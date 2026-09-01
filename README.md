@@ -22,6 +22,12 @@ aosp-replaced-files.txt   stock paths owned by AOSP/ROM modules (audit input)
 workspace/                local analysis workspace (gitignored, not published)
 ```
 
+Start with [`reports/ulefone-debug-pstore-rescue-report.md`](reports/ulefone-debug-pstore-rescue-report.md)
+for the boot-hang investigation: no serial console, open BROM, the
+`plat_sepolicy` hash mismatch that invalidates the vendor `precompiled_sepolicy`,
+the PID-1 capture harness that writes into the pstore partition tail, and the
+`vendor_boot` rescue/repack contract.
+
 `workspace/` holds extracted stock partitions, live snapshots and generated
 reports. It is large, contains vendor binaries, and is never committed.
 
