@@ -10,7 +10,7 @@ the device tree itself stays a normal, lean LineageOS tree.
 |---|---|
 | [`android_device_ulefone_gq5012bf1`](https://github.com/LieppOS/android_device_ulefone_gq5012bf1) | the LineageOS 22.2 device tree |
 | [`OrangeFox-Ulefone-GQ5012BF1`](https://github.com/LieppOS/OrangeFox-Ulefone-GQ5012BF1) | OrangeFox recovery overlay, packaging and releases |
-| this one | evidence, analysis and audit tooling |
+| [`LieppOS-ulefone-gq5012bf1-research`](https://github.com/LieppOS/LieppOS-ulefone-gq5012bf1-research) | this one: evidence, analysis and audit tooling |
 
 ## Layout
 
