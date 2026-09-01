@@ -1,0 +1,696 @@
+$ bootctl hal-info
+[root=True exit=0]
+HAL Version: android.hardware.boot@aidl::IBootControl
+
+$ bootctl get-current-slot
+[root=True exit=0]
+0
+
+$ bootctl get-active-boot-slot
+[root=True exit=0]
+0
+
+$ bootctl get-number-slots
+[root=True exit=0]
+2
+
+$ bootctl get-suffix 0
+[root=True exit=0]
+_a
+
+$ bootctl get-suffix 1
+[root=True exit=0]
+_b
+
+$ bootctl is-slot-bootable 0
+[root=True exit=0]
+1
+
+$ bootctl is-slot-bootable 1
+[root=True exit=0]
+1
+
+$ bootctl is-slot-marked-successful 0
+[root=True exit=0]
+1
+
+$ bootctl is-slot-marked-successful 1
+[root=True exit=70]
+0
+
+$ bootctl get-snapshot-merge-status
+[root=True exit=0]
+none
+
+$ ls -la /metadata
+[root=True exit=0]
+total 48
+drwxr-xr-x 14 root   root   4096 2026-08-30 00:35 .
+drwxr-xr-x 30 root   root    763 2026-08-30 10:18 ..
+drwxrwxr-x  5 root   system 3452 2026-08-30 00:35 aconfig
+drwx------  5 root   system 3452 2026-08-30 00:35 apex
+drwxr-x---  2 system log    3452 2026-08-31 21:55 bootstat
+drwxrwx--x  6 root   system 3452 2026-08-30 10:23 gsi
+drwxr-x---  3 root   system 3452 2026-08-31 21:55 ota
+drwxrwx--x  2 root   system 3452 2026-08-30 00:35 password_slots
+drwx------  2 root   root   3452 2026-08-30 00:35 phh
+drwxrwx---  2 root   system 3452 2026-08-30 00:35 prefetch
+drwxrwx---  2 root   system 3452 2026-08-30 00:35 staged-install
+drwxrwx---  2 root   system 3452 2026-08-30 00:35 tradeinmode
+drwx------  3 root   root   3452 2026-08-30 00:35 vold
+drwxrwx---  3 root   system 3452 2026-08-30 15:18 watchdog
+
+$ ls -la /metadata/ota
+[root=True exit=0]
+total 14
+drwxr-x---  3 root system 3452 2026-08-31 21:55 .
+drwxr-xr-x 14 root root   4096 2026-08-30 00:35 ..
+drwxr-x---  2 root system 3452 2026-08-30 00:35 snapshots
+-rw-------  1 root root      0 2026-08-31 21:55 state
+
+$ getprop | grep -i snapshot
+[root=True exit=0]
+[init.svc.apexd-snapshotde]: [stopped]
+[init.svc_debug_pid.apexd-snapshotde]: []
+[ro.boottime.apexd-snapshotde]: [12198517538]
+[ro.virtual_ab.userspace.snapshots.enabled]: [true]
+
+$ getprop | grep -Ei "dsu|gsi|dynamic_system"
+[root=True exit=0]
+[gsid.image_installed]: [0]
+[init.svc.gsid]: [stopped]
+[init.svc.watchdogd-gsi]: [running]
+[init.svc_debug_pid.gsid]: []
+[init.svc_debug_pid.watchdogd-gsi]: [1259]
+[ro.boottime.gsid]: [60970735324539]
+[ro.boottime.watchdogd-gsi]: [11081715999]
+[ro.gsid.image_running]: [0]
+[ro.lineage.device]: [tdgsi_arm64_ab]
+[ro.lineage.display.version]: [LieppOS-23-20260830-VANILLA-EROFS-GSI]
+[ro.lineage.version]: [23.2-20260830-VANILLA-EROFS-GSI]
+
+$ pm list features
+[root=True exit=0]
+feature:reqGlEsVersion=0x30002
+feature:android.hardware.audio.output
+feature:android.hardware.bluetooth
+feature:android.hardware.bluetooth_le
+feature:android.hardware.camera
+feature:android.hardware.camera.any
+feature:android.hardware.camera.autofocus
+feature:android.hardware.camera.capability.manual_post_processing
+feature:android.hardware.camera.capability.manual_sensor
+feature:android.hardware.camera.capability.raw
+feature:android.hardware.camera.concurrent
+feature:android.hardware.camera.flash
+feature:android.hardware.camera.front
+feature:android.hardware.camera.level.full
+feature:android.hardware.consumerir
+feature:android.hardware.faketouch
+feature:android.hardware.hardware_keystore=300
+feature:android.hardware.keystore.app_attest_key
+feature:android.hardware.location
+feature:android.hardware.location.gps
+feature:android.hardware.location.network
+feature:android.hardware.microphone
+feature:android.hardware.nfc
+feature:android.hardware.nfc.any
+feature:android.hardware.nfc.hce
+feature:android.hardware.nfc.hcef
+feature:android.hardware.nfc.uicc
+feature:android.hardware.opengles.aep
+feature:android.hardware.ram.normal
+feature:android.hardware.screen.landscape
+feature:android.hardware.screen.portrait
+feature:android.hardware.se.omapi.uicc
+feature:android.hardware.security.model.compatible
+feature:android.hardware.sensor.accelerometer
+feature:android.hardware.sensor.barometer
+feature:android.hardware.sensor.compass
+feature:android.hardware.sensor.gyroscope
+feature:android.hardware.sensor.light
+feature:android.hardware.sensor.proximity
+feature:android.hardware.sensor.stepcounter
+feature:android.hardware.sensor.stepdetector
+feature:android.hardware.telephony
+feature:android.hardware.telephony.calling
+feature:android.hardware.telephony.cdma
+feature:android.hardware.telephony.data
+feature:android.hardware.telephony.gsm
+feature:android.hardware.telephony.ims
+feature:android.hardware.telephony.messaging
+feature:android.hardware.telephony.radio.access
+feature:android.hardware.telephony.subscription
+feature:android.hardware.touchscreen
+feature:android.hardware.touchscreen.multitouch
+feature:android.hardware.touchscreen.multitouch.distinct
+feature:android.hardware.touchscreen.multitouch.jazzhand
+feature:android.hardware.usb.accessory
+feature:android.hardware.usb.host
+feature:android.hardware.vulkan.compute
+feature:android.hardware.vulkan.level=1
+feature:android.hardware.vulkan.version=4206592
+feature:android.hardware.wifi
+feature:android.hardware.wifi.direct
+feature:android.hardware.wifi.passpoint
+feature:android.software.activities_on_secondary_displays
+feature:android.software.adoptable_storage
+feature:android.software.app_enumeration
+feature:android.software.app_widgets
+feature:android.software.autofill
+feature:android.software.backup
+feature:android.software.cant_save_state
+feature:android.software.companion_device_setup
+feature:android.software.controls
+feature:android.software.credentials
+feature:android.software.cts
+feature:android.software.device_admin
+feature:android.software.device_id_attestation
+feature:android.software.device_lock
+feature:android.software.erofs
+feature:android.software.file_based_encryption
+feature:android.software.home_screen
+feature:android.software.incremental_delivery=2
+feature:android.software.input_methods
+feature:android.software.ipsec_tunnel_migration
+feature:android.software.ipsec_tunnels
+feature:android.software.live_wallpaper
+feature:android.software.managed_users
+feature:android.software.midi
+feature:android.software.opengles.deqp.level=132580097
+feature:android.software.picture_in_picture
+feature:android.software.print
+feature:android.software.secure_lock_screen
+feature:android.software.securely_removes_users
+feature:android.software.sip
+feature:android.software.sip.voip
+feature:android.software.telecom
+feature:android.software.verified_boot
+feature:android.software.voice_recognizers
+feature:android.software.vulkan.deqp.level=132580097
+feature:android.software.webview
+feature:android.software.window_magnification
+feature:com.google.android.mainline.patchlevel.2
+feature:com.mediatek.hardware.vow.2e2k
+feature:com.mediatek.hardware.vow_dsp.riscv
+feature:org.lineageos.android
+feature:org.lineageos.globalactions
+feature:org.lineageos.hardware
+feature:org.lineageos.health
+feature:org.lineageos.livedisplay
+feature:org.lineageos.profiles
+feature:org.lineageos.settings
+feature:org.lineageos.trust
+
+$ gsi_tool status
+[root=True exit=0]
+normal
+
+$ find /vendor/etc -maxdepth 1 -name "fstab*" -type f -print
+[root=True exit=0]
+/vendor/etc/fstab.emmc
+/vendor/etc/fstab.enableswap
+/vendor/etc/fstab.mt6878
+
+$ cat /vendor/etc/fstab.enableswap
+[root=True exit=0]
+/dev/block/zram0 none swap defaults zramsize=100%
+
+$ cat /vendor/etc/fstab.mt6878
+[root=True exit=0]
+# 1 "vendor/mediatek/proprietary/hardware/fstab/mt6878/fstab.in.mt6878"
+# 1 "<built-in>" 1
+# 1 "<built-in>" 3
+# 374 "<built-in>" 3
+# 1 "<command line>" 1
+# 1 "<built-in>" 2
+# 1 "vendor/mediatek/proprietary/hardware/fstab/mt6878/fstab.in.mt6878" 2
+# 130 "vendor/mediatek/proprietary/hardware/fstab/mt6878/fstab.in.mt6878"
+system /system erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system /system ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system_ext /system_ext erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system_ext /system_ext ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+
+vendor /vendor erofs ro wait,slotselect,avb,logical,first_stage_mount
+vendor /vendor ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+product /product erofs ro wait,slotselect,avb,logical,first_stage_mount
+product /product ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+
+
+
+
+vendor_dlkm /vendor_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+vendor_dlkm /vendor_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+odm_dlkm /odm_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+odm_dlkm /odm_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+system_dlkm /system_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+system_dlkm /system_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+/dev/block/by-name/metadata /metadata f2fs noatime,nosuid,nodev,discard wait,check,formattable,first_stage_mount
+
+/dev/block/by-name/userdata /data f2fs noatime,nosuid,nodev,discard,noflush_merge,fsync_mode=nobarrier,reserve_root=134217,resgid=1065,inlinecrypt wait,check,formattable,quota,latemount,resize,reservedsize=128m,checkpoint=fs,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption,fsverity
+
+
+
+/dev/block/by-name/protect1 /mnt/vendor/protect_f ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/protect2 /mnt/vendor/protect_s ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/nvdata /mnt/vendor/nvdata ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/nvcfg /mnt/vendor/nvcfg ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+
+
+/dev/block/by-name/persist /mnt/vendor/persist ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+
+
+
+
+
+/devices/platform/soc/11240000.mmc* auto auto defaults voldmanaged=sdcard1:auto,encryptable=userdata
+
+/devices/platform/usb_xhci* auto vfat defaults voldmanaged=usbotg:auto
+/devices/platform/soc/11201000.usb0/11200000.xhci* auto vfat defaults voldmanaged=usbotg:auto
+/devices/platform/soc/11211000.usb1/11210000.xhci* auto vfat defaults voldmanaged=usbotg:auto
+
+/dev/block/by-name/frp /persistent emmc defaults defaults
+
+/dev/block/by-name/nvram /nvram emmc defaults defaults
+/dev/block/by-name/proinfo /proinfo emmc defaults defaults
+/dev/block/by-name/lk1 /lk1 emmc defaults defaults
+/dev/block/by-name/bootloader2 /bootloader2 emmc defaults defaults
+/dev/block/by-name/para /para emmc defaults defaults
+/dev/block/by-name/misc /misc emmc defaults defaults
+/dev/block/by-name/init_boot /init_boot emmc defaults defaults
+
+
+
+
+/dev/block/by-name/boot /boot emmc defaults first_stage_mount,nofail,slotselect
+
+
+
+
+
+/dev/block/by-name/vbmeta_vendor /vbmeta_vendor emmc defaults first_stage_mount,nofail,slotselect
+/dev/block/by-name/vbmeta_system /vbmeta_system emmc defaults first_stage_mount,nofail,slotselect,avb=vbmeta
+
+/dev/block/by-name/logo /logo emmc defaults defaults
+/dev/block/by-name/expdb /expdb emmc defaults defaults
+/dev/block/by-name/seccfg /seccfg emmc defaults defaults
+
+/dev/block/by-name/tee1 /tee1 emmc defaults defaults
+/dev/block/by-name/tee2 /tee2 emmc defaults defaults
+
+
+/dev/block/by-name/scp1 /scp1 emmc defaults defaults
+/dev/block/by-name/scp2 /scp2 emmc defaults defaults
+
+
+/dev/block/by-name/sspm1 /sspm1 emmc defaults defaults
+/dev/block/by-name/sspm2 /sspm2 emmc defaults defaults
+
+
+/dev/block/by-name/dpm1 /dpm1 emmc defaults defaults
+/dev/block/by-name/dpm2 /dpm2 emmc defaults defaults
+
+/dev/block/by-name/mcupm1 /mcupm1 emmc defaults defaults
+/dev/block/by-name/mcupm2 /mcupm2 emmc defaults defaults
+
+
+
+/dev/block/by-name/modem /modem emmc defaults defaults
+/dev/block/by-name/md1dsp /md1dsp emmc defaults defaults
+/dev/block/by-name/md1arm7 /md1arm7 emmc defaults defaults
+/dev/block/by-name/md3img /md3img emmc defaults defaults
+
+
+
+
+
+/dev/block/by-name/gz1 /gz1 emmc defaults defaults
+/dev/block/by-name/gz2 /gz2 emmc defaults defaults
+/dev/block/by-name/ccu /ccu emmc defaults defaults
+/dev/block/by-name/vcp /vcp emmc defaults defaults
+/dev/block/by-name/gpueb /gpueb emmc defaults defaults
+/dev/block/by-name/mcf_ota /mcf_ota emmc defaults defaults
+/dev/block/by-name/vendor_boot /vendor_boot emmc defaults defaults
+/dev/block/by-name/mvpu_algo1 /mvpu_algo1 emmc defaults defaults
+/dev/block/by-name/mvpu_algo2 /mvpu_algo2 emmc defaults defaults
+/dev/block/by-name/apusys1 /apusys1 emmc defaults defaults
+/dev/block/by-name/apusys2 /apusys2 emmc defaults defaults
+
+/dev/block/by-name/spmfw /spmfw emmc defaults defaults
+
+
+
+
+
+
+
+/dev/block/by-name/pi_img /pi_img emmc defaults defaults
+/dev/block/by-name/boot_para /boot_para emmc defaults defaults
+/dev/block/by-name/odmdtbo /odmdtbo emmc defaults defaults
+/dev/block/by-name/dtbo /dtbo emmc defaults defaults
+/dev/block/by-name/connsys_wifi /connsys_wifi emmc defaults defaults
+/dev/block/by-name/connsys_bt /connsys_bt emmc defaults defaults
+
+/dev/block/by-name/otp /otp emmc defaults defaults
+
+
+/dev/block/by-name/vbmeta /vbmeta emmc defaults defaults
+
+$ cat /vendor/etc/fstab.mt6878.first_stage
+[root=True exit=1]
+cat: /vendor/etc/fstab.mt6878.first_stage: No such file or directory
+
+$ cat /vendor_dlkm/etc/build.prop
+[root=True exit=0]
+####################################
+# from generate-common-build-props
+# These properties identify this partition image.
+####################################
+ro.product.vendor_dlkm.brand=Ulefone
+ro.product.vendor_dlkm.device=GQ5012BF1
+ro.product.vendor_dlkm.manufacturer=Ulefone
+ro.product.vendor_dlkm.model=Armor 29 Pro
+ro.product.vendor_dlkm.name=GQ5012BF1_EEA
+ro.product.model_for_attestation=
+ro.product.brand_for_attestation=
+ro.product.name_for_attestation=
+ro.vendor_dlkm.build.date=Wed Oct 22 19:07:54 CST 2025
+ro.vendor_dlkm.build.date.utc=1761131274
+ro.vendor_dlkm.build.fingerprint=Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+ro.vendor_dlkm.build.id=GQ5012BF1_EEA_V15
+ro.vendor_dlkm.build.tags=release-keys
+ro.vendor_dlkm.build.type=user
+ro.vendor_dlkm.build.version.incremental=mp1rck6989v164P8
+ro.vendor_dlkm.build.version.release=14
+ro.vendor_dlkm.build.version.release_or_codename=14
+ro.vendor_dlkm.build.version.sdk=34
+ro.vendor_dlkm.custom.version=DZ_M170_Ulefone_EEA_Armor29Pro_20251022_V35
+# end of file
+
+$ strings /vendor_dlkm/lib/modules/bt_drv_6878.ko | grep -E "^(vermagic=|depends=|name=)"
+[root=True exit=0]
+vermagic=6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+name=bt_drv_6878
+depends=conninfra,bluetooth,connadp,mtk_disp_notify,connfem
+
+$ strings /vendor_dlkm/lib/modules/wlan_drv_gen4m_6878.ko | grep -E "^(vermagic=|depends=|name=)"
+[root=True exit=0]
+vermagic=6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+name=wlan_drv_gen4m_6878
+depends=connadp,wmt_chrdev_wifi_connac2,aee_aed,cfg80211,mtk_disp_notify,pmic_lbat_service,conninfra,ccci_md_all,mddp,connfem
+
+$ cat /vendor_dlkm/lib/modules/modules.load
+[root=True exit=0]
+cfg80211.ko
+mac80211.ko
+reboot-mode.ko
+syscon-reboot-mode.ko
+spmi-mtk-mpu.ko
+fhctl.ko
+clk-dbg-mt6878.ko
+mtk-vmm-notifier.ko
+cmdq-sec-drv.ko
+mtk_hcp.ko
+mtk-ipesys-me.ko
+mtk_imgsys_cmdq.ko
+mtk_imgsys_v4l2.ko
+mtk_imgsys_isp7sp.ko
+mtk_aie.ko
+mtk_aie_debug_7sp_2.ko
+camera_dpe_isp7sp.ko
+mtk-pmic-oc-debug.ko
+mtk-ssc.ko
+mtk-ssc-dbg-v2.ko
+trace_mmstat.ko
+ccmni.ko
+rps_perf.ko
+mtk-pwm.ko
+mtk_irtx_pwm.ko
+sspm_v3.ko
+mtk_battery_oc_throttling.ko
+mtk_low_battery_throttling.ko
+mtk_dynamic_loading_throttling.ko
+mtk_md_power_throttling.ko
+mtk_cpu_power_throttling.ko
+mtk_gpu_power_throttling.ko
+mtk_peak_power_budget.ko
+mtk_pbm.ko
+mtk_cg_peak_power_throttling.ko
+mtk_mdpm.ko
+gpueb.ko
+mtk_gpu_hal.ko
+mtk_gpufreq_wrapper.ko
+mtk_gpufreq_mt6878.ko
+ged.ko
+mali_prot_alloc_mt6878_r44.ko
+mali_mgm_mt6878_r44.ko
+mali_kbase_mt6878_r44.ko
+mali_dmabuf_test_mt6878_r44.ko
+nvmem-mt635x-efuse.ko
+audio_ipi.ko
+mtk-scp-audiocommon.ko
+usb_offload.ko
+aw883xx_driver.ko
+snd-soc-tfa98xx.ko
+mtk-sp-spk-amp.ko
+mtk-btcvsd.ko
+snd-soc-mtk-common.ko
+snd-soc-mt6878-afe.ko
+snd-soc-mt6369.ko
+snd-soc-audiodsp-common.ko
+mtk-scp-ultra.ko
+snd-soc-mtk-scp-ultra.ko
+mtk-soc-offload-common.ko
+mt6878-mt6369.ko
+mddp.ko
+soc_temp_lvts.ko
+pmic_temp.ko
+thermal-generic-adc.ko
+thermal_trace.ko
+board_temp.ko
+vtskin_temp.ko
+md_cooling_all.ko
+charger_cooling.ko
+backlight_cooling.ko
+thermal_interface.ko
+wifi_cooling.ko
+mtk_gpu_qos.ko
+mt6369-accdet.ko
+cpudvfs.ko
+vcp.ko
+mtk-vcu.ko
+mtk_jpeg.ko
+mtk-vcodec-common.ko
+mtk-vcodec-dec-v1.ko
+mtk-vcodec-enc-v1.ko
+cpuqos_v3.ko
+mtk_ccuv.ko
+mtk-vmm-isp71-regulator.ko
+mtk_rpmsg_mbox.ko
+mtk-mbox.ko
+mtk_tinysys_ipi.ko
+scp.ko
+mtk-vow.ko
+mtk-scp-vow.ko
+mcupm.ko
+mtk_ccd_remoteproc.ko
+ccd_rpmsg.ko
+mtk_cm_ipi.ko
+mtk_cm_mgr.ko
+mtk_cm_mgr_mt6878.ko
+mtk_perf_ioctl.ko
+mtk_fpsgo.ko
+fpsgo.ko
+frs.ko
+custom-ldo-wl2868.ko
+custom-ldo.ko
+mtk-cam-isp7sp.ko
+imgsensor-glue.ko
+imgsensor.ko
+camera_eeprom_v4l2.ko
+mtk-swpm.ko
+mtk-swpm-dbg-common-v1.ko
+mtk-swpm-dbg-v6878.ko
+mtk-swpm-cpu-dbg-v6878.ko
+ccci_auxadc.ko
+ccci_ccif.ko
+ccci_dpmaif.ko
+ccci_fsm_scp.ko
+ccci_md_all.ko
+ccci_util_lib.ko
+connadp.ko
+connscp.ko
+connfem.ko
+conninfra.ko
+wmt_chrdev_wifi_connac2.ko
+wlan_drv_gen4m_6878.ko
+mtk-lpm.ko
+mtk-lpm-dbg-common-v2.ko
+mtk-lpm-plat-v1.ko
+mtk-lpm-dbg-mt6878.ko
+lpm-gov-MHSP.ko
+fmradio_drv_connac2x.ko
+gps_drv_dl_v051.ko
+mtk_qos.ko
+powerhal_cpu_ctrl.ko
+touch_boost.ko
+mtk_ioctl_touch_boost.ko
+mtk_ioctl_powerhal.ko
+cpufreq_sugov_ext.ko
+scheduler.ko
+hf_manager.ko
+sensorhub.ko
+mtk-composite.ko
+aw36515.ko
+aw36518.ko
+aw36518_v2.ko
+flashlight.ko
+gz_trusty_mod.ko
+gz_ipc_mod.ko
+gz_irq_mod.ko
+gz_virtio_mod.ko
+gz_tz_system.ko
+gz_main_mod.ko
+gz_log_mod.ko
+tmem_ffa.ko
+camera_af_media.ko
+main_vcm.ko
+main2_vcm.ko
+main3_vcm.ko
+main4_vcm.ko
+dw9781c.ko
+sub_vcm.ko
+pda_drv_mt6878.ko
+mtk_sec_heap.ko
+mtk_heap_debug.ko
+sapu.ko
+iommu_test.ko
+atf_logger.ko
+mtk_core_ctl.ko
+mtk-dvfsrc-start.ko
+bt_drv_6878.ko
+bluetooth.ko
+c2k_usb.ko
+c2k_usb_f_via_atc.ko
+c2k_usb_f_via_ets.ko
+c2k_usb_f_via_modem.ko
+mtk_u_ether.ko
+mtk_usb_f_rndis.ko
+clk-disable-unused.ko
+mtk-pm-domain-disable-unused.ko
+hbt.ko
+apu_top.ko
+apusys.ko
+widevine_driver.ko
+task_turbo.ko
+mtk_perf_common.ko
+mtk_disp_sec.ko
+mtk_perf_ioctl_magt.ko
+mtk-mmdvfs-v3-start.ko
+uload_ind.ko
+load_track.ko
+mtk_c2ps.ko
+mtk_mbraink.ko
+c2ps_perf_ioctl.ko
+spi_tiny_co5300_lcd.ko
+leds-ln2403.ko
+yft_devinfo.ko
+yft_tiny2c_usb.ko
+
+$ cat /vendor_dlkm/lib/modules/modules.dep | head -40
+[root=True exit=0]
+/vendor_dlkm/lib/modules/mtk_cg_peak_power_throttling.ko: /vendor_dlkm/lib/modules/mtk_gpu_hal.ko
+/vendor_dlkm/lib/modules/mcupm.ko: /vendor_dlkm/lib/modules/mtk_tinysys_ipi.ko /vendor_dlkm/lib/modules/mtk_rpmsg_mbox.ko /vendor_dlkm/lib/modules/mtk-mbox.ko
+/vendor_dlkm/lib/modules/atf_logger.ko:
+/vendor_dlkm/lib/modules/mtk_gpu_hal.ko:
+/vendor_dlkm/lib/modules/clk-dbg-mt6878.ko:
+/vendor_dlkm/lib/modules/mt6878-mt6369.ko: /vendor_dlkm/lib/modules/snd-soc-mt6369.ko /vendor_dlkm/lib/modules/mt6369-accdet.ko /vendor_dlkm/lib/modules/snd-soc-mt6878-afe.ko /vendor_dlkm/lib/modules/mtk_peak_power_budget.ko /vendor_dlkm/lib/modules/snd-soc-mtk-scp-ultra.ko /vendor_dlkm/lib/modules/snd-soc-mtk-common.ko /vendor_dlkm/lib/modules/ccci_md_all.ko /vendor_dlkm/lib/modules/mtk_pbm.ko /vendor_dlkm/lib/modules/mtk_mdpm.ko /vendor_dlkm/lib/modules/mtk_dynamic_loading_throttling.ko /vendor_dlkm/lib/modules/mtk_low_battery_throttling.ko /vendor_dlkm/lib/modules/ccci_auxadc.ko /vendor_dlkm/lib/modules/ccci_util_lib.ko /vendor_dlkm/lib/modules/ccmni.ko /vendor_dlkm/lib/modules/rps_perf.ko /vendor_dlkm/lib/modules/mtk-scp-ultra.ko /vendor_dlkm/lib/modules/mtk-sp-spk-amp.ko /vendor_dlkm/lib/modules/aw883xx_driver.ko /vendor_dlkm/lib/modules/snd-soc-audiodsp-common.ko /vendor_dlkm/lib/modules/audio_ipi.ko /vendor_dlkm/lib/modules/mtk-scp-audiocommon.ko /vendor_dlkm/lib/modules/scp.ko /vendor_dlkm/lib/modules/mtk_tinysys_ipi.ko /vendor_dlkm/lib/modules/mtk_rpmsg_mbox.ko /vendor_dlkm/lib/modules/mtk-mbox.ko
+/vendor_dlkm/lib/modules/mtk-sp-spk-amp.ko: /vendor_dlkm/lib/modules/aw883xx_driver.ko /vendor_dlkm/lib/modules/snd-soc-audiodsp-common.ko /vendor_dlkm/lib/modules/audio_ipi.ko /vendor_dlkm/lib/modules/mtk-scp-audiocommon.ko /vendor_dlkm/lib/modules/scp.ko /vendor_dlkm/lib/modules/mtk_tinysys_ipi.ko /vendor_dlkm/lib/modules/mtk_rpmsg_mbox.ko /vendor_dlkm/lib/modules/mtk-mbox.ko
+/vendor_dlkm/lib/modules/mtk-cam-isp7sp.ko: /vendor_dlkm/lib/modules/mtk_ccuv.ko /vendor_dlkm/lib/modules/mtk_sec_heap.ko /vendor_dlkm/lib/modules/tmem_ffa.ko /vendor_dlkm/lib/modules/gz_tz_system.ko /vendor_dlkm/lib/modules/gz_ipc_mod.ko /vendor_dlkm/lib/modules/gz_trusty_mod.ko /vendor_dlkm/lib/modules/ccd_rpmsg.ko
+/vendor_dlkm/lib/modules/mtk-lpm.ko:
+/vendor_dlkm/lib/modules/cpuqos_v3.ko:
+/vendor_dlkm/lib/modules/mtk-lpm-dbg-common-v2.ko: /vendor_dlkm/lib/modules/mtk-lpm.ko
+/vendor_dlkm/lib/modules/mtk_battery_oc_throttling.ko:
+/vendor_dlkm/lib/modules/mtk_hcp.ko:
+/vendor_dlkm/lib/modules/mtk_c2ps.ko: /vendor_dlkm/lib/modules/scheduler.ko /vendor_dlkm/lib/modules/cpuqos_v3.ko /vendor_dlkm/lib/modules/powerhal_cpu_ctrl.ko /vendor_dlkm/lib/modules/mtk_ioctl_powerhal.ko /vendor_dlkm/lib/modules/cpudvfs.ko /vendor_dlkm/lib/modules/cpufreq_sugov_ext.ko /vendor_dlkm/lib/modules/thermal_interface.ko /vendor_dlkm/lib/modules/mtk_gpufreq_wrapper.ko /vendor_dlkm/lib/modules/gpueb.ko /vendor_dlkm/lib/modules/c2ps_perf_ioctl.ko /vendor_dlkm/lib/modules/mtk_pbm.ko /vendor_dlkm/lib/modules/mtk_mdpm.ko /vendor_dlkm/lib/modules/mtk_dynamic_loading_throttling.ko /vendor_dlkm/lib/modules/mtk_low_battery_throttling.ko /vendor_dlkm/lib/modules/mtk_tinysys_ipi.ko /vendor_dlkm/lib/modules/mtk_rpmsg_mbox.ko /vendor_dlkm/lib/modules/mtk-mbox.ko /vendor_dlkm/lib/modules/mtk_gpu_hal.ko
+/vendor_dlkm/lib/modules/mtk_perf_common.ko: /vendor_dlkm/lib/modules/mtk_qos.ko /vendor_dlkm/lib/modules/sspm_v3.ko /vendor_dlkm/lib/modules/cpufreq_sugov_ext.ko /vendor_dlkm/lib/modules/thermal_interface.ko /vendor_dlkm/lib/modules/mtk_gpufreq_wrapper.ko /vendor_dlkm/lib/modules/gpueb.ko /vendor_dlkm/lib/modules/mtk_pbm.ko /vendor_dlkm/lib/modules/mtk_mdpm.ko /vendor_dlkm/lib/modules/mtk_dynamic_loading_throttling.ko /vendor_dlkm/lib/modules/mtk_low_battery_throttling.ko /vendor_dlkm/lib/modules/mtk_tinysys_ipi.ko /vendor_dlkm/lib/modules/mtk_rpmsg_mbox.ko /vendor_dlkm/lib/modules/mtk-mbox.ko /vendor_dlkm/lib/modules/mtk_gpu_hal.ko
+/vendor_dlkm/lib/modules/board_temp.ko:
+/vendor_dlkm/lib/modules/met_scmi_api.ko: /vendor_dlkm/lib/modules/met.ko
+/vendor_dlkm/lib/modules/mtk_imgsys_v4l2.ko: /vendor_dlkm/lib/modules/mtk-ipesys-me.ko /vendor_dlkm/lib/modules/mtk_imgsys_cmdq.ko /vendor_dlkm/lib/modules/cmdq-sec-drv.ko /vendor_dlkm/lib/modules/mtk_hcp.ko /vendor_dlkm/lib/modules/gz_tz_system.ko /vendor_dlkm/lib/modules/gz_ipc_mod.ko /vendor_dlkm/lib/modules/gz_trusty_mod.ko
+/vendor_dlkm/lib/modules/mtk-ssc-dbg-v2.ko: /vendor_dlkm/lib/modules/mtk-ssc.ko
+/vendor_dlkm/lib/modules/c2ps_perf_ioctl.ko:
+/vendor_dlkm/lib/modules/mtk-pwm.ko:
+/vendor_dlkm/lib/modules/fpsgo.ko: /vendor_dlkm/lib/modules/mtk_fpsgo.ko /vendor_dlkm/lib/modules/ged.ko /vendor_dlkm/lib/modules/mtk_gpu_qos.ko /vendor_dlkm/lib/modules/mtk_cm_mgr.ko /vendor_dlkm/lib/modules/mtk_cm_ipi.ko /vendor_dlkm/lib/modules/mtk_perf_ioctl_magt.ko /vendor_dlkm/lib/modules/mtk_perf_ioctl.ko /vendor_dlkm/lib/modules/mtk_qos.ko /vendor_dlkm/lib/modules/sspm_v3.ko /vendor_dlkm/lib/modules/scheduler.ko /vendor_dlkm/lib/modules/cpuqos_v3.ko /vendor_dlkm/lib/modules/powerhal_cpu_ctrl.ko /vendor_dlkm/lib/modules/mtk_ioctl_powerhal.ko /vendor_dlkm/lib/modules/cpudvfs.ko /vendor_dlkm/lib/modules/cpufreq_sugov_ext.ko /vendor_dlkm/lib/modules/thermal_interface.ko /vendor_dlkm/lib/modules/mtk_gpufreq_wrapper.ko /vendor_dlkm/lib/modules/gpueb.ko /vendor_dlkm/lib/modules/mtk_pbm.ko /vendor_dlkm/lib/modules/mtk_mdpm.ko /vendor_dlkm/lib/modules/mtk_dynamic_loading_throttling.ko /vendor_dlkm/lib/modules/mtk_low_battery_throttling.ko /vendor_dlkm/lib/modules/mtk_tinysys_ipi.ko /vendor_dlkm/lib/modules/mtk_rpmsg_mbox.ko /vendor_dlkm/lib/modules/mtk-mbox.ko /vendor_dlkm/lib/modules/mtk_gpu_hal.ko
+/vendor_dlkm/lib/modules/gpueb.ko: /vendor_dlkm/lib/modules/mtk_tinysys_ipi.ko /vendor_dlkm/lib/modules/mtk_rpmsg_mbox.ko /vendor_dlkm/lib/modules/mtk-mbox.ko
+/vendor_dlkm/lib/modules/sub_vcm.ko:
+/vendor_dlkm/lib/modules/thermal-generic-adc.ko:
+/vendor_dlkm/lib/modules/charger_cooling.ko:
+/vendor_dlkm/lib/modules/mtk_heap_debug.ko: /vendor_dlkm/lib/modules/mtk_sec_heap.ko /vendor_dlkm/lib/modules/tmem_ffa.ko /vendor_dlkm/lib/modules/gz_tz_system.ko /vendor_dlkm/lib/modules/gz_ipc_mod.ko /vendor_dlkm/lib/modules/gz_trusty_mod.ko
+/vendor_dlkm/lib/modules/mtk_imgsys_isp7sp.ko: /vendor_dlkm/lib/modules/mtk_imgsys_v4l2.ko /vendor_dlkm/lib/modules/mtk-ipesys-me.ko /vendor_dlkm/lib/modules/mtk_imgsys_cmdq.ko /vendor_dlkm/lib/modules/cmdq-sec-drv.ko /vendor_dlkm/lib/modules/mtk_hcp.ko /vendor_dlkm/lib/modules/gz_tz_system.ko /vendor_dlkm/lib/modules/gz_ipc_mod.ko /vendor_dlkm/lib/modules/gz_trusty_mod.ko
+/vendor_dlkm/lib/modules/yft_devinfo.ko:
+/vendor_dlkm/lib/modules/camera_af_media.ko:
+/vendor_dlkm/lib/modules/mtk_peak_power_budget.ko: /vendor_dlkm/lib/modules/mtk_low_battery_throttling.ko
+/vendor_dlkm/lib/modules/cpufreq_sugov_ext.ko: /vendor_dlkm/lib/modules/thermal_interface.ko /vendor_dlkm/lib/modules/mtk_gpufreq_wrapper.ko /vendor_dlkm/lib/modules/gpueb.ko /vendor_dlkm/lib/modules/mtk_pbm.ko /vendor_dlkm/lib/modules/mtk_mdpm.ko /vendor_dlkm/lib/modules/mtk_dynamic_loading_throttling.ko /vendor_dlkm/lib/modules/mtk_low_battery_throttling.ko /vendor_dlkm/lib/modules/mtk_tinysys_ipi.ko /vendor_dlkm/lib/modules/mtk_rpmsg_mbox.ko /vendor_dlkm/lib/modules/mtk-mbox.ko /vendor_dlkm/lib/modules/mtk_gpu_hal.ko
+/vendor_dlkm/lib/modules/mtk_cpu_power_throttling.ko: /vendor_dlkm/lib/modules/mtk_battery_oc_throttling.ko /vendor_dlkm/lib/modules/mtk_low_battery_throttling.ko
+/vendor_dlkm/lib/modules/mtk_perf_ioctl_magt.ko:
+/vendor_dlkm/lib/modules/cpudvfs.ko: /vendor_dlkm/lib/modules/cpufreq_sugov_ext.ko /vendor_dlkm/lib/modules/thermal_interface.ko /vendor_dlkm/lib/modules/mtk_gpufreq_wrapper.ko /vendor_dlkm/lib/modules/gpueb.ko /vendor_dlkm/lib/modules/mtk_pbm.ko /vendor_dlkm/lib/modules/mtk_mdpm.ko /vendor_dlkm/lib/modules/mtk_dynamic_loading_throttling.ko /vendor_dlkm/lib/modules/mtk_low_battery_throttling.ko /vendor_dlkm/lib/modules/mtk_tinysys_ipi.ko /vendor_dlkm/lib/modules/mtk_rpmsg_mbox.ko /vendor_dlkm/lib/modules/mtk-mbox.ko /vendor_dlkm/lib/modules/mtk_gpu_hal.ko
+/vendor_dlkm/lib/modules/mtk-lpm-dbg-mt6878.ko: /vendor_dlkm/lib/modules/mtk-swpm.ko /vendor_dlkm/lib/modules/mtk-lpm-dbg-common-v2.ko /vendor_dlkm/lib/modules/mtk-lpm.ko /vendor_dlkm/lib/modules/mtk_qos.ko /vendor_dlkm/lib/modules/sspm_v3.ko
+/vendor_dlkm/lib/modules/aw36515.ko: /vendor_dlkm/lib/modules/flashlight.ko /vendor_dlkm/lib/modules/mtk_peak_power_budget.ko /vendor_dlkm/lib/modules/mtk_pbm.ko /vendor_dlkm/lib/modules/mtk_mdpm.ko /vendor_dlkm/lib/modules/mtk_dynamic_loading_throttling.ko /vendor_dlkm/lib/modules/mtk_low_battery_throttling.ko
+/vendor_dlkm/lib/modules/soc_temp_lvts.ko: /vendor_dlkm/lib/modules/thermal_interface.ko /vendor_dlkm/lib/modules/mtk_gpufreq_wrapper.ko /vendor_dlkm/lib/modules/gpueb.ko /vendor_dlkm/lib/modules/mtk_pbm.ko /vendor_dlkm/lib/modules/mtk_mdpm.ko /vendor_dlkm/lib/modules/mtk_dynamic_loading_throttling.ko /vendor_dlkm/lib/modules/mtk_low_battery_throttling.ko /vendor_dlkm/lib/modules/mtk_tinysys_ipi.ko /vendor_dlkm/lib/modules/mtk_rpmsg_mbox.ko /vendor_dlkm/lib/modules/mtk-mbox.ko /vendor_dlkm/lib/modules/mtk_gpu_hal.ko
+/vendor_dlkm/lib/modules/sapu.ko: /vendor_dlkm/lib/modules/mtk_sec_heap.ko /vendor_dlkm/lib/modules/tmem_ffa.ko /vendor_dlkm/lib/modules/gz_tz_system.ko /vendor_dlkm/lib/modules/gz_ipc_mod.ko /vendor_dlkm/lib/modules/gz_trusty_mod.ko
+/vendor_dlkm/lib/modules/ccmni.ko: /vendor_dlkm/lib/modules/rps_perf.ko
+
+$ blkid /dev/block/mapper/vendor_dlkm_a
+[root=True exit=2]
+
+$ blkid /dev/block/mapper/vendor_dlkm_b
+[root=True exit=2]
+
+$ blkid /dev/block/mapper/system_a
+[root=True exit=2]
+
+$ blkid /dev/block/mapper/system_b
+[root=True exit=2]
+
+$ df / /system /system_ext /product /vendor /vendor_dlkm /odm_dlkm /data /metadata /persist
+[root=True exit=0]
+Filesystem       1K-blocks     Used Available Use% Mounted on
+/dev/block/dm-4    1716120  1716120         0 100% /vendor/etc/usb_audio_policy_configuration.xml
+/dev/block/dm-4    1716120  1716120         0 100% /vendor/etc/usb_audio_policy_configuration.xml
+/dev/block/dm-4    1716120  1716120         0 100% /vendor/etc/usb_audio_policy_configuration.xml
+/dev/block/dm-4    1716120  1716120         0 100% /vendor/etc/usb_audio_policy_configuration.xml
+/dev/block/dm-10   1229892  1229892         0 100% /vendor
+/dev/block/dm-12     16724    16724         0 100% /vendor_dlkm
+/dev/block/dm-0         56       56         0 100% /odm_dlkm
+/dev/block/dm-57 488339424 56981676 431357748  12% /mnt/pass_through/0/emulated
+/dev/block/sdc16     73696    40184     33512  55% /metadata
+/dev/block/sdc9      38896      496     38400   2% /persist
+
+$ ls -l /sys/block/dm-12/slaves
+[root=True exit=0]
+total 0
+lrwxrwxrwx 1 root root 0 2026-08-31 21:55 sdc75 -> ../../../../platform/soc/112b0000.ufshci/host0/target0:0:0/0:0:0:2/block/sdc/sdc75
+
+$ ls -l /sys/block/dm-13/slaves
+[root=True exit=0]
+total 0
+lrwxrwxrwx 1 root root 0 2026-08-31 21:55 sdc75 -> ../../../../platform/soc/112b0000.ufshci/host0/target0:0:0/0:0:0:2/block/sdc/sdc75
+
+$ cat /sys/block/dm-12/dm/name
+[root=True exit=0]
+vendor_dlkm_a
+
+$ cat /sys/block/dm-13/dm/name
+[root=True exit=0]
+vendor_dlkm_b
+
