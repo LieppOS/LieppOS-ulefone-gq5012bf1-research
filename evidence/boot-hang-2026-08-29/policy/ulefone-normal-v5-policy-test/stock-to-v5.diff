@@ -1,0 +1,14 @@
+--- /home/armol/ulefone-normal-v5-policy-test/stock.rules	2026-08-29 20:44:50.254404749 +0300
++++ /home/armol/ulefone-normal-v5-policy-test/v5.rules	2026-08-29 20:44:48.934404861 +0300
+@@ -25416,9 +25416,10 @@
+ allow kernel kernel:lockdown confidentiality;
+ allow kernel kernel:process { fork getattr getcap getpgid getsched getsession setcap setpgid setrlimit setsched sigchld sigkill signal signull sigstop };
+ allow kernel kernel:security setcheckreqprot;
++allow kernel kernel:system syslog_read;
+ allow kernel kernel:unix_dgram_socket { append bind connect create getattr getopt ioctl lock map read sendto setattr setopt shutdown write };
+ allow kernel kernel:unix_stream_socket { accept append bind connect connectto create getattr getopt ioctl listen lock map read setattr setopt shutdown write };
+-allow kernel kmsg_device:chr_file { relabelto write };
++allow kernel kmsg_device:chr_file { getattr open read relabelto write };
+ allow kernel loop_device:blk_file { getattr ioctl lock map open read watch watch_reads };
+ allow kernel media_rw_data_file:dir { add_name create getattr ioctl lock open read remove_name rename reparent rmdir search setattr watch watch_reads write };
+ allow kernel media_rw_data_file:file { append create getattr ioctl lock map open read rename setattr unlink watch watch_reads write };
