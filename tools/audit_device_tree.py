@@ -80,7 +80,9 @@ def main() -> int:
     aosp_replaced_path = args.aosp_replaced or (here.parent / "aosp-replaced-files.txt")
     recovery_tree = (args.recovery_tree or device).resolve()
     metadata = load(args.inventory / "metadata.json")
-    stock_root = Path(metadata["inputs"]["stock_root"])
+    # The inventory records the stock root it was generated from. An explicit
+    # --stock-partitions wins: the workspace moves between checkouts.
+    stock_root = args.stock_partitions or Path(metadata["inputs"]["stock_root"])
     vintf = load(args.inventory / "vintf.json")
     modules = load(args.inventory / "modules.json")
     init = load(args.inventory / "init.json")
