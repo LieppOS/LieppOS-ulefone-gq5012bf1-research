@@ -821,3 +821,256 @@ evidence rather than purely from binary disassembly.
 VTDR6115 is identified as a Viewtrix AMOLED display-driver IC, but no usable
 kernel panel source has yet been located.
 
+
+## Stock KMI requirement split
+
+The complete 5,207-symbol stock import ABI was split by provider.
+
+Results:
+
+- raw versioned import records: 26,111
+- unique imported symbol/CRC requirements: 5,207
+- conflicting CRC requirements: 0
+- symbols provided by another stock module: 2,261
+- symbols requiring a kernel/builtin provider: 2,946
+
+Therefore the actual kernel-facing compatibility target for retaining the
+complete stock module population is 2,946 unique symbol/CRC requirements.
+The remaining 2,261 symbols form the stock module-to-module ABI.
+
+Nothing published KMI symbol-name coverage of the 2,946 kernel requirements:
+
+- covered by device MTK symbol-list union: 2,139
+- missing from device MTK symbol-list union: 807
+- covered by kernel base + MTK + Nothing union: 2,913
+- missing from kernel base + MTK + Nothing union: 33
+- covered by any inspected Nothing published symbol list: 2,913
+- missing from all inspected published Nothing lists: 33
+
+Thus Nothing's published KMI lists cover 98.88% of the Ulefone stock
+kernel-facing imported symbol names.
+
+This is symbol-name coverage only. CRC equality is not yet proven.
+
+The Android Common arm64 base abi_gki_aarch64 list intentionally contains
+only module_layout and __put_task_struct. Large vendor KMI surfaces are carried
+by additional symbol lists such as abi_gki_aarch64_mtk and
+abi_gki_aarch64_nothing.
+
+The remaining 33 names must not automatically be treated as incompatible ABI
+gaps. A symbol may be exported by the Nothing kernel source while being absent
+from the inspected published symbol lists. Each of the 33 must therefore be
+mapped to its stock consumer modules and checked for actual source/export
+presence.
+
+
+## Resolution of the 33 published-KMI-list gaps
+
+The 33 kernel-facing stock symbols absent from the inspected Nothing published
+KMI symbol lists were checked directly against Nothing kernel source exports.
+
+Results:
+
+- published-list gaps: 33
+- explicit Nothing source exports found: 32
+- no explicit Nothing source export found: 1
+
+The sole no-export result is:
+
+- cpu_busy_with_softirqs
+  - stock required CRC: 0x3c5aab9e
+  - stock consumer: scheduler.ko
+  - module classification: LIKELY_PLATFORM_MATCH
+
+All published-list gaps consumed by ULEFONE_ONLY modules are explicitly
+exported in the Nothing kernel source.
+
+All published-list gaps consumed by NEEDS_ULEFONE_PORT modules are explicitly
+exported in the Nothing kernel source.
+
+Both published-list gaps consumed by DIRECT_SOURCE_MATCH modules are explicitly
+exported in the Nothing kernel source.
+
+Therefore no kernel symbol-name/export blocker has yet been demonstrated for
+the ULEFONE_ONLY proprietary-module population.
+
+The 33-symbol discrepancy is primarily a published KMI-list coverage issue,
+not evidence that the corresponding kernel APIs are absent from Nothing source.
+
+Android Common later explicitly exported cpu_busy_with_softirqs for vendor
+scheduler users. This is consistent with the Ulefone scheduler module importing
+that symbol and with Nothing's older Linux 6.1.68 source base lacking the
+explicit export.
+
+Exact compatibility is still not proven because CONFIG_MODVERSIONS requires
+matching CRC values, not merely matching symbol names and exports.
+
+
+## Minimal proprietary-module KMI contract
+
+The kernel-facing ABI was reduced to the subset required by modules that
+cannot yet be replaced directly from the current donor-source set.
+
+Results:
+
+- complete stock kernel-facing KMI: 2,946 symbols
+- ULEFONE_ONLY kernel requirements: 304 symbols
+- NEEDS_ULEFONE_PORT kernel requirements: 157 symbols
+- combined ULEFONE_ONLY + NEEDS_ULEFONE_PORT requirements: 354 symbols
+- overlap between those two groups: 107 symbols
+
+Therefore, if all DIRECT_SOURCE_MATCH and LIKELY_PLATFORM_MATCH modules are
+rebuilt from source, only 304 stock kernel symbol/CRC contracts currently need
+to be preserved for the remaining ULEFONE_ONLY binary modules.
+
+During transition, before the five NEEDS_ULEFONE_PORT modules are rebuilt, the
+binary-compatible kernel target is 354 unique symbol/CRC requirements.
+
+The target can shrink below 304 as additional Ulefone-specific modules are
+reimplemented or source donors are found.
+
+Nothing's Linux 6.1.68 source contains cpu_busy_with_softirqs, but it is static
+and is not exported. No export commit was found in that Nothing repository
+history. Ulefone stock scheduler.ko imports the symbol.
+
+Therefore stock scheduler.ko is not directly compatible with the older Nothing
+source implementation of this API. This is a kernel-version/source-delta issue,
+not a ULEFONE_ONLY blocker, because scheduler is classified as a platform-source
+module that can be rebuilt/forward-ported.
+
+
+## Hard Ulefone binary KMI name/export coverage
+
+The ULEFONE_ONLY kernel-facing contract contains 304 unique symbol/CRC
+requirements.
+
+Published Nothing KMI-name coverage:
+
+- in inspected Nothing published KMI lists: 289
+- outside inspected published KMI lists: 15
+
+All 15 unlisted symbols were independently verified as explicit exports in the
+Nothing kernel source.
+
+Therefore:
+
+- hard ULEFONE_ONLY kernel requirements: 304
+- symbol names with a Nothing source-level provider/export path: 304
+- demonstrated source-level name/export blockers: 0
+
+The remaining unresolved compatibility problem is CRC equivalence under
+CONFIG_MODVERSIONS.
+
+This is important because absence from a published KMI list did not imply
+absence from the Nothing kernel source. The 15 Ulefone-only list gaps are
+exported APIs and therefore remain viable candidates for preservation in a
+forward-ported/custom kernel.
+
+cpu_busy_with_softirqs is not part of the 304-symbol ULEFONE_ONLY hard
+contract. It is consumed by scheduler.ko, which is classified as
+LIKELY_PLATFORM_MATCH and can be rebuilt or forward-ported rather than retained
+as an irreplaceable proprietary binary.
+
+
+## Ulefone-only KMI reduction potential
+
+The 304-symbol hard proprietary kernel ABI was analyzed by individual
+ULEFONE_ONLY consumer.
+
+Of the 304 required kernel symbol/CRC contracts:
+
+- 172 are currently exclusive to exactly one ULEFONE_ONLY module
+- 132 are shared by two or more ULEFONE_ONLY modules
+
+Largest immediate single-module KMI reductions:
+
+- tkcore: 44 exclusive requirements (101 total)
+- yft_gpio_keys: 36 exclusive requirements (65 total)
+- panel_ky_vtdr6115_dphy_cmd: 19 exclusive requirements (38 total)
+- tkcore_drv: 16 exclusive requirements (54 total)
+- microarray_fp_tee: 13 exclusive requirements (59 total)
+- spi_tiny_co5300_lcd: 9 exclusive requirements (54 total)
+- yft_devinfo: 9 exclusive requirements (40 total)
+- hynitron: 7 exclusive requirements (51 total)
+- sc8571_charger: 5 exclusive requirements (41 total)
+- sh366003_fg: 5 exclusive requirements (33 total)
+
+Exclusive requirements are those that would immediately cease to constrain
+the kernel ABI if the corresponding binary module were replaced by a
+source-built implementation.
+
+These counts are not reverse-engineering difficulty scores. In particular,
+tkcore has the largest KMI impact but belongs to the TEE/security stack and is
+likely substantially harder to replace than yft_gpio_keys.
+
+yft_gpio_keys is therefore a strong early reconstruction candidate: it removes
+36 currently exclusive stock CRC requirements while using conventional
+GPIO/input/IRQ kernel interfaces.
+
+yft_devinfo has lower direct KMI reduction but remains strategically important
+because multiple Ulefone-specific drivers depend on its exported module ABI.
+
+
+## Ulefone module-to-module ABI dependency graph
+
+ULEFONE_ONLY modules were analyzed as providers of symbols imported by other
+stock modules.
+
+Provider summary:
+
+- yft_devinfo:
+  - consumed exported symbols: 23
+  - consumer modules: 7
+  - binary-class consumers: 5
+
+- tkcore:
+  - consumed exported symbols: 19
+  - consumer modules: 3
+  - binary-class consumers: 2
+
+- fingerprint:
+  - consumed exported symbols: 4
+  - consumer modules: 1
+  - binary-class consumers: 1
+
+- yft_tpd_gesture:
+  - consumed exported symbols: 3
+  - consumer modules: 1
+  - binary-class consumers: 1
+
+- custom_ldo_wl2868:
+  - consumed exported symbols: 2
+  - consumer modules: 1
+  - binary-class consumers: 1
+
+- hynitron:
+  - consumed exported symbols: 2
+  - consumer modules: 1
+  - binary-class consumers: 1
+
+- custom_ldo:
+  - consumed exported symbols: 2
+  - consumer modules: 1
+  - binary-class consumers: 0
+
+No multiply-exported imported symbols were found. The inferred stock
+module-to-module provider graph therefore has unambiguous symbol providers.
+
+This materially affects reconstruction order.
+
+yft_gpio_keys is the strongest early reconstruction candidate because it:
+
+- removes 36 currently exclusive kernel CRC requirements
+- does not appear as an inter-module ABI provider
+- uses conventional GPIO/input/IRQ interfaces
+
+yft_devinfo is instead a dependency hub. Replacing it independently requires
+preserving the module exports required by its remaining stock consumers, or
+migrating those consumers at the same time.
+
+Ulefone-specific reconstruction should therefore be planned by subsystem and
+dependency graph rather than only by kernel-KMI reduction count.
+
+TrustKernel/fingerprint modules should remain late-stage targets because of
+TEE/security complexity despite their relatively large KMI impact.
+
