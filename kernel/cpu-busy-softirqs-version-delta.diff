@@ -1,0 +1,132 @@
+--- /proc/self/fd/14	2026-09-04 16:39:07.764519249 +0300
++++ /proc/self/fd/15	2026-09-04 16:39:07.765519249 +0300
+@@ -1,61 +1,68 @@
+-	struct sched_rt_entity *rt_se = &p->rt;
+-	struct rt_rq *rt_rq;
+-
+-	for_each_sched_rt_entity(rt_se) {
+-		rt_rq = rt_rq_of_se(rt_se);
+-		requeue_rt_entity(rt_rq, rt_se, head);
+-	}
+-}
+-
+-static void yield_task_rt(struct rq *rq)
+-{
+-	requeue_task_rt(rq, rq->curr, 0);
+-}
+-
+-#ifdef CONFIG_SMP
+-static int find_lowest_rq(struct task_struct *task);
+-
+-#ifdef CONFIG_RT_SOFTIRQ_AWARE_SCHED
+-/*
+- * Return whether the given cpu is currently non-preemptible
+- * while handling a potentially long softirq, or if the current
+- * task is likely to block preemptions soon because it is a
+- * ksoftirq thread that is handling softirqs.
+- */
+-static bool cpu_busy_with_softirqs(int cpu)
+-{
+-	u32 softirqs = per_cpu(active_softirqs, cpu) |
+-		       __cpu_softirq_pending(cpu);
+-
+-	return softirqs & LONG_SOFTIRQ_MASK;
+-}
+-#else
+-static bool cpu_busy_with_softirqs(int cpu)
+-{
+-	return false;
+-}
+-#endif /* CONFIG_RT_SOFTIRQ_AWARE_SCHED */
+-
+-static bool rt_task_fits_cpu(struct task_struct *p, int cpu)
+-{
+-	return rt_task_fits_capacity(p, cpu) && !cpu_busy_with_softirqs(cpu);
+-}
+-
+-static int
+-select_task_rq_rt(struct task_struct *p, int cpu, int flags)
+-{
+-	struct task_struct *curr;
+-	struct rq *rq;
+-	struct rq *this_cpu_rq;
+-	bool test;
+-	int target_cpu = -1;
+-	bool sync = !!(flags & WF_SYNC);
+-	int this_cpu;
+-
+-	trace_android_rvh_select_task_rq_rt(p, cpu, flags & 0xF,
+-					flags, &target_cpu);
+-	if (target_cpu >= 0)
+-		return target_cpu;
+-
+-	/* For anything but wake ups, just return the task_cpu */
+-	if (!(flags & (WF_TTWU | WF_FORK)))
++1618-{
++1619-	struct sched_rt_entity *rt_se = &p->rt;
++1620-	struct rt_rq *rt_rq;
++1621-
++1622-	for_each_sched_rt_entity(rt_se) {
++1623-		rt_rq = rt_rq_of_se(rt_se);
++1624-		requeue_rt_entity(rt_rq, rt_se, head);
++1625-	}
++1626-}
++1627-
++1628-static void yield_task_rt(struct rq *rq)
++1629-{
++1630-	requeue_task_rt(rq, rq->curr, 0);
++1631-}
++1632-
++1633-#ifdef CONFIG_SMP
++1634-static int find_lowest_rq(struct task_struct *task);
++1635-
++1636-#ifdef CONFIG_RT_SOFTIRQ_AWARE_SCHED
++1637-/*
++1638- * Return whether the given cpu is currently non-preemptible
++1639- * while handling a potentially long softirq, or if the current
++1640- * task is likely to block preemptions soon because it is a
++1641- * ksoftirq thread that is handling softirqs.
++1642- */
++1643:bool cpu_busy_with_softirqs(int cpu)
++1644-{
++1645-	u32 softirqs = per_cpu(active_softirqs, cpu) |
++1646-		       __cpu_softirq_pending(cpu);
++1647-
++1648-	return softirqs & LONG_SOFTIRQ_MASK;
++1649-}
++1650-#else
++1651:bool cpu_busy_with_softirqs(int cpu)
++1652-{
++1653-	return false;
++1654-}
++1655-#endif /* CONFIG_RT_SOFTIRQ_AWARE_SCHED */
++1656:EXPORT_SYMBOL_GPL(cpu_busy_with_softirqs);
++1657-
++1658-static bool rt_task_fits_cpu(struct task_struct *p, int cpu)
++1659-{
++1660:	return rt_task_fits_capacity(p, cpu) && !cpu_busy_with_softirqs(cpu);
++1661-}
++1662-
++1663-static int
++1664-select_task_rq_rt(struct task_struct *p, int cpu, int flags)
++1665-{
++1666-	struct task_struct *curr;
++1667-	struct rq *rq;
++1668-	struct rq *this_cpu_rq;
++1669-	bool test;
++1670-	int target_cpu = -1;
++1671-	bool sync = !!(flags & WF_SYNC);
++1672-	int this_cpu;
++1673-
++1674-	trace_android_rvh_select_task_rq_rt(p, cpu, flags & 0xF,
++1675-					flags, &target_cpu);
++1676-	if (target_cpu >= 0)
++1677-		return target_cpu;
++1678-
++1679-	/* For anything but wake ups, just return the task_cpu */
++1680-	if (!(flags & (WF_TTWU | WF_FORK)))
++1681-		goto out;
++1682-
++1683-	rq = cpu_rq(cpu);
++1684-
++1685-	rcu_read_lock();

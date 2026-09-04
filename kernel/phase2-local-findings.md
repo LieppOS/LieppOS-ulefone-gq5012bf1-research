@@ -1074,3 +1074,206 @@ dependency graph rather than only by kernel-KMI reduction count.
 TrustKernel/fingerprint modules should remain late-stage targets because of
 TEE/security complexity despite their relatively large KMI impact.
 
+
+## Exact stock GKI provenance
+
+The stock runtime kernel reports:
+
+6.1.115-android14-11-g6b18f0b574ab-ab12901745
+#1 Fri Jan 10 22:12:05 UTC 2025
+
+This was matched exactly to Android Common:
+
+- release tag: android14-6.1-2024-12_r4
+- common commit:
+  6b18f0b574ab3267615ae6ce642d5a7c3c21ac09
+- Android CI kernel_aarch64 build: 12901745
+- common commit timestamp:
+  2025-01-10 22:12:05 UTC
+
+The git abbreviation, Android build number and timestamp all match the stock
+runtime kernel string.
+
+Therefore the GQ5012BF1 stock GKI base is pinned to Android Common commit
+6b18f0b574ab3267615ae6ce642d5a7c3c21ac09 / build 12901745.
+
+This is substantially stronger than identifying only Linux 6.1.115 or the
+android14-6.1 branch.
+
+Bit-for-bit identity between the Ulefone boot kernel and the published Google
+GKI artifact still requires a binary hash comparison, but the source/build
+provenance is effectively identified.
+
+This exact GKI revision should be used as the baseline for CONFIG_MODVERSIONS
+CRC reconstruction instead of the older Nothing Linux 6.1.68 common tree.
+
+
+## Exact Android Common 6.1.115 comparison
+
+The exact Android Common GKI source was checked out successfully:
+
+- tag: android14-6.1-2024-12_r4
+- commit: 6b18f0b574ab3267615ae6ce642d5a7c3c21ac09
+- Linux version: 6.1.115
+- Android CI kernel_aarch64 build: 12901745
+
+Comparison against the older Nothing 6.1.68 GKI defconfig produced a 196-line
+diff, mostly consisting of platform enablement and normal Android Common
+evolution.
+
+The inspected KMI-sensitive arm64 GKI configuration remains aligned on:
+
+- CONFIG_CFI_CLANG=y
+- CONFIG_MODULE_UNLOAD=y
+- CONFIG_MODVERSIONS=y
+- CONFIG_MODULE_SCMVERSION=y
+- CONFIG_MODULE_SIG=y
+- CONFIG_DEBUG_INFO_DWARF4=y
+- CONFIG_DEBUG_INFO_BTF=y
+- CONFIG_MODULE_ALLOW_BTF_MISMATCH=y
+
+The exact 6.1.115 GKI additionally has:
+
+- CONFIG_MODULE_SIG_PROTECT=y
+
+The previous cpu_busy_with_softirqs discrepancy is now fully explained.
+
+Nothing Linux 6.1.68 contains cpu_busy_with_softirqs as a static scheduler
+helper and does not export it.
+
+Exact Android Common Linux 6.1.115 contains the same helper as a global
+function and exports it with:
+
+EXPORT_SYMBOL_GPL(cpu_busy_with_softirqs);
+
+Therefore the stock scheduler.ko dependency on cpu_busy_with_softirqs is
+explained by Android Common version evolution rather than a Ulefone-specific
+kernel export.
+
+The exact Android Common source also contains the MediaTek KMI list
+android/abi_gki_aarch64_mtk, with 3581 file lines in this revision.
+
+The next compatibility step is direct CRC comparison against Android CI build
+12901745 vmlinux.symvers.
+
+
+## Exact Google GKI CRC proof
+
+Android CI build 12901745 `kernel_aarch64` was downloaded directly from the
+official Android CI artifact service.
+
+BUILD_INFO independently confirms:
+
+- build: 12901745
+- target: kernel_aarch64
+- branch: aosp_kernel-common-android14-6.1-2024-12
+- kernel/common:
+  6b18f0b574ab3267615ae6ce642d5a7c3c21ac09
+- Linux version: 6.1.115
+
+The downloaded `vmlinux.symvers` contains 7,993 exported symbols and contains
+no duplicate symbol names with differing CRCs.
+
+Direct comparison against the stock GQ5012BF1 module requirements produced:
+
+- complete stock kernel-facing ABI:
+  2,946 / 2,946 exact CRC matches
+- CRC mismatches: 0
+- missing symbols: 0
+
+Transitional ULEFONE_ONLY + NEEDS_ULEFONE_PORT ABI:
+
+- 354 / 354 exact CRC matches
+- mismatches: 0
+- missing: 0
+
+Hard ULEFONE_ONLY ABI:
+
+- 304 / 304 exact CRC matches
+- mismatches: 0
+- missing: 0
+
+Therefore every kernel-facing CONFIG_MODVERSIONS requirement observed in the
+entire stock module population is satisfied exactly by Google's official
+kernel_aarch64 GKI build 12901745.
+
+This proves that the stock Ulefone module population uses the exact Google GKI
+ABI represented by that build.
+
+It does not by itself prove that the kernel binary contained in Ulefone boot.img
+is byte-identical to Google's published Image. Binary identity requires a
+separate kernel Image hash comparison.
+
+The previous cpu_busy_with_softirqs investigation was also closed directly:
+
+Google GKI build 12901745 exports:
+
+0x3c5aab9e cpu_busy_with_softirqs vmlinux EXPORT_SYMBOL_GPL
+
+which exactly matches the CRC imported by the Ulefone stock scheduler module.
+
+Implication for custom-kernel development:
+
+Google GKI build 12901745 / Android Common commit
+6b18f0b574ab3267615ae6ce642d5a7c3c21ac09 is the authoritative kernel ABI
+baseline for GQ5012BF1.
+
+The Nothing MT6878 trees should primarily be treated as MediaTek BSP/vendor
+driver source donors and forward-ported onto this exact Android Common baseline,
+rather than using Nothing's older Linux 6.1.68 kernel core as the final kernel.
+
+
+## Exact stock kernel binary identity
+
+The kernel payload extracted from the stock GQ5012BF1 boot.img was compared
+directly against the official Android CI Image.lz4 artifact from build
+12901745.
+
+Stock boot kernel:
+
+- size: 16,498,955 bytes
+- format: LZ4 compressed ARM64 kernel Image
+- SHA256:
+  1f2a9e9b1c1d2533ca649a472c29df42b029b63dac677c5d439a358ede67e722
+
+Google Android CI build 12901745 Image.lz4:
+
+- size: 16,498,955 bytes
+- format: LZ4 compressed ARM64 kernel Image
+- SHA256:
+  1f2a9e9b1c1d2533ca649a472c29df42b029b63dac677c5d439a358ede67e722
+
+A direct cmp comparison reports the files as bit-for-bit identical.
+
+Therefore the kernel payload shipped by Ulefone in the stock GQ5012BF1
+boot.img is exactly Google's published Image.lz4 artifact from Android CI
+kernel_aarch64 build 12901745.
+
+Combined with the previously proven CONFIG_MODVERSIONS results:
+
+- complete stock kernel-facing ABI: 2,946 / 2,946 CRC matches
+- transition binary ABI: 354 / 354 CRC matches
+- hard ULEFONE_ONLY ABI: 304 / 304 CRC matches
+- CRC mismatches: 0
+- missing symbols: 0
+
+the GQ5012BF1 kernel baseline is now identified at both binary and ABI level.
+
+Authoritative kernel baseline:
+
+- Android Common tag: android14-6.1-2024-12_r4
+- commit:
+  6b18f0b574ab3267615ae6ce642d5a7c3c21ac09
+- Android CI build: 12901745
+- target: kernel_aarch64
+- Linux: 6.1.115
+
+This means Ulefone did not ship a privately modified GKI kernel binary for
+this stock build. Device-specific functionality is supplied through vendor
+modules, device tree, vendor_boot and associated MediaTek/Ulefone components.
+
+For LieppOS custom-kernel development, Google's exact Android Common GKI
+revision should be treated as the kernel core baseline. Nothing MT6878 sources
+should be treated primarily as BSP/vendor-module source donors to be
+forward-ported onto that baseline.
+

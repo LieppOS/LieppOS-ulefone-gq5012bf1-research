@@ -85,8 +85,9 @@ Of those 304:
 - names outside those lists: 15
 - unlisted names explicitly exported by Nothing source: 15
 - demonstrated source-level symbol/export blockers: 0
-- exact CRC matches currently proven: 0
-- exact CRCs still requiring verification: 304
+- exact CRC matches against Google GKI build 12901745: 304
+- CRC mismatches: 0
+- missing symbols: 0
 
 Thus every kernel symbol required by the currently ULEFONE_ONLY binary set has
 a source-level implementation/export path in the Nothing donor.
@@ -162,8 +163,8 @@ At the symbol-name/export level:
 - complete proprietary hard KMI coverage: 304 / 304
 - known symbol/export blockers: 0
 
-The unresolved compatibility question is exact CONFIG_MODVERSIONS CRC
-equivalence.
+Exact CONFIG_MODVERSIONS equivalence has now been proven against Google's
+official GKI build 12901745.
 
 The practical strategy remains:
 
@@ -176,3 +177,29 @@ The practical strategy remains:
 
 Module-to-module ABI dependencies must be analyzed before choosing the final
 driver reconstruction order.
+
+## Stock kernel binary identity
+
+The stock GQ5012BF1 boot.img kernel payload was compared with Google's official
+Android CI build 12901745 `Image.lz4`.
+
+Both files are:
+
+- 16,498,955 bytes
+- LZ4 compressed ARM64 kernel images
+- SHA256:
+  `1f2a9e9b1c1d2533ca649a472c29df42b029b63dac677c5d439a358ede67e722`
+
+A direct binary comparison is identical.
+
+Therefore the GQ5012BF1 stock boot kernel is the exact published Google GKI
+`Image.lz4` from build 12901745.
+
+This independently confirms the provenance already established through:
+
+- kernel release string
+- Android Common commit
+- Android CI build number
+- BUILD_INFO
+- 2,946 / 2,946 stock kernel-facing CONFIG_MODVERSIONS CRC matches
+
