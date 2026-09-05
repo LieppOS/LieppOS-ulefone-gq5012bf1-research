@@ -223,9 +223,32 @@ gesture, ESD/PRC and firmware-debug sysfs attribute groups (full list in
    (`0xea3d7f0d`, `0x0a0f3b69`, `0xd0815107`) but no source exists locally or
    publicly, so the rebuilt module cannot record them without fabricating CRCs.
    *Needed:* `yft_devinfo` source, or a LieppOS reimplementation of that module.
-2. **`yft_tpd_gesture` provider source**, for `tpgesture_value`,
-   `tpgesture_status`, `tpgesture_hander` (stock CRCs `0x02f3ea4c`,
-   `0x30ac810a`, `0x8386526d`). Same situation.
+2. **`yft_tpd_gesture` provider — 2 of 3 blockers now RESOLVED.**
+   The provider has been reconstructed and built against exact GKI 12901745;
+   see `kernel/phase4-yft-tpd-gesture-reconstruction.md`. Its `.text`,
+   `.init.text`, `.exit.text`, `.rodata`, `.data`, `.bss` layout, imports and
+   `__versions` are byte-identical to the stock provider.
+
+   | Symbol | Stock CRC | Reconstructed provider CRC | Status |
+   |---|---|---|---|
+   | `tpgesture_status` | `0x30ac810a` | `0x30ac810a` | **RESOLVED** (generated from source, not patched) |
+   | `tpgesture_hander` | `0x8386526d` | `0x8386526d` | **RESOLVED** (generated from source, not patched) |
+   | `tpgesture_value` | `0x02f3ea4c` | `0xec3d4c19` | **still blocked** |
+
+   `tpgesture_value` is the last remaining `tpgesture_*` blocker. Its object is
+   reproduced exactly (GLOBAL OBJECT, size 10, `.data..read_mostly+0x0`,
+   alignment 1, identical code in every function that touches it), but the
+   genksyms declaration *text* behind the stock CRC could not be recovered; an
+   exhaustive algebraic search over the reachable declaration space is
+   documented in
+   `workspace/phase4-yft-providers/yft-tpd-gesture-export-crc-analysis.md`.
+   *Needed:* the vendor `yft_tpd_gesture.symref`/`.symtypes` reference type
+   string for `tpgesture_value`, or the vendor header declaring it.
+
+   Practical impact: the reconstructed provider satisfies `tpgesture_status`
+   and `tpgesture_hander` for the **stock** FT3680 binary. `tpgesture_value`
+   resolves only when this FT3680 reconstruction is rebuilt against the
+   reconstructed provider, in which case both sides carry `0xec3d4c19`.
 3. **FT3680 chip-ID mapping.** `FTS_CHIP_TYPE_MAPPING` for FT3680
    (chip/rom/pramboot/bootloader ID tuple) could not be recovered: the table is
    materialised as inline immediates inside the 3,416-byte
@@ -324,3 +347,142 @@ They comprise:
 
 Earlier summary wording describing these as "three stock subsystems and one
 vendor provider" is imprecise and is superseded by this six-item list.
+
+## YFT provider follow-up started
+
+The first stock-provider lookup found:
+
+    vendor_dlkm/lib/modules/yft_devinfo.ko
+
+The initial filename-based search did not find a stock module named:
+
+    yft_tpd_gesture.ko
+
+Therefore the gesture dependency is being resolved by scanning every stock
+kernel module for the actual exported symbols:
+
+    tpgesture_value
+    tpgesture_status
+    tpgesture_hander
+
+This avoids assuming that the provider module filename matches the source/module
+name used by the FocalTech driver.
+
+The `yft_devinfo` provider will likewise be verified against:
+
+    yft_spitouchpanel_device_add
+    yft_set_touch_device_used
+    touch_fw_version
+
+## YFT provider boundary refined
+
+Follow-up inspection positively identified the stock `yft_devinfo.ko` provider:
+
+    vendor_dlkm/lib/modules/yft_devinfo.ko
+
+SHA256:
+
+    0d5e547e3e6c313c88695b2c8f9aae04398e3c8822f16d57dff6aea011f821fe
+
+Relevant exported objects/functions:
+
+    touch_fw_version               30-byte object
+    second_touch_fw_version        30-byte object
+    yft_spitouchpanel_device_add   664-byte function
+    yft_set_touch_device_used      152-byte function
+
+Consumer inspection additionally showed that `hynitron.ko` imports:
+
+    second_touch_fw_version
+    yft_set_touch_device_used
+
+Therefore `yft_devinfo` is a shared touchscreen/platform information provider,
+not merely an FT3680-specific dependency.
+
+A complete symbol scan of the currently extracted `stock/partitions` `.ko`
+set did NOT locate definitions for:
+
+    tpgesture_value
+    tpgesture_status
+    tpgesture_hander
+
+Those symbols were found only as unresolved imports of
+`focaltech_touch_spi_ft3680.ko`.
+
+Therefore the earlier attribution of those symbols to a physical stock file
+named `yft_tpd_gesture.ko` is not yet proven. The logical provider may reside
+in the vendor_boot ramdisk or another stock module location not represented by
+the current `stock/partitions` file scan.
+
+Do not begin reconstruction of a presumed `yft_tpd_gesture.ko` binary until
+its actual stock provider object is located.
+
+## YFT gesture provider resolved
+
+The earlier statement that the physical stock provider for the `tpgesture_*`
+symbols had not yet been located is superseded.
+
+The exact provider is:
+
+    $RESEARCH/workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/yft_tpd_gesture.ko
+
+Stock metadata:
+
+    name:        yft_tpd_gesture
+    description: YFT touch gesturewake driver
+    depends:     none
+
+The stock FocalTech module explicitly declares:
+
+    depends: yft_tpd_gesture,mtk_disp_notify,yft_devinfo
+
+The vendor_boot platform ramdisk additionally contains:
+
+    modules.load
+    modules.load.recovery
+
+and both load:
+
+    yft_tpd_gesture.ko
+
+The provider exports exactly the three symbols required by
+`focaltech_touch_spi_ft3680.ko`:
+
+    tpgesture_status     1-byte object
+    tpgesture_value      10-byte object
+    tpgesture_hander     108-byte function
+
+Therefore the FT3680 YFT provider boundary is now fully identified:
+
+    yft_devinfo       -> vendor_dlkm / vendor platform provider
+    yft_tpd_gesture   -> vendor_boot platform ramdisk provider
+    mtk_disp_notify   -> already reconstructed/direct-source matched
+
+The previous conclusion that `yft_tpd_gesture.ko` might not exist as a physical
+stock module is withdrawn.
+
+## YFT gesture reconstruction status clarification
+
+`yft_tpd_gesture` is no longer an unreconstructed/missing-source provider.
+
+The module has been reconstructed with byte-identical code and data against
+stock. Two of its three FT3680-facing export CRCs are reproduced exactly from
+source:
+
+    tpgesture_status  0x30ac810a  exact
+    tpgesture_hander  0x8386526d  exact
+
+The only residual provider issue is:
+
+    tpgesture_value
+
+whose runtime object/layout/behavior is reproduced exactly, but whose historical
+stock genksyms CRC (`0x02f3ea4c`) cannot currently be regenerated from the
+recovered declaration. The reconstructed declaration produces `0xec3d4c19`.
+
+Therefore this is now classified as an export-CRC provenance gap, not an
+unfinished `yft_tpd_gesture` implementation.
+
+A LieppOS FT3680 module rebuilt against the reconstructed provider is internally
+ABI-coherent because both sides use the reconstructed CRC. The untouched stock
+FT3680 binary still requires its original stock CRC.
