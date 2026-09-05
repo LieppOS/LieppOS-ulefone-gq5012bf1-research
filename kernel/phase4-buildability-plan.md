@@ -704,3 +704,304 @@ KernelBuildExtModuleInfo.strip_modules while kernel_module requires it.
 This provider mismatch is specific to the historical Kleaf build system and is
 not evidence of a driver, kernel API, KMI, or Ulefone compatibility problem.
 
+
+## First ST21 source-backed build attempt
+
+The first actual build was invoked for:
+
+  //external/lieppos/st21nfc:st21nfc_source_gki
+
+using the exact source-backed:
+
+  //common:kernel_aarch64
+
+Result:
+
+  GKI KERNEL BUILD: PASS
+  EXTERNAL MODULE ACTION: STARTED
+  ST21 C COMPILATION: NOT REACHED
+  OVERALL TARGET: FAIL
+
+The exact pinned GKI successfully completed its kernel build before Kleaf
+started the ST21 external-module action.
+
+The external-module action then failed at its initial Kbuild invocation with:
+
+  make: Makefile: No such file or directory
+  make: *** No rule to make target 'Makefile'. Stop.
+
+Therefore this first failure is classified as:
+
+  BUILD_HARNESS / SANDBOX STAGING FAILURE
+
+It is not currently evidence of:
+
+- ST21 source incompatibility
+- Linux 6.1.115 API incompatibility
+- missing Ulefone symbols
+- KMI/CONFIG_MODVERSIONS incompatibility
+- inter-module dependency failure
+
+No ST21 C compilation occurred.
+
+The next investigation determines whether the standalone Makefile is absent
+from the KernelModule action inputs or staged at a path different from the
+directory used by the historical Kleaf make invocation.
+
+
+## ST21 harness Makefile contract
+
+After relocating the standalone ST21 package from the Bazel-reserved
+top-level external/ namespace to:
+
+  lieppos/st21nfc
+
+the previous:
+
+  Makefile: No such file or directory
+
+failure disappeared.
+
+Configured analysis continued to pass and the external-module action reached
+the package Makefile successfully.
+
+The next build failed with:
+
+  make: *** No targets. Stop.
+
+The standalone harness Makefile at that point contained only:
+
+  obj-m += st21nfc.o
+
+This is a Kbuild fragment, not a complete external-module wrapper.
+
+Historical Kleaf invokes the external package first with:
+
+  make -C lieppos/st21nfc \
+    M=<module path relative to kernel source> \
+    O=<kernel output> \
+    KERNEL_SRC=<kernel source>
+
+Therefore the standalone package Makefile must provide ordinary build targets
+which recursively invoke the kernel Kbuild tree.
+
+The harness was changed to a dual-purpose Makefile:
+
+- when KERNELRELEASE is defined:
+    expose obj-m += st21nfc.o to Kbuild
+
+- otherwise:
+    provide all/modules/modules_install/clean wrappers which invoke:
+      $(MAKE) -C $(KERNEL_SRC) M=$(M) ...
+
+This change affects only the standalone test harness.
+
+The NothingOSS files:
+
+  st21nfc.c
+  st21nfc.h
+
+remain unmodified.
+
+
+## ST21 first successful source-backed compilation
+
+After fixing only the standalone build harness:
+
+1. moving the package out of Bazel's reserved top-level external/ namespace
+2. replacing the bare Kbuild fragment with an external-module wrapper Makefile
+
+the target:
+
+  //lieppos/st21nfc:st21nfc_source_gki
+
+built successfully against:
+
+  //common:kernel_aarch64
+
+Result:
+
+  BUILD_RC=0
+
+Kleaf produced:
+
+  st21nfc.ko
+  Module.symvers
+  st21nfc_source_gki.check_no_remaining
+
+The NothingOSS source files remained byte-identical throughout:
+
+  st21nfc.c
+    SHA256 5a9dee31d3c69dae50a0b93f3aff1a06395cfa6749b7cac81386db758062522f
+
+  st21nfc.h
+    SHA256 494132147cfc2b12ad889d55ebb891b564b84f0982852a46b3eb2c5ba49ac670
+
+The build emitted a sign-file warning because the exact GKI workspace does
+not contain the referenced signing_key.pem. This did not fail the module
+build.
+
+Classification:
+
+  ST21 SOURCE COMPILE: PASS
+  KLEAF EXTERNAL MODULE BUILD: PASS
+  KMI / MODVERSION COMPARISON: PENDING
+  DEVICE LOAD TEST: NOT PERFORMED
+
+No phone interaction occurred.
+
+
+## ST21 stock-vs-Nothing MODVERSIONS result
+
+The successfully rebuilt untouched NothingOSS ST21 module was compared against
+the stock GQ5012BF1 st21nfc.ko.
+
+Result:
+
+  stock imports:        54
+  rebuilt imports:      51
+  shared imports:       47
+  shared CRC mismatch:   0
+  stock-only imports:    7
+  rebuilt-only imports:  4
+
+Every shared kernel-facing symbol has an identical CONFIG_MODVERSIONS CRC.
+
+This proves that the rebuilt Nothing ST21 source is compatible with the exact
+GQ5012BF1 GKI/KMI for all shared dependencies.
+
+However the import sets are not identical.
+
+Stock-only:
+
+  destroy_workqueue
+  device_property_present
+  devm_gpiod_put
+  of_property_read_variable_u32_array
+  pm_wakeup_ws_event
+  wakeup_source_register
+  wakeup_source_unregister
+
+Nothing-rebuilt-only:
+
+  device_set_wakeup_capable
+  device_wakeup_enable
+  pm_wakeup_dev_event
+  sysfs_create_file_ns
+
+The differences cluster around wakeup/power-management, device properties,
+GPIO lifecycle, and sysfs handling.
+
+Current classification:
+
+  NothingOSS ST21: STRONG SOURCE DONOR
+  exact Ulefone ST21 source/config identity: NOT YET PROVEN
+
+The next investigation determines whether these differences are caused by
+disabled compile-time ST21 options or by a different ST21 source revision.
+
+No device load test has been performed.
+
+
+## ST21 exact source revision identification
+
+Extended module metadata establishes that the stock GQ5012BF1 ST21 driver and
+the NothingOSS donor are different source revisions.
+
+Stock:
+
+  version:    2.2.0.19
+  srcversion: B6AF553DA6B3CC90D31F110
+
+NothingOSS rebuild:
+
+  version:    2.2.0.15
+  srcversion: 9CDF386295E0F7F1306D932
+
+Therefore the stock-vs-rebuilt import-set difference is not merely evidence
+of a possible build-configuration mismatch. The modules identify themselves
+as different ST21 driver revisions.
+
+The stock 2.2.0.19 binary shows newer/different behavior in at least:
+
+- probe-time device-property handling
+- DT u32-property parsing
+- explicit GPIO cleanup
+- workqueue destruction
+- dedicated wakeup_source registration/unregistration
+- IRQ wake handling through pm_wakeup_ws_event
+
+The NothingOSS 2.2.0.15 implementation instead imports device-level wakeup
+helpers including:
+
+  device_set_wakeup_capable
+  device_wakeup_enable
+  pm_wakeup_dev_event
+
+All 47 kernel imports shared between the two versions have identical
+CONFIG_MODVERSIONS CRCs against the exact Ulefone GKI.
+
+Conclusion:
+
+  kernel/KMI compatibility: PROVEN
+  NothingOSS donor usefulness: PROVEN
+  exact Ulefone ST21 source identity: version 2.2.0.19, source not yet recovered
+  next task: binary-assisted source-delta reconstruction / exact-source search
+
+
+## ST21 final reconstruction status
+
+The earlier ST21 source-revision mismatch has now been resolved by targeted
+source-delta reconstruction.
+
+Stock GQ5012BF1:
+
+    driver:     st21nfc
+    version:    2.2.0.19
+    srcversion: B6AF553DA6B3CC90D31F110
+
+Primary public donor:
+
+    NothingOSS MT6878
+    version: 2.2.0.15
+
+The NothingOSS source remained the correct platform donor, but the Ulefone
+stock module contains a newer ST21 revision with additional behavior around:
+
+- recovery / CORE_RESET_NTF handling
+- probe-time device-property handling
+- DT property parsing
+- explicit GPIO cleanup
+- workqueue destruction
+- dedicated wakeup_source lifecycle
+- IRQ wake handling
+
+The stock delta was reconstructed against the exact GKI 12901745 workspace.
+
+Final validation:
+
+    stock imports:              54
+    reconstructed imports:      54
+    MODVERSION CRC matches:     54 / 54
+    MODVERSION mismatches:      0
+    missing imports:            0
+
+The reconstruction reports the stock driver version `2.2.0.19` and reproduces
+the required stock initialization/recovery behavior.
+
+Frozen reconstruction source:
+
+    $GKI_WS/lieppos/st21nfc-2.2.0.19-recon/st21nfc.c.r5j-final
+
+Authoritative source/provenance research:
+
+    kernel/phase4-st21nfc-public-source-candidates.md
+    kernel/phase4-st21nfc-abi-delta.tsv
+
+Final classification:
+
+    ST21_SOURCE_DELTA_RECONSTRUCTION_COMPLETE
+    ABI_EXACT_FOR_STOCK_KERNEL_IMPORT_CONTRACT
+
+ST21 is frozen for initial LieppOS custom-kernel integration unless later
+runtime testing exposes a concrete behavioral defect.
