@@ -7,7 +7,9 @@ This report supersedes every earlier intermediate hypothesis about
 **Final classification (completion pass — authoritative section is the LAST
 one in this file; every earlier classification is withdrawn)**
 
-    STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE
+    SOURCE_RECONSTRUCTION_COMPLETE
+    STOCK_BEHAVIOR_RECONSTRUCTED
+    SAFE_RUNTIME_VARIANT_WITH_FW_PROGRAMMING_DISABLED
     SYMBOL_SET_PARITY_EXACT (imports 104/104, functions 166/166, 0 extra, 0 missing)
     STOCK_BINARY_ABI_SUBSTITUTION_BLOCKED_BY_TWO_PROVIDER_GENKSYMS_GAPS
 
@@ -18,11 +20,10 @@ layout, the V4.2 PRAM/DPRAM/ECC download engine, the FHP ioctl ABI and the
 firmware-debug protocol), the Ulefone integration deltas and the
 `touch_fw_version` path are ported, and the donor-only procfs subtree is gone.
 
-What remains is **one unimplemented subsystem** (the FHP misc-device layer,
-whose userspace ABI is nevertheless fully recovered and documented) plus the
-two long-standing provider genksyms declaration-text gaps. See
-"Continuation pass — final state" at the end of this report, which is the
-authoritative section.
+The reconstruction implementation is complete. Two bounded historical
+provider genksyms declaration-text gaps remain, and the recovered firmware
+programming path is deliberately disabled by default for safety. See the
+completion-pass section at the end of this report, which is authoritative.
 
 No fake CRC, no invented firmware sequence and no phone/partition modification
 was involved at any point. The recovered firmware-programming engine ships
