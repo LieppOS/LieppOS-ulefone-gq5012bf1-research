@@ -4,16 +4,26 @@ This report supersedes every earlier intermediate hypothesis about
 `focaltech_touch_spi_ft3680.ko`, including the initial
 `NEEDS_ULEFONE_PORT` classification in `phase4-focaltech-ft3680.md`.
 
-**Final classification**
+**Final classification (continuation pass, supersedes everything below)**
 
-    BLOCKED_WITH_EXACT_MISSING_EVIDENCE
+    BEHAVIORAL_RECONSTRUCTION_WITH_DOCUMENTED_RESIDUALS
 
-The reconstruction is source-backed, builds against exact GKI 12901745, and
-reproduces the stock module identity, device contract and firmware data
-exactly. It is *not* complete: three stock subsystems and one vendor provider
-remain blocked on precisely identified missing evidence, listed in
-"Exact missing evidence" below. No fake CRC, no invented firmware sequence and
-no phone/partition modification was involved at any point.
+The previous classification `BLOCKED_WITH_EXACT_MISSING_EVIDENCE` is
+**withdrawn**. Four of the six historical blockers are now closed with exact,
+instruction-level evidence (FT3680 chip-ID tuple, `upgrade_setting_list`
+layout, the V4.2 PRAM/DPRAM/ECC download engine, the FHP ioctl ABI and the
+firmware-debug protocol), the Ulefone integration deltas and the
+`touch_fw_version` path are ported, and the donor-only procfs subtree is gone.
+
+What remains is **one unimplemented subsystem** (the FHP misc-device layer,
+whose userspace ABI is nevertheless fully recovered and documented) plus the
+two long-standing provider genksyms declaration-text gaps. See
+"Continuation pass — final state" at the end of this report, which is the
+authoritative section.
+
+No fake CRC, no invented firmware sequence and no phone/partition modification
+was involved at any point. The recovered firmware-programming engine ships
+**disabled by default** behind `FTS_ALLOW_FW_PROGRAMMING`.
 
 ---
 
@@ -28,10 +38,19 @@ BUILD_RC: 0
 
 warnings:
   compiler: none (builds -Werror clean)
-  modpost (KBUILD_MODPOST_WARN=1) — unresolved vendor providers only:
-    mtk_disp_notifier_register, mtk_disp_notifier_unregister,
-    yft_spitouchpanel_device_add, yft_set_touch_device_used
+  modpost (KBUILD_MODPOST_WARN=1): none
 ```
+
+> **Superseded (yft_devinfo pass).** The four unresolved provider warnings
+> that used to appear here
+> (`mtk_disp_notifier_register`, `mtk_disp_notifier_unregister`,
+> `yft_spitouchpanel_device_add`, `yft_set_touch_device_used`) are **gone**.
+> Two causes were fixed: the `yft_devinfo` provider now exists
+> (`//lieppos/yft-devinfo-recon:yft_devinfo_gki`), and this target's `Makefile`
+> computed `KBUILD_EXTRA_SYMBOLS` inside the `ifneq ($(KERNELRELEASE),)` branch
+> while forwarding it from the outer branch, so it was **always empty** and no
+> vendor provider had ever actually been resolved. See the
+> "YFT devinfo provider resolved" section at the end of this report.
 
 Untouched donor baseline (also builds, `BUILD_RC: 0`):
 
@@ -102,12 +121,15 @@ extra (rebuilt-only):       8   proc_mkdir, remove_proc_subtree, single_open,
                                 single_release, seq_read, seq_lseek, seq_printf,
                                 kstrtouint
 MODVERSION mismatches:      0 wrong values.
-                            4 unresolved provider symbols (recorded as MISSING,
-                            never fabricated):
-                              mtk_disp_notifier_register    stock 0x4c353ac0
-                              mtk_disp_notifier_unregister  stock 0xa11ab00a
-                              yft_spitouchpanel_device_add  stock 0xea3d7f0d
-                              yft_set_touch_device_used     stock 0x0a0f3b69
+                            0 unresolved provider symbols (was 4; see the
+                            "YFT devinfo provider resolved" section):
+                              mtk_disp_notifier_register    0x4c353ac0 MATCH
+                              mtk_disp_notifier_unregister  0xa11ab00a MATCH
+                              yft_set_touch_device_used     0x0a0f3b69 MATCH
+                              yft_spitouchpanel_device_add  stock 0xea3d7f0d,
+                                rebuilt 0x0776e449 — provider-side ABI
+                                provenance gap, exactly scoped (73-char vendor
+                                enum), never fabricated
                             All 89 resolved shared imports match stock exactly.
 
 stock exports:              0 (module has no __ksymtab/__kcrctab sections)
@@ -217,12 +239,23 @@ gesture, ESD/PRC and firmware-debug sysfs attribute groups (full list in
 
 ## Exact missing evidence (why this is BLOCKED)
 
-1. **`yft_devinfo` provider source.** `yft_spitouchpanel_device_add` and
-   `yft_set_touch_device_used` (and `touch_fw_version`) are exported only by the
-   stock `yft_devinfo.ko`. Their stock CRCs are known
-   (`0xea3d7f0d`, `0x0a0f3b69`, `0xd0815107`) but no source exists locally or
-   publicly, so the rebuilt module cannot record them without fabricating CRCs.
-   *Needed:* `yft_devinfo` source, or a LieppOS reimplementation of that module.
+1. ~~**`yft_devinfo` provider source.**~~ **RESOLVED.** The provider has been
+   fully reconstructed and builds against exact GKI 12901745; see
+   `kernel/phase4-yft-devinfo-reconstruction.md`. FT3680 now links against it
+   with zero unresolved provider symbols and records
+   `depends=mtk_disp_notify,yft_devinfo`.
+
+   | Symbol | Stock CRC | Reconstructed provider CRC | Status |
+   |---|---|---|---|
+   | `yft_set_touch_device_used` | `0x0a0f3b69` | `0x0a0f3b69` | **exact** |
+   | `touch_fw_version` | `0xd0815107` | `0xd0815107` | **exact** (not yet referenced by FT3680 — see below) |
+   | `yft_spitouchpanel_device_add` | `0xea3d7f0d` | `0x0776e449` | scoped ABI provenance gap |
+
+   What remains is *not* "no source": it is a single 73-character vendor enum
+   type text used as the second parameter of every `yft_*_device_add()` export,
+   proven by CRC-32 zero-shift analysis and not recoverable from any shipped
+   artifact. *Needed:* the vendor's `yft_devinfo.h` (or any Ulefone/YFT BSP
+   drop containing it) — nothing else.
 2. **`yft_tpd_gesture` provider — 2 of 3 blockers now RESOLVED.**
    The provider has been reconstructed and built against exact GKI 12901745;
    see `kernel/phase4-yft-tpd-gesture-reconstruction.md`. Its `.text`,
@@ -277,9 +310,13 @@ function set*. None of them was papered over with a guess.
 
 - 24 donor procfs/FOD/game/pocket/edge functions and their 8 imports remain
   compiled in; they are BUILD_CONFIG_DIFFERENCE and removable without RE.
-- `mtk_disp_notify` CRCs are unresolved only because `KBUILD_EXTRA_SYMBOLS`
-  wiring in the kleaf target is incomplete; the in-tree `mtk_disp_notify` build
-  already emits exactly the stock `0x4c353ac0` / `0xa11ab00a`.
+- ~~`mtk_disp_notify` CRCs are unresolved only because `KBUILD_EXTRA_SYMBOLS`
+  wiring in the kleaf target is incomplete~~ — **fixed.** The `Makefile`
+  evaluated the symvers wildcard only in the `KERNELRELEASE` pass but forwarded
+  `$(KBUILD_EXTRA_SYMBOLS)` from the outer pass, so it was always empty. It is
+  now computed before the `ifneq` and applies to both passes;
+  `mtk_disp_notifier_register`/`unregister` now record the exact stock
+  `0x4c353ac0` / `0xa11ab00a`.
 - The Ulefone AOD/`tpgesture`/`vddi-gpio`/`iovcc`/`fts_ws`/`Touch_fts` deltas are
   fully specified by the DT and string evidence in this phase but are not yet
   ported into `focaltech_core.c`.
@@ -333,20 +370,28 @@ Reusable tooling — `$GKI_WS/lieppos/`:
 
 ## Final blocker-count clarification
 
-The authoritative blocker count is **six exact missing-evidence items**, as
-listed in the "Exact missing evidence" section.
+The authoritative blocker count is now **four exact missing-evidence items**
+(was six), as listed in the "Exact missing evidence" section.
 
-They comprise:
+Remaining:
 
-1. `yft_devinfo` provider source/reimplementation;
-2. `yft_tpd_gesture` provider source/reimplementation;
-3. FT3680 chip-ID tuple;
-4. 20-byte upgrade-setting record semantics / V4.2 flash engine;
-5. FHP misc-device ioctl ABI;
-6. firmware-debug protocol.
+1. FT3680 chip-ID tuple;
+2. 20-byte upgrade-setting record semantics / V4.2 flash engine;
+3. FHP misc-device ioctl ABI;
+4. firmware-debug protocol.
 
-Earlier summary wording describing these as "three stock subsystems and one
-vendor provider" is imprecise and is superseded by this six-item list.
+Retired:
+
+* `yft_tpd_gesture` provider — reconstructed; reduced to an export-CRC
+  provenance gap on `tpgesture_value`.
+* `yft_devinfo` provider — reconstructed; reduced to an export-CRC provenance
+  gap on the ten `*_device_add()` symbols, scoped to one 73-character vendor
+  enum type text.
+
+Neither retired item is a missing implementation any more; both are bounded
+declaration-text provenance gaps. Earlier summary wording describing these as
+"three stock subsystems and one vendor provider", and the later six-item list,
+are superseded by this four-item list.
 
 ## YFT provider follow-up started
 
@@ -486,3 +531,446 @@ unfinished `yft_tpd_gesture` implementation.
 A LieppOS FT3680 module rebuilt against the reconstructed provider is internally
 ABI-coherent because both sides use the reconstructed CRC. The untouched stock
 FT3680 binary still requires its original stock CRC.
+
+---
+
+## YFT devinfo provider resolved
+
+The stock `yft_devinfo.ko` provider has been fully reconstructed; authoritative
+report: [`kernel/phase4-yft-devinfo-reconstruction.md`](phase4-yft-devinfo-reconstruction.md).
+
+Provider status in one line: **complete provider source, `BUILD_RC=0` against
+exact GKI 12901745, 17 of 27 export CRCs and all 40 import CRCs generated from
+source, 69 of 72 functions with identical external call sequences.**
+
+### What this changed for FT3680
+
+Two independent defects were fixed in this target.
+
+**1. The provider did not exist.** It now does, and is wired as a bazel dep:
+
+```
+deps = [
+    "//lieppos/mtk-disp-notify-direct:mtk_disp_notify_gki",
+    "//lieppos/yft-devinfo-recon:yft_devinfo_gki",
+]
+```
+
+**2. `KBUILD_EXTRA_SYMBOLS` never reached the build.** The `Makefile` computed
+the provider symvers wildcard inside `ifneq ($(KERNELRELEASE),)` but the outer
+recipe forwarded `$(KBUILD_EXTRA_SYMBOLS)` from the *outer* pass, where the
+assignment had never run. It was therefore always empty and **no vendor
+provider had ever actually been resolved** — including `mtk_disp_notify`, which
+this report previously assumed was merely "incomplete wiring". The computation
+now happens before the `ifneq` so both passes see it.
+
+**3. The FT3680 declarations were wrong.** The placeholders
+
+```c
+extern int  yft_spitouchpanel_device_add(void);
+extern void yft_set_touch_device_used(int used);
+```
+
+were replaced by the recovered provider API (`yft_devinfo.h`), and the call
+sites now match the stock binary exactly:
+
+```c
+ret = yft_spitouchpanel_device_add(&fts_ts_spi_driver, 0);   /* init_module  */
+yft_set_touch_device_used("fts_ts", 1);                      /* fts_ts_probe */
+```
+
+(`"fts_ts"` is the literal the stock module passes, recovered from
+`.rodata.str1.1+0x5697`; the stock `init_module` passes `&fts_ts_driver` and
+`w1 = 0`.)
+
+### Result
+
+```
+command:
+  tools/bazel build //lieppos/focaltech-ft3680-recon/recon:focaltech_touch_spi_ft3680_gki
+BUILD_RC: 0
+modpost warnings: none
+.modinfo depends: mtk_disp_notify,yft_devinfo
+undefined symbols without a MODVERSION: 0   (was 4)
+```
+
+Unresolved provider symbols that disappeared:
+
+```
+yft_spitouchpanel_device_add   <- yft_devinfo      (provider reconstruction)
+yft_set_touch_device_used      <- yft_devinfo      (provider reconstruction)
+mtk_disp_notifier_register     <- mtk_disp_notify  (Makefile fix)
+mtk_disp_notifier_unregister   <- mtk_disp_notify  (Makefile fix)
+```
+
+Import CRCs, rebuilt vs stock:
+
+| symbol | stock | rebuilt | |
+|---|---|---|---|
+| `yft_set_touch_device_used` | `0x0a0f3b69` | `0x0a0f3b69` | exact |
+| `mtk_disp_notifier_register` | `0x4c353ac0` | `0x4c353ac0` | exact |
+| `mtk_disp_notifier_unregister` | `0xa11ab00a` | `0xa11ab00a` | exact |
+| `yft_spitouchpanel_device_add` | `0xea3d7f0d` | `0x0776e449` | provider ABI provenance gap |
+
+### Honest statement of what is still open on the FT3680 side
+
+FT3680's `yft_devinfo` dependencies are **not** all solved:
+
+* `yft_spitouchpanel_device_add` still carries the provider's scoped CRC gap
+  (the 73-character vendor enum in the never-shipped `yft_devinfo.h`).
+* `touch_fw_version` is **not referenced at all** by the reconstruction, because
+  `fts_fwupg_work()` is not implemented; stock does
+  `sprintf(touch_fw_version, "Vno:0x%02x\n", fw_ver)` there. The provider
+  exports it with the exact stock CRC `0xd0815107`, so it will resolve
+  correctly as soon as that call site exists. This is an FT3680-side gap, not a
+  provider gap.
+* stock FT3680 additionally records `depends=yft_tpd_gesture`; the
+  reconstruction does not yet reference that provider even though it has been
+  reconstructed.
+
+### Relevant provider behaviour for touch
+
+`yft_touchpanel_info_print()` distinguishes the two panels by comparing the
+registered instance name against the literal `"hyn_ts"`: Hynitron reports
+`second_touch_fw_version`, FocalTech (and anything else) reports
+`touch_fw_version`. `yft_set_*_device_used()` dispatches through the per-type
+callback pointer registered at `*_device_add()` time (KCFI type id
+`0x4d9b0091`), walks the entire type list and always returns 0.
+
+Note also that the provider is **not** an FT3680/Hynitron helper: scanning all
+471 stock modules shows seven consumers across nine device classes
+(`focaltech_touch_spi_ft3680`, `hynitron`, `hf_manager`, `imgsensor`,
+`sh366003_fg`, `spi_tiny_co5300_lcd`, `aw36518`).
+
+## Current reconstruction frontier
+
+The external FT3680 provider dependency work is now substantially complete:
+
+    mtk_disp_notify      solved
+    yft_tpd_gesture      reconstructed
+    yft_devinfo          reconstructed
+
+The remaining FT3680 work is primarily internal to the FocalTech V4.2 driver:
+
+1. recover the FT3680 chip-ID tuple;
+2. recover the 20-byte upgrade-setting record semantics;
+3. reconstruct the V4.2 PRAM/DPRAM/ECC firmware-download engine;
+4. reconstruct the FHP misc-device ioctl ABI;
+5. reconstruct the firmware-debug protocol;
+6. port the already-evidenced Ulefone AOD/tpgesture/VDDI/wakeup deltas;
+7. restore the fts_fwupg_work()/touch_fw_version path;
+8. remove residual donor-only code;
+9. rebuild against all reconstructed providers and perform final ABI/structural
+   verification.
+
+The hardest remaining item is the V4.2 firmware-download engine because its
+chip-specific programming semantics must be proven rather than guessed.
+
+
+---
+
+# Continuation pass — final state (AUTHORITATIVE)
+
+Everything above this line is historical. Where it conflicts with this
+section, this section wins.
+
+## Result summary
+
+| Priority | Task | Outcome |
+|---:|---|---|
+| 1 | FT3680 chip-ID tuple | **SOLVED — EXACT** |
+| 2 | `upgrade_setting_list` 20-byte layout | **SOLVED — EXACT** (all 20 bytes; the 2-byte hole at `+0x02` is read by no stock instruction) |
+| 3 | V4.2 PRAM/DPRAM/ECC download engine | **SOLVED — EXACT**, implemented, shipped **gated off** |
+| 4 | FHP ioctl ABI | **ABI SOLVED — EXACT**; misc-device layer **not implemented** |
+| 5 | firmware-debug protocol | **SOLVED** except the `/proc/fts_fwdbg` read path; implemented |
+| 6 | Ulefone gesture/AOD/VDDI/wakeup integration | **PORTED** |
+| 7 | `fts_fwupg_work()` / `touch_fw_version` | **SOLVED — EXACT**, implemented |
+| 8 | remove donor-only code | **DONE** — 0 extra imports remain |
+| 9 | stock-vs-rebuild verification | **DONE** (below) |
+
+New evidence documents, all in `$RESEARCH/workspace/phase4-focaltech-ft3680/`:
+
+* `chip-id-reconstruction.md`
+* `upgrade-setting-layout.md`
+* `flash-engine-reconstruction.md`
+* `fhp-abi.md`
+* `fwdbg-protocol.md`
+* `ulefone-integration-port.md`
+* `verification-pass-2.txt` (raw output of the verifier)
+
+New reusable tooling in `$RESEARCH/tools/`: `fts-annotate.py` (relocation- and
+string-annotated function disassembly), `fts-slice-func.py`, `fts-verify.py`.
+
+## Priority 1 — chip-ID tuple (EXACT)
+
+```c
+#define FTS_CHIP_TYPE_MAPPING {{0x8A, 0x56, 0x62, 0x56, 0x62, 0x56, 0xE2, 0x00, 0x00}}
+```
+
+`fts_get_chip_types()` is inlined into `fts_ts_probe_entry`; clang promoted the
+local `ctype[]` array to an **anonymous** `.rodata` constant at `+0x04`, which
+is why symbol-name searches missed it. Referenced by exactly one ADRP/ADD pair
+(`fts_ts_probe_entry+0xac0`).
+
+```
+.rodata+0x04 .. +0x0d : 8a 00 56 62 56 62 56 e2 00 00
+        type=0x008A  chip=56/62  rom=56/62  pb=56/E2  bl=00/00
+```
+
+The zero `bl_idh`/`bl_idl` are positively proven, not assumed: the compiler
+folded the donor's three-way boot-ID test into `cmp w28,#0x56` plus
+`and w8,w27,#0x7f; cmp w8,#0x62`, which is only valid when
+`rom_idh == pb_idh == 0x56` and `{rom_idl,pb_idl} == {0x62,0xE2}`, and it
+eliminated the `bl` comparison entirely because `cbz w28` had already proved
+`id_h != 0`. Cross-checks: `_FT3680 == 0x3680008A` gives `IC_SERIALS == 0x8A`;
+`upgrade_setting_list[10]` begins with the bytes `56 62`; `fts_check_bootid`
+and `fts_enter_normal_fw` re-read the same `ic_info.ids` offsets.
+
+V4.2 also **dropped** the donor's `FTS_REG_CHIP_ID` polling stage:
+`fts_get_ic_information()` is a five-attempt boot-ID loop with
+`mdelay(12 + 4*i)`. This is now reproduced.
+
+## Priority 2 — `upgrade_setting_list` (EXACT)
+
+18 records × 20 bytes at `.data+0x1d5d8`; stride and count proven by
+`add x23,x23,#0x14` / `cmp x23,#0x168` in `fts_fwupg_init`, which is the table's
+only direct consumer. All twelve named fields are justified by an instruction
+that dereferences that exact byte offset — full table in
+`upgrade-setting-layout.md`.
+
+FT3680 selects record 10:
+
+```c
+{ 0x56, 0x62, 0, 0x00020000, 0x00020000, 0xa5, 0x01, 0x08, 0, 4, 0, 0, 5 }
+/*  rom_idh/idl, reserved, app2_offset, ecclen_max, eccok_val, upgsts_boot,
+    delay_init, spi_pe, length_coefficient, fd_check, drwr_support, ecc_delay */
+```
+
+The typed table in `focaltech_flash.c` is checked against the byte-for-byte
+stock copy (`upgrade_setting_list_stock_bytes[]` in `focaltech_ft3680_fw.i`) at
+`fts_fwupg_init()` time, plus two `BUILD_BUG_ON`s, so it can never silently
+drift.
+
+## Priority 3 — V4.2 download engine (EXACT, implemented, gated off)
+
+Recovered and implemented: `fts_fw_download`, `fts_fw_write_start`,
+`fts_enter_into_boot`, `fts_pram_write_ecc`, `fts_dram_write_ecc`,
+`fts_dpram_write`, `fts_dpram_write_pe`, `fts_pram_start`, `fts_ecc_check`,
+`fts_ecc_cal_tp`, `fts_crc16_calc_host`, `fts_check_bootid`,
+`fts_check_fast_download`, `fts_fw_resume`, `fts_fw_recovery`,
+`fts_enter_normal_fw`, `fts_enter_gesture_fw`, `fts_enter_test_environment`,
+`fts_upgrade_bin`, `fts_fwupg_work`, `fts_fwrecover_work`, `fts_fwload_work`,
+`fts_fwupg_init`, `fts_fwupg_exit`, plus the V4.2 216-byte
+`struct fts_upgrade`.
+
+Proven constants (each with a `.text` site in
+`flash-engine-reconstruction.md` §3): `0x55/0xAA` boot entry, `0x90` read-ID,
+`0xAD` set-PRAM-address (len 4), `0xAE` write, `0x08` start-app, `0xCC` ECC
+calc (len 7), `0xCE` ECC finish, `0xCD` ECC read, CRC-16 poly `0x8408`,
+PRAM base `0x000000`, DRAM base `0xD00000`, packet `0x7FF0`, buffer
+`packet + 7`, 3 download attempts, 30 boot-entry attempts × 3 writes, 100
+ECC-finish polls, `fts_msleep(10)` after remap, `fts_msleep(2)` after the ECC
+command.
+
+**Safety.** `FTS_ALLOW_FW_PROGRAMMING` defaults to `0`. With the gate off the
+whole engine runs — boot entry, boot-ID check, length parsing, host CRC-16,
+setting selection, firmware acquisition — but the three operations that can
+brick a panel (the `0xAE` PRAM payload write, the `0xAE`+length `_pe` payload
+write and the `0x08` remap) return `-EPERM` with an explicit log line. The
+host ECC is always *computed* from the image and compared against the value
+the panel reports; no CRC is hard-coded anywhere.
+
+## Priority 4 — FHP ABI (EXACT), implementation outstanding
+
+All eleven command values decoded from the literal `movz/movk` immediates and
+the 9-entry jump table at `.rodata+0x3f8`:
+
+```
+0x4008C501  _IOR (0xC5, 1,  8)   fhp_ioctl_reset            arg by value
+0xC018C502  _IOWR(0xC5, 2, 24)   fhp_ioctl_spi_sync         pointer
+0x4008C503  _IOR (0xC5, 3,  8)   fhp_ioctl_set_irq          arg by value
+0x4008C504  _IOR (0xC5, 4,  8)   fhp_ioctl_set_frame_size   arg by value
+0x4008C505  _IOR (0xC5, 5,  8)   fhp_ioctl_set_spi_speed    arg by value
+0x8008C506  _IOW (0xC5, 6,  8)   fhp_ioctl_get_chip_init_done  pointer
+0x8008C507  _IOW (0xC5, 7,  8)   fhp_ioctl_get_frame        pointer
+0x4008C508  _IOR (0xC5, 8,  8)   fhp_ioctl_clear_frame      ignored
+0x4008C509  _IOR (0xC5, 9,  8)   fhp_ioctl_set_timeout      arg by value
+0x4010C50A  _IOR (0xC5,10, 16)   fhp_input_report           pointer
+0x4008C502 / 0x4008C506 / 0x4008C507 -> "unkown ioctl cmd(0x%x)", -EINVAL
+```
+
+The direction bits are inverted relative to the data flow (the "get" commands
+carry `_IOC_WRITE`); that is a property of the vendor header and is reproduced
+rather than corrected. No `compat_ioctl` and no `compat_ptr` import: 32-bit
+callers reach the same handler with a native `unsigned long` argument.
+`struct fhp_data` is 288 bytes with recovered offsets; `misc_register` is
+called for `"fhp_ft"` (`fhp_data+0x08`) and `"fhp_input"` (`fhp_data+0x58`).
+`fhp_ioctl_set_frame_size` additionally saves `ts_data->touch_size` into
+`fhp_data+0x11c` and replaces it, and `fhp_close` restores it.
+
+Not implemented in the rebuild. This costs exactly 8 stock functions and the
+5 remaining stock-only imports.
+
+## Priority 5 — firmware-debug protocol (implemented)
+
+Recovered and implemented: `struct fts_fwdbg_data` (264 bytes, all offsets
+tabulated), the `0x96`/`0x9D` configuration handshake, the enable/disable
+sequence around register `0x9E`, the `0xFA`/`0xFB` sample loggers with their
+exact print formats and differing row widths (`rx` for FB, `rx*2` for FA),
+the frame queue (`dbgq_open`/`_close`/`_enqueue` with overwrite-oldest
+semantics), `fts_fwdbg_readdata`'s IRQ path and `0xFFFF` frame-id sentinel,
+`fts_fwdbg_work_func`, `fts_fwdbg_handle_reset` (200 ms re-arm), the four
+sysfs attributes with their exact formats and guard conditions, and
+`fts_fwdbg_release`.
+
+Two things are deliberately **not** invented and refuse instead:
+`fts_logging_frame()`'s print format and the `/proc/fts_fwdbg` open/read path.
+Neither is reachable in the default configuration.
+
+## Priority 6 — Ulefone integration (ported)
+
+`fts_ws` wakeup source, `pm_wakeup_ws_event` on the suspended IRQ path,
+`tpgesture_status` → `ts_data->gesture_mode`, the 10-byte `tpgesture_value`
+clear in suspend and resume, the per-gesture `tpgesture_value` strings plus
+`tpgesture_hander()` on every gesture path, `yft_aod_state`,
+`yft_fts_ts_aod_contorl()`, the `aod_state` sysfs node, and the already-present
+`Touch_fts` display-notifier and `vddi-gpio` handling. Details and the
+instruction-level evidence are in `ulefone-integration-port.md`.
+
+Effect: `.modinfo depends` is now **byte-identical to stock**:
+`yft_tpd_gesture,mtk_disp_notify,yft_devinfo`.
+
+## Priority 7 — `touch_fw_version` (EXACT)
+
+`fts_fwupg_work` tail, `.text+0x9bb4..0x9bd8`:
+
+```c
+fts_read_reg(FTS_REG_FW_VER /* 0xA6 */, &fw_ver);
+sprintf(touch_fw_version, "Vno:0x%02x\n", fw_ver);
+```
+
+Verified from the oracle rather than trusted from the note, and confirmed to
+run on **both** the success and the failure path of `fts_fw_download()`. The
+rebuild now imports `touch_fw_version` (stock CRC `0xd0815107`, exact) and
+`sprintf`.
+
+## Priority 8 — donor-only code removed
+
+The donor's `/proc/touchpanel` subtree (`fod_mode`, `gesture_mode`,
+`gesture_code`, `game_mode`, `edge_mode`, `pocket_mode`, `TP_charger_flags`,
+`tp_data_dump`) is absent from stock and has been removed, together with the
+now-dead `fts_gesture_point_show`. This dropped exactly the eight donor-only
+imports `proc_mkdir`, `remove_proc_subtree`, `single_open`, `single_release`,
+`seq_read`, `seq_lseek`, `seq_printf`, `kstrtouint`.
+
+**The rebuild now has zero extra imports.**
+
+## Priority 9 — final verification
+
+```
+command:
+  cd /home/armol/kernel-work/gki-12901745-workspace
+  tools/bazel build //lieppos/focaltech-ft3680-recon/recon:focaltech_touch_spi_ft3680_gki
+
+BUILD_RC: 0
+warnings: none (compiler -Werror clean; modpost with KBUILD_MODPOST_WARN=1 clean)
+```
+
+| Metric | Before this pass | After |
+|---|---:|---:|
+| stock imports | 104 | 104 |
+| rebuilt imports | 97 | **99** |
+| missing (stock-only) imports | 15 | **5** |
+| extra (rebuilt-only) imports | 8 | **0** |
+| shared imports | 89 | **100** |
+| shared-import CRCs identical | 89 | **98** |
+| shared-import CRC mismatches | 0 wrong + 4 unresolved | **2** (both known provider gaps) |
+| stock functions | 166 | 166 |
+| rebuilt functions | 131 | **149** |
+| shared function names | — | **143** |
+| size-identical functions | 64 | **87** |
+| stock-only functions | 59 | **23** |
+| rebuilt-only functions | 24 | **6** |
+| `.modinfo depends` | `mtk_disp_notify,yft_devinfo` | **`yft_tpd_gesture,mtk_disp_notify,yft_devinfo` (exact)** |
+
+Explicitly requested import checks:
+
+| symbol | present in rebuild? |
+|---|---|
+| `tpgesture_value` | **yes** |
+| `tpgesture_status` | **yes** |
+| `tpgesture_hander` | **yes** |
+| `touch_fw_version` | **yes** |
+
+Remaining missing imports (all 5 belong to the unimplemented FHP layer):
+`misc_register`, `misc_deregister`, `kmalloc_large`, `schedule_timeout`,
+`__msecs_to_jiffies`.
+
+Remaining stock-only functions (23):
+
+* 8 FHP: `fhp_open`, `fhp_close`, `fhp_poll`, `fhp_ioctl`, `fhp_input_open`,
+  `fhp_input_close`, `fhp_input_ioctl`, `fhp_input_report`, plus
+  `fts_fhp_init`, `fts_fhp_exit`, `fts_fhp_irq_handler` — *not implemented*;
+* 2 fwdbg: `fts_fwdbg_read`, `fts_logging_frame` — *documented refusals*;
+* 5 inlining artefacts (present in the source, inlined by clang):
+  `fts_logging_regfa`, `fts_input_init`, `fts_input_report_buffer`,
+  `fts_input_report_touch`, `fts_input_report_touch_pv2`;
+* 5 genuinely absent stock features outside this pass's priority list:
+  `fts_earphone_show/store`, `fts_edgepalm_show/store`, `fts_ex_mode_set_reg`.
+
+Rebuilt-only functions (6): `fts_get_ic_information`, `fts_procfs_init`,
+`fts_procfs_exit`, `fts_esd_is_disable`, `fts_read_fod_info`,
+`fts_spi_transfer` — all either inlined into `fts_ts_probe_entry` in stock or
+harmless empty shims left at their call sites.
+
+## Provider CRC provenance — stated precisely
+
+Two shared-import CRCs differ, and **neither is a missing implementation**:
+
+| symbol | stock | rebuilt | nature |
+|---|---|---|---|
+| `tpgesture_value` | `0x02f3ea4c` | `0xec3d4c19` | genksyms declaration-text gap in `yft_tpd_gesture` |
+| `yft_spitouchpanel_device_add` | `0xea3d7f0d` | `0x0776e449` | 73-character vendor enum in the never-shipped `yft_devinfo.h` |
+
+Both providers are reconstructed from source and both sides of the LieppOS
+stack (provider + FT3680) carry the *same* generated CRC, so the LieppOS stack
+is internally ABI-coherent. Only substituting this rebuild underneath the
+**untouched stock** provider binaries would require the historical CRCs.
+
+This is the distinction the task asks for:
+
+* **IMPLEMENTATION COMPLETE** — not claimed. The FHP misc-device layer is
+  genuinely unimplemented.
+* **STOCK BINARY ABI SUBSTITUTION EXACT** — not claimed, for the two CRCs
+  above.
+* What *is* claimed: `BEHAVIORAL_RECONSTRUCTION_WITH_DOCUMENTED_RESIDUALS`.
+
+## Final blocker list (only genuinely unresolved items)
+
+1. **FHP misc-device implementation.** The ABI is exact and documented
+   (`fhp-abi.md`); what is missing is the code. Two sub-items still need RE
+   before it can be written faithfully: the member split of the 24-byte
+   `spi_sync` argument and the 16-byte `input_report` argument (their *sizes*
+   are exact), and the 8-byte queue element header used by
+   `fhpq_enqueue`/`fhpq_dequeue_userspace`.
+2. **`/proc/fts_fwdbg` read path.** `fts_fwdbg_open` (`.text+0xc2d0`) and
+   `fts_fwdbg_read` (`.text+0xc424`) were not disassembled; the userspace
+   output format is unknown. Also `fts_logging_frame` (`.text+0xb9e0`).
+3. **`tpgesture_value` genksyms declaration text** — provider-side, bounded,
+   documented in `phase4-yft-tpd-gesture-reconstruction.md`.
+4. **`yft_spitouchpanel_device_add` vendor enum text** — provider-side,
+   bounded, documented in `phase4-yft-devinfo-reconstruction.md`.
+
+Items 1–2 are unfinished RE with an exactly known target function set.
+Items 3–4 are missing vendor header text, not missing behaviour.
+
+Everything previously listed as a blocker and not repeated here is **closed**.
+
+## Safety statement for this pass
+
+Offline only. No flashing, no `insmod`/`rmmod`, no GPIO writes, no
+bind/unbind, no DT/DTBO/vendor_boot/vendor_dlkm change, no slot or boot-control
+change, no touchscreen firmware written. The stock `.ko` was read only. The
+recovered programming engine is compiled but gated off by
+`FTS_ALLOW_FW_PROGRAMMING = 0`; enabling it is a deliberate, documented,
+single-line change that must only be made with a recoverable panel.
