@@ -4,9 +4,12 @@ This report supersedes every earlier intermediate hypothesis about
 `focaltech_touch_spi_ft3680.ko`, including the initial
 `NEEDS_ULEFONE_PORT` classification in `phase4-focaltech-ft3680.md`.
 
-**Final classification (continuation pass, supersedes everything below)**
+**Final classification (completion pass — authoritative section is the LAST
+one in this file; every earlier classification is withdrawn)**
 
-    BEHAVIORAL_RECONSTRUCTION_WITH_DOCUMENTED_RESIDUALS
+    STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE
+    SYMBOL_SET_PARITY_EXACT (imports 104/104, functions 166/166, 0 extra, 0 missing)
+    STOCK_BINARY_ABI_SUBSTITUTION_BLOCKED_BY_TWO_PROVIDER_GENKSYMS_GAPS
 
 The previous classification `BLOCKED_WITH_EXACT_MISSING_EVIDENCE` is
 **withdrawn**. Four of the six historical blockers are now closed with exact,
@@ -974,3 +977,345 @@ change, no touchscreen firmware written. The stock `.ko` was read only. The
 recovered programming engine is compiled but gated off by
 `FTS_ALLOW_FW_PROGRAMMING = 0`; enabling it is a deliberate, documented,
 single-line change that must only be made with a recoverable panel.
+
+## Post-continuation audit
+
+The continuation pass closes the difficult chip-specific FT3680 reconstruction
+work, but the module is not yet frozen as an implementation-complete stock
+replacement.
+
+Clarifications:
+
+1. The FHP ioctl command-number surface is recovered exactly, but the complete
+   payload ABI is not yet exact. Remaining structure evidence is required for:
+
+       24-byte spi_sync argument
+       16-byte input_report argument
+       8-byte FHP queue-element header
+
+   Therefore the current status is:
+
+       FHP_IOCTL_COMMAND_SURFACE_EXACT
+       FHP_PAYLOAD_ABI_PARTIALLY_RECOVERED
+       FHP_IMPLEMENTATION_INCOMPLETE
+
+2. The final verification's FHP stock-only function count is 11, not 8:
+
+       fhp_open
+       fhp_close
+       fhp_poll
+       fhp_ioctl
+       fhp_input_open
+       fhp_input_close
+       fhp_input_ioctl
+       fhp_input_report
+       fts_fhp_init
+       fts_fhp_exit
+       fts_fhp_irq_handler
+
+3. Five genuine stock functions outside the previous continuation priority list
+   are also still absent from the reconstruction:
+
+       fts_earphone_show
+       fts_earphone_store
+       fts_edgepalm_show
+       fts_edgepalm_store
+       fts_ex_mode_set_reg
+
+   These must either be reconstructed or proven inactive/non-required on the
+   GQ5012BF1 stock runtime before claiming full stock behavioral replacement.
+
+The remaining implementation frontier is therefore:
+
+1. finish the FHP payload ABI and misc-device implementation;
+2. recover /proc/fts_fwdbg open/read and fts_logging_frame;
+3. recover the five remaining stock earphone/edge-palm/ex-mode functions;
+4. classify/remove remaining rebuilt-only shims;
+5. perform final stock-vs-rebuild verification.
+
+The two provider genksyms declaration-text gaps remain bounded provenance
+issues and do not represent missing provider runtime behavior.
+
+The recovered firmware-download engine remains disabled by default via
+FTS_ALLOW_FW_PROGRAMMING=0.
+
+
+---
+
+# Completion pass — FINAL STATE (AUTHORITATIVE, supersedes every section above)
+
+The "Post-continuation audit" frontier is closed. All five items on it are
+done: the FHP payload ABI and misc-device layer, the `/proc/fts_fwdbg`
+open/read path plus `fts_logging_frame`, the five earphone/edge-palm/ex-mode
+functions, the rebuilt-only shims, and the final stock-vs-rebuild
+verification.
+
+## Headline result
+
+```
+command:
+  cd /home/armol/kernel-work/gki-12901745-workspace
+  tools/bazel build //lieppos/focaltech-ft3680-recon/recon:focaltech_touch_spi_ft3680_gki
+
+BUILD_RC: 0
+warnings:  0   (clang -Werror clean; modpost clean; no undefined-symbol warnings)
+```
+
+| Metric | Previous pass | **This pass** |
+|---|---:|---:|
+| stock imports | 104 | 104 |
+| rebuilt imports | 99 | **104** |
+| missing imports | 5 | **0** |
+| extra imports | 0 | **0** |
+| shared imports | 100 | **105** |
+| shared-import CRCs identical | 98 | **103** |
+| shared-import CRC mismatches | 2 | **2** (the two bounded provider gaps) |
+| stock functions | 166 | 166 |
+| rebuilt functions | 149 | **166** |
+| shared function names | 143 | **166** |
+| size-identical functions | 87 | **105** |
+| stock-only functions | 23 | **0** |
+| rebuilt-only functions | 6 | **0** |
+| `.modinfo depends` | exact | **exact** |
+
+Raw verifier output: `workspace/phase4-focaltech-ft3680/verification-pass-3.txt`.
+Tool: `tools/fts-verify.py`.
+
+**Symbol-set parity is exact.** There is no stock function the rebuild lacks
+and no rebuild function stock lacks. The five imports that were previously
+missing — `misc_register`, `misc_deregister`, `kmalloc_large`,
+`schedule_timeout`, `__msecs_to_jiffies` — all now resolve, and they resolve
+for the right reason: the FHP misc devices, the 0x8000 queue allocation and
+the bounded `wait_event_interruptible_timeout` in `GET_FRAME`.
+
+## Priority 1 — FHP: recovered and implemented
+
+New file: `recon/focaltech_fhp.c`. Evidence:
+`workspace/phase4-focaltech-ft3680/fhp-abi.md`, section
+"Completion pass — full payload ABI and implementation".
+
+All eleven stock functions are present: `fts_fhp_init`, `fts_fhp_exit`,
+`fts_fhp_irq_handler`, `fhp_open`, `fhp_close`, `fhp_poll`, `fhp_ioctl`,
+`fhp_input_open`, `fhp_input_close`, `fhp_input_ioctl`, `fhp_input_report`.
+
+### The three structures that were previously unknown
+
+**24-byte `spi_sync` argument.** `copy_from_user(&arg, user, 24)` at
+`.text+0xddd0` followed by `ldr x8,[sp]` (tx), `ldr x8,[sp,#0x8]` (rx) and
+`ldr w2,[sp,#0x10]` (len). The trailing 4 bytes are tail padding that no
+stock instruction reads.
+
+**16-byte `input_report` argument.** `copy_from_user(&arg, user, 16)` at
+`.text+0xef24` followed by `ldr x22,[sp]` (buf) and `ldr w20,[sp,#0x8]`
+(size); size is validated to `1..84` and the 84-byte landing buffer is
+pre-filled with `0xFF`, not zero.
+
+**8-byte queue element header.** `str x22, [x0], #0x8` at `.text+0xd794`
+writes a microsecond timestamp — `ktime_get_with_offset(TK_OFFS_REAL)` divided
+by 1000 with the canonical `0x20C49BA5E353F7CF` / `asr #7` magic — and
+advances the cursor by exactly 8 before the payload `memcpy`. Corroborated by
+`fhp_get_frame`, which validates `touch_size + 8 == q->sizeq` and carries the
+literal `8` in `w4` (`mov w4,#0x8`, `.text+0xd8d0`) as the third argument of
+`"touch size(%u,%d,%lu) is invalid"`. `fhpq_dequeue_userspace` then hands the
+whole `sizeq` bytes — timestamp included — to userspace, so a userspace frame
+buffer must be `frame_size + 8` bytes.
+
+### Correction to the previously published command surface
+
+`fhp_ioctl` accepts the report command as `0x4010C50A` (magic `0xC5`, nr 10),
+but `fhp_input_ioctl` accepts it as **`0x4010C601`** (magic `0xC6`, nr 1) —
+`mov w9,#0xc601 ; movk w9,#0x4010,lsl#16` at `.text+0xf234`. Both dispatch to
+the same `fhp_input_report()`. The earlier document recorded only the first.
+
+### `struct fhp_data` and `struct fhp_queue`
+
+288 bytes and 64 bytes respectively, with every field tied to a dereferencing
+instruction (full tables in `fhp-abi.md`). `misc_open()` installs the
+`struct miscdevice` pointer in `file->private_data`, so the stock entry points
+recover the control block with `container_of()` — that is the source of the
+constant biases `cmp x19,#0x8` (`fhp_poll`) and `subs x0,x9,#0x58`
+(`fhp_input_ioctl`). One 16-byte range at `+0x100` is dereferenced by no stock
+instruction; it is **named** `reserved_0x100[16]`, not guessed.
+
+`fhp_fops` and `fhp_input_fops` carry relocations only for `.poll`,
+`.unlocked_ioctl`, `.open` and `.release`. There is **no** relocation against
+`__this_module` at slot `+0x00` and none at `.compat_ioctl` (`+0x58`), so the
+vendor left `.owner` unset and provided no compat handler. Both facts are
+reproduced rather than "fixed".
+
+### One vendor defect, reproduced deliberately
+
+`fhpq_enqueue` writes the 8-byte timestamp and then `memcpy`s a further
+`q->sizeq` bytes (`ldrsw x2,[x21,#0xd0]`, `.text+0xd798`) instead of
+`sizeq - 8`, so each element writes 8 bytes more than its own stride.
+
+* The **read** side is safe by construction: the source is the 4096-byte
+  `ts_data->touch_buf` and `fhp_ioctl_set_frame_size` caps the frame at 4080.
+* The **write** side can run 8 bytes past the 0x8000 ring on the final slot,
+  but only when `0x8000 % sizeq < 8`.
+
+This is stock behaviour, so it is reproduced verbatim. The one-line hardening
+exists and is **disabled**: `FTS_FHP_FIX_ENQUEUE_OVERRUN` defaults to `0`.
+Enabling it would be a documented, deliberate divergence from the oracle.
+
+## Priority 2 — fwdbg: `/proc/fts_fwdbg` fully recovered
+
+Evidence: `fwdbg-protocol.md`, section "Completion pass". The previous
+`-ENOSYS` refusals are gone; nothing in the subsystem is stubbed.
+
+* `fts_fwdbg_open` (`.text+0xc2d0`) — validates `q.elem_size == frame_size`
+  when logging is off, resets the read cursor, and (in non-blocking mode)
+  arms the reader, replays the `0xFB`/`0xFA` register logs and `vmalloc`s the
+  latch buffer.
+* `fts_fwdbg_read` (`.text+0xc424`) — two distinct paths. If the caller's
+  buffer is smaller than one frame, `proc_get_one_frame` latches a single
+  element into `dbg->read_buf` and serves byte-slices tracked by
+  `dbg->read_offset`; otherwise `dbgq_dequeue_to_proc` copies
+  `min(q.count, count / frame_size)` whole frames straight from the ring. The
+  return value is always a byte count, and a partial `copy_to_user` failure
+  returns the bytes already delivered.
+* `fts_logging_frame` (`.text+0xb9e0`) — its first argument is **not** the
+  control block: `fts_fwdbg_readdata` passes `add x0, x19, #0xa8`, the nine-int
+  configuration block. Output is a 512-byte scratch buffer rendered as two
+  `"%02x,"` runs (which deliberately share one running character count), a
+  single `"%d"` byte, and two big-endian signed 16-bit `"%d,"` sections with
+  different index bases, different loop guards and different line-break tests.
+  Every quirk is documented at the instruction that proves it.
+
+The control block is reached through `PDE_DATA(inode)` in all three entry
+points (`ldr x19,[x0,#0x2b8]`); the previous implementation used
+`file->private_data` in `fts_fwdbg_release`, which was wrong and is corrected.
+
+**No format was invented.** Every literal is a string constant or an immediate
+in the stock `.text`.
+
+## Priority 3 — earphone / edge-palm / ex-mode: ACTIVE, implemented
+
+Evidence: `ex-mode-and-inlining.md`, part 1.
+
+They are **not** dead code. `fts_ex_mode_init` is called unconditionally from
+`fts_ts_probe_entry`, it creates the whole attribute group including both new
+nodes, and `fts_ex_mode_recovery` runs on resume and after a firmware reset.
+Nothing gates them on chip type or a device-tree property, so they are
+implemented rather than documented-as-unreachable.
+
+Stock carries **five** modes, not the donor's three:
+
+| flag | mode | register |
+|---|---|---|
+| `ts_data+0x30d` | `MODE_GLOVE` | `0xC0` |
+| `ts_data+0x30e` | `MODE_COVER` | `0xC1` |
+| `ts_data+0x30f` | `MODE_CHARGER` | `0x8B` |
+| `ts_data+0x310` | `MODE_EARPHONE` | `0xC3` |
+| `ts_data+0x311` | `MODE_EDGEPALM` | `0x8C` |
+
+The first four are replayed with the literal `1`. Edge-palm is replayed with a
+stored value from `ts_data+0x320`, so it is not a boolean mode — its store
+parses `"%d"` with `sscanf` and pushes the raw value into register `0x8C`.
+
+`fts_ex_mode_set_reg` (`.text+0x5c18`) is a verifying writer, not a plain
+write: probe, then up to five write/1 ms-sleep/read-back rounds. Three
+behaviours follow from the instruction sequence and are reproduced — an
+already-correct register returns 0 *silently*, the last attempt is never read
+back, and the failure log therefore quotes the sample taken by the previous
+attempt.
+
+## Priority 4 — rebuilt-only functions: classified, residue removed
+
+| symbol | verdict | action |
+|---|---|---|
+| `fts_procfs_init` | dead donor residue (reduced to `return 0` after the `/proc/touchpanel` removal) | **deleted**, call site removed |
+| `fts_procfs_exit` | dead donor residue | **deleted**, call site removed |
+| `fts_get_ic_information` | inlined stock behaviour (boot-ID loop lives inside `fts_ts_probe_entry`) | `__always_inline` |
+| `fts_read_fod_info` | inlined stock behaviour (inlined into `fts_read_parse_touchdata`) | `__always_inline` |
+| `fts_esd_is_disable` | inlined stock behaviour (16-byte accessor, single call site) | `__always_inline` |
+| `fts_spi_transfer` | inlined stock behaviour (stock inlines the `spi_message` setup into all three bus helpers) | `__always_inline` |
+
+And in the opposite direction, the last three **stock-only** functions were
+resolved by discovering that `fts_input_report_buffer` (`.text+0x984`) is only
+120 bytes — a dispatcher, not a parser:
+
+* `fts_input_report_touch` (`.text+0x9fc`) — event type 0, 8-bit coordinates;
+* `fts_input_report_touch_pv2` (`.text+0xbb8`) — event type **2**
+  (`TOUCH_PROTOCOL_v2`, not the 0x82 high-resolution encoding): packed 16-bit
+  coordinates with sub-pixel nibbles, explicit minor axis, fixed pressure
+  `0x3F`;
+* `fts_input_init` (`.text+0x1f04`) — already present, but clang inlined it.
+
+The reconstruction was split to match, and the three are emitted with
+`noinline` (a pure code-layout attribute, no behavioural effect) so that the
+rebuild stops inlining functions the vendor build kept out of line. That
+split is also what makes the FHP input path possible at all: stock
+`fts_input_report_buffer` is **GLOBAL** precisely so `fhp_input_report` can
+push a userspace-supplied buffer through the same reporting path as an
+interrupt-delivered one.
+
+## Final blocker list — two items, both bounded, neither behavioural
+
+1. **`tpgesture_value` genksyms declaration text** — provider-side.
+   Stock CRC `0x02f3ea4c`, rebuilt `0xec3d4c19`.
+2. **`yft_spitouchpanel_device_add` vendor enum text** — provider-side.
+   Stock CRC `0xea3d7f0d`, rebuilt `0x0776e449`.
+
+Both are missing *vendor header text*, not missing runtime behaviour. The
+provider and the FT3680 module are reconstructed from the same sources and
+therefore carry the *same* generated CRC on both sides, so the LieppOS stack
+is internally ABI-coherent. The historical CRCs would only be required in
+order to drop this rebuild underneath the **untouched stock** provider
+binaries.
+
+Nothing else is open. Every previously listed blocker is closed:
+
+* FHP implementation — **done**;
+* FHP payload ABI (spi_sync / input_report / queue header) — **done**;
+* `/proc/fts_fwdbg` open/read and `fts_logging_frame` — **done**;
+* earphone / edge-palm / ex-mode — **done**;
+* rebuilt-only shims — **classified, residue deleted**.
+
+## What is and is not claimed
+
+* **Claimed: `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`.** Every stock
+  function is present, no rebuild function is absent from stock, the import
+  set matches exactly, and no subsystem is stubbed or refuses.
+* **Claimed: `SYMBOL_SET_PARITY_EXACT`.** 104/104 imports, 166/166 functions,
+  zero extra, zero missing, exact `.modinfo depends`.
+* **Not claimed: byte-identical `.text`.** 105 of 166 functions match stock
+  size exactly; the rest differ in register allocation and scheduling, which
+  is expected from a source reconstruction compiled by a different toolchain
+  invocation.
+* **Not claimed: `STOCK_BINARY_ABI_SUBSTITUTION_EXACT`.** Blocked by the two
+  provider genksyms gaps above.
+
+## Known deliberate deviations from the oracle (complete list)
+
+1. `FTS_ALLOW_FW_PROGRAMMING = 0` — the recovered V4.2 download engine is
+   compiled but the three panel-bricking operations return `-EPERM`.
+2. `FTS_FHP_FIX_ENQUEUE_OVERRUN = 0` — the vendor's 8-byte enqueue overrun is
+   reproduced; the hardening exists but is off.
+3. `noinline` / `__always_inline` attributes — code layout only, chosen to
+   reproduce the stock symbol set. No behavioural effect.
+
+There are no other intentional differences, and no unexplained behavioural
+differences.
+
+## Safety statement
+
+Offline only, throughout. No flashing, no `insmod`/`rmmod`, no GPIO writes, no
+bind/unbind, no DT/DTBO/vendor_boot/vendor_dlkm modification, no slot or
+boot-control change, no touchscreen firmware written, no CRC fabricated. The
+stock `.ko` was read as an oracle and never modified. The firmware-programming
+engine remains disabled by default.
+
+## Evidence index
+
+| document | covers |
+|---|---|
+| `workspace/phase4-focaltech-ft3680/chip-id-reconstruction.md` | FT3680 chip-ID tuple |
+| `.../upgrade-setting-layout.md` | 20-byte `upgrade_setting_list` record |
+| `.../flash-engine-reconstruction.md` | V4.2 PRAM/DPRAM/ECC engine |
+| `.../fhp-abi.md` | FHP command surface **and** full payload ABI |
+| `.../fwdbg-protocol.md` | firmware-debug protocol **and** the proc read path |
+| `.../ulefone-integration-port.md` | gesture / AOD / VDDI / wakeup deltas |
+| `.../ex-mode-and-inlining.md` | five-mode ex_mode subsystem; symbol-set convergence |
+| `.../verification-pass-3.txt` | raw final verifier output |
+| `tools/fts-annotate.py`, `fts-compact.py`, `fts-slice-func.py`, `fts-verify.py` | reusable RE + verification tooling |
