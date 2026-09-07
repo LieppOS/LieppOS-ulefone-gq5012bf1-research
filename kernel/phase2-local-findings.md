@@ -784,7 +784,14 @@ External source/vendor-resource reconnaissance also changed the porting plan:
 
 - aw883xx_driver:
   Awinic publishes GPL-2.0 AW883xx Smart PA driver source.
-  Classification: NEEDS_ULEFONE_PORT, not binary-only reconstruction.
+  Phase 2 classification was: NEEDS_ULEFONE_PORT, not binary-only reconstruction.
+
+  RESOLVED in Phase 4 -> SOURCE_DELTA_RECONSTRUCTION_EXACT.
+  See kernel/phase4-aw883xx-reconstruction.md (authoritative).
+  The public donor (awinic-driver/aw883xx @ 4f52a10) is v1.6.0 while stock is
+  v1.7.1, and no public v1.7.1 drop exists; the 11 deltas were recovered from
+  the stock binary. Result: 236/236 functions, 235/236 byte-identical,
+  0/236 differing relocation multisets, exact stock ABI parity.
 
 - aw36515:
   Awinic provides AW36515 Android driver/sample/porting resources.

@@ -15,17 +15,40 @@ The only modpost warnings in the RED build were three unresolved symbols —
 
 ### RED result (untouched donor vs stock oracle)
 
-| metric | stock | RED donor | delta |
+| metric | stock | RED donor | delta (donor − stock) |
 |---|---|---|---|
-| defined `.text` functions | 236 | 244 | +8 |
+| defined `.text` functions | 236 | 238 | +2 |
+| `.init.text` / `.exit.text` functions | 0 / 0 | 1 / 1 | +2 |
+| all-text functions | 236 | 240 | +4 |
 | imported symbols | 73 | 80 | +7 |
-| `__versions` records | 74 | 81 | +7 |
+| `__versions` records | 74 | 78 | +4 |
 | exported symbols | 2 | 0 | −2 |
-| `.rodata.str1.1` strings | 991 | 1000 | +9 real |
-| functions differing in relocation/call/string sequence | — | 16 / 236 shared | — |
-| `sizeof(struct aw_device)` | `0x750` | `0x748` | +8 |
+| `.rodata.str1.1` strings | 996 | 1012 | +16 (19 donor-only, 3 stock-only) |
+| shared functions differing in size | — | 17 / 236 shared | — |
+| shared functions differing in relocation/call/string multiset | — | 14 / 236 shared | — |
+| `sizeof(struct aw_device)` | `0x750` | `0x748` | −8 |
+
+Donor-only functions: `aw_cali_write_re_to_nvram` and
+`aw_dev_parse_data_by_sec_type_v_1_0_0_0` in `.text`, plus `init_module`
+(`.init.text`) and `cleanup_module` (`.exit.text`). The stock module has **no
+`.init.text` or `.exit.text` section at all** — the first direct proof of D8.
+There are no stock-only functions: the donor is a strict superset by name.
 
 Raw evidence: `RED-raw-donor-vs-stock.txt`, `RED-function-sequence-diff.txt`.
+
+> **Counting note.** `.rodata.str1.1` holds 996 strings; the companion dump
+> `aw883xx-strings.txt` lists 991 lines because that dump filters strings
+> shorter than three characters (it omits `%s`, `%d`, `rw`, `Fm` and `\n`).
+> A further single string lives in `.rodata.str`. All counts are equal between
+> stock and the final reconstruction under either convention.
+
+> **Correction (recorded during report authoring).** An earlier revision of this
+> table stated 244 `.text` functions, 81 `__versions` records, 991/1000 strings
+> and 16 sequence-differing functions. Those four figures were wrong; the values
+> above were recomputed directly from the two ELF objects. The corrected numbers
+> do not change any delta, conclusion or the final verification result — they
+> only make the RED baseline smaller and more precisely bounded than first
+> recorded.
 
 Because the delta was small and fully enumerable, the reconstruction is a
 **delta reconstruction**, not a rewrite. Every change below is justified by an
@@ -299,7 +322,7 @@ modpost warnings  : none (KBUILD_MODPOST_WARN=1, zero unresolved symbols)
 | defined `.text` functions | 236 / 236, **0 extra, 0 missing** |
 | byte-identical functions | **235 / 236** |
 | functions with a differing relocation/call/string multiset | **0 / 236** |
-| `.rodata.str1.1` strings | 991 / 991, 0 extra, 0 missing |
+| `.rodata.str1.1` strings | 996 / 996, 0 extra, 0 missing, multiset identical (991 / 991 under the short-string-filtered `aw883xx-strings.txt` convention) |
 | `.rodata` bytes | identical |
 | `.bss` | identical (50 bytes) |
 | `.data` non-relocated bytes | identical |
