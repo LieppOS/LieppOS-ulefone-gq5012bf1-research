@@ -1,0 +1,740 @@
+# LieppOS GQ5012BF1 aw883xx_driver.ko reconstruction patch
+#
+# Base   : github.com/awinic-driver/aw883xx @ 4f52a10
+#          ("ASoc: codecs: Add aw883xx amplifier driver", AW883XX_DRIVER_VERSION "v1.6.0")
+# Result : reconstruction of the Ulefone GQ5012BF1 stock aw883xx_driver.ko v1.7.1
+#          oracle sha256 3bc4722c6550abb9cfd75d06602c2a1bff8d0b6af58708324479ef6a0d22c9b4
+#          235/236 .text functions byte-identical; 0/236 differing relocation
+#          multisets; __versions / __ksymtab_strings / __kcrctab byte-identical.
+#
+# Reproduce:
+#   git clone https://github.com/awinic-driver/aw883xx recon
+#   git -C recon checkout 4f52a10 && rm -rf recon/.git recon/README.md recon/LICENSE
+#   sed -i 's/\r$//' recon/*.c recon/*.h        # donor ships CRLF; this diff is LF
+#   patch -p1 -d recon < phase4-aw883xx-donor-to-recon.diff
+#   # then build //lieppos/aw883xx-recon/recon:aw883xx_driver_gki against GKI ab/12901745
+#
+# Every hunk is justified in phase4-aw883xx-RED.md (delta ledger D1..D11).
+#
+diff -Nru --strip-trailing-cr donor-pristine/aw883xx_bin_parse.c recon/aw883xx_bin_parse.c
+--- donor-pristine/aw883xx_bin_parse.c	2026-09-07 02:32:14.032648322 +0300
++++ recon/aw883xx_bin_parse.c	2026-09-07 07:03:08.926626269 +0300
+@@ -960,63 +960,92 @@
+ 	return 0;
+ }
+ 
+-static int aw_dev_parse_dev_type_v_1_0_0_0(struct aw_device *aw_dev,
+-		struct aw_cfg_hdr *prof_hdr)
++/*
++ * v1.7.1 replaces aw_dev_parse_dev_type_v_1_0_0_0() and
++ * aw_dev_parse_default_type_v_1_0_0_0() with a single scene parser.
++ *
++ * Recovered from the stock aw883xx_dev_cfg_load disassembly (the function is
++ * static and fully inlined; its __func__ string "aw_dev_parse_scene_v_1_0_0_0"
++ * and its "no valid device scenario resolved" error string are present in
++ * .rodata.str1.1 while "get dev type failed, get num [%d]" is not referenced):
++ *
++ *   pass 1: walk cfg_hdr->a_ddt_num DDEs.
++ *           dev_type   -> require i2c adapter nr == dev_bus (dde+0x16)
++ *                                 i2c addr      == dev_addr (dde+0x18)
++ *           default    -> require aw_dev->channel == dev_index (dde+0x14)
++ *           both       -> require aw_dev->chip_id == chip_id   (dde+0x4c)
++ *           matching indexes are insertion-sorted ascending by
++ *           dev_profile (dde+0x1a) into a 32-entry index table
++ *           (stack array, bound checked against 0x1f).
++ *   pass 2: for each sorted index, dispatch on data_type:
++ *           ACF_SEC_TYPE_MONITOR  -> aw883xx_monitor_parse_fw(&aw_dev->monitor_desc, ...)
++ *           ACF_SEC_TYPE_MUTLBIN  -> aw_dev_prof_parse_multi_bin(... &prof_desc[cur])
++ *                                    prof_desc[cur].prf_str = dde->dev_profile_str
++ *                                    prof_desc[cur].id      = dde->dev_profile
++ *                                    cur++
++ *           default               -> "unsupported SEC_TYPE [%d]"
++ *   cur == 0 -> "no valid device scenario resolved", -EINVAL
++ *
++ * The ascending dev_profile sort is new in v1.7.1: v1.6.0 filled prof_desc[] in
++ * DDE file order.
++ */
++#define AW_SCENE_INDEX_MAX	(32)
++
++static int aw_dev_parse_scene_v_1_0_0_0(struct aw_device *aw_dev,
++		struct aw_cfg_hdr *prof_hdr, bool dev_type)
+ {
+-	int i = 0;
++	int i, j, k;
+ 	int ret;
+ 	int cur_scene_id = 0;
++	int num = 0;
++	int index[AW_SCENE_INDEX_MAX];
+ 	struct aw_cfg_dde_v_1_0_0_0 *cfg_dde =
+ 		(struct aw_cfg_dde_v_1_0_0_0 *)((char *)prof_hdr + prof_hdr->a_hdr_offset);
+ 
+ 	aw_dev_info(aw_dev->dev, "enter");
+ 
+ 	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
+-		if ((aw_dev->i2c->adapter->nr == cfg_dde[i].dev_bus) &&
+-			(aw_dev->i2c->addr == cfg_dde[i].dev_addr) &&
+-			(aw_dev->chip_id == cfg_dde[i].chip_id)) {
+-			ret = aw_dev_parse_data_by_sec_type_v_1_0_0_0(aw_dev, prof_hdr,
+-							&cfg_dde[i], &cur_scene_id);
+-			if (ret < 0) {
+-				aw_dev_err(aw_dev->dev, "parse failed");
+-				return ret;
+-			}
++		if (dev_type) {
++			if (aw_dev->i2c->adapter->nr != cfg_dde[i].dev_bus)
++				continue;
++			if (aw_dev->i2c->addr != cfg_dde[i].dev_addr)
++				continue;
++		} else {
++			if (aw_dev->channel != cfg_dde[i].dev_index)
++				continue;
+ 		}
+-	}
+ 
+-	if (cur_scene_id == 0) {
+-		aw_dev_info(aw_dev->dev, "get dev type failed, get num [%d]", cur_scene_id);
+-		return -EINVAL;
+-	}
++		if (aw_dev->chip_id != cfg_dde[i].chip_id)
++			continue;
+ 
+-	return 0;
+-}
+-
+-static int aw_dev_parse_default_type_v_1_0_0_0(struct aw_device *aw_dev,
+-		struct aw_cfg_hdr *prof_hdr)
+-{
+-	int i = 0;
+-	int ret;
+-	int cur_scene_id = 0;
+-	struct aw_cfg_dde_v_1_0_0_0 *cfg_dde =
+-		(struct aw_cfg_dde_v_1_0_0_0 *)((char *)prof_hdr + prof_hdr->a_hdr_offset);
+-
+-	aw_dev_info(aw_dev->dev, "enter");
++		/* LieppOS hardening: stock relies on the compiler's array-bounds
++		 * trap here; an explicit bound cannot change behaviour for any
++		 * ACF with <= 32 matching DDEs (see RED.md deviation D10).
++		 */
++		if (num >= AW_SCENE_INDEX_MAX)
++			return -EINVAL;
++
++		/* keep index[] ordered by ascending dev_profile */
++		for (j = 0; j < num; j++)
++			if (cfg_dde[i].dev_profile < cfg_dde[index[j]].dev_profile)
++				break;
++		for (k = num; k > j; k--)
++			index[k] = index[k - 1];
++		index[j] = i;
++		num++;
++	}
+ 
+-	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
+-		if ((aw_dev->channel == cfg_dde[i].dev_index) &&
+-			(aw_dev->chip_id == cfg_dde[i].chip_id)) {
+-			ret = aw_dev_parse_data_by_sec_type_v_1_0_0_0(aw_dev, prof_hdr,
+-							&cfg_dde[i], &cur_scene_id);
+-			if (ret < 0) {
+-				aw_dev_err(aw_dev->dev, "parse failed");
+-				return ret;
+-			}
++	for (k = 0; k < num; k++) {
++		ret = aw_dev_parse_data_by_sec_type_v_1_0_0_0(aw_dev, prof_hdr,
++						&cfg_dde[index[k]], &cur_scene_id);
++		if (ret < 0) {
++			aw_dev_err(aw_dev->dev, "parse failed");
++			return ret;
+ 		}
+ 	}
+ 
+ 	if (cur_scene_id == 0) {
+-		aw_dev_err(aw_dev->dev, "get dev default type failed, get num[%d]", cur_scene_id);
++		aw_dev_err(aw_dev->dev, "no valid device scenario resolved");
+ 		return -EINVAL;
+ 	}
+ 
+@@ -1028,20 +1057,22 @@
+ {
+ 	int ret;
+ 
+-	if (aw_dev->prof_info.prof_type == AW_DEV_TYPE_ID) {
+-		ret = aw_dev_parse_dev_type_v_1_0_0_0(aw_dev, cfg_hdr);
+-		if (ret < 0)
+-			return ret;
+-	} else if (aw_dev->prof_info.prof_type == AW_DEV_DEFAULT_TYPE_ID) {
+-		ret = aw_dev_parse_default_type_v_1_0_0_0(aw_dev, cfg_hdr);
+-		if (ret < 0)
+-			return ret;
+-	} else {
++	/* Stock v1.7.1 resolves the DDE selector into a single bool and has one
++	 * aw_dev_parse_scene_v_1_0_0_0 call site (the stock disassembly branches
++	 * to a common body with w21 = (prof_type == AW_DEV_TYPE_ID)).
++	 */
++	if ((aw_dev->prof_info.prof_type != AW_DEV_TYPE_ID) &&
++		(aw_dev->prof_info.prof_type != AW_DEV_DEFAULT_TYPE_ID)) {
+ 		aw_dev_err(aw_dev->dev, "prof type matched failed, get num[%d]",
+ 			aw_dev->prof_info.prof_type);
+ 		return -EINVAL;
+ 	}
+ 
++	ret = aw_dev_parse_scene_v_1_0_0_0(aw_dev, cfg_hdr,
++			aw_dev->prof_info.prof_type == AW_DEV_TYPE_ID);
++	if (ret < 0)
++		return ret;
++
+ 	return 0;
+ }
+ 
+diff -Nru --strip-trailing-cr donor-pristine/aw883xx.c recon/aw883xx.c
+--- donor-pristine/aw883xx.c	2026-09-07 02:32:14.032648322 +0300
++++ recon/aw883xx.c	2026-09-07 07:03:08.927631066 +0300
+@@ -33,6 +33,7 @@
+ #include <sound/tlv.h>
+ #include <linux/uaccess.h>
+ #include "aw883xx.h"
++#include "aw883xx_calib.h"
+ #include "aw883xx_bin_parse.h"
+ #include "aw883xx_device.h"
+ #include "aw883xx_log.h"
+@@ -45,7 +46,7 @@
+  ******************************************************/
+ #define AW883XX_I2C_NAME "aw883xx_smartpa"
+ 
+-#define AW883XX_DRIVER_VERSION "v1.6.0"
++#define AW883XX_DRIVER_VERSION "v1.7.1"	/* stock GQ5012BF1 drv_ver_show string */
+ 
+ #define AW883XX_RATES (SNDRV_PCM_RATE_8000_48000 | \
+ 			SNDRV_PCM_RATE_96000)
+@@ -2125,6 +2126,9 @@
+ 				struct device_attribute *attr, const char *buf,
+ 				size_t count)
+ {
++#if !AW_ALLOW_FACTORY_MODE
++	return -EPERM;
++#endif
+ 	struct aw883xx *aw883xx = dev_get_drvdata(dev);
+ 	struct aw_device *aw_dev = aw883xx->aw_pa;
+ 	unsigned int databuf[2] = { 0 };
+@@ -2139,6 +2143,9 @@
+ 				struct device_attribute *attr, const char *buf,
+ 				size_t count)
+ {
++#if !AW_ALLOW_FACTORY_MODE
++	return -EPERM;
++#endif
+ 	struct aw883xx *aw883xx = dev_get_drvdata(dev);
+ 	struct aw_device *aw_dev = aw883xx->aw_pa;
+ 	unsigned int databuf[2] = { 0 };
+@@ -2208,6 +2215,9 @@
+ 				struct device_attribute *attr,
+ 				const char *buf, size_t count)
+ {
++#if !AW_ALLOW_FACTORY_MODE
++	return -EPERM;
++#endif
+ 	struct aw883xx *aw883xx = dev_get_drvdata(dev);
+ 	struct aw_device *aw_dev = aw883xx->aw_pa;
+ 	unsigned int databuf[2] = { 0 };
+@@ -2372,6 +2382,9 @@
+ static ssize_t awrw_store(struct device *dev,
+ 	struct device_attribute *attr, const char *buf, size_t count)
+ {
++#if !AW_ALLOW_FACTORY_MODE
++	return -EPERM;
++#endif
+ 	struct aw883xx *aw883xx = dev_get_drvdata(dev);
+ 	int ret = -1;
+ 
+@@ -2817,7 +2830,7 @@
+  * i2c driver
+  *
+  ******************************************************/
+-static int aw883xx_i2c_probe(struct i2c_client *i2c,
++int aw883xx_i2c_probe(struct i2c_client *i2c,
+ 				const struct i2c_device_id *id)
+ {
+ 	struct aw883xx *aw883xx = NULL;
+@@ -2899,11 +2912,14 @@
+ 	return ret;
+ }
+ 
+-#if defined AW_KERNEL_VER_OVER_6_1_0
+-static void aw883xx_i2c_remove(struct i2c_client *i2c)
+-#else
+-static int aw883xx_i2c_remove(struct i2c_client *i2c)
+-#endif
++/* The stock module keeps the pre-6.1 "int" return even on 6.1: its exported
++ * aw883xx_i2c_remove has MODVERSION CRC 0xb3e48038, which is what
++ * mtk-sp-spk-amp.ko imports, and the stock function is 260 bytes (4 bytes more
++ * than the void form, i.e. the extra "mov w0, wzr").  mtk_spk_i2c_remove()
++ * discards the value.  Do not switch this to void: it would break the stock
++ * consumer ABI (void form CRC = 0x64a36158).
++ */
++int aw883xx_i2c_remove(struct i2c_client *i2c)
+ {
+ 	struct aw883xx *aw883xx = i2c_get_clientdata(i2c);
+ 
+@@ -2930,54 +2946,24 @@
+ 	}
+ 	mutex_unlock(&g_aw883xx_lock);
+ 
+-#if defined AW_KERNEL_VER_OVER_6_1_0
+-#else
+ 	return 0;
+-#endif
+-}
+-
+-static const struct i2c_device_id aw883xx_i2c_id[] = {
+-	{AW883XX_I2C_NAME, 0},
+-	{}
+-};
+-
+-MODULE_DEVICE_TABLE(i2c, aw883xx_i2c_id);
+-
+-static const struct of_device_id aw883xx_dt_match[] = {
+-	{.compatible = "awinic,aw883xx_smartpa"},
+-	{},
+-};
+-
+-static struct i2c_driver aw883xx_i2c_driver = {
+-	.driver = {
+-		.name = AW883XX_I2C_NAME,
+-		.owner = THIS_MODULE,
+-		.of_match_table = of_match_ptr(aw883xx_dt_match),
+-	},
+-	.probe = aw883xx_i2c_probe,
+-	.remove = aw883xx_i2c_remove,
+-	.id_table = aw883xx_i2c_id,
+-};
+-
+-static int __init aw883xx_i2c_init(void)
+-{
+-	int ret = -1;
+-
+-	aw_pr_info("aw883xx driver version %s", AW883XX_DRIVER_VERSION);
+-
+-	ret = i2c_add_driver(&aw883xx_i2c_driver);
+-	if (ret)
+-		aw_pr_err("fail to add aw883xx device into i2c");
+-
+-	return ret;
+ }
+-module_init(aw883xx_i2c_init);
+ 
+-static void __exit aw883xx_i2c_exit(void)
+-{
+-	i2c_del_driver(&aw883xx_i2c_driver);
+-}
+-module_exit(aw883xx_i2c_exit);
++/*
++ * Stock GQ5012BF1 packaging: aw883xx_driver.ko is a *library* module.  It has no
++ * module_init/module_exit (the stock .ko has no .init.text/.exit.text section and
++ * a NULL init/exit in .gnu.linkonce.this_module), no MODULE_DEVICE_TABLE aliases
++ * (stock .modinfo carries no alias= record) and does not call
++ * i2c_register_driver/i2c_del_driver.
++ *
++ * Instead it exports the bus callbacks, which MediaTek's mtk-sp-spk-amp.ko calls
++ * from its own "mediatek,speaker_amp" i2c_driver:
++ *   mtk_spk_i2c_probe()    -> aw883xx_i2c_probe(client, id)   (CRC 0x713728fc)
++ *   mtk_spk_i2c_remove()   -> aw883xx_i2c_remove(client)      (CRC 0xb3e48038)
++ * and sets mtk_spk_type = MTK_SPK_AWINIC_AW883XX (5) when probe returns 0.
++ */
++EXPORT_SYMBOL(aw883xx_i2c_probe);
++EXPORT_SYMBOL(aw883xx_i2c_remove);
+ 
+ MODULE_DESCRIPTION("ASoC AW883XX Smart PA Driver");
+ MODULE_LICENSE("GPL v2");
+diff -Nru --strip-trailing-cr donor-pristine/aw883xx_calib.c recon/aw883xx_calib.c
+--- donor-pristine/aw883xx_calib.c	2026-09-07 02:32:14.032648322 +0300
++++ recon/aw883xx_calib.c	2026-09-07 07:03:08.928896833 +0300
+@@ -1470,6 +1470,10 @@
+ 
+ static int aw_cali_svc_cali_re(struct aw_device *aw_dev, bool is_single, unsigned int flag)
+ {
++#if !AW_ALLOW_CALIBRATION_WRITES
++	aw_dev_err(aw_dev->dev, "cali function disable");
++	return -EPERM;
++#endif
+ 	if (is_single)
+ 		return aw_cali_svc_dev_cali_re(aw_dev, flag);
+ 	else
+@@ -1598,6 +1602,10 @@
+ 
+ static int aw_cali_svc_cali_f0_q(struct aw_device *aw_dev, bool is_single, unsigned int flag)
+ {
++#if !AW_ALLOW_CALIBRATION_WRITES
++	aw_dev_err(aw_dev->dev, "cali function disable");
++	return -EPERM;
++#endif
+ 	if (is_single)
+ 		return aw_cali_svc_dev_cali_f0_q(aw_dev, flag);
+ 	else
+diff -Nru --strip-trailing-cr donor-pristine/aw883xx_calib.h recon/aw883xx_calib.h
+--- donor-pristine/aw883xx_calib.h	2026-09-07 02:32:14.032648322 +0300
++++ recon/aw883xx_calib.h	2026-09-07 07:03:08.935159834 +0300
+@@ -14,14 +14,43 @@
+ #ifndef __AW883XX_CALIBRATION_H__
+ #define __AW883XX_CALIBRATION_H__
+ 
++/* LieppOS reconstruction (stock GQ5012BF1 aw883xx_driver.ko v1.7.1):
++ * AW_CALI_STORE_EXAMPLE is NOT enabled in the stock module.
++ * Evidence: the stock .ko imports neither filp_open/filp_close/kernel_read/
++ * kernel_write nor skip_spaces, contains no "/mnt/vendor/persist/factory/audio/
++ * aw_cali.bin" string, and has no aw_cali_write_re_to_nvram symbol.
++ * Calibration Re is therefore volatile in-kernel only; persistence is owned by
++ * userspace/HAL (see firmware-config-contract.md).
++ */
+ /*#define AW_CALI_STORE_EXAMPLE*/
+ #include "aw883xx_data_type.h"
+ 
+-#define AW_CALI_STORE_EXAMPLE
++/*
++ * LieppOS safety gates.  Both default to 1, i.e. exactly the stock behaviour;
++ * with the defaults the generated code is byte-identical to the stock module.
++ * Set to 0 only for bring-up on hardware whose speaker/boost state is unknown.
++ *
++ *   AW_ALLOW_CALIBRATION_WRITES  0 -> refuse to *run* Re/F0 calibration and to
++ *                                     push a new Re into the DSP.  Reads of
++ *                                     Re/R0/F0/Q/Te stay available.
++ *   AW_ALLOW_FACTORY_MODE        0 -> make the raw register / DSP debug sysfs
++ *                                     windows (reg, rw, dsp, dsp_rw, awrw)
++ *                                     read-only.
++ * Ordinary playback initialisation, profile/firmware download, power sequencing
++ * and monitor protection are never gated: the stock evidence proves they are
++ * required for normal operation.
++ */
++#ifndef AW_ALLOW_CALIBRATION_WRITES
++#define AW_ALLOW_CALIBRATION_WRITES	(1)
++#endif
++#ifndef AW_ALLOW_FACTORY_MODE
++#define AW_ALLOW_FACTORY_MODE		(1)
++#endif
++
+ #define AW_ERRO_CALI_RE_VALUE (0)
+ #define AW_ERRO_CALI_F0_VALUE (2600)
+ 
+-#define AW_CALI_RE_DEFAULT_TIMER (3000)
++#define AW_CALI_RE_DEFAULT_TIMER (1000)	/* stock v1.7.1: g_cali_re_time initialiser at .data+0x1e8 is 0x3e8, not 0xbb8 */
+ #define MSGS_SIZE (512)
+ #define RESERVED_SIZE (252)
+ 
+diff -Nru --strip-trailing-cr donor-pristine/aw883xx_device.c recon/aw883xx_device.c
+--- donor-pristine/aw883xx_device.c	2026-09-07 02:32:14.032648322 +0300
++++ recon/aw883xx_device.c	2026-09-07 07:03:08.930037521 +0300
+@@ -693,13 +693,22 @@
+ 
+ 	check_value = desc->st_check;
+ 
+-	if (noise_gate_desc->reg != AW_REG_NONE) {
+-		aw_dev->ops.aw_reg_read(aw_dev, noise_gate_desc->reg, &reg_val);
+-		if (reg_val & (~noise_gate_desc->noise_gate_mask))
+-			check_value = desc->st_check;
+-		else
+-			check_value = desc->st_sws_check;
++	/* v1.7.1: instead of switching between st_check/st_sws_check, every
++	 * populated gate entry that reports "active" masks bits out of the
++	 * expected SYSST value.  For AW88395/AW88399 gate[0] clears
++	 * *_SWS_SWITCHING_VALUE, reproducing the old st_check/st_sws_check pair;
++	 * AW88399 additionally clears *_BSTS_FINISHED_VALUE via gate[1].
++	 */
++	for (i = 0; i < AW_SYSST_GATE_NUM; i++) {
++		if (noise_gate_desc->gate[i].reg == AW_REG_NONE)
++			continue;
++
++		aw_dev->ops.aw_reg_read(aw_dev,
++				noise_gate_desc->gate[i].reg, &reg_val);
++		if (reg_val & (~noise_gate_desc->gate[i].noise_gate_mask))
++			check_value &= noise_gate_desc->gate[i].st_and_mask;
+ 	}
++	i = 0;
+ 
+ 	for (i = 0; i < AW_DEV_SYSST_CHECK_MAX; i++) {
+ 		aw_dev->ops.aw_reg_read(aw_dev, desc->reg, &reg_val);
+@@ -734,26 +743,14 @@
+ 	return ret;
+ }
+ 
+-static int aw_dev_sysint_check(struct aw_device *aw_dev)
+-{
+-	int ret = 0;
+-	uint32_t reg_val = 0;
+-	struct aw_int_desc *desc = &aw_dev->int_desc;
+-
+-	ret = aw_dev_get_int_status(aw_dev, &reg_val);
+-	if (ret < 0) {
+-		aw_dev_err(aw_dev->dev, "get int status fail ret:%d", ret);
+-		return ret;
+-	}
+-
+-	if (reg_val & (desc->intst_mask)) {
+-		aw_dev_err(aw_dev->dev, "int check fail:0x%04x", reg_val);
+-		ret = -EINVAL;
+-	}
+-
+-	return ret;
+-}
+-
++/* v1.7.1 removed aw_dev_sysint_check(): aw883xx_device_stop() no longer probes
++ * SYSINT before powering the part down, it only evaluates the interrupt state
++ * latched by the monitor path (aw_dev_get_monitor_sysint_st()).
++ * Evidence: the stock module contains neither an aw_dev_sysint_check symbol nor
++ * any reference to the "get int status fail ret:%d" / "int check fail:0x%04x"
++ * strings from aw883xx_device_stop; the stock aw883xx_device_stop reloc sequence
++ * goes straight from aw_dev_set_intmask to aw_dev_dsp_enable.
++ */
+ static void aw_dev_get_cur_mode_st(struct aw_device *aw_dev)
+ {
+ 	uint16_t reg_val = 0;
+@@ -1990,7 +1987,6 @@
+ 
+ int aw883xx_device_stop(struct aw_device *aw_dev)
+ {
+-	int int_st = 0;
+ 	int monitor_int_st = 0;
+ 	uint16_t reg_data = 0;
+ 	struct aw_sec_data_desc *dsp_cfg =
+@@ -2024,9 +2020,6 @@
+ 	/*set defaut int mask*/
+ 	aw_dev_set_intmask(aw_dev, AW_DEV_MASK_INT_VAL);
+ 
+-	/*check sysint state*/
+-	int_st = aw_dev_sysint_check(aw_dev);
+-
+ 	/*close dsp*/
+ 	aw_dev_dsp_enable(aw_dev, AW_DEV_DSP_BYPASS);
+ 
+@@ -2036,7 +2029,7 @@
+ 	/*check monitor process sysint state*/
+ 	monitor_int_st = aw_dev_get_monitor_sysint_st(aw_dev);
+ 
+-	if (int_st < 0 || monitor_int_st < 0) {
++	if (monitor_int_st < 0) {
+ 		/*system status anomaly*/
+ 		aw_dev_memclk_select(aw_dev, AW_DEV_MEMCLK_OSC);
+ 		aw_dev_sram_check(aw_dev);
+diff -Nru --strip-trailing-cr donor-pristine/aw883xx_device.h recon/aw883xx_device.h
+--- donor-pristine/aw883xx_device.h	2026-09-07 02:32:14.033648322 +0300
++++ recon/aw883xx_device.h	2026-09-07 07:03:08.935882359 +0300
+@@ -313,12 +313,35 @@
+ 	unsigned int pll_check;
+ 	unsigned int dsp_check;
+ 	unsigned int dsp_mask;
+-	unsigned int st_sws_check;
++	/* v1.7.1: st_sws_check was removed; st_check now carries the *_SWS_CHECK
++	 * value directly and aw_dev_sysst_check() masks bits out of it through
++	 * struct aw_sysst_gate (see aw_noise_gate_en below).
++	 * Evidence: stock sizeof(struct aw_device)=0x750 vs donor 0x748,
++	 * offsetof(profctrl_desc)=0xe8 vs 0xec, and stock
++	 * aw883xx_pid_2066/2183_dev_init store 0x311 (=*_BIT_SYSST_SWS_CHECK)
++	 * into sysst_desc.st_check while writing no field at sysst_desc+0x18.
++	 */
+ };
+ 
+-struct aw_noise_gate_en {
++/* v1.7.1 sysst gate entry.
++ * When (reg != AW_REG_NONE) and (reg_val & ~mask) is non-zero, aw_dev_sysst_check()
++ * ANDs st_and_mask into the expected SYSST check value.  Recovered from the stock
++ * aw883xx_device_start disassembly (inlined aw_dev_sysst_check):
++ *   ldr w1,[aw_dev+0x318] ; cmp #0xff ; reg_read ; ldr w9,[+0x31c] ; bics ;
++ *   ldr w8,[+0x320] ; and check_value,w8,check_value
++ *   ldr w1,[aw_dev+0x324] ; cmp #0xff ; reg_read ; ldr w9,[+0x328] ; bics ;
++ *   ldr w8,[+0x32c] ; and check_value,w8,check_value
++ */
++struct aw_sysst_gate {
+ 	unsigned int reg;
+ 	unsigned int noise_gate_mask;
++	unsigned int st_and_mask;
++};
++
++#define AW_SYSST_GATE_NUM	(2)
++
++struct aw_noise_gate_en {
++	struct aw_sysst_gate gate[AW_SYSST_GATE_NUM];
+ };
+ 
+ struct aw_profctrl_desc {
+diff -Nru --strip-trailing-cr donor-pristine/aw883xx.h recon/aw883xx.h
+--- donor-pristine/aw883xx.h	2026-09-07 02:32:14.033648322 +0300
++++ recon/aw883xx.h	2026-09-07 07:03:08.936315612 +0300
+@@ -230,4 +230,11 @@
+ int aw883xx_get_dev_num(void);
+ int aw883xx_get_version(char *buf, int size);
+ 
++
++/* Exported to MediaTek's mtk-sp-spk-amp.ko ("mediatek,speaker_amp" i2c_driver).
++ * Stock MODVERSION CRCs: aw883xx_i2c_probe 0x713728fc, aw883xx_i2c_remove 0xb3e48038.
++ */
++int aw883xx_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id);
++int aw883xx_i2c_remove(struct i2c_client *i2c);
++
+ #endif
+diff -Nru --strip-trailing-cr donor-pristine/aw883xx_pid_2049_init.c recon/aw883xx_pid_2049_init.c
+--- donor-pristine/aw883xx_pid_2049_init.c	2026-09-07 02:32:14.032648322 +0300
++++ recon/aw883xx_pid_2049_init.c	2026-09-07 07:03:08.932253951 +0300
+@@ -735,7 +735,8 @@
+ 	aw_pa->sysst_desc.dsp_check = AW_PID_2049_DSPS_NORMAL_VALUE;
+ 	aw_pa->sysst_desc.dsp_mask = AW_PID_2049_DSPS_MASK;
+ 
+-	aw_pa->noise_gate_en.reg = AW_REG_NONE;
++	aw_pa->noise_gate_en.gate[0].reg = AW_REG_NONE;
++	aw_pa->noise_gate_en.gate[1].reg = AW_REG_NONE;
+ 
+ 	aw_pa->profctrl_desc.reg = AW_PID_2049_SYSCTRL_REG;
+ 	aw_pa->profctrl_desc.mask = AW_PID_2049_RCV_MODE_MASK;
+diff -Nru --strip-trailing-cr donor-pristine/aw883xx_pid_2066_init.c recon/aw883xx_pid_2066_init.c
+--- donor-pristine/aw883xx_pid_2066_init.c	2026-09-07 02:32:14.032648322 +0300
++++ recon/aw883xx_pid_2066_init.c	2026-09-07 07:03:08.932819564 +0300
+@@ -326,15 +326,16 @@
+ 	aw_pa->efuse_check_desc.and_val = AW_PID_2066_EF_DBMD_AND_VALUE;
+ 
+ 	aw_pa->sysst_desc.reg = AW_PID_2066_SYSST_REG;
+-	aw_pa->sysst_desc.st_check = AW_PID_2066_BIT_SYSST_NOSWS_CHECK;
++	aw_pa->sysst_desc.st_check = AW_PID_2066_BIT_SYSST_SWS_CHECK;
+ 	aw_pa->sysst_desc.st_mask = AW_PID_2066_BIT_SYSST_CHECK_MASK;
+ 	aw_pa->sysst_desc.pll_check = AW_PID_2066_BIT_PLL_CHECK;
+ 	aw_pa->sysst_desc.dsp_check = AW_PID_2066_DSPS_NORMAL_VALUE;
+ 	aw_pa->sysst_desc.dsp_mask = AW_PID_2066_DSPS_MASK;
+-	aw_pa->sysst_desc.st_sws_check = AW_PID_2066_BIT_SYSST_SWS_CHECK;
+ 
+-	aw_pa->noise_gate_en.reg = AW_PID_2066_PWMCTRL3_REG;
+-	aw_pa->noise_gate_en.noise_gate_mask = AW_PID_2066_NOISE_GATE_EN_MASK;
++	aw_pa->noise_gate_en.gate[0].reg = AW_PID_2066_PWMCTRL3_REG;
++	aw_pa->noise_gate_en.gate[0].noise_gate_mask = AW_PID_2066_NOISE_GATE_EN_MASK;
++	aw_pa->noise_gate_en.gate[0].st_and_mask = AW_PID_2066_SWS_SWITCHING_MASK;
++	aw_pa->noise_gate_en.gate[1].reg = AW_REG_NONE;
+ 
+ 	aw_pa->profctrl_desc.reg = AW_PID_2066_SYSCTRL_REG;
+ 	aw_pa->profctrl_desc.mask = AW_PID_2066_EN_TRAN_MASK;
+diff -Nru --strip-trailing-cr donor-pristine/aw883xx_pid_2066_reg.h recon/aw883xx_pid_2066_reg.h
+--- donor-pristine/aw883xx_pid_2066_reg.h	2026-09-07 02:32:14.033648322 +0300
++++ recon/aw883xx_pid_2066_reg.h	2026-09-07 07:03:08.939111856 +0300
+@@ -567,6 +567,11 @@
+ 		AW_PID_2066_CLKS_STABLE_VALUE | \
+ 		AW_PID_2066_PLLS_LOCKED_VALUE)
+ 
++/* v1.7.1 sysst gate mask: clears SWS_SWITCHING from the SYSST check value
++ * (stock aw883xx_pid_2066_dev_init writes 0xfffffeff to noise_gate_en+0x08). */
++#define AW_PID_2066_SWS_SWITCHING_MASK	\
++	(~(((1<<AW_PID_2066_SWS_BITS_LEN)-1) << AW_PID_2066_SWS_START_BIT))
++
+ #define AW_PID_2066_BIT_SYSST_SWS_CHECK \
+ 		(AW_PID_2066_BSTS_FINISHED_VALUE | \
+ 		AW_PID_2066_CLKS_STABLE_VALUE | \
+diff -Nru --strip-trailing-cr donor-pristine/aw883xx_pid_2183_init.c recon/aw883xx_pid_2183_init.c
+--- donor-pristine/aw883xx_pid_2183_init.c	2026-09-07 02:32:14.032648322 +0300
++++ recon/aw883xx_pid_2183_init.c	2026-09-07 07:03:08.933375837 +0300
+@@ -242,15 +242,18 @@
+ 	aw_pa->vcalb_desc.iscal_dac_factor = AW_PID_2183_ISCAL_DAC_FACTOR;
+ 
+ 	aw_pa->sysst_desc.reg = AW_PID_2183_SYSST_REG;
+-	aw_pa->sysst_desc.st_check = AW_PID_2183_BIT_SYSST_NOSWS_CHECK;
++	aw_pa->sysst_desc.st_check = AW_PID_2183_BIT_SYSST_SWS_CHECK;
+ 	aw_pa->sysst_desc.st_mask = AW_PID_2183_BIT_SYSST_CHECK_MASK;
+ 	aw_pa->sysst_desc.pll_check = AW_PID_2183_BIT_PLL_CHECK;
+ 	aw_pa->sysst_desc.dsp_check = AW_PID_2183_DSPS_NORMAL_VALUE;
+ 	aw_pa->sysst_desc.dsp_mask = AW_PID_2183_DSPS_MASK;
+-	aw_pa->sysst_desc.st_sws_check = AW_PID_2183_BIT_SYSST_SWS_CHECK;
+ 
+-	aw_pa->noise_gate_en.reg = AW_PID_2183_PWMCTRL3_REG;
+-	aw_pa->noise_gate_en.noise_gate_mask = AW_PID_2183_NOISE_GATE_EN_MASK;
++	aw_pa->noise_gate_en.gate[0].reg = AW_PID_2183_PWMCTRL3_REG;
++	aw_pa->noise_gate_en.gate[0].noise_gate_mask = AW_PID_2183_NOISE_GATE_EN_MASK;
++	aw_pa->noise_gate_en.gate[0].st_and_mask = AW_PID_2183_SWS_SWITCHING_MASK;
++	aw_pa->noise_gate_en.gate[1].reg = AW_PID_2183_BSTCTRL10_REG;
++	aw_pa->noise_gate_en.gate[1].noise_gate_mask = AW_PID_2183_REG_0X69_BIT2_MASK;
++	aw_pa->noise_gate_en.gate[1].st_and_mask = AW_PID_2183_BSTS_FINISHED_MASK;
+ 
+ 	aw_pa->profctrl_desc.reg = AW_PID_2183_SYSCTRL_REG;
+ 	aw_pa->profctrl_desc.mask = AW_PID_2183_RCV_MODE_MASK;
+diff -Nru --strip-trailing-cr donor-pristine/aw883xx_pid_2183_reg.h recon/aw883xx_pid_2183_reg.h
+--- donor-pristine/aw883xx_pid_2183_reg.h	2026-09-07 02:32:14.033648322 +0300
++++ recon/aw883xx_pid_2183_reg.h	2026-09-07 07:03:08.940263035 +0300
+@@ -587,6 +587,25 @@
+ 		AW_PID_2183_CLKS_STABLE_VALUE | \
+ 		AW_PID_2183_PLLS_LOCKED_VALUE)
+ 
++/* v1.7.1 sysst gate masks.
++ * stock aw883xx_pid_2183_dev_init writes:
++ *   noise_gate_en.gate[0] = { 0x16, 0xffffdfff, 0xfffffeff }
++ *   noise_gate_en.gate[1] = { 0x69, 0xfffffffb, 0xfffffdff }
++ * 0xfffffeff == ~SWS_SWITCHING_VALUE (bit 8), 0xfffffdff == ~BSTS_FINISHED_VALUE
++ * (bit 9).  Bit 2 of BSTCTRL10 (0x69) has no name in the published Awinic
++ * headers, so it is carried by address until its semantics are demonstrated.
++ */
++#define AW_PID_2183_SWS_SWITCHING_MASK	\
++	(~(((1<<AW_PID_2183_SWS_BITS_LEN)-1) << AW_PID_2183_SWS_START_BIT))
++
++#define AW_PID_2183_BSTS_FINISHED_MASK	\
++	(~(((1<<AW_PID_2183_BSTS_BITS_LEN)-1) << AW_PID_2183_BSTS_START_BIT))
++
++#define AW_PID_2183_REG_0X69_BIT2_START_BIT	(2)
++#define AW_PID_2183_REG_0X69_BIT2_BITS_LEN	(1)
++#define AW_PID_2183_REG_0X69_BIT2_MASK	\
++	(~(((1<<AW_PID_2183_REG_0X69_BIT2_BITS_LEN)-1) << AW_PID_2183_REG_0X69_BIT2_START_BIT))
++
+ #define AW_PID_2183_BIT_SYSST_SWS_CHECK \
+ 		(AW_PID_2183_BSTS_FINISHED_VALUE | \
+ 		AW_PID_2183_CLKS_STABLE_VALUE | \
+diff -Nru --strip-trailing-cr donor-pristine/BUILD.bazel recon/BUILD.bazel
+--- donor-pristine/BUILD.bazel	1970-01-01 03:00:00.000000000 +0300
++++ recon/BUILD.bazel	2026-09-07 02:53:02.715622137 +0300
+@@ -0,0 +1,17 @@
++load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
++
++package(default_visibility = ["//visibility:public"])
++
++# LieppOS reconstruction of the GQ5012BF1 stock aw883xx_driver.ko,
++# built against the exact Google GKI 12901745 kernel (//common:kernel_aarch64).
++#
++# The module has no providers outside vmlinux: all 74 stock __versions entries
++# resolve against GKI 12901745 with identical CRCs (see
++# aw883xx-provider-boundary.tsv).  Its only consumer is mtk-sp-spk-amp.ko.
++kernel_module(
++    name = "aw883xx_driver_gki",
++    srcs = glob(["*.c", "*.h"]) + ["Makefile"],
++    outs = ["aw883xx_driver.ko"],
++    kernel_build = "//common:kernel_aarch64",
++    visibility = ["//visibility:public"],
++)
+diff -Nru --strip-trailing-cr donor-pristine/Makefile recon/Makefile
+--- donor-pristine/Makefile	1970-01-01 03:00:00.000000000 +0300
++++ recon/Makefile	2026-09-07 02:53:02.714622137 +0300
+@@ -0,0 +1,39 @@
++# LieppOS reconstruction of the Ulefone GQ5012BF1 stock aw883xx_driver.ko (v1.7.1).
++#
++# Object order reproduces the stock link order, which was recovered from the
++# stock .text layout (first function of each translation unit):
++#   0x000004 aw883xx_monitor.c        (aw883xx_monitor_start)
++#   0x001b14 aw883xx_bin_parse.c      (aw883xx_dev_dsp_data_order)
++#   0x003a94 aw883xx_device.c         (aw883xx_dev_get_list_head)
++#   0x008694 aw883xx_init.c           (aw883xx_init_check_chipid)
++#   0x0089a0 aw883xx_calib.c          (aw883xx_cali_check_result)
++#   0x00e974 aw883xx_spin.c           (aw883xx_spin_check_mode)
++#   0x00f7e0 aw883xx.c                (aw883xx_get_version)
++#   0x015844 aw883xx_pid_2049_init.c  (aw883xx_pid_2049_dev_init)
++#   0x017078 aw883xx_pid_2066_init.c  (aw883xx_pid_2066_dev_init)
++#   0x017bac aw883xx_pid_2183_init.c  (aw883xx_pid_2183_dev_init)
++ifneq ($(KERNELRELEASE),)
++
++obj-m += aw883xx_driver.o
++aw883xx_driver-y := aw883xx_monitor.o \
++		aw883xx_bin_parse.o \
++		aw883xx_device.o \
++		aw883xx_init.o \
++		aw883xx_calib.o \
++		aw883xx_spin.o \
++		aw883xx.o \
++		aw883xx_pid_2049_init.o \
++		aw883xx_pid_2066_init.o \
++		aw883xx_pid_2183_init.o
++
++else
++
++.PHONY: all modules modules_install clean
++all modules:
++	$(MAKE) -C $(KERNEL_SRC) M=$(M) KBUILD_MODPOST_WARN=1 modules
++modules_install:
++	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules_install
++clean:
++	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
++
++endif

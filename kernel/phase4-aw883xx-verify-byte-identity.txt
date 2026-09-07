@@ -1,0 +1,26 @@
+STOCK vs LieppOS reconstruction - aw883xx_driver.ko
+stock  : vendor_dlkm/lib/modules/aw883xx_driver.ko
+         sha256 3bc4722c6550abb9cfd75d06602c2a1bff8d0b6af58708324479ef6a0d22c9b4
+rebuilt: //lieppos/aw883xx-recon/recon:aw883xx_driver_gki against //common:kernel_aarch64 (GKI ab/12901745)
+
+stock .text functions    : 236
+rebuilt .text functions  : 236
+stock-only               : none
+rebuilt-only             : none
+byte-identical           : 235/236
+not byte-identical       :
+    aw883xx_dev_cfg_load  stock=3560 rebuilt=3564  (+4)  [register allocation / spill slot only; reloc multiset identical]
+differing reloc/call/string multiset: 0 
+
+imports                  : stock=73 rebuilt=73 identical=True
+.data non-relocated bytes identical       : True
+.data reloc (offset,target) list identical: True
+.rodata              stock= 3353 rebuilt= 3353 identical=True
+.bss                 stock=   50 rebuilt=   50 identical=True
+__versions           stock= 4736 rebuilt= 4736 identical=True
+__ksymtab_strings    stock=   38 rebuilt=   38 identical=True
+__kcrctab            stock=    8 rebuilt=    8 identical=True
+
+exports (stock == rebuilt):
+    aw883xx_i2c_probe 0x713728fc
+    aw883xx_i2c_remove 0xb3e48038

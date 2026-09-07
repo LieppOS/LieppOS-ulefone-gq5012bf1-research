@@ -34,8 +34,11 @@ Remaining hardware-specific port tracks:
 - aw36515
 - aw36518
 - aw36518_v2
-- aw883xx_driver
-- focaltech_touch_spi_ft3680
+- ~~aw883xx_driver~~ — **done**, see `kernel/phase4-aw883xx-reconstruction.md`
+  (`SOURCE_DELTA_RECONSTRUCTION_EXACT`: 236/236 functions, 235/236
+  byte-identical, exact ABI parity with the stock oracle)
+- ~~focaltech_touch_spi_ft3680~~ — done, see
+  `kernel/phase4-focaltech-ft3680-reconstruction.md`
 - leds_rgb_aw2013
 
 UARTHUB is excluded from the required-port set because stock GQ5012BF1 has:
