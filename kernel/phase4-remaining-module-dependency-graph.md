@@ -57,7 +57,7 @@ P:72 mtk-mml → P:73 mtk-mml-mt6878 → P:74 drm_dma_helper → P:75 mtk_panel_
    → P:78 mediatek-drm-panel-drv → P:79 drm_display_helper → P:80 mediatek-drm
 ```
 
-**Recommended build order:** `mtk_panel_ext` → `mediatek_drm` → panel.
+**Current action:** retain stock `mtk_panel_ext` → `mediatek-drm` → panel as one ABI island. The panel logic is reconstructed, but a source build remains `BLOCKED_WITH_EXACT_MISSING_EVIDENCE` until the provider type graph reproduces all seven stock CRCs.
 Because the panel has **zero exports**, reconstructing it can never break
 anything downstream — the risk is entirely upstream (its 7 imported CRCs).
 
@@ -364,7 +364,8 @@ happens.
 TIER 0  source-built GKI core only; every vendor module stays stock
 TIER 1  frozen reconstructions re-landed (no new providers introduced)
 TIER 2  yft_devinfo pinned to STOCK; all consumers linked to stock symvers
-TIER 3  mtk_panel_ext → mediatek_drm → panel_ky_vtdr6115_dphy_cmd
+TIER 3  retain stock mtk_panel_ext → mediatek_drm → panel ABI island;
+        panel source waits for exact provider type graph (7 CRCs)
 TIER 4  custom_ldo_wl2868 → custom_ldo
 TIER 5  charger_class verified → sc851x_charger → sc8571_charger → sh366003_fg
 TIER 6  connadp/connscp/ccci_md_all/aee_aed/device-apc-common

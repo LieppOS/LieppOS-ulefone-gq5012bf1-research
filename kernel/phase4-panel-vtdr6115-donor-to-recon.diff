@@ -1,0 +1,1867 @@
+--- "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/workspace/phase4-panel-vtdr6115/donor/donor.c"  2026-09-07 23:53:58.284035632 +0300
++++ "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/kernel/phase4-panel-vtdr6115-recon/panel-ky-vtdr6115-dphy-cmd.c"        2026-09-08 00:26:36.329994571 +0300
+@@ -1,123 +1,111 @@
+ // SPDX-License-Identifier: GPL-2.0
+ /*
+- * Copyright (c) 2019 MediaTek Inc.
++ * Reconstruction of the Ulefone Armor 29 Pro Thermal (GQ5012BF1 / MT6878)
++ * stock display-panel module:
++ *
++ *     panel-ky-vtdr6115-dphy-cmd.ko
++ *     name        panel_ky_vtdr6115_dphy_cmd
++ *     sha256      1e5778f3612378dd6fc3ba96ca461d8ba0661fc6617290a7c64245ede3f3af07
++ *     BuildID     c86ee66361fe30b7b27e0c1a11edb1b81eafd2b0
++ *     vermagic    6.1.115-android14-11-g945dff7bc1bf
++ *
++ * Every command byte, every delay, every GPIO transition and every panel-ext
++ * parameter below was recovered from that binary.  Nothing here was taken from
++ * the Motorola CSOT 144 Hz VDO donor except where the donor independently
++ * matched the stock bytes (only the 8 bpp DSC PPS payload does).
++ *
++ * NOTE ON THE PANEL MODE: despite "cmd" in the module name and in the DT
++ * compatible string, dsi->mode_flags in the stock binary is 0x0E05 =
++ * MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
++ * MIPI_DSI_MODE_NO_EOT_PACKET | MIPI_DSI_CLOCK_NON_CONTINUOUS |
++ * MIPI_DSI_MODE_LPM.  The panel runs in DSI VIDEO (sync-pulse) mode.  The
++ * MODULE_DESCRIPTION ("vtdr6115 VDO 120HZ AMOLED Panel Driver") is correct;
++ * the "cmd" token in the filename/compatible is a vendor misnomer.
+  */
+
+ #include <linux/backlight.h>
+-#include <drm/drm_mipi_dsi.h>
+-#include <drm/drm_panel.h>
+-#include <drm/drm_modes.h>
+ #include <linux/delay.h>
+-#include <drm/drm_connector.h>
+-#include <drm/drm_device.h>
+-
++#include <linux/device.h>
+ #include <linux/gpio/consumer.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/of_graph.h>
++#include <linux/of_platform.h>
+ #include <linux/regulator/consumer.h>
+
+ #include <video/mipi_display.h>
+ #include <video/of_videomode.h>
+ #include <video/videomode.h>
+
+-#include <linux/module.h>
+-#include <linux/of_platform.h>
+-#include <linux/of_graph.h>
+-#include <linux/platform_device.h>
++#include <drm/drm_connector.h>
++#include <drm/drm_device.h>
++#include <drm/drm_mipi_dsi.h>
++#include <drm/drm_modes.h>
++#include <drm/drm_panel.h>
++#include <drm/drm_print.h>
+
+-#define CONFIG_MTK_PANEL_EXT
+-#if defined(CONFIG_MTK_PANEL_EXT)
+-#include "../mediatek/mediatek_v2/mtk_panel_ext.h"
+-#include "../mediatek/mediatek_v2/mtk_drm_graphics_base.h"
+-#endif
+-
+-#include "dsi-panel-mot-csot-vtdr6115-655-fhdp-dphy-vdo-144hz-lhbm-alpha.h"
+-
+-#define SUPPORT_144HZ_REFRESH_RATE
+-#define DSC_10BIT
+-#ifdef DSC_10BIT
+-#define DSC_BITS       10
+-#define DSC_CFG                40//2088//40
+-#else
+-#define DSC_BITS       8
+-#define DSC_CFG                34
+-#endif
+-
+-enum panel_version{
+-       PANEL_V1 = 1,
+-       PANEL_V2,
+-};
++#include "mtk_panel_ext_stock_abi.h"
+
++/* ------------------------------------------------------------------------ */
++/* Panel private context                                                     */
++/*                                                                           */
++/* sizeof == 112 (0x70) - proven from                                        */
++/*     devm_kmalloc(&dsi->dev, 0x70, GFP_KERNEL | __GFP_ZERO)                */
++/* in lcm_probe.  Member offsets proven from instruction displacements:      */
++/*     0x00 dev, 0x08 panel, 0x38 backlight, 0x40 reset_gpio,                */
++/*     0x50 dvdd_gpio, 0x58 vci_gpio, 0x60 prepared, 0x61 enabled,           */
++/*     0x68 hbm_flag, 0x6C error.                                            */
++/* 0x48 and 0x64 are never referenced by any stock instruction; they are     */
++/* modelled here with the two plausible vendor members (the DT does carry an */
++/* unconsumed powerdm-gpios and a gate-ic property).                         */
++/* ------------------------------------------------------------------------ */
+ struct lcm {
+-       struct device *dev;
+-       struct drm_panel panel;
+-       struct backlight_device *backlight;
+-       struct gpio_desc *reset_gpio;
+-       bool prepared;
+-       bool enabled;
+-       bool lhbm_en;
+-
+-       int error;
+-       unsigned int hbm_mode;
+-       unsigned int dc_mode;
+-       unsigned int current_bl;
+-       enum panel_version version;
+-};
+-
+-struct lcm *g_ctx = NULL;
+-
+-#define lcm_dcs_write_seq(ctx, seq...)                                         \
+-       ({                                                                     \
+-               const u8 d[] = { seq };                                        \
+-               BUILD_BUG_ON_MSG(ARRAY_SIZE(d) > 64,                           \
+-                                "DCS sequence too big for stack");            \
+-               lcm_dcs_write(ctx, d, ARRAY_SIZE(d));                          \
+-       })
+-
+-#define lcm_dcs_write_seq_static(ctx, seq...)  \
+-({\
+-       static const u8 d[] = { seq };\
+-       lcm_dcs_write(ctx, d, ARRAY_SIZE(d));\
+-})
++       struct device *dev;                     /* 0x00 */
++       struct drm_panel panel;                 /* 0x08 */
++       struct backlight_device *backlight;     /* 0x38 */
++       struct gpio_desc *reset_gpio;           /* 0x40 */
++       struct gpio_desc *powerdm_gpio;         /* 0x48 - never referenced */
++       struct gpio_desc *dvdd_gpio;            /* 0x50 */
++       struct gpio_desc *vci_gpio;             /* 0x58 */
++       bool prepared;                          /* 0x60 */
++       bool enabled;                           /* 0x61 */
++       unsigned int gate_ic;                   /* 0x64 - never referenced */
++       int hbm_flag;                           /* 0x68 */
++       int error;                              /* 0x6C */
++};
++
++static_assert(sizeof(struct lcm) == 112, "struct lcm size");
++static_assert(offsetof(struct lcm, panel) == 0x08, "lcm.panel");
++static_assert(offsetof(struct lcm, backlight) == 0x38, "lcm.backlight");
++static_assert(offsetof(struct lcm, reset_gpio) == 0x40, "lcm.reset_gpio");
++static_assert(offsetof(struct lcm, dvdd_gpio) == 0x50, "lcm.dvdd_gpio");
++static_assert(offsetof(struct lcm, vci_gpio) == 0x58, "lcm.vci_gpio");
++static_assert(offsetof(struct lcm, prepared) == 0x60, "lcm.prepared");
++static_assert(offsetof(struct lcm, enabled) == 0x61, "lcm.enabled");
++static_assert(offsetof(struct lcm, hbm_flag) == 0x68, "lcm.hbm_flag");
++static_assert(offsetof(struct lcm, error) == 0x6C, "lcm.error");
++
++/* module-scope state (stock .data / .bss) */
++static struct lcm *g_ctx;                      /* .bss+0x00 */
++static unsigned int current_backlight;         /* .bss+0x08 */
++static struct class *primary_lcm_class;                /* .bss+0x10 */
++static int last_hbm_backlight_value;           /* .bss+0x18 */
++static unsigned int current_fps = 120;         /* .data+0xC8, init 0x78 */
+
+ static inline struct lcm *panel_to_lcm(struct drm_panel *panel)
+ {
+        return container_of(panel, struct lcm, panel);
+ }
+
+-#ifdef PANEL_SUPPORT_READBACK
+-static int lcm_dcs_read(struct lcm *ctx, u8 cmd, void *data, size_t len)
+-{
+-       struct mipi_dsi_device *dsi = to_mipi_dsi_device(ctx->dev);
+-       ssize_t ret;
+-
+-       if (ctx->error < 0)
+-               return 0;
+-
+-       ret = mipi_dsi_dcs_read(dsi, cmd, data, len);
+-       if (ret < 0) {
+-               dev_info(ctx->dev, "error %d reading dcs seq:(%#x)\n", ret,
+-                        cmd);
+-               ctx->error = ret;
+-       }
+-
+-       return ret;
+-}
+-
+-static void lcm_panel_get_data(struct lcm *ctx)
+-{
+-       u8 buffer[3] = { 0 };
+-       static int ret;
+-
+-       pr_info("%s+\n", __func__);
+-
+-       if (ret == 0) {
+-               ret = lcm_dcs_read(ctx, 0x0A, buffer, 1);
+-               pr_info("%s  0x%08x\n", __func__, buffer[0] | (buffer[1] << 8));
+-               dev_info(ctx->dev, "return %d data(0x%08x) to dsi engine\n",
+-                       ret, buffer[0] | (buffer[1] << 8));
+-       }
+-}
+-#endif
+-
++/* ------------------------------------------------------------------------ */
++/* DSI transport                                                             */
++/*                                                                           */
++/* Stock lcm_dcs_write: opcode <= 0xAF -> mipi_dsi_dcs_write_buffer,         */
++/* opcode >= 0xB0 -> mipi_dsi_generic_write.  Both paths retry the write     */
++/* exactly once after logging, and only latch ctx->error if the retry also   */
++/* fails.  The retry ("seq_2") is a Ulefone/YFT deviation from the MediaTek  */
++/* template and is reproduced verbatim.                                      */
++/* ------------------------------------------------------------------------ */
+ static void lcm_dcs_write(struct lcm *ctx, const void *data, size_t len)
+ {
+        struct mipi_dsi_device *dsi = to_mipi_dsi_device(ctx->dev);
+@@ -128,75 +116,167 @@
+                return;
+
+        addr = (char *)data;
+-       if ((int)*addr < 0xB0)
++       if ((int)*addr < 0xB0) {
+                ret = mipi_dsi_dcs_write_buffer(dsi, data, len);
+-       else
++               if (ret < 0) {
++                       dev_info(ctx->dev, "error %zd writing seq: %ph\n",
++                                ret, data);
++                       ret = mipi_dsi_dcs_write_buffer(dsi, data, len);
++                       if (ret < 0) {
++                               dev_info(ctx->dev,
++                                        "error %zd writing seq_2: %ph\n",
++                                        ret, data);
++                               ctx->error = ret;
++                       }
++               }
++       } else {
+                ret = mipi_dsi_generic_write(dsi, data, len);
+-       if (ret < 0) {
+-               dev_info(ctx->dev, "error %zd writing seq: %ph\n", ret, data);
+-               ctx->error = ret;
++               if (ret < 0) {
++                       dev_info(ctx->dev,
++                                "generic_write error %zd writing seq: %ph\n",
++                                ret, data);
++                       ret = mipi_dsi_generic_write(dsi, data, len);
++                       if (ret < 0) {
++                               dev_info(ctx->dev,
++                                        "generic_write error %zd writing seq_2: %ph\n",
++                                        ret, data);
++                               ctx->error = ret;
++                       }
++               }
+        }
+ }
+
++#define lcm_dcs_write_seq_static(ctx, seq...)                                  \
++       ({                                                                     \
++               static const u8 d[] = { seq };                                 \
++               lcm_dcs_write(ctx, d, ARRAY_SIZE(d));                          \
++       })
++
++/* ------------------------------------------------------------------------ */
++/* Panel initialisation - .rodata command tables, call order proven from the */
++/* relocation stream of lcm_panel_init                                       */
++/* ------------------------------------------------------------------------ */
+ static void lcm_panel_init(struct lcm *ctx)
+ {
+-       lcm_dcs_write_seq_static(ctx, 0xF0, 0xAA, 0x10);
+-       lcm_dcs_write_seq_static(ctx, 0xD0, 0x84,0x15,0x50,0x14,0x20,0x00,0x39,0x0D,0x1D,0x19,0x00,0x00,0x0D,0x1D,0x19,0x00,0x00,0x09,0x05,0x05,0x1D,0x1D);//swire pulse:ELVSS 30pulse-normal 24pulse-HBM
++       u8 bl_tb0[] = { 0x51, 0x07, 0xFF };
++
++       /* reset L(15ms) - H(15ms) - L(15ms) - H(20ms) */
++       ctx->reset_gpio = devm_gpiod_get(ctx->dev, "reset", GPIOD_OUT_HIGH);
++       gpiod_set_value(ctx->reset_gpio, 0);
++       usleep_range(15 * 1000, 15 * 1000);
++       gpiod_set_value(ctx->reset_gpio, 1);
++       usleep_range(15 * 1000, 15 * 1000);
++       gpiod_set_value(ctx->reset_gpio, 0);
++       usleep_range(15 * 1000, 15 * 1000);
++       gpiod_set_value(ctx->reset_gpio, 1);
++       usleep_range(20 * 1000, 20 * 1000);
++       devm_gpiod_put(ctx->dev, ctx->reset_gpio);
++
++       printk("%s+ yft-lcm-vtdr6115-drv- start reset_gpio H-L-H,%d\n",
++              __func__, current_fps);
++
+        lcm_dcs_write_seq_static(ctx, 0x03, 0x01);
+-       lcm_dcs_write_seq_static(ctx, 0x35, 0x00);
+-       lcm_dcs_write_seq_static(ctx, 0x55, 0x10);
+        lcm_dcs_write_seq_static(ctx, 0x53, 0x20);
+-       lcm_dcs_write_seq_static(ctx, 0x51, 0x00, 0x00);
+-       lcm_dcs_write_seq_static(ctx, 0x59, 0x09);
+-       lcm_dcs_write_seq_static(ctx, 0x6f, 0x01);
+-       lcm_dcs_write_seq_static(ctx, 0x6c, 0x00);
+-       lcm_dcs_write_seq_static(ctx, 0x62, 0x00);
+-       lcm_dcs_write_seq_static(ctx, 0x6d, 0x00);
+-#ifdef DSC_10BIT
+-       lcm_dcs_write_seq_static(ctx, 0x70, 0x11,0x00,0x00,0xAB,0x30,0x80,0x09,0x60,0x04,0x38,0x00,0x0C,0x02,0x1C,0x02,0x1C,
+-                                                                               0x02,0x00,0x02,0x0E,0x00,0x20,0x01,0x1F,0x00,0x07,0x00,0x0C,0x08,0xBB,0x08,0x7A,
+-                                                                               0x18,0x00,0x10,0xF0,0x07,0x10,0x20,0x00,0x06,0x0F,0x0F,0x33,0x0E,0x1C,0x2A,0x38,
+-                                                                               0x46,0x54,0x62,0x69,0x70,0x77,0x79,0x7B,0x7D,0x7E,0x02,0x02,0x22,0x00,0x2A,0x40,
+-                                                                               0x2A,0xBE,0x3A,0xFC,0x3A,0xFA,0x3A,0xF8,0x3B,0x38,0x3B,0x78,0x3B,0xB6,0x4B,0xB6,
+-                                                                               0x4B,0xF4,0x4B,0xF4,0x6C,0x34,0x84,0x74,0x00,0x00,0x00,0x00,0x00,0x00);
+-#else
+-       lcm_dcs_write_seq_static(ctx, 0x70, 0x11,0x00,0x00,0x89,0x30,0x80,0x09,0x60,0x04,0x38,0x00,0x0C,0x02,0x1C,0x02,0x1C,
+-                                                                               0x02,0x00,0x02,0x0E,0x00,0x20,0x01,0x1F,0x00,0x07,0x00,0x0C,0x08,0xBB,0x08,0x7A,
+-                                                                               0x18,0x00,0x10,0xF0,0x03,0x0C,0x20,0x00,0x06,0x0B,0x0B,0x33,0x0E,0x1C,0x2A,0x38,
+-                                                                               0x46,0x54,0x62,0x69,0x70,0x77,0x79,0x7B,0x7D,0x7E,0x01,0x02,0x01,0x00,0x09,0x40,
+-                                                                               0x09,0xBE,0x19,0xFC,0x19,0xFA,0x19,0xF8,0x1A,0x38,0x1A,0x78,0x1A,0xB6,0x2A,0xB6,
+-                                                                               0x2A,0xF4,0x2A,0xF4,0x4B,0x34,0x63,0x74,0x00,0x00,0x00,0x00,0x00,0x00);
+-#endif
+-       lcm_dcs_write_seq_static(ctx, 0xff, 0x5a, 0x80);
+-       lcm_dcs_write_seq_static(ctx, 0x65, 0x0e);
+-       lcm_dcs_write_seq_static(ctx, 0xf9, 0xb9);
+-
+-       lcm_dcs_write_seq_static(ctx, 0xff, 0x5a, 0x81);
+-       lcm_dcs_write_seq_static(ctx, 0xf3, 0x08);
++       lcm_dcs_write_seq_static(ctx, 0x51, 0x00, 0xFF);
++       lcm_dcs_write_seq_static(ctx, 0x6F, 0x01);
++       lcm_dcs_write_seq_static(ctx, 0x35, 0x00);
++       lcm_dcs_write_seq_static(ctx, 0x59, 0x00);
+
+-       lcm_dcs_write_seq_static(ctx, 0xff, 0x5a, 0x81);
++       if (current_fps == 60)
++               lcm_dcs_write_seq_static(ctx, 0x6C, 0x00);
++       else if (current_fps == 120)
++               lcm_dcs_write_seq_static(ctx, 0x6C, 0x02);
++       else if (current_fps == 90)
++               lcm_dcs_write_seq_static(ctx, 0x6C, 0x01);
++
++       lcm_dcs_write_seq_static(ctx, 0x6D, 0x00);
++
++       /* DSC 1.1 PPS, 8 bpp, 1080x2400, slice 540x12 */
++       lcm_dcs_write_seq_static(ctx, 0x70,
++               0x11, 0x00, 0x00, 0x89, 0x30, 0x80, 0x09, 0x60,
++               0x04, 0x38, 0x00, 0x0C, 0x02, 0x1C, 0x02, 0x1C,
++               0x02, 0x00, 0x02, 0x0E, 0x00, 0x20, 0x01, 0x1F,
++               0x00, 0x07, 0x00, 0x0C, 0x08, 0xBB, 0x08, 0x7A,
++               0x18, 0x00, 0x10, 0xF0, 0x03, 0x0C, 0x20, 0x00,
++               0x06, 0x0B, 0x0B, 0x33, 0x0E, 0x1C, 0x2A, 0x38,
++               0x46, 0x54, 0x62, 0x69, 0x70, 0x77, 0x79, 0x7B,
++               0x7D, 0x7E, 0x01, 0x02, 0x01, 0x00, 0x09, 0x40,
++               0x09, 0xBE, 0x19, 0xFC, 0x19, 0xFA, 0x19, 0xF8,
++               0x1A, 0x38, 0x1A, 0x78, 0x1A, 0xB6, 0x2A, 0xB6,
++               0x2A, 0xF4, 0x2A, 0xF4, 0x4B, 0x34, 0x63, 0x74,
++               0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
++
++       lcm_dcs_write_seq_static(ctx, 0xF0, 0xAA, 0x19);
++       lcm_dcs_write_seq_static(ctx, 0xD0, 0x01, 0x1F, 0x1E, 0x1F, 0x1E, 0x1F, 0x1E);
++       lcm_dcs_write_seq_static(ctx, 0xF0, 0xAA, 0x18);
++       lcm_dcs_write_seq_static(ctx, 0xB0, 0x13);
++       lcm_dcs_write_seq_static(ctx, 0xB2, 0x13);
++       lcm_dcs_write_seq_static(ctx, 0xFF, 0x5A, 0x81);
+        lcm_dcs_write_seq_static(ctx, 0x65, 0x03);
+-       lcm_dcs_write_seq_static(ctx, 0xf4, 0x03);
++       lcm_dcs_write_seq_static(ctx, 0xF4, 0x03);
++       lcm_dcs_write_seq_static(ctx, 0xF0, 0xAA, 0x12);
++       lcm_dcs_write_seq_static(ctx, 0x65, 0x09);
++       lcm_dcs_write_seq_static(ctx, 0xC5, 0x07);
++       lcm_dcs_write_seq_static(ctx, 0xFF, 0x5A, 0x80);
++       lcm_dcs_write_seq_static(ctx, 0x65, 0x0E);
++       lcm_dcs_write_seq_static(ctx, 0xF9, 0xB9);
++       lcm_dcs_write_seq_static(ctx, 0xFF, 0x5A, 0x81);
+        lcm_dcs_write_seq_static(ctx, 0x65, 0x08);
+-       lcm_dcs_write_seq_static(ctx, 0xf6, 0x51, 0x44);
++       lcm_dcs_write_seq_static(ctx, 0xF6, 0x51, 0x44);
++       lcm_dcs_write_seq_static(ctx, 0xF0, 0xAA, 0x12);
++       lcm_dcs_write_seq_static(ctx, 0x65, 0x02);
++       lcm_dcs_write_seq_static(ctx, 0xBB, 0x10);
++       lcm_dcs_write_seq_static(ctx, 0x55, 0x00);
++       lcm_dcs_write_seq_static(ctx, 0xF0, 0xAA, 0x11);
++       lcm_dcs_write_seq_static(ctx, 0xBA, 0x82, 0x10);
++       lcm_dcs_write_seq_static(ctx, 0x65, 0x01);
++       lcm_dcs_write_seq_static(ctx, 0xB0, 0x81);
++       lcm_dcs_write_seq_static(ctx, 0xF0, 0xAA, 0x10);
++       lcm_dcs_write_seq_static(ctx, 0xD0,
++               0x84, 0x16, 0x50, 0x14, 0x14, 0x00, 0x29, 0x00,
++               0x13, 0x00, 0x00, 0x00, 0x00, 0x29, 0x00, 0x00,
++               0x00, 0x00, 0x06, 0x06, 0x13, 0x13);
++       lcm_dcs_write_seq_static(ctx, 0xD1,
++               0x84, 0x15, 0x50, 0x14, 0x14, 0x00, 0x39, 0x2C,
++               0x0D, 0x32, 0x00, 0x00, 0x2C, 0x23, 0x32, 0x00,
++               0x00, 0x00, 0x05, 0x05, 0x0D, 0x0D);
++
++       bl_tb0[1] = (current_backlight >> 8) & 0xF;
++       bl_tb0[2] = current_backlight & 0xFF;
++       lcm_dcs_write(ctx, bl_tb0, ARRAY_SIZE(bl_tb0));
+
+-       lcm_dcs_write_seq_static(ctx, 0xff, 0x5a, 0x00);
+-       lcm_dcs_write_seq_static(ctx, 0xf0, 0xaa, 0x00);
++       lcm_dcs_write_seq_static(ctx, 0xF0, 0xAA, 0x10);
++       lcm_dcs_write_seq_static(ctx, 0xB1,
++               0x01, 0x6D, 0x00, 0x18, 0x09, 0xE0, 0x00, 0x01,
++               0x6D, 0x00, 0x18, 0x03, 0x76, 0x00, 0x01, 0x6D,
++               0x00, 0x18, 0x00, 0x3C, 0x00);
++       lcm_dcs_write_seq_static(ctx, 0xB2,
++               0x01, 0x6D, 0x00, 0x18, 0x00, 0x3C, 0x03, 0x01,
++               0x6D, 0x00, 0x18, 0x00, 0x3C, 0x03, 0x01, 0x6D,
++               0x00, 0x18, 0x00, 0x3C, 0x03);
++       lcm_dcs_write_seq_static(ctx, 0xFF, 0x5A, 0x00);
++       lcm_dcs_write_seq_static(ctx, 0xF0, 0xAA, 0x00);
+
+        /* Sleep Out */
+-       lcm_dcs_write_seq_static(ctx, 0x11);
++       lcm_dcs_write_seq_static(ctx, 0x11, 0x00);
+        msleep(120);
+
+        /* Display On */
+-       lcm_dcs_write_seq_static(ctx, 0x29);
++       lcm_dcs_write_seq_static(ctx, 0x29, 0x00);
++       msleep(50);
+
+-       pr_info("%s csot vtdr6115-\n", __func__);
++       pr_info("%s-\n", __func__);
+ }
+
++/* ------------------------------------------------------------------------ */
++/* drm_panel operations                                                      */
++/* ------------------------------------------------------------------------ */
+ static int lcm_disable(struct drm_panel *panel)
+ {
+        struct lcm *ctx = panel_to_lcm(panel);
+
++       printk("%s+ yft-lcm-vtdr6115-drv- start \n", __func__);
++
+        if (!ctx->enabled)
+                return 0;
+
+@@ -210,58 +290,57 @@
+        return 0;
+ }
+
+-static int gate_ic_Power_on(struct drm_panel *panel, int enabled)
+-{
+-       struct lcm *ctx = panel_to_lcm(panel);
+-       bool gpio_status;
+-       struct gpio_desc *pm_en_pin;
+-       int i;
+-
+-       gpio_status = enabled ? 1:0;
+-       if (gpio_status) {
+-               for (i=0; i < 4; i++) {
+-                       pm_en_pin = NULL;
+-                       pm_en_pin = devm_gpiod_get_index(ctx->dev, "pm-enable", i, GPIOD_OUT_LOW);
+-                       if (IS_ERR(pm_en_pin)) {
+-                               pr_err("cannot get bias-gpios 0 %ld\n", PTR_ERR(pm_en_pin));
+-                               return PTR_ERR(pm_en_pin);
+-                       }
+-                       gpiod_set_value(pm_en_pin, gpio_status);
+-                       devm_gpiod_put(ctx->dev, pm_en_pin);
+-                       usleep_range(3000, 3001);
+-               }
+-       } else {
+-               for (i=3; i >= 0; i--) {
+-                       pm_en_pin = NULL;
+-                       pm_en_pin = devm_gpiod_get_index(ctx->dev, "pm-enable", i, GPIOD_OUT_LOW);
+-                       if (IS_ERR(pm_en_pin)) {
+-                               pr_err("cannot get bias-gpios 0 %ld\n", PTR_ERR(pm_en_pin));
+-                               return PTR_ERR(pm_en_pin);
+-                       }
+-                       gpiod_set_value(pm_en_pin, gpio_status);
+-                       devm_gpiod_put(ctx->dev, pm_en_pin);
+-                       usleep_range(3000, 3001);
+-               }
+-       }
+-       return 0;
+-}
+-
+-
+ static int lcm_unprepare(struct drm_panel *panel)
+ {
+        struct lcm *ctx = panel_to_lcm(panel);
+
+-
+-       pr_info("%s+\n", __func__);
+        if (!ctx->prepared)
+                return 0;
+
++       printk("%s+ yft-lcm-vtdr6115-drv- start \n", __func__);
++
+        lcm_dcs_write_seq_static(ctx, MIPI_DCS_SET_DISPLAY_OFF);
++       msleep(20);
+        lcm_dcs_write_seq_static(ctx, MIPI_DCS_ENTER_SLEEP_MODE);
+-       msleep(120);
++       msleep(200);
++
++       ctx->reset_gpio = devm_gpiod_get(ctx->dev, "reset", GPIOD_OUT_HIGH);
++       if (IS_ERR(ctx->reset_gpio)) {
++               dev_err(ctx->dev, "%s: cannot get reset_gpio %ld\n",
++                       __func__, PTR_ERR(ctx->reset_gpio));
++               return PTR_ERR(ctx->reset_gpio);
++       }
++       pr_info("yft-drv- %s reset_gpio  is off !\n", __func__);
++       gpiod_set_value(ctx->reset_gpio, 0);
++       devm_gpiod_put(ctx->dev, ctx->reset_gpio);
++       msleep(10);
++
++       ctx->vci_gpio = devm_gpiod_get(ctx->dev, "vci", GPIOD_OUT_HIGH);
++       if (IS_ERR(ctx->vci_gpio)) {
++               dev_err(ctx->dev, "%s: cannot get vci_gpio %ld\n",
++                       __func__, PTR_ERR(ctx->vci_gpio));
++               return PTR_ERR(ctx->vci_gpio);
++       }
++       pr_info("yft-drv- %s vci_gpio is off !\n", __func__);
++       gpiod_set_value(ctx->vci_gpio, 0);
++       devm_gpiod_put(ctx->dev, ctx->vci_gpio);
++       msleep(10);
++
++       ctx->dvdd_gpio = devm_gpiod_get(ctx->dev, "dvdd", GPIOD_OUT_HIGH);
++       if (IS_ERR(ctx->dvdd_gpio)) {
++               dev_err(ctx->dev, "%s: cannot get dvdd_gpio %ld\n",
++                       __func__, PTR_ERR(ctx->dvdd_gpio));
++               return PTR_ERR(ctx->dvdd_gpio);
++       }
++       pr_info("yft-drv- %s dvdd_pin is off !\n", __func__);
++       gpiod_set_value(ctx->dvdd_gpio, 0);
++       devm_gpiod_put(ctx->dev, ctx->dvdd_gpio);
+
+        ctx->error = 0;
+        ctx->prepared = false;
++       msleep(10);
++
++       printk("%s+ yft-lcm-vtdr6115-drv- end \n", __func__);
+
+        return 0;
+ }
+@@ -271,37 +350,43 @@
+        struct lcm *ctx = panel_to_lcm(panel);
+        int ret;
+
+-       pr_info("%s+\n", __func__);
++       pr_info("%s+ yft-lcm-vtdr6115-drv- start\n", __func__);
++
+        if (ctx->prepared)
+                return 0;
+
+-       // lcd reset L->H -> L -> L
+-       ctx->reset_gpio = devm_gpiod_get(ctx->dev, "reset", GPIOD_OUT_LOW);
+-       gpiod_set_value(ctx->reset_gpio, 0);
+-       usleep_range(11000, 11001);
+-       gpiod_set_value(ctx->reset_gpio, 1);
+-       usleep_range(5000, 5001);
+-       gpiod_set_value(ctx->reset_gpio, 0);
+-       usleep_range(5000, 5001);
+-       gpiod_set_value(ctx->reset_gpio, 1);
+-       usleep_range(20000, 20001);
+-       devm_gpiod_put(ctx->dev, ctx->reset_gpio);
+-       // end
++       ctx->dvdd_gpio = devm_gpiod_get(ctx->dev, "dvdd", GPIOD_OUT_HIGH);
++       if (IS_ERR(ctx->dvdd_gpio)) {
++               dev_err(ctx->dev, "%s: cannot get dvdd_gpio %ld\n",
++                       __func__, PTR_ERR(ctx->dvdd_gpio));
++               return PTR_ERR(ctx->dvdd_gpio);
++       }
++       pr_info("yft-drv- %s dvdd_pin is on !\n", __func__);
++       gpiod_set_value(ctx->dvdd_gpio, 1);
++       devm_gpiod_put(ctx->dev, ctx->dvdd_gpio);
++
++       msleep(10);
++
++       ctx->vci_gpio = devm_gpiod_get(ctx->dev, "vci", GPIOD_OUT_HIGH);
++       if (IS_ERR(ctx->vci_gpio)) {
++               dev_err(ctx->dev, "%s: cannot get vci_gpio %ld\n",
++                       __func__, PTR_ERR(ctx->vci_gpio));
++               return PTR_ERR(ctx->vci_gpio);
++       }
++       pr_info("yft-drv- %s vci_gpio is on !\n", __func__);
++       gpiod_set_value(ctx->vci_gpio, 1);
++       devm_gpiod_put(ctx->dev, ctx->vci_gpio);
+
+        lcm_panel_init(ctx);
+
+        ret = ctx->error;
+-       if (ret < 0) goto error;
++       if (ret < 0)
++               lcm_unprepare(panel);
+
+        ctx->prepared = true;
+-#ifdef PANEL_SUPPORT_READBACK
+-       lcm_panel_get_data(ctx);
+-#endif
+
+-       pr_info("%s-\n", __func__);
+-       return ret;
+-error:
+-       lcm_unprepare(panel);
++       pr_info("%s- yft-lcm-vtdr6115-drv- end\n", __func__);
++
+        return ret;
+ }
+
+@@ -309,6 +394,8 @@
+ {
+        struct lcm *ctx = panel_to_lcm(panel);
+
++       printk("%s+ yft-lcm-vtdr6115-drv- start \n", __func__);
++
+        if (ctx->enabled)
+                return 0;
+
+@@ -322,364 +409,184 @@
+        return 0;
+ }
+
+-
+-#define HFP (32)
+-#define HSA (32)
+-#define HBP (32)
+-#define VFP (3480)
+-#define VSA (4)
+-#define VBP (8)
+-#define HACT (1080)
+-#define VACT (2400)
+-#define DISP_CLOCK (413199)    //1176*2460*144
+-#define DISP_PLL_CLK (550)
+-
+-static const struct drm_display_mode switch_mode_144hz = {
+-       .clock          = DISP_CLOCK,
+-       .hdisplay       = HACT,
+-       .hsync_start    = HACT + HFP,
+-       .hsync_end      = HACT + HFP + HSA,
+-       .htotal         = HACT + HFP + HSA + HBP,
+-       .vdisplay       = VACT,
+-       .vsync_start    = VACT + 28,
+-       .vsync_end      = VACT + 28 + VSA,
+-       .vtotal         = VACT + 28 + VSA + VBP,
+-};
+-
+-static const struct drm_display_mode switch_mode_120hz = {
+-       .clock          = DISP_CLOCK,
+-       .hdisplay       = HACT,
+-       .hsync_start    = HACT + HFP,
+-       .hsync_end      = HACT + HFP + HSA,
+-       .htotal         = HACT + HFP + HSA + HBP,
+-       .vdisplay       = VACT,
+-       .vsync_start    = VACT + 516,
+-       .vsync_end      = VACT + 516 + VSA,
+-       .vtotal         = VACT + 516 + VSA + VBP,
+-};
+-
+-static const struct drm_display_mode switch_mode_90hz = {
+-       .clock          = DISP_CLOCK,
+-       .hdisplay       = HACT,
+-       .hsync_start    = HACT + HFP,
+-       .hsync_end      = HACT + HFP + HSA,
+-       .htotal         = HACT + HFP + HSA + HBP,
+-       .vdisplay       = VACT,
+-       .vsync_start    = VACT + 1492,
+-       .vsync_end      = VACT + 1492 + VSA,
+-       .vtotal         = VACT + 1492 + VSA + VBP,
+-};
+-
+-static const struct drm_display_mode switch_mode_60hz = {
+-       .clock = DISP_CLOCK,
+-       .hdisplay       = HACT,
+-       .hsync_start    = HACT + HFP,
+-       .hsync_end      = HACT + HFP + HSA,
+-       .htotal         = HACT + HFP + HSA + HBP,
+-       .vdisplay       = VACT,
+-       .vsync_start    = VACT + 3444,
+-       .vsync_end      = VACT + 3444 + VSA,
+-       .vtotal         = VACT + 3444 + VSA + VBP,
+-};
+-
+-#if defined(CONFIG_MTK_PANEL_EXT)
+-static struct mtk_panel_params ext_params_60hz = {
+-       .pll_clk = DISP_PLL_CLK,
+-       .cust_esd_check = 0,
+-       .esd_check_enable = 1,
+-       .lcm_esd_check_table[0] = {
+-               .cmd = 0x0a,
+-               .count = 1,
+-               .para_list[0] = 0x9c,
+-       },
+-       .physical_width_um = 68256,
+-       .physical_height_um = 151680,
+-       .lcm_index = 0,
+-
+-       .output_mode = MTK_PANEL_DSC_SINGLE_PORT,
+-       .dsc_params = {
+-               .enable = 1,
+-               .ver = 17,
+-               .slice_mode = 1,
+-               .rgb_swap = 0,
+-               .dsc_cfg = DSC_CFG,
+-               .rct_on = 1,
+-               .bit_per_channel = DSC_BITS,
+-               .dsc_line_buf_depth = 11,
+-               .bp_enable = 1,
+-               .bit_per_pixel = 128,
+-               .pic_height = 2400,
+-               .pic_width = 1080,
+-               .slice_height = 12,
+-               .slice_width = 540,
+-               .chunk_size = 540,
+-               .xmit_delay = 512,
+-               .dec_delay = 526,
+-               .scale_value = 32,
+-               .increment_interval = 287,
+-               .decrement_interval = 7,
+-               .line_bpg_offset = 12,
+-               .nfl_bpg_offset = 2235,
+-               .slice_bpg_offset = 2170,
+-               .initial_offset = 6144,
+-               .final_offset = 4336,
+-               .flatness_minqp = 7,
+-               .flatness_maxqp = 16,
+-               .rc_model_size = 8192,
+-               .rc_edge_factor = 6,
+-               .rc_quant_incr_limit0 = 15,
+-               .rc_quant_incr_limit1 = 15,
+-               .rc_tgt_offset_hi = 3,
+-               .rc_tgt_offset_lo = 3,
++/* ------------------------------------------------------------------------ */
++/* Display modes                                                             */
++/*                                                                           */
++/* Exact stock .rodata values.  1080x2400, htotal 1204 (hfp 100 / hsa 8 /    */
++/* hbp 16); the three refresh rates are produced purely by vfp:              */
++/*     60 Hz  vfp 2528, vtotal 4952                                          */
++/*     90 Hz  vfp  886, vtotal 3310                                          */
++/*    120 Hz  vfp   60, vtotal 2484                                          */
++/* All three .clock values equal htotal*vtotal*fps/1000 exactly.             */
++/* ------------------------------------------------------------------------ */
++static const struct drm_display_mode default_mode = {
++       .clock          = 357732,
++       .hdisplay       = 1080,
++       .hsync_start    = 1080 + 100,
++       .hsync_end      = 1080 + 100 + 8,
++       .htotal         = 1080 + 100 + 8 + 16,
++       .vdisplay       = 2400,
++       .vsync_start    = 2400 + 2528,
++       .vsync_end      = 2400 + 2528 + 4,
++       .vtotal         = 2400 + 2528 + 4 + 20,
++};
++
++static const struct drm_display_mode performance_mode_90hz = {
++       .clock          = 358671,
++       .hdisplay       = 1080,
++       .hsync_start    = 1080 + 100,
++       .hsync_end      = 1080 + 100 + 8,
++       .htotal         = 1080 + 100 + 8 + 16,
++       .vdisplay       = 2400,
++       .vsync_start    = 2400 + 886,
++       .vsync_end      = 2400 + 886 + 4,
++       .vtotal         = 2400 + 886 + 4 + 20,
++};
++
++static const struct drm_display_mode performance_mode_120hz = {
++       .clock          = 358888,
++       .hdisplay       = 1080,
++       .hsync_start    = 1080 + 100,
++       .hsync_end      = 1080 + 100 + 8,
++       .htotal         = 1080 + 100 + 8 + 16,
++       .vdisplay       = 2400,
++       .vsync_start    = 2400 + 60,
++       .vsync_end      = 2400 + 60 + 4,
++       .vtotal         = 2400 + 60 + 4 + 20,
++};
++
++/* ------------------------------------------------------------------------ */
++/* MediaTek panel extension parameters                                       */
++/* ------------------------------------------------------------------------ */
++static unsigned int vtdr6115_vdo_120hz_dphy_buf_thresh[14] = {
++       896, 1792, 2688, 3584, 4480, 5376, 6272, 6720,
++       7168, 7616, 7744, 7872, 8000, 8064
++};
++
++static unsigned int vtdr6115_vdo_120hz_dphy_range_min_qp[15] = {
++       0, 0, 1, 1, 3, 3, 3, 3, 3, 3, 5, 5, 5, 9, 12
++};
++
++static unsigned int vtdr6115_vdo_120hz_dphy_range_max_qp[15] = {
++       4, 4, 5, 6, 7, 7, 7, 8, 9, 10, 10, 11, 11, 12, 13
++};
++
++static int vtdr6115_vdo_120hz_dphy_range_bpg_ofs[15] = {
++       2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -12, -12, -12, -12
++};
++
++#define VTDR6115_EXT_PARAMS_COMMON                                     \
++       .pll_clk = 435,                                                 \
++       .data_rate = 870,                                               \
++       .vdo_per_frame_lp_enable = 1,                                   \
++       .change_fps_by_vfp_send_cmd = 1,                                \
++       .cust_esd_check = 1,                                            \
++       .esd_check_enable = 1,                                          \
++       .lcm_esd_check_table[0] = {                                     \
++               .cmd = 0x0A,                                            \
++               .count = 1,                                             \
++               .para_list[0] = 0x9C,                                   \
++       },                                                              \
++       .output_mode = MTK_PANEL_DSC_SINGLE_PORT,                       \
++       .lp_perline_en = 1,                                             \
++       .dsc_params = {                                                 \
++               .enable = 1,                                            \
++               .ver = 17,                                              \
++               .slice_mode = 1,                                        \
++               .rgb_swap = 0,                                          \
++               .dsc_cfg = 34,                                          \
++               .rct_on = 1,                                            \
++               .bit_per_channel = 8,                                   \
++               .dsc_line_buf_depth = 9,                                \
++               .bp_enable = 1,                                         \
++               .bit_per_pixel = 128,                                   \
++               .pic_height = 2400,                                     \
++               .pic_width = 1080,                                      \
++               .slice_height = 12,                                     \
++               .slice_width = 540,                                     \
++               .chunk_size = 540,                                      \
++               .xmit_delay = 512,                                      \
++               .dec_delay = 526,                                       \
++               .scale_value = 32,                                      \
++               .increment_interval = 287,                              \
++               .decrement_interval = 7,                                \
++               .line_bpg_offset = 12,                                  \
++               .nfl_bpg_offset = 2235,                                 \
++               .slice_bpg_offset = 2170,                               \
++               .initial_offset = 6144,                                 \
++               .final_offset = 4336,                                   \
++               .flatness_minqp = 3,                                    \
++               .flatness_maxqp = 12,                                   \
++               .rc_model_size = 8192,                                  \
++               .rc_edge_factor = 6,                                    \
++               .rc_quant_incr_limit0 = 11,                             \
++               .rc_quant_incr_limit1 = 11,                             \
++               .rc_tgt_offset_hi = 3,                                  \
++               .rc_tgt_offset_lo = 3,                                  \
++               .ext_pps_cfg = {                                        \
++                       .enable = 1,                                    \
++                       .rc_buf_thresh = vtdr6115_vdo_120hz_dphy_buf_thresh,   \
++                       .range_min_qp = vtdr6115_vdo_120hz_dphy_range_min_qp,  \
++                       .range_max_qp = vtdr6115_vdo_120hz_dphy_range_max_qp,  \
++                       .range_bpg_ofs = vtdr6115_vdo_120hz_dphy_range_bpg_ofs,\
++               },                                                      \
++       }
++
++static struct mtk_panel_params ext_params = {
++       VTDR6115_EXT_PARAMS_COMMON,
++       .dfps_cmd_table0 = {
++               .cmd_num = 2,
++               .para_list = { 0x6C, 0x00 },
+        },
+-
+-       .max_bl_level = 3514,
+-       .hbm_type = HBM_MODE_DCS_ONLY,
+-
+-       .dyn_fps = {
+-               .switch_en = 1,
+-               .dfps_cmd_grp_table[0] = {2, {0x6c, 0x00} },
+-               .dfps_cmd_grp_table[1] = {2, {0x62, 0x00} },
+-               .dfps_cmd_grp_size = 2,
+-       },
+-       .data_rate = DISP_PLL_CLK * 2,
+-       .change_fps_by_vfp_send_cmd = 1,
+-
+-       .panel_cellid_reg = 0x5a,
+-       .panel_cellid_offset_reg = 0x65,
+-       .panel_cellid_len = 23,
+ };
+
+ static struct mtk_panel_params ext_params_90hz = {
+-       .pll_clk = DISP_PLL_CLK,
+-       .cust_esd_check = 0,
+-       .esd_check_enable = 1,
+-       .lcm_esd_check_table[0] = {
+-               .cmd = 0x0a,
+-               .count = 1,
+-               .para_list[0] = 0x9c,
+-       },
+-       .physical_width_um = 68256,
+-       .physical_height_um = 151680,
+-       .lcm_index = 0,
+-
+-       .output_mode = MTK_PANEL_DSC_SINGLE_PORT,
+-       .dsc_params = {
+-               .enable = 1,
+-               .ver = 17,
+-               .slice_mode = 1,
+-               .rgb_swap = 0,
+-               .dsc_cfg = DSC_CFG,
+-               .rct_on = 1,
+-               .bit_per_channel = DSC_BITS,
+-               .dsc_line_buf_depth = 11,
+-               .bp_enable = 1,
+-               .bit_per_pixel = 128,
+-               .pic_height = 2400,
+-               .pic_width = 1080,
+-               .slice_height = 12,
+-               .slice_width = 540,
+-               .chunk_size = 540,
+-               .xmit_delay = 512,
+-               .dec_delay = 526,
+-               .scale_value = 32,
+-               .increment_interval = 287,
+-               .decrement_interval = 7,
+-               .line_bpg_offset = 12,
+-               .nfl_bpg_offset = 2235,
+-               .slice_bpg_offset = 2170,
+-               .initial_offset = 6144,
+-               .final_offset = 4336,
+-               .flatness_minqp = 7,
+-               .flatness_maxqp = 16,
+-               .rc_model_size = 8192,
+-               .rc_edge_factor = 6,
+-               .rc_quant_incr_limit0 = 15,
+-               .rc_quant_incr_limit1 = 15,
+-               .rc_tgt_offset_hi = 3,
+-               .rc_tgt_offset_lo = 3,
++       VTDR6115_EXT_PARAMS_COMMON,
++       .dfps_cmd_table0 = {
++               .cmd_num = 2,
++               .para_list = { 0x6C, 0x01 },
+        },
+-       .max_bl_level = 3514,
+-       .hbm_type = HBM_MODE_DCS_ONLY,
+-
+-       .dyn_fps = {
+-               .switch_en = 1,
+-               .dfps_cmd_grp_table[0] = {2, {0x6c, 0x01} },
+-               .dfps_cmd_grp_table[1] = {2, {0x62, 0x01} },
+-               .dfps_cmd_grp_table[2] = {3, {0xf0, 0xaa, 0x10} },
+-               .dfps_cmd_grp_table[3] = {14, {0xB1,0x01,0x57,0x00,0x0C,0x0D,0x74,0x00,0x01,0x57,0x00,0x0C,0x05,0xD4} },
+-               .dfps_cmd_grp_size = 4,
+-       },
+-       .data_rate = DISP_PLL_CLK * 2,
+-       .change_fps_by_vfp_send_cmd = 1,
+-
+-       .panel_cellid_reg = 0x5a,
+-       .panel_cellid_offset_reg = 0x65,
+-       .panel_cellid_len = 23,
+ };
+-static struct mtk_panel_params ext_params_120hz = {
+-       .pll_clk = DISP_PLL_CLK,
+-       .cust_esd_check = 0,
+-       .esd_check_enable = 1,
+-       .lcm_esd_check_table[0] = {
+-               .cmd = 0x0a,
+-               .count = 1,
+-               .para_list[0] = 0x9c,
+-       },
+-       .physical_width_um = 68256,
+-       .physical_height_um = 151680,
+-       .lcm_index = 0,
+-
+-       .output_mode = MTK_PANEL_DSC_SINGLE_PORT,
+-       .dsc_params = {
+-               .enable = 1,
+-               .ver = 17,
+-               .slice_mode = 1,
+-               .rgb_swap = 0,
+-               .dsc_cfg = DSC_CFG,
+-               .rct_on = 1,
+-               .bit_per_channel = DSC_BITS,
+-               .dsc_line_buf_depth = 11,
+-               .bp_enable = 1,
+-               .bit_per_pixel = 128,
+-               .pic_height = 2400,
+-               .pic_width = 1080,
+-               .slice_height = 12,
+-               .slice_width = 540,
+-               .chunk_size = 540,
+-               .xmit_delay = 512,
+-               .dec_delay = 526,
+-               .scale_value = 32,
+-               .increment_interval = 287,
+-               .decrement_interval = 7,
+-               .line_bpg_offset = 12,
+-               .nfl_bpg_offset = 2235,
+-               .slice_bpg_offset = 2170,
+-               .initial_offset = 6144,
+-               .final_offset = 4336,
+-               .flatness_minqp = 7,
+-               .flatness_maxqp = 16,
+-               .rc_model_size = 8192,
+-               .rc_edge_factor = 6,
+-               .rc_quant_incr_limit0 = 15,
+-               .rc_quant_incr_limit1 = 15,
+-               .rc_tgt_offset_hi = 3,
+-               .rc_tgt_offset_lo = 3,
+-       },
+-       .max_bl_level = 3514,
+-       .hbm_type = HBM_MODE_DCS_ONLY,
+
+-       .dyn_fps = {
+-               .switch_en = 1,
+-               .dfps_cmd_grp_table[0] = {2, {0x6c, 0x01} },
+-               .dfps_cmd_grp_table[1] = {2, {0x62, 0x00} },
+-               .dfps_cmd_grp_table[2] = {3, {0xf0, 0xaa, 0x10} },
+-               .dfps_cmd_grp_table[3] = {14, {0xB1,0x01,0x57,0x00,0x0C,0x0D,0x74,0x00,0x01,0x57,0x00,0x0C,0x02,0x04} },
+-               .dfps_cmd_grp_size = 4,
++static struct mtk_panel_params ext_params_120hz = {
++       VTDR6115_EXT_PARAMS_COMMON,
++       .dfps_cmd_table0 = {
++               .cmd_num = 2,
++               .para_list = { 0x6C, 0x02 },
+        },
+-       .data_rate = DISP_PLL_CLK * 2,
+-       .change_fps_by_vfp_send_cmd = 1,
+-
+-       .panel_cellid_reg = 0x5a,
+-       .panel_cellid_offset_reg = 0x65,
+-       .panel_cellid_len = 23,
+ };
+
+-static struct mtk_panel_params ext_params_144hz = {
+-       .pll_clk = DISP_PLL_CLK,
+-       .cust_esd_check = 0,
+-       .esd_check_enable = 1,
+-       .lcm_esd_check_table[0] = {
+-               .cmd = 0x0a,
+-               .count = 1,
+-               .para_list[0] = 0x9c,
+-       },
+-       .physical_width_um = 68256,
+-       .physical_height_um = 151680,
+-       .lcm_index = 0,
+-
+-       .output_mode = MTK_PANEL_DSC_SINGLE_PORT,
+-       .dsc_params = {
+-               .enable = 1,
+-               .ver = 17,
+-               .slice_mode = 1,
+-               .rgb_swap = 0,
+-               .dsc_cfg = DSC_CFG,
+-               .rct_on = 1,
+-               .bit_per_channel = DSC_BITS,
+-               .dsc_line_buf_depth = 11,
+-               .bp_enable = 1,
+-               .bit_per_pixel = 128,
+-               .pic_height = 2400,
+-               .pic_width = 1080,
+-               .slice_height = 12,
+-               .slice_width = 540,
+-               .chunk_size = 540,
+-               .xmit_delay = 512,
+-               .dec_delay = 526,
+-               .scale_value = 32,
+-               .increment_interval = 287,
+-               .decrement_interval = 7,
+-               .line_bpg_offset = 12,
+-               .nfl_bpg_offset = 2235,
+-               .slice_bpg_offset = 2170,
+-               .initial_offset = 6144,
+-               .final_offset = 4336,
+-               .flatness_minqp = 7,
+-               .flatness_maxqp = 16,
+-               .rc_model_size = 8192,
+-               .rc_edge_factor = 6,
+-               .rc_quant_incr_limit0 = 15,
+-               .rc_quant_incr_limit1 = 15,
+-               .rc_tgt_offset_hi = 3,
+-               .rc_tgt_offset_lo = 3,
+-       },
+-       .max_bl_level = 3514,
+-       .hbm_type = HBM_MODE_DCS_ONLY,
+-
+-       .dyn_fps = {
+-               .switch_en = 1,
+-               .dfps_cmd_grp_table[0] = {2, {0x6c, 0x02} },
+-               .dfps_cmd_grp_table[1] = {2, {0x62, 0x00} },
+-               .dfps_cmd_grp_size = 2,
+-       },
+-       .data_rate = DISP_PLL_CLK * 2,
+-       .change_fps_by_vfp_send_cmd = 1,
+-
+-       .panel_cellid_reg = 0x5a,
+-       .panel_cellid_offset_reg = 0x65,
+-       .panel_cellid_len = 23,
+-};
+-#endif
++/* ------------------------------------------------------------------------ */
++/* panel-ext callbacks                                                       */
++/* ------------------------------------------------------------------------ */
+
++/* NOTE: stock always returns 1 - there is no runtime ATA/ID readback. */
+ static int panel_ata_check(struct drm_panel *panel)
+ {
+-       /* Customer test by own ATA tool */
+        return 1;
+ }
+
+ static int lcm_setbacklight_cmdq(void *dsi, dcs_write_gce cb, void *handle,
+                                 unsigned int level)
+ {
+-       char bl_tb0[] = { 0x51, 0x0f, 0xff};
+-       struct lcm *ctx = g_ctx;
++       u8 bl_tb0[] = { 0x51, 0x07, 0xFF };
+
+-       if (ctx->hbm_mode) {
+-               pr_info("hbm_mode = %d, skip backlight(%d)\n", ctx->hbm_mode, level);
+-               return 0;
++       if (level <= 21) {
++               pr_info("%s level=%d, limit=%d\n", __func__, level, 22);
++               level = 22;
+        }
+
+-       if (!(ctx->current_bl && level)) pr_info("backlight changed from %u to %u\n", ctx->current_bl, level);
+-       else pr_debug("backlight changed from %u to %u\n", ctx->current_bl, level);
+-
+-       bl_tb0[1] = (u8)((level>>8)&0xF);
+-       bl_tb0[2] = (u8)(level&0xFF);
++       bl_tb0[1] = (level >> 8) & 0xF;
++       bl_tb0[2] = level & 0xFF;
+
+        if (!cb)
+                return -1;
+
+        cb(dsi, handle, bl_tb0, ARRAY_SIZE(bl_tb0));
+-       ctx->current_bl = level;
++       current_backlight = level;
++
++       pr_info("%s %d %d %d\n", __func__, level, bl_tb0[1], bl_tb0[2]);
++
+        return 0;
+ }
+
+@@ -687,8 +594,9 @@
+ {
+        struct lcm *ctx = panel_to_lcm(panel);
+
+-       ctx->reset_gpio =
+-               devm_gpiod_get(ctx->dev, "reset", GPIOD_OUT_HIGH);
++       pr_info("%s:yft-lcm-vtdr6115-drv \n", __func__);
++
++       ctx->reset_gpio = devm_gpiod_get(ctx->dev, "reset", GPIOD_OUT_HIGH);
+        gpiod_set_value(ctx->reset_gpio, on);
+        devm_gpiod_put(ctx->dev, ctx->reset_gpio);
+
+@@ -696,7 +604,7 @@
+ }
+
+ struct drm_display_mode *get_mode_by_id(struct drm_connector *connector,
+-       unsigned int mode)
++                                       unsigned int mode)
+ {
+        struct drm_display_mode *m;
+        unsigned int i = 0;
+@@ -709,348 +617,253 @@
+        return NULL;
+ }
+
++enum RES_SWITCH_TYPE mtk_get_res_switch_type(void)
++{
++       pr_info("%s:yft-lcm-vtdr6115-drv\n", __func__);
++       return RES_SWITCH_NO_USE;
++}
++
++int mtk_scaling_mode_mapping(int mode_idx)
++{
++       pr_info("%s:yft-lcm-vtdr6115-drv\n", __func__);
++       return mode_idx % 3;
++}
++
+ static int mtk_panel_ext_param_set(struct drm_panel *panel,
+-                       struct drm_connector *connector, unsigned int mode)
++                                  struct drm_connector *connector,
++                                  unsigned int mode)
+ {
+        struct mtk_panel_ext *ext = find_panel_ext(panel);
+        int ret = 0;
+        struct drm_display_mode *m = get_mode_by_id(connector, mode);
++       int dst_fps = m ? drm_mode_vrefresh(m) : -EINVAL;
+
+-       if (drm_mode_vrefresh(m) == 144)
+-               ext->params = &ext_params_144hz;
+-       else if (drm_mode_vrefresh(m) == 120)
+-               ext->params = &ext_params_120hz;
+-       else if (drm_mode_vrefresh(m) == 90)
+-               ext->params = &ext_params_90hz;
+-       else if (drm_mode_vrefresh(m) == 60)
+-               ext->params = &ext_params_60hz;
+-       else
+-               ret = 1;
++       printk("%s+ yft-lcm-vtdr6115-drv- start dst_fps=%d\n",
++              __func__, dst_fps);
+
+-       return ret;
+-}
+-
+-#if 0
+-static void mode_switch_to_144(struct drm_panel *panel,
+-       enum MTK_PANEL_MODE_SWITCH_STAGE stage)
+-{
+-       if (stage == BEFORE_DSI_POWERDOWN) {
+-               struct lcm *ctx = panel_to_lcm(panel);
+-
+-               lcm_dcs_write_seq_static(ctx, 0x2F, 0x04);
+-               lcm_dcs_write_seq_static(ctx, 0x3B, 0x00, 0x07, 0x00, 0x1c);
++       if (dst_fps == 60)
++               ext->params = &ext_params;
++       else if (dst_fps == 90)
++               ext->params = &ext_params_90hz;
++       else if (dst_fps == 120 || dst_fps == 30)
++               ext->params = &ext_params_120hz;
++       else {
++               pr_err("%s, dst_fps %d\n", __func__, dst_fps);
++               return -EINVAL;
+        }
+-}
+
+-static void mode_switch_to_120(struct drm_panel *panel,
+-       enum MTK_PANEL_MODE_SWITCH_STAGE stage)
+-{
+-       if (stage == BEFORE_DSI_POWERDOWN) {
+-               struct lcm *ctx = panel_to_lcm(panel);
++       current_fps = drm_mode_vrefresh(m);
+
+-               lcm_dcs_write_seq_static(ctx, 0x2F, 0x02);
+-               lcm_dcs_write_seq_static(ctx, 0x3B, 0x00, 0x07, 0x01, 0xee);
+-       }
++       return ret;
+ }
+
+-static void mode_switch_to_90(struct drm_panel *panel,
+-       enum MTK_PANEL_MODE_SWITCH_STAGE stage)
++static int mtk_panel_ext_param_get(struct drm_panel *panel,
++                                  struct drm_connector *connector,
++                                  struct mtk_panel_params **ext_para,
++                                  unsigned int mode)
+ {
+-       if (stage == BEFORE_DSI_POWERDOWN) {
+-               struct lcm *ctx = panel_to_lcm(panel);
++       struct drm_display_mode *m = get_mode_by_id(connector, mode);
+
+-               lcm_dcs_write_seq_static(ctx, 0x2F, 0x03);
+-               lcm_dcs_write_seq_static(ctx, 0x3B, 0x00, 0x07, 0x05, 0xbc);
+-       }
+-}
+-static void mode_switch_to_60(struct drm_panel *panel,
+-       enum MTK_PANEL_MODE_SWITCH_STAGE stage)
+-{
+-       if (stage == BEFORE_DSI_POWERDOWN) {
+-               struct lcm *ctx = panel_to_lcm(panel);
++       if (drm_mode_vrefresh(m) == 120)
++               *ext_para = &ext_params_120hz;
++       else if (drm_mode_vrefresh(m) == 90)
++               *ext_para = &ext_params_90hz;
++       else if (drm_mode_vrefresh(m) == 60)
++               *ext_para = &ext_params;
++       else
++               return 1;
+
+-               lcm_dcs_write_seq_static(ctx, 0x2F, 0x01);
+-               lcm_dcs_write_seq_static(ctx, 0x3B, 0x00, 0x07, 0x0d, 0x58);
+-       }
++       current_fps = drm_mode_vrefresh(m);
++
++       return 0;
+ }
+
+-static int mode_switch(struct drm_panel *panel, unsigned int cur_mode,
+-               unsigned int dst_mode, enum MTK_PANEL_MODE_SWITCH_STAGE stage)
++/*
++ * Stock mode_switch sends NO DSI command.  It validates the destination mode
++ * and logs; the actual rate change is realised by the vfp of the selected
++ * drm_display_mode plus the ext_params selected by mtk_panel_ext_param_set.
++ */
++static int mode_switch(struct drm_panel *panel,
++                      struct drm_connector *connector, unsigned int cur_mode,
++                      unsigned int dst_mode,
++                      enum MTK_PANEL_MODE_SWITCH_STAGE stage)
+ {
+        int ret = 0;
+        struct drm_display_mode *m = get_mode_by_id(connector, dst_mode);
++       int dst_fps;
+
+-       if (cur_mode == dst_mode)
+-               return ret;
+-
+-       if (drm_mode_vrefresh(m) == 48) { /*switch to 48 */
+-               mode_switch_to_48(panel, stage);
+-       } else if (drm_mode_vrefresh(m) == 60) { /*switch to 60 */
+-               mode_switch_to_60(panel, stage);
+-       } else if (drm_mode_vrefresh(m) == 90) { /*switch to 60 */
+-               mode_switch_to_90(panel, stage);
+-       } else if (drm_mode_vrefresh(m) == 120) { /*switch to 120 */
+-               mode_switch_to_120(panel, stage);
+-       } else if (drm_mode_vrefresh(m) == 144) { /*switch to 144 */
+-               mode_switch_to_144(panel, stage);
+-       } else
+-               ret = 1;
++       pr_info("%s:yft-lcm-vtdr6115-drv cur_mode = %d dst_mode %d\n",
++               __func__, cur_mode, dst_mode);
+
+-       return ret;
+-}
+-#endif
+-
+-static struct mtk_panel_para_table panel_lhbm_bright_on[] = {
+-       {3, {0xf0, 0xaa, 0x13}},
+-       {2, {0xc6, 0x01}},
+-       {3, {0x63, 0x03, 0xff}},
+-       {2, {0x62, 0x03}},
+-};
++       if (!m) {
++               ret = -EINVAL;
++               pr_err("%s, dst_fps %d\n", __func__, ret);
++               return ret;
++       }
+
+-static struct mtk_panel_para_table panel_lhbm_bright_off[] = {
+-       {2, {0x62, 0x00}},
+-       {3, {0xf0, 0xaa, 0x13}},
+-       {2, {0xc6, 0x00}},
+-};
++       dst_fps = drm_mode_vrefresh(m);
+
+-static struct mtk_panel_para_table panel_lhbm_dark_on[] = {
+-       {3, {0xf0, 0xaa, 0x13}},
+-       {2, {0xc6, 0x01}},
+-       {3, {0x63, 0x03, 0xff}},
+-       {3, {0x51, 0x06, 0x8f}},
+-       {2, {0x62, 0x03}},
+-};
++       if (dst_fps == 60 || dst_fps == 90 || dst_fps == 120)
++               return 0;
+
+-static struct mtk_panel_para_table panel_lhbm_dark_off[] = {
+-       {2, {0x62, 0x00}},
+-       {3, {0x51, 0x03, 0xff}},
+-       {3, {0xf0, 0xaa, 0x13}},
+-       {2, {0xc6, 0x00}},
+-};
++       pr_err("%s, dst_fps %d\n", __func__, dst_fps);
+
+-static struct mtk_panel_para_table panel_lhbm_off_hbm_on[] = {
+-       {2, {0x62, 0x00}},
+-       {3, {0x51, 0x0f, 0xff}},
+-       {3, {0xf0, 0xaa, 0x13}},
+-       {2, {0xc6, 0x00}},
+-};
++       return -EINVAL;
++}
+
+-static void set_lhbm_alpha(unsigned int bl_level)
++/*
++ * HBM: 0x51 with the 12-bit maximum (0x0FFF) when enabled, 0x03FF when
++ * disabled.  There is no dedicated vendor HBM register on this panel.
++ */
++static int sethbm_cmdq(struct drm_panel *panel, void *dsi, dcs_write_gce cb,
++                      void *handle, bool en)
+ {
+-       struct mtk_panel_para_table *pTable = &panel_lhbm_dark_on[2];
+-       unsigned int alpha = 0;
++       u8 bl_tb0[] = { 0x51, 0x07, 0xFF };
+
+-       alpha = lhbm_alpha[bl_level - 1];
++       pr_info("%s, yft-lcm-vtdr6115-drv en=%d\n", __func__, en);
+
+-       pTable->para_list[1] = (alpha >> 8) & 0xFF;
+-       pTable->para_list[2] = alpha & 0xFF;
+-       pr_info("%s: backlight %d alpha %d(0x%x, 0x%x)\n", __func__, bl_level, alpha, pTable->para_list[1], pTable->para_list[2]);
+-}
++       if (!cb)
++               return -1;
+
+-static int panel_lhbm_set_cmdq(void *dsi, dcs_grp_write_gce cb, void *handle, uint32_t on, uint32_t bl_level)
+-{
+-       unsigned int para_count = 0;
+-       struct mtk_panel_para_table *pTable;
++       bl_tb0[1] = en ? 0x0F : 0x03;
++       bl_tb0[2] = 0xFF;
+
+-       if (on) {
+-               if (bl_level <= ARRAY_SIZE(lhbm_alpha)) {
+-                       set_lhbm_alpha(bl_level);
+-                       para_count = sizeof(panel_lhbm_dark_on) / sizeof(struct mtk_panel_para_table);
+-                       pTable = panel_lhbm_dark_on;
+-               } else {
+-                       para_count = sizeof(panel_lhbm_bright_on) / sizeof(struct mtk_panel_para_table);
+-                       pTable = panel_lhbm_bright_on;
+-               }
+-       } else {
+-               if (bl_level <= ARRAY_SIZE(lhbm_alpha)) {
+-                       pTable = &panel_lhbm_dark_off[1];
+-                       pTable->para_list[1] = (bl_level >> 8) & 0xFF;
+-                       pTable->para_list[2] = bl_level & 0xFF;
+-                       para_count = sizeof(panel_lhbm_dark_off) / sizeof(struct mtk_panel_para_table);
+-                       pTable = panel_lhbm_dark_off;
+-               } else {
+-                       para_count = sizeof(panel_lhbm_bright_off) / sizeof(struct mtk_panel_para_table);
+-                       pTable = panel_lhbm_bright_off;
+-               }
+-       }
+-       cb(dsi, handle, pTable, para_count);
+-       return 0;
++       cb(dsi, handle, bl_tb0, ARRAY_SIZE(bl_tb0));
+
++       return 0;
+ }
+
+-static int pane_hbm_set_cmdq(struct lcm *ctx, void *dsi, dcs_grp_write_gce cb, void *handle, uint32_t hbm_state)
++static int mtk_set_value(int value)
+ {
+-       struct mtk_panel_para_table hbm_on_table = {3, {0x51, 0x0F, 0xFF}};
+-
+-       if (hbm_state > 2) return -1;
+-       switch (hbm_state)
+-       {
+-               case 0:
+-                       if (ctx->lhbm_en)
+-                               panel_lhbm_set_cmdq(dsi, cb, handle, 0, ctx->current_bl);
+-                       break;
+-               case 1:
+-                       if (ctx->lhbm_en)
+-                               cb(dsi, handle, panel_lhbm_off_hbm_on, 4);
+-                       else
+-                               cb(dsi, handle, &hbm_on_table, 1);
+-                       break;
+-               case 2:
+-                       if (ctx->lhbm_en)
+-                               panel_lhbm_set_cmdq(dsi, cb, handle, 1, ctx->current_bl);
+-                       else
+-                               cb(dsi, handle, &hbm_on_table, 1);
+-                       break;
+-               default:
+-                       break;
+-       }
+-
+        return 0;
+ }
+
+-static struct mtk_panel_para_table panel_dc_off[] = {
+-       {2, {0x5e, 0x00}},
+-};
+-
+-static struct mtk_panel_para_table panel_dc_on[] = {
+-       {2, {0x5e, 0x01}},
++static struct mtk_panel_funcs ext_funcs = {
++       .set_backlight_cmdq = lcm_setbacklight_cmdq,
++       .reset = panel_ext_reset,
++       .ata_check = panel_ata_check,
++       .ext_param_set = mtk_panel_ext_param_set,
++       .ext_param_get = mtk_panel_ext_param_get,
++       .get_res_switch_type = mtk_get_res_switch_type,
++       .scaling_mode_mapping = mtk_scaling_mode_mapping,
++       .mode_switch = mode_switch,
++       .hbm_set_cmdq = sethbm_cmdq,
++       .set_value = mtk_set_value,
+ };
+
+-static int pane_dc_set_cmdq(void *dsi, dcs_grp_write_gce cb, void *handle, uint32_t dc_state)
++/* ------------------------------------------------------------------------ */
++/* sysfs: /sys/class/primary_lcm/set_hbm_backlight                           */
++/* Fingerprint local-HBM path via mediatek-drm's ddic_dsi_send_cmd_for_fp.   */
++/* ------------------------------------------------------------------------ */
++static ssize_t set_hbm_backlight_show(struct class *class,
++                                     struct class_attribute *attr, char *buf)
+ {
+-       unsigned int para_count = 0;
+-       struct mtk_panel_para_table *pTable;
++       struct lcm *ctx = g_ctx;
+
+-       if (dc_state) {
+-               para_count = sizeof(panel_dc_on) / sizeof(struct mtk_panel_para_table);
+-               pTable = panel_dc_on;
+-       } else {
+-               para_count = sizeof(panel_dc_off) / sizeof(struct mtk_panel_para_table);
+-               pTable = panel_dc_off;
+-       }
+-       cb(dsi, handle, pTable, para_count);
+-       return 0;
++       pr_info("[%s] yft-lcm-vtdr6115-drv- yft_hbm_flag = %d\n",
++               __func__, ctx->hbm_flag);
++       return sprintf(buf, "%d\n", ctx->hbm_flag);
+ }
+
+-static int panel_feature_set(struct drm_panel *panel, void *dsi,
+-                             dcs_grp_write_gce cb, void *handle, struct panel_param_info param_info)
++static ssize_t set_hbm_backlight_store(struct class *class,
++                                      struct class_attribute *attr,
++                                      const char *buf, size_t count)
+ {
+-
+-       struct lcm *ctx = panel_to_lcm(panel);
+-
+-       if (!cb)
+-               return -1;
+-       pr_info("%s: set feature %d to %d\n", __func__, param_info.param_idx, param_info.value);
+-
+-       switch (param_info.param_idx) {
+-               case PARAM_CABC:
+-               case PARAM_ACL:
+-                       break;
+-               case PARAM_HBM:
+-                       ctx->hbm_mode = param_info.value;
+-                       pane_hbm_set_cmdq(ctx, dsi, cb, handle, param_info.value);
+-                       break;
+-               case PARAM_DC:
+-                       pane_dc_set_cmdq(dsi, cb, handle, param_info.value);
+-                       ctx->dc_mode = param_info.value;
+-                       break;
+-               default:
+-                       break;
++       struct lcm *ctx = g_ctx;
++       int databuf[16] = { 0 };
++       u8 bl_tb0[3];
++       unsigned int level = 0;
++
++       sscanf(buf, "%d", &databuf[0]);
++
++       if (last_hbm_backlight_value == databuf[0]) {
++               pr_info("%s yft-lcm-vtdr6115-drv-! ignore hbm_backlight\n",
++                       __func__);
++               return count;
++       }
++
++       if (databuf[0] == 1) {
++               bl_tb0[1] = 0x0F;
++               bl_tb0[2] = 0xFF;
++               level = 0;
++       } else if (databuf[0] == 0) {
++               level = current_backlight;
++               bl_tb0[1] = (current_backlight >> 8) & 0xF;
++               bl_tb0[2] = current_backlight & 0xFF;
++       } else {
++               bl_tb0[1] = 0x00;
++               bl_tb0[2] = 0xFF;
++               level = 0;
+        }
+
+-       pr_info("%s: set feature %d to %d success\n", __func__, param_info.param_idx, param_info.value);
+-       return 0;
+-}
++       pr_info("%s yft-lcm-vtdr6115-drv-! databuf[0]=%d,[0x%x,0x%x], level=%d\n",
++               __func__, databuf[0], bl_tb0[1], bl_tb0[2], level);
+
+-static int panel_ext_init_power(struct drm_panel *panel)
+-{
+-       int ret;
+-       ret = gate_ic_Power_on(panel, 1);
+-       return ret;
+-}
++       bl_tb0[0] = 0x51;
++       ddic_dsi_send_cmd_for_fp(bl_tb0, 3);
+
+-static int panel_ext_powerdown(struct drm_panel *panel)
+-{
+-       struct lcm *ctx = panel_to_lcm(panel);
+-
+-       pr_info("%s+\n", __func__);
+-       if (ctx->prepared)
+-           return 0;
++       ctx->hbm_flag = databuf[0];
++       last_hbm_backlight_value = databuf[0];
+
+-       ctx->reset_gpio = devm_gpiod_get(ctx->dev, "reset", GPIOD_OUT_HIGH);
+-       gpiod_set_value(ctx->reset_gpio, 0);
+-       devm_gpiod_put(ctx->dev, ctx->reset_gpio);
+-
+-       gate_ic_Power_on(panel, 0);
+-
+-       return 0;
++       return count;
+ }
+
+-static struct mtk_panel_funcs ext_funcs = {
+-       .reset = panel_ext_reset,
+-       .set_backlight_cmdq = lcm_setbacklight_cmdq,
+-       .init_power = panel_ext_init_power,
+-       .power_down = panel_ext_powerdown,
+-       .ata_check = panel_ata_check,
+-       .ext_param_set = mtk_panel_ext_param_set,
+-       .panel_feature_set = panel_feature_set,
++static struct class_attribute class_attr_primary_lcm[] = {
++       __ATTR(set_hbm_backlight, 0664,
++              set_hbm_backlight_show, set_hbm_backlight_store),
++       __ATTR_NULL,
+ };
+
++/* ------------------------------------------------------------------------ */
++/* get_modes / probe / remove                                                */
++/* ------------------------------------------------------------------------ */
+ static int lcm_get_modes(struct drm_panel *panel,
+-                                       struct drm_connector *connector)
++                        struct drm_connector *connector)
+ {
++       struct drm_display_mode *mode;
+        struct drm_display_mode *mode_1;
+        struct drm_display_mode *mode_2;
+-       struct drm_display_mode *mode_3;
+-
+-       struct drm_display_mode *mode_4;
+
+-       mode_1 = drm_mode_duplicate(connector->dev, &switch_mode_60hz);
++       pr_info("%s+ yft-lcm-vtdr6115-drv- add  11111\n", __func__);
++
++       mode = drm_mode_duplicate(connector->dev, &default_mode);
++       if (!mode) {
++               dev_info(connector->dev->dev, "failed to add mode %ux%ux@%u\n",
++                        default_mode.hdisplay, default_mode.vdisplay,
++                        drm_mode_vrefresh(&default_mode));
++               return -ENOMEM;
++       }
++       drm_mode_set_name(mode);
++       mode->type = DRM_MODE_TYPE_DRIVER;
++       drm_mode_probed_add(connector, mode);
++
++       mode_1 = drm_mode_duplicate(connector->dev, &performance_mode_90hz);
+        if (!mode_1) {
+                dev_info(connector->dev->dev, "failed to add mode %ux%ux@%u\n",
+-                        switch_mode_60hz.hdisplay, switch_mode_60hz.vdisplay,
+-                        drm_mode_vrefresh(&switch_mode_60hz));
++                        performance_mode_90hz.hdisplay,
++                        performance_mode_90hz.vdisplay,
++                        drm_mode_vrefresh(&performance_mode_90hz));
+                return -ENOMEM;
+        }
+        drm_mode_set_name(mode_1);
+-       mode_1->type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
++       mode_1->type = DRM_MODE_TYPE_DRIVER;
+        drm_mode_probed_add(connector, mode_1);
+
+-       mode_2 = drm_mode_duplicate(connector->dev, &switch_mode_90hz);
++       mode_2 = drm_mode_duplicate(connector->dev, &performance_mode_120hz);
+        if (!mode_2) {
+                dev_info(connector->dev->dev, "failed to add mode %ux%ux@%u\n",
+-                       switch_mode_90hz.hdisplay, switch_mode_90hz.vdisplay,
+-                       drm_mode_vrefresh(&switch_mode_90hz));
++                        performance_mode_120hz.hdisplay,
++                        performance_mode_120hz.vdisplay,
++                        drm_mode_vrefresh(&performance_mode_120hz));
+                return -ENOMEM;
+        }
+        drm_mode_set_name(mode_2);
+-       mode_2->type = DRM_MODE_TYPE_DRIVER;
++       mode_2->type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
+        drm_mode_probed_add(connector, mode_2);
+
+-       mode_3 = drm_mode_duplicate(connector->dev, &switch_mode_120hz);
+-       if (!mode_3) {
+-               dev_info(connector->dev->dev, "failed to add mode %ux%ux@%u\n",
+-                       switch_mode_120hz.hdisplay, switch_mode_120hz.vdisplay,
+-                       drm_mode_vrefresh(&switch_mode_120hz));
+-               return -ENOMEM;
+-       }
+-       drm_mode_set_name(mode_3);
+-       mode_3->type = DRM_MODE_TYPE_DRIVER;
+-       drm_mode_probed_add(connector, mode_3);
+-
+-       mode_4 = drm_mode_duplicate(connector->dev, &switch_mode_144hz);
+-       if (!mode_4) {
+-               dev_info(connector->dev->dev, "failed to add mode %ux%ux@%u\n",
+-                       switch_mode_144hz.hdisplay, switch_mode_144hz.vdisplay,
+-                       drm_mode_vrefresh(&switch_mode_144hz));
+-               return -ENOMEM;
+-       }
+-       drm_mode_set_name(mode_4);
+-       mode_4->type = DRM_MODE_TYPE_DRIVER;
+-       drm_mode_probed_add(connector, mode_4);
++       connector->display_info.width_mm = 69;
++       connector->display_info.height_mm = 155;
+
+-       connector->display_info.width_mm = 68;
+-       connector->display_info.height_mm = 152;
+        return 1;
+ }
+
+@@ -1068,10 +881,13 @@
+        struct device_node *dsi_node, *remote_node = NULL, *endpoint = NULL;
+        struct lcm *ctx;
+        struct device_node *backlight;
++       unsigned int lcm_degree = 0;
++       unsigned int rc_enable = 0;
++       struct mtk_panel_params *ext_param_sel;
+        int ret;
+-       const u32 *val;
++       int i;
+
+-       pr_info("%s+\n", __func__);
++       pr_info("%s+ lcm,vtdr6115,vdo,120hz\n", __func__);
+
+        dsi_node = of_get_parent(dev->of_node);
+        if (dsi_node) {
+@@ -1086,7 +902,7 @@
+                }
+        }
+        if (remote_node != dev->of_node) {
+-               pr_info("%s+ skip probe due to not current lcm(node: %s)\n", __func__, dev->of_node->name);
++               pr_info("%s+ skip probe due to not current lcm\n", __func__);
+                return -ENODEV;
+        }
+
+@@ -1095,84 +911,140 @@
+                return -ENOMEM;
+
+        mipi_dsi_set_drvdata(dsi, ctx);
+-       g_ctx = ctx;
+        ctx->dev = dev;
++       g_ctx = ctx;
++
+        dsi->lanes = 4;
+        dsi->format = MIPI_DSI_FMT_RGB888;
+-       dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST
+-                        | MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_EOT_PACKET
+-                        | MIPI_DSI_CLOCK_NON_CONTINUOUS;
++       dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE
++                        | MIPI_DSI_MODE_NO_EOT_PACKET
++                        | MIPI_DSI_CLOCK_NON_CONTINUOUS
++                        | MIPI_DSI_MODE_LPM;
++
++       ret = of_property_read_u32(dev->of_node, "rc-enable", &rc_enable);
++       if (ret < 0) {
++               rc_enable = 0;
++       } else {
++               ext_params.round_corner_en = rc_enable;
++               ext_params_90hz.round_corner_en = rc_enable;
++               ext_params_120hz.round_corner_en = rc_enable;
++       }
++       pr_info("%s+ round_corner_en %d\n", __func__,
++               ext_params.round_corner_en);
+
+        backlight = of_parse_phandle(dev->of_node, "backlight", 0);
+        if (backlight) {
+                ctx->backlight = of_find_backlight_by_node(backlight);
+-               of_node_put(backlight);
+-
+                if (!ctx->backlight)
+                        return -EPROBE_DEFER;
+        }
+
++       pr_info("%s+ yft-lcm-vtdr6115-drv- add  11111\n", __func__);
++
+        ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
+        if (IS_ERR(ctx->reset_gpio)) {
+                dev_info(dev, "cannot get reset-gpios %ld\n",
+                         PTR_ERR(ctx->reset_gpio));
+                return PTR_ERR(ctx->reset_gpio);
+        }
++       current_backlight = 2047;
+        devm_gpiod_put(dev, ctx->reset_gpio);
++
++       ctx->dvdd_gpio = devm_gpiod_get(dev, "dvdd", GPIOD_OUT_HIGH);
++       if (IS_ERR(ctx->dvdd_gpio)) {
++               dev_info(dev, "cannot get dvdd-gpios %ld\n",
++                        PTR_ERR(ctx->dvdd_gpio));
++               return PTR_ERR(ctx->dvdd_gpio);
++       }
++       devm_gpiod_put(dev, ctx->dvdd_gpio);
++
++       ctx->vci_gpio = devm_gpiod_get(dev, "vci", GPIOD_OUT_HIGH);
++       if (IS_ERR(ctx->vci_gpio)) {
++               dev_info(dev, "cannot get vci_gpio %ld\n",
++                        PTR_ERR(ctx->vci_gpio));
++               return PTR_ERR(ctx->vci_gpio);
++       }
++       devm_gpiod_put(dev, ctx->vci_gpio);
++
++       pr_info("%s+ yft-lcm-vtdr6115-drv- add  2222\n", __func__);
++
+        ctx->prepared = true;
+        ctx->enabled = true;
+-       drm_panel_init(&ctx->panel, dev, &lcm_drm_funcs, DRM_MODE_CONNECTOR_DSI);
+
+-       drm_panel_add(&ctx->panel);
++       if (of_find_property(dsi_node, "init-panel-off", NULL)) {
++               ctx->prepared = false;
++               ctx->enabled = false;
++               pr_info("vtdr6115,120hz dsi_node:%s set prepared = enabled = false\n",
++                       dsi_node->full_name);
++       }
+
+-       val = of_get_property(dev->of_node, "reg", NULL);
+-       ctx->version = val ? be32_to_cpup(val) : 1;
++       drm_panel_init(&ctx->panel, dev, &lcm_drm_funcs,
++                      DRM_MODE_CONNECTOR_DSI);
+
+-       pr_info("%s: panel version 0x%x\n", __func__, ctx->version);
++       drm_panel_add(&ctx->panel);
+
+        ret = mipi_dsi_attach(dsi);
+        if (ret < 0)
+                drm_panel_remove(&ctx->panel);
+
+-#if defined(CONFIG_MTK_PANEL_EXT)
+        mtk_panel_tch_handle_reg(&ctx->panel);
+-       ret = mtk_panel_ext_create(dev, &ext_params_60hz, &ext_funcs, &ctx->panel);
++
++       if (current_fps == 90)
++               ext_param_sel = &ext_params_90hz;
++       else if (current_fps == 120)
++               ext_param_sel = &ext_params_120hz;
++       else
++               ext_param_sel = &ext_params;
++
++       ret = mtk_panel_ext_create(dev, ext_param_sel, &ext_funcs, &ctx->panel);
+        if (ret < 0)
+                return ret;
+
+-#endif
+-       ctx->hbm_mode = 0;
+-       ctx->dc_mode = 0;
++       ret = of_property_read_u32(dev->of_node, "lcm-degree", &lcm_degree);
++       if (ret < 0)
++               lcm_degree = 0;
++       else
++               ext_param_sel->lcm_degree = lcm_degree;
++       pr_info("lcm_degree: %d\n", ext_param_sel->lcm_degree);
++
++       primary_lcm_class = class_create(THIS_MODULE, "primary_lcm");
++       if (IS_ERR(primary_lcm_class)) {
++               ret = PTR_ERR(primary_lcm_class);
++               pr_err("create class, err = %d\n", ret);
++               return ret;
++       }
+
+-       ctx->lhbm_en = of_property_read_bool(dev->of_node, "lhbm-enable");
++       for (i = 0; class_attr_primary_lcm[i].attr.name; i++) {
++               ret = class_create_file(primary_lcm_class,
++                                       &class_attr_primary_lcm[i]);
++               if (ret) {
++                       pr_err("Fail class_create_file\n");
++                       return ret;
++               }
++       }
+
+-       pr_info("%s- lcm,csot, vtdr6115,cmd,120hz, lhbm_en = %d\n", __func__, ctx->lhbm_en);
++       pr_info("%s- ,vtdr6115,vdo,120hz ret=%d\n", __func__, ret);
+
+        return ret;
+ }
+
+-static int lcm_remove(struct mipi_dsi_device *dsi)
++static void lcm_remove(struct mipi_dsi_device *dsi)
+ {
+        struct lcm *ctx = mipi_dsi_get_drvdata(dsi);
+-#if defined(CONFIG_MTK_PANEL_EXT)
+        struct mtk_panel_ctx *ext_ctx = find_panel_ctx(&ctx->panel);
+-#endif
++
++       pr_info("%s+ yft-lcm-vtdr6115-drv- add  11\n", __func__);
+
+        mipi_dsi_detach(dsi);
+        drm_panel_remove(&ctx->panel);
+-#if defined(CONFIG_MTK_PANEL_EXT)
+        mtk_panel_detach(ext_ctx);
+        mtk_panel_remove(ext_ctx);
+-#endif
+-
+-       return 0;
++       class_destroy(primary_lcm_class);
+ }
+
+ static const struct of_device_id lcm_of_match[] = {
+-       {
+-               .compatible = "csot,vtdr6115,vdo,144hz",
+-       },
+-       {}
++       { .compatible = "hx,vtdr6115,cmd,120hz,ky", },
++       { }
+ };
+
+ MODULE_DEVICE_TABLE(of, lcm_of_match);
+@@ -1181,7 +1053,7 @@
+        .probe = lcm_probe,
+        .remove = lcm_remove,
+        .driver = {
+-               .name = "panel-csot-vtdr6115-vdo-144hz",
++               .name = "panel-ky-vtdr6115-dphy-cmd",
+                .owner = THIS_MODULE,
+                .of_match_table = lcm_of_match,
+        },
+@@ -1189,6 +1061,6 @@
+
+ module_mipi_dsi_driver(lcm_driver);
+
+-MODULE_AUTHOR("MEDIATEK");
+-MODULE_DESCRIPTION("csot vtdr6115 AMOLED VDO SPR Panel Driver");
++MODULE_AUTHOR("shaohua deng <shaohua.deng@mediatek.com>");
++MODULE_DESCRIPTION("vtdr6115 VDO 120HZ AMOLED Panel Driver");
+ MODULE_LICENSE("GPL v2");

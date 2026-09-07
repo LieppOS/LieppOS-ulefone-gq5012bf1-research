@@ -159,7 +159,7 @@ view below carries the decision-relevant columns.
 
 | module | placement | normal boot | recovery | kern/inter/exp imports | source confidence | blob safe? | disposition | priority |
 |---|---|---|---|---|---|---|---|---|
-| `panel_ky_vtdr6115_dphy_cmd` | vendor_boot platform | yes (idx 76) | yes (idx 74) | 38 / 7 / 0 | STRUCTURAL_DONOR_ONLY | YES_WITH_STOCK_PROVIDER_CHAIN | RE_REQUIRED | P1_CORE_HARDWARE |
+| `panel_ky_vtdr6115_dphy_cmd` | vendor_boot platform | yes (idx 76) | yes (idx 74) | 38 / 7 / 0 | ORACLE_RECONSTRUCTION_PROVIDER_ABI_BLOCKED | YES_WITH_STOCK_PROVIDER_CHAIN | BLOCKED_WITH_EXACT_MISSING_EVIDENCE | P1_CORE_HARDWARE |
 | `yft_devinfo` | platform + vendor_dlkm | yes (vdlkm idx 193) | yes (idx 187) | 40 / 0 / 27 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | SOURCE_DELTA | P1_CORE_HARDWARE |
 | `sh366003_fg` | vendor_boot platform | yes (idx 133) | yes (idx 131) | 33 / 3 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | RE_REQUIRED | P1_CORE_HARDWARE |
 | `sc8571_charger` | vendor_boot platform | yes (idx 147) | yes (idx 145) | 41 / 1 / 0 | STRUCTURAL_DONOR_ONLY | YES_WITH_STOCK_PROVIDER_CHAIN | RE_REQUIRED | P1_CORE_HARDWARE |
@@ -587,11 +587,10 @@ traffic is TEE-mediated and therefore not observable from the Linux side).
 
 ## 14. Modules that genuinely require reverse engineering
 
-Seven, and only seven:
+Six still require panel/hardware reverse engineering; VTDR6115 panel logic is now reconstructed but separately blocked at the provider ABI:
 
 | module | why no source path exists | difficulty |
 |---|---|---|
-| `panel_ky_vtdr6115_dphy_cmd` | no VTDR6115 KY/120 Hz-cmd source anywhere; Motorola donor is a different panel variant | HIGH |
 | `sh366003_fg` | no public SH366003 Linux driver; vendor AFI upgrade engine | HIGH |
 | `sc8571_charger` | only an OPLUS-framework donor; MediaTek `charger_class` glue absent | MODERATE |
 | `sc851x_charger` | no public SC851x driver at all | LOW_TO_MODERATE |
@@ -657,8 +656,8 @@ NEXT  4  SOURCE_BUILD    re-land the frozen reconstructions (st21nfc, mtk_disp_n
                          mtk_mbox, mtk_tinysys_ipi, mtk_rpmsg_mbox, connfem, tcpc_class,
                          tcpc_mt6375, pd_dbg_info, leds_rgb_aw2013, aw36515, aw36518,
                          aw36518_v2, aw883xx_driver, yft_tpd_gesture, ft3680)
-NEXT  5  RE              panel_ky_vtdr6115_dphy_cmd   (P1 — the only thing between
-                         Level A and a phone you can look at)
+NEXT  5  ABI_SOURCE      panel_ky_vtdr6115_dphy_cmd — panel logic reconstructed;
+                         obtain exact mtk_panel_ext/mediatek-drm type graph for 7 CRCs
 NEXT  6  RE              custom_ldo_wl2868, then custom_ldo  (provider before consumer)
 NEXT  7  RE              sc8571_charger, then sc851x_charger (charging)
 NEXT  8  RE              sh366003_fg  (needs stock yft_devinfo CRCs — see NEXT 3)

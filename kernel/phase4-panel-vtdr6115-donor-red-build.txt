@@ -1,0 +1,15 @@
+Target: //lieppos/panel-vtdr6115-donor-red:donor_red
+GKI: 12901745 / common 6b18f0b574ab3267615ae6ce642d5a7c3c21ac09
+Compiler: Android clang 17.0.2 r487747c
+Donor source modified: no (SHA-256 14bdae12bd622dca1c5113bacf6bf9f3d487d4c5ea33e98d76d42c7567ac5b44)
+Command: tools/bazel build //lieppos/panel-vtdr6115-donor-red:donor_red
+Result: FAIL (expected RED), compile stage
+
+Representative diagnostics:
+- field designator 'panel_cellid_reg' does not refer to any field in 'struct mtk_panel_params' (four mode objects)
+- field designator 'panel_cellid_offset_reg' does not refer to any field in 'struct mtk_panel_params'
+- field designator 'panel_cellid_len' does not refer to any field in 'struct mtk_panel_params'
+- use of undeclared identifier 'MIPI_DSI_MODE_EOT_PACKET'
+- incompatible function pointer: donor int remove(struct mipi_dsi_device *) versus exact-GKI void remove(...)
+
+Interpretation: the Motorola source is structural-only and not directly buildable against the exact GKI. No donor artifact exists to compare as a replacement module. The oracle-to-donor behavioral differences are independently documented in phase4-panel-vtdr6115-source-candidates.md and the full donor-to-reconstruction diff.

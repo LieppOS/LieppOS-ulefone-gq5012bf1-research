@@ -1,0 +1,19 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+# BUILD HARNESS ONLY. These inert providers exist solely to generate a real
+# Module.symvers and let exact-GKI modpost/link complete. Never ship or load.
+kernel_module(
+    name = "mtk_panel_ext_harness",
+    srcs = [
+        "mtk_panel_ext.c",
+        "mediatek-drm.c",
+        "mtk_panel_ext_stock_abi.h",
+        "Makefile",
+    ],
+    outs = [
+        "mtk_panel_ext.ko",
+        "mediatek-drm.ko",
+    ],
+    kernel_build = "//common:kernel_aarch64",
+    visibility = ["//visibility:public"],
+)

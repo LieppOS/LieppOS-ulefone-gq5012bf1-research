@@ -89,9 +89,11 @@ Module:
 
 - panel_ky_vtdr6115_dphy_cmd
 
-The module has high immediate KMI reduction potential but display bring-up is
-high impact. It should be attempted after a stable kernel/module test workflow
-exists.
+The panel logic is now reconstructed from the stock oracle, including exact
+command bytes and byte-identical panel parameter blobs. Replacement remains
+`BLOCKED_WITH_EXACT_MISSING_EVIDENCE`: its seven MediaTek display-provider CRCs
+cannot be source-reproduced without the exact vendor type graph. Retain the
+stock panel + `mtk_panel_ext` + `mediatek-drm` ABI island meanwhile.
 
 ## Priority 7 — Auxiliary LEDs / regulators
 

@@ -1,0 +1,25 @@
+Phase 4 VTDR6115 stock-versus-reconstruction verification
+
+.text                        stock=   6424 recon=   6416 SIZE_DIFFERS
+.init.text                   stock=     48 recon=     48 BYTE_IDENTICAL
+.exit.text                   stock=     40 recon=     40 BYTE_IDENTICAL
+.rodata                      stock=   1123 recon=   1120 SIZE_DIFFERS
+.rodata.str1.1               stock=   1955 recon=   1955 BYTE_IDENTICAL
+.data                        stock= 199816 recon= 199816 BYTE_IDENTICAL
+.modinfo                     stock=    348 recon=    346 SIZE_DIFFERS
+__versions                   stock=   2880 recon=   2880 SAME_SIZE_DIFFERS
+.gnu.linkonce.this_module    stock=   1088 recon=   1088 BYTE_IDENTICAL
+.bss                         stock=     28 recon=     28 SIZE_IDENTICAL
+
+functions stock=24 recon=24 shared=24 size-identical=22 byte-identical=19
+imports stock=44 recon=44
+modversions total=45 match=38 mismatch=7
+command objects: all 46 stock lcm_panel_init static byte arrays are present byte-for-byte in reconstruction
+init runtime: 45 writes / 287 bytes; hashes: [(60, 45, 287, '6dc2e822e771fb7c97b0ba80b0050e0d6e3667aa51504469d2bb77db6c2c6d16'), (90, 45, 287, 'e3bab654eb1c05926f176b72006e672fa1b176720b0821542a3ffdaf2c2a4adf'), (120, 45, 287, 'ba20b2e6800fe143d9bb5cdeffda4e677055afc63048d3675d11f66698eb4e4c')]
+
+Interpretation:
+- .data (199,816 bytes), including all three 66,328-byte mtk_panel_params blobs, is byte-identical.
+- .rodata.str1.1, init/exit text and this_module are byte-identical.
+- Five functions retain source-shape/code-generation differences; their recovered constants, calls, control decisions, GPIO timing and transmitted bytes are accounted for.
+- Seven vendor-provider CRCs differ because the stock MediaTek-patched type graph is unavailable; all 38 GKI CRCs match.
+- The linked .ko is a comparison artifact using inert source-built provider harness modules and is NOT loadable/shippable with stock providers.

@@ -135,7 +135,7 @@ rear touch, rear display, camera sensors and motion sensors simultaneously.
 
 | order | module | label | disposition | why Level B |
 |--:|---|---|---|---|
-| 1 | `panel_ky_vtdr6115_dphy_cmd` | SOURCE_NOW | RE_REQUIRED | the main display; `P1` |
+| 1 | `panel_ky_vtdr6115_dphy_cmd` | ABI_SOURCE | BLOCKED_WITH_EXACT_MISSING_EVIDENCE | panel logic reconstructed; exact provider type graph needed for 7 CRCs |
 | 2 | `custom_ldo_wl2868` | SOURCE_NOW | RE_REQUIRED | camera/sensor rails |
 | 3 | `custom_ldo` | SOURCE_NOW | RE_REQUIRED | 2-function shim; gates `imgsensor` |
 | 4 | `sc851x_charger` | SOURCE_NOW | RE_REQUIRED | reverse/OTG + `AUDIO_EN`; safest of the three (0 intermodule imports) |

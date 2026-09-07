@@ -1,0 +1,54 @@
+phase	index	condition	transport	length	bytes	oracle_location	delay	note
+init	1	always	DCS	2	03 01	.rodata+0x1d0	-	-
+init	2	always	DCS	2	53 20	.rodata+0x1d2	-	-
+init	3	always	DCS	3	51 00 ff	.rodata+0x1d4	-	-
+init	4	always	DCS	2	6f 01	.rodata+0x1d7	-	-
+init	5	always	DCS	2	35 00	.rodata+0x1d9	-	-
+init	6	always	DCS	2	59 00	.rodata+0x1db	-	-
+init	7	current_fps	DCS	2	60:6c 00 | 90:6c 01 | 120:6c 02	.rodata+0x1dd	-	one branch only; stock disassembly shown at 120 Hz
+init	8	always	DCS	2	6d 00	.rodata+0x1e3	-	-
+init	9	always	DCS	95	70 11 00 00 89 30 80 09 60 04 38 00 0c 02 1c 02 1c 02 00 02 0e 00 20 01 1f 00 07 00 0c 08 bb 08 7a 18 00 10 f0 03 0c 20 00 06 0b 0b 33 0e 1c 2a 38 46 54 62 69 70 77 79 7b 7d 7e 01 02 01 00 09 40 09 be 19 fc 19 fa 19 f8 1a 38 1a 78 1a b6 2a b6 2a f4 2a f4 4b 34 63 74 00 00 00 00 00 00	.rodata+0x1e5	-	-
+init	10	always	GENERIC	3	f0 aa 19	.rodata+0x244	-	-
+init	11	always	GENERIC	8	d0 01 1f 1e 1f 1e 1f 1e	.rodata+0x247	-	-
+init	12	always	GENERIC	3	f0 aa 18	.rodata+0x24f	-	-
+init	13	always	GENERIC	2	b0 13	.rodata+0x252	-	-
+init	14	always	GENERIC	2	b2 13	.rodata+0x254	-	-
+init	15	always	GENERIC	3	ff 5a 81	.rodata+0x256	-	-
+init	16	always	DCS	2	65 03	.rodata+0x259	-	-
+init	17	always	GENERIC	2	f4 03	.rodata+0x25b	-	-
+init	18	always	GENERIC	3	f0 aa 12	.rodata+0x25d	-	-
+init	19	always	DCS	2	65 09	.rodata+0x260	-	-
+init	20	always	GENERIC	2	c5 07	.rodata+0x262	-	-
+init	21	always	GENERIC	3	ff 5a 80	.rodata+0x264	-	-
+init	22	always	DCS	2	65 0e	.rodata+0x267	-	-
+init	23	always	GENERIC	2	f9 b9	.rodata+0x269	-	-
+init	24	always	GENERIC	3	ff 5a 81	.rodata+0x26b	-	-
+init	25	always	DCS	2	65 08	.rodata+0x26e	-	-
+init	26	always	GENERIC	3	f6 51 44	.rodata+0x270	-	-
+init	27	always	GENERIC	3	f0 aa 12	.rodata+0x273	-	-
+init	28	always	DCS	2	65 02	.rodata+0x276	-	-
+init	29	always	GENERIC	2	bb 10	.rodata+0x278	-	-
+init	30	always	DCS	2	55 00	.rodata+0x27a	-	-
+init	31	always	GENERIC	3	f0 aa 11	.rodata+0x27c	-	-
+init	32	always	GENERIC	3	ba 82 10	.rodata+0x27f	-	-
+init	33	always	DCS	2	65 01	.rodata+0x282	-	-
+init	34	always	GENERIC	2	b0 81	.rodata+0x284	-	-
+init	35	always	GENERIC	3	f0 aa 10	.rodata+0x286	-	-
+init	36	always	GENERIC	23	d0 84 16 50 14 14 00 29 00 13 00 00 00 00 29 00 00 00 00 06 06 13 13	.rodata+0x289	-	-
+init	37	always	GENERIC	23	d1 84 15 50 14 14 00 39 2c 0d 32 00 00 2c 23 32 00 00 00 05 05 0d 0d	.rodata+0x2a0	-	-
+init	38	current_backlight	DCS	3	51 HH LL	dynamic stack	-	12-bit brightness; initial probe value 0x07ff
+init	39	always	GENERIC	3	f0 aa 10	.rodata+0x2b7	-	-
+init	40	always	GENERIC	22	b1 01 6d 00 18 09 e0 00 01 6d 00 18 03 76 00 01 6d 00 18 00 3c 00	.rodata+0x2ba	-	-
+init	41	always	GENERIC	22	b2 01 6d 00 18 00 3c 03 01 6d 00 18 00 3c 03 01 6d 00 18 00 3c 03	.rodata+0x2d0	-	-
+init	42	always	GENERIC	3	ff 5a 00	.rodata+0x2e6	-	-
+init	43	always	GENERIC	3	f0 aa 00	.rodata+0x2e9	-	-
+init	44	always	DCS	2	11 00	.rodata+0x2ec	120 ms after	-
+init	45	always	DCS	2	29 00	.rodata+0x2ee	50 ms after	-
+suspend	1	always	DCS	1	28	.rodata+0x2f0	20 ms after	display off
+suspend	2	always	DCS	1	10	.rodata+0x2f1	200 ms after	sleep in
+backlight	1	level clamped to >=22	DCS	3	51 HH LL	stack	-	12-bit brightness
+hbm_cmdq	1	en=1	DCS	3	51 0f ff	stack	-	maximum
+hbm_cmdq	1	en=0	DCS	3	51 03 ff	stack	-	restore fixed 0x03ff on this callback
+fingerprint_sysfs	1	input=1	DCS via ddic_dsi_send_cmd_for_fp	3	51 0f ff	stack	-	maximum
+fingerprint_sysfs	1	input=0	DCS via ddic_dsi_send_cmd_for_fp	3	51 HH LL	stack	-	restore current_backlight
+fingerprint_sysfs	1	other input	DCS via ddic_dsi_send_cmd_for_fp	3	51 00 ff	stack	-	vendor fallback

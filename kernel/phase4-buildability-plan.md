@@ -1100,8 +1100,12 @@ class of problem already seen and solved for ST21 (donor 2.2.0.15 vs stock
 
 ### Modules that genuinely require reverse engineering
 
-Seven: `panel_ky_vtdr6115_dphy_cmd`, `sh366003_fg`, `sc8571_charger`,
-`sc851x_charger`, `custom_ldo_wl2868`, `custom_ldo`, `fingerprint`.
+Six remain: `sh366003_fg`, `sc8571_charger`, `sc851x_charger`,
+`custom_ldo_wl2868`, `custom_ldo`, `fingerprint`.
+
+`panel_ky_vtdr6115_dphy_cmd` panel logic is reconstructed from the stock oracle
+but is `BLOCKED_WITH_EXACT_MISSING_EVIDENCE`: the exact MediaTek display-provider
+type graph is required to reproduce its seven intermodule MODVERSION CRCs.
 
 ### Exact-GKI transition-blob result
 
