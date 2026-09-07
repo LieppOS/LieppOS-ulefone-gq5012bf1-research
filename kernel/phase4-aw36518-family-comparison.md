@@ -20,6 +20,15 @@ reconstructed; these are measurements on the stock modules.
 
 ## `aw36518_v2.ko` — same source, one `#define` apart
 
+> **Status: reconstructed and verified.** The hypothesis below was re-proved
+> against the V2 oracle in `phase4-aw36518-v2-reconstruction.md`
+> (`SOURCE_DELTA_RECONSTRUCTION_EXACT`).  Confirmed additions from that phase:
+> the two stock modules are **19/23 functions byte-identical to each other**,
+> their per-function reference multisets are 22/23 identical (only
+> `CALL:is_yft_cts_board` differs), `MODULE_DESCRIPTION` also changes
+> (`AW36518` → `AW36518_V2`), and the LieppOS source delta is literally two
+> removed lines plus the token rename.
+
 After normalising the `aw36518_v2_` prefix to `aw36518_`:
 
 * **function-name sets are identical** (23/23);
@@ -33,12 +42,15 @@ After normalising the `aw36518_v2_` prefix to `aw36518_`:
 `364 − 296 = 68` bytes is precisely the `bl is_yft_cts_board` + branch +
 register-shuffling block observed at `aw36518_parse_dt+0x128…0x148`.
 
-**Conclusion:** `aw36518_v2.ko` is the *same vendor source file* built with the
-name macro changed to `aw36518_v2` and the `is_yft_cts_board()` CTS skip
-compiled out.  Reconstructing it from the source produced in this phase is a
-mechanical rename plus removing one call — no new RE is required.  (The
-LieppOS reconstruction source is written so the tag string, the compatible, the
-sub-device name and the CTS hook are the only chip-identity knobs.)
+**Conclusion (verified):** `aw36518_v2.ko` is the *same vendor source file* built
+with the name macro changed to `aw36518_v2` and the `is_yft_cts_board()` CTS skip
+compiled out.  The complete ledger — 10 source deltas, 3 ABI consequences and 2
+compiler-derived effects (`strscpy` length immediate, `__LINE__` shifts), with
+everything else proved identical — is `phase4-aw36518-v2-delta-ledger.tsv`.
+
+Behavioural note worth carrying forward: because the CTS guard exists only in
+AW36518, a CTS board registers **only** the V2 device with the MediaTek
+flashlight core; the AW36518 instance is then V4L2-only.
 
 ## `aw36515.ko` — related but genuinely different driver
 
@@ -74,3 +86,36 @@ its own binary** (different chip, different channel count).
 * Thermal cooling device structure and the 4-entry µA limit table.
 * The build harness: `//lieppos/aw36518-recon/providers/flashlight` produces the
   real `flashlight.ko` `Module.symvers` needed by all three modules.
+
+### Specifically for the upcoming `aw36515.ko` pass
+
+Evidence gathered while doing V2 that should shorten the AW36515 work:
+
+1. **Struct layout.** The vendor `struct aw365xx_flash` carries 24 bytes (three
+   pointer-sized members) between `dnode[]` and `flash_dev_id[]` that no
+   instruction ever touches.  On AW36518/V2 this makes
+   `sizeof(*flash) = 0x308` with `dnode[0] @ +0x278`, `flash_dev_id[0] @ +0x298`,
+   `cdev @ +0x2d0`.  Reproducing that gap raised byte-identical functions from
+   6 → 12 in both modules; expect the same trick to matter for AW36515, whose
+   arrays are `[2]` (so re-measure its `devm_kzalloc` size and field offsets
+   instead of copying these numbers).
+2. **Logging shim.** `printk(KERN_ERR "aw36515[%s] " fmt, __func__, …)` for the
+   tagged records, plain `pr_info()`/`printk()` for the few untagged ones —
+   re-derive the exact split from its own `.rodata.str1.1`.
+3. **Toolchain.** All three stock modules carry the identical
+   `Android (10087095, +pgo, +bolt, +lto, -mlgo, based on r487747c) clang 17.0.2`
+   comment, so the residual scheduling differences seen here (Kleaf builds
+   without the vendor's PGO/BOLT profile) will reappear and are expected.
+4. **PT path differs.** AW36515 calls `flashlight_pt_is_low()` itself, while
+   AW36518/V2 rely on the Ulefone `fl_enable()` name-match bypass in
+   `flashlight.ko` (`strncmp(name, "aw36518-led0", 12)` /
+   `"aw36518_v2-led0", 15`).  Check whether `fl_enable()` also names
+   `aw36515-led0/1`; if not, AW36515 goes through the normal low-battery cut-off.
+5. **Providers.** AW36515 imports `flashlight_pt_is_low` in addition to the two
+   flashlight symbols and does **not** import `is_yft_cts_board`, so the same
+   `flashlight_provider` target supplies all of its vendor CRCs; `fortify_panic`
+   and `strnlen` are GKI symbols.
+6. **DT.** `aw36515@63` is the only node of the three with `flash-externel` and
+   with media-graph endpoints (`mtk-composite-v4l2-1` ports 0/1), and it uses
+   `part = 0` with `ct = 0/1` — i.e. it is the main-camera pair while
+   AW36518/V2 are the `part = 1` pair.

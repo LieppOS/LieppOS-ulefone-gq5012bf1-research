@@ -1,0 +1,951 @@
+--- lieppos/aw36518-recon/recon/aw36518.c
++++ lieppos/aw36518-v2-recon/aw36518_v2.c
+@@ -25,19 +25,19 @@
+ #include <linux/power_supply.h>
+ #endif
+ 
+-#define aw36518_NAME	"aw36518"
+-#define aw36518_I2C_ADDR	(0x63)
+-#define aw36518_DRIVER_VERSION	"V1.0.0"
++#define aw36518_v2_NAME	"aw36518_v2"
++#define aw36518_v2_I2C_ADDR	(0x63)
++#define aw36518_v2_DRIVER_VERSION	"V1.0.0"
+ 
+ /*
+  * Stock log ABI (recovered from .rodata.str1.1 of the stock module):
+- * the tagged records are emitted at KERN_ERR and carry an "aw36518[%s] "
++ * the tagged records are emitted at KERN_ERR and carry an "aw36518_v2[%s] "
+  * prefix whose argument is the *enclosing* function name.  A small number of
+  * call sites in the stock module use plain pr_info()/printk() instead; those
+  * are reproduced verbatim below and must not be converted to aw_log().
+  */
+ #define aw_log(fmt, ...)	\
+-	printk(KERN_ERR "aw36518[%s] " fmt, __func__, ##__VA_ARGS__)
++	printk(KERN_ERR "aw36518_v2[%s] " fmt, __func__, ##__VA_ARGS__)
+ 
+ /* registers definitions */
+ #define REG_ENABLE		0x01
+@@ -55,55 +55,55 @@
+ /*  FLASH Brightness
+  *	min 2940mA, step 5.87mA, max 1500mA
+  */
+-#define aw36518_FLASH_BRT_MIN 2940
+-#define aw36518_FLASH_BRT_STEP 5870
+-#define aw36518_FLASH_BRT_MAX 1499790
+-#define aw36518_FLASH_BRT_uA_TO_REG(a)	\
+-	((a) < aw36518_FLASH_BRT_MIN ? 0 :	\
+-	 (((a) - aw36518_FLASH_BRT_MIN) / aw36518_FLASH_BRT_STEP))
+-#define aw36518_FLASH_BRT_REG_TO_uA(a)		\
+-	((a) * aw36518_FLASH_BRT_STEP + aw36518_FLASH_BRT_MIN)
++#define aw36518_v2_FLASH_BRT_MIN 2940
++#define aw36518_v2_FLASH_BRT_STEP 5870
++#define aw36518_v2_FLASH_BRT_MAX 1499790
++#define aw36518_v2_FLASH_BRT_uA_TO_REG(a)	\
++	((a) < aw36518_v2_FLASH_BRT_MIN ? 0 :	\
++	 (((a) - aw36518_v2_FLASH_BRT_MIN) / aw36518_v2_FLASH_BRT_STEP))
++#define aw36518_v2_FLASH_BRT_REG_TO_uA(a)		\
++	((a) * aw36518_v2_FLASH_BRT_STEP + aw36518_v2_FLASH_BRT_MIN)
+ 
+ /*  FLASH TIMEOUT DURATION
+  *	min 40ms, step 40ms, max 1600ms
+  */
+-#define aw36518_FLASH_TOUT_MIN 40
+-#define aw36518_FLASH_TOUT_STEP 40
+-#define aw36518_FLASH_TOUT_MAX 1600
+-#define aw36518_FLASH_TOUT_DEFAULT 400
++#define aw36518_v2_FLASH_TOUT_MIN 40
++#define aw36518_v2_FLASH_TOUT_STEP 40
++#define aw36518_v2_FLASH_TOUT_MAX 1600
++#define aw36518_v2_FLASH_TOUT_DEFAULT 400
+ 
+ /*  TORCH BRT
+  *	min 750uA, step 1510uA, max 386000uA
+  */
+-#define aw36518_TORCH_BRT_MIN 750
+-#define aw36518_TORCH_BRT_STEP 1510
+-#define aw36518_TORCH_BRT_MAX 385800
+-#define aw36518_TORCH_BRT_uA_TO_REG(a)	\
+-	((a) < aw36518_TORCH_BRT_MIN ? 0 :	\
+-	 (((a) - aw36518_TORCH_BRT_MIN) / aw36518_TORCH_BRT_STEP))
+-#define aw36518_TORCH_BRT_REG_TO_uA(a)		\
+-	((a) * aw36518_TORCH_BRT_STEP + aw36518_TORCH_BRT_MIN)
++#define aw36518_v2_TORCH_BRT_MIN 750
++#define aw36518_v2_TORCH_BRT_STEP 1510
++#define aw36518_v2_TORCH_BRT_MAX 385800
++#define aw36518_v2_TORCH_BRT_uA_TO_REG(a)	\
++	((a) < aw36518_v2_TORCH_BRT_MIN ? 0 :	\
++	 (((a) - aw36518_v2_TORCH_BRT_MIN) / aw36518_v2_TORCH_BRT_STEP))
++#define aw36518_v2_TORCH_BRT_REG_TO_uA(a)		\
++	((a) * aw36518_v2_TORCH_BRT_STEP + aw36518_v2_TORCH_BRT_MIN)
+ 
+-#define aw36518_COOLER_MAX_STATE 4
+-static const int flash_state_to_current_limit[aw36518_COOLER_MAX_STATE] = {
++#define aw36518_v2_COOLER_MAX_STATE 4
++static const int flash_state_to_current_limit[aw36518_v2_COOLER_MAX_STATE] = {
+ 	150000, 100000, 50000, 25000
+ };
+ 
+-enum aw36518_led_id {
+-	aw36518_LED0 = 0,
+-	aw36518_LED_MAX
++enum aw36518_v2_led_id {
++	aw36518_v2_LED0 = 0,
++	aw36518_v2_LED_MAX
+ };
+ 
+-/* struct aw36518_platform_data
++/* struct aw36518_v2_platform_data
+  *
+  * @max_flash_timeout: flash timeout
+  * @max_flash_brt: flash mode led brightness
+  * @max_torch_brt: torch mode led brightness
+  */
+-struct aw36518_platform_data {
++struct aw36518_v2_platform_data {
+ 	u32 max_flash_timeout;
+-	u32 max_flash_brt[aw36518_LED_MAX];
+-	u32 max_torch_brt[aw36518_LED_MAX];
++	u32 max_flash_brt[aw36518_v2_LED_MAX];
++	u32 max_torch_brt[aw36518_v2_LED_MAX];
+ };
+ 
+ 
+@@ -114,7 +114,7 @@
+ };
+ 
+ /**
+- * struct aw36518_flash
++ * struct aw36518_v2_flash
+  *
+  * @dev: pointer to &struct device
+  * @pdata: platform data
+@@ -124,18 +124,18 @@
+  * @ctrls_led: V4L2 controls
+  * @subdev_led: V4L2 subdev
+  */
+-struct aw36518_flash {
++struct aw36518_v2_flash {
+ 	struct device *dev;
+-	struct aw36518_platform_data *pdata;
++	struct aw36518_v2_platform_data *pdata;
+ 	struct regmap *regmap;
+ 	struct mutex lock;
+ 
+ 	enum v4l2_flash_led_mode led_mode;
+-	struct v4l2_ctrl_handler ctrls_led[aw36518_LED_MAX];
+-	struct v4l2_subdev subdev_led[aw36518_LED_MAX];
+-	struct device_node *dnode[aw36518_LED_MAX];
++	struct v4l2_ctrl_handler ctrls_led[aw36518_v2_LED_MAX];
++	struct v4l2_subdev subdev_led[aw36518_v2_LED_MAX];
++	struct device_node *dnode[aw36518_v2_LED_MAX];
+ 	/*
+-	 * Stock layout evidence (aw36518_probe): devm_kzalloc(sizeof(*flash))
++	 * Stock layout evidence (aw36518_v2_probe): devm_kzalloc(sizeof(*flash))
+ 	 * = 0x308, dnode[0] at +0x278, flash_dev_id[0] at +0x298, cdev at
+ 	 * +0x2d0.  The vendor struct therefore carries 24 bytes (three
+ 	 * pointer-sized members) between dnode[] and flash_dev_id[].  No stock
+@@ -146,7 +146,7 @@
+ 	 */
+ 	void *vendor_reserved[3];
+ #if IS_ENABLED(CONFIG_MTK_FLASHLIGHT)
+-	struct flashlight_device_id flash_dev_id[aw36518_LED_MAX];
++	struct flashlight_device_id flash_dev_id[aw36518_v2_LED_MAX];
+ #endif
+ 	struct thermal_cooling_device *cdev;
+ 	int need_cooler;
+@@ -160,12 +160,12 @@
+ /* define usage count */
+ static int use_count;
+ 
+-static struct aw36518_flash *aw36518_flash_data;
++static struct aw36518_v2_flash *aw36518_v2_flash_data;
+ 
+-#define to_aw36518_flash(_ctrl, _no)	\
+-	container_of(_ctrl->handler, struct aw36518_flash, ctrls_led[_no])
++#define to_aw36518_v2_flash(_ctrl, _no)	\
++	container_of(_ctrl->handler, struct aw36518_v2_flash, ctrls_led[_no])
+ 
+-static __always_inline void aw36518_gpio_set(struct aw36518_flash *flash,
++static __always_inline void aw36518_v2_gpio_set(struct aw36518_v2_flash *flash,
+ 					      int state)
+ {
+ 	aw_log("set start, pin(%d) state(%d)\n",
+@@ -173,7 +173,7 @@
+ 	gpio_set_value(flash->flash_externel_gpio, state);
+ }
+ 
+-static __always_inline int aw36518_gpio_init(struct aw36518_flash *flash)
++static __always_inline int aw36518_v2_gpio_init(struct aw36518_v2_flash *flash)
+ {
+ 	struct device_node *np = flash->dev->of_node;
+ 	int gpio, rval;
+@@ -198,7 +198,7 @@
+ }
+ 
+ /* enable mode control */
+-static int aw36518_mode_ctrl(struct aw36518_flash *flash)
++static int aw36518_v2_mode_ctrl(struct aw36518_v2_flash *flash)
+ {
+ 	int rval = -EINVAL;
+ 
+@@ -221,8 +221,8 @@
+ }
+ 
+ /* led1 enable/disable */
+-static int aw36518_enable_ctrl(struct aw36518_flash *flash,
+-			      enum aw36518_led_id led_no, bool on)
++static int aw36518_v2_enable_ctrl(struct aw36518_v2_flash *flash,
++			      enum aw36518_v2_led_id led_no, bool on)
+ {
+ 	int rval;
+ 
+@@ -246,15 +246,15 @@
+ }
+ 
+ /* torch1 brightness control */
+-static int aw36518_torch_brt_ctrl(struct aw36518_flash *flash,
+-				 enum aw36518_led_id led_no, unsigned int brt)
++static int aw36518_v2_torch_brt_ctrl(struct aw36518_v2_flash *flash,
++				 enum aw36518_v2_led_id led_no, unsigned int brt)
+ {
+ 	int rval;
+ 	u8 br_bits;
+ 
+ 	aw_log("%s %d brt:%u\n", __func__, led_no, brt);
+-	if (brt < aw36518_TORCH_BRT_MIN)
+-		return aw36518_enable_ctrl(flash, led_no, false);
++	if (brt < aw36518_v2_TORCH_BRT_MIN)
++		return aw36518_v2_enable_ctrl(flash, led_no, false);
+ 
+ 	if (flash->need_cooler == 0) {
+ 		flash->ori_current = brt;
+@@ -265,7 +265,7 @@
+ 		}
+ 	}
+ 
+-	br_bits = aw36518_TORCH_BRT_uA_TO_REG(brt);
++	br_bits = aw36518_v2_TORCH_BRT_uA_TO_REG(brt);
+ 
+ 	if (led_no)
+ 		return 0;
+@@ -276,22 +276,22 @@
+ }
+ 
+ /* flash1/2 brightness control */
+-static int aw36518_flash_brt_ctrl(struct aw36518_flash *flash,
+-				 enum aw36518_led_id led_no, unsigned int brt)
++static int aw36518_v2_flash_brt_ctrl(struct aw36518_v2_flash *flash,
++				 enum aw36518_v2_led_id led_no, unsigned int brt)
+ {
+ 	int rval;
+ 	u8 br_bits;
+ 
+ 	aw_log("%s %d brt:%u", __func__, led_no, brt);
+-	if (brt < aw36518_FLASH_BRT_MIN)
+-		return aw36518_enable_ctrl(flash, led_no, false);
++	if (brt < aw36518_v2_FLASH_BRT_MIN)
++		return aw36518_v2_enable_ctrl(flash, led_no, false);
+ 
+ 	if (flash->need_cooler == 1 && brt > flash->target_current) {
+ 		brt = flash->target_current;
+ 		aw_log("thermal limit current:%d\n", brt);
+ 	}
+ 
+-	br_bits = aw36518_FLASH_BRT_uA_TO_REG(brt);
++	br_bits = aw36518_v2_FLASH_BRT_uA_TO_REG(brt);
+ 
+ 	rval = regmap_update_bits(flash->regmap,
+ 				REG_LED0_FLASH_BR, 0xff, br_bits);
+@@ -300,13 +300,13 @@
+ }
+ 
+ /* flash1 timeout control */
+-static int aw36518_flash_tout_ctrl(struct aw36518_flash *flash,
++static int aw36518_v2_flash_tout_ctrl(struct aw36518_v2_flash *flash,
+ 				unsigned int tout)
+ {
+ 	int rval;
+ 	u8 tout_bits;
+ 	aw_log("%s tout:%u", __func__, tout);
+-	tout_bits = tout / aw36518_FLASH_TOUT_STEP;
++	tout_bits = tout / aw36518_v2_FLASH_TOUT_STEP;
+ 	rval = regmap_update_bits(flash->regmap,
+ 				  REG_FLASH_TOUT, 0x0f, tout_bits);
+ 
+@@ -314,9 +314,9 @@
+ }
+ 
+ /* v4l2 controls  */
+-static int aw36518_get_ctrl(struct v4l2_ctrl *ctrl, enum aw36518_led_id led_no)
++static int aw36518_v2_get_ctrl(struct v4l2_ctrl *ctrl, enum aw36518_v2_led_id led_no)
+ {
+-	struct aw36518_flash *flash = to_aw36518_flash(ctrl, led_no);
++	struct aw36518_v2_flash *flash = to_aw36518_v2_flash(ctrl, led_no);
+ 	int rval = -EINVAL;
+ 
+ 	mutex_lock(&flash->lock);
+@@ -342,9 +342,9 @@
+ 	return rval;
+ }
+ 
+-static int aw36518_set_ctrl(struct v4l2_ctrl *ctrl, enum aw36518_led_id led_no)
++static int aw36518_v2_set_ctrl(struct v4l2_ctrl *ctrl, enum aw36518_v2_led_id led_no)
+ {
+-	struct aw36518_flash *flash = to_aw36518_flash(ctrl, led_no);
++	struct aw36518_v2_flash *flash = to_aw36518_v2_flash(ctrl, led_no);
+ 	int rval = -EINVAL;
+ 
+ 	aw_log("%s led:%d ID:%d", __func__, led_no, ctrl->id);
+@@ -355,13 +355,13 @@
+ 		aw_log("%s enter V4L2_CID_FLASH_LED_MODE", __func__);
+ 		flash->led_mode = ctrl->val;
+ 		if (flash->led_mode != V4L2_FLASH_LED_MODE_FLASH)
+-			rval = aw36518_mode_ctrl(flash);
++			rval = aw36518_v2_mode_ctrl(flash);
+ 		else
+ 			rval = 0;
+ 		if (flash->led_mode == V4L2_FLASH_LED_MODE_NONE)
+-			aw36518_enable_ctrl(flash, led_no, false);
++			aw36518_v2_enable_ctrl(flash, led_no, false);
+ 		else if (flash->led_mode == V4L2_FLASH_LED_MODE_TORCH)
+-			rval = aw36518_enable_ctrl(flash, led_no, true);
++			rval = aw36518_v2_enable_ctrl(flash, led_no, true);
+ 		break;
+ 
+ 	case V4L2_CID_FLASH_STROBE_SOURCE:
+@@ -373,7 +373,7 @@
+ 			aw_log("hw trigger\n");
+ 			rval = regmap_update_bits(flash->regmap,
+ 					REG_ENABLE, 0x2C, 0x20);
+-			rval = aw36518_enable_ctrl(flash, led_no, true);
++			rval = aw36518_v2_enable_ctrl(flash, led_no, true);
+ 		}
+ 		if (rval < 0)
+ 			goto err_out;
+@@ -385,9 +385,9 @@
+ 			goto err_out;
+ 		}
+ 		flash->led_mode = V4L2_FLASH_LED_MODE_FLASH;
+-		rval = aw36518_mode_ctrl(flash);
+-		rval = aw36518_enable_ctrl(flash, led_no, true);
+-		aw36518_gpio_set(flash, 1);
++		rval = aw36518_v2_mode_ctrl(flash);
++		rval = aw36518_v2_enable_ctrl(flash, led_no, true);
++		aw36518_v2_gpio_set(flash, 1);
+ 		break;
+ 
+ 	case V4L2_CID_FLASH_STROBE_STOP:
+@@ -395,21 +395,21 @@
+ 			rval = -EBUSY;
+ 			goto err_out;
+ 		}
+-		aw36518_enable_ctrl(flash, led_no, false);
++		aw36518_v2_enable_ctrl(flash, led_no, false);
+ 		flash->led_mode = V4L2_FLASH_LED_MODE_NONE;
+-		rval = aw36518_mode_ctrl(flash);
++		rval = aw36518_v2_mode_ctrl(flash);
+ 		break;
+ 
+ 	case V4L2_CID_FLASH_TIMEOUT:
+-		rval = aw36518_flash_tout_ctrl(flash, ctrl->val);
++		rval = aw36518_v2_flash_tout_ctrl(flash, ctrl->val);
+ 		break;
+ 
+ 	case V4L2_CID_FLASH_INTENSITY:
+-		rval = aw36518_flash_brt_ctrl(flash, led_no, ctrl->val);
++		rval = aw36518_v2_flash_brt_ctrl(flash, led_no, ctrl->val);
+ 		break;
+ 
+ 	case V4L2_CID_FLASH_TORCH_INTENSITY:
+-		rval = aw36518_torch_brt_ctrl(flash, led_no, ctrl->val);
++		rval = aw36518_v2_torch_brt_ctrl(flash, led_no, ctrl->val);
+ 		break;
+ 	}
+ 
+@@ -419,31 +419,31 @@
+ }
+ 
+ 
+-static int aw36518_led0_get_ctrl(struct v4l2_ctrl *ctrl)
++static int aw36518_v2_led0_get_ctrl(struct v4l2_ctrl *ctrl)
+ {
+-	return aw36518_get_ctrl(ctrl, aw36518_LED0);
++	return aw36518_v2_get_ctrl(ctrl, aw36518_v2_LED0);
+ }
+ 
+-static int aw36518_led0_set_ctrl(struct v4l2_ctrl *ctrl)
++static int aw36518_v2_led0_set_ctrl(struct v4l2_ctrl *ctrl)
+ {
+-	return aw36518_set_ctrl(ctrl, aw36518_LED0);
++	return aw36518_v2_set_ctrl(ctrl, aw36518_v2_LED0);
+ }
+ 
+-static const struct v4l2_ctrl_ops aw36518_led_ctrl_ops[aw36518_LED_MAX] = {
+-	[aw36518_LED0] = {
+-			.g_volatile_ctrl = aw36518_led0_get_ctrl,
+-			.s_ctrl = aw36518_led0_set_ctrl,
++static const struct v4l2_ctrl_ops aw36518_v2_led_ctrl_ops[aw36518_v2_LED_MAX] = {
++	[aw36518_v2_LED0] = {
++			.g_volatile_ctrl = aw36518_v2_led0_get_ctrl,
++			.s_ctrl = aw36518_v2_led0_set_ctrl,
+ 			},
+ };
+ 
+-static int aw36518_init_controls(struct aw36518_flash *flash,
+-				enum aw36518_led_id led_no)
++static int aw36518_v2_init_controls(struct aw36518_v2_flash *flash,
++				enum aw36518_v2_led_id led_no)
+ {
+ 	struct v4l2_ctrl *fault;
+ 	u32 max_flash_brt = flash->pdata->max_flash_brt[led_no];
+ 	u32 max_torch_brt = flash->pdata->max_torch_brt[led_no];
+ 	struct v4l2_ctrl_handler *hdl = &flash->ctrls_led[led_no];
+-	const struct v4l2_ctrl_ops *ops = &aw36518_led_ctrl_ops[led_no];
++	const struct v4l2_ctrl_ops *ops = &aw36518_v2_led_ctrl_ops[led_no];
+ 
+ 	aw_log("enter\n");
+ 	v4l2_ctrl_handler_init(hdl, 8);
+@@ -466,20 +466,20 @@
+ 
+ 	/* flash strobe timeout */
+ 	v4l2_ctrl_new_std(hdl, ops, V4L2_CID_FLASH_TIMEOUT,
+-			  aw36518_FLASH_TOUT_MIN,
++			  aw36518_v2_FLASH_TOUT_MIN,
+ 			  flash->pdata->max_flash_timeout,
+-			  aw36518_FLASH_TOUT_STEP,
++			  aw36518_v2_FLASH_TOUT_STEP,
+ 			  flash->pdata->max_flash_timeout);
+ 
+ 	/* flash brt */
+ 	v4l2_ctrl_new_std(hdl, ops, V4L2_CID_FLASH_INTENSITY,
+-			  aw36518_FLASH_BRT_MIN, max_flash_brt,
+-			  aw36518_FLASH_BRT_STEP, max_flash_brt);
++			  aw36518_v2_FLASH_BRT_MIN, max_flash_brt,
++			  aw36518_v2_FLASH_BRT_STEP, max_flash_brt);
+ 
+ 	/* torch brt */
+ 	v4l2_ctrl_new_std(hdl, ops, V4L2_CID_FLASH_TORCH_INTENSITY,
+-			  aw36518_TORCH_BRT_MIN, max_torch_brt,
+-			  aw36518_TORCH_BRT_STEP, max_torch_brt);
++			  aw36518_v2_TORCH_BRT_MIN, max_torch_brt,
++			  aw36518_v2_TORCH_BRT_STEP, max_torch_brt);
+ 
+ 	/* fault */
+ 	fault = v4l2_ctrl_new_std(hdl, ops, V4L2_CID_FLASH_FAULT, 0,
+@@ -498,17 +498,17 @@
+ }
+ 
+ /* initialize device */
+-static const struct v4l2_subdev_ops aw36518_ops = {
++static const struct v4l2_subdev_ops aw36518_v2_ops = {
+ 	.core = NULL,
+ };
+ 
+-static const struct regmap_config aw36518_regmap = {
++static const struct regmap_config aw36518_v2_regmap = {
+ 	.reg_bits = 8,
+ 	.val_bits = 8,
+ 	.max_register = 0xFF,
+ };
+ 
+-static void aw36518_v4l2_i2c_subdev_init(struct v4l2_subdev *sd,
++static void aw36518_v2_v4l2_i2c_subdev_init(struct v4l2_subdev *sd,
+ 		struct i2c_client *client,
+ 		const struct v4l2_subdev_ops *ops)
+ {
+@@ -527,7 +527,7 @@
+ 		pr_info("snprintf failed\n");
+ }
+ 
+-static int aw36518_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
++static int aw36518_v2_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+ {
+ 	int ret;
+ 
+@@ -540,20 +540,20 @@
+ 	return 0;
+ }
+ 
+-static int aw36518_close(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
++static int aw36518_v2_close(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+ {
+ 	pm_runtime_put(sd->dev);
+ 
+ 	return 0;
+ }
+ 
+-static const struct v4l2_subdev_internal_ops aw36518_int_ops = {
+-	.open = aw36518_open,
+-	.close = aw36518_close,
++static const struct v4l2_subdev_internal_ops aw36518_v2_int_ops = {
++	.open = aw36518_v2_open,
++	.close = aw36518_v2_close,
+ };
+ 
+-static __always_inline int aw36518_subdev_init(struct aw36518_flash *flash,
+-			      enum aw36518_led_id led_no, char *led_name)
++static __always_inline int aw36518_v2_subdev_init(struct aw36518_v2_flash *flash,
++			      enum aw36518_v2_led_id led_no, char *led_name)
+ {
+ 	struct i2c_client *client = to_i2c_client(flash->dev);
+ 	struct device_node *np = flash->dev->of_node, *child;
+@@ -562,10 +562,10 @@
+ 
+ 	aw_log("%s %d", __func__, led_no);
+ 
+-	aw36518_v4l2_i2c_subdev_init(&flash->subdev_led[led_no],
+-				client, &aw36518_ops);
++	aw36518_v2_v4l2_i2c_subdev_init(&flash->subdev_led[led_no],
++				client, &aw36518_v2_ops);
+ 	flash->subdev_led[led_no].flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
+-	flash->subdev_led[led_no].internal_ops = &aw36518_int_ops;
++	flash->subdev_led[led_no].internal_ops = &aw36518_v2_int_ops;
+ 	strscpy(flash->subdev_led[led_no].name, led_name,
+ 		sizeof(flash->subdev_led[led_no].name));
+ 
+@@ -585,7 +585,7 @@
+ 		}
+ 	}
+ 
+-	rval = aw36518_init_controls(flash, led_no);
++	rval = aw36518_v2_init_controls(flash, led_no);
+ 	if (rval)
+ 		goto err_out;
+ 	rval = media_entity_pads_init(&flash->subdev_led[led_no].entity, 0, NULL);
+@@ -605,19 +605,19 @@
+ }
+ 
+ /* flashlight init */
+-static int aw36518_init(struct aw36518_flash *flash)
++static int aw36518_v2_init(struct aw36518_v2_flash *flash)
+ {
+ 	int rval = 0;
+ 	unsigned int reg_val;
+ 
+ 	/* set timeout */
+-	aw36518_gpio_set(flash, 0);
+-	rval = aw36518_flash_tout_ctrl(flash, aw36518_FLASH_TOUT_DEFAULT);
++	aw36518_v2_gpio_set(flash, 0);
++	rval = aw36518_v2_flash_tout_ctrl(flash, aw36518_v2_FLASH_TOUT_DEFAULT);
+ 	if (rval < 0)
+ 		return rval;
+ 	/* output disable */
+ 	flash->led_mode = V4L2_FLASH_LED_MODE_NONE;
+-	rval = aw36518_mode_ctrl(flash);
++	rval = aw36518_v2_mode_ctrl(flash);
+ 	if (rval < 0)
+ 		return rval;
+ 
+@@ -635,23 +635,23 @@
+ }
+ 
+ /* flashlight uninit */
+-static __always_inline int aw36518_uninit(struct aw36518_flash *flash)
++static __always_inline int aw36518_v2_uninit(struct aw36518_v2_flash *flash)
+ {
+-	aw36518_gpio_set(flash, 0);
++	aw36518_v2_gpio_set(flash, 0);
+ 	return 0;
+ }
+ 
+-static int aw36518_flash_open(void)
++static int aw36518_v2_flash_open(void)
+ {
+ 	return 0;
+ }
+ 
+-static int aw36518_flash_release(void)
++static int aw36518_v2_flash_release(void)
+ {
+ 	return 0;
+ }
+ 
+-static int aw36518_ioctl(unsigned int cmd, unsigned long arg)
++static int aw36518_v2_ioctl(unsigned int cmd, unsigned long arg)
+ {
+ 	struct flashlight_dev_arg *fl_arg;
+ 	int channel;
+@@ -664,15 +664,15 @@
+ 		aw_log("FLASH_IOC_SET_ONOFF(%d): %d\n",
+ 				channel, (int)fl_arg->arg);
+ 		if ((int)fl_arg->arg) {
+-			aw36518_torch_brt_ctrl(aw36518_flash_data, channel, 250000);
+-			aw36518_flash_data->led_mode = V4L2_FLASH_LED_MODE_TORCH;
+-			aw36518_mode_ctrl(aw36518_flash_data);
+-			aw36518_enable_ctrl(aw36518_flash_data, channel, true);
++			aw36518_v2_torch_brt_ctrl(aw36518_v2_flash_data, channel, 250000);
++			aw36518_v2_flash_data->led_mode = V4L2_FLASH_LED_MODE_TORCH;
++			aw36518_v2_mode_ctrl(aw36518_v2_flash_data);
++			aw36518_v2_enable_ctrl(aw36518_v2_flash_data, channel, true);
+ 		} else {
+-			if (aw36518_flash_data->led_mode != V4L2_FLASH_LED_MODE_NONE) {
+-				aw36518_flash_data->led_mode = V4L2_FLASH_LED_MODE_NONE;
+-				aw36518_mode_ctrl(aw36518_flash_data);
+-				aw36518_enable_ctrl(aw36518_flash_data, channel, false);
++			if (aw36518_v2_flash_data->led_mode != V4L2_FLASH_LED_MODE_NONE) {
++				aw36518_v2_flash_data->led_mode = V4L2_FLASH_LED_MODE_NONE;
++				aw36518_v2_mode_ctrl(aw36518_v2_flash_data);
++				aw36518_v2_enable_ctrl(aw36518_v2_flash_data, channel, false);
+ 			}
+ 		}
+ 		break;
+@@ -685,48 +685,48 @@
+ 	return 0;
+ }
+ 
+-static int aw36518_set_driver(int set)
++static int aw36518_v2_set_driver(int set)
+ {
+ 	int ret = 0;
+ 
+ 	/* set chip and usage count */
+-	//mutex_lock(&aw36518_mutex);
++	//mutex_lock(&aw36518_v2_mutex);
+ 	if (set) {
+ 		if (!use_count)
+-			ret = aw36518_init(aw36518_flash_data);
++			ret = aw36518_v2_init(aw36518_v2_flash_data);
+ 		use_count++;
+ 		aw_log("Set driver: %d\n", use_count);
+ 	} else {
+ 		use_count--;
+ 		if (!use_count)
+-			ret = aw36518_uninit(aw36518_flash_data);
++			ret = aw36518_v2_uninit(aw36518_v2_flash_data);
+ 		if (use_count < 0)
+ 			use_count = 0;
+ 		aw_log("Unset driver: %d\n", use_count);
+ 	}
+-	//mutex_unlock(&aw36518_mutex);
++	//mutex_unlock(&aw36518_v2_mutex);
+ 
+ 	return 0;
+ }
+ 
+-static ssize_t aw36518_strobe_store(struct flashlight_arg arg)
++static ssize_t aw36518_v2_strobe_store(struct flashlight_arg arg)
+ {
+ 	aw_log("%s %d", __func__, arg.channel);
+-	aw36518_set_driver(1);
+-	//aw36518_set_level(arg.channel, arg.level);
+-	//aw36518_timeout_ms[arg.channel] = 0;
+-	//aw36518_enable(arg.channel);
+-	aw36518_torch_brt_ctrl(aw36518_flash_data, arg.channel,
++	aw36518_v2_set_driver(1);
++	//aw36518_v2_set_level(arg.channel, arg.level);
++	//aw36518_v2_timeout_ms[arg.channel] = 0;
++	//aw36518_v2_enable(arg.channel);
++	aw36518_v2_torch_brt_ctrl(aw36518_v2_flash_data, arg.channel,
+ 				arg.level * 25000);
+-	aw36518_enable_ctrl(aw36518_flash_data, arg.channel, true);
+-	aw36518_flash_data->led_mode = V4L2_FLASH_LED_MODE_TORCH;
+-	aw36518_mode_ctrl(aw36518_flash_data);
++	aw36518_v2_enable_ctrl(aw36518_v2_flash_data, arg.channel, true);
++	aw36518_v2_flash_data->led_mode = V4L2_FLASH_LED_MODE_TORCH;
++	aw36518_v2_mode_ctrl(aw36518_v2_flash_data);
+ 	msleep(arg.dur);
+-	//aw36518_disable(arg.channel);
+-	aw36518_flash_data->led_mode = V4L2_FLASH_LED_MODE_NONE;
+-	aw36518_mode_ctrl(aw36518_flash_data);
+-	aw36518_enable_ctrl(aw36518_flash_data, arg.channel, false);
+-	aw36518_set_driver(0);
++	//aw36518_v2_disable(arg.channel);
++	aw36518_v2_flash_data->led_mode = V4L2_FLASH_LED_MODE_NONE;
++	aw36518_v2_mode_ctrl(aw36518_v2_flash_data);
++	aw36518_v2_enable_ctrl(aw36518_v2_flash_data, arg.channel, false);
++	aw36518_v2_set_driver(0);
+ 	return 0;
+ }
+ 
+@@ -738,7 +738,7 @@
+ 	int i;
+ 
+ 	for (i = 0; i < 0x0e; i++) {
+-		regmap_read(aw36518_flash_data->regmap, i, &val);
++		regmap_read(aw36518_v2_flash_data->regmap, i, &val);
+ 		len += snprintf(buf + len, PAGE_SIZE - len,
+ 				"reg0x%02X = 0x%02X\n", i, val);
+ 	}
+@@ -752,34 +752,34 @@
+ 	unsigned int reg, val;
+ 
+ 	if (sscanf(buf, "%x %x", &reg, &val) == 2)
+-		regmap_write(aw36518_flash_data->regmap, reg, val);
++		regmap_write(aw36518_v2_flash_data->regmap, reg, val);
+ 	return count;
+ }
+ 
+-static int aw36518_cooling_get_max_state(struct thermal_cooling_device *cdev,
++static int aw36518_v2_cooling_get_max_state(struct thermal_cooling_device *cdev,
+ 					unsigned long *state)
+ {
+-	struct aw36518_flash *flash = cdev->devdata;
++	struct aw36518_v2_flash *flash = cdev->devdata;
+ 
+ 	*state = flash->max_state;
+ 
+ 	return 0;
+ }
+ 
+-static int aw36518_cooling_get_cur_state(struct thermal_cooling_device *cdev,
++static int aw36518_v2_cooling_get_cur_state(struct thermal_cooling_device *cdev,
+ 					unsigned long *state)
+ {
+-	struct aw36518_flash *flash = cdev->devdata;
++	struct aw36518_v2_flash *flash = cdev->devdata;
+ 
+ 	*state = flash->target_state;
+ 
+ 	return 0;
+ }
+ 
+-static int aw36518_cooling_set_cur_state(struct thermal_cooling_device *cdev,
++static int aw36518_v2_cooling_set_cur_state(struct thermal_cooling_device *cdev,
+ 					unsigned long state)
+ {
+-	struct aw36518_flash *flash = cdev->devdata;
++	struct aw36518_v2_flash *flash = cdev->devdata;
+ 	int ret = 0;
+ 
+ 	/* Request state should be less than max_state */
+@@ -793,36 +793,36 @@
+ 
+ 	if (flash->target_state == 0) {
+ 		flash->need_cooler = 0;
+-		flash->target_current = aw36518_FLASH_BRT_MAX;
+-		ret = aw36518_torch_brt_ctrl(flash, aw36518_LED0,
+-						aw36518_TORCH_BRT_MAX);
++		flash->target_current = aw36518_v2_FLASH_BRT_MAX;
++		ret = aw36518_v2_torch_brt_ctrl(flash, aw36518_v2_LED0,
++						aw36518_v2_TORCH_BRT_MAX);
+ 	} else {
+ 		flash->need_cooler = 1;
+ 		flash->target_current =
+ 			flash_state_to_current_limit[flash->target_state - 1];
+-		ret = aw36518_torch_brt_ctrl(flash, aw36518_LED0,
++		ret = aw36518_v2_torch_brt_ctrl(flash, aw36518_v2_LED0,
+ 						flash->target_current);
+ 	}
+ 	return ret;
+ }
+ 
+-static struct thermal_cooling_device_ops aw36518_cooling_ops = {
+-	.get_max_state		= aw36518_cooling_get_max_state,
+-	.get_cur_state		= aw36518_cooling_get_cur_state,
+-	.set_cur_state		= aw36518_cooling_set_cur_state,
++static struct thermal_cooling_device_ops aw36518_v2_cooling_ops = {
++	.get_max_state		= aw36518_v2_cooling_get_max_state,
++	.get_cur_state		= aw36518_v2_cooling_get_cur_state,
++	.set_cur_state		= aw36518_v2_cooling_set_cur_state,
+ };
+ 
+-static struct flashlight_operations aw36518_flash_ops = {
+-	aw36518_flash_open,
+-	aw36518_flash_release,
+-	aw36518_ioctl,
+-	aw36518_strobe_store,
+-	aw36518_set_driver
++static struct flashlight_operations aw36518_v2_flash_ops = {
++	aw36518_v2_flash_open,
++	aw36518_v2_flash_release,
++	aw36518_v2_ioctl,
++	aw36518_v2_strobe_store,
++	aw36518_v2_set_driver
+ };
+ 
+ static DEVICE_ATTR(reg, 0644, reg_show, reg_store);
+ 
+-static int aw36518_parse_dt(struct aw36518_flash *flash)
++static int aw36518_v2_parse_dt(struct aw36518_v2_flash *flash)
+ {
+ 	struct device_node *np, *cnp;
+ 	struct device *dev = flash->dev;
+@@ -860,10 +860,8 @@
+ 				flash->flash_dev_id[i].name,
+ 				flash->flash_dev_id[i].channel,
+ 				flash->flash_dev_id[i].decouple);
+-		if (is_yft_cts_board())
+-			continue;
+ 		rval = flashlight_dev_register_by_device_id(&flash->flash_dev_id[i],
+-							 &aw36518_flash_ops);
++							 &aw36518_v2_flash_ops);
+ 		if (rval)
+ 			return rval;
+ 		i++;
+@@ -872,11 +870,11 @@
+ 	return 0;
+ }
+ 
+-static int aw36518_probe(struct i2c_client *client,
++static int aw36518_v2_probe(struct i2c_client *client,
+ 			const struct i2c_device_id *devid)
+ {
+-	struct aw36518_flash *flash;
+-	struct aw36518_platform_data *pdata = dev_get_platdata(&client->dev);
++	struct aw36518_v2_flash *flash;
++	struct aw36518_v2_platform_data *pdata = dev_get_platdata(&client->dev);
+ 	unsigned int reg_val = 0;
+ 	int rval;
+ 
+@@ -886,7 +884,7 @@
+ 	if (flash == NULL)
+ 		return -ENOMEM;
+ 
+-	flash->regmap = devm_regmap_init_i2c(client, &aw36518_regmap);
++	flash->regmap = devm_regmap_init_i2c(client, &aw36518_v2_regmap);
+ 	if (IS_ERR(flash->regmap)) {
+ 		rval = PTR_ERR(flash->regmap);
+ 		return rval;
+@@ -897,44 +895,44 @@
+ 		pdata = devm_kzalloc(&client->dev, sizeof(*pdata), GFP_KERNEL);
+ 		if (pdata == NULL)
+ 			return -ENODEV;
+-		pdata->max_flash_timeout = aw36518_FLASH_TOUT_MAX;
++		pdata->max_flash_timeout = aw36518_v2_FLASH_TOUT_MAX;
+ 		/* led 1 */
+-		pdata->max_flash_brt[aw36518_LED0] = aw36518_FLASH_BRT_MAX;
+-		pdata->max_torch_brt[aw36518_LED0] = aw36518_TORCH_BRT_MAX;
++		pdata->max_flash_brt[aw36518_v2_LED0] = aw36518_v2_FLASH_BRT_MAX;
++		pdata->max_torch_brt[aw36518_v2_LED0] = aw36518_v2_TORCH_BRT_MAX;
+ 	}
+ 	flash->pdata = pdata;
+ 	flash->dev = &client->dev;
+ 	mutex_init(&flash->lock);
+-	aw36518_flash_data = flash;
++	aw36518_v2_flash_data = flash;
+ 
+-	rval = aw36518_gpio_init(flash);
++	rval = aw36518_v2_gpio_init(flash);
+ 	if (rval)
+ 		return rval;
+ 
+-	rval = aw36518_subdev_init(flash, aw36518_LED0, "aw36518-led0");
++	rval = aw36518_v2_subdev_init(flash, aw36518_v2_LED0, "aw36518_v2-led0");
+ 	if (rval < 0)
+ 		return rval;
+ 
+ 	pm_runtime_enable(flash->dev);
+ 
+-	rval = aw36518_parse_dt(flash);
++	rval = aw36518_v2_parse_dt(flash);
+ 
+ 	i2c_set_clientdata(client, flash);
+ 	device_create_file(&client->dev, &dev_attr_reg);
+ 
+-	flash->max_state = aw36518_COOLER_MAX_STATE;
++	flash->max_state = aw36518_v2_COOLER_MAX_STATE;
+ 	flash->target_state = 0;
+ 	flash->need_cooler = 0;
+-	flash->target_current = aw36518_FLASH_BRT_MAX;
+-	flash->ori_current = aw36518_TORCH_BRT_MAX;
++	flash->target_current = aw36518_v2_FLASH_BRT_MAX;
++	flash->ori_current = aw36518_v2_TORCH_BRT_MAX;
+ 	flash->cdev = thermal_of_cooling_device_register(client->dev.of_node,
+-			"flashlight_cooler", flash, &aw36518_cooling_ops);
++			"flashlight_cooler", flash, &aw36518_v2_cooling_ops);
+ 	if (IS_ERR(flash->cdev))
+ 		aw_log("register thermal failed\n");
+ 
+ 	regmap_read(flash->regmap, 0x00, &reg_val);
+ 	aw_log("read chip id:%d\n", reg_val);
+-	aw_log("%s %s:%d", aw36518_DRIVER_VERSION, __func__, __LINE__);
++	aw_log("%s %s:%d", aw36518_v2_DRIVER_VERSION, __func__, __LINE__);
+ 	rval = regmap_read(flash->regmap, 0x07, &reg_val);
+ 	if (rval < 0)
+ 		return 0;
+@@ -948,13 +946,13 @@
+ 	return 0;
+ }
+ 
+-static void aw36518_remove(struct i2c_client *client)
++static void aw36518_v2_remove(struct i2c_client *client)
+ {
+-	struct aw36518_flash *flash = i2c_get_clientdata(client);
++	struct aw36518_v2_flash *flash = i2c_get_clientdata(client);
+ 	unsigned int i;
+ 
+ 	thermal_cooling_device_unregister(flash->cdev);
+-	for (i = aw36518_LED0; i < aw36518_LED_MAX; i++) {
++	for (i = aw36518_v2_LED0; i < aw36518_v2_LED_MAX; i++) {
+ 		v4l2_device_unregister_subdev(&flash->subdev_led[i]);
+ 		v4l2_ctrl_handler_free(&flash->ctrls_led[i]);
+ 	}
+@@ -964,55 +962,55 @@
+ 	pm_runtime_set_suspended(&client->dev);
+ }
+ 
+-static int __maybe_unused aw36518_suspend(struct device *dev)
++static int __maybe_unused aw36518_v2_suspend(struct device *dev)
+ {
+-	struct aw36518_flash *flash = dev_get_drvdata(dev);
++	struct aw36518_v2_flash *flash = dev_get_drvdata(dev);
+ 
+ 	aw_log("%s %d", __func__, __LINE__);
+-	aw36518_gpio_set(flash, 0);
++	aw36518_v2_gpio_set(flash, 0);
+ 	return 0;
+ }
+ 
+-static int __maybe_unused aw36518_resume(struct device *dev)
++static int __maybe_unused aw36518_v2_resume(struct device *dev)
+ {
+-	struct aw36518_flash *flash = dev_get_drvdata(dev);
++	struct aw36518_v2_flash *flash = dev_get_drvdata(dev);
+ 
+ 	aw_log("%s %d", __func__, __LINE__);
+-	return aw36518_init(flash);
++	return aw36518_v2_init(flash);
+ }
+ 
+-static const struct i2c_device_id aw36518_id_table[] = {
+-	{aw36518_NAME, 0},
++static const struct i2c_device_id aw36518_v2_id_table[] = {
++	{aw36518_v2_NAME, 0},
+ 	{}
+ };
+ 
+-MODULE_DEVICE_TABLE(i2c, aw36518_id_table);
++MODULE_DEVICE_TABLE(i2c, aw36518_v2_id_table);
+ 
+-static const struct of_device_id aw36518_of_table[] = {
+-	{ .compatible = "mediatek,aw36518" },
++static const struct of_device_id aw36518_v2_of_table[] = {
++	{ .compatible = "mediatek,aw36518_v2" },
+ 	{ },
+ };
+-MODULE_DEVICE_TABLE(of, aw36518_of_table);
++MODULE_DEVICE_TABLE(of, aw36518_v2_of_table);
+ 
+-static const struct dev_pm_ops aw36518_pm_ops = {
++static const struct dev_pm_ops aw36518_v2_pm_ops = {
+ 	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
+ 				pm_runtime_force_resume)
+-	SET_RUNTIME_PM_OPS(aw36518_suspend, aw36518_resume, NULL)
++	SET_RUNTIME_PM_OPS(aw36518_v2_suspend, aw36518_v2_resume, NULL)
+ };
+ 
+-static struct i2c_driver aw36518_i2c_driver = {
++static struct i2c_driver aw36518_v2_i2c_driver = {
+ 	.driver = {
+-		   .name = aw36518_NAME,
+-		   .pm = &aw36518_pm_ops,
+-		   .of_match_table = aw36518_of_table,
++		   .name = aw36518_v2_NAME,
++		   .pm = &aw36518_v2_pm_ops,
++		   .of_match_table = aw36518_v2_of_table,
+ 		   },
+-	.probe = aw36518_probe,
+-	.remove = aw36518_remove,
+-	.id_table = aw36518_id_table,
++	.probe = aw36518_v2_probe,
++	.remove = aw36518_v2_remove,
++	.id_table = aw36518_v2_id_table,
+ };
+ 
+-module_i2c_driver(aw36518_i2c_driver);
++module_i2c_driver(aw36518_v2_i2c_driver);
+ 
+ MODULE_AUTHOR("Alec <like@awinic.com>");
+-MODULE_DESCRIPTION("Awinic AW36518 LED flash driver");
++MODULE_DESCRIPTION("Awinic AW36518_V2 LED flash driver");
+ MODULE_LICENSE("GPL");

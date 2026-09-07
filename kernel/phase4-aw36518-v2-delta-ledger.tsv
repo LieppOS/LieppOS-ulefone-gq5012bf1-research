@@ -1,0 +1,25 @@
+#	AW36518 -> AW36518_V2 source delta ledger.
+#	Oracles: stock aw36518.ko    SHA-256 7dcf64a7d25c657d1a0795cc89ad519c954561c6c757949c247d623f16976247
+#	         stock aw36518_v2.ko SHA-256 c7faa3ba4d8f14e4d24087f1dbd9f7c7c492e384214d571def17fb087de1458e
+#	Every row cites the ELF/disassembly evidence that proves it.  Rows marked
+#	kind=CONSEQUENCE are compiler-derived effects of another row, not separate
+#	source edits (both were confirmed by rebuilding).
+id	kind	delta	v1_value	v2_value	evidence
+D1	SOURCE	module name token	aw36518	aw36518_v2	.gnu.linkonce.this_module name field: only differing bytes are 31..33 ("\0\0\0" -> "_v2"); .modinfo name=aw36518 -> name=aw36518_v2
+D2	SOURCE	i2c_device_id name (embedded char[])	"aw36518"	"aw36518_v2"	.rodata+0x08 aw36518_id_table[0].name: b'aw36518\0...' -> b'aw36518_v2\0...'
+D3	SOURCE	of_device_id compatible (embedded char[])	"mediatek,aw36518"	"mediatek,aw36518_v2"	.rodata+0x48+64 of_table[0].compatible: b'mediatek,aw36518\0' -> b'mediatek,aw36518_v2\0'
+D4	SOURCE	i2c_driver .driver.name string	"aw36518"	"aw36518_v2"	.data+0x38 R_AARCH64_ABS64 -> .rodata.str1.1 "aw36518" / "aw36518_v2"
+D5	SOURCE	MODULE_DESCRIPTION	Awinic AW36518 LED flash driver	Awinic AW36518_V2 LED flash driver	.modinfo description=; __UNIQUE_ID_description467 size 44 -> 47
+D6	SOURCE	module aliases	i2c:aw36518, of:N*T*Cmediatek,aw36518[C*]	i2c:aw36518_v2, of:N*T*Cmediatek,aw36518_v2[C*]	.modinfo alias entries; __UNIQUE_ID_alias336/337/338 sizes 18/31/33 -> 21/34/36
+D7	SOURCE	vendor log tag	"aw36518[%s] "	"aw36518_v2[%s] "	25 tagged format strings in .rodata.str1.1; string multisets are 63/63 equal after normalising the token
+D8	SOURCE	all function identifiers (__func__ strings)	aw36518_*	aw36518_v2_*	18 __func__ strings (probe, parse_dt, gpio_init, gpio_set, mode_ctrl, enable_ctrl, torch/flash_brt_ctrl, flash_tout_ctrl, set_ctrl, subdev_init, init_controls, ioctl, strobe_store, set_driver, suspend, resume, ...)
+D9	SOURCE	V4L2 sub-device name literal	"aw36518-led0"	"aw36518_v2-led0"	.rodata.str1.1 literal; flashlight.ko fl_enable() strncmp targets both names (12 / 15 chars)
+D10	SOURCE	CTS-board guard removed from parse_dt	if (is_yft_cts_board()) continue;	(absent)	aw36518_parse_dt 364 B -> 296 B (-68); per-function reference multiset delta is exactly {CALL:is_yft_cts_board: 1}; .rela.text 11760 -> 11736
+D11	ABI	import set	46 imports incl. is_yft_cts_board	45 imports	stock-imports vs stockv2-imports; only is_yft_cts_board removed
+D12	ABI	__versions records	47 (CRC 0xad70697b for is_yft_cts_board)	46	__versions 3008 B -> 2944 B; all 46 shared CRCs identical
+D13	ABI	MODULE depends	yft_devinfo,flashlight	flashlight	.modinfo depends=; live /proc/modules: yft_devinfo user list contains aw36518 but not aw36518_v2
+D14	CONSEQUENCE	strscpy() length immediate at probe+0x270	#13 (= sizeof "aw36518-led0")	#16 (= sizeof "aw36518_v2-led0")	compiler-derived from D9; both LieppOS rebuilds emit the same immediates from identical source text
+D15	CONSEQUENCE	__LINE__ constants	probe 932/986/991/993, suspend 1023, resume 1033	probe 930/984/988/990, suspend 1020, resume 1030	MOVZ immediates at probe+0x40/+0x580/+0x5b8/+0x5d0, suspend+0x28, resume+0x28; -2 before probe = the 2 removed guard lines (D10), one further line removed inside probe's reset block
+D16	NONE	all register writes, masks, currents, timeout, thermal table, fault decode	identical	identical	19/23 functions byte-identical between the two stock modules; .rodata.cst16, mode table (.rodata+0x468), switch table (.rodata+0x000) byte-identical
+D17	NONE	operation tables / OF+I2C tables / PM ops / regmap config / sysfs attr	identical	identical	.data byte-identical (relocation-carried), aw36518_ops/int_ops/led_ctrl_ops/pm_ops/regmap byte-identical
+D18	NONE	device identity (type/ct/part/channel/decouple)	0/0/1/0/0	0/1/1/0/0	comes from DT children, not from code: aw36518@63/flash@0 vs aw36518_i2c13@63/flash@1

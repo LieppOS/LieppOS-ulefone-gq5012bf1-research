@@ -36,8 +36,11 @@ Remaining hardware-specific port tracks:
   (`STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`: 23/23 functions, 47/47 identical
   MODVERSION CRCs, all data objects and all 63 strings byte-identical, built
   against exact GKI `ab/12901745` with 0 warnings and 0 unresolved symbols)
-- aw36518_v2 — reduced to a rename + one removed `is_yft_cts_board()` call on top
-  of the AW36518 source, see `kernel/phase4-aw36518-family-comparison.md`
+- ~~aw36518_v2~~ — **done**, see `kernel/phase4-aw36518-v2-reconstruction.md`
+  (`SOURCE_DELTA_RECONSTRUCTION_EXACT`: 23/23 functions, 12 byte-identical,
+  46/46 identical MODVERSION CRCs, 63/63 strings, all data objects
+  byte-identical; the whole source delta is a token rename plus two removed
+  lines)
 - ~~aw883xx_driver~~ — **done**, see `kernel/phase4-aw883xx-reconstruction.md`
   (`SOURCE_DELTA_RECONSTRUCTION_EXACT`: 236/236 functions, 235/236
   byte-identical, exact ABI parity with the stock oracle)

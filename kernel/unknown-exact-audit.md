@@ -326,10 +326,13 @@
 - exact hit records: 0
 - description: `Awinic AW36518_V2 LED flash driver`
 - aliases: `i2c:aw36518_v2;of:N*T*Cmediatek,aw36518_v2;of:N*T*Cmediatek,aw36518_v2C*`
-- Proved to be the same vendor source as `aw36518` with the name macro changed
-  and the `is_yft_cts_board()` CTS skip compiled out (22/23 functions identical
-  in size, identical string multiset, one import less). See
-  `kernel/phase4-aw36518-family-comparison.md`.
+- **Resolved by reconstruction** (Phase 4): proved to be the same vendor source
+  as `aw36518` with the name token changed and the `is_yft_cts_board()` CTS skip
+  compiled out (19/23 functions byte-identical between the two stock modules,
+  identical string multiset after normalisation, one import less).  The LieppOS
+  reconstruction is ABI-exact against the V2 oracle; see
+  `kernel/phase4-aw36518-v2-reconstruction.md` and
+  `kernel/phase4-aw36518-v2-delta-ledger.tsv`.
 
 - No exact source hit found.
 

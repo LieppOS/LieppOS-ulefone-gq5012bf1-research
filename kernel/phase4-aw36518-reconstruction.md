@@ -24,8 +24,16 @@ Justification (all measured, see `phase4-aw36518-verify-recon-vs-stock.txt`):
 * per-function call/string/data reference multisets are identical for 21/23
   functions, the remaining two differ only in the `.data` offset at which the
   *same* byte-identical objects landed;
-* 6 functions are byte-identical and 18/23 are size-identical; the residue is
+* 12 functions are byte-identical and 18/23 are size-identical; the residue is
   instruction scheduling/register allocation, not semantics.
+
+> **Updated after the AW36518_V2 phase** (`phase4-aw36518-v2-reconstruction.md`):
+> that phase found a 24-byte reserved gap in the vendor `struct aw36518_flash`
+> (between `dnode[]` and `flash_dev_id[]`, never accessed by any stock
+> instruction, proved by `sizeof(*flash) = 0x308` and the field offsets
+> `dnode[0] @ +0x278`, `flash_dev_id[0] @ +0x298`, `cdev @ +0x2d0`).
+> Reproducing it raised byte-identical functions from 6 to 12 here as well; the
+> numbers in this report are the post-fix ones.
 
 It is not `DIRECT_SOURCE_MATCH` (no vendor source exists publicly) and not a
 whole-module byte match (LTO/PGO-scheduling differences remain), so the
@@ -140,14 +148,14 @@ and skips flashlight registration on CTS boards.  Details:
 kernel      android14-6.1-2024-12_r4, common commit 6b18f0b574ab3267615ae6ce642d5a7c3c21ac09, CI ab/12901745
 target      //common:kernel_aarch64
 module      //lieppos/aw36518-recon/recon:aw36518_recon
-source      $GKI_WS/lieppos/aw36518-recon/recon/aw36518.c   (1007 lines)
+source      $GKI_WS/lieppos/aw36518-recon/recon/aw36518.c   (1018 lines)
 BUILD_RC              0
 compiler warnings     0
 modpost warnings      0
 unresolved symbols    0
 KBUILD_MODPOST_WARN   not used
 output      aw36518.ko, 42976 bytes,
-            SHA-256 2a98c6bf6565de8fe335762f2c41c600e5192f37bd9564f1f63660fc0b9fe8f9
+            SHA-256 0fb7d85f9fbd22d57a61c6c87e79dbfafca8cba707a6f3b21675cc1dcbbf0034
 ```
 
 The provider module `flashlight.ko` is built with `KBUILD_MODPOST_WARN=1` for
@@ -162,7 +170,7 @@ used for CRC generation, never to `aw36518.ko` itself.
 |---|---|
 | Functions | stock 23 / rebuilt 23 / shared 23 / stock-only 0 / rebuilt-only 0 |
 | Size-identical functions | 18 / 23 |
-| Byte-identical functions | 6 (`init_module`, `cleanup_module`, `aw36518_open`, `aw36518_close`, `aw36518_flash_open`, `aw36518_flash_release`) |
+| Byte-identical functions | 12 (`init_module`, `cleanup_module`, `aw36518_open`, `aw36518_close`, `aw36518_flash_open`, `aw36518_flash_release`, `aw36518_ioctl`, `aw36518_parse_dt`, `aw36518_remove`, `aw36518_torch_brt_ctrl`, `aw36518_cooling_get_cur_state`, `aw36518_cooling_get_max_state`) |
 | KCFI type ids | 20 present in stock, 20/20 identical |
 | Imports | 46 / 46, 0 missing, 0 extra |
 | Exports | 0 / 0 |
@@ -192,8 +200,8 @@ Raw output: `phase4-aw36518-verify-recon-vs-stock.txt`.
 
 ### Residual differences (all explained, none hardware-affecting)
 
-1. **Instruction scheduling / partial inlining.** 17 of 23 functions differ in
-   byte layout; 5 also in size (`probe`, `parse_dt` −8 B, `led0_get_ctrl`,
+1. **Instruction scheduling / partial inlining.** 11 of 23 functions differ in
+   byte layout; 5 also in size (`probe`, `led0_get_ctrl`, `reg_store`,
    `strobe_store`, `set_driver`).  The stock compiler partially inlined
    `aw36518_torch_brt_ctrl` into the `state == 0` arm of
    `aw36518_cooling_set_cur_state`; the rebuild calls it out of line there.
@@ -257,6 +265,7 @@ phase.  Live validation belongs to Slot-B bring-up.
 | `phase4-aw36518-donor-to-recon.diff` | Phase 11 donor → reconstruction delta |
 | `phase4-aw36518-verify-recon-vs-stock.txt` | Phase 14 verification output |
 | `phase4-aw36518-family-comparison.md` | Phase 15 AW36518_V2 / AW36515 comparison |
+| `phase4-aw36518-v2-reconstruction.md` | sibling phase: AW36518 → AW36518_V2 delta reconstruction |
 | `$GKI_WS/lieppos/aw36518-recon/recon/` | reconstruction source + Kleaf target |
 | `$GKI_WS/lieppos/aw36518-recon/providers/flashlight/` | real provider used for CRC generation |
 | `workspace/phase4-aw36518/` (gitignored) | disassembly, section blobs, sibling inventories, public donor copies, extractor/comparator tooling |
