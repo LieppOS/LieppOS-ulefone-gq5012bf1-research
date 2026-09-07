@@ -1034,3 +1034,117 @@ Final classification:
 
 ST21 is frozen for initial LieppOS custom-kernel integration unless later
 runtime testing exposes a concrete behavioral defect.
+
+
+## Phase 4 remaining-module triage (current resolution)
+
+The hardware-specific reconstruction tracks listed above are complete. A full
+triage of every *remaining* stock module has now been performed. Nothing in the
+sections above is retracted; this section records the current position.
+
+Authoritative documents:
+
+    kernel/phase4-remaining-module-triage.md
+    kernel/phase4-remaining-module-triage.tsv
+    kernel/phase4-remaining-module-dependency-graph.md
+    kernel/phase4-slot-b-minimum-source-stack.md
+
+### Authoritative unresolved set
+
+Total remaining unresolved modules before triage: **23**.
+
+Derived from the full stock population (471 placements / 458 distinct SHA256
+binaries; 184 platform + 189 recovery + 195 vendor_dlkm + 60 system_dlkm load
+entries; `odm_dlkm` contains no modules), minus every module with an
+authoritative solved/frozen report, minus the settled
+`DIRECT_SOURCE_MATCH`/`LIKELY_PLATFORM_MATCH` bulk forward-port population.
+
+The 16 named in the triage brief, plus 7 that were missing from it:
+`sc8571_charger`, `microarray_fp_tee`, `spi_tiny_co5300_lcd`, `hynitron`,
+`yft_gpio_keys`, `yft_tiny2c_usb`, `yft_devinfo`.
+
+### Dispositions
+
+| disposition           | count |
+| --------------------- | ----: |
+| DIRECT_SOURCE         |     0 |
+| SOURCE_DELTA          |     2 |
+| FORWARD_PORT          |     7 |
+| RE_REQUIRED           |     7 |
+| STOCK_TRANSITION_BLOB |     7 |
+| NOT_REQUIRED          |     0 |
+| UNKNOWN               |     0 |
+
+| priority                | count |
+| ----------------------- | ----: |
+| P0_BOOT_CRITICAL        |     2 |
+| P1_CORE_HARDWARE        |     5 |
+| P2_MAJOR_FEATURE        |    11 |
+| P3_OPTIONAL_FEATURE     |     5 |
+| P4_DEBUG_FACTORY_LEGACY |     0 |
+| NOT_REQUIRED            |     0 |
+
+### Connectivity is a forward-port, not a reverse-engineering problem
+
+`conninfra`, `wmt_chrdev_wifi_connac2`, `wlan_drv_gen4m_6878`, `bt_drv_6878`,
+`gps_drv_dl_v051`, `gps_pwr` and `gps_scp` all have **exact named build
+targets** in the local NothingOSS MT6878 trees, including the MT6878-specific
+object sets. The earlier `STRONG_API_HIT` / `RELATED_SOURCE_HIT` labels in
+`unknown-exact-audit.md` understated this. Binary reverse engineering of the
+WLAN/BT/conninfra stack is explicitly not recommended; module size is not
+evidence for RE.
+
+The residual risk for this cluster is exact source-revision drift — the same
+class of problem already seen and solved for ST21 (donor 2.2.0.15 vs stock
+2.2.0.19). It is measured *after* the first build, not before.
+
+### Modules that genuinely require reverse engineering
+
+Seven: `panel_ky_vtdr6115_dphy_cmd`, `sh366003_fg`, `sc8571_charger`,
+`sc851x_charger`, `custom_ldo_wl2868`, `custom_ldo`, `fingerprint`.
+
+### Exact-GKI transition-blob result
+
+All 23 unresolved modules were re-checked against the exact Google
+`vmlinux.symvers` for `ab/12901745`:
+
+    kernel-facing CRC mismatches:  0 / 23 modules
+    unresolved kernel imports:     0 / 23 modules
+
+and the full stock requirement set is `MATCH` for all 2,946 symbols. Every
+remaining stock module is therefore loadable, unchanged, against a source-built
+`//common:kernel_aarch64`.
+
+Classification: 7 `YES_SAFE_TRANSITION`, 16 `YES_WITH_STOCK_PROVIDER_CHAIN`,
+0 `NO_SOURCE_STACK_REQUIRED`, 0 `UNKNOWN`.
+
+### Mandatory ABI constraint: pin stock `yft_devinfo`
+
+`phase4-yft-devinfo-reconstruction.md` reports 17/27 export CRCs reproduced and
+10 gapped (all `*_device_add()`), blocked on a single 73-character vendor enum
+type text.
+
+Those ten exports are imported by `sh366003_fg`, `hynitron`,
+`spi_tiny_co5300_lcd`, `imgsensor`, `hf_manager` and the reconstructed
+`focaltech_touch_spi_ft3680`.
+
+For Level A and Level B the **stock** `yft_devinfo.ko` must remain the provider,
+and every consumer — including the reconstructed FT3680 — must be linked against
+the **stock** `Module.symvers` through `KBUILD_EXTRA_SYMBOLS`. Shipping the
+reconstructed `yft_devinfo` would break five stock consumers at once.
+
+This supersedes the "Downstream: FT3680 rebuild" note in
+`phase4-yft-devinfo-reconstruction.md`, which linked FT3680 against the
+*reconstructed* provider symvers. That remains correct for a fully
+source-built stack (Level C) but is wrong for Levels A and B.
+
+### Level-A feasibility
+
+A Level-A Slot-B source-kernel boot is possible **before any of the remaining
+reverse engineering is complete**. Level A requires exactly one new artefact —
+the source-built exact GKI core — with all 439 stock vendor modules and their
+load order retained verbatim. Zero of the 23 unresolved modules need to be
+reconstructed first.
+
+See `kernel/phase4-slot-b-minimum-source-stack.md` for the Level A / B / C
+definitions and acceptance criteria.

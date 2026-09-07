@@ -4,6 +4,45 @@
 - method: exact module/chip/alias/compatible/export searches only
 - no fuzzy candidate ranking is used
 
+> ## CURRENT-RESOLUTION NOTE (Phase 4 remaining-module triage)
+>
+> The per-module sections below are the **original** exact-evidence scan and are
+> preserved verbatim as historical evidence. Several of their verdicts are now
+> stale. The authoritative current status for every still-unresolved module is:
+>
+> * `kernel/phase4-remaining-module-triage.md` (narrative + summary tables)
+> * `kernel/phase4-remaining-module-triage.tsv` (machine-readable, 37 columns)
+> * `kernel/phase4-remaining-module-dependency-graph.md`
+> * `kernel/phase4-slot-b-minimum-source-stack.md`
+>
+> Stale-verdict corrections established by that triage:
+>
+> | module | this file says | current status |
+> |---|---|---|
+> | `conninfra` | `STRONG_API_HIT` | **EXACT_SOURCE / FORWARD_PORT** — bazel target `//…/connectivity/conninfra:conninfra` with an explicit MT6878 object set (`Kbuild:424-436`) |
+> | `wmt_chrdev_wifi_connac2` | `STRONG_API_HIT` | **EXACT_SOURCE / FORWARD_PORT** — `//…/wlan/adaptor/build/connac2x:wmt_chrdev_wifi_connac2` |
+> | `wlan_drv_gen4m_6878` | `RELATED_SOURCE_HIT` | **EXACT_SOURCE / FORWARD_PORT** — `//…/wlan/core/gen4m/build/connac2x/6878:wlan_drv_gen4m_6878`; `Kbuild:26-27` selects `Kbuild.6878` |
+> | `bt_drv_6878` | `STRONG_API_HIT` | **EXACT_SOURCE / FORWARD_PORT** — `//…/bt/mt66xx:btif` emits `bt_drv_6878.ko`; `btif/Kbuild:142 MODULE_NAME := bt_drv_$(BT_PLATFORM)` |
+> | `gps_drv_dl_v051` | `RELATED_SOURCE_HIT` (1 hit) | **EXACT_SOURCE / FORWARD_PORT** — `//…/gps/data_link/plat/v051:gps_drv_dl_v051`, Kbuild comment `# For MT6878 SoC + MT6686 A-die` |
+> | `gps_pwr` / `gps_scp` | `RELATED_SOURCE_HIT` | **EXACT_SOURCE / FORWARD_PORT** — `define_mgk_ko(name = "gps_pwr" / "gps_scp")` |
+> | `fingerprint` | `RELATED_SOURCE_HIT`, 97 hits | **NO_USEFUL_SOURCE / RE_REQUIRED** — the 97 hits are netfilter-OSF / x509 / unrelated-DTS noise and are rejected. Real identifier is `mediatek,yft_finger`; the module is 16 functions of YFT pinctrl/GPIO glue. |
+> | `tkcore` | `STRONG_API_HIT`, 60 hits | **NO_USEFUL_SOURCE / STOCK_TRANSITION_BLOB** — the 60 hits are GlobalPlatform `TEEC_*` API-name collisions with MicroTrust TEEI (`drivers/tee/teei/510/…`). `grep -rl 'trustkernel\|tkcore'` over the Nothing MT6878 trees and the MiCode vendor-reference BSPs returns **zero** files. |
+> | `panel_ky_vtdr6115_dphy_cmd` | `NO_EXACT_HIT` | **STRUCTURAL_DONOR_ONLY / RE_REQUIRED** — donor located: `MotorolaMobilityLLC/kernel-mtk@0087a407394abd3ab073e1a2df164f1187959a3f` `dsi-panel-mot-csot-vtdr6115-655-fhdp-dphy-vdo-144hz.c` (CSOT 144 Hz VDO vs Ulefone KY 120 Hz cmd) |
+> | `custom_ldo_wl2868` | `NO_EXACT_HIT` | **STRUCTURAL_DONOR_ONLY / RE_REQUIRED** — donor located: `sonyxperiadev/kernel@7e42db1690b55e374fd6a6af536684a746bac614` `drivers/regulator/wl2868c-regulator.{c,h}` (regulator-framework model; stock is a chardev+export model). Nothing ships only `cust_wl2864c.dtsi`; the `wl2864c.ko` target in `mgk_64_k61.bzl` has **no** source in the published tree. |
+> | `sc851x_charger`, `sh366003_fg`, `custom_ldo`, `leds_ln2403`, `tkcore_drv` | `NO_EXACT_HIT` | unchanged — **NO_USEFUL_SOURCE** re-confirmed against the Nothing trees, the MiCode vendor-reference BSPs and public source indexes |
+>
+> Modules resolved since this scan and therefore no longer unresolved:
+> `aw883xx_driver`, `aw36515`, `aw36518`, `aw36518_v2`, `leds_rgb_aw2013`,
+> `connfem`.
+>
+> Modules **missing** from this 22-entry scan that the triage proved are also
+> still unresolved: `sc8571_charger`, `microarray_fp_tee`, `spi_tiny_co5300_lcd`,
+> `hynitron`, `yft_gpio_keys`, `yft_tiny2c_usb`, `yft_devinfo`.
+>
+> Transition-blob result applying to **all** of them: every one imports 0
+> unresolved and 0 CRC-mismatched kernel symbols against the exact Google GKI
+> `vmlinux.symvers` for `ab/12901745`.
+
 ## tkcore
 
 - locations: `vendor_boot_platform`
