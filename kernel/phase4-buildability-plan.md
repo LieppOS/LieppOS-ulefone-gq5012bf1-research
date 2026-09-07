@@ -32,8 +32,12 @@ The broad source-discovery problem is complete.
 Remaining hardware-specific port tracks:
 
 - aw36515
-- aw36518
-- aw36518_v2
+- ~~aw36518~~ — **done**, see `kernel/phase4-aw36518-reconstruction.md`
+  (`STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`: 23/23 functions, 47/47 identical
+  MODVERSION CRCs, all data objects and all 63 strings byte-identical, built
+  against exact GKI `ab/12901745` with 0 warnings and 0 unresolved symbols)
+- aw36518_v2 — reduced to a rename + one removed `is_yft_cts_board()` call on top
+  of the AW36518 source, see `kernel/phase4-aw36518-family-comparison.md`
 - ~~aw883xx_driver~~ — **done**, see `kernel/phase4-aw883xx-reconstruction.md`
   (`SOURCE_DELTA_RECONSTRUCTION_EXACT`: 236/236 functions, 235/236
   byte-identical, exact ABI parity with the stock oracle)

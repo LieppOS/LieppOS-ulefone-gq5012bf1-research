@@ -1,0 +1,28 @@
+#	Every row is recovered from relocation-aware disassembly of the stock
+#	vendor_dlkm aw36518.ko (SHA-256 7dcf64a7d25c657d1a0795cc89ad519c954561c6c757949c247d623f16976247).
+#	"text_off" is the byte offset of the accessing instruction inside .text
+#	(.init.text for init_module).  No register semantics are inferred from
+#	datasheets: only the address/mask/value actually programmed by stock.
+#	regmap_config: reg_bits=8 val_bits=8 max_register=0xFF (aw36518_regmap, .rodata+0x298).
+reg	op	mask	value	function	text_off	condition/notes
+0x00	read	-	-	aw36518_probe	0x540	chip-id read; result only logged ("read chip id:%d"); no comparison, no probe gating
+0x07	read	-	-	aw36518_probe	0x58c	software-reset sequence step 0; on rval<0 probe returns 0 without writing
+0x07	write	-	prev|0x80	aw36518_probe	0x5e4	software reset: msleep(10) then set bit7 of the value just read
+0x08	update_bits	0x0f	0x0a	aw36518_init	0x1604	timeout programming with tout=400 ms -> 400/40 = 0x0a
+0x01	update_bits	0x0c	0x00	aw36518_init	0x1684	mode table .rodata+0x468 = {0x00,0x0c,0x08}; index = led_mode (NONE=0)
+0x05	update_bits	0x80	0x00	aw36518_init	0x16a8	clears torch-brightness bit7
+0x03	update_bits	0x80	0x00	aw36518_init	0x16cc	clears flash-brightness bit7
+0x0a	read	-	-	aw36518_init	0x16e0	fault/flag read at end of init (read-to-clear latch); value discarded
+0x0a	read	-	-	aw36518_led0_get_ctrl	0x92c	V4L2_CID_FLASH_FAULT source register
+0x01	update_bits	0x0c	tbl[mode]	aw36518_mode_ctrl (inlined)	0xab4,0xcb0,0xd94,0x1200,0x1374,0x13e8,0x1668	tbl = {NONE:0x00, FLASH:0x0c, TORCH:0x08} at .rodata+0x468
+0x01	update_bits	0x03	0x03	aw36518_enable_ctrl (inlined)	0xafc,0xd3c,0x1250,0x1334	enable path, only when led_no == 0
+0x01	update_bits	0x03	0x00	aw36518_enable_ctrl (inlined)	0xc78,0xe0c,0xf3c(via 0xf84),0x143c	disable path, only when led_no == 0
+0x01	update_bits	0x2c	0x0c	aw36518_set_ctrl (inlined)	0xa44	V4L2_CID_FLASH_STROBE_SOURCE == SOFTWARE ("sw ctrl")
+0x01	update_bits	0x2c	0x20	aw36518_set_ctrl (inlined)	0xcf4	V4L2_CID_FLASH_STROBE_SOURCE == EXTERNAL ("hw trigger"), then enable_ctrl(true)
+0x05	update_bits	0xff	(brt-750)/1510	aw36518_torch_brt_ctrl	0xf3c	torch current -> register; magic-number division umull #0x0ad9af4d, lsr #38
+0x05	update_bits	0xff	(brt-750)/1510	aw36518_ioctl (inlined torch)	0x11a4	FLASH_IOC_SET_ONOFF on-path with brt = 250000 uA
+0x05	update_bits	0xff	(brt-750)/1510	aw36518_cooling_set_cur_state (inlined torch)	0x19e0	thermal state 0 path (brt = 385800 uA)
+0x03	update_bits	0xff	(brt-2940)/5870	aw36518_flash_brt_ctrl (inlined)	0xc24->0xd30	flash current -> register; umull #0xb2a20f87, lsr #44
+0x08	update_bits	0x0f	tout/40	aw36518_flash_tout_ctrl (inlined)	0xbac->0xc30	V4L2_CID_FLASH_TIMEOUT path; magic division by 40 (umull #0xcccccccd, lsr #37)
+0x00..0x0d	read	-	-	reg_show	0x1740	sysfs "reg" attribute dumps 14 registers as "reg0x%02X = 0x%02X\n"
+any	write	-	-	reg_store	0x182c	sysfs "reg" attribute: sscanf("%x %x") -> regmap_write(reg, val)
