@@ -1,0 +1,88 @@
+GQ5012BF1 stock leds-rgb-aw2013.ko - frozen oracle (Phase 4 / LEDS_RGB_AW2013)
+
+path        workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/
+              lib/modules/leds-rgb-aw2013.ko
+            (vendor_boot "platform" vendor_ramdisk, NOT vendor_dlkm -
+             this is a first-stage/ramdisk module, unlike aw36515/aw883xx)
+copies      1 - the only copy anywhere in the image.  Content hash searched
+            across every .ko in the extracted stock tree and in
+            vendor_ulefone_gq5012bf1/proprietary (735 module paths): no
+            duplicate, no vendor_dlkm/odm_dlkm/system_dlkm copy.
+size        24856 bytes
+SHA-256     97c86e3b3dd038c4fc90b73315aac966087a852d604f103fc166076bd28f7549
+build-id    6470ceb27010efd6bd0f20ff10eb1144a74516ab
+ELF         ET_REL, EM_AARCH64, 38 sections, 102 symtab entries
+            .note.gnu.property: aarch64 feature PAC (pac-ret enabled)
+compiler    .comment section is EMPTY (0 bytes emitted into the .ko).
+            Toolchain identity is instead established structurally: the
+            module carries Clang KCFI type-id prologues, PAC (paciasp/
+            autiasp) and SP_EL0+0x638 stack-guard access, and rebuilds
+            byte-identically with
+            prebuilts/clang/host/linux-x86/clang-r487747c
+            (Android clang 17.0.2) from the exact GKI tree.
+
+modinfo
+  author       Nikita Travkin <nikitos.tr@gmail.com>
+  description  AW2013 LED driver
+  license      GPL v2
+  vermagic     6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+  name         leds_rgb_aw2013
+  depends      (empty - no module dependencies)
+  alias        of:N*T*Cawinic,rgb,aw2013
+  alias        of:N*T*Cawinic,rgb,aw2013C*
+  parameters   none (no module_param, no .modinfo parmtype/parm records)
+  srcversion   absent
+
+  NOTE: author/description/license are verbatim upstream mainline Linux
+  (drivers/leds/leds-aw2013.c).  This is NOT an Awinic vendor driver.
+
+inventory   8 text symbols (6 in .text, 1 .init.text, 1 .exit.text)
+            26 imports, 27 __versions records (26 imports + module_layout)
+            0 exports (no __ksymtab / __ksymtab_gpl section at all)
+            21 named data objects
+            39 strings in .rodata.str1.1 (1175 bytes)
+            .rodata 728 B, .data 280 B, .bss 13 B, .init.eh_frame 448 B
+            170 relocation records total
+
+functions   led_aw2103_get_boot_mode  .text+0x004   160 B  GLOBAL  kcfi 0x837de525
+            led_aw2103_control        .text+0x0a8   296 B  GLOBAL  kcfi 0x36b1c5a6
+            aw2013_brightness_set     .text+0x1d4   740 B  LOCAL   kcfi 0x140dd685
+            aw2013_remove             .text+0x4bc    64 B  LOCAL   kcfi 0x8effdd6d
+            aw2013_probe              .text+0x500  1272 B  LOCAL   kcfi 0xcc836375
+            aw2013_blink_set          .text+0x9fc   492 B  LOCAL   kcfi 0x6286520f
+            init_module          .init.text+0x004    44 B  GLOBAL  kcfi 0x36b1c5a6
+            cleanup_module       .exit.text+0x004    36 B  GLOBAL  kcfi 0xa540670c
+
+            Inlined (no separate symbol): aw2013_chip_init, aw2013_chip_enable,
+            aw2013_chip_disable, aw2013_chip_in_use, aw2013_probe_dt,
+            yft_aw2013_parse_dts (the last proven by the __func__ string
+            "yft_aw2013_parse_dts" appearing in aw2013_probe's printks).
+
+objects     gftk_leds                 .bss+0x000      8 B  (struct aw2013 *)
+            aw2013_pwd_gpio           .bss+0x008      4 B  (int)
+            aw2013_probe.__key        .bss+0x00c      1 B  (lock_class_key)
+            aw2013_match_table     .rodata+0x000    400 B  (of_device_id[2])
+            aw2013_regmap_config   .rodata+0x190    328 B
+            aw2013_driver            .data+0x000    280 B  (struct i2c_driver)
+            + 8 .modinfo __UNIQUE_ID_* records, __this_module (1088 B),
+              ____versions (1728 B), 2 .note.Linux records, 2 addressable
+              init/exit stubs, __mod_of__aw2013_match_table_device_table
+
+module load placement
+  modules.load          line 179 of 184: "leds-rgb-aw2013.ko"
+  modules.load.recovery line 183: "leds-rgb-aw2013.ko"
+  modules.dep           line 188: "/lib/modules/leds-rgb-aw2013.ko:"
+                        (empty dependency list - confirms depends= empty)
+  modules.alias         lines 1289-1290:
+                        alias of:N*T*Cawinic,rgb,aw2013   leds_rgb_aw2013
+                        alias of:N*T*Cawinic,rgb,aw2013C* leds_rgb_aw2013
+
+live evidence (read-only snapshot live-stock-adb-20260831-115649/buses.txt)
+  ===/sys/bus/i2c/devices/11-0045===
+  /sys/bus/i2c/drivers/leds-rgb-aw2013
+  /sys/module/leds_rgb_aw2013
+  rgb,aw2013
+  of:Naw2013T(null)Cawinic,rgb,aw2013
+
+  -> bound on I2C bus 11 (i2c@11d71000) at 7-bit address 0x45,
+     driver name "leds-rgb-aw2013", DT node "aw2013".

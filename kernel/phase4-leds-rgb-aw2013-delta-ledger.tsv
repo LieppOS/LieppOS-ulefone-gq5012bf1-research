@@ -1,0 +1,20 @@
+id	category	donor (exact-GKI leds-aw2013.c)	stock / reconstruction	binary evidence	hardware effect
+D01	identity	MODULE source file leds-aw2013.c -> name leds_aw2013	leds-rgb-aw2013.c -> name leds_rgb_aw2013	.modinfo name=leds_rgb_aw2013	module/alias ABI
+D02	identity	.driver.name = "leds-aw2013"	.driver.name = "leds-rgb-aw2013"	.data+0x38 -> .rodata.str1.1+0xba	/sys/bus/i2c/drivers/leds-rgb-aw2013
+D03	identity	compatible "awinic,aw2013"	compatible "awinic,rgb,aw2013"	.rodata+0x40 string; .modinfo aliases	DT match / modules.alias
+D04	power	struct regulator *vcc_regulator field	field removed	leds[0] moves 0x40->0x38; regmap 0x568->0x578; 3 regulator imports gone	no regulator consumed
+D05	power	devm_regulator_get + regulator_enable in probe	yft_aw2013_parse_dts(): of_get_named_gpio("aw2013-pwd-gpio") + gpio_request + gpio_direction_output(1)	.text+0x594..0x6ec; imports of_get_named_gpio_flags gpio_to_desc gpio_request gpiod_direction_output_raw gpiod_get_raw_value	chip enable via GPIO 188, latched high
+D06	power	regulator_enable in aw2013_chip_enable	removed; only chip->enabled=true then GCR=1	.text+0x314..0x328	chip enable is register-only
+D07	power	regulator_disable in aw2013_chip_disable	removed; only GCR=0 then chip->enabled=false	.text+0x484..0x494; aw2013_remove .text+0x4d8	disable cannot fail
+D08	power	regulator_disable at end of probe / error_reg path	removed	no regulator relocs anywhere	-
+D09	brightness	struct aw2013_led has num,imax	adds u32 fixed_brightness at +0x1b8 (stride 0x1b8->0x1c0)	madd x9,x23,#0x1c0; str w8,[x9,#0x1f0]	per-channel fixed output level
+D10	brightness	DT: reg, led-max-microamp	adds led-fixed-brightness (default LED_FULL=0xff)	.text+0x89c reads .rodata.str1.1+0x482; csel w8,w8,#0xff,ge	red/green=64, blue=128
+D11	brightness	PWM(n) = requested brightness	if (brightness) brightness = led->fixed_brightness	.text+0x254 cbz w20; .text+0x258 ldr w20,[cdev+0x1b0]	brightness is clamped, LED is effectively binary
+D12	new code	-	unsigned int led_aw2103_get_boot_mode(void) - MTK /chosen atag,boot parser	.text+0x004, 160B, KCFI 0x837de525 (xxHash64 "_ZTSFjvE")	reads boot mode
+D13	new code	-	int led_aw2103_control(void) - power-off-charging battery indicator	.text+0x0a8, 296B, KCFI 0x36b1c5a6	green >=90%, red <=15%, blue otherwise
+D14	new code	-	static struct aw2013 *gftk_leds published at end of probe	.bss+0x0, str x19,[.bss] at .text+0x990	module-global handle for led_aw2103_control
+D15	new code	-	static int aw2013_pwd_gpio	.bss+0x8	set to gpio or -1
+D16	new code	-	probe calls led_aw2103_control() after mutex_unlock	.text+0x994 bl led_aw2103_control	charging LED lit at boot in KPOC
+D17	teardown	aw2013_remove: chip_disable + mutex_destroy	mutex_destroy removed	aw2013_remove is 64B vs donor 104B; no mutex_destroy import	mutex leaked (harmless, devm frees chip)
+D18	teardown	probe error path: mutex_unlock + mutex_destroy	both removed; error paths return directly	.text error tails jump straight to the epilogue at 0x554	mutex left held on probe failure
+D19	imports	19 imports incl. 3 regulator	26 imports; adds _printk of_find_node_opts_by_path of_get_property power_supply_get_by_name power_supply_get_property + 5 gpio	__versions 27 records	-

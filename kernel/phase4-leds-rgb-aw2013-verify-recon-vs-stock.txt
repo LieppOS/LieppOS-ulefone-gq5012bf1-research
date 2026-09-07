@@ -1,0 +1,106 @@
+GQ5012BF1 leds_rgb_aw2013 - stock vs reconstruction verification
+generated: offline, exact GKI ab/12901745 (common 6b18f0b574ab3267615ae6ce642d5a7c3c21ac09)
+
+stock : workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/leds-rgb-aw2013.ko
+        sha256 97c86e3b3dd038c4fc90b73315aac966087a852d604f103fc166076bd28f7549  size 24856
+recon : bazel-bin/lieppos/aw2013-recon/recon/leds_rgb_aw2013_recon/leds-rgb-aw2013.ko
+        sha256 73e0eb219c70905d67c5b652fb87959cfd73b2dfd10910b6e08445600193850e  size 24720
+donor : bazel-bin/lieppos/aw2013-recon/donor-build/leds_aw2013_donor/leds-aw2013.ko (RED baseline)
+        sha256 735c71718dee68b97d8748b72040b9fc8540d7b0a428eb5c8293a7454ff56ffa  size 19928
+
+== SECTION-BY-SECTION CONTENT COMPARISON (stock vs recon) ==
+section                        stock     recon     result
+.text                          3048      3048      BYTE-IDENTICAL
+.init.text                     48        48        BYTE-IDENTICAL
+.exit.text                     40        40        BYTE-IDENTICAL
+.rodata                        728       728       BYTE-IDENTICAL
+.rodata.str1.1                 1175      1175      BYTE-IDENTICAL
+.data                          280       280       BYTE-IDENTICAL
+.init.data                     8         8         BYTE-IDENTICAL
+.exit.data                     8         8         BYTE-IDENTICAL
+__versions                     1728      1728      BYTE-IDENTICAL
+.gnu.linkonce.this_module      1088      1088      BYTE-IDENTICAL
+.init.eh_frame                 448       448       BYTE-IDENTICAL
+.note.Linux                    48        48        BYTE-IDENTICAL
+cmp: EOF on ‘/tmp/b.bin’ after byte 271
+.modinfo                       273       271       DIFFERS (146 bytes)
+.bss (NOBITS)                  13        13        SIZE+LAYOUT IDENTICAL
+
+== FUNCTIONS ==
+function                  section     stock_offset  stock_size  recon_size  donor_size  stock_kcfi  recon_kcfi  bind    byte_identical
+init_module               .init.text  0x4           44          44          44          0x36b1c5a6  0x36b1c5a6  GLOBAL  YES
+cleanup_module            .exit.text  0x4           36          36          36          0xa540670c  0xa540670c  GLOBAL  YES
+led_aw2103_get_boot_mode  .text       0x4           160         160         ABSENT      0x837de525  0x837de525  GLOBAL  YES
+led_aw2103_control        .text       0xa8          296         296         ABSENT      0x36b1c5a6  0x36b1c5a6  GLOBAL  YES
+aw2013_brightness_set     .text       0x1d4         740         740         856         0x140dd685  0x140dd685  LOCAL   YES
+aw2013_remove             .text       0x4bc         64          64          104         0x8effdd6d  0x8effdd6d  LOCAL   YES
+aw2013_probe              .text       0x500         1272        1272        908         0xcc836375  0xcc836375  LOCAL   YES
+aw2013_blink_set          .text       0x9fc         492         492         492         0x6286520f  0x6286520f  LOCAL   YES
+
+== NAMED OBJECTS ==
+object                                       section                    stock_offset  stock_size  recon_size  bind    byte_identical
+gftk_leds                                    .bss                       0x0           8           8           LOCAL   YES(NOBITS)
+aw2013_pwd_gpio                              .bss                       0x8           4           4           LOCAL   YES(NOBITS)
+aw2013_probe.__key                           .bss                       0xc           1           1           LOCAL   YES(NOBITS)
+aw2013_match_table                           .rodata                    0x0           400         400         LOCAL   YES
+__mod_of__aw2013_match_table_device_table    .rodata                    0x0           400         400         GLOBAL  YES
+aw2013_regmap_config                         .rodata                    0x190         328         328         LOCAL   YES
+__UNIQUE_ID___addressable_init_module461     .init.data                 0x0           8           8           LOCAL   YES
+__UNIQUE_ID___addressable_cleanup_module462  .exit.data                 0x0           8           8           LOCAL   YES
+__UNIQUE_ID_author463                        .modinfo                   0x0           45          45          LOCAL   YES
+__UNIQUE_ID_description464                   .modinfo                   0x2d          30          30          LOCAL   YES
+__UNIQUE_ID_license465                       .modinfo                   0x4b          15          15          LOCAL   YES
+__UNIQUE_ID_vermagic333                      .modinfo                   0x5a          87          85          LOCAL   NO
+__UNIQUE_ID_name334                          .modinfo                   0xb1          21          21          LOCAL   YES
+__UNIQUE_ID_depends335                       .modinfo                   0xc6          9           9           LOCAL   YES
+__UNIQUE_ID_alias336                         .modinfo                   0xcf          32          32          LOCAL   YES
+__UNIQUE_ID_alias337                         .modinfo                   0xef          34          34          LOCAL   YES
+aw2013_driver                                .data                      0x0           280         280         LOCAL   YES
+_note_9                                      .note.Linux                0x0           24          24          LOCAL   YES
+_note_10                                     .note.Linux                0x18          24          24          LOCAL   YES
+__this_module                                .gnu.linkonce.this_module  0x0           1088        1088        GLOBAL  YES
+____versions                                 __versions                 0x0           1728        1728        LOCAL   YES
+
+== RELOCATION MULTISET ==
+IDENTICAL: 209 relocations, same type/target/addend multiset
+stock relocation records: 209
+recon relocation records: 209
+
+== MODINFO ==
+/home/armol/kernel-work/gki-12901745-workspace/prebuilts/clang/host/linux-x86/clang-r487747c/bin/llvm-objcopy: error: '/dev/stdout': Permission denied
+/home/armol/kernel-work/gki-12901745-workspace/prebuilts/clang/host/linux-x86/clang-r487747c/bin/llvm-objcopy: error: '/dev/stdout': Permission denied
+(only vermagic differs - vendor SCM revision vs local Kleaf build stamp)
+
+== MODVERSIONS / ABI ==
+symbol                               stock_crc   recon_crc   gki_crc     provider_module  export_type        status
+of_find_node_opts_by_path            0x748c8ec0  0x748c8ec0  0x748c8ec0  vmlinux          EXPORT_SYMBOL      MATCH
+_printk                              0x92997ed8  0x92997ed8  0x92997ed8  vmlinux          EXPORT_SYMBOL      MATCH
+of_get_property                      0x9da9550a  0x9da9550a  0x9da9550a  vmlinux          EXPORT_SYMBOL      MATCH
+power_supply_get_by_name             0x60e98d99  0x60e98d99  0x60e98d99  vmlinux          EXPORT_SYMBOL_GPL  MATCH
+power_supply_get_property            0xd351924c  0xd351924c  0xd351924c  vmlinux          EXPORT_SYMBOL_GPL  MATCH
+__stack_chk_fail                     0xc2c193d2  0xc2c193d2  0xc2c193d2  vmlinux          EXPORT_SYMBOL      MATCH
+mutex_lock                           0xd5977bfb  0xd5977bfb  0xd5977bfb  vmlinux          EXPORT_SYMBOL      MATCH
+regmap_write                         0x2971bc8d  0x2971bc8d  0x2971bc8d  vmlinux          EXPORT_SYMBOL_GPL  MATCH
+regmap_update_bits_base              0xb1d8e449  0xb1d8e449  0xb1d8e449  vmlinux          EXPORT_SYMBOL_GPL  MATCH
+_dev_err                             0xf27ed00b  0xf27ed00b  0xf27ed00b  vmlinux          EXPORT_SYMBOL      MATCH
+mutex_unlock                         0xed55cabd  0xed55cabd  0xed55cabd  vmlinux          EXPORT_SYMBOL      MATCH
+i2c_register_driver                  0x50f5d94e  0x50f5d94e  0x50f5d94e  vmlinux          EXPORT_SYMBOL      MATCH
+i2c_del_driver                       0xfee5be94  0xfee5be94  0xfee5be94  vmlinux          EXPORT_SYMBOL      MATCH
+devm_kmalloc                         0xd50f026e  0xd50f026e  0xd50f026e  vmlinux          EXPORT_SYMBOL_GPL  MATCH
+of_get_named_gpio_flags              0xb9ab15e7  0xb9ab15e7  0xb9ab15e7  vmlinux          EXPORT_SYMBOL_GPL  MATCH
+gpio_to_desc                         0x0ec43f6f  0x0ec43f6f  0x0ec43f6f  vmlinux          EXPORT_SYMBOL_GPL  MATCH
+gpio_request                         0x47229b5c  0x47229b5c  0x47229b5c  vmlinux          EXPORT_SYMBOL_GPL  MATCH
+gpiod_direction_output_raw           0x1aadfa2a  0x1aadfa2a  0x1aadfa2a  vmlinux          EXPORT_SYMBOL_GPL  MATCH
+gpiod_get_raw_value                  0xe7edce8c  0xe7edce8c  0xe7edce8c  vmlinux          EXPORT_SYMBOL_GPL  MATCH
+__mutex_init                         0xa571f6b0  0xa571f6b0  0xa571f6b0  vmlinux          EXPORT_SYMBOL      MATCH
+__devm_regmap_init_i2c               0x1bab1211  0x1bab1211  0x1bab1211  vmlinux          EXPORT_SYMBOL_GPL  MATCH
+regmap_read                          0xe4fcaad8  0xe4fcaad8  0xe4fcaad8  vmlinux          EXPORT_SYMBOL_GPL  MATCH
+of_get_next_available_child          0x9abbe2da  0x9abbe2da  0x9abbe2da  vmlinux          EXPORT_SYMBOL      MATCH
+of_property_read_variable_u32_array  0x94a3f9c7  0x94a3f9c7  0x94a3f9c7  vmlinux          EXPORT_SYMBOL_GPL  MATCH
+devm_led_classdev_register_ext       0x9c6e5a8d  0x9c6e5a8d  0x9c6e5a8d  vmlinux          EXPORT_SYMBOL_GPL  MATCH
+_dev_info                            0xef3cb484  0xef3cb484  0xef3cb484  vmlinux          EXPORT_SYMBOL      MATCH
+module_layout                        0xea759d7f  0xea759d7f  0xea759d7f  vmlinux          EXPORT_SYMBOL      MATCH
+
+== EXPORTS ==
+stock __ksymtab sections: 0
+recon __ksymtab sections: 0

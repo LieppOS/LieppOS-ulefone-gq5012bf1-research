@@ -1,0 +1,16 @@
+reg_addr	reg_name	access	mask	value	caller	condition	delay	retry	evidence
+0x00	AW2013_RSTR	regmap_read	0xFF	(expects 0x33)	aw2013_probe	always, after regmap init	none	none	.text+0x74c bl regmap_read w1=0; .text+0x758 cmp w2,#0x33
+0x00	AW2013_RSTR	regmap_write	0xFF	0x55 (AW2013_RSTR_RESET)	aw2013_probe_dt (inlined in aw2013_probe)	1 <= available child count <= 3	none	none	.text+0x7ac mov w2,#0x55; .text+0x7b0 bl regmap_write (w1=0)
+0x01	AW2013_GCR	regmap_write	0xFF	0x01 (AW2013_GCR_ENABLE)	aw2013_chip_enable (inlined in aw2013_brightness_set)	chip in use and !chip->enabled	none	none	.text+0x31c mov w1,#1; .text+0x320 mov w2,#1; .text+0x328 bl regmap_write
+0x01	AW2013_GCR	regmap_write	0xFF	0x00	aw2013_chip_disable (inlined in aw2013_brightness_set and aw2013_remove)	chip->enabled	none	none	.text+0x488/0x4dc mov w1,#1; w2=wzr; bl regmap_write
+0x31 + n	AW2013_LCFG(n)	regmap_update_bits_base	0x03 (AW2013_LCFG_IMAX_MASK)	led[n].imax (0..3)	aw2013_chip_init (inlined in aw2013_brightness_set)	for i in 0..num_leds-1, after GCR enable	none	none	.text+0x340 mov w2,#3; .text+0x354 add w1,w8,#0x31; w3=leds[i].imax
+0x31 + n	AW2013_LCFG(n)	regmap_update_bits_base	0x10 (AW2013_LCFG_MD)	0x00	aw2013_brightness_set	brightness == 0 (after clearing LCTR bit)	none	none	.text+0x3fc add w1,w22,#0x31; .text+0x400 mov w2,#0x10; .text+0x404 w3=wzr
+0x31 + n	AW2013_LCFG(n)	regmap_update_bits_base	0x10 (AW2013_LCFG_MD)	0x00	aw2013_blink_set	*delay_off == 0 (never off -> disable blink)	none	none	.text+0xb6c add w1,w24,#0x31; .text+0xb70 mov w2,#0x10; .text+0xb74 w3=wzr
+0x31 + n	AW2013_LCFG(n)	regmap_update_bits_base	0x10 (AW2013_LCFG_MD)	0xFF	aw2013_blink_set	both delays non-zero, after LEDT0/LEDT1	none	none	.text+0xb0c add w1,w24,#0x31; .text+0xb10 mov w2,#0x10; .text+0xb14 mov w3,#0xff
+0x30	AW2013_LCTR	regmap_update_bits_base	BIT(n)	0xFF	aw2013_brightness_set	brightness != 0	none	none	.text+0x27c mov w1,#0x30; .text+0x284 lsl x2,#1,n; .text+0x290 mov w3,#0xff
+0x30	AW2013_LCTR	regmap_update_bits_base	BIT(n)	0x00	aw2013_brightness_set	brightness == 0	none	none	.text+0x27c mov w1,#0x30; .text+0x3dc w3=wzr
+0x30	AW2013_LCTR	regmap_update_bits_base	BIT(n)	0xFF	aw2013_blink_set	blink programmed successfully	none	none	.text+0xb38 mov w1,#0x30; .text+0xb3c mov w3,#0xff; .text+0xb44 lsl x2,#1,n
+0x34 + n	AW2013_REG_PWM(n)	regmap_write	0xFF	0 if brightness==0 else led[n].fixed_brightness	aw2013_brightness_set	every call	none	none	.text+0x254 cbz w20; .text+0x258 ldr w20,[cdev+0x1b0]; .text+0x260 add w1,w22,#0x34; .text+0x26c bl regmap_write
+0x37 + 3n	AW2013_LEDT0(n)	regmap_write	0xFF	AW2013_LEDT0_T2(on) = min(7, ilog2((delay_on-1)/130)+1)	aw2013_blink_set	both delays non-zero	none	none	.text+0xacc add w20,w24,w24 lsl 1; .text+0xad0 add w1,w20,#0x37; w2=on
+0x38 + 3n	AW2013_LEDT1(n)	regmap_write	0xFF	AW2013_LEDT1_T4(off) = min(5, ilog2((delay_off-1)/130)+1)	aw2013_blink_set	both delays non-zero	none	none	.text+0xaf0 add w1,w20,#0x38; .text+0xaf4 mov w2,w23
+0x77	(regmap max_register)	n/a	-	-	aw2013_regmap_config	regmap bound only	none	none	.rodata+0x190+0xac = 0x77; reg_bits=8 val_bits=8

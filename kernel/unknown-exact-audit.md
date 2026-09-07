@@ -196,11 +196,44 @@
 ## leds_rgb_aw2013
 
 - locations: `vendor_boot_platform`
-- result: **RELATED_SOURCE_HIT**
-- evidence kinds: `CHIP_TOKEN`
+- result: **RESOLVED — DIRECT_SOURCE_VARIANT / SOURCE_DELTA_RECONSTRUCTION_EXACT**
+  (superseding the original `RELATED_SOURCE_HIT`)
+- evidence kinds: `CHIP_TOKEN` (original scan) + `MODULE_AUTHOR`, `STRING_SET`,
+  `STRUCT_LAYOUT`, `KCFI_TYPEID` (Phase 4)
 - exact hit records: 47
 - description: `AW2013 LED driver`
 - aliases: `of:N*T*Cawinic,rgb,aw2013;of:N*T*Cawinic,rgb,aw2013C*`
+
+### Phase 4 resolution
+
+The original scan flagged this only as a chip-token hit. The decisive evidence
+is the module author: `Nikita Travkin <nikitos.tr@gmail.com>` with
+`license=GPL v2` — i.e. the **upstream mainline Linux** driver
+`drivers/leds/leds-aw2013.c`, *not* an Awinic vendor driver (contrast the
+Awinic parts on the same board, which carry `Alec <like@awinic.com>`).
+
+Donor: `common/drivers/leds/leds-aw2013.c` at exact GKI
+`6b18f0b574ab3267615ae6ce642d5a7c3c21ac09`,
+sha256 `8458f2aac83ccb6d996f88895b5e9ce953d3475019405ad869bde06a3c361b17`.
+Every upstream diagnostic string is present verbatim in the stock binary; the
+regmap config and the whole `struct i2c_driver` are byte-identical to an
+untouched donor build; `aw2013_blink_set` is size-identical (492 B).
+
+Ulefone/YFT delta (19 items, fully enumerated in
+`phase4-leds-rgb-aw2013-delta-ledger.tsv`): identity rename
+(`leds-rgb-aw2013`, `awinic,rgb,aw2013`), the `vcc` regulator replaced by the
+`aw2013-pwd-gpio` chip-enable GPIO, a `led-fixed-brightness` per-channel
+brightness clamp, and two new functions `led_aw2103_get_boot_mode()` /
+`led_aw2103_control()` implementing a MediaTek power-off-charging battery
+indicator.
+
+Reconstruction is byte-identical to stock in every content-bearing section
+(8/8 functions, 170/170 relocations, 27/27 MODVERSION CRCs, 0 exports); only
+the `.modinfo` vermagic SCM stamp differs.
+
+See `phase4-leds-rgb-aw2013-reconstruction.md` (authoritative),
+`phase4-leds-rgb-aw2013-RED.md`, `-stock-oracle.txt`, `-hardware-contract.md`,
+`-dt-contract.md`, `-userspace-contract.md`, `-register-map.tsv`.
 
 - `CHIP_TOKEN` `aw2013` → `kernel:drivers/leds/leds-aw2013.c:54
 - `CHIP_TOKEN` `aw2013` → `kernel:drivers/leds/leds-aw2013.c:56

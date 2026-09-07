@@ -51,7 +51,21 @@ Remaining hardware-specific port tracks:
   byte-identical, exact ABI parity with the stock oracle)
 - ~~focaltech_touch_spi_ft3680~~ — done, see
   `kernel/phase4-focaltech-ft3680-reconstruction.md`
-- leds_rgb_aw2013
+- ~~leds_rgb_aw2013~~ — **done**, see
+  `kernel/phase4-leds-rgb-aw2013-reconstruction.md`
+  (`SOURCE_DELTA_RECONSTRUCTION_EXACT`: donor is the exact-GKI in-tree
+  `common/drivers/leds/leds-aw2013.c` @ `6b18f0b574ab` — upstream mainline,
+  author Nikita Travkin, **not** an Awinic vendor driver. 8/8 functions
+  byte-identical at identical offsets with identical KCFI IDs, 170/170
+  relocations identical, 27/27 identical MODVERSION CRCs (all `vmlinux`,
+  `depends=` empty), 0 exports, and `.text` `.rodata` `.rodata.str1.1`
+  `.data` `.init.data` `.exit.data` `.init.text` `.exit.text` `__versions`
+  `.gnu.linkonce.this_module` `.init.eh_frame` `.note.Linux` **all
+  byte-identical**; the only difference in the whole file is the `.modinfo`
+  vermagic SCM stamp. Built against exact GKI `ab/12901745` with 0 compiler
+  warnings, 0 modpost warnings and 0 unresolved symbols.
+  Hardware role: the front notification / charging-indicator RGB LED,
+  I2C bus 11 @0x45, enable GPIO 188, channels red/green/blue at 5 mA.)
 
 UARTHUB is excluded from the required-port set because stock GQ5012BF1 has:
 
