@@ -164,6 +164,18 @@
 
 ## aw36515
 
+- **Resolved by reconstruction** (Phase 4): reverse-engineered with its own
+  mandatory RED against the public MediaTek donor
+  `MotorolaMobilityLLC/kernel-mtk@ecf0e8f4448b5464d80c5dcd13b7573e9b2d39de`
+  `drivers/misc/mediatek/flashlight/v4l2/aw36515.c`, then rebuilt against exact
+  GKI `ab/12901745`.  Result `SOURCE_DELTA_RECONSTRUCTION_EXACT`: 23/23
+  functions, 23/23 size-identical, 22/23 byte-identical, 46/46 imports, 47/47
+  identical MODVERSION CRCs.  See `kernel/phase4-aw36515-reconstruction.md`,
+  `kernel/phase4-aw36515-RED.md` and `kernel/phase4-aw36515-delta-ledger.tsv`.
+  The `cust_mt6985_alpha_camera_v4l2.dtsi` hits below are the original
+  Phase-2/3 classifier evidence and are kept for the record; the GQ5012BF1 DT
+  contract actually in force is `kernel/phase4-aw36515-dt-contract.md`.
+
 - locations: `vendor_dlkm`
 - result: **STRONG_HARDWARE_HIT**
 - evidence kinds: `ALIAS;CHIP_TOKEN;COMPATIBLE;MODULE_NAME`

@@ -186,6 +186,14 @@ name-dependent hooks re-verified on the V2 side:
 * Exports: 0.  No stock module imports an `aw36518_v2` symbol, and live
   `/proc/modules` shows refcount 0: `phase4-aw36518-v2-consumer-boundary.tsv`.
 
+
+> Provider note (added by the AW36515 phase): the shared
+> `//lieppos/aw36518-recon/providers/flashlight` target is now built with
+> `CONFIG_MTK_FLASHLIGHT_PT=1` (plus the two throttling surfaces stock's own
+> `flashlight.ko` imports) so that it really exports `flashlight_pt_is_low`
+> for AW36515.  The two CRCs consumed here, `0xe8fd8896` and `0x8287fd03`,
+> are **unchanged**, so nothing in this report is affected.
+
 ```
 missing provider symbols = 0
 manually fabricated CRCs = 0
@@ -204,7 +212,7 @@ modpost warnings      0
 unresolved symbols    0
 KBUILD_MODPOST_WARN   not used
 output      aw36518_v2.ko, 43008 bytes,
-            SHA-256 111c922786c42cc134894c9b03964ea6560f5fed3d000e4e63f2c782be0236dc
+            SHA-256 f417845ff67947bfd22e8edbee722f7f4783e10b784dbdc3badcbacf0b1d3a52
 ```
 
 (The `flashlight.ko` provider is still built with `KBUILD_MODPOST_WARN=1` for
@@ -216,8 +224,8 @@ never applies to `aw36518_v2.ko`.)
 | Metric | Result |
 |---|---|
 | Functions | stock 23 / rebuilt 23 / shared 23 / stock-only 0 / rebuilt-only 0 |
-| Size-identical | 18 / 23 |
-| Byte-identical | **12 / 23** — `close`, `cooling_get_cur_state`, `cooling_get_max_state`, `flash_open`, `flash_release`, `ioctl`, `open`, **`parse_dt`**, `remove`, `torch_brt_ctrl`, `init_module`, `cleanup_module` |
+| Size-identical | 19 / 23 |
+| Byte-identical | **13 / 23** — `close`, `cooling_get_cur_state`, `cooling_get_max_state`, `flash_open`, `flash_release`, `ioctl`, `open`, **`parse_dt`**, `remove`, `torch_brt_ctrl`, `reg_store`, `init_module`, `cleanup_module` |
 | KCFI type ids | 20 present, 20/20 identical |
 | Imports | 45 / 45, 0 missing, 0 extra |
 | Exports | 0 / 0 |
@@ -247,14 +255,21 @@ functions rose from 6 → 12 for AW36518 **and** V2, and
 `parse_dt`/`remove`/`ioctl`/`torch_brt_ctrl` became exact.  The AW36518 report
 and its verification artifact were refreshed accordingly.
 
+A second shared fidelity fix arrived from the later AW36515 phase: the vendor's
+`reg_store()` keeps its two `sscanf` outputs in **one 2-element `u32` array**,
+not two scalars (stock computes the second output pointer as `orr xN, sp, #0x4`
+from a single frame base).  Applying that form here made `reg_store`
+byte-identical as well, so the counts in this report are **13/23 byte-identical
+and 19/23 size-identical**.
+
 ### Residual differences (11 functions, all explained, none hardware-affecting)
 
 1. **Clang scheduling** — `init`, `led0_set_ctrl`, `suspend`, `reg_show`,
    `cooling_set_cur_state` are size-identical and differ only by reordered
    instructions or by an intra-section `bl` displacement (1–7 words each).
 2. **Size-differing five** — `probe` (1588 vs 1584), `led0_get_ctrl` (208 vs
-   196), `set_driver` (184 vs 188), `strobe_store` (604 vs 608), `reg_store`
-   (144 vs 140).  Reference multisets, calls, constants and strings are equal;
+   196), `set_driver` (184 vs 188), `strobe_store` (604 vs 608).
+   Reference multisets, calls, constants and strings are equal;
    the deltas are register allocation and branch-form choices under
    `+pgo/+bolt/+lto` vendor flags that Kleaf does not reproduce.
 3. **`__LINE__` values** (D15) — the vendor file's absolute line numbering is not

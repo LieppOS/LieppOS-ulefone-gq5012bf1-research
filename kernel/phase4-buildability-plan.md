@@ -31,13 +31,18 @@ The broad source-discovery problem is complete.
 
 Remaining hardware-specific port tracks:
 
-- aw36515
+- ~~aw36515~~ — **done**, see `kernel/phase4-aw36515-reconstruction.md`
+  (`SOURCE_DELTA_RECONSTRUCTION_EXACT`: own mandatory RED against a public
+  MediaTek donor, 23/23 functions, 23/23 size-identical, 22/23
+  byte-identical, 46/46 imports, 47/47 identical MODVERSION CRCs, all data
+  objects and all 24 strings byte-identical, built against exact GKI
+  `ab/12901745` with 0 warnings and 0 unresolved symbols)
 - ~~aw36518~~ — **done**, see `kernel/phase4-aw36518-reconstruction.md`
   (`STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`: 23/23 functions, 47/47 identical
   MODVERSION CRCs, all data objects and all 63 strings byte-identical, built
   against exact GKI `ab/12901745` with 0 warnings and 0 unresolved symbols)
 - ~~aw36518_v2~~ — **done**, see `kernel/phase4-aw36518-v2-reconstruction.md`
-  (`SOURCE_DELTA_RECONSTRUCTION_EXACT`: 23/23 functions, 12 byte-identical,
+  (`SOURCE_DELTA_RECONSTRUCTION_EXACT`: 23/23 functions, 13 byte-identical,
   46/46 identical MODVERSION CRCs, 63/63 strings, all data objects
   byte-identical; the whole source delta is a token rename plus two removed
   lines)

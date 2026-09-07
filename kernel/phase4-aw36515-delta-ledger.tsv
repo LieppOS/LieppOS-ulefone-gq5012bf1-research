@@ -1,0 +1,39 @@
+#	Donor -> stock delta ledger for GQ5012BF1 aw36515.ko.
+#	Donor: MotorolaMobilityLLC/kernel-mtk @ ecf0e8f4448b5464d80c5dcd13b7573e9b2d39de
+#	       drivers/misc/mediatek/flashlight/v4l2/aw36515.c
+#	       SHA-256 22603b6de9ab378ead54ed6ab4457b2ffa557a0386b14139d0575be354c5f024
+#	Stock: SHA-256 85e5a860bc0ebae9c26e401ae333928ab8da9569b3892040da4f858cf6f643e8
+#	kind=ELECTRICAL changes a current/timing; kind=BEHAVIOUR changes control flow;
+#	kind=STRUCTURE changes the symbol/ABI inventory; kind=COSMETIC is metadata.
+id	kind	delta	donor	stock (reconstructed)	proof
+D01	ELECTRICAL	flash brightness maximum	2000000 uA	2000560 uA	pdata init in probe stores 0x1e86b0; V4L2_CID_FLASH_INTENSITY max/def = same value (= 3910 + 255*7830)
+D02	ELECTRICAL	torch brightness maximum	500000 uA	500780 uA	pdata init stores 0x7a42c; V4L2_CID_FLASH_TORCH_INTENSITY max/def = same value (= 980 + 255*1960)
+D03	ELECTRICAL	flash brightness register write	brt/2 into mask 0x7f, both LEDs always	brt into mask 0xff, one LED	aw36515_set_ctrl+0x2ac/+0x2ec: w2=0xff, single regmap_update_bits, divisor 7830 applied to the full value
+D04	ELECTRICAL	torch brightness register write	brt/2 into mask 0x7f, both LEDs always	brt into mask 0xff, one LED	aw36515_torch_brt_ctrl+0xb4/+0xbc: w2=0xff, single regmap_update_bits, divisor 1960 on the full value
+D05	ELECTRICAL	flash timeout encoding	staircase: 0 / (tout/600)-1 / 0x0a, mask 0x1f	code = tout/40, mask 0x0f	aw36515_set_ctrl+0x1f4 umull 0xcccccccd>>37 (=/40) with w2=0x0f
+D06	ELECTRICAL	V4L2 timeout control step	600 ms	40 ms	v4l2_ctrl_new_std(V4L2_CID_FLASH_TIMEOUT, min #0x28, max 0x640, step #0x28, def 0x640)
+D07	ELECTRICAL	thermal cooling ladder	{100000, 80000, 60000, 40000, 20000} uA	{200000, 150000, 100000, 50000, 25000} uA	.rodata+0x3c8, 5 x u32, read by aw36515_cooling_set_cur_state+0x90
+D08	ELECTRICAL	FLASH_IOC_SET_ONOFF torch point	25000 uA	80000 uA	aw36515_ioctl+0x34 mov w8, #0x13880 (= 80000) fed into the inlined torch_brt_ctrl
+D09	BEHAVIOUR	per-channel addressing	enable/torch/flash always write both LEDs (donor's per-LED code is #if 0'd out)	each call addresses exactly one LED selected by led_no	aw36515_set_ctrl / aw36515_torch_brt_ctrl select 0x01 vs 0x02 and 0x03/0x05 vs 0x04/0x06 on led_no
+D10	BEHAVIOUR	strobe-source register values	0x00 (software) and 0x24 (external), mask 0x2C	0x0C (software) and 0x20 (external), mask 0x2C	aw36515_set_ctrl+0xf4 (w3=0x0c) and +0x284 (w3=0x20)
+D11	BEHAVIOUR	external strobe GPIO	absent	"flash-externel" GPIO requested in probe and driven	of_get_named_gpio_flags("flash-externel"), devm_gpio_request_one("flash_externel"), gpio_to_desc/gpiod_set_raw_value
+D12	BEHAVIOUR	V4L2_CID_FLASH_STROBE drives the GPIO high	absent	gpiod_set_raw_value(gpio_to_desc(flash->gpio), 1) after enabling	aw36515_set_ctrl+0x35c-+0x368
+D13	BEHAVIOUR	aw36515_init() lowers the GPIO first	absent	gpio_set(0) before programming the timeout	aw36515_set_driver+0x40-+0x48
+D14	BEHAVIOUR	aw36515_uninit() lowers the GPIO	empty function returning 0	gpio_set(0) then return 0	aw36515_set_driver+0x148-+0x150 (inlined set==0 branch)
+D15	BEHAVIOUR	probe software reset	absent	read 0x07, msleep(10), two printk records, write 0x07 | BIT(7)	aw36515_probe+0x2e0..+0x348
+D16	BEHAVIOUR	probe chip-ID read	absent	regmap_read(regmap, 0x00, &val), value discarded	aw36515_probe+0x2d0
+D17	BEHAVIOUR	vendor "reg" debug sysfs	absent	DEVICE_ATTR(reg, 0644, reg_show, reg_store) created in probe	device_create_file(&client->dev, &dev_attr_reg); reg_show/reg_store symbols
+D18	BEHAVIOUR	cooling state 0 restore value	torch_brt_ctrl(..., flash->ori_current)	torch_brt_ctrl(..., aw36515_TORCH_BRT_MAX)	the LED0 restore constant-folds to regmap_update_bits(0x05, 0xff, 0xff) at +0xe8
+D19	BEHAVIOUR	probe ori_current seed	0	aw36515_TORCH_BRT_MAX (500780)	aw36515_probe+0x2b8 str x10 (0x7a42c) to flash+0x558
+D20	BEHAVIOUR	cooling state clamp guard	if (state < 0) state = 0	absent (state is unsigned long)	aw36515_cooling_set_cur_state has only the csel against max_state
+D21	BEHAVIOUR	thermal registration error log	if (IS_ERR(cdev)) pr_info("register thermal failed")	absent, result stored unchecked	aw36515_probe+0x2b8..+0x2c4 stores x0 with no IS_ERR test
+D22	STRUCTURE	runtime PM sleep ops	dev_pm_ops with SET_SYSTEM_SLEEP_PM_OPS/SET_RUNTIME_PM_OPS	no pm_ops, no suspend/resume	no aw36515_pm_ops object, no suspend/resume symbols, no pm_runtime_force_* imports, i2c_driver.driver.pm has no relocation
+D23	STRUCTURE	remove() prototype	int aw36515_remove(struct i2c_client *)	void aw36515_remove(struct i2c_client *)	Linux 6.1 i2c_driver.remove signature; stock remove ends without setting w0
+D24	STRUCTURE	media_entity_cleanup in remove	present	absent	aw36515_remove has only unregister_subdev + ctrl_handler_free per LED
+D25	STRUCTURE	logging	pr_info_ratelimited/pr_info/pr_debug throughout	only 5 log sites remain	stock has no ___ratelimit import and no *._rs objects; .rodata.str1.1 holds 24 strings total
+D26	STRUCTURE	snprintf failure check in subdev name init	unchecked snprintf	if (snprintf(...) < 0) pr_info("snprintf failed\n")	aw36515_subdev_init+0xbc tbnz + call to _printk with .rodata.str1.1+0x8e
+D27	STRUCTURE	inlining	mode_ctrl/enable_ctrl/flash_brt_ctrl/flash_tout_ctrl/get_ctrl/init_controls/v4l2_i2c_subdev_init/init/uninit/parse_dt are separate functions	all inlined	stock symbol table has exactly 23 text symbols; the reconstruction uses __always_inline to reproduce that inventory
+D28	COSMETIC	MODULE_AUTHOR	Roger-HY Wang <roger-hy.wang@mediatek.com>	Alec <like@awinic.com>	.modinfo author=, __UNIQUE_ID_author466 size 30
+D29	COSMETIC	MODULE_DESCRIPTION	Texas Instruments aw36515 LED flash driver	Awinic AW36515 LED flash driver	.modinfo description=, __UNIQUE_ID_description467 size 44
+D30	COSMETIC	reg_store locals	n/a (function absent in donor)	one 2-element u32 array, not two scalars	stock reg_store computes &val as orr x3, x9, #0x4 from a single sp base; the array form reproduces the function byte-for-byte (also fixes the AW36518/V2 residual)
+D31	COSMETIC	absolute line numbering	n/a	probe's two printk records must report lines 1047 and 1049	MOVZ immediates #0x417 and #0x419 at aw36515_probe+0x314/+0x32c; the reconstruction restores the numbering with a documented comment block

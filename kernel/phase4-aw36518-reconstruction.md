@@ -24,7 +24,7 @@ Justification (all measured, see `phase4-aw36518-verify-recon-vs-stock.txt`):
 * per-function call/string/data reference multisets are identical for 21/23
   functions, the remaining two differ only in the `.data` offset at which the
   *same* byte-identical objects landed;
-* 12 functions are byte-identical and 18/23 are size-identical; the residue is
+* 13 functions are byte-identical and 19/23 are size-identical; the residue is
   instruction scheduling/register allocation, not semantics.
 
 > **Updated after the AW36518_V2 phase** (`phase4-aw36518-v2-reconstruction.md`):
@@ -32,8 +32,14 @@ Justification (all measured, see `phase4-aw36518-verify-recon-vs-stock.txt`):
 > (between `dnode[]` and `flash_dev_id[]`, never accessed by any stock
 > instruction, proved by `sizeof(*flash) = 0x308` and the field offsets
 > `dnode[0] @ +0x278`, `flash_dev_id[0] @ +0x298`, `cdev @ +0x2d0`).
-> Reproducing it raised byte-identical functions from 6 to 12 here as well; the
-> numbers in this report are the post-fix ones.
+> Reproducing it raised byte-identical functions from 6 to 12 here as well.
+>
+> **Updated again after the AW36515 phase** (`phase4-aw36515-reconstruction.md`):
+> that phase recovered the vendor's `reg_store()` local-variable form (one
+> 2-element `u32` array rather than two scalars, proved by the `orr xN, sp, #0x4`
+> addressing stock uses for the second `sscanf` output).  Applying it here made
+> `reg_store` byte-identical too, giving 13/23 byte-identical and 19/23
+> size-identical.  The numbers in this report are the post-fix ones.
 
 It is not `DIRECT_SOURCE_MATCH` (no vendor source exists publicly) and not a
 whole-module byte match (LTO/PGO-scheduling differences remain), so the
@@ -125,6 +131,13 @@ and skips flashlight registration on CTS boards.  Details:
 
 ## ABI: providers and consumers
 
+> Provider note (added by the AW36515 phase): the shared
+> `//lieppos/aw36518-recon/providers/flashlight` target is now built with
+> `CONFIG_MTK_FLASHLIGHT_PT=1` (plus the two throttling surfaces stock's own
+> `flashlight.ko` imports) so that it really exports `flashlight_pt_is_low`
+> for AW36515.  The two CRCs consumed here, `0xe8fd8896` and `0x8287fd03`,
+> are **unchanged**, so nothing in this report is affected.
+
 * Imports: 46 — 43 from GKI `vmlinux`, plus
   `flashlight_dev_register_by_device_id` (`0xe8fd8896`) and
   `flashlight_kicker_pbm` (`0x8287fd03`) from `flashlight.ko`, and
@@ -155,7 +168,7 @@ modpost warnings      0
 unresolved symbols    0
 KBUILD_MODPOST_WARN   not used
 output      aw36518.ko, 42976 bytes,
-            SHA-256 0fb7d85f9fbd22d57a61c6c87e79dbfafca8cba707a6f3b21675cc1dcbbf0034
+            SHA-256 6d7cf0274b84e99b597683427b26feaac38e0fbf3b1b4299db492e073cf47429
 ```
 
 The provider module `flashlight.ko` is built with `KBUILD_MODPOST_WARN=1` for
@@ -169,8 +182,8 @@ used for CRC generation, never to `aw36518.ko` itself.
 | Metric | Result |
 |---|---|
 | Functions | stock 23 / rebuilt 23 / shared 23 / stock-only 0 / rebuilt-only 0 |
-| Size-identical functions | 18 / 23 |
-| Byte-identical functions | 12 (`init_module`, `cleanup_module`, `aw36518_open`, `aw36518_close`, `aw36518_flash_open`, `aw36518_flash_release`, `aw36518_ioctl`, `aw36518_parse_dt`, `aw36518_remove`, `aw36518_torch_brt_ctrl`, `aw36518_cooling_get_cur_state`, `aw36518_cooling_get_max_state`) |
+| Size-identical functions | 19 / 23 |
+| Byte-identical functions | 13 (`init_module`, `cleanup_module`, `aw36518_open`, `aw36518_close`, `aw36518_flash_open`, `aw36518_flash_release`, `aw36518_ioctl`, `aw36518_parse_dt`, `aw36518_remove`, `aw36518_torch_brt_ctrl`, `aw36518_cooling_get_cur_state`, `aw36518_cooling_get_max_state`, `reg_store`) |
 | KCFI type ids | 20 present in stock, 20/20 identical |
 | Imports | 46 / 46, 0 missing, 0 extra |
 | Exports | 0 / 0 |
@@ -201,7 +214,7 @@ Raw output: `phase4-aw36518-verify-recon-vs-stock.txt`.
 ### Residual differences (all explained, none hardware-affecting)
 
 1. **Instruction scheduling / partial inlining.** 11 of 23 functions differ in
-   byte layout; 5 also in size (`probe`, `led0_get_ctrl`, `reg_store`,
+   byte layout; 4 also in size (`probe`, `led0_get_ctrl`,
    `strobe_store`, `set_driver`).  The stock compiler partially inlined
    `aw36518_torch_brt_ctrl` into the `state == 0` arm of
    `aw36518_cooling_set_cur_state`; the rebuild calls it out of line there.

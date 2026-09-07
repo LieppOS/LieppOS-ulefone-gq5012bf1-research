@@ -1,0 +1,31 @@
+#	AW36515 register map recovered from the GQ5012BF1 stock aw36515.ko
+#	(SHA-256 85e5a860bc0ebae9c26e401ae333928ab8da9569b3892040da4f858cf6f643e8).
+#	Every row cites the stock function and instruction that proves it.
+#	regmap_update_bits_base(map, reg, mask, val, ...) => w1=reg, w2=mask, w3=val.
+#	"unit" states explicitly whether a quantity is microamperes, milliseconds,
+#	a register code or a bit mask.  Nothing here is inferred from AW36518.
+reg	mask	field	value/encoding	unit	proof
+0x00	0xFF	chip identification	read once in probe, value discarded, never logged, no gate	register code	aw36515_probe+0x2d0 regmap_read(regmap, 0x00, &val); result unused
+0x01	0x01	LED0 output enable	1 = on, 0 = off	bit mask	aw36515_set_ctrl+0x14c/+0x340 regmap_update_bits(0x01, 0x01, 0x01|0x00)
+0x01	0x02	LED1 output enable	1 = on, 0 = off	bit mask	aw36515_set_ctrl+0xbc/+0x348 regmap_update_bits(0x01, 0x02, 0x02|0x00)
+0x01	0x0C	mode select	0x00 standby, 0x08 torch, 0x0C flash	bit field	aw36515_set_ctrl+0x90 (0x00/0x08), +0x134 (0x0C), aw36515_ioctl+0x140 (0x08)
+0x01	0x2C	strobe source	0x0C software strobe, 0x20 external/hardware strobe	bit field	aw36515_set_ctrl+0xf4 (val 0x0C) and +0x284 (val 0x20)
+0x03	0xFF	LED0 flash brightness	code = (uA - 3910) / 7830, 0..255	register code from uA	aw36515_set_ctrl+0x2ec: w1=3; umull magic 0x085eaf1d >> 40 == /7830
+0x04	0xFF	LED1 flash brightness	code = (uA - 3910) / 7830, 0..255	register code from uA	aw36515_set_ctrl+0x2ac: w1=4, same divisor
+0x05	0xFF	LED0 torch brightness	code = (uA - 980) / 1960, 0..255	register code from uA	aw36515_torch_brt_ctrl+0xbc: w1=5; ((uA-980)>>3) * 0x216fcdd9 >> 37 == /1960
+0x05	0x80	LED0 torch bit7	cleared once during aw36515_init()	bit mask	aw36515_set_driver+0xb4 regmap_update_bits(0x05, 0x80, 0x00)
+0x06	0xFF	LED1 torch brightness	code = (uA - 980) / 1960, 0..255	register code from uA	aw36515_torch_brt_ctrl+0xb4: w1=6, same divisor
+0x03	0x80	LED0 flash bit7	cleared once during aw36515_init()	bit mask	aw36515_set_driver+0xd8 regmap_update_bits(0x03, 0x80, 0x00)
+0x07	0x80	software reset	probe reads 0x07, msleep(10), sets bit7, writes it back	bit mask	aw36515_probe+0x2e0 read, +0x2f4 msleep(10), +0x330 orr #0x80, +0x344 regmap_write
+0x08	0x0F	flash timeout	code = ms / 40 (V4L2 control: min 40 ms, step 40 ms, max 1600 ms)	register code from ms	aw36515_set_ctrl+0x1f4: umull 0xcccccccd >> 37 == /40; aw36515_set_driver+0x68 writes 0x0A (400 ms)
+0x0A	0x01	fault: timeout	-> V4L2_FLASH_FAULT_TIMEOUT (0x02)	bit mask	aw36515_led0_get_ctrl+0x80 bfi w11, w8, #1, #1
+0x0A	0x04	fault: over-temperature	-> V4L2_FLASH_FAULT_OVER_TEMPERATURE (0x04)	bit mask	aw36515_led0_get_ctrl+0x78 and w11, w8, #4
+0x0A	0x10	fault: LED1 short circuit	-> V4L2_FLASH_FAULT_SHORT_CIRCUIT (0x08)	bit mask	aw36515_led0_get_ctrl+0x70 tst w8,#0x10 / csel w9,w9,#8
+0x0A	0x20	fault: LED0 short circuit	-> V4L2_FLASH_FAULT_SHORT_CIRCUIT (0x08)	bit mask	aw36515_led0_get_ctrl+0x6c lsr w9,w8,#2 / and w9,w9,#8
+0x0A	0xFF	fault latch clear	read once at the end of aw36515_init(), value discarded	register code	aw36515_set_driver+0xec regmap_read(regmap, 0x0A, &val)
+0x00-0x0D	0xFF	vendor debug dump	"reg" sysfs attribute (0644) prints reg0x%02X = 0x%02X for i in 0..13	register code	reg_show+0x48 loop with cmp w20, #0x0e
+any	0xFF	vendor debug write	"reg" sysfs store: sscanf(buf, "%x %x", &reg, &val) then regmap_write	register code	reg_store+0x40 sscanf / +0x5c regmap_write
+#	regmap_config: reg_bits = 8, val_bits = 8, max_register = 0xFF
+#	(.rodata+0x1d8, 328 bytes, byte-identical to the AW36518 sibling's config).
+#	No regulator, clock or interrupt is requested by the driver; the only
+#	non-I2C hardware resource is the "flash-externel" GPIO (see dt-contract).

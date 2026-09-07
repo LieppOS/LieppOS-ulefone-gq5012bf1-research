@@ -54,6 +54,13 @@ flashlight core; the AW36518 instance is then V4L2-only.
 
 ## `aw36515.ko` — related but genuinely different driver
 
+> **Status: reconstructed and verified.** The hypothesis below was carried
+> through its own mandatory RED and full reconstruction in
+> `phase4-aw36515-reconstruction.md` (`SOURCE_DELTA_RECONSTRUCTION_EXACT`:
+> 23/23 functions, 23/23 size-identical, 22/23 byte-identical, 46/46 imports,
+> 47/47 identical CRCs).  Everything that phase *disproved* about the naive
+> family assumption is summarised at the end of this section.
+
 * Function-name overlap with `aw36518.ko` is only the 4 framework-generic names
   (`init_module`, `cleanup_module`, `aw36515_flash_open`,
   `aw36515_flash_release` counterparts); everything else is prefixed
@@ -70,12 +77,33 @@ flashlight core; the AW36518 instance is then V4L2-only.
 * It is the only one of the three whose DT node carries `flash-externel` and
   media-graph endpoints, i.e. it is the primary camera flash.
 
-**Conclusion:** AW36515 is a *sibling Awinic driver from the same code family*
-(same author, same MediaTek flashlight + V4L2 skeleton, same regmap style) but a
-dual-channel implementation that still calls `flashlight_pt_is_low()` directly.
-It needs its own RED/reconstruction pass; the register/level/timeout semantics
-recovered here are a strong starting hypothesis but **must be re-proved against
-its own binary** (different chip, different channel count).
+**Conclusion (verified):** AW36515 is a *sibling Awinic driver from the same
+code family* (same author, same MediaTek flashlight + V4L2 skeleton, same
+regmap config — the 328-byte `regmap_config` blob is byte-identical across all
+three) but a dual-channel implementation that calls `flashlight_pt_is_low()`
+directly.  It got its own RED and reconstruction pass, and that pass confirmed
+the warning above was justified: **almost none of the AW36518 electrical
+constants carry over.**
+
+| quantity | AW36518 / V2 | AW36515 |
+|---|---|---|
+| channels | 1 | 2 |
+| flash current | 2940 µA + 5870 µA/LSB, max 1 499 790 µA, reg `0x03` | 3910 µA + 7830 µA/LSB, max 2 000 560 µA, regs `0x03`/`0x04` |
+| torch current | 750 µA + 1510 µA/LSB, max 385 800 µA, reg `0x05` | 980 µA + 1960 µA/LSB, max 500 780 µA, regs `0x05`/`0x06` |
+| enable mask | `0x03` (both bits at once) | `0x01` / `0x02` (per channel) |
+| timeout | `0x08[3:0] = ms/40`, init 400 ms | identical encoding, init 400 ms |
+| cooling | max_state 4, `{150000,100000,50000,25000}` µA | max_state 5, `{200000,150000,100000,50000,25000}` µA |
+| `FLASH_IOC_SET_ONOFF` on | 250 000 µA | 80 000 µA |
+| strobe source values | `0x0C` sw / `0x20` hw (mask `0x2C`) | identical |
+| fault decode of `0x0A` | bit0/bit2/bit4|bit5 | identical |
+| external strobe GPIO | none on the node | `flash-externel = <&pio 116 0>`, driven by `STROBE` |
+| PM | `dev_pm_ops` + suspend/resume | none at all |
+| low-battery path | relies on `fl_enable()` name bypass in `flashlight.ko` | calls `flashlight_pt_is_low()` itself *and* has no name bypass |
+| logging | `printk(KERN_ERR "aw36518[%s] " …)` on nearly every path, 63 strings | almost none: 5 log sites, 24 strings |
+
+Only the timeout encoding, the strobe-source values, the fault decode and the
+`regmap_config` survived unchanged — every current, every maximum, the cooling
+ladder and the ioctl operating point are different.
 
 ## Reusable results for the sibling passes
 
@@ -83,39 +111,37 @@ its own binary** (different chip, different channel count).
   plain `pr_info`/`printk` exceptions) — identical string layout in all three.
 * Register semantics 0x01/0x03/0x05/0x07/0x08/0x0A and the µA↔code linear maps.
 * MediaTek flashlight `flashlight_operations` shape and ioctl handling.
-* Thermal cooling device structure and the 4-entry µA limit table.
+* Thermal cooling device structure (AW36518/V2 use a 4-entry µA limit table,
+  AW36515 a 5-entry one).
 * The build harness: `//lieppos/aw36518-recon/providers/flashlight` produces the
-  real `flashlight.ko` `Module.symvers` needed by all three modules.
+  real `flashlight.ko` `Module.symvers` needed by all three modules.  It is now
+  built with `CONFIG_MTK_FLASHLIGHT_PT=1` as well, so it really exports
+  `flashlight_pt_is_low` (`0xe39abd31`) for AW36515; the two CRCs the AW36518
+  pair consumes are unchanged.
+* The `reg` sysfs store uses **one 2-element `u32` array**, not two scalars —
+  recovered on AW36515 from the `orr xN, sp, #0x4` addressing form and then
+  applied to AW36518/V2, where it also produced a byte-identical `reg_store`.
 
-### Specifically for the upcoming `aw36515.ko` pass
+### What the AW36515 pass added back to the family record
 
-Evidence gathered while doing V2 that should shorten the AW36515 work:
-
-1. **Struct layout.** The vendor `struct aw365xx_flash` carries 24 bytes (three
-   pointer-sized members) between `dnode[]` and `flash_dev_id[]` that no
-   instruction ever touches.  On AW36518/V2 this makes
-   `sizeof(*flash) = 0x308` with `dnode[0] @ +0x278`, `flash_dev_id[0] @ +0x298`,
-   `cdev @ +0x2d0`.  Reproducing that gap raised byte-identical functions from
-   6 → 12 in both modules; expect the same trick to matter for AW36515, whose
-   arrays are `[2]` (so re-measure its `devm_kzalloc` size and field offsets
-   instead of copying these numbers).
-2. **Logging shim.** `printk(KERN_ERR "aw36515[%s] " fmt, __func__, …)` for the
-   tagged records, plain `pr_info()`/`printk()` for the few untagged ones —
-   re-derive the exact split from its own `.rodata.str1.1`.
-3. **Toolchain.** All three stock modules carry the identical
-   `Android (10087095, +pgo, +bolt, +lto, -mlgo, based on r487747c) clang 17.0.2`
-   comment, so the residual scheduling differences seen here (Kleaf builds
-   without the vendor's PGO/BOLT profile) will reappear and are expected.
-4. **PT path differs.** AW36515 calls `flashlight_pt_is_low()` itself, while
-   AW36518/V2 rely on the Ulefone `fl_enable()` name-match bypass in
-   `flashlight.ko` (`strncmp(name, "aw36518-led0", 12)` /
-   `"aw36518_v2-led0", 15`).  Check whether `fl_enable()` also names
-   `aw36515-led0/1`; if not, AW36515 goes through the normal low-battery cut-off.
-5. **Providers.** AW36515 imports `flashlight_pt_is_low` in addition to the two
-   flashlight symbols and does **not** import `is_yft_cts_board`, so the same
-   `flashlight_provider` target supplies all of its vendor CRCs; `fortify_panic`
-   and `strnlen` are GKI symbols.
-6. **DT.** `aw36515@63` is the only node of the three with `flash-externel` and
-   with media-graph endpoints (`mtk-composite-v4l2-1` ports 0/1), and it uses
-   `part = 0` with `ct = 0/1` — i.e. it is the main-camera pair while
-   AW36518/V2 are the `part = 1` pair.
+1. **Struct layout.** All three modules share a vendor `struct aw365xx_flash`
+   with 24 bytes (three pointer-sized members) between `dnode[]` and
+   `flash_dev_id[]` that no instruction ever touches.  AW36518/V2:
+   `sizeof = 0x308`, `dnode[0] @ +0x278`, `flash_dev_id[0] @ +0x298`,
+   `cdev @ +0x2d0`.  AW36515 (two-element arrays): `sizeof = 0x568`,
+   `dnode[0] @ +0x4a0`, `flash_dev_id[0] @ +0x4c8`, `cdev @ +0x530`.
+   Reproducing the gap is what unlocked byte-identity in all three.
+2. **A public donor exists for AW36515 too**, in the same repository and the
+   same commit as the AW36518 donor:
+   `MotorolaMobilityLLC/kernel-mtk@ecf0e8f4448b5464d80c5dcd13b7573e9b2d39de`,
+   `drivers/misc/mediatek/flashlight/v4l2/aw36515.c`.  It is a *different file*,
+   not a copy of the AW36518 one.
+3. **`fl_enable()` in stock `flashlight.ko` names only the AW36518 pair.**
+   The string `aw36515` does not occur anywhere in `flashlight.ko`, so the
+   Ulefone low-battery bypass applies to AW36518/AW36518_V2 only.
+4. **DT indexing crosses on AW36515**: `subdev_init()` binds children by `reg`
+   while the flashlight registration loop assigns `channel`/name by DT order,
+   and this DTB lists `flash@1` before `flash@0`.  See
+   `phase4-aw36515-dt-contract.md`.
+5. **Toolchain** is the identical `clang 17.0.2 (+pgo, +bolt, +lto)` string in
+   all three stock modules, so Kleaf rebuilds keep a small scheduling residue.
