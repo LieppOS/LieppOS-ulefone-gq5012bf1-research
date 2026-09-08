@@ -29,11 +29,12 @@
 > | `tkcore` | `STRONG_API_HIT`, 60 hits | **NO_USEFUL_SOURCE / STOCK_TRANSITION_BLOB** — the 60 hits are GlobalPlatform `TEEC_*` API-name collisions with MicroTrust TEEI (`drivers/tee/teei/510/…`). `grep -rl 'trustkernel\|tkcore'` over the Nothing MT6878 trees and the MiCode vendor-reference BSPs returns **zero** files. |
 > | `panel_ky_vtdr6115_dphy_cmd` | `NO_EXACT_HIT` | **STRUCTURAL_DONOR_ONLY / RE_REQUIRED** — donor located: `MotorolaMobilityLLC/kernel-mtk@0087a407394abd3ab073e1a2df164f1187959a3f` `dsi-panel-mot-csot-vtdr6115-655-fhdp-dphy-vdo-144hz.c` (CSOT 144 Hz VDO vs Ulefone KY 120 Hz cmd) |
 > | `custom_ldo_wl2868` | `NO_EXACT_HIT` | **STRUCTURAL_DONOR_ONLY / RE_REQUIRED** — donor located: `sonyxperiadev/kernel@7e42db1690b55e374fd6a6af536684a746bac614` `drivers/regulator/wl2868c-regulator.{c,h}` (regulator-framework model; stock is a chardev+export model). Nothing ships only `cust_wl2864c.dtsi`; the `wl2864c.ko` target in `mgk_64_k61.bzl` has **no** source in the published tree. |
-> | `sc851x_charger`, `sh366003_fg`, `custom_ldo`, `leds_ln2403`, `tkcore_drv` | `NO_EXACT_HIT` | unchanged — **NO_USEFUL_SOURCE** re-confirmed against the Nothing trees, the MiCode vendor-reference BSPs and public source indexes |
+> | `custom_ldo` | `NO_EXACT_HIT` | no donor found, but **STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION** completed from stock ELF: 2/2 functions byte-identical, exact CRC/KCFI/relocations, exact-GKI build clean |
+> | `sc851x_charger`, `sh366003_fg`, `leds_ln2403`, `tkcore_drv` | `NO_EXACT_HIT` | unchanged — **NO_USEFUL_SOURCE** re-confirmed against the Nothing trees, the MiCode vendor-reference BSPs and public source indexes |
 >
 > Modules resolved since this scan and therefore no longer unresolved:
 > `aw883xx_driver`, `aw36515`, `aw36518`, `aw36518_v2`, `leds_rgb_aw2013`,
-> `connfem`.
+> `connfem`, `custom_ldo`.
 >
 > Modules **missing** from this 22-entry scan that the triage proved are also
 > still unresolved: `sc8571_charger`, `microarray_fp_tee`, `spi_tiny_co5300_lcd`,
@@ -306,6 +307,15 @@ See `phase4-leds-rgb-aw2013-reconstruction.md` (authoritative),
 - aliases: ``
 
 - No exact source hit found.
+
+### Phase 4 reconstruction follow-up (2026-09-08)
+
+The source-search result remains historically correct: no donor was found.
+Nevertheless, binary-led reconstruction is now complete at
+`STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`. Both stock functions were recovered
+byte-identically (28 bytes each); prototypes, KCFI, all three import CRCs, both
+export CRCs, and all 10 relocations match. Exact-GKI `BUILD_RC=0`, unresolved
+symbols 0. Authoritative report: `phase4-custom-ldo-reconstruction.md`.
 
 ## gps_drv_dl_v051
 

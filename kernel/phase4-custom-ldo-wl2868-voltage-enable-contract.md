@@ -9,7 +9,7 @@
 - `scaled = signed(value / 100)` and candidate `vset = (scaled + offset[ldo-1]) / 125`.
 - The stock compare/csel path selects zero when the recovered limit comparison fails. It then performs raw register-pointer/readback transfers and logs `write_val` and `read_val`.
 
-The stock symbol names do not establish a public unit convention, and local consumer source is unavailable. Do not reinterpret this as a regulator-uV API without the consumer source.
+Follow-up stock-consumer analysis closes the former unit uncertainty. Stock `imgsensor` loads `ent->val` unchanged from each 12-byte camera power-sequence entry and dispatches that same field to either its standard regulator backend or its Ulefone custom-LDO backend. The standard backend passes the value unchanged as both `min_uV` and `max_uV` to `regulator_set_voltage`; `set_custom_ldo` passes it unchanged to `custom_ldo_vout`, whose byte-identical shim passes it unchanged to `will_ldo_vout`. Compiled values are 1,100,000, 1,200,000, 1,800,000, and 2,800,000. Therefore `value` is **PROVEN_FROM_STOCK to be microvolts**. Evidence: `phase4-custom-ldo-imgsensor-consumer-analysis.md`.
 
 ## Enable
 

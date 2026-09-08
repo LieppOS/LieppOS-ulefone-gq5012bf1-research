@@ -2,7 +2,7 @@
 
 ## 1. Final classification
 
-`STRUCTURAL_AND_BEHAVIORAL_APPROXIMATION` — **PRECISELY BLOCKED for an exact reconstruction claim**. The provider ABI is exact at the export-CRC level and the module builds against the requested GKI, but no exact source exists and the voltage-unit interpretation, some probe data layout, and byte/function parity are not proven. No live validation is permitted.
+`STRUCTURAL_AND_BEHAVIORAL_APPROXIMATION` — **PRECISELY BLOCKED for an exact reconstruction claim**. The provider ABI is exact at the export-CRC level and the module builds against the requested GKI, but no exact source exists and some probe data layout and byte/function parity are not proven. The former voltage-unit residual was closed by the subsequent `custom_ldo`/stock-`imgsensor` analysis; no live validation is permitted.
 
 ## 2. Stock oracle
 
@@ -45,7 +45,7 @@ No CRC patching or hand-written `Module.symvers` was used.
 
 ## 10. Voltage contract
 
-Valid LDO numbers are 1–7 and map to `ldo_num+2`; invalid numbers return -1. Static arithmetic recovered from the AArch64 constants is signed `value/100`, addition of the per-chip/per-LDO offset table, then division by 125, with a limit comparison selecting zero on the failing branch. Tables are recorded in `phase4-custom-ldo-wl2868-voltage-enable-contract.md`. The public unit convention remains unresolved; assigning donor uV semantics would be speculation.
+Valid LDO numbers are 1–7 and map to `ldo_num+2`; invalid numbers return -1. Static arithmetic recovered from the AArch64 constants is signed `value/100`, addition of the per-chip/per-LDO offset table, then division by 125, with a limit comparison selecting zero on the failing branch. Tables are recorded in `phase4-custom-ldo-wl2868-voltage-enable-contract.md`. Follow-up stock `imgsensor` analysis now proves the public `value` argument is a microvolt setpoint: the same compiled power-sequence field is passed unchanged either to `custom_ldo_vout`/`will_ldo_vout` or to `regulator_set_voltage(..., min_uV, max_uV)`.
 
 ## 11. Enable and GPIO contract
 
@@ -57,11 +57,11 @@ A misc device named `wl2864c` supplies `open`, `llseek`, `read`, and `write`. Op
 
 ## 13. Camera/sensor power mapping
 
-The stock binary proves seven camera/sensor LDO channels and the transitive consumer chain, but no local sensor power-table source recovers named rail-to-LDO assignments or call-site voltage units. Unrelated Nothing DT rail names are explicitly not attributed to Ulefone. The exact evidence boundary is in `phase4-custom-ldo-wl2868-consumer-contract.md`.
+Follow-up reconstruction of `custom_ldo` traced every stock `imgsensor` call site and decoded the stock Ulefone DT mappings. Active mappings cover AVDD, DVDD, DOVDD, and AFVDD across sensor slots 0, 1, 2, and 4, with LDO channels 1–7 and microvolt setpoints 1,100,000, 1,200,000, 1,800,000, and 2,800,000. Exact stages and confidence are in `phase4-custom-ldo-imgsensor-consumer-analysis.md` and `phase4-custom-ldo-imgsensor-custom-stages.tsv`.
 
 ## 14. Consumer pre-analysis
 
-`stock-custom-ldo.ko` was only disassembled and symbol-scanned. Its two wrappers directly CALL26 the two provider exports and carry no additional logic. It was not rebuilt, inserted, removed, or otherwise executed; work stops before the custom_ldo phase as required.
+Historical task boundary: during the WL2868 task, `stock-custom-ldo.ko` was only disassembled and symbol-scanned, and work stopped before rebuilding it. The subsequent dedicated `custom_ldo` task reconstructed both wrappers byte-identically and still performed no module insertion/removal or hardware execution. See `phase4-custom-ldo-reconstruction.md`.
 
 ## 15. Reconstruction tree
 
@@ -75,7 +75,7 @@ Kleaf emits two OpenSSL/sign-file diagnostics because the local workspace has no
 
 ## 17. Structural, behavioral, and CRC verification
 
-Static verification is in `workspace/phase4-custom-ldo-wl2868/verify-recon-vs-stock.txt`. Results: all 27 stock kernel imports are present (the `module_layout` record is MODVERSION-only), no extra imports, both export CRCs match exactly, and the check-no-remaining artifact exists. Named function/control-flow shape, exact data layout, voltage units, and byte identity do not match sufficiently to claim exact behavioral parity. The raw rebuilt module is `workspace/phase4-custom-ldo-wl2868/recon-custom_ldo_wl2868.ko`.
+Static verification is in `workspace/phase4-custom-ldo-wl2868/verify-recon-vs-stock.txt`. Results: all 27 stock kernel imports are present (the `module_layout` record is MODVERSION-only), no extra imports, both export CRCs match exactly, and the check-no-remaining artifact exists. Named function/control-flow shape, exact data layout, and byte identity do not match sufficiently to claim exact behavioral parity. Voltage units are now independently proven by the follow-up consumer analysis. The raw rebuilt module is `workspace/phase4-custom-ldo-wl2868/recon-custom_ldo_wl2868.ko`.
 
 ## 18. Safety, runtime status, evidence, and final verdict
 
@@ -83,4 +83,4 @@ Hard safety boundary held: no device I2C writes, GPIO toggles, rail changes, cha
 
 Authoritative evidence index: stock oracle; seven inventory TSVs; raw ELF sections/disassembly/bytes; source candidates; RED; hardware/DT/register/voltage-enable/userspace/consumer contracts; provider/consumer boundary TSVs; reconstruction source/build glue; build logs; and static verification output.
 
-**Final verdict: PRECISELY BLOCKED for COMPLETE exact source reconstruction.** The safe deliverable is a built structural/behavioral approximation with exact consumer export CRCs, not a claim that it is drop-in hardware-equivalent. Keep the stock module/provider chain until exact consumer call-site voltage semantics and permitted non-live evidence resolve the residuals.
+**Final verdict: PRECISELY BLOCKED for COMPLETE exact source reconstruction.** The safe deliverable remains a built structural/behavioral approximation with exact consumer export CRCs, not a claim that it is drop-in hardware-equivalent. The consumer voltage-unit residual is closed, but probe/data-layout and whole-function/source parity residuals remain; keep the stock provider until those are resolved or runtime validation is permitted.

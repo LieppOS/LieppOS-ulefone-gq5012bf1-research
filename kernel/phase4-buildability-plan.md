@@ -1100,8 +1100,15 @@ class of problem already seen and solved for ST21 (donor 2.2.0.15 vs stock
 
 ### Modules that genuinely require reverse engineering
 
-Six remain: `sh366003_fg`, `sc8571_charger`, `sc851x_charger`,
-`custom_ldo_wl2868`, `custom_ldo`, `fingerprint`.
+Five remain: `sh366003_fg`, `sc8571_charger`, `sc851x_charger`,
+`custom_ldo_wl2868`, `fingerprint`.
+
+`custom_ldo` is now complete at `STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`:
+both functions are byte-identical, all import/export CRCs and KCFI IDs match,
+and the exact-GKI build against the reconstructed WL2868 provider has zero
+unresolved symbols. Its stock-consumer analysis also proves WL2868 voltage
+values are microvolts. The WL2868 provider remains in this list because its
+separate probe/data-layout and whole-function parity residuals remain.
 
 `panel_ky_vtdr6115_dphy_cmd` panel logic is reconstructed from the stock oracle
 but is `BLOCKED_WITH_EXACT_MISSING_EVIDENCE`: the exact MediaTek display-provider

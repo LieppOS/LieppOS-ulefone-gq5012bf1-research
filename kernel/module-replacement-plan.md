@@ -77,8 +77,8 @@ Candidate modules:
 - sc8571_charger
 - sc851x_charger
 - yft_tiny2c_usb
-- custom_ldo
-- custom_ldo_wl2868
+- custom_ldo — reconstructed exactly at the consumer ABI/function level
+- custom_ldo_wl2868 — structurally reconstructed; provider residuals remain
 
 These modules require careful staged testing because failures can affect
 charging, battery reporting and power stability.
@@ -100,9 +100,10 @@ stock panel + `mtk_panel_ext` + `mediatek-drm` ABI island meanwhile.
 Modules include:
 
 - leds_ln2403
-- remaining custom LDO glue
+- custom LDO glue (**completed**; retained here as historical priority)
 
-These are relatively contained but should follow reconstruction of their
+The custom LDO shim is now reconstructed exactly at the consumer ABI/function
+level. `leds_ln2403` remains relatively contained and should follow its
 underlying power dependencies.
 
 ## Priority 8 — TrustKernel / fingerprint
@@ -139,5 +140,15 @@ preserved or migrated.
 
 ## Phase 4 custom_ldo_wl2868 update (2026-09-08)
 
-`custom_ldo_wl2868` now has a raw-I2C structural reconstruction with exact `will_ldo_vout`/`will_ldo_en` export CRCs and a successful exact-GKI build. It is not promoted to an independently deployable replacement: the exact camera voltage-unit contract is unresolved and no live hardware validation is allowed. Keep the stock provider chain.
+`custom_ldo_wl2868` has a raw-I2C structural reconstruction with exact `will_ldo_vout`/`will_ldo_en` export CRCs and a successful exact-GKI build. Subsequent stock `imgsensor` call-site analysis proves the camera voltage value is in microvolts, closing that residual. It is still not promoted to an independently deployable replacement because probe/data-layout and whole-function/source parity residuals remain and no live hardware validation is allowed.
+
+## Phase 4 custom_ldo update (2026-09-08)
+
+`custom_ldo` is complete at `STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`. Its two
+28-byte forwarding functions are byte-identical to stock; exact KCFI, three
+import CRCs, two export CRCs, module dependency metadata, and all relocations
+are reproduced. Exact-GKI build succeeds with zero compiler/modpost warnings
+and zero unresolved symbols against the reconstructed WL2868 provider's real
+`Module.symvers`. Only generated srcversion/vermagic provenance differs. It is
+removed from the remaining reverse-engineering queue.
 

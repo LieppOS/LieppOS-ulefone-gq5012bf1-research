@@ -3,10 +3,10 @@
 Scope: what still stands between the current source-reconstruction state and a
 practical first source-based LieppOS custom-kernel boot on Slot B.
 
-This is a **triage** document. No new reverse engineering was started, no
-hardware was touched, and no module was reconstructed. Every statement below is
-derived from artefacts already committed to this repository plus read-only
-inspection of local donor source trees and public source indexes.
+This is a **triage** document. Its original baseline started no new reverse
+engineering and touched no hardware. It now carries append-only/current-status
+updates from later dedicated reconstruction tasks; `custom_ldo` is complete.
+All device evidence remains static/read-only.
 
 Baseline (unchanged):
 
@@ -30,7 +30,8 @@ Machine-readable form of this table: `kernel/phase4-remaining-module-triage.tsv`
 | DIRECT_SOURCE         |     0 |
 | SOURCE_DELTA          |     2 |
 | FORWARD_PORT          |     7 |
-| RE_REQUIRED           |     7 |
+| SOURCE_RECONSTRUCTED  |     1 |
+| RE_REQUIRED           |     6 |
 | STOCK_TRANSITION_BLOB |     7 |
 | NOT_REQUIRED          |     0 |
 | UNKNOWN               |     0 |
@@ -175,7 +176,7 @@ view below carries the decision-relevant columns.
 | `gps_scp` | vendor_dlkm | on demand (init.gps_scp.rc) | no | 26 / 5 / 0 | **EXACT_SOURCE** | YES_WITH_STOCK_PROVIDER_CHAIN | FORWARD_PORT | P2_MAJOR_FEATURE |
 | `fingerprint` | vendor_boot platform | yes (idx 181) | yes (idx 185) | 18 / 0 / 10 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | RE_REQUIRED | P2_MAJOR_FEATURE |
 | `microarray_fp_tee` | vendor_boot platform | yes (idx 182) | yes (idx 186) | 59 / 7 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P2_MAJOR_FEATURE |
-| `custom_ldo` | vendor_dlkm | yes (idx 102) | no | 1 / 2 / 2 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | RE_REQUIRED | P2_MAJOR_FEATURE |
+| `custom_ldo` | vendor_dlkm | yes (idx 102) | no | 1 / 2 / 2 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED** | P2_MAJOR_FEATURE |
 | `custom_ldo_wl2868` | vendor_dlkm | yes (idx 101) | no | 27 / 0 / 2 | STRUCTURAL_DONOR_ONLY | YES_SAFE_TRANSITION | RE_REQUIRED | P2_MAJOR_FEATURE |
 | `yft_gpio_keys` | vendor_boot platform | yes (idx 179) | yes (idx 183) | 65 / 0 / 0 | **STRONG_SOURCE_MATCH** | YES_SAFE_TRANSITION | SOURCE_DELTA | P3_OPTIONAL_FEATURE |
 | `spi_tiny_co5300_lcd` | vendor_dlkm | yes (idx 191) | no | 54 / 4 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
@@ -587,7 +588,7 @@ traffic is TEE-mediated and therefore not observable from the Linux side).
 
 ## 14. Modules that genuinely require reverse engineering
 
-Six still require panel/hardware reverse engineering; VTDR6115 panel logic is now reconstructed but separately blocked at the provider ABI:
+Five still require panel/hardware reverse engineering; VTDR6115 panel logic is now reconstructed but separately blocked at the provider ABI. `custom_ldo` graduated from this list after byte-identical two-function reconstruction:
 
 | module | why no source path exists | difficulty |
 |---|---|---|
@@ -595,7 +596,6 @@ Six still require panel/hardware reverse engineering; VTDR6115 panel logic is no
 | `sc8571_charger` | only an OPLUS-framework donor; MediaTek `charger_class` glue absent | MODERATE |
 | `sc851x_charger` | no public SC851x driver at all | LOW_TO_MODERATE |
 | `custom_ldo_wl2868` | Sony donor is a regulator driver; stock is a chardev+export driver | LOW_TO_MODERATE |
-| `custom_ldo` | 2-function Ulefone shim | TRIVIAL |
 | `fingerprint` | Ulefone/YFT-only pinctrl glue | LOW |
 
 ## 15. Modules that have usable source and need only build / forward-port work
@@ -658,7 +658,8 @@ NEXT  4  SOURCE_BUILD    re-land the frozen reconstructions (st21nfc, mtk_disp_n
                          aw36518_v2, aw883xx_driver, yft_tpd_gesture, ft3680)
 NEXT  5  ABI_SOURCE      panel_ky_vtdr6115_dphy_cmd — panel logic reconstructed;
                          obtain exact mtk_panel_ext/mediatek-drm type graph for 7 CRCs
-NEXT  6  RE              custom_ldo_wl2868, then custom_ldo  (provider before consumer)
+DONE  6  RE              custom_ldo: byte-identical wrappers, exact ABI/build;
+                         custom_ldo_wl2868 remains structurally reconstructed with residuals
 NEXT  7  RE              sc8571_charger, then sc851x_charger (charging)
 NEXT  8  RE              sh366003_fg  (needs stock yft_devinfo CRCs — see NEXT 3)
 NEXT  9  FORWARD_PORT    conninfra   (root of the whole connectivity cluster)
@@ -711,3 +712,17 @@ enable, and no calibration/NVRAM/DT/DTBO modification. All device evidence came
 from the previously committed read-only snapshot
 `workspace/gq5012bf1/snapshots/live-stock-adb-20260831-115649/` and the
 committed stock partition extraction.
+
+---
+
+## 22. Phase 4 `custom_ldo` update (2026-09-08)
+
+`custom_ldo` is complete at `STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`: stock
+and reconstruction each contain exactly two 28-byte functions, both functions
+are byte-identical, KCFI is exact, all three import CRCs and both export CRCs
+match, relocation parity is 10/10, and exact-GKI `BUILD_RC=0` with unresolved
+symbols 0. The build consumes the reconstructed WL2868 provider's real
+`Module.symvers`. Stock `imgsensor` call sites additionally prove the forwarded
+voltage value is in microvolts. Only generated srcversion/vermagic provenance
+differs; the shim itself is no longer an RE task. The WL2868 provider retains
+its separate documented structural residuals.

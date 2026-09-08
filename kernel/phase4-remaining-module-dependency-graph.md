@@ -110,13 +110,13 @@ All four are leaves — nothing depends on them, so a mistake cannot cascade.
 ## 3. Cluster: CAMERA POWER
 
 ```
-   custom_ldo_wl2868 [stock] V:101   will,wl2864c_pmu @ I2C 11-0029
-   27 kernel imports · 0 intermodule · 2 exports
+   custom_ldo_wl2868 [recon/residual] V:101   will,wl2864c_pmu @ I2C 11-0029
+   27 kernel imports · 0 intermodule · 2 exports (export CRCs exact)
             │
             │ 2 symbols (will_ldo_en, will_ldo_vout)
             ▼
-   custom_ldo        [stock] V:102   pure shim, 10 296 B, 2 functions
-   1 kernel import · 2 intermodule · 2 exports
+   custom_ldo        [recon-exact] V:102   pure shim, stock 10 296 B, 2 functions
+   1 kernel import · 2 intermodule · 2 exports (functions/ABI exact)
             │
             │ 2 symbols (custom_ldo_en, custom_ldo_vout)
             ▼
@@ -126,8 +126,10 @@ All four are leaves — nothing depends on them, so a mistake cannot cascade.
 Load neighbourhood: `V:101 custom-ldo-wl2868 → V:102 custom-ldo →
 V:103 mtk-cam-isp7sp → V:104 imgsensor-glue → V:105 imgsensor`.
 
-This is a strict three-link chain and **the hard gate on cameras**. It is also
-the cheapest RE in the whole set: `custom_ldo` is two forwarding functions.
+This is a strict three-link chain and **the hard gate on cameras**. The
+`custom_ldo` shim is now reconstructed completely: both forwarding functions
+are byte-identical and its consumer/provider CRCs are exact. The WL2868
+hardware provider retains separate documented structural residuals.
 
 **Recommended build order:** `custom_ldo_wl2868` → `custom_ldo` → (`imgsensor`
 as part of the platform forward-port programme). Never the other way round.
@@ -402,4 +404,13 @@ TIER 9  held on stock indefinitely: tkcore, tkcore_drv, microarray_fp_tee,
 
 ## Phase 4 custom_ldo_wl2868 update (2026-09-08)
 
-The provider node is now structurally reconstructed and its two exports have exact CRC parity with the stock provider. The dependency graph remains intentionally unchanged: `custom_ldo` and `imgsensor` must retain the stock chain until the provider's unresolved voltage semantics are proven without live rail testing.
+The provider node is structurally reconstructed and its two exports have exact CRC parity with the stock provider. Follow-up `custom_ldo` work proves its voltage argument is a microvolt setpoint, closing that provider residual; probe/data-layout and whole-function/source parity residuals remain.
+
+## Phase 4 custom_ldo update (2026-09-08)
+
+The middle node is complete at `STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`: 2/2
+functions byte-identical, exact KCFI, exact imports/exports/MODVERSIONS and
+10/10 relocation parity, with exact-GKI `BUILD_RC=0` and unresolved symbols 0.
+It builds naturally against the reconstructed provider's real CRCs and exports
+exactly what stock `imgsensor` requires. The graph edge remains, but this node
+is no longer an unresolved RE task.
