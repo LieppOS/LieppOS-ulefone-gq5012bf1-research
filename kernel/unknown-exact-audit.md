@@ -30,11 +30,12 @@
 > | `panel_ky_vtdr6115_dphy_cmd` | `NO_EXACT_HIT` | **STRUCTURAL_DONOR_ONLY / RE_REQUIRED** — donor located: `MotorolaMobilityLLC/kernel-mtk@0087a407394abd3ab073e1a2df164f1187959a3f` `dsi-panel-mot-csot-vtdr6115-655-fhdp-dphy-vdo-144hz.c` (CSOT 144 Hz VDO vs Ulefone KY 120 Hz cmd) |
 > | `custom_ldo_wl2868` | `NO_EXACT_HIT` | **STRUCTURAL_DONOR_ONLY / RE_REQUIRED** — donor located: `sonyxperiadev/kernel@7e42db1690b55e374fd6a6af536684a746bac614` `drivers/regulator/wl2868c-regulator.{c,h}` (regulator-framework model; stock is a chardev+export model). Nothing ships only `cust_wl2864c.dtsi`; the `wl2864c.ko` target in `mgk_64_k61.bzl` has **no** source in the published tree. |
 > | `custom_ldo` | `NO_EXACT_HIT` | no donor found, but **STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION** completed from stock ELF: 2/2 functions byte-identical, exact CRC/KCFI/relocations, exact-GKI build clean |
-> | `sc851x_charger`, `sh366003_fg`, `leds_ln2403`, `tkcore_drv` | `NO_EXACT_HIT` | unchanged — **NO_USEFUL_SOURCE** re-confirmed against the Nothing trees, the MiCode vendor-reference BSPs and public source indexes |
+> | `sc851x_charger` | `NO_EXACT_HIT` | no donor found, but **SOURCE_RECONSTRUCTED** from stock oracle: 11 exact function sizes/KCFI IDs, byte-identical data/strings/MODVERSION records, exact relocation target/type sequence, clean exact-GKI build |
+> | `sh366003_fg`, `leds_ln2403`, `tkcore_drv` | `NO_EXACT_HIT` | unchanged — **NO_USEFUL_SOURCE** re-confirmed against the Nothing trees, the MiCode vendor-reference BSPs and public source indexes |
 >
 > Modules resolved since this scan and therefore no longer unresolved:
 > `aw883xx_driver`, `aw36515`, `aw36518`, `aw36518_v2`, `leds_rgb_aw2013`,
-> `connfem`, `custom_ldo`.
+> `connfem`, `custom_ldo`, `sc851x_charger`.
 >
 > Modules **missing** from this 22-entry scan that the triage proved are also
 > still unresolved: `sc8571_charger`, `microarray_fp_tee`, `spi_tiny_co5300_lcd`,
@@ -400,6 +401,22 @@ symbols 0. Authoritative report: `phase4-custom-ldo-reconstruction.md`.
 - aliases: ``
 
 - No exact source hit found.
+
+### Phase 4 reconstruction follow-up (2026-09-08)
+
+No-public-source RED reconstructed the stock module without borrowing a related
+SouthChip charger framework. The source reproduces all 11 function sizes and
+KCFI IDs, the exact 50-entry `reg_field` table, 35 required DT writes,
+byte-identical `.rodata`/`.data`/strings/30 MODVERSION records, and exact
+relocation target/type sequences. Eight of nine behavioral functions are
+byte-identical; the 1924-byte inlined probe retains a bounded compiler-local
+instruction delta. Exact-GKI build: `BUILD_RC=0`, warnings 0, unresolved 0.
+
+DT/live identity is `sc,sc8510` at `reg=<0x69>` / `6-0069`; `@6f` is stale.
+The stock driver is a configuration/debug/IRQ leaf, not a charger-class policy
+driver. uSmart control and VBUS are separately mapped to USB1/extcon and MT6375
+`usb-otg-vbus`, so SC851x is classified `PROVEN_UNRELATED` to that connector's
+software/control path. See `phase4-sc851x-reconstruction.md` and `usmart/`.
 
 ## tkcore_drv
 

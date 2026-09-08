@@ -113,6 +113,7 @@ core power. Adds the frozen reconstructions plus the `P1`/`P2` work.
 | `yft_tpd_gesture` | SOURCE_NOW | byte-exact code/data; 2/3 export CRCs |
 | `focaltech_touch_spi_ft3680` | SOURCE_NOW | **must be relinked against the STOCK `yft_devinfo` `Module.symvers`** (see B.2) |
 | `custom_ldo` | SOURCE_NOW | `STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`; 2/2 functions byte-identical, exact provider/consumer CRCs |
+| `sc851x_charger` | SOURCE_NOW | `SOURCE_RECONSTRUCTED`; no-public-source oracle, exact-GKI build clean, all function sizes/KCFI/data/strings/MODVERSIONs and relocation target/type sequences match |
 
 ### B.2 The `yft_devinfo` pin — mandatory for Level B
 
@@ -138,17 +139,16 @@ rear touch, rear display, camera sensors and motion sensors simultaneously.
 |--:|---|---|---|---|
 | 1 | `panel_ky_vtdr6115_dphy_cmd` | ABI_SOURCE | BLOCKED_WITH_EXACT_MISSING_EVIDENCE | panel logic reconstructed; exact provider type graph needed for 7 CRCs |
 | 2 | `custom_ldo_wl2868` | SOURCE_NOW | RE_REQUIRED | camera/sensor rails; voltage unit now proven, other provider residuals remain |
-| 3 | `sc851x_charger` | SOURCE_NOW | RE_REQUIRED | reverse/OTG + `AUDIO_EN`; safest of the three (0 intermodule imports) |
-| 4 | `sc8571_charger` | SOURCE_NOW | RE_REQUIRED | PD/PPS fast charge; `P1` |
-| 5 | `sh366003_fg` | SOURCE_NOW | RE_REQUIRED | `3rd-gauge`; `P1` |
-| 6 | `conninfra` | SOURCE_NOW | FORWARD_PORT | root of all connectivity |
-| 7 | `wmt_chrdev_wifi_connac2` | SOURCE_NOW | FORWARD_PORT | WLAN adaptor |
-| 8 | `wlan_drv_gen4m_6878` | SOURCE_NOW | FORWARD_PORT | Wi-Fi |
-| 9 | `bt_drv_6878` | SOURCE_NOW | FORWARD_PORT | Bluetooth |
-| 10 | `gps_drv_dl_v051` | SOURCE_NOW | FORWARD_PORT | GNSS |
-| 11 | `gps_pwr` | SOURCE_NOW | FORWARD_PORT | GNSS power (on-demand load path preserved) |
-| 12 | `gps_scp` | SOURCE_NOW | FORWARD_PORT | GNSS SCP offload (on-demand load path preserved) |
-| 13 | `fingerprint` | SOURCE_NOW | RE_REQUIRED | 10 export CRCs gate the sensor driver |
+| 3 | `sc8571_charger` | SOURCE_NOW | RE_REQUIRED | PD/PPS fast charge; `P1` |
+| 4 | `sh366003_fg` | SOURCE_NOW | RE_REQUIRED | `3rd-gauge`; `P1` |
+| 5 | `conninfra` | SOURCE_NOW | FORWARD_PORT | root of all connectivity |
+| 6 | `wmt_chrdev_wifi_connac2` | SOURCE_NOW | FORWARD_PORT | WLAN adaptor |
+| 7 | `wlan_drv_gen4m_6878` | SOURCE_NOW | FORWARD_PORT | Wi-Fi |
+| 8 | `bt_drv_6878` | SOURCE_NOW | FORWARD_PORT | Bluetooth |
+| 9 | `gps_drv_dl_v051` | SOURCE_NOW | FORWARD_PORT | GNSS |
+| 10 | `gps_pwr` | SOURCE_NOW | FORWARD_PORT | GNSS power (on-demand load path preserved) |
+| 11 | `gps_scp` | SOURCE_NOW | FORWARD_PORT | GNSS SCP offload (on-demand load path preserved) |
+| 12 | `fingerprint` | SOURCE_NOW | RE_REQUIRED | 10 export CRCs gate the sensor driver |
 
 Plus the platform prerequisites named in the dependency graph:
 `connadp`, `connscp`, `ccci_md_all`, `aee_aed`, `device-apc-common`,
@@ -210,7 +210,7 @@ mistake there costs the device its ability to unlock encrypted `/data`.
 | level | SOURCE_NOW | STOCK_TRANSITION | NOT_REQUIRED |
 |---|---:|---:|---:|
 | **A — first boot** | 1 (the GKI core) | 439 stock modules | `odm_dlkm` modules, `uarthub_drv` |
-| **B — usable phone** | 17 frozen + 13 new = 30, plus platform prereqs | 9 | `uarthub_drv` |
+| **B — usable phone** | 18 frozen + 12 new = 30, plus platform prereqs | 9 | `uarthub_drv` |
 | **C — source-complete** | all except the two TEE modules if they are held | 0-2 | `uarthub_drv` |
 
 ## Answer to the driving question
@@ -224,7 +224,7 @@ imports are proven `MATCH` with zero unresolved symbols.
 
 The correct sequencing is therefore: **boot first, validate the source stack
 incrementally, and reverse engineer only what Level B actually needs** — now
-6 modules, not 23, after completion of `custom_ldo`.
+5 modules, not 23, after completion of `custom_ldo` and `sc851x_charger`.
 
 ---
 

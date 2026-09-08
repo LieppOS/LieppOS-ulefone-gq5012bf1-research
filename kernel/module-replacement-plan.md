@@ -75,7 +75,7 @@ Candidate modules:
 
 - sh366003_fg
 - sc8571_charger
-- sc851x_charger
+- sc851x_charger — reconstructed from the stock oracle; exact-GKI build clean
 - yft_tiny2c_usb
 - custom_ldo — reconstructed exactly at the consumer ABI/function level
 - custom_ldo_wl2868 — structurally reconstructed; provider residuals remain
@@ -151,4 +151,21 @@ are reproduced. Exact-GKI build succeeds with zero compiler/modpost warnings
 and zero unresolved symbols against the reconstructed WL2868 provider's real
 `Module.symvers`. Only generated srcversion/vermagic provenance differs. It is
 removed from the remaining reverse-engineering queue.
+
+## Phase 4 sc851x_charger update (2026-09-08)
+
+`sc851x_charger` is complete at `SOURCE_RECONSTRUCTED`. No public source donor
+was found; mandatory no-public-source RED recovered the 11 functions, all 50
+register fields, 35 required DT writes, sysfs/IRQ/PM/shutdown behavior and the
+kernel-only ABI. Exact-GKI build returns 0 with zero warnings and unresolved
+symbols. Function sizes/KCFI IDs, data, strings, all 30 MODVERSION records and
+relocation target/type sequences match stock; 8/9 behavioral functions are
+byte-identical and the inlined probe's compiler-local text delta is reported.
+
+Hardware identity is SC8510 at `6-0069`: the DT `@6f` suffix is stale while
+`reg=<0x69>` and the live device agree. The module is a converter
+configuration/debug/IRQ shim, not charger policy. uSmart control/VBUS instead
+maps to USB1/extcon and MT6375 `usb-otg-vbus`; classification
+`PROVEN_UNRELATED`, with no stock software support found for charging the phone
+through uSmart. Runtime power testing remains intentionally unperformed.
 

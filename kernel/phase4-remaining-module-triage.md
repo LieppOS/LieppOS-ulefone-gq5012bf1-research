@@ -5,8 +5,8 @@ practical first source-based LieppOS custom-kernel boot on Slot B.
 
 This is a **triage** document. Its original baseline started no new reverse
 engineering and touched no hardware. It now carries append-only/current-status
-updates from later dedicated reconstruction tasks; `custom_ldo` is complete.
-All device evidence remains static/read-only.
+updates from later dedicated reconstruction tasks; `custom_ldo` and
+`sc851x_charger` are complete. All device evidence remains static/read-only.
 
 Baseline (unchanged):
 
@@ -30,8 +30,9 @@ Machine-readable form of this table: `kernel/phase4-remaining-module-triage.tsv`
 | DIRECT_SOURCE         |     0 |
 | SOURCE_DELTA          |     2 |
 | FORWARD_PORT          |     7 |
-| SOURCE_RECONSTRUCTED  |     1 |
-| RE_REQUIRED           |     6 |
+| SOURCE_RECONSTRUCTED  |     2 |
+| RE_REQUIRED           |     4 |
+| BLOCKED_WITH_EXACT_MISSING_EVIDENCE | 1 |
 | STOCK_TRANSITION_BLOB |     7 |
 | NOT_REQUIRED          |     0 |
 | UNKNOWN               |     0 |
@@ -164,7 +165,7 @@ view below carries the decision-relevant columns.
 | `yft_devinfo` | platform + vendor_dlkm | yes (vdlkm idx 193) | yes (idx 187) | 40 / 0 / 27 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | SOURCE_DELTA | P1_CORE_HARDWARE |
 | `sh366003_fg` | vendor_boot platform | yes (idx 133) | yes (idx 131) | 33 / 3 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | RE_REQUIRED | P1_CORE_HARDWARE |
 | `sc8571_charger` | vendor_boot platform | yes (idx 147) | yes (idx 145) | 41 / 1 / 0 | STRUCTURAL_DONOR_ONLY | YES_WITH_STOCK_PROVIDER_CHAIN | RE_REQUIRED | P1_CORE_HARDWARE |
-| `sc851x_charger` | vendor_boot platform | yes (idx 146) | yes (idx 144) | 30 / 0 / 0 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | RE_REQUIRED | P1_CORE_HARDWARE |
+| `sc851x_charger` | vendor_boot platform | yes (idx 146) | yes (idx 144) | 30 / 0 / 0 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | **SOURCE_RECONSTRUCTED** | P1_CORE_HARDWARE |
 | `tkcore` | vendor_boot platform | yes (idx 99) | yes (idx 97) | 101 / 0 / 25 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | STOCK_TRANSITION_BLOB | **P0_BOOT_CRITICAL** |
 | `tkcore_drv` | vendor_boot platform | yes (idx 100) | yes (idx 98) | 54 / 13 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | **P0_BOOT_CRITICAL** |
 | `conninfra` | vendor_dlkm | yes (idx 120) | no (vendor_dlkm unmounted) | 175 / 19 / 81 | **EXACT_SOURCE** | YES_WITH_STOCK_PROVIDER_CHAIN | FORWARD_PORT | P2_MAJOR_FEATURE |
@@ -392,7 +393,7 @@ explicitly out of scope; only the Linux-side ABI is frozen here.
 | userspace / HAL | `3rd-gauge` power supply; BatteryService reads MT6375 as primary | none observed | MediaTek `primary_dvchg` / `secondary_dvchg` charger_class names; thermal HAL `charger-cooler` | none | none |
 | runtime-active | **YES** — `fg_monitor_workfunc` every ~5 s (`RSOC=79, Volt=8397, Curr=194, Temp=375, SoH=94, cycnt=26, FCC=8594`) | **YES** — `irq/57-sc851x-irq` thread | **YES** — `sc8571_enable_adc` / `sc8571_get_adc_data` polling; `irq/49-sc8571-master-irq`, `irq/63-sc8571-slave-irq` | **YES** — bound | **YES** — loaded before `imgsensor` |
 | boot importance | none | none | none | none | none |
-| charging importance | secondary gauge only | reverse/OTG + `AUDIO_EN` load switch | **high** — PD/PPS direct charge | none | none |
+| charging importance | secondary gauge only | SC8510 static converter protection/timing configuration; no charging-policy API | **high** — PD/PPS direct charge | none | none |
 | source candidate | none | none | OPLUS `oplus_sc8571_master.c` (register map only) | sonyxperiadev `wl2868c-regulator.c` (register/voltage map only) | none |
 
 Answers to the specific questions asked:
@@ -405,11 +406,15 @@ Answers to the specific questions asked:
   module — so losing `sh366003_fg` degrades secondary gauge reporting but does
   not remove the battery.
 * **Is `sc851x_charger` active in normal charging?** It is **bound and has a live
-  IRQ thread**, but no `sc851x` traffic appears in the captured normal-charging
-  dmesg window (0 hits), whereas `sc8571` appears 126 times. Its strings
-  (`AUDIO_EN`, `rvs-ocp`, `fwd-ocp`, forward 2:1 / reverse 1:2) and the SC8510
-  datasheet role indicate it serves the **reverse/OTG and load-switch** path, not
-  the normal forward charging path. Normal fast charging runs through SC8571.
+  IRQ thread**, but no `sc851x` event appears in the captured normal-charging
+  dmesg window, whereas SC8571 is actively polled through `charger_class`.
+  Reconstruction proves that SC851x resets the IC, writes 35 static
+  protection/timing/frequency fields, dumps registers, and logs three IRQ flag
+  bytes. It exposes no charging-policy or converter-direction API. SouthChip
+  documents SC8510 silicon as a 2S forward-2:1/reverse-1:2 converter, but the
+  board's exact mode/enable nets are schematic-unknown; the earlier claim that
+  this Linux driver specifically serves reverse/OTG or an audio load switch is
+  withdrawn. uSmart VBUS is separately proven to use MT6375 `usb-otg-vbus`.
 * **Does `custom_ldo_wl2868` power cameras/sensors?** Yes. It is the WL2864C /
   WL2868C 7-channel camera PMU, and the only path from it into the rest of the
   kernel is `custom_ldo_wl2868 → custom_ldo → imgsensor`. It is loaded at
@@ -726,3 +731,18 @@ symbols 0. The build consumes the reconstructed WL2868 provider's real
 voltage value is in microvolts. Only generated srcversion/vermagic provenance
 differs; the shim itself is no longer an RE task. The WL2868 provider retains
 its separate documented structural residuals.
+
+---
+
+## 23. Phase 4 `sc851x_charger` update (2026-09-08)
+
+`sc851x_charger` is now `SOURCE_RECONSTRUCTED`: no-public-source RED recovered
+all 11 functions, 50 register fields, 35 required DT writes, raw-register
+sysfs, IRQ, PM and shutdown behavior. Exact-GKI build is clean
+(`BUILD_RC=0`, warnings 0, unresolved 0). All function sizes/KCFI IDs,
+`.rodata`, `.data`, strings, 30 MODVERSION records and relocation target/type
+sequences match; 8/9 behavioral functions are byte-identical and the inlined
+probe retains a reported compiler-local text delta. DT/live identity is
+resolved as SC8510 at `6-0069`; the `@6f` suffix is stale. Separate DT,
+extcon, APK and symbol evidence proves uSmart VBUS/control uses USB1 and MT6375
+OTG, not SC851x. Hardware runtime testing remains excluded by the safety policy.

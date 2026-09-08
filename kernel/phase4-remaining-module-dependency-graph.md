@@ -70,7 +70,7 @@ anything downstream — the risk is entirely upstream (its 7 imported CRCs).
                                      sc,sc8571-master @ I2C 11-0066
                                      sc,sc8571-slave  @ I2C  6-0067   → LEAF
 
-   (kernel only) ───────────────────▶ sc851x_charger [stock] P:146 / R:144
+   (kernel only) ───────────────────▶ sc851x_charger [recon-exact] P:146 / R:144
                                      sc,sc8510 @ I2C 6-0069           → LEAF
                                      30 kernel imports · 0 intermodule
 
@@ -98,12 +98,15 @@ P:129 adapter_class → P:130 charger_class → P:131 mtk_charger_algorithm_clas
 
 **Recommended build order:**
 1. keep stock `yft_devinfo` (see §6),
-2. `sc851x_charger` (zero intermodule imports — the safest of the three to do
-   first, and it validates the SouthChip register-map method),
+2. re-land the completed `sc851x_charger` reconstruction (zero intermodule
+   imports; exact-GKI build and structural parity pass),
 3. `sc8571_charger` (needs `charger_class` CRCs verified),
 4. `sh366003_fg` (needs the stock `yft_devinfo` CRCs).
 
 All four are leaves — nothing depends on them, so a mistake cannot cascade.
+SC851x is no longer an RE task. Its Linux driver provides static converter
+configuration/debug/IRQ behavior, not charger policy; uSmart VBUS instead
+resolves to the MT6375 OTG regulator through `extcon-mtk-usb`.
 
 ---
 
@@ -369,7 +372,7 @@ TIER 2  yft_devinfo pinned to STOCK; all consumers linked to stock symvers
 TIER 3  retain stock mtk_panel_ext → mediatek_drm → panel ABI island;
         panel source waits for exact provider type graph (7 CRCs)
 TIER 4  custom_ldo_wl2868 → custom_ldo
-TIER 5  charger_class verified → sc851x_charger → sc8571_charger → sh366003_fg
+TIER 5  re-land completed sc851x_charger; charger_class verified → sc8571_charger → sh366003_fg
 TIER 6  connadp/connscp/ccci_md_all/aee_aed/device-apc-common
           → conninfra
           → wmt_chrdev_wifi_connac2 → wlan_page_pool → wlan_drv_gen4m_6878
@@ -414,3 +417,13 @@ functions byte-identical, exact KCFI, exact imports/exports/MODVERSIONS and
 It builds naturally against the reconstructed provider's real CRCs and exports
 exactly what stock `imgsensor` requires. The graph edge remains, but this node
 is no longer an unresolved RE task.
+
+## Phase 4 sc851x_charger update (2026-09-08)
+
+The kernel-only leaf is now reconstructed from a no-public-source stock oracle.
+All 11 function sizes/KCFI IDs, data, strings, 30 MODVERSION records and
+relocation target/type sequences match; exact-GKI `BUILD_RC=0`, warnings 0,
+unresolved 0. The board is SC8510 at `6-0069` (`@6f` is only a stale node
+suffix). Its graph remains kernel-only: no intermodule import/export edge and
+no charger-class, regulator, extcon or USB edge. uSmart's VBUS/control graph is
+`MT6375 OTG → extcon-mtk-usb → USB1/UVC GPIOs`, explicitly excluding SC851x.

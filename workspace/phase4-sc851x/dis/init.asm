@@ -1,0 +1,25 @@
+
+stock/sc851x_charger.ko:	file format elf64-littleaarch64
+
+Disassembly of section .init.text:
+
+0000000000000000 <.init.text>:
+       0: a6 c5 b1 36  	.word	0x36b1c5a6
+
+0000000000000004 <init_module>:
+       4: d503233f     	paciasp
+       8: a9bf7bfd     	stp	x29, x30, [sp, #-0x10]!
+       c: 910003fd     	mov	x29, sp
+      10: 90000000     	adrp	x0, 0x0 <.init.text>
+		0000000000000010:  R_AARCH64_ADR_PREL_PG_HI21	__this_module
+      14: 91000000     	add	x0, x0, #0x0
+		0000000000000014:  R_AARCH64_ADD_ABS_LO12_NC	__this_module
+      18: 90000001     	adrp	x1, 0x0 <.init.text>
+		0000000000000018:  R_AARCH64_ADR_PREL_PG_HI21	.data
+      1c: 91000021     	add	x1, x1, #0x0
+		000000000000001c:  R_AARCH64_ADD_ABS_LO12_NC	.data
+      20: 94000000     	bl	0x20 <init_module+0x1c>
+		0000000000000020:  R_AARCH64_CALL26	i2c_register_driver
+      24: a8c17bfd     	ldp	x29, x30, [sp], #0x10
+      28: d50323bf     	autiasp
+      2c: d65f03c0     	ret

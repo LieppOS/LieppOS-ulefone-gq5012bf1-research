@@ -1070,7 +1070,9 @@ The 16 named in the triage brief, plus 7 that were missing from it:
 | DIRECT_SOURCE         |     0 |
 | SOURCE_DELTA          |     2 |
 | FORWARD_PORT          |     7 |
-| RE_REQUIRED           |     7 |
+| SOURCE_RECONSTRUCTED  |     2 |
+| RE_REQUIRED           |     4 |
+| BLOCKED_WITH_EXACT_MISSING_EVIDENCE | 1 |
 | STOCK_TRANSITION_BLOB |     7 |
 | NOT_REQUIRED          |     0 |
 | UNKNOWN               |     0 |
@@ -1100,8 +1102,8 @@ class of problem already seen and solved for ST21 (donor 2.2.0.15 vs stock
 
 ### Modules that genuinely require reverse engineering
 
-Five remain: `sh366003_fg`, `sc8571_charger`, `sc851x_charger`,
-`custom_ldo_wl2868`, `fingerprint`.
+Four remain: `sh366003_fg`, `sc8571_charger`, `custom_ldo_wl2868`,
+`fingerprint`.
 
 `custom_ldo` is now complete at `STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`:
 both functions are byte-identical, all import/export CRCs and KCFI IDs match,
@@ -1109,6 +1111,15 @@ and the exact-GKI build against the reconstructed WL2868 provider has zero
 unresolved symbols. Its stock-consumer analysis also proves WL2868 voltage
 values are microvolts. The WL2868 provider remains in this list because its
 separate probe/data-layout and whole-function parity residuals remain.
+
+`sc851x_charger` is now complete at `SOURCE_RECONSTRUCTED`: all 11 function
+sizes/KCFI IDs, 50 register fields, 35 required DT writes, data/strings,
+30 MODVERSION records and relocation target/type sequences match the stock
+oracle; 8/9 behavioral functions are byte-identical. The exact-GKI build has
+`BUILD_RC=0`, zero warnings and zero unresolved symbols. Its board identity is
+SC8510 at `6-0069` (`@6f` is a stale DT unit-address suffix), and separate
+DT/module/userspace evidence assigns uSmart VBUS to MT6375 OTG rather than
+SC851x. See `phase4-sc851x-reconstruction.md` and `usmart/`.
 
 `panel_ky_vtdr6115_dphy_cmd` panel logic is reconstructed from the stock oracle
 but is `BLOCKED_WITH_EXACT_MISSING_EVIDENCE`: the exact MediaTek display-provider

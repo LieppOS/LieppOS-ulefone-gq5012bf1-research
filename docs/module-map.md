@@ -14,7 +14,9 @@
 High-value device modules include FT3680 touch, Hynitron rear touch,
 CO5300 rear LCD, Microarray fingerprint, YFT tiny2c USB, AW2013 RGB LED,
 ST21NFC, camera/flash/actuator modules, MT6375/SH366003 gauges, SC8571/SC851x
-chargers, speaker amp and YFT GPIO keys.
+chargers, speaker amp and YFT GPIO keys. `sc851x_charger` now has a clean
+exact-GKI stock-oracle reconstruction; its SC8510 address is `6-0069` and its
+stock software has no uSmart control edge.
 
 ## Packaging model
 

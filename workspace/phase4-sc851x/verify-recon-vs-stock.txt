@@ -1,0 +1,46 @@
+SC851x stock/reconstruction verification
+stock=stock/sc851x_charger.ko size=28488
+recon=recon/sc851x_charger.ko size=28480
+modinfo differing keys=['vermagic']
+  stock vermagic=6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+  recon vermagic=6.1.115-android14-11-maybe-dirty SMP preempt mod_unload modversions aarch64
+  classification=local SCM suffix only
+function key sets exact=True count=11
+function sizes exact=True
+KCFI type words exact=True
+function byte comparison:
+  .exit.text cleanup_module                 size=  36 diffbytes=   0 kcfi=0c6740a5
+  .init.text init_module                    size=  44 diffbytes=   0 kcfi=a6c5b136
+  .text      sc851x_charger_probe           size=1924 diffbytes=1516 kcfi=aa38f15e
+  .text      sc851x_charger_remove          size=  40 diffbytes=   0 kcfi=6dddff8e
+  .text      sc851x_charger_shutdown        size= 104 diffbytes=   0 kcfi=6dddff8e
+  .text      sc851x_irq_handler             size= 236 diffbytes=   0 kcfi=f6050ff9
+  .text      sc851x_register_interrupt      size= 252 diffbytes=   3 kcfi=c0035fd6
+  .text      sc851x_resume                  size=  96 diffbytes=   0 kcfi=5f65453f
+  .text      sc851x_show_registers          size= 296 diffbytes=   0 kcfi=5cc243df
+  .text      sc851x_store_register          size= 152 diffbytes=   0 kcfi=07baa895
+  .text      sc851x_suspend                 size=  96 diffbytes=   0 kcfi=5f65453f
+section comparison:
+  .text              stock= 3228 recon= 3228 exact=False
+  .init.text         stock=   48 recon=   48 exact=True
+  .exit.text         stock=   40 recon=   40 exact=True
+  .rodata            stock= 1520 recon= 1520 exact=True
+  .data              stock= 1112 recon= 1112 exact=True
+  .rodata.str1.1     stock= 1509 recon= 1509 exact=True
+  __versions         stock= 1920 recon= 1920 exact=True
+  .comment           stock=  185 recon=  185 exact=True
+modversions exact=True entries=30
+modversion name/CRC set exact=True
+relocation section sets exact=True
+  .rela.data                   stock= 10 recon= 10 exact=True target/type-sequence=True
+  .rela.eh_frame               stock= 11 recon= 11 exact=True target/type-sequence=True
+  .rela.exit.data              stock=  1 recon=  1 exact=True target/type-sequence=True
+  .rela.exit.text              stock=  3 recon=  3 exact=True target/type-sequence=True
+  .rela.gnu.linkonce.this_module stock=  2 recon=  2 exact=True target/type-sequence=True
+  .rela.init.data              stock=  1 recon=  1 exact=True target/type-sequence=True
+  .rela.init.text              stock=  5 recon=  5 exact=True target/type-sequence=True
+  .rela.rodata                 stock=  6 recon=  6 exact=True target/type-sequence=True
+  .rela.text                   stock=215 recon=215 exact=False target/type-sequence=True
+all relocation target/type sequences exact=True
+STRUCTURAL_PARITY=PASS
+Known residual: compiler-local instruction scheduling/register allocation in probe, plus equivalent gpio validity compare; no relocation target/type or observable call-order delta.

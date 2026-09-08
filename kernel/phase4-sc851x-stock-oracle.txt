@@ -1,0 +1,202 @@
+PHASE 4 SC851X STOCK ORACLE — GQ5012BF1
+=========================================
+
+Oracle
+------
+module: sc851x_charger.ko
+frozen copy: workspace/phase4-sc851x/stock/sc851x_charger.ko
+stock origin: workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/sc851x_charger.ko
+sha256: b5e5f08bcfe37ac8c81525b0d4fe514902b552cc45b7f99fbeda8b80f6c2aa0c
+size: 28488 bytes
+build-id: d7daa55c413b8e593c2062b79b6bbaa9d19a68cc
+ELF: AArch64 relocatable kernel module
+compiler comment: Android clang 17.0.2 (clang-r487747c)
+vermagic: 6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+name: sc851x_charger
+description: SC SC851X Driver
+author: South Chip <Aiden-yu@southchip.com>
+license: GPL v2
+depends: empty
+parameters: none
+module aliases: none
+exports: 0
+imports / MODVERSION records: 30, all kernel/GKI supplied
+intermodule imports: 0
+normal modules.load: line 147 (1-based), index 146 (0-based)
+
+Defined functions
+-----------------
+section      offset  size  binding  name
+.init.text   0x0004    44  GLOBAL   init_module
+.exit.text   0x0004    36  GLOBAL   cleanup_module
+.text        0x0004  1924  LOCAL    sc851x_charger_probe
+.text        0x078c    40  LOCAL    sc851x_charger_remove
+.text        0x07b8   104  LOCAL    sc851x_charger_shutdown
+.text        0x0820   252  LOCAL    sc851x_register_interrupt
+.text        0x0920   296  LOCAL    sc851x_show_registers
+.text        0x0a4c   152  LOCAL    sc851x_store_register
+.text        0x0ae8   236  LOCAL    sc851x_irq_handler
+.text        0x0bd8    96  LOCAL    sc851x_suspend
+.text        0x0c3c    96  LOCAL    sc851x_resume
+
+Important objects
+-----------------
+.data+0x000  280  sc851x_charger_driver
+.data+0x118  800  sc851x_charger_match_table (4 x struct of_device_id)
+.data+0x438   32  dev_attr_registers
+.rodata+0x000 192 sc851x_pm
+.rodata+0x0c0 328 sc851x_regmap_config
+.rodata+0x208 1000 sc851x_reg_fields (50 x struct reg_field)
+
+The 50-entry field table is fully enumerated in
+kernel/phase4-sc851x-register-fields.tsv. It is relocation-free scalar data.
+The reconstructed table is byte-identical to stock.
+
+Imports and relocations
+-----------------------
+The 30 exact MODVERSION name/CRC pairs are in
+kernel/phase4-sc851x-imports.tsv. Notable groups:
+
+  I2C module lifecycle: i2c_register_driver, i2c_del_driver
+  regmap: __devm_regmap_init_i2c, devm_regmap_field_alloc,
+          regmap_field_update_bits_base, regmap_read, regmap_write
+  DT/GPIO/IRQ: of_property_read_variable_u32_array,
+          of_get_named_gpio_flags, gpio_request_one, gpio_to_desc,
+          gpiod_to_irq, devm_request_threaded_irq, irq_set_irq_wake,
+          disable_irq, enable_irq
+  sysfs/formatting: device_create_file, snprintf, sscanf, memcpy, memset,
+          fortify_panic
+  logging/lifetime: _dev_err, _dev_info, _printk, devm_kmalloc,
+          devm_kfree, msleep, __stack_chk_fail, module_layout
+
+There are 254 relocations total:
+  .rela.text 215; .rela.init.text 5; .rela.exit.text 3;
+  .rela.init.data 1; .rela.exit.data 1; .rela.data 10;
+  .rela.rodata 6; .rela.eh_frame 11;
+  .rela.gnu.linkonce.this_module 2.
+The complete relocation inventory is kernel/phase4-sc851x-relocations.tsv.
+
+Regmap and register surface
+---------------------------
+reg_bits: 8
+val_bits: 8
+max_register: 0x15
+cache: none specified
+allocated fields: 50
+DT-driven writes after reset: 35
+raw dump/read range: 0x00..0x15 inclusive
+raw sysfs write range: 0x00..0x15 inclusive
+
+DT configuration maps to these masked register updates on this board:
+  reg 0x00 mask 0xff configured bits 0x54
+  reg 0x01 mask 0xff configured bits 0x5e
+  reg 0x02 mask 0xf8 configured bits 0x78
+  reg 0x03 mask 0xff configured bits 0xf4
+  reg 0x04 mask 0xff configured bits 0x06
+  reg 0x06 mask 0x07 configured bits 0x05
+  reg 0x07 mask 0x0f configured bits 0x06
+  reg 0x08 mask 0xee configured bits 0xa6
+  reg 0x12 mask 0xfd configured bits 0x00
+  reg 0x13 mask 0xe2 configured bits 0x20
+  reg 0x15 mask 0x03 configured bits 0x00
+
+These are masks/bit values, not unconditional full-register writes. regmap_field
+performs read-modify-write. The reset write is reg 0x06[3] = 1, followed by
+msleep(10), before the 35 writes. Do not treat the predicted configured bits as
+captured hardware register contents; no safe live register read was performed.
+
+Behavioural oracle
+------------------
+init_module:
+  i2c_register_driver(&sc851x_charger_driver)
+
+cleanup_module:
+  i2c_del_driver(&sc851x_charger_driver)
+
+probe(client, id):
+  1. dev_err version banner: sc851x_charger_probe (1.0.0_G)
+  2. devm_kzalloc 576-byte private structure
+  3. devm_regmap_init_i2c with 8/8-bit, max 0x15 configuration
+  4. allocate all 50 regmap fields; any failure aborts
+  5. i2c_set_clientdata
+  6. create DEVICE_ATTR(registers, 0660, show, store); return ignored
+  7. read 35 required u32 DT properties; first absent property aborts
+  8. read and validate sc,sc851x,irq-gpio
+  9. set REG_RST field 0x06[3]=1; log reset failure but continue
+ 10. sleep 10 ms
+ 11. issue all 35 field writes in fixed table order; individual errors are logged
+     by the field helper but are not propagated
+ 12. read and dev_err-log every register 0x00..0x15; only the last read status is
+     returned by the dump routine
+ 13. request legacy GPIO as input, convert to IRQ, request falling-edge oneshot
+     threaded IRQ named sc851x-irq, call irq_set_irq_wake(irq, 1)
+ 14. log success and return 0
+
+probe failure path:
+  devm_kfree private object; log "sc851x probe fail"; return error. Stock does
+  not unwind a previously created sysfs file or explicitly free a requested
+  legacy GPIO on later failure.
+
+IRQ thread:
+  log "INT OCCURED"; read 0x0c, 0x0d, 0x0e; log FLAG1/2/3 only for successful
+  reads; return IRQ_HANDLED. It does not clear faults explicitly, change power
+  mode, notify a charger framework, or schedule policy work.
+
+registers sysfs:
+  show emits "sc851x:" and successful reads as "Reg[XX] = 0xYY" for 0x00..0x15.
+  store accepts two hexadecimal numbers and writes only when two conversions
+  succeed and register <= 0x15. This is dangerous debug functionality and was
+  not exercised during this read-only investigation.
+
+remove:
+  devm_kfree private object. No device_remove_file call in stock.
+
+shutdown:
+  write AUDIO_EN field 0x06[2] = 0; print
+  "sc851x_charger_shutdown: close AUDIO_EN". Return status is ignored.
+
+suspend:
+  dev_info "Suspend successfully!"; when wakeup-capable set IRQ wake to 1;
+  disable_irq; return 0.
+
+resume:
+  dev_info "Resume successfully!"; when wakeup-capable set IRQ wake to 0;
+  enable_irq; return 0.
+
+Driver registration contract
+----------------------------
+driver.name: sc851x
+OF matches: sc,sc851x ; sc,sc8510 ; sc,sc8517 ; terminator
+probe callback: legacy two-argument i2c_driver.probe
+remove callback: Linux 6.1 void i2c_driver.remove
+shutdown callback: present
+PM: SIMPLE_DEV_PM_OPS with suspend/resume above
+MODULE_DEVICE_TABLE: absent, hence no OF module aliases
+
+Framework-negative evidence
+---------------------------
+No power_supply, regulator, charger_class, extcon, USB-role, Type-C, notifier,
+thermal, workqueue, or intermodule-provider symbol is imported or exported.
+There is no externally callable enable/direction/mode API. The module is a leaf
+I2C configuration/debug/IRQ shim. It does not implement charging policy.
+
+Live and DT identity
+--------------------
+DT path: /soc/i2c@11e01000/sc851x-charger@6f
+parent controller: i2c@11e01000, live Linux bus 6
+node compatible: sc,sc8510
+authoritative reg cell: <0x69>
+stale unit-address suffix: @6f
+live device: /sys/bus/i2c/devices/6-0069
+live driver: /sys/bus/i2c/drivers/sc851x
+live module: /sys/module/sc851x_charger
+live IRQ thread: irq/57-sc851x-irq
+captured runtime: repeated successful suspend/resume logs; no captured
+"INT OCCURED" fault/event log during the observation window.
+
+Safety boundary
+---------------
+All conclusions came from frozen images, ELF/relocation/disassembly analysis,
+existing read-only snapshots, and public documentation. No module was inserted,
+removed, rebound, or exercised; no sysfs register write, GPIO change, DT change,
+reverse-power operation, electrical probe, flash, or slot switch was performed.
