@@ -137,3 +137,7 @@ A replacement module is not considered independent merely because its
 kernel-facing KMI is known. Module-to-module ABI dependencies must also be
 preserved or migrated.
 
+## Phase 4 custom_ldo_wl2868 update (2026-09-08)
+
+`custom_ldo_wl2868` now has a raw-I2C structural reconstruction with exact `will_ldo_vout`/`will_ldo_en` export CRCs and a successful exact-GKI build. It is not promoted to an independently deployable replacement: the exact camera voltage-unit contract is unresolved and no live hardware validation is allowed. Keep the stock provider chain.
+

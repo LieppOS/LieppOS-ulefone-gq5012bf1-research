@@ -399,3 +399,7 @@ TIER 9  held on stock indefinitely: tkcore, tkcore_drv, microarray_fp_tee,
 | `custom_ldo_wl2868` | 2 | `custom_ldo` | 2 |
 | `hynitron` | 2 | `spi_tiny_co5300_lcd` | 2 |
 | `bt_drv_6878` | 1 | (none in the stock set) | 0 |
+
+## Phase 4 custom_ldo_wl2868 update (2026-09-08)
+
+The provider node is now structurally reconstructed and its two exports have exact CRC parity with the stock provider. The dependency graph remains intentionally unchanged: `custom_ldo` and `imgsensor` must retain the stock chain until the provider's unresolved voltage semantics are proven without live rail testing.

@@ -203,3 +203,7 @@ This independently confirms the provenance already established through:
 - BUILD_INFO
 - 2,946 / 2,946 stock kernel-facing CONFIG_MODVERSIONS CRC matches
 
+## Phase 4 custom_ldo_wl2868 update (2026-09-08)
+
+The provider rebuild consumes the same 27 GKI records as the stock module and reproduces both module-to-module export CRCs consumed by `custom_ldo`: `0x23ec3223` and `0xdd9b9ea1`. This is an ABI result only; it does not waive the exact-behaviour block recorded in the authoritative phase report.
+

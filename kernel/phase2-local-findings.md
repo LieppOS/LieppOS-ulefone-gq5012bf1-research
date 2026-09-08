@@ -1284,3 +1284,7 @@ revision should be treated as the kernel core baseline. Nothing MT6878 sources
 should be treated primarily as BSP/vendor-module source donors to be
 forward-ported onto that baseline.
 
+## Phase 4 custom_ldo_wl2868 completion update (2026-09-08)
+
+The stock provider was frozen and reconstructed in a separate exact-GKI harness. The two consumer export CRCs are reproduced without patching; the safe classification remains `STRUCTURAL_AND_BEHAVIORAL_APPROXIMATION` / `PRECISELY BLOCKED` because live validation and exact consumer voltage units are unavailable. See `phase4-custom-ldo-wl2868-reconstruction.md`.
+
