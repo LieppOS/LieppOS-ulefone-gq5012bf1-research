@@ -25,6 +25,13 @@
 - Recovery lunch and `m nothing` pass for `twrp_gq5012bf1-ap2a-eng` with ROM
   EROFS/super/vendor integration excluded.
 - `git diff --check` and Python bytecode compilation pass.
+- The reconstructed SouthChip `sc8571_charger.ko` builds successfully against
+  exact GKI ab/12901745 (`//lieppos/sc8571-recon:sc8571_recon`) with zero
+  compiler warnings and no unresolved symbols. Its 42-entry `__versions`
+  section, KCFI words, register/ADC tables, charger-class callback object and
+  external-call contract match the frozen stock oracle; the bounded static
+  verifier reports `ABI_AND_BEHAVIORAL_CONTRACT_PARITY=PASS` and explicitly
+  reports `BINARY_IDENTITY=NO`.
 
 ## Build blocker outside this device tree
 
@@ -38,5 +45,7 @@ and is not recorded as a successful device build.
 
 No full ROM image was flashed. New ROM-side graphics, radio/IMS, camera,
 ThermoVue, rear display, fingerprint, audio, sensors, charging, NFC, OTA and
-SELinux behavior remain hardware validation work. Existing recovery/security
-claims retain their earlier hardware evidence only.
+SELinux behavior remain hardware validation work. In particular, the
+reconstructed SC8571 module was not inserted, bound, or used for any register,
+charging, or PD/PPS operation. Existing recovery/security claims retain their
+earlier hardware evidence only.

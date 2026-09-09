@@ -114,6 +114,7 @@ core power. Adds the frozen reconstructions plus the `P1`/`P2` work.
 | `focaltech_touch_spi_ft3680` | SOURCE_NOW | **must be relinked against the STOCK `yft_devinfo` `Module.symvers`** (see B.2) |
 | `custom_ldo` | SOURCE_NOW | `STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`; 2/2 functions byte-identical, exact provider/consumer CRCs |
 | `sc851x_charger` | SOURCE_NOW | `SOURCE_RECONSTRUCTED`; no-public-source oracle, exact-GKI build clean, all function sizes/KCFI/data/strings/MODVERSIONs and relocation target/type sequences match |
+| `sc8571_charger` | SOURCE_NOW | `SOURCE_RECONSTRUCTED`; exact-GKI build clean; exact provider CRC, KCFI, `__versions`, register/ADC tables and charger callback slots; bounded ABI/behavioral static parity PASS; needs stock-compatible `charger_class` |
 
 ### B.2 The `yft_devinfo` pin — mandatory for Level B
 
@@ -139,7 +140,6 @@ rear touch, rear display, camera sensors and motion sensors simultaneously.
 |--:|---|---|---|---|
 | 1 | `panel_ky_vtdr6115_dphy_cmd` | ABI_SOURCE | BLOCKED_WITH_EXACT_MISSING_EVIDENCE | panel logic reconstructed; exact provider type graph needed for 7 CRCs |
 | 2 | `custom_ldo_wl2868` | SOURCE_NOW | RE_REQUIRED | camera/sensor rails; voltage unit now proven, other provider residuals remain |
-| 3 | `sc8571_charger` | SOURCE_NOW | RE_REQUIRED | PD/PPS fast charge; `P1` |
 | 4 | `sh366003_fg` | SOURCE_NOW | RE_REQUIRED | `3rd-gauge`; `P1` |
 | 5 | `conninfra` | SOURCE_NOW | FORWARD_PORT | root of all connectivity |
 | 6 | `wmt_chrdev_wifi_connac2` | SOURCE_NOW | FORWARD_PORT | WLAN adaptor |

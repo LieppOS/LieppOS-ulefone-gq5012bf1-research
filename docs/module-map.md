@@ -16,7 +16,10 @@ CO5300 rear LCD, Microarray fingerprint, YFT tiny2c USB, AW2013 RGB LED,
 ST21NFC, camera/flash/actuator modules, MT6375/SH366003 gauges, SC8571/SC851x
 chargers, speaker amp and YFT GPIO keys. `sc851x_charger` now has a clean
 exact-GKI stock-oracle reconstruction; its SC8510 address is `6-0069` and its
-stock software has no uSmart control edge.
+stock software has no uSmart control edge. `sc8571_charger` also has a clean
+exact-GKI stock-oracle reconstruction with bounded static ABI/behavioral parity;
+it preserves the master/slave `charger_class` edge and requires provider CRC
+`0x36325d38`. Neither power-converter reconstruction was loaded on hardware.
 
 ## Packaging model
 

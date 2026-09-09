@@ -1,0 +1,110 @@
+GQ5012BF1 SC8571 STOCK ORACLE
+================================
+
+Scope
+-----
+Static/offline evidence only. No charger sysfs write, I2C write, bind/unbind,
+module insertion/removal, PD/PPS action, DT change, flash, or slot switch was
+performed.
+
+Canonical stock ELF
+-------------------
+Source partition/ramdisk: vendor_boot platform ramdisk
+Canonical extracted path:
+  workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/sc8571_charger.ko
+Frozen analysis copy:
+  workspace/phase4-sc8571/oracle/sc8571_charger.stock.ko
+SHA256: 790065853b875213ee7906bb4c41a5f272106b24a537034a886f12f0153d1d0b
+Size: 49,768 bytes
+ELF: ELF64 little-endian AArch64 ET_REL, not stripped
+GNU Build ID: 25748028cf538204ae8d7b387f51a89e3c93bf9f
+Compiler:
+  Android (10087095, +pgo, +bolt, +lto, -mlgo, based on r487747c)
+  clang 17.0.2
+  llvm-project d9f89f4d16663d5012e5c09495f3b30ece3d2362
+GNU property: AArch64 PAC
+
+Copy census
+-----------
+Exactly one distinct stock module placement is recorded by
+kernel/stock-module-master.csv and kernel/stock-module-placements.tsv:
+  vendor_boot_platform:lib/modules/sc8571_charger.ko
+SHA256 identity count: 1
+Placement count: 1
+
+The same vendor_boot platform file is referenced by both normal and recovery
+load lists. No second distinct recovery ELF exists in the committed extraction.
+No sc8571_charger.ko was found under vendor_dlkm, system_dlkm, odm_dlkm, the
+committed proprietary extraction, or the exact GKI workspace. The frozen
+analysis copy is not a second stock provenance.
+
+modinfo
+-------
+module name: sc8571_charger
+description: SC SC8571 Driver
+author: South Chip <Aiden-yu@southchip.com>
+license: GPL v2
+depends: charger_class
+vermagic: 6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+version: ABSENT
+srcversion: ABSENT
+aliases: ABSENT
+parameters: NONE
+soft dependencies: NONE
+exports: 0
+MODVERSION/import records: 42 total = 41 kernel/builtin + 1 intermodule
+intermodule import: charger_device_register from charger_class, CRC 0x36325d38
+
+Load order
+----------
+Normal vendor_boot platform modules.load:
+  one-based line 148; zero-based load index 147
+Recovery vendor_boot platform modules.load.recovery:
+  one-based line 146; zero-based load index 145
+
+Dependency metadata
+-------------------
+modules.dep exact entry:
+  /lib/modules/sc8571_charger.ko: /lib/modules/charger_class.ko
+modules.alias: no sc8571 entry
+modules.softdep: no sc8571 entry
+
+Known device identities (frozen prior read-only snapshot)
+---------------------------------------------------------
+MASTER
+  compatible: sc,sc8571-master
+  I2C bus/address: 11 / 0x66
+  live binding snapshot: /sys/bus/i2c/devices/11-0066
+  charger-class role: primary_dvchg
+  frozen IRQ thread: irq/49-sc8571-master-irq
+
+SLAVE
+  compatible: sc,sc8571-slave
+  I2C bus/address: 6 / 0x67
+  live binding snapshot: /sys/bus/i2c/devices/6-0067
+  charger-class role: secondary_dvchg
+  frozen IRQ thread: irq/63-sc8571-slave-irq
+
+Runtime oracle boundary
+-----------------------
+Previously committed read-only charging captures contain active
+sc8571_enable_adc and sc8571_get_adc_data messages and substantial SC8571
+activity. Those captures are used only for static correlation; this task does
+not create new phone-side evidence.
+
+Raw evidence
+------------
+workspace/phase4-sc8571/raw/stock-metadata.txt
+workspace/phase4-sc8571/raw/module-copy-search.txt
+workspace/phase4-sc8571/raw/load-and-module-files.txt
+workspace/phase4-sc8571/raw/repository-sc8571-references.txt
+kernel/stock-module-master.csv
+kernel/stock-module-placements.tsv
+kernel/stock-module-imports.tsv
+kernel/stock-intermodule-abi.csv
+
+Baseline
+--------
+Linux 6.1.115-android14-11
+Android GKI ab/12901745
+common commit 6b18f0b574ab3267615ae6ce642d5a7c3c21ac09

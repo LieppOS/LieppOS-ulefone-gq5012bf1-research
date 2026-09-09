@@ -1,0 +1,1 @@
+0x36325d38	charger_device_register	charger_class	EXPORT_SYMBOL	

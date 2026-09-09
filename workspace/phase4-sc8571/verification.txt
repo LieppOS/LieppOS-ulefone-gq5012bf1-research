@@ -1,0 +1,25 @@
+SC8571 stock/reconstruction verification
+stock=workspace/phase4-sc8571/oracle/sc8571_charger.stock.ko size=49768
+recon=workspace/phase4-sc8571/recon/sc8571_charger.ko size=49808
+BINARY_IDENTITY=NO
+required modinfo exact=True
+stock vermagic=6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+recon vermagic=6.1.115-android14-11-maybe-dirty SMP preempt mod_unload modversions aarch64
+vermagic residual=SCM token only (-g945dff7bc1bf vs -maybe-dirty)
+function set exact=True count=34
+function size deltas={'sc8571_charger_probe': -4, 'mtk_sc8571_set_ibatocp': 4} allowed=True
+KCFI type words exact=True
+raw-identical functions=20/34
+per-function external call multisets exact=True
+object set exact=True count=34 sizes exact=True
+named PROGBITS objects exact (excluding vermagic)=27/27
+__versions byte-exact=True entries=42
+undefined import set exact=True count=41
+.rodata byte-exact=True
+.rodata.str1.1 string multiset exact=True
+.comment toolchain identity exact=True
+.text aggregate size exact=True
+relocation totals stock=608 recon=610 residual=+2
+KNOWN_RESIDUALS=probe basic-block/string-address sharing; IBAT arithmetic scheduling; local SCM vermagic/BuildID; internal data layout/padding
+ABI_AND_BEHAVIORAL_CONTRACT_PARITY=PASS
+VERIFY_RC=0

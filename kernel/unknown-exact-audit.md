@@ -31,15 +31,16 @@
 > | `custom_ldo_wl2868` | `NO_EXACT_HIT` | **STRUCTURAL_DONOR_ONLY / RE_REQUIRED** — donor located: `sonyxperiadev/kernel@7e42db1690b55e374fd6a6af536684a746bac614` `drivers/regulator/wl2868c-regulator.{c,h}` (regulator-framework model; stock is a chardev+export model). Nothing ships only `cust_wl2864c.dtsi`; the `wl2864c.ko` target in `mgk_64_k61.bzl` has **no** source in the published tree. |
 > | `custom_ldo` | `NO_EXACT_HIT` | no donor found, but **STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION** completed from stock ELF: 2/2 functions byte-identical, exact CRC/KCFI/relocations, exact-GKI build clean |
 > | `sc851x_charger` | `NO_EXACT_HIT` | no donor found, but **SOURCE_RECONSTRUCTED** from stock oracle: 11 exact function sizes/KCFI IDs, byte-identical data/strings/MODVERSION records, exact relocation target/type sequence, clean exact-GKI build |
+> | `sc8571_charger` | absent from the original 22-entry scan | **SOURCE_RECONSTRUCTED** from stock oracle: dual master/slave topology, 58 fields, 40 DT settings, 14 exact charger-class callback slots, exact provider CRC/KCFI/`__versions`, clean exact-GKI build and bounded static parity pass |
 > | `sh366003_fg`, `leds_ln2403`, `tkcore_drv` | `NO_EXACT_HIT` | unchanged — **NO_USEFUL_SOURCE** re-confirmed against the Nothing trees, the MiCode vendor-reference BSPs and public source indexes |
 >
 > Modules resolved since this scan and therefore no longer unresolved:
 > `aw883xx_driver`, `aw36515`, `aw36518`, `aw36518_v2`, `leds_rgb_aw2013`,
-> `connfem`, `custom_ldo`, `sc851x_charger`.
+> `connfem`, `custom_ldo`, `sc851x_charger`, `sc8571_charger`.
 >
 > Modules **missing** from this 22-entry scan that the triage proved are also
-> still unresolved: `sc8571_charger`, `microarray_fp_tee`, `spi_tiny_co5300_lcd`,
-> `hynitron`, `yft_gpio_keys`, `yft_tiny2c_usb`, `yft_devinfo`.
+> still unresolved: `microarray_fp_tee`, `spi_tiny_co5300_lcd`, `hynitron`,
+> `yft_gpio_keys`, `yft_tiny2c_usb`, `yft_devinfo`.
 >
 > Transition-blob result applying to **all** of them: every one imports 0
 > unresolved and 0 CRC-mismatched kernel symbols against the exact Google GKI

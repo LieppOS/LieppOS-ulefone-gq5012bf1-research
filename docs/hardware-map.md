@@ -11,7 +11,7 @@
 | NFC | ST21NFC at I2C 6-0008, AIDL NFC service, ST firmware | VERIFIED |
 | Sensors | ICM4N607 accel/gyro, MMC5603 mag, STK3A5X ALS/prox, SPL07 pressure | VERIFIED |
 | Fuel gauges | MT6375 primary Android battery path; SH366003 secondary `3rd-gauge` | VERIFIED |
-| Charge pumps / 2S converter | SC8571 at I2C 11-0066 and 6-0067; SC8510 at 6-0069 (`@6f` suffix stale, `reg=0x69`) | VERIFIED binding; SC8510 software shim reconstructed, exact board nets UNKNOWN |
+| Charge pumps / 2S converter | SC8571 master at 11-0066 (`primary_dvchg`) and slave at 6-0067 (`secondary_dvchg`); SC8510 at 6-0069 (`@6f` suffix stale, `reg=0x69`) | VERIFIED stock binding; both stock drivers reconstructed and exact-GKI/static-parity validated; reconstructed modules not hardware-run; exact board nets UNKNOWN |
 | Cameras | IMX989, S5KJN1, S5KJN1MAIN2, OV64B | VERIFIED enumeration |
 | Thermal camera | ThermoVue Pro AC020 userspace with UVC/USB native stack and bundled calibration; `yft_tiny2c_usb` mode path | VERIFIED components; end-to-end ROM integration not tested |
 | Audio | MT6369 headset jack and external `speaker_amp` at I2C 6-0034 | VERIFIED; exact amp IC UNKNOWN |

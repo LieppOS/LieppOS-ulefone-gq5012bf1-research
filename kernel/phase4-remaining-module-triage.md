@@ -164,7 +164,7 @@ view below carries the decision-relevant columns.
 | `panel_ky_vtdr6115_dphy_cmd` | vendor_boot platform | yes (idx 76) | yes (idx 74) | 38 / 7 / 0 | ORACLE_RECONSTRUCTION_PROVIDER_ABI_BLOCKED | YES_WITH_STOCK_PROVIDER_CHAIN | BLOCKED_WITH_EXACT_MISSING_EVIDENCE | P1_CORE_HARDWARE |
 | `yft_devinfo` | platform + vendor_dlkm | yes (vdlkm idx 193) | yes (idx 187) | 40 / 0 / 27 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | SOURCE_DELTA | P1_CORE_HARDWARE |
 | `sh366003_fg` | vendor_boot platform | yes (idx 133) | yes (idx 131) | 33 / 3 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | RE_REQUIRED | P1_CORE_HARDWARE |
-| `sc8571_charger` | vendor_boot platform | yes (idx 147) | yes (idx 145) | 41 / 1 / 0 | STRUCTURAL_DONOR_ONLY | YES_WITH_STOCK_PROVIDER_CHAIN | RE_REQUIRED | P1_CORE_HARDWARE |
+| `sc8571_charger` | vendor_boot platform | yes (idx 147) | yes (idx 145) | 41 / 1 / 0 | **NO_USEFUL_SOURCE / ORACLE_RECONSTRUCTED** | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED** | P1_CORE_HARDWARE |
 | `sc851x_charger` | vendor_boot platform | yes (idx 146) | yes (idx 144) | 30 / 0 / 0 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | **SOURCE_RECONSTRUCTED** | P1_CORE_HARDWARE |
 | `tkcore` | vendor_boot platform | yes (idx 99) | yes (idx 97) | 101 / 0 / 25 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | STOCK_TRANSITION_BLOB | **P0_BOOT_CRITICAL** |
 | `tkcore_drv` | vendor_boot platform | yes (idx 100) | yes (idx 98) | 54 / 13 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | **P0_BOOT_CRITICAL** |
@@ -184,6 +184,11 @@ view below carries the decision-relevant columns.
 | `hynitron` | vendor_dlkm | on demand (init.touch.rc) | no | 51 / 3 / 2 | STRUCTURAL_DONOR_ONLY | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
 | `leds_ln2403` | vendor_dlkm | yes (idx 192) | no | 30 / 2 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
 | `yft_tiny2c_usb` | vendor_dlkm | yes (idx 194) | no | 22 / 1 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
+
+`sc8571_charger` is now exact-GKI buildable and passes the bounded static
+ABI/behavioral-contract verifier. It still requires a stock-compatible
+`charger_class` provider (`charger_device_register`, CRC `0x36325d38`) and has
+not been runtime-tested under the charging safety boundary.
 
 ---
 

@@ -29,7 +29,13 @@ the PID-1 capture harness that writes into the pstore partition tail, and the
 `vendor_boot` rescue/repack contract.
 
 `workspace/` holds extracted stock partitions, live snapshots and generated
-reports. It is large, contains vendor binaries, and is never committed.
+reports. It is large, contains vendor binaries, and is normally not committed.
+
+Kernel reconstruction reports and commit-contained source mirrors live under
+`kernel/`. The SC8571 master/slave charge-pump result starts at
+[`kernel/phase4-sc8571-reconstruction.md`](kernel/phase4-sc8571-reconstruction.md);
+it is exact-GKI build/static-parity validated but was deliberately not loaded
+or exercised on the phone.
 
 ## Tooling
 

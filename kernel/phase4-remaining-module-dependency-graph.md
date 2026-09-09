@@ -66,9 +66,10 @@ anything downstream — the risk is entirely upstream (its 7 imported CRCs).
 ## 2. Cluster: POWER / CHARGING
 
 ```
-   charger_class [port] P:130 ──1──▶ sc8571_charger [stock] P:147 / R:145
+   charger_class [port] P:130 ──1──▶ sc8571_charger [recon-static-pass] P:147 / R:145
                                      sc,sc8571-master @ I2C 11-0066
                                      sc,sc8571-slave  @ I2C  6-0067   → LEAF
+                                     import CRC 0x36325d38
 
    (kernel only) ───────────────────▶ sc851x_charger [recon-exact] P:146 / R:144
                                      sc,sc8510 @ I2C 6-0069           → LEAF
@@ -100,13 +101,17 @@ P:129 adapter_class → P:130 charger_class → P:131 mtk_charger_algorithm_clas
 1. keep stock `yft_devinfo` (see §6),
 2. re-land the completed `sc851x_charger` reconstruction (zero intermodule
    imports; exact-GKI build and structural parity pass),
-3. `sc8571_charger` (needs `charger_class` CRCs verified),
+3. re-land the completed `sc8571_charger` reconstruction against the proven
+   `charger_class` CRC `0x36325d38` (exact-GKI build and bounded static
+   ABI/behavioral parity pass),
 4. `sh366003_fg` (needs the stock `yft_devinfo` CRCs).
 
 All four are leaves — nothing depends on them, so a mistake cannot cascade.
-SC851x is no longer an RE task. Its Linux driver provides static converter
-configuration/debug/IRQ behavior, not charger policy; uSmart VBUS instead
-resolves to the MT6375 OTG regulator through `extcon-mtk-usb`.
+SC851x and SC8571 are no longer RE tasks, although SC8571 still requires a
+stock-compatible `charger_class` provider and neither reconstruction was
+activated under the live-power safety boundary. SC851x provides static
+converter configuration/debug/IRQ behavior, not charger policy; uSmart VBUS
+instead resolves to the MT6375 OTG regulator through `extcon-mtk-usb`.
 
 ---
 
