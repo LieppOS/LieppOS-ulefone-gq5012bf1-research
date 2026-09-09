@@ -25,7 +25,7 @@
 > | `bt_drv_6878` | `STRONG_API_HIT` | **EXACT_SOURCE / FORWARD_PORT** — `//…/bt/mt66xx:btif` emits `bt_drv_6878.ko`; `btif/Kbuild:142 MODULE_NAME := bt_drv_$(BT_PLATFORM)` |
 > | `gps_drv_dl_v051` | `RELATED_SOURCE_HIT` (1 hit) | **EXACT_SOURCE / FORWARD_PORT** — `//…/gps/data_link/plat/v051:gps_drv_dl_v051`, Kbuild comment `# For MT6878 SoC + MT6686 A-die` |
 > | `gps_pwr` / `gps_scp` | `RELATED_SOURCE_HIT` | **EXACT_SOURCE / FORWARD_PORT** — `define_mgk_ko(name = "gps_pwr" / "gps_scp")` |
-> | `fingerprint` | `RELATED_SOURCE_HIT`, 97 hits | **NO_USEFUL_SOURCE / RE_REQUIRED** — the 97 hits are netfilter-OSF / x509 / unrelated-DTS noise and are rejected. Real identifier is `mediatek,yft_finger`; the module is 16 functions of YFT pinctrl/GPIO glue. |
+> | `fingerprint` | `RELATED_SOURCE_HIT`, 97 hits | **NO_PUBLIC_DONOR_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE / FROZEN FOR RE** — the 97 hits are netfilter-OSF / x509 / unrelated-DTS noise. Stock-oracle source reproduces all 16 function bytes/sizes/KCFI IDs, 18 MODVERSIONs, 10 export CRCs, and all four MicroArray consumer edges; verifier 39/39. |
 > | `tkcore` | `STRONG_API_HIT`, 60 hits | **NO_USEFUL_SOURCE / STOCK_TRANSITION_BLOB** — the 60 hits are GlobalPlatform `TEEC_*` API-name collisions with MicroTrust TEEI (`drivers/tee/teei/510/…`). `grep -rl 'trustkernel\|tkcore'` over the Nothing MT6878 trees and the MiCode vendor-reference BSPs returns **zero** files. |
 > | `panel_ky_vtdr6115_dphy_cmd` | `NO_EXACT_HIT` | **STRUCTURAL_DONOR_ONLY / RE_REQUIRED** — donor located: `MotorolaMobilityLLC/kernel-mtk@0087a407394abd3ab073e1a2df164f1187959a3f` `dsi-panel-mot-csot-vtdr6115-655-fhdp-dphy-vdo-144hz.c` (CSOT 144 Hz VDO vs Ulefone KY 120 Hz cmd) |
 > | `custom_ldo_wl2868` | `NO_EXACT_HIT` | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE / FROZEN FOR RE** — clean-room stock-oracle source closes all hardware-significant behavior; exact 15-function/KCFI/call sets, 27 MODVERSIONs, export CRCs, clean provider/downstream builds, and 50/50 verifier. Sony remains structural-only; Nothing remains DT-only. |
@@ -37,7 +37,8 @@
 >
 > Modules resolved since this scan and therefore no longer unresolved:
 > `aw883xx_driver`, `aw36515`, `aw36518`, `aw36518_v2`, `leds_rgb_aw2013`,
-> `connfem`, `custom_ldo_wl2868`, `custom_ldo`, `sc851x_charger`, `sc8571_charger`.
+> `connfem`, `custom_ldo_wl2868`, `custom_ldo`, `sc851x_charger`, `sc8571_charger`,
+> `fingerprint`.
 >
 > Modules **missing** from this 22-entry scan that the triage proved are also
 > still unresolved: `microarray_fp_tee`, `spi_tiny_co5300_lcd`, `hynitron`,
@@ -500,11 +501,16 @@ software/control path. See `phase4-sc851x-reconstruction.md` and `usmart/`.
 ## fingerprint
 
 - locations: `vendor_boot_platform`
-- result: **RELATED_SOURCE_HIT**
+- original result: **RELATED_SOURCE_HIT**
+- closure result: **NO_PUBLIC_DONOR_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE / FROZEN FOR RE**
 - evidence kinds: `MODULE_NAME`
-- exact hit records: 97
+- exact hit records: 97 (all generic-word noise; no YFT source donor)
 - description: `for yft fingerprint driver`
 - aliases: `of:N*T*Cmediatek,yft_finger;of:N*T*Cmediatek,yft_fingerC*`
+- stock-oracle closure: 16/16 function bytes, sizes and KCFI IDs; exact 18-entry
+  import/MODVERSION map; 10/10 natural export CRCs; all four stock
+  `microarray_fp_tee` consumer CRCs; exact-GKI clean build; verifier 39/39.
+- authoritative report: `phase4-fingerprint-reconstruction.md`.
 
 - `MODULE_NAME` `fingerprint` → `kernel:include/uapi/linux/netfilter/nfnetlink_osf.h:15
 - `MODULE_NAME` `fingerprint` → `kernel:include/uapi/linux/netfilter/nfnetlink_osf.h:16

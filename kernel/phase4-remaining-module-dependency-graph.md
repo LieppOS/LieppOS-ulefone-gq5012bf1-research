@@ -293,8 +293,8 @@ and it has no module dependencies of its own.
 ## 7. Cluster: FINGERPRINT
 
 ```
-   fingerprint [stock] P:181 / R:185
-   mediatek,yft_finger · 18 kernel imports · 0 intermodule · 10 exports
+   fingerprint [frozen/recon-complete] P:181 / R:185
+   mediatek,yft_finger · 18 exact kernel imports · 0 intermodule · 10 exact exports
         │
         │ 4 symbols: yft_finger_set_irq, yft_finger_set_reset,
         │            yft_finger_set_spi_mode, yft_waite_for_finger_dts_paser
@@ -311,9 +311,12 @@ P:182 microarray_fp_tee`.
 
 **Root providers:** `fingerprint`, `spi-mt65xx`, `tkcore`.
 
-**Recommended build order:** `fingerprint` first (its 10 export CRCs gate the
-sensor driver), and only after `tkcore`'s ABI is frozen. `microarray_fp_tee`
-stays stock — its behaviour is only observable through the secure world.
+**Current closure/build order:** `fingerprint` is
+`STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE. Its 10/10 export
+CRCs include all four stock consumer edges, so it remains first in load/build
+order. `microarray_fp_tee` stays stock and still separately depends on
+`spi-mt65xx` and stock `tkcore`; provider completion does not complete or alter
+the sensor/TEE driver.
 
 ---
 
@@ -388,7 +391,7 @@ TIER 6  connadp/connscp/ccci_md_all/aee_aed/device-apc-common
           → wmt_chrdev_wifi_connac2 → wlan_page_pool → wlan_drv_gen4m_6878
           → bt_drv_6878
           → gps_drv_dl_v051 → gps_pwr → gps_scp
-TIER 7  fingerprint  (after tkcore ABI frozen)
+TIER 7  fingerprint [frozen/recon-complete; 10/10 provider CRCs exact]
 TIER 8  yft_gpio_keys
 TIER 9  held on stock indefinitely: tkcore, tkcore_drv, microarray_fp_tee,
         spi_tiny_co5300_lcd, hynitron, leds_ln2403, yft_tiny2c_usb
@@ -434,6 +437,15 @@ functions byte-identical, exact KCFI, exact imports/exports/MODVERSIONS and
 It builds naturally against the reconstructed provider's real CRCs and exports
 exactly what stock `imgsensor` requires. The graph edge remains, but this node
 is no longer an unresolved RE task.
+
+## Phase 4 fingerprint provider closure
+
+`fingerprint` is `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE.
+All 16 function bytes/sizes/KCFI IDs, 18 kernel MODVERSIONs, and 10 export CRCs
+match. The four-symbol edge to stock `microarray_fp_tee` is
+`STOCK_CONSUMER_ABI_EXACT`, and the verifier passes 39/39. The edge and adjacent
+load order remain mandatory, but the provider is source-ready. The stock-held
+consumer and its `spi-mt65xx`/`tkcore` dependencies are unchanged.
 
 ## Phase 4 sc851x_charger update (2026-09-08)
 

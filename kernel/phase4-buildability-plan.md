@@ -1102,7 +1102,16 @@ class of problem already seen and solved for ST21 (donor 2.2.0.15 vs stock
 
 ### Modules that genuinely require reverse engineering
 
-One remains: `fingerprint`. `custom_ldo_wl2868` is now closed and frozen for RE.
+No board-glue module remains in this queue. `fingerprint` and
+`custom_ldo_wl2868` are now closed and frozen for RE. The separate
+`microarray_fp_tee` sensor/TEE driver remains a stock-held future task and was
+not reconstructed as part of the provider closure.
+
+`fingerprint` is `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE:
+16/16 functions are byte- and size-identical with exact KCFI, all 18 kernel
+imports/MODVERSIONs and all 10 export CRCs match, the four stock MicroArray
+consumer edges are exact, the exact-GKI build is clean, and the fail-closed
+verifier passes 39/39. See `phase4-fingerprint-reconstruction.md`.
 
 `sh366003_fg` is now reconstructed from the frozen stock oracle at
 `BEHAVIORAL_RECONSTRUCTION_WITH_DOCUMENTED_RESIDUALS`: 39/39 named functions,

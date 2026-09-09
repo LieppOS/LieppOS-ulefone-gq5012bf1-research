@@ -116,6 +116,7 @@ core power. Adds the frozen reconstructions plus the `P1`/`P2` work.
 | `custom_ldo` | SOURCE_NOW | `STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`; 2/2 functions byte-identical, exact provider/consumer CRCs |
 | `sc851x_charger` | SOURCE_NOW | `SOURCE_RECONSTRUCTED`; no-public-source oracle, exact-GKI build clean, all function sizes/KCFI/data/strings/MODVERSIONs and relocation target/type sequences match |
 | `sc8571_charger` | SOURCE_NOW | `SOURCE_RECONSTRUCTED`; exact-GKI build clean; exact provider CRC, KCFI, `__versions`, register/ADC tables and charger callback slots; bounded ABI/behavioral static parity PASS; needs stock-compatible `charger_class` |
+| `fingerprint` | SOURCE_NOW | `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`; FROZEN FOR RE; 16/16 function bytes/sizes/KCFI, 18/18 MODVERSIONs, 10/10 export CRCs, four exact MicroArray consumer edges, 39/39 verifier |
 
 ### B.2 The `yft_devinfo` pin — mandatory for Level B
 
@@ -148,7 +149,6 @@ rear touch, rear display, camera sensors and motion sensors simultaneously.
 | 9 | `gps_drv_dl_v051` | SOURCE_NOW | FORWARD_PORT | GNSS |
 | 10 | `gps_pwr` | SOURCE_NOW | FORWARD_PORT | GNSS power (on-demand load path preserved) |
 | 11 | `gps_scp` | SOURCE_NOW | FORWARD_PORT | GNSS SCP offload (on-demand load path preserved) |
-| 12 | `fingerprint` | SOURCE_NOW | RE_REQUIRED | 10 export CRCs gate the sensor driver |
 
 Plus the platform prerequisites named in the dependency graph:
 `connadp`, `connscp`, `ccci_md_all`, `aee_aed`, `device-apc-common`,
@@ -176,8 +176,9 @@ Plus the platform prerequisites named in the dependency graph:
 Display + backlight + 60/90/120 Hz mode switching · FT3680 touch · charging
 including PD/PPS · both fuel gauges · audio through the AW883xx smart PA ·
 Wi-Fi · Bluetooth · GNSS fix · cameras enumerate and stream · NFC · RGB
-notification LED · flashlight. Fingerprint and the rear/mini display continue to
-work off stock blobs.
+notification LED · flashlight. Fingerprint uses the source-reconstructed YFT
+provider with stock `microarray_fp_tee`/TrustKernel; the rear/mini display
+continues to work off stock blobs.
 
 ---
 
@@ -210,7 +211,7 @@ mistake there costs the device its ability to unlock encrypted `/data`.
 | level | SOURCE_NOW | STOCK_TRANSITION | NOT_REQUIRED |
 |---|---:|---:|---:|
 | **A — first boot** | 1 (the GKI core) | 439 stock modules | `odm_dlkm` modules, `uarthub_drv` |
-| **B — usable phone** | 19 frozen + 11 new = 30, plus platform prereqs | 9 | `uarthub_drv` |
+| **B — usable phone** | 20 frozen + 10 new = 30, plus platform prereqs | 9 | `uarthub_drv` |
 | **C — source-complete** | all except the two TEE modules if they are held | 0-2 | `uarthub_drv` |
 
 ## Answer to the driving question
@@ -223,9 +224,10 @@ against it because all 2 946 kernel-facing CRCs and all 23 unresolved modules'
 imports are proven `MATCH` with zero unresolved symbols.
 
 The correct sequencing is therefore: **boot first and validate the source
-stack incrementally**. `fingerprint` is now the sole genuine RE target;
-`custom_ldo_wl2868` and `custom_ldo` are both source-ready. Remaining Level-B
-work is forward-port or exact-provider-ABI work, not WL2868 reverse engineering.
+stack incrementally**. `fingerprint`, `custom_ldo_wl2868`, and `custom_ldo` are
+source-ready and frozen for RE. Remaining Level-B work is forward-port or
+exact-provider-ABI work; `microarray_fp_tee` remains a separate stock-held
+sensor/TEE task.
 
 ---
 

@@ -5,8 +5,10 @@ practical first source-based LieppOS custom-kernel boot on Slot B.
 
 This is a **triage** document. Its original baseline started no new reverse
 engineering and touched no hardware. It now carries append-only/current-status
-updates from later dedicated reconstruction tasks; `custom_ldo` and
-`sc851x_charger` are complete; `custom_ldo_wl2868` is also behaviorally complete and frozen for RE. All device evidence remains static/read-only.
+updates from later dedicated reconstruction tasks; `custom_ldo`,
+`sc851x_charger`, and `fingerprint` are complete; `custom_ldo_wl2868` and
+`fingerprint` are behaviorally complete and frozen for RE. All device evidence
+remains static/read-only.
 
 Baseline (unchanged):
 
@@ -57,10 +59,10 @@ Machine-readable form of this table: `kernel/phase4-remaining-module-triage.tsv`
 | EXACT_SOURCE | 7 |
 | STRONG_SOURCE_MATCH | 1 |
 | STRUCTURAL_DONOR_ONLY | 1 |
-| NO_USEFUL_SOURCE | 10 |
+| NO_USEFUL_SOURCE | 9 |
 | NO_USEFUL_SOURCE / ORACLE_RECONSTRUCTED | 2 |
 | ORACLE_RECONSTRUCTION_PROVIDER_ABI_BLOCKED | 1 |
-| NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE | 1 |
+| NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE | 2 |
 
 ## 4. Summary — stock transition-blob safety
 
@@ -110,7 +112,8 @@ exists (per the user's frozen list and the reports in this directory):
 `focaltech_touch_spi_ft3680`, `aw883xx_driver`, `aw36515`, `aw36518`,
 `aw36518_v2`, `leds_rgb_aw2013`, `st21nfc`, `connfem`, `tcpc_class`,
 `tcpc_mt6375`, `pd_dbg_info`, `mtk_disp_notify`, `mtk_mbox`,
-`mtk_tinysys_ipi`, `mtk_rpmsg_mbox`, `mtk-mbox-mailbox`, `yft_tpd_gesture`.
+`mtk_tinysys_ipi`, `mtk_rpmsg_mbox`, `mtk-mbox-mailbox`, `yft_tpd_gesture`,
+`fingerprint`.
 
 Removed because the platform-source question is already settled: the 336
 `LIKELY_PLATFORM_MATCH` + 100 `DIRECT_SOURCE_MATCH` modules, for which Phase 3
@@ -177,7 +180,7 @@ view below carries the decision-relevant columns.
 | `gps_drv_dl_v051` | vendor_dlkm | yes (idx 129) | no | 105 / 19 / 0 | **EXACT_SOURCE** | YES_WITH_STOCK_PROVIDER_CHAIN | FORWARD_PORT | P2_MAJOR_FEATURE |
 | `gps_pwr` | vendor_dlkm | on demand (init.gps_pwr.rc) | no | 21 / 3 / 0 | **EXACT_SOURCE** | YES_WITH_STOCK_PROVIDER_CHAIN | FORWARD_PORT | P2_MAJOR_FEATURE |
 | `gps_scp` | vendor_dlkm | on demand (init.gps_scp.rc) | no | 26 / 5 / 0 | **EXACT_SOURCE** | YES_WITH_STOCK_PROVIDER_CHAIN | FORWARD_PORT | P2_MAJOR_FEATURE |
-| `fingerprint` | vendor_boot platform | yes (idx 181) | yes (idx 185) | 18 / 0 / 10 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | RE_REQUIRED | P2_MAJOR_FEATURE |
+| `fingerprint` | vendor_boot platform | yes (idx 181) | yes (idx 185) | 18 / 0 / 10 | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | YES_SAFE_TRANSITION | **SOURCE_RECONSTRUCTED** | P2_MAJOR_FEATURE |
 | `microarray_fp_tee` | vendor_boot platform | yes (idx 182) | yes (idx 186) | 59 / 7 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P2_MAJOR_FEATURE |
 | `custom_ldo` | vendor_dlkm | yes (idx 102) | no | 1 / 2 / 2 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED** | P2_MAJOR_FEATURE |
 | `custom_ldo_wl2868` | vendor_dlkm | yes (idx 101) | no | 27 / 0 / 2 | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | YES_SAFE_TRANSITION | **SOURCE_RECONSTRUCTED** | P2_MAJOR_FEATURE |
@@ -591,21 +594,24 @@ matches and are rejected. The real identifiers are `mediatek,yft_finger` and
   intermodule imports). `microarray_fp_tee` is `YES_WITH_STOCK_PROVIDER_CHAIN`
   (needs stock `fingerprint`, `spi-mt65xx`, `tkcore`).
 
-Dispositions: `fingerprint` → **RE_REQUIRED** (LOW difficulty; 16 glue
-functions, DT contract already fully recovered; but its 10 export CRCs must be
-reproduced exactly because they gate the sensor driver).
-`microarray_fp_tee` → **STOCK_TRANSITION_BLOB** (HIGH difficulty: all sensor
-traffic is TEE-mediated and therefore not observable from the Linux side).
+Disposition: `fingerprint` → **SOURCE_RECONSTRUCTED /
+STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE / FROZEN FOR RE**. Its 16/16 function
+bytes/sizes/KCFI IDs, 18 imports/MODVERSIONs, all 10 export CRCs, and all four
+stock MicroArray consumer edges are exact; exact-GKI build and 39/39 verifier
+pass. `microarray_fp_tee` remains a **STOCK_TRANSITION_BLOB** (HIGH difficulty:
+all sensor traffic is TEE-mediated and therefore not observable from the Linux
+side). Provider closure does not classify the consumer complete.
 
 ---
 
 ## 14. Modules that genuinely require reverse engineering
 
-One remains: `fingerprint`. VTDR6115 panel logic is reconstructed but separately blocked at the provider ABI. `custom_ldo_wl2868`, `custom_ldo`, `sc851x_charger`, `sc8571_charger`, and `sh366003_fg` have graduated after stock-oracle reconstruction.
-
-| module | why no source path exists | difficulty |
-|---|---|---|
-| `fingerprint` | Ulefone/YFT-only pinctrl glue | LOW |
+No board-glue module remains in this queue. `fingerprint`,
+`custom_ldo_wl2868`, `custom_ldo`, `sc851x_charger`, `sc8571_charger`, and
+`sh366003_fg` have graduated after stock-oracle reconstruction. VTDR6115 panel
+logic is reconstructed but separately blocked on exact provider ABI evidence.
+The TEE-mediated `microarray_fp_tee` sensor remains stock-held and is not made
+complete by the fingerprint provider closure.
 
 ## 15. Modules that have usable source and need only build / forward-port work
 
@@ -676,7 +682,8 @@ NEXT  9  FORWARD_PORT    conninfra   (root of the whole connectivity cluster)
 NEXT 10  FORWARD_PORT    wmt_chrdev_wifi_connac2, then wlan_drv_gen4m_6878
 NEXT 11  FORWARD_PORT    bt_drv_6878
 NEXT 12  FORWARD_PORT    gps_drv_dl_v051, gps_pwr, gps_scp
-NEXT 13  RE              fingerprint  (10 export CRCs must match exactly)
+DONE 13  RE              fingerprint: STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE,
+                         16/16 function bytes, 10/10 exports, 39/39 verifier
 NEXT 14  SOURCE_DELTA    yft_gpio_keys (low-risk, 0 exports, in-tree donor)
 NEXT 15  TRANSITION_BLOB hold: microarray_fp_tee, tkcore, tkcore_drv,
                          spi_tiny_co5300_lcd, hynitron, leds_ln2403, yft_tiny2c_usb

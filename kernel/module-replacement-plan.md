@@ -113,9 +113,10 @@ Treat as one late-stage security subsystem:
 - tkcore
 - tkcore_drv
 - microarray_fp_tee
-- fingerprint
+- fingerprint — **completed** at `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`,
+  FROZEN FOR RE; source-ready provider with all 10 export CRCs exact
 
-This group has high kernel-KMI impact but also the highest likely
+The remaining sensor/TEE group has high kernel-KMI impact and the highest likely
 reverse-engineering and integration difficulty because it crosses:
 
 - GlobalPlatform TEE interfaces
@@ -123,7 +124,10 @@ reverse-engineering and integration difficulty because it crosses:
 - fingerprint transport/glue
 - secure-world interaction
 
-It should not block earlier custom-kernel development.
+It should not block earlier custom-kernel development. The completed
+`fingerprint` board-glue provider can be source-built while
+`microarray_fp_tee`, `tkcore`, and `tkcore_drv` remain stock; the four consumed
+provider CRCs are exact.
 
 ## Strategy
 
@@ -160,6 +164,16 @@ are reproduced. Exact-GKI build succeeds with zero compiler/modpost warnings
 and zero unresolved symbols against the reconstructed WL2868 provider's real
 `Module.symvers`. Only generated srcversion/vermagic provenance differs. It is
 removed from the remaining reverse-engineering queue.
+
+## Phase 4 fingerprint provider closure
+
+`fingerprint` is `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE.
+The stock-oracle source reproduces 16/16 function bytes, sizes and KCFI IDs,
+18/18 kernel imports/MODVERSIONs, all 10 export CRCs, and the four exact CRCs
+consumed by stock `microarray_fp_tee`. Exact-GKI build succeeds with zero
+compiler/modpost warnings and zero unresolved symbols; the fail-closed verifier
+passes 39/39. The provider is removed from the RE queue. The MicroArray sensor
+and TrustKernel modules remain untouched and incomplete.
 
 ## Phase 4 sc851x_charger update (2026-09-08)
 
