@@ -1070,8 +1070,8 @@ The 16 named in the triage brief, plus 7 that were missing from it:
 | DIRECT_SOURCE         |     0 |
 | SOURCE_DELTA          |     2 |
 | FORWARD_PORT          |     7 |
-| SOURCE_RECONSTRUCTED  |     2 |
-| RE_REQUIRED           |     4 |
+| SOURCE_RECONSTRUCTED  |     5 |
+| RE_REQUIRED           |     1 |
 | BLOCKED_WITH_EXACT_MISSING_EVIDENCE | 1 |
 | STOCK_TRANSITION_BLOB |     7 |
 | NOT_REQUIRED          |     0 |
@@ -1102,7 +1102,7 @@ class of problem already seen and solved for ST21 (donor 2.2.0.15 vs stock
 
 ### Modules that genuinely require reverse engineering
 
-Two remain: `custom_ldo_wl2868` and `fingerprint`.
+One remains: `fingerprint`. `custom_ldo_wl2868` is now closed and frozen for RE.
 
 `sh366003_fg` is now reconstructed from the frozen stock oracle at
 `BEHAVIORAL_RECONSTRUCTION_WITH_DOCUMENTED_RESIDUALS`: 39/39 named functions,
@@ -1115,12 +1115,15 @@ gapped historical CRCs. See `phase4-sh366003-reconstruction.md`.
 `sc8571_charger` is likewise no longer an RE task; its source reconstruction
 and static ABI/behavioral parity pass are documented separately.
 
-`custom_ldo` is now complete at `STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`:
-both functions are byte-identical, all import/export CRCs and KCFI IDs match,
-and the exact-GKI build against the reconstructed WL2868 provider has zero
-unresolved symbols. Its stock-consumer analysis also proves WL2868 voltage
-values are microvolts. The WL2868 provider remains in this list because its
-separate probe/data-layout and whole-function parity residuals remain.
+`custom_ldo_wl2868` is now complete at
+`STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE: exact 15-function
+and KCFI sets, exact per-function call multisets, exact 27-entry MODVERSION map,
+exact export CRCs, closed state/probe/GPIO/variant/voltage/enable/I2C/misc/
+lifecycle contracts, clean exact-GKI and downstream builds, and a 50/50
+fail-closed verifier pass. `custom_ldo` remains complete at
+`STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`, with both forwarding functions
+byte-identical. The camera-power chain `custom_ldo_wl2868 → custom_ldo` is
+source-ready. See `phase4-custom-ldo-wl2868-reconstruction.md`.
 
 `sc851x_charger` is now complete at `SOURCE_RECONSTRUCTED`: all 11 function
 sizes/KCFI IDs, 50 register fields, 35 required DT writes, data/strings,

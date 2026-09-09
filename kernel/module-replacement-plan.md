@@ -78,7 +78,7 @@ Candidate modules:
 - sc851x_charger — reconstructed from the stock oracle; exact-GKI build clean
 - yft_tiny2c_usb
 - custom_ldo — reconstructed exactly at the consumer ABI/function level
-- custom_ldo_wl2868 — structurally reconstructed; provider residuals remain
+- custom_ldo_wl2868 — `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`, FROZEN FOR RE; camera-power provider source-ready
 
 These modules require careful staged testing because failures can affect
 charging, battery reporting and power stability.
@@ -138,9 +138,18 @@ A replacement module is not considered independent merely because its
 kernel-facing KMI is known. Module-to-module ABI dependencies must also be
 preserved or migrated.
 
-## Phase 4 custom_ldo_wl2868 update (2026-09-08)
+## Phase 4 custom_ldo_wl2868 closure
 
-`custom_ldo_wl2868` has a raw-I2C structural reconstruction with exact `will_ldo_vout`/`will_ldo_en` export CRCs and a successful exact-GKI build. Subsequent stock `imgsensor` call-site analysis proves the camera voltage value is in microvolts, closing that residual. It is still not promoted to an independently deployable replacement because probe/data-layout and whole-function/source parity residuals remain and no live hardware validation is allowed.
+`custom_ldo_wl2868` is `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN
+FOR RE. The stock oracle closes the 112-byte static state, exact probe/GPIO and
+error order, hardcoded 0x82 selector/forced 0x2f transfer address, both voltage
+families, enable bit map/global-bit rule, raw-I2C and misc-device ABIs, and
+lifecycle. Source reproduces the exact 15-function/KCFI/call sets, exact 27
+MODVERSIONs and `will_ldo_vout`/`will_ldo_en` CRCs. Provider and downstream
+`custom_ldo` exact-GKI builds are clean and the fail-closed verifier passes
+50/50. The chain `custom_ldo_wl2868 → custom_ldo` is source-ready. Runtime rail
+or GPIO testing remains prohibited by this closure task and is not an RE
+residual.
 
 ## Phase 4 custom_ldo update (2026-09-08)
 

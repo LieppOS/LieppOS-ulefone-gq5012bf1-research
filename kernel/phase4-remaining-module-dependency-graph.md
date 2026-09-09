@@ -121,8 +121,8 @@ instead resolves to the MT6375 OTG regulator through `extcon-mtk-usb`.
 ## 3. Cluster: CAMERA POWER
 
 ```
-   custom_ldo_wl2868 [recon/residual] V:101   will,wl2864c_pmu @ I2C 11-0029
-   27 kernel imports · 0 intermodule · 2 exports (export CRCs exact)
+   custom_ldo_wl2868 [recon-complete] V:101   will,wl2864c_pmu @ I2C 11-0029
+   27 kernel imports · 0 intermodule · 2 exports (ABI/behavior complete)
             │
             │ 2 symbols (will_ldo_en, will_ldo_vout)
             ▼
@@ -137,10 +137,11 @@ instead resolves to the MT6375 OTG regulator through `extcon-mtk-usb`.
 Load neighbourhood: `V:101 custom-ldo-wl2868 → V:102 custom-ldo →
 V:103 mtk-cam-isp7sp → V:104 imgsensor-glue → V:105 imgsensor`.
 
-This is a strict three-link chain and **the hard gate on cameras**. The
-`custom_ldo` shim is now reconstructed completely: both forwarding functions
-are byte-identical and its consumer/provider CRCs are exact. The WL2868
-hardware provider retains separate documented structural residuals.
+This is a strict three-link chain and **the hard gate on cameras**. Both power
+nodes are now source-ready: `custom_ldo_wl2868` is
+`STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` with its fail-closed verifier at
+50/50, and `custom_ldo` has both forwarding functions byte-identical with exact
+consumer/provider CRCs. Neither node remains an RE target.
 
 **Recommended build order:** `custom_ldo_wl2868` → `custom_ldo` → (`imgsensor`
 as part of the platform forward-port programme). Never the other way round.
@@ -414,9 +415,16 @@ TIER 9  held on stock indefinitely: tkcore, tkcore_drv, microarray_fp_tee,
 | `hynitron` | 2 | `spi_tiny_co5300_lcd` | 2 |
 | `bt_drv_6878` | 1 | (none in the stock set) | 0 |
 
-## Phase 4 custom_ldo_wl2868 update (2026-09-08)
+## Phase 4 custom_ldo_wl2868 closure (authoritative)
 
-The provider node is structurally reconstructed and its two exports have exact CRC parity with the stock provider. Follow-up `custom_ldo` work proves its voltage argument is a microvolt setpoint, closing that provider residual; probe/data-layout and whole-function/source parity residuals remain.
+The provider is `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE.
+The stock oracle establishes the exact 112-byte state, probe/GPIO order and
+errors, hardcoded 0x82 selector and forced 0x2f transfer address, both voltage
+families, enable RMW/bit-7 rule, misc raw-register ABI, raw-I2C topology, and
+lifecycle. The reconstruction has the exact 15-function/KCFI/call sets, exact
+27 MODVERSIONs and two export CRCs; provider/downstream exact-GKI builds are
+clean and the verifier passes 50/50. The camera power edge
+`custom_ldo_wl2868 → custom_ldo` is source-ready.
 
 ## Phase 4 custom_ldo update (2026-09-08)
 

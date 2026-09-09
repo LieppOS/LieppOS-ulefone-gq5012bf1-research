@@ -6,7 +6,7 @@ practical first source-based LieppOS custom-kernel boot on Slot B.
 This is a **triage** document. Its original baseline started no new reverse
 engineering and touched no hardware. It now carries append-only/current-status
 updates from later dedicated reconstruction tasks; `custom_ldo` and
-`sc851x_charger` are complete. All device evidence remains static/read-only.
+`sc851x_charger` are complete; `custom_ldo_wl2868` is also behaviorally complete and frozen for RE. All device evidence remains static/read-only.
 
 Baseline (unchanged):
 
@@ -30,8 +30,8 @@ Machine-readable form of this table: `kernel/phase4-remaining-module-triage.tsv`
 | DIRECT_SOURCE         |     0 |
 | SOURCE_DELTA          |     2 |
 | FORWARD_PORT          |     7 |
-| SOURCE_RECONSTRUCTED  |     2 |
-| RE_REQUIRED           |     4 |
+| SOURCE_RECONSTRUCTED  |     5 |
+| RE_REQUIRED           |     1 |
 | BLOCKED_WITH_EXACT_MISSING_EVIDENCE | 1 |
 | STOCK_TRANSITION_BLOB |     7 |
 | NOT_REQUIRED          |     0 |
@@ -52,13 +52,15 @@ Machine-readable form of this table: `kernel/phase4-remaining-module-triage.tsv`
 
 ## 3. Summary — source confidence
 
-| source confidence      | count |
-| ---------------------- | ----: |
-| EXACT_SOURCE           |     7 |
-| STRONG_SOURCE_MATCH    |     1 |
-| RELATED_SOURCE         |     0 |
-| STRUCTURAL_DONOR_ONLY  |     4 |
-| NO_USEFUL_SOURCE       |    11 |
+| source confidence | count |
+|---|---:|
+| EXACT_SOURCE | 7 |
+| STRONG_SOURCE_MATCH | 1 |
+| STRUCTURAL_DONOR_ONLY | 1 |
+| NO_USEFUL_SOURCE | 10 |
+| NO_USEFUL_SOURCE / ORACLE_RECONSTRUCTED | 2 |
+| ORACLE_RECONSTRUCTION_PROVIDER_ABI_BLOCKED | 1 |
+| NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE | 1 |
 
 ## 4. Summary — stock transition-blob safety
 
@@ -178,7 +180,7 @@ view below carries the decision-relevant columns.
 | `fingerprint` | vendor_boot platform | yes (idx 181) | yes (idx 185) | 18 / 0 / 10 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | RE_REQUIRED | P2_MAJOR_FEATURE |
 | `microarray_fp_tee` | vendor_boot platform | yes (idx 182) | yes (idx 186) | 59 / 7 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P2_MAJOR_FEATURE |
 | `custom_ldo` | vendor_dlkm | yes (idx 102) | no | 1 / 2 / 2 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED** | P2_MAJOR_FEATURE |
-| `custom_ldo_wl2868` | vendor_dlkm | yes (idx 101) | no | 27 / 0 / 2 | STRUCTURAL_DONOR_ONLY | YES_SAFE_TRANSITION | RE_REQUIRED | P2_MAJOR_FEATURE |
+| `custom_ldo_wl2868` | vendor_dlkm | yes (idx 101) | no | 27 / 0 / 2 | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | YES_SAFE_TRANSITION | **SOURCE_RECONSTRUCTED** | P2_MAJOR_FEATURE |
 | `yft_gpio_keys` | vendor_boot platform | yes (idx 179) | yes (idx 183) | 65 / 0 / 0 | **STRONG_SOURCE_MATCH** | YES_SAFE_TRANSITION | SOURCE_DELTA | P3_OPTIONAL_FEATURE |
 | `spi_tiny_co5300_lcd` | vendor_dlkm | yes (idx 191) | no | 54 / 4 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
 | `hynitron` | vendor_dlkm | on demand (init.touch.rc) | no | 51 / 3 / 2 | STRUCTURAL_DONOR_ONLY | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
@@ -599,11 +601,10 @@ traffic is TEE-mediated and therefore not observable from the Linux side).
 
 ## 14. Modules that genuinely require reverse engineering
 
-Two still require hardware reverse engineering. VTDR6115 panel logic is reconstructed but separately blocked at the provider ABI. `custom_ldo`, `sc851x_charger`, `sc8571_charger`, and now `sh366003_fg` have graduated from this list after stock-oracle reconstruction:
+One remains: `fingerprint`. VTDR6115 panel logic is reconstructed but separately blocked at the provider ABI. `custom_ldo_wl2868`, `custom_ldo`, `sc851x_charger`, `sc8571_charger`, and `sh366003_fg` have graduated after stock-oracle reconstruction.
 
 | module | why no source path exists | difficulty |
 |---|---|---|
-| `custom_ldo_wl2868` | Sony donor is a regulator driver; stock is a chardev+export driver | LOW_TO_MODERATE |
 | `fingerprint` | Ulefone/YFT-only pinctrl glue | LOW |
 
 ## 15. Modules that have usable source and need only build / forward-port work
@@ -666,8 +667,8 @@ NEXT  4  SOURCE_BUILD    re-land the frozen reconstructions (st21nfc, mtk_disp_n
                          aw36518_v2, aw883xx_driver, yft_tpd_gesture, ft3680)
 NEXT  5  ABI_SOURCE      panel_ky_vtdr6115_dphy_cmd — panel logic reconstructed;
                          obtain exact mtk_panel_ext/mediatek-drm type graph for 7 CRCs
-DONE  6  RE              custom_ldo: byte-identical wrappers, exact ABI/build;
-                         custom_ldo_wl2868 remains structurally reconstructed with residuals
+DONE  6  RE              custom_ldo_wl2868: STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE,
+                         50/50 verifier; custom_ldo: byte-identical wrappers, exact ABI/build
 DONE  7  RE              sc8571_charger and sc851x_charger reconstructed; static parity/build PASS
 DONE  8  RE              sh366003_fg reconstructed with documented residuals; exact
                          stock yft_devinfo CRCs used; 527-check verifier PASS
@@ -732,9 +733,9 @@ are byte-identical, KCFI is exact, all three import CRCs and both export CRCs
 match, relocation parity is 10/10, and exact-GKI `BUILD_RC=0` with unresolved
 symbols 0. The build consumes the reconstructed WL2868 provider's real
 `Module.symvers`. Stock `imgsensor` call sites additionally prove the forwarded
-voltage value is in microvolts. Only generated srcversion/vermagic provenance
-differs; the shim itself is no longer an RE task. The WL2868 provider retains
-its separate documented structural residuals.
+voltage value is in microvolts. Only generated srcversion/vermagic provenance differs; the shim itself is no
+longer an RE task. The WL2868 provider is also now complete and FROZEN FOR RE;
+see §24.
 
 ---
 
@@ -750,3 +751,17 @@ probe retains a reported compiler-local text delta. DT/live identity is
 resolved as SC8510 at `6-0069`; the `@6f` suffix is stale. Separate DT,
 extcon, APK and symbol evidence proves uSmart VBUS/control uses USB1 and MT6375
 OTG, not SC851x. Hardware runtime testing remains excluded by the safety policy.
+
+---
+
+## 24. Phase 4 `custom_ldo_wl2868` closure
+
+`custom_ldo_wl2868` is `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and **FROZEN
+FOR RE**. The stock oracle closes its exact 112-byte state, probe/GPIO/error
+order, hardcoded 0x82 selector and forced 0x2f transfer address, voltage and
+enable transformations, misc raw-register ABI, raw-I2C semantics, and
+lifecycle. Reconstruction has the exact 15-function/KCFI/call sets, exact 27
+MODVERSIONs and both export CRCs; exact-GKI provider/downstream builds are clean
+and the fail-closed verifier passes 50/50. The camera-power chain
+`custom_ldo_wl2868 → custom_ldo` is source-ready. Runtime hardware validation
+remains intentionally excluded.

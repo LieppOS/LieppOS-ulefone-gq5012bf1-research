@@ -1,10 +1,11 @@
 chip	register	operation	meaning	evidence
-WL2864C/WL2868C	0x00	read	chip identity byte	stock wl2864c_probe / i2c_transfer
-WL2864C/WL2868C	0x03	read/write	LDO1 VOUT	stock vout index ldo_num+2
-WL2864C/WL2868C	0x04	read/write	LDO2 VOUT	stock vout index ldo_num+2
-WL2864C/WL2868C	0x05	read/write	LDO3 VOUT	stock vout index ldo_num+2
-WL2864C/WL2868C	0x06	read/write	LDO4 VOUT	stock vout index ldo_num+2
-WL2864C/WL2868C	0x07	read/write	LDO5 VOUT	stock vout index ldo_num+2
-WL2864C/WL2868C	0x08	read/write	LDO6 VOUT	stock vout index ldo_num+2
-WL2864C/WL2868C	0x09	read/write	LDO7 VOUT	stock vout index ldo_num+2
-WL2864C/WL2868C	0x0e	read/write	LDO enable bitmap; WL2868C preserves bit7 when resulting bitmap is zero	stock wl286[48]c_ldo_en
+WL2864C/WL2868C	0x00	DT metadata only	identity register declared by DT; stock probe does not read it	merged DT + stock probe no i2c_transfer
+WL2864C/WL2868C	0x03	read/write	LDO1 VOUT	stock vout mapping ldo_num+2
+WL2864C/WL2868C	0x04	read/write	LDO2 VOUT	stock vout mapping ldo_num+2
+WL2864C/WL2868C	0x05	read/write	LDO3 VOUT	stock vout mapping ldo_num+2
+WL2864C/WL2868C	0x06	read/write	LDO4 VOUT	stock vout mapping ldo_num+2
+WL2864C/WL2868C	0x07	read/write	LDO5 VOUT	stock vout mapping ldo_num+2
+WL2864C/WL2868C	0x08	read/write	LDO6 VOUT	stock vout mapping ldo_num+2
+WL2864C/WL2868C	0x09	read/write	LDO7 VOUT	stock vout mapping ldo_num+2
+WL2864C	0x0e	read/write	LDO enable bitmap; selected bit changed, all other bits preserved	stock wl2864c_ldo_en
+WL2868C	0x0e	read/write	LDO enable bitmap; after selected-bit RMW, zero iff entire intermediate byte zero, else OR bit7	stock wl2868c_ldo_en

@@ -28,7 +28,7 @@
 > | `fingerprint` | `RELATED_SOURCE_HIT`, 97 hits | **NO_USEFUL_SOURCE / RE_REQUIRED** — the 97 hits are netfilter-OSF / x509 / unrelated-DTS noise and are rejected. Real identifier is `mediatek,yft_finger`; the module is 16 functions of YFT pinctrl/GPIO glue. |
 > | `tkcore` | `STRONG_API_HIT`, 60 hits | **NO_USEFUL_SOURCE / STOCK_TRANSITION_BLOB** — the 60 hits are GlobalPlatform `TEEC_*` API-name collisions with MicroTrust TEEI (`drivers/tee/teei/510/…`). `grep -rl 'trustkernel\|tkcore'` over the Nothing MT6878 trees and the MiCode vendor-reference BSPs returns **zero** files. |
 > | `panel_ky_vtdr6115_dphy_cmd` | `NO_EXACT_HIT` | **STRUCTURAL_DONOR_ONLY / RE_REQUIRED** — donor located: `MotorolaMobilityLLC/kernel-mtk@0087a407394abd3ab073e1a2df164f1187959a3f` `dsi-panel-mot-csot-vtdr6115-655-fhdp-dphy-vdo-144hz.c` (CSOT 144 Hz VDO vs Ulefone KY 120 Hz cmd) |
-> | `custom_ldo_wl2868` | `NO_EXACT_HIT` | **STRUCTURAL_DONOR_ONLY / RE_REQUIRED** — donor located: `sonyxperiadev/kernel@7e42db1690b55e374fd6a6af536684a746bac614` `drivers/regulator/wl2868c-regulator.{c,h}` (regulator-framework model; stock is a chardev+export model). Nothing ships only `cust_wl2864c.dtsi`; the `wl2864c.ko` target in `mgk_64_k61.bzl` has **no** source in the published tree. |
+> | `custom_ldo_wl2868` | `NO_EXACT_HIT` | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE / FROZEN FOR RE** — clean-room stock-oracle source closes all hardware-significant behavior; exact 15-function/KCFI/call sets, 27 MODVERSIONs, export CRCs, clean provider/downstream builds, and 50/50 verifier. Sony remains structural-only; Nothing remains DT-only. |
 > | `custom_ldo` | `NO_EXACT_HIT` | no donor found, but **STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION** completed from stock ELF: 2/2 functions byte-identical, exact CRC/KCFI/relocations, exact-GKI build clean |
 > | `sc851x_charger` | `NO_EXACT_HIT` | no donor found, but **SOURCE_RECONSTRUCTED** from stock oracle: 11 exact function sizes/KCFI IDs, byte-identical data/strings/MODVERSION records, exact relocation target/type sequence, clean exact-GKI build |
 > | `sc8571_charger` | absent from the original 22-entry scan | **SOURCE_RECONSTRUCTED** from stock oracle: dual master/slave topology, 58 fields, 40 DT settings, 14 exact charger-class callback slots, exact provider CRC/KCFI/`__versions`, clean exact-GKI build and bounded static parity pass |
@@ -37,7 +37,7 @@
 >
 > Modules resolved since this scan and therefore no longer unresolved:
 > `aw883xx_driver`, `aw36515`, `aw36518`, `aw36518_v2`, `leds_rgb_aw2013`,
-> `connfem`, `custom_ldo`, `sc851x_charger`, `sc8571_charger`.
+> `connfem`, `custom_ldo_wl2868`, `custom_ldo`, `sc851x_charger`, `sc8571_charger`.
 >
 > Modules **missing** from this 22-entry scan that the triage proved are also
 > still unresolved: `microarray_fp_tee`, `spi_tiny_co5300_lcd`, `hynitron`,
@@ -457,13 +457,14 @@ software/control path. See `phase4-sc851x-reconstruction.md` and `usmart/`.
 ## custom_ldo_wl2868
 
 - locations: `vendor_dlkm`
-- result: **NO_EXACT_HIT**
-- evidence kinds: ``
-- exact hit records: 0
+- original source-scan result: **NO_EXACT_HIT**
+- closure result: **STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE — FROZEN FOR RE**
+- exact public-source hit records: 0 (`NO_PUBLIC_SOURCE_FOUND` after final bounded pass)
 - description: `WL2864 & WL2868 Power IC Driver`
-- aliases: ``
-
-- No exact source hit found.
+- stock-oracle closure: exact 15-function/KCFI/call sets, exact 27 MODVERSIONs,
+  exact two export CRCs, exact state/probe/GPIO/variant/voltage/enable/I2C/misc/
+  lifecycle contracts, clean exact-GKI/downstream builds, verifier 50/50.
+- authoritative report: `phase4-custom-ldo-wl2868-reconstruction.md`.
 
 ## conninfra
 

@@ -1286,5 +1286,5 @@ forward-ported onto that baseline.
 
 ## Phase 4 custom_ldo_wl2868 completion update (2026-09-08)
 
-The stock provider was frozen and reconstructed in a separate exact-GKI harness. The two consumer export CRCs are reproduced without patching; the safe classification remains `STRUCTURAL_AND_BEHAVIORAL_APPROXIMATION` / `PRECISELY BLOCKED` because live validation and exact consumer voltage units are unavailable. See `phase4-custom-ldo-wl2868-reconstruction.md`.
+The stock provider was frozen and reconstructed in a separate exact-GKI harness. Closure recovered the complete stock-visible probe, GPIO, voltage, enable, misc-device, raw-I2C, state-layout, and lifecycle contracts; stock imgsensor evidence proves microvolt units. Both consumer export CRCs are reproduced without patching. The authoritative classification is now `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`, and WL2868 is frozen for further RE. See `phase4-custom-ldo-wl2868-reconstruction.md`.
 

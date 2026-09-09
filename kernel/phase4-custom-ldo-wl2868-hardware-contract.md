@@ -1,11 +1,11 @@
-# Hardware contract
+# Hardware contract — closure summary
 
-- IC family: Will Semiconductor WL2864C/WL2868C-compatible seven-output camera LDO.
-- Stock I2C bus/address from board evidence: bus 11, address `0x29` (7-bit).
-- Stock driver identity: `wl2864c`; module description `WL2864 & WL2868 Power IC Driver`.
-- Raw register transactions use `i2c_transfer`; no regulator framework or regmap imports are present.
-- Chip selection is by the register-0 identity byte: dispatch accepts `0x01` as WL2864C and `0x82` as WL2868C. Exact reset-time identity sequence is preserved in the disassembly evidence; no live read/write was performed.
-- LDO vset registers are `0x03..0x09`; enable register is `0x0e`.
-- GPIOs are consumer names `reset`, `vin1_en`; a separate integer `vin2` GPIO is stored for the exported/internal `wl2864c_vin2_power` path.
+- Family: Will Semiconductor WL2864C/WL2868C-compatible seven-output camera PMU.
+- Board enumeration: I2C bus 11, DT address 0x29, compatible `will,wl2864c_pmu`, live-bound as `11-0029` in the frozen snapshot.
+- Operational stock behavior: probe overwrites `client->addr` with 0x2f and all raw `i2c_transfer` messages use that mutated address.
+- Probe does not read identity register 0x00. It hardcodes software dispatch byte 0x82. The DT declares ID metadata 0x01/0x82, which supports WL2868C board intent but is not a physical-die read.
+- VOUT registers are 0x03–0x09; enable is 0x0e.
+- Stock uses raw I2C, exported `will_ldo_vout`/`will_ldo_en`, and a misc character device—not regmap or Linux regulator children.
+- GPIO consumers are optional `vin1` and required `reset`; the misleading log calls `vin1` `vin1_en`. A separate zero-default integer VIN2 path uses `gpio_to_desc` and `gpiod_set_raw_value` without ownership.
 
-Safety: this is static evidence only. No I2C transfer, GPIO transition, module insertion/removal, camera open, or rail change was attempted.
+Authoritative contracts: `phase4-custom-ldo-wl2868-{probe,gpio,chip-variant,voltage,enable,i2c,lifecycle}-contract.md`. No live hardware operation was performed.

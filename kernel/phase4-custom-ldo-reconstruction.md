@@ -167,13 +167,17 @@ There are **no instruction-level residuals**. Raw comparison:
 Neither implementation validates, logs, accesses state, nor performs hardware
 I/O itself.
 
-# WL2868 residual impact
+# WL2868 provider closure
 
-This task closes the former WL2868 voltage-unit question: `value` is a
+This task closed the former WL2868 voltage-unit question: `value` is a
 microvolt setpoint, proven through stock imgsensor's shared custom/regulator
-backend flow. The WL2868 provider's classification is not otherwise promoted:
-its separate probe/data-layout and whole-function/source parity residuals remain,
-and live hardware validation is prohibited.
+backend flow. The subsequent provider closure now promotes
+`custom_ldo_wl2868` to `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN
+FOR RE: probe/data layout, GPIO, variant dispatch, voltage/enable arithmetic,
+raw-I2C, misc ABI, lifecycle, exact function/KCFI/call sets, MODVERSIONs and
+export CRCs are closed, with clean provider/downstream builds and a 50/50
+verifier. The chain `custom_ldo_wl2868 → custom_ldo` is source-ready; live
+hardware validation remains prohibited by policy.
 
 # Residual differences
 

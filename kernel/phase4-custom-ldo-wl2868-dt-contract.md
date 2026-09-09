@@ -1,21 +1,24 @@
-# Device-tree contract
+# Device-tree contract — corrected closure version
 
-Recovered directly from the stock `.rodata`/relocations and probe strings:
+Frozen merged board node:
 
 ```dts
-wl2864c@29 {
+pmu@wl2864c {
         compatible = "will,wl2864c_pmu";
         reg = <0x29>;
-        reset-gpios = <...>;
-        vin1_en-gpios = <...>;
-        /* vin2 is consumed as a GPIO number by wl2864c_vin2_power. */
+        id_reg = <0x00>;
+        id_val = <0x01>;
+        id_reg_2868c = <0x00>;
+        id_val_2868c = <0x82>;
+        reset-gpios = <... 0>; /* active high */
 };
 ```
 
-- OF match table contains `will,wl2864c_pmu` and terminates with an empty entry.
-- I2C ID table contains `wl2864c`; the driver name/string is also `wl2864c`.
-- Probe requests GPIO consumers named exactly `reset` and `vin1_en` using `devm_gpiod_get` with output-high flags.
-- `vin2` is not present as an additional named gpiod import: the stock path loads a GPIO integer from its global data and calls `gpio_to_desc`, then `gpiod_set_raw_value`.
-- The stock `.rodata` contains misc name `wl2864c`; no regulator child-node contract was found.
+- OF table: `will,wl2864c_pmu`; I2C ID/driver/misc name: `wl2864c`.
+- Probe requests consumer `vin1` first with `GPIOD_OUT_HIGH`. The board node has no `vin1-gpios`, and this lookup failure is non-fatal. The stock error text misleadingly says `vin1_en`.
+- Probe then requests consumer `reset` with `GPIOD_OUT_HIGH`; the board supplies active-high `reset-gpios`.
+- No VIN2 DT property is parsed. The global integer remains zero after probe.
+- Stock parses none of the ID properties, performs no ID register read, forces `client->addr=0x2f`, and hardcodes software ID 0x82.
+- The bus/address declaration remains 11/0x29 for device enumeration; the forced 0x2f is the operational transfer address.
 
-The address 0x29 and bus 11 are board-level evidence from the frozen research tree; the module itself only encodes the driver/OF contract and does not encode the bus number.
+No regulator child-node contract exists. Full evidence: `phase4-custom-ldo-wl2868-probe-contract.md`, `-gpio-contract.md`, and `-chip-variant-contract.md`.
