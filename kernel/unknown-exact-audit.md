@@ -32,7 +32,8 @@
 > | `custom_ldo` | `NO_EXACT_HIT` | no donor found, but **STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION** completed from stock ELF: 2/2 functions byte-identical, exact CRC/KCFI/relocations, exact-GKI build clean |
 > | `sc851x_charger` | `NO_EXACT_HIT` | no donor found, but **SOURCE_RECONSTRUCTED** from stock oracle: 11 exact function sizes/KCFI IDs, byte-identical data/strings/MODVERSION records, exact relocation target/type sequence, clean exact-GKI build |
 > | `sc8571_charger` | absent from the original 22-entry scan | **SOURCE_RECONSTRUCTED** from stock oracle: dual master/slave topology, 58 fields, 40 DT settings, 14 exact charger-class callback slots, exact provider CRC/KCFI/`__versions`, clean exact-GKI build and bounded static parity pass |
-> | `sh366003_fg`, `leds_ln2403`, `tkcore_drv` | `NO_EXACT_HIT` | unchanged — **NO_USEFUL_SOURCE** re-confirmed against the Nothing trees, the MiCode vendor-reference BSPs and public source indexes |
+> | `sh366003_fg` | `NO_EXACT_HIT` | no donor found, but **BEHAVIORAL_RECONSTRUCTION_WITH_DOCUMENTED_RESIDUALS** completed from the stock oracle: exact 39-function name set, 35-import/36-MODVERSION map, 8 KCFI IDs, embedded AFI bytes/state machine, exact-GKI build, and 527-check verifier PASS; stock `yft_devinfo` remains mandatory |
+> | `leds_ln2403`, `tkcore_drv` | `NO_EXACT_HIT` | unchanged — **NO_USEFUL_SOURCE** re-confirmed against the Nothing trees, the MiCode vendor-reference BSPs and public source indexes |
 >
 > Modules resolved since this scan and therefore no longer unresolved:
 > `aw883xx_driver`, `aw36515`, `aw36518`, `aw36518_v2`, `leds_rgb_aw2013`,
@@ -138,6 +139,11 @@
 - aliases: `of:N*T*Csh,sh366003;of:N*T*Csh,sh366003C*;i2c:sh366003`
 
 - No exact source hit found.
+- Subsequent stock-oracle reconstruction is complete at
+  **BEHAVIORAL_RECONSTRUCTION_WITH_DOCUMENTED_RESIDUALS**. The exact register,
+  unit, `3rd-gauge`, monitor, AFI/profile, YFT ABI, build, and verifier evidence
+  is indexed by `phase4-sh366003-reconstruction.md`. This preserves the
+  historical `NO_EXACT_HIT` result rather than reclassifying source provenance.
 
 ## connfem
 

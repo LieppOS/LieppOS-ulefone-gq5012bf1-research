@@ -1,0 +1,39 @@
+register	read_write	width	endianness	caller	mask_or_subcommand	scale	unit	semantic	confidence
+0x00	R/W	16	SMBus little-endian	fg_read_sbs_word; fg_gauge_unseal	control descriptor bit26; subcommand 0x0001; unseal keys	identity	raw	Control/ManufacturerAccess; device-ID subcommand; unseal-key port	PROVEN_FROM_STOCK
+0x06	R	16	SMBus little-endian	fg_read_ExtTemperature	none	raw - 2731	0.1 degC	pack/external temperature	PROVEN_FROM_STOCK
+0x08	R	16	SMBus little-endian	fg_read_Voltage	none	identity	mV	pack voltage	PROVEN_FROM_STOCK
+0x0a	R	16	SMBus little-endian	fg_monitor_workfunc	none	identity	bitfield	BatteryStatus	PROVEN_FROM_STOCK
+0x0c	R	16 signed	SMBus little-endian	fg_read_Current; fg_monitor_workfunc	sign bit	exposed=abs((s16)raw)*1000; log=(s16)raw	uA exposed / mA log	pack current (stock discards exposed sign)	PROVEN_FROM_STOCK
+0x10	R	16	SMBus little-endian	fg_monitor_workfunc	none	identity	mAh	remaining capacity	PROVEN_FROM_STOCK
+0x12	R	16	SMBus little-endian	fg_read_fcc	none	identity	mAh	full-charge capacity	PROVEN_FROM_STOCK
+0x28	R	16	SMBus little-endian	fg_read_IntTemperature	none	identity	raw	internal temperature diagnostic only	PROVEN_FROM_STOCK
+0x2a	R	16	SMBus little-endian	fg_monitor_workfunc	none	identity	cycles	cycle count	PROVEN_FROM_STOCK
+0x2c	R	16	SMBus little-endian	fg_read_SOC	none	identity	percent	relative state of charge	PROVEN_FROM_STOCK
+0x2e	R	16	SMBus little-endian	fg_monitor_workfunc	none	identity	percent	gauge-reported state of health (log only)	PROVEN_FROM_STOCK
+0x30	R	16	SMBus little-endian	fg_monitor_workfunc	none	identity	mV	charge voltage diagnostic VCHG	PROVEN_FROM_STOCK
+0x32	R	16	SMBus little-endian	fg_monitor_workfunc	none	identity	mA	charge current diagnostic ICHG	PROVEN_FROM_STOCK
+0x3e	R/W	16 or block	SMBus little-endian / raw bytes	fg_read_sbs_word; fg_read_block; AFI interpreter; update recovery	MAC command selector	identity	command/data	ManufacturerAccess/MAC command and raw block port	PROVEN_FROM_STOCK
+0x40	R	16 or block	SMBus little-endian / raw bytes	fg_read_sbs_word; fg_read_block	response to 0x3e selector	identity	response	MAC data response	PROVEN_FROM_STOCK
+0x60	W	block/raw	byte stream	AFI interpreter	embedded checksum/length pair	identity	bytes	AFI data-flash checksum/commit port	PROVEN_FROM_STOCK
+MAC:0x0021	W	16	SMBus little-endian	fg_update_workfunc	via 0x3e	identity	command	gauge run-state recovery command; stock log says gauge disable	PROVEN_FROM_STOCK
+MAC:0x0030	W	16	SMBus little-endian	fg_gauge_seal	via 0x3e	identity	command	seal	PROVEN_FROM_STOCK
+MAC:0x0041	W	16	SMBus little-endian	fg_update_workfunc	via 0x3e	identity	command	reset/run-state recovery	PROVEN_FROM_STOCK
+MAC:0x0046	R	16/block	MAC little-endian	probe; AFI final compare	via 0x3e/0x40 or raw 0x3e	identity	version	AFI version; embedded target 0x8cd3	PROVEN_FROM_STOCK
+MAC:0x004c	R	32-byte block	byte stream	probe	first 7 payload bytes	ASCII	text	manufacturer name	PROVEN_FROM_STOCK
+MAC:0x004d	R/W	2 bytes	MAC little-endian	probe; manufacture-date helpers; AFI	SBS date fields	identity	packed date	profile/manufacture date; required 0x5a93	PROVEN_FROM_STOCK
+MAC:0x004e	R	16	MAC little-endian	probe	none	identity	raw	serial number	PROVEN_FROM_STOCK
+MAC:0x0050	R	16	MAC little-endian	monitor	none	identity	bitfield	SafetyAlert	DONOR_NAME_CONFIRMED
+MAC:0x0051	R	16	MAC little-endian	monitor	none	identity	bitfield	SafetyStatus	DONOR_NAME_CONFIRMED
+MAC:0x0052	R	16	MAC little-endian	monitor	none	identity	bitfield	PFAlert	DONOR_NAME_CONFIRMED
+MAC:0x0053	R	16	MAC little-endian	monitor	none	identity	bitfield	PFStatus	DONOR_NAME_CONFIRMED
+MAC:0x0054	R	16	MAC little-endian	unseal/full-access checks; monitor	none	identity	bitfield	OperationStatus	PROVEN_FROM_STOCK
+MAC:0x0055	R	16	MAC little-endian	monitor	none	identity	bitfield	ChargingStatus	DONOR_NAME_CONFIRMED
+MAC:0x0056	R	16	MAC little-endian	monitor	none	identity	bitfield	GaugingStatus	DONOR_NAME_CONFIRMED
+MAC:0x0057	R	16	MAC little-endian	monitor	none	identity	bitfield	ManufacturingStatus	DONOR_NAME_CONFIRMED
+MAC:0x0060	R	32-byte block	byte stream	probe	first two u16 values are summed	identity	mV-like	max-voltage/configuration diagnostic	INFERRED
+MAC:0x0067	W	16	SMBus little-endian	fg_update_workfunc	via 0x3e	identity	command	lifetime/run-state enable recovery	INFERRED
+MAC:0x0071	R	32-byte block	byte stream	monitor	first two u16	identity	mV	DAStatus1 cell voltages	DONOR_NAME_CONFIRMED
+MAC:0x00c1	R	16	MAC little-endian	fg_update_workfunc	bits 14,15	identity	bitfield	OEM/gauge run-state flags	PROVEN_FROM_STOCK
+MAC:0x00c5	R	32-byte block	byte stream	fg_update_workfunc	none	identity	bytes	post-update verification block	PROVEN_FROM_STOCK
+MAC:0x40d9	R	2-byte block	byte stream	probe	2 bytes	ASCII	firmware/version text fragment	PROVEN_FROM_STOCK
+AFI:data	W	variable 2..34 bytes	raw byte stream	file_decode_process	I2C address 0x55, regs 0x3e/0x60/0x00	embedded	bytes	104 exact AFI writes; see phase4-sh366003-afi-records.tsv	PROVEN_FROM_STOCK

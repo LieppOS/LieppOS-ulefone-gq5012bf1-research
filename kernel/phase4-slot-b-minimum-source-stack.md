@@ -140,7 +140,7 @@ rear touch, rear display, camera sensors and motion sensors simultaneously.
 |--:|---|---|---|---|
 | 1 | `panel_ky_vtdr6115_dphy_cmd` | ABI_SOURCE | BLOCKED_WITH_EXACT_MISSING_EVIDENCE | panel logic reconstructed; exact provider type graph needed for 7 CRCs |
 | 2 | `custom_ldo_wl2868` | SOURCE_NOW | RE_REQUIRED | camera/sensor rails; voltage unit now proven, other provider residuals remain |
-| 4 | `sh366003_fg` | SOURCE_NOW | RE_REQUIRED | `3rd-gauge`; `P1` |
+| 4 | `sh366003_fg` | DONE | SOURCE_RECONSTRUCTED | `3rd-gauge`; behavioral reconstruction with documented residuals; exact stock YFT ABI, exact AFI image, exact-GKI/verifier PASS |
 | 5 | `conninfra` | SOURCE_NOW | FORWARD_PORT | root of all connectivity |
 | 6 | `wmt_chrdev_wifi_connac2` | SOURCE_NOW | FORWARD_PORT | WLAN adaptor |
 | 7 | `wlan_drv_gen4m_6878` | SOURCE_NOW | FORWARD_PORT | Wi-Fi |

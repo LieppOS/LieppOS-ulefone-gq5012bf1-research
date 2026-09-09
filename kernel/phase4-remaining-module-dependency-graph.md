@@ -75,10 +75,10 @@ anything downstream — the risk is entirely upstream (its 7 imported CRCs).
                                      sc,sc8510 @ I2C 6-0069           → LEAF
                                      30 kernel imports · 0 intermodule
 
-   yft_devinfo [stock] ──3──────────▶ sh366003_fg   [stock] P:133 / R:131
-   (fuelgauge_fw_version,             sh,sh366003 @ I2C 9-0055        → LEAF
-    yft_fuelgauge_device_add,
-    yft_set_fuelgauge_device_used)
+   yft_devinfo [stock] ──3──────────▶ sh366003_fg [recon-pass] P:133 / R:131
+   (fuelgauge_fw_version,             sh,sh366003 @ I2C 9-0055        → symbol LEAF
+    yft_fuelgauge_device_add,         35 imports/36 MODVERSIONs exact; AFI exact
+    yft_set_fuelgauge_device_used)    → `3rd-gauge` → MT6375 battery/charger consumers
 
    mt6375_charger [port] ──1────────▶ yft_tiny2c_usb [stock] V:194   → LEAF
 ```
@@ -104,12 +104,15 @@ P:129 adapter_class → P:130 charger_class → P:131 mtk_charger_algorithm_clas
 3. re-land the completed `sc8571_charger` reconstruction against the proven
    `charger_class` CRC `0x36325d38` (exact-GKI build and bounded static
    ABI/behavioral parity pass),
-4. `sh366003_fg` (needs the stock `yft_devinfo` CRCs).
+4. re-land the completed `sh366003_fg` reconstruction against the exact stock
+   `yft_devinfo` CRCs (39/39 function names; import/MODVERSION/KCFI maps exact;
+   embedded AFI exact; 527-check verifier PASS).
 
-All four are leaves — nothing depends on them, so a mistake cannot cascade.
-SC851x and SC8571 are no longer RE tasks, although SC8571 still requires a
-stock-compatible `charger_class` provider and neither reconstruction was
-activated under the live-power safety boundary. SC851x provides static
+All four are symbol leaves, but SH366003 is a named power-supply provider used
+by the MT6375 battery/charging stack, so behavioral mistakes can propagate to
+Android battery reporting. SC851x, SC8571, and SH366003 are no longer RE tasks;
+SC8571 still requires a stock-compatible `charger_class` provider and none of
+the reconstructions was activated under the live-power safety boundary. SC851x provides static
 converter configuration/debug/IRQ behavior, not charger policy; uSmart VBUS
 instead resolves to the MT6375 OTG regulator through `extcon-mtk-usb`.
 
@@ -254,7 +257,7 @@ therefore KeyMint/Gatekeeper/FBE — will not come up.
        │3         │3         │3          │10         │3         │2         │1
        ▼          ▼          ▼           ▼           ▼          ▼          ▼
   focaltech_  hynitron   sh366003_fg  hf_manager  imgsensor  spi_tiny_  aw36518
-  ft3680      [stock]    [stock]      [port]      [port]     co5300_lcd [frozen]
+  ft3680      [stock]    [recon]      [port]      [port]     co5300_lcd [frozen]
   [frozen]                                                   [stock]
        ▲ 3 symbols
        │
@@ -268,7 +271,7 @@ therefore KeyMint/Gatekeeper/FBE — will not come up.
 
 | gapped export | consumer |
 |---|---|
-| `yft_fuelgauge_device_add` | `sh366003_fg` [stock] |
+| `yft_fuelgauge_device_add` | `sh366003_fg` [reconstructed consumer, stock provider CRC] |
 | `yft_touchpanel_device_add` | `hynitron` [stock] |
 | `yft_tinylcd_device_add` | `spi_tiny_co5300_lcd` [stock] |
 | `yft_camera_device_add` | `imgsensor` [port] |
@@ -377,7 +380,8 @@ TIER 2  yft_devinfo pinned to STOCK; all consumers linked to stock symvers
 TIER 3  retain stock mtk_panel_ext → mediatek_drm → panel ABI island;
         panel source waits for exact provider type graph (7 CRCs)
 TIER 4  custom_ldo_wl2868 → custom_ldo
-TIER 5  re-land completed sc851x_charger; charger_class verified → sc8571_charger → sh366003_fg
+TIER 5  re-land completed sc851x_charger; charger_class verified → completed sc8571_charger;
+        stock yft_devinfo verified → completed sh366003_fg
 TIER 6  connadp/connscp/ccci_md_all/aee_aed/device-apc-common
           → conninfra
           → wmt_chrdev_wifi_connac2 → wlan_page_pool → wlan_drv_gen4m_6878

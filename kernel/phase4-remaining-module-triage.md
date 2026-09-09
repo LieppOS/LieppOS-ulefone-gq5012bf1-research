@@ -126,7 +126,7 @@ proven still-unresolved:
 |--:|---|---|
 | 1 | `panel_ky_vtdr6115_dphy_cmd` | task list; `NO_EXACT_HIT` in the exact audit |
 | 2 | `leds_ln2403` | task list; `NO_EXACT_HIT` |
-| 3 | `sh366003_fg` | task list; `NO_EXACT_HIT` |
+| 3 | `sh366003_fg` | task list; historical `NO_EXACT_HIT`, subsequently stock-oracle reconstructed |
 | 4 | `custom_ldo` | task list; `NO_EXACT_HIT` |
 | 5 | `gps_drv_dl_v051` | task list; `RELATED_SOURCE_HIT` only |
 | 6 | `gps_pwr` | task list; `RELATED_SOURCE_HIT` only |
@@ -163,7 +163,7 @@ view below carries the decision-relevant columns.
 |---|---|---|---|---|---|---|---|---|
 | `panel_ky_vtdr6115_dphy_cmd` | vendor_boot platform | yes (idx 76) | yes (idx 74) | 38 / 7 / 0 | ORACLE_RECONSTRUCTION_PROVIDER_ABI_BLOCKED | YES_WITH_STOCK_PROVIDER_CHAIN | BLOCKED_WITH_EXACT_MISSING_EVIDENCE | P1_CORE_HARDWARE |
 | `yft_devinfo` | platform + vendor_dlkm | yes (vdlkm idx 193) | yes (idx 187) | 40 / 0 / 27 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | SOURCE_DELTA | P1_CORE_HARDWARE |
-| `sh366003_fg` | vendor_boot platform | yes (idx 133) | yes (idx 131) | 33 / 3 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | RE_REQUIRED | P1_CORE_HARDWARE |
+| `sh366003_fg` | vendor_boot platform | yes (idx 133) | yes (idx 131) | 33 / 3 / 0 | **NO_USEFUL_SOURCE / ORACLE_RECONSTRUCTED** | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED** | P1_CORE_HARDWARE |
 | `sc8571_charger` | vendor_boot platform | yes (idx 147) | yes (idx 145) | 41 / 1 / 0 | **NO_USEFUL_SOURCE / ORACLE_RECONSTRUCTED** | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED** | P1_CORE_HARDWARE |
 | `sc851x_charger` | vendor_boot platform | yes (idx 146) | yes (idx 144) | 30 / 0 / 0 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | **SOURCE_RECONSTRUCTED** | P1_CORE_HARDWARE |
 | `tkcore` | vendor_boot platform | yes (idx 99) | yes (idx 97) | 101 / 0 / 25 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | STOCK_TRANSITION_BLOB | **P0_BOOT_CRITICAL** |
@@ -394,22 +394,23 @@ explicitly out of scope; only the Linux-side ABI is frozen here.
 | alias | `i2c:sh366003`, `of:…Csh,sh366003` | none | none | none | none |
 | live binding | `/sys/bus/i2c/devices/9-0055` → `sh366003` | `/sys/bus/i2c/devices/6-0069` → `sc851x` | `11-0066` → `sc8571` (`sc8571-master`), `6-0067` → `sc8571` (`sc8571-slave`) | `/sys/bus/i2c/devices/11-0029` → `wl2864c` | `/sys/module/custom_ldo` |
 | providers | `yft_devinfo` (3) | none | `charger_class` (1) | none | `custom_ldo_wl2868` (2) |
-| consumers | none | none | none | `custom_ldo` | `imgsensor` |
-| userspace / HAL | `3rd-gauge` power supply; BatteryService reads MT6375 as primary | none observed | MediaTek `primary_dvchg` / `secondary_dvchg` charger_class names; thermal HAL `charger-cooler` | none | none |
+| consumers | MT6375 battery/charger and MediaTek charger-policy modules consume `3rd-gauge` by name | none | none | `custom_ldo` | `imgsensor` |
+| userspace / HAL | `3rd-gauge` is republished through the MT6375 `battery` power supply; Android BatteryService consumes `battery` | none observed | MediaTek `primary_dvchg` / `secondary_dvchg` charger_class names; thermal HAL `charger-cooler` | none | none |
 | runtime-active | **YES** — `fg_monitor_workfunc` every ~5 s (`RSOC=79, Volt=8397, Curr=194, Temp=375, SoH=94, cycnt=26, FCC=8594`) | **YES** — `irq/57-sc851x-irq` thread | **YES** — `sc8571_enable_adc` / `sc8571_get_adc_data` polling; `irq/49-sc8571-master-irq`, `irq/63-sc8571-slave-irq` | **YES** — bound | **YES** — loaded before `imgsensor` |
 | boot importance | none | none | none | none | none |
-| charging importance | secondary gauge only | SC8510 static converter protection/timing configuration; no charging-policy API | **high** — PD/PPS direct charge | none | none |
-| source candidate | none | none | OPLUS `oplus_sc8571_master.c` (register map only) | sonyxperiadev `wl2868c-regulator.c` (register/voltage map only) | none |
+| charging importance | **high battery-reporting importance** — pack values feed the public MT6375 `battery` node | SC8510 static converter protection/timing configuration; no charging-policy API | **high** — PD/PPS direct charge | none | none |
+| source candidate | no donor; stock-oracle reconstruction + exact embedded AFI | none | OPLUS `oplus_sc8571_master.c` (register map only) | sonyxperiadev `wl2868c-regulator.c` (register/voltage map only) | none |
 
 Answers to the specific questions asked:
 
 * **Does `sh366003_fg` control the `3rd-gauge` power supply seen elsewhere?**
-  Yes. `docs/battery-charging.md` records `SH366003 at I2C 9-0055, exported as
-  3rd-gauge`, and the live `thermal-power.txt` dump contains three `3rd-gauge`
-  references alongside three `mtk-gauge` references. The primary Android battery
-  path is MT6375 `mtk-gauge` at I2C 5-0034 and is **not** provided by this
-  module — so losing `sh366003_fg` degrades secondary gauge reporting but does
-  not remove the battery.
+  Yes, and it is not merely isolated secondary telemetry. Stock
+  `mt6375-battery.ko` and charger-policy modules call
+  `power_supply_get_by_name("3rd-gauge")`; the live public `battery` node mirrors
+  SH366003 SOC/current/cycle/FCC and normalizes SH voltage/FCC from mV/mAh to
+  µV/µAh. The MT6375 gauge remains the Android-facing publisher, but SH366003
+  pack data is an input to that path. Losing this module can therefore degrade
+  or remove authoritative Android battery reporting.
 * **Is `sc851x_charger` active in normal charging?** It is **bound and has a live
   IRQ thread**, but no `sc851x` event appears in the captured normal-charging
   dmesg window, whereas SC8571 is actively polled through `charger_class`.
@@ -598,13 +599,10 @@ traffic is TEE-mediated and therefore not observable from the Linux side).
 
 ## 14. Modules that genuinely require reverse engineering
 
-Five still require panel/hardware reverse engineering; VTDR6115 panel logic is now reconstructed but separately blocked at the provider ABI. `custom_ldo` graduated from this list after byte-identical two-function reconstruction:
+Two still require hardware reverse engineering. VTDR6115 panel logic is reconstructed but separately blocked at the provider ABI. `custom_ldo`, `sc851x_charger`, `sc8571_charger`, and now `sh366003_fg` have graduated from this list after stock-oracle reconstruction:
 
 | module | why no source path exists | difficulty |
 |---|---|---|
-| `sh366003_fg` | no public SH366003 Linux driver; vendor AFI upgrade engine | HIGH |
-| `sc8571_charger` | only an OPLUS-framework donor; MediaTek `charger_class` glue absent | MODERATE |
-| `sc851x_charger` | no public SC851x driver at all | LOW_TO_MODERATE |
 | `custom_ldo_wl2868` | Sony donor is a regulator driver; stock is a chardev+export driver | LOW_TO_MODERATE |
 | `fingerprint` | Ulefone/YFT-only pinctrl glue | LOW |
 
@@ -670,8 +668,9 @@ NEXT  5  ABI_SOURCE      panel_ky_vtdr6115_dphy_cmd — panel logic reconstructe
                          obtain exact mtk_panel_ext/mediatek-drm type graph for 7 CRCs
 DONE  6  RE              custom_ldo: byte-identical wrappers, exact ABI/build;
                          custom_ldo_wl2868 remains structurally reconstructed with residuals
-NEXT  7  RE              sc8571_charger, then sc851x_charger (charging)
-NEXT  8  RE              sh366003_fg  (needs stock yft_devinfo CRCs — see NEXT 3)
+DONE  7  RE              sc8571_charger and sc851x_charger reconstructed; static parity/build PASS
+DONE  8  RE              sh366003_fg reconstructed with documented residuals; exact
+                         stock yft_devinfo CRCs used; 527-check verifier PASS
 NEXT  9  FORWARD_PORT    conninfra   (root of the whole connectivity cluster)
 NEXT 10  FORWARD_PORT    wmt_chrdev_wifi_connac2, then wlan_drv_gen4m_6878
 NEXT 11  FORWARD_PORT    bt_drv_6878

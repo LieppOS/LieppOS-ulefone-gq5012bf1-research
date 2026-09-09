@@ -1102,8 +1102,18 @@ class of problem already seen and solved for ST21 (donor 2.2.0.15 vs stock
 
 ### Modules that genuinely require reverse engineering
 
-Four remain: `sh366003_fg`, `sc8571_charger`, `custom_ldo_wl2868`,
-`fingerprint`.
+Two remain: `custom_ldo_wl2868` and `fingerprint`.
+
+`sh366003_fg` is now reconstructed from the frozen stock oracle at
+`BEHAVIORAL_RECONSTRUCTION_WITH_DOCUMENTED_RESIDUALS`: 39/39 named functions,
+35/35 exact imports, all 36 MODVERSIONs and 8 global KCFI IDs match, the
+2,142-byte AFI image is byte-exact, the 527-check behavioral verifier passes,
+and the exact-GKI build is clean. It must still use the **stock** `yft_devinfo`
+provider because `yft_fuelgauge_device_add` remains one of that provider's
+gapped historical CRCs. See `phase4-sh366003-reconstruction.md`.
+
+`sc8571_charger` is likewise no longer an RE task; its source reconstruction
+and static ABI/behavioral parity pass are documented separately.
 
 `custom_ldo` is now complete at `STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION`:
 both functions are byte-identical, all import/export CRCs and KCFI IDs match,
