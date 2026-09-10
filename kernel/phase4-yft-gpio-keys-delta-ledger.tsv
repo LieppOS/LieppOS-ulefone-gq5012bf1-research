@@ -1,0 +1,14 @@
+id	area	stock_evidence	donor_behavior	stock_behavior	required_change	hardware_significance	abi_significance	confidence	status
+D01	module identity	modinfo name=yft_gpio_keys; filename/load lists	gpio_keys.ko/name gpio_keys	yft_gpio_keys.ko/name yft_gpio_keys	build object as yft_gpio_keys.o	no	yes	EXACT	CLOSED
+D02	platform driver	.rodata.str1.1 and .data relocation target	name gpio-keys	name yft-gpio-keys	change driver .name	yes	yes	EXACT	CLOSED
+D03	OF match	OF table/module aliases	compatible gpio-keys	compatible yft-gpio-keys	change OF compatible	yes	yes	EXACT	CLOSED
+D04	default debounce	probe immediate/source-shape proof	missing property defaults 5 ms	missing property defaults 16 ms	change default to 16	yes	no	EXACT	CLOSED
+D05	IRQ masking	stock ISR import/call disable_irq_nosync	does not mask before debounce	disables current IRQ immediately	add disable_irq_nosync at ISR entry	yes	yes (imports)	EXACT	CLOSED
+D06	IRQ re-enable	stock debounce completion calls enable_irq	does not re-enable	completion re-enables after report/sync/relax	add enable_irq	yes	no new import	EXACT	CLOSED
+D07	event diagnostics	_printk relocations and exact strings	no per-event printk	logs sampled state and pressed/released	add exact printk calls	no	yes (import)	EXACT	CLOSED
+D08	edge rearm	stock irq_set_irq_type calls/constants after sample	keeps both-edge request	logical 1 arms rising; logical 0 arms falling	add exact state-dependent rearm	yes	no	EXACT	CLOSED
+D09	keycodes/topology	DT has two children code 0x3b/0x3c; driver is DT-generic	generic DT-driven	generic DT-driven; no hard-coded F1/F2 logic	no source change	yes	no	EXACT	CLOSED
+D10	PM/wakeup	stock/rebuild PM bytes exact	exact-GKI behavior	same behavior	no change	yes	no	EXACT	CLOSED
+D11	input ABI	stock/rebuild input/probe bytes and rodata exact	exact-GKI behavior	same except driver-derived name	identity change already applied	yes	yes	EXACT	CLOSED
+D12	long/multi/action logic	complete function/object/import/string inventory	absent	absent; Android YftPhoneWindowManager consumes F1/F2	none	no	no	EXACT	CLOSED
+D13	build provenance metadata	.modinfo/.rodata.str/build-id	local exact-GKI workspace path/release string	vendor KMD source path and g945dff7 vermagic	document only; no ELF patching	no	no runtime behavior; CRC ABI exact	EXACT	DOCUMENTED_NONHARDWARE

@@ -117,6 +117,7 @@ core power. Adds the frozen reconstructions plus the `P1`/`P2` work.
 | `sc851x_charger` | SOURCE_NOW | `SOURCE_RECONSTRUCTED`; no-public-source oracle, exact-GKI build clean, all function sizes/KCFI/data/strings/MODVERSIONs and relocation target/type sequences match |
 | `sc8571_charger` | SOURCE_NOW | `SOURCE_RECONSTRUCTED`; exact-GKI build clean; exact provider CRC, KCFI, `__versions`, register/ADC tables and charger callback slots; bounded ABI/behavioral static parity PASS; needs stock-compatible `charger_class` |
 | `fingerprint` | SOURCE_NOW | `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`; FROZEN FOR RE; 16/16 function bytes/sizes/KCFI, 18/18 MODVERSIONs, 10/10 export CRCs, four exact MicroArray consumer edges, 39/39 verifier |
+| `yft_gpio_keys` | SOURCE_NOW | `SOURCE_DELTA_RECONSTRUCTION_EXACT`; FROZEN FOR RE; exact GPIO13/F1 and GPIO8/F2 contracts, 23/23 function bytes, 65/65 CRCs, 40/40 verifier |
 
 ### B.2 The `yft_devinfo` pin — mandatory for Level B
 
@@ -169,7 +170,6 @@ Plus the platform prerequisites named in the dependency graph:
 | `hynitron` | STOCK_TRANSITION | rear touch; `P3` |
 | `leds_ln2403` | STOCK_TRANSITION | camping light; `P3` |
 | `yft_tiny2c_usb` | STOCK_TRANSITION | thermal camera; `P3` |
-| `yft_gpio_keys` | STOCK_TRANSITION | `P3`; trivial to promote whenever wanted |
 
 ### Level B acceptance criteria
 
@@ -188,7 +188,7 @@ Everything we intend to replace from source. Promotes the Level-B holds:
 
 | module | label at Level C | blocker to clear |
 |---|---|---|
-| `yft_gpio_keys` | SOURCE_NOW | none — `STRONG_SOURCE_MATCH` against exact-GKI `drivers/input/keyboard/gpio_keys.c`; rename + small delta |
+| `yft_gpio_keys` | SOURCE_NOW | **closed** — `SOURCE_DELTA_RECONSTRUCTION_EXACT`, FROZEN FOR RE; pinned donor plus proven identity/default-debounce/IRQ/logging delta |
 | `leds_ln2403` | SOURCE_NOW | none technical — 0 exports, DT + sysfs ABI already fully recovered; clean-room rewrite |
 | `yft_tiny2c_usb` | SOURCE_NOW | none technical — 0 exports, DT + sysfs ABI recovered; pair with the ThermoVue userspace work |
 | `hynitron` | SOURCE_NOW | 65 functions incl. an embedded CST816D/CST816T firmware-update engine; must reproduce 2 export CRCs for `spi_tiny_co5300_lcd` |

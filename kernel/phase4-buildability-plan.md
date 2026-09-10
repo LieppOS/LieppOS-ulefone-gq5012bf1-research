@@ -1063,6 +1063,14 @@ The 16 named in the triage brief, plus 7 that were missing from it:
 `sc8571_charger`, `microarray_fp_tee`, `spi_tiny_co5300_lcd`, `hynitron`,
 `yft_gpio_keys`, `yft_tiny2c_usb`, `yft_devinfo`.
 
+> **Post-triage closure:** `yft_gpio_keys` is now
+> `SOURCE_DELTA_RECONSTRUCTION_EXACT`, `SOURCE_RECONSTRUCTED`, `SOURCE_NOW`,
+> and FROZEN FOR RE. Its exact-GKI reconstruction has 23/23 byte-identical
+> functions, 65/65 import/MODVERSION parity, exact DT/input/IRQ/debounce/PM
+> contracts, a clean build and a 40/40 fail-closed verifier. It is removed from
+> the active RE queue; the 23-module count above remains the historical input to
+> this triage.
+
 ### Dispositions
 
 | disposition           | count |

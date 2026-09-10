@@ -33,16 +33,17 @@
 > | `sc851x_charger` | `NO_EXACT_HIT` | no donor found, but **SOURCE_RECONSTRUCTED** from stock oracle: 11 exact function sizes/KCFI IDs, byte-identical data/strings/MODVERSION records, exact relocation target/type sequence, clean exact-GKI build |
 > | `sc8571_charger` | absent from the original 22-entry scan | **SOURCE_RECONSTRUCTED** from stock oracle: dual master/slave topology, 58 fields, 40 DT settings, 14 exact charger-class callback slots, exact provider CRC/KCFI/`__versions`, clean exact-GKI build and bounded static parity pass |
 > | `sh366003_fg` | `NO_EXACT_HIT` | no donor found, but **BEHAVIORAL_RECONSTRUCTION_WITH_DOCUMENTED_RESIDUALS** completed from the stock oracle: exact 39-function name set, 35-import/36-MODVERSION map, 8 KCFI IDs, embedded AFI bytes/state machine, exact-GKI build, and 527-check verifier PASS; stock `yft_devinfo` remains mandatory |
+> | `yft_gpio_keys` | absent from the original 22-entry scan | **SOURCE_DELTA_RECONSTRUCTION_EXACT / SOURCE_RECONSTRUCTED / FROZEN FOR RE** — pinned exact-GKI `gpio_keys.c` plus the recovered YFT identity, 16-ms default, IRQ mask/re-enable, edge-rearm and logging delta gives 23/23 byte-identical functions, 65/65 exact MODVERSIONs, a clean build and 40/40 verifier |
 > | `leds_ln2403`, `tkcore_drv` | `NO_EXACT_HIT` | unchanged — **NO_USEFUL_SOURCE** re-confirmed against the Nothing trees, the MiCode vendor-reference BSPs and public source indexes |
 >
 > Modules resolved since this scan and therefore no longer unresolved:
 > `aw883xx_driver`, `aw36515`, `aw36518`, `aw36518_v2`, `leds_rgb_aw2013`,
 > `connfem`, `custom_ldo_wl2868`, `custom_ldo`, `sc851x_charger`, `sc8571_charger`,
-> `fingerprint`.
+> `fingerprint`, `yft_gpio_keys`.
 >
-> Modules **missing** from this 22-entry scan that the triage proved are also
-> still unresolved: `microarray_fp_tee`, `spi_tiny_co5300_lcd`, `hynitron`,
-> `yft_gpio_keys`, `yft_tiny2c_usb`, `yft_devinfo`.
+> Modules **missing** from this 22-entry scan that remain unresolved after later
+> stock-oracle closures: `microarray_fp_tee`, `spi_tiny_co5300_lcd`, `hynitron`,
+> `yft_tiny2c_usb`, `yft_devinfo`.
 >
 > Transition-blob result applying to **all** of them: every one imports 0
 > unresolved and 0 CRC-mismatched kernel symbols against the exact Google GKI

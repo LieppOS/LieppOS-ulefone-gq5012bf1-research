@@ -7,8 +7,10 @@ This is a **triage** document. Its original baseline started no new reverse
 engineering and touched no hardware. It now carries append-only/current-status
 updates from later dedicated reconstruction tasks; `custom_ldo`,
 `sc851x_charger`, and `fingerprint` are complete; `custom_ldo_wl2868` and
-`fingerprint` are behaviorally complete and frozen for RE. All device evidence
-remains static/read-only.
+`fingerprint` are behaviorally complete and frozen for RE. `yft_gpio_keys` is
+also `SOURCE_DELTA_RECONSTRUCTION_EXACT`, `SOURCE_NOW`, and FROZEN FOR RE after
+23/23 byte-identical functions, 65/65 CRC parity and a 40/40 verifier. All
+device evidence remains static/read-only.
 
 Baseline (unchanged):
 
@@ -184,7 +186,7 @@ view below carries the decision-relevant columns.
 | `microarray_fp_tee` | vendor_boot platform | yes (idx 182) | yes (idx 186) | 59 / 7 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P2_MAJOR_FEATURE |
 | `custom_ldo` | vendor_dlkm | yes (idx 102) | no | 1 / 2 / 2 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED** | P2_MAJOR_FEATURE |
 | `custom_ldo_wl2868` | vendor_dlkm | yes (idx 101) | no | 27 / 0 / 2 | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | YES_SAFE_TRANSITION | **SOURCE_RECONSTRUCTED** | P2_MAJOR_FEATURE |
-| `yft_gpio_keys` | vendor_boot platform | yes (idx 179) | yes (idx 183) | 65 / 0 / 0 | **STRONG_SOURCE_MATCH** | YES_SAFE_TRANSITION | SOURCE_DELTA | P3_OPTIONAL_FEATURE |
+| `yft_gpio_keys` | vendor_boot platform | yes (idx 179) | yes (idx 183) | 65 / 0 / 0 | **STOCK_ORACLE_PROVEN** | SOURCE_NOW | **SOURCE_DELTA_RECONSTRUCTION_EXACT / FROZEN FOR RE** | CLOSED |
 | `spi_tiny_co5300_lcd` | vendor_dlkm | yes (idx 191) | no | 54 / 4 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
 | `hynitron` | vendor_dlkm | on demand (init.touch.rc) | no | 51 / 3 / 2 | STRUCTURAL_DONOR_ONLY | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
 | `leds_ln2403` | vendor_dlkm | yes (idx 192) | no | 30 / 2 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
@@ -615,20 +617,16 @@ complete by the fingerprint provider closure.
 
 ## 15. Modules that have usable source and need only build / forward-port work
 
-Nine:
+Eight remain in this historical category:
 
 `conninfra`, `wmt_chrdev_wifi_connac2`, `wlan_drv_gen4m_6878`, `bt_drv_6878`,
 `gps_drv_dl_v051`, `gps_pwr`, `gps_scp` (all `EXACT_SOURCE`, named bazel
-targets), plus `yft_gpio_keys` (`STRONG_SOURCE_MATCH` against the exact-GKI
-in-tree `drivers/input/keyboard/gpio_keys.c`) and `yft_devinfo`
-(`SOURCE_DELTA`; complete buildable source already exists, blocked only on one
-73-character enum text).
+targets), plus `yft_devinfo` (`SOURCE_DELTA`; buildable source exists but its
+remaining stock-oracle gap is tracked separately).
 
-`yft_gpio_keys` evidence: `MODULE_DESCRIPTION` is byte-identical
-(`"Keyboard driver for GPIOs"`); all 23 stock functions are a strict subset of
-the 27 upstream `gpio_keys_*` functions; the delta is the module/compatible
-rename `gpio-keys` → `yft-gpio-keys` (the `platform:gpio-keys` alias is
-retained) plus the wakeup-enable helpers being inlined/compiled out.
+`yft_gpio_keys` has graduated from this section: the untouched donor RED and
+recovered identity/default-debounce/IRQ-mask/re-enable/edge-rearm/logging delta
+produce all 23 stock function bytes and all 65 stock CRCs.
 
 ## 16. Safe to keep temporarily as stock transition blobs
 
@@ -640,7 +638,8 @@ All 23 are ABI-safe against the source-built exact GKI. The seven for which
 
 Of the 23, seven are `YES_SAFE_TRANSITION` (no module-to-module provider at
 all): `yft_devinfo`, `sc851x_charger`, `tkcore`, `wmt_chrdev_wifi_connac2`,
-`fingerprint`, `custom_ldo_wl2868`, `yft_gpio_keys`.
+`fingerprint`, `custom_ldo_wl2868`. `yft_gpio_keys` is no longer a transition
+blob candidate; it is `SOURCE_NOW`.
 
 ## 17. Modules not required
 
@@ -684,7 +683,8 @@ NEXT 11  FORWARD_PORT    bt_drv_6878
 NEXT 12  FORWARD_PORT    gps_drv_dl_v051, gps_pwr, gps_scp
 DONE 13  RE              fingerprint: STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE,
                          16/16 function bytes, 10/10 exports, 39/39 verifier
-NEXT 14  SOURCE_DELTA    yft_gpio_keys (low-risk, 0 exports, in-tree donor)
+DONE 14  SOURCE_NOW      yft_gpio_keys — exact donor delta, 23/23 function bytes,
+                         65/65 CRCs, 40/40 verifier, FROZEN FOR RE
 NEXT 15  TRANSITION_BLOB hold: microarray_fp_tee, tkcore, tkcore_drv,
                          spi_tiny_co5300_lcd, hynitron, leds_ln2403, yft_tiny2c_usb
 NEXT 16  SOURCE_DELTA    yft_devinfo — only if a YFT BSP drop supplying the missing

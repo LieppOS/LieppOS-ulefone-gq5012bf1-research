@@ -1,0 +1,70 @@
+--- common/drivers/input/keyboard/gpio_keys.c
++++ lieppos/yft-gpio-keys-recon/yft_gpio_keys.c
+@@ -379,12 +379,22 @@
+ 		return;
+ 	}
+ 
++	printk("[%s]  button=%s,state=%d\n", __func__, button->desc, state);
++
+ 	if (type == EV_ABS) {
+ 		if (state)
+ 			input_event(input, type, button->code, button->value);
+ 	} else {
+ 		input_event(input, type, *bdata->code, state);
+ 	}
++
++	if (state) {
++		printk("%s: key %s. \n", __func__, "pressed");
++		irq_set_irq_type(bdata->irq, IRQ_TYPE_EDGE_RISING);
++	} else {
++		printk("%s: key %s. \n", __func__, "released");
++		irq_set_irq_type(bdata->irq, IRQ_TYPE_EDGE_FALLING);
++	}
+ }
+ 
+ static void gpio_keys_debounce_event(struct gpio_button_data *bdata)
+@@ -394,6 +404,8 @@
+ 
+ 	if (bdata->button->wakeup)
+ 		pm_relax(bdata->input->dev.parent);
++
++	enable_irq(bdata->irq);
+ }
+ 
+ static void gpio_keys_gpio_work_func(struct work_struct *work)
+@@ -420,6 +432,8 @@
+ 
+ 	BUG_ON(irq != bdata->irq);
+ 
++	disable_irq_nosync(irq);
++
+ 	if (bdata->button->wakeup) {
+ 		const struct gpio_keys_button *button = bdata->button;
+ 
+@@ -783,7 +797,7 @@
+ 
+ 		if (fwnode_property_read_u32(child, "debounce-interval",
+ 					 &button->debounce_interval))
+-			button->debounce_interval = 5;
++			button->debounce_interval = 16;
+ 
+ 		button++;
+ 	}
+@@ -792,7 +806,7 @@
+ }
+ 
+ static const struct of_device_id gpio_keys_of_match[] = {
+-	{ .compatible = "gpio-keys", },
++	{ .compatible = "yft-gpio-keys", },
+ 	{ },
+ };
+ MODULE_DEVICE_TABLE(of, gpio_keys_of_match);
+@@ -1049,7 +1063,7 @@
+ 	.probe		= gpio_keys_probe,
+ 	.shutdown	= gpio_keys_shutdown,
+ 	.driver		= {
+-		.name	= "gpio-keys",
++		.name	= "yft-gpio-keys",
+ 		.pm	= &gpio_keys_pm_ops,
+ 		.of_match_table = gpio_keys_of_match,
+ 		.dev_groups	= gpio_keys_groups,

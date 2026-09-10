@@ -355,9 +355,10 @@ Both consumers stay stock through Level B.
                               sysfs: camplight_mode, leds_ctl,
                                      camplight_set_brightness
 
-   (kernel only) ───────────▶ yft_gpio_keys [stock] P:179 / R:183  → LEAF (0 exports)
-                              yft-gpio-keys · F1 (0x3b) / F2 (0x3c)
-                              donor: exact-GKI drivers/input/keyboard/gpio_keys.c
+   (kernel only) ───────────▶ yft_gpio_keys [SOURCE_NOW/EXACT] P:179 / R:183
+                              LEAF · 0 exports · FROZEN FOR RE
+                              GPIO13/F1 (0x3b) · GPIO8/F2 (0x3c), active-low
+                              23/23 function bytes · 65/65 CRCs · 40/40 verifier
 
    mt6375_charger [port] ──1─▶ yft_tiny2c_usb [stock] V:194    → LEAF (0 exports)
                               mediatek,yft_tiny2c_usb · thermal camera mode
@@ -365,13 +366,12 @@ Both consumers stay stock through Level B.
    leds_rgb_aw2013 [frozen] P:178 · aw36515/aw36518/aw36518_v2 [frozen]
 ```
 
-All four remaining members are **leaves with zero exports** — nothing in the
-kernel can depend on them, so they are individually removable and individually
-reconstructible in any order with no ABI risk to the rest of the stack.
+All four members are **leaves with zero exports**. `yft_gpio_keys` is now
+source-reconstructed and stock-oracle closed. The remaining stock-held leaves
+stay individually reconstructible without provider ABI risk.
 
-**Recommended build order:** `yft_gpio_keys` first (in-tree donor, lowest risk),
-then `leds_ln2403` and `yft_tiny2c_usb` whenever the corresponding userspace work
-happens.
+**Remaining order:** `leds_ln2403` and `yft_tiny2c_usb` only when separately
+tasked; `yft_gpio_keys` is DONE and must not be reopened as donor-only work.
 
 ---
 
@@ -392,7 +392,7 @@ TIER 6  connadp/connscp/ccci_md_all/aee_aed/device-apc-common
           → bt_drv_6878
           → gps_drv_dl_v051 → gps_pwr → gps_scp
 TIER 7  fingerprint [frozen/recon-complete; 10/10 provider CRCs exact]
-TIER 8  yft_gpio_keys
+TIER 8  yft_gpio_keys [SOURCE_DELTA_RECONSTRUCTION_EXACT; FROZEN FOR RE]
 TIER 9  held on stock indefinitely: tkcore, tkcore_drv, microarray_fp_tee,
         spi_tiny_co5300_lcd, hynitron, leds_ln2403, yft_tiny2c_usb
 ```

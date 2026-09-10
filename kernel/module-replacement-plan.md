@@ -14,18 +14,21 @@ Current transitional ULEFONE_ONLY + NEEDS_ULEFONE_PORT ABI:
 
 - 354 unique kernel symbol/CRC requirements
 
-## Priority 1 — yft_gpio_keys
+## Priority 1 — yft_gpio_keys — COMPLETE
 
-Reasons:
+Classification: `SOURCE_DELTA_RECONSTRUCTION_EXACT`; `SOURCE_RECONSTRUCTED`;
+`SOURCE_NOW`; FROZEN FOR RE.
 
-- 65 kernel-facing imports
-- 36 currently exclusive KMI requirements
-- no observed stock-module consumers of its exports
-- conventional GPIO/input/IRQ functionality
-- relatively isolated reconstruction target
+- exact-GKI donor frozen and mandatory RED recorded;
+- exact `/yft-gpio-keys` contract: active-low GPIO13/F1 and GPIO8/F2, 16-ms
+  debounce, wake capable;
+- exact YFT IRQ mask/re-enable/next-edge-rearm and logging delta recovered;
+- 23/23 functions byte-identical, 65/65 import/MODVERSION entries exact;
+- clean exact-GKI build and 40/40 fail-closed verifier;
+- zero exports and no provider-ABI risk.
 
-This should be the first Ulefone-specific module reconstructed from behavior,
-DT data and stock binary/API evidence.
+This module is removed from the active RE queue. Public source alone was not
+accepted; closure is against the frozen stock oracle.
 
 ## Priority 2 — Touch gesture / FT3680
 
