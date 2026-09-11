@@ -1224,3 +1224,13 @@ reconstructed first.
 
 See `kernel/phase4-slot-b-minimum-source-stack.md` for the Level A / B / C
 definitions and acceptance criteria.
+
+## Hynitron closure update
+
+`hynitron.ko` has graduated from `STOCK_TRANSITION_BLOB` to
+`SOURCE_RECONSTRUCTED / SOURCE_NOW / FROZEN FOR RE`. The exact-GKI build has an
+identical 65-function set, exact 54-symbol MODVERSION map, exact three stock
+`yft_devinfo` provider CRCs, and naturally exact two exports accepted by stock
+`spi_tiny_co5300_lcd.ko`; the fail-closed verifier reports 34/34. The stock
+`yft_devinfo` rule above remains mandatory. `spi_tiny_co5300_lcd` is still an
+active target; only its Hynitron provider edges are READY/EXACT.

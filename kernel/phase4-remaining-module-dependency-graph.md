@@ -258,7 +258,7 @@ therefore KeyMint/Gatekeeper/FBE — will not come up.
        │3         │3         │3          │10         │3         │2         │1
        ▼          ▼          ▼           ▼           ▼          ▼          ▼
   focaltech_  hynitron   sh366003_fg  hf_manager  imgsensor  spi_tiny_  aw36518
-  ft3680      [stock]    [recon]      [port]      [port]     co5300_lcd [frozen]
+  ft3680      [frozen]   [recon]      [port]      [port]     co5300_lcd [frozen]
   [frozen]                                                   [stock]
        ▲ 3 symbols
        │
@@ -273,7 +273,7 @@ therefore KeyMint/Gatekeeper/FBE — will not come up.
 | gapped export | consumer |
 |---|---|
 | `yft_fuelgauge_device_add` | `sh366003_fg` [reconstructed consumer, stock provider CRC] |
-| `yft_touchpanel_device_add` | `hynitron` [stock] |
+| `yft_touchpanel_device_add` | `hynitron` [reconstructed consumer, stock provider CRC] |
 | `yft_tinylcd_device_add` | `spi_tiny_co5300_lcd` [stock] |
 | `yft_camera_device_add` | `imgsensor` [port] |
 | `yft_{acc,m,alsps,sar,baro}sensor_device_add` | `hf_manager` [port] |
@@ -325,7 +325,7 @@ the sensor/TEE driver.
 ```
    yft_devinfo [stock] ──2──┐
                             ├──▶ spi_tiny_co5300_lcd [stock] V:191   → LEAF
-   hynitron    [stock] ──2──┘     hxytech,spi_tiny_lcd @ SPI0
+   hynitron    [recon/frozen] ─2─┘ hxytech,spi_tiny_lcd @ SPI0
    hynitron,hyn_ts @ I2C 0-0015   /sys/class/misc/tiny_lcd_miscdev
    (on-demand load: init.touch.rc)
         ▲
@@ -342,8 +342,9 @@ the stock list; the registration is therefore late-bound (module_init /
 deferred), not load-order dependent. Preserve the list verbatim rather than
 "fixing" it.
 
-**Recommended build order:** `yft_devinfo` → `hynitron` → `spi_tiny_co5300_lcd`.
-Both consumers stay stock through Level B.
+**Resolved build order:** stock `yft_devinfo` ABI → reconstructed/frozen
+`hynitron` → future `spi_tiny_co5300_lcd`. Hynitron's two provider edges are
+READY/EXACT; the LCD consumer itself remains stock and unresolved.
 
 ---
 
@@ -400,8 +401,9 @@ TIER 7  fingerprint [frozen/recon-complete; 10/10 provider CRCs exact]
 TIER 8  yft_gpio_keys [SOURCE_DELTA_RECONSTRUCTION_EXACT; FROZEN FOR RE]
 TIER 9  leds_ln2403 [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 10 yft_tiny2c_usb [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
-TIER 11 held on stock indefinitely: tkcore, tkcore_drv, microarray_fp_tee,
-        spi_tiny_co5300_lcd, hynitron
+TIER 11 hynitron [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
+TIER 12 held on stock: tkcore, tkcore_drv, microarray_fp_tee,
+        spi_tiny_co5300_lcd
 ```
 
 ## 11. Leaf modules (zero exports — safe to touch in any order)

@@ -1,0 +1,83 @@
+GQ5012BF1 HYNITRON STOCK ORACLE
+================================
+
+Scope: static/offline only
+Target: Ulefone Armor 29 Pro Thermal / GQ5012BF1 / MT6878(T)
+Module placement: vendor_dlkm
+
+CANONICAL STOCK ELF
+-------------------
+Original extracted path:
+  workspace/gq5012bf1/stock/partitions/vendor_dlkm/lib/modules/hynitron.ko
+Frozen project path:
+  workspace/phase4-hynitron/oracle/hynitron.stock.ko
+SHA256: 860f28409fdd59458640cd067fec6eb83f3e5ec00ca12782c0e152323a351fb6
+Size: 142528 bytes
+ELF: ELF64 little-endian AArch64 relocatable, not stripped
+Build ID (SHA-1): 2defd559d61e657b6f1bd9712d48c6f403e8514d
+Compiler: Android clang 17.0.2, build 10087095, +pgo +bolt +lto -mlgo, LLVM revision d9f89f4d16663d5012e5c09495f3b30ece3d2362
+Vermagic: 6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+Module name: hynitron
+Description: Hynitron Touchscreen Driver
+Author: Hynitron Driver Team
+License: GPL v2
+Depends: yft_devinfo
+Srcversion: absent
+Parameters: none
+Aliases:
+  i2c:hyn_ts
+  of:N*T*Chynitron,hyn_ts
+  of:N*T*Chynitron,hyn_tsC*
+
+COPY SEARCH
+-----------
+A filename search across the extracted stock tree, evidence backups, slot-B
+investigation data, and exact-GKI workspace found exactly one hynitron.ko.
+No copy is present in vendor_boot/platform ramdisk, recovery ramdisk,
+system_dlkm, or the searched proprietary/evidence backups. Consequently there
+is no multiple-copy byte-identity question: the vendor_dlkm ELF above is the
+sole canonical oracle.
+
+LOAD AND DEPENDENCY EVIDENCE
+----------------------------
+modules.load: absent from vendor_dlkm, system_dlkm, platform ramdisk, and
+  recovery modules.load lists.
+Normal boot: vendor/etc/init/init.touch.rc has an `on init` background modprobe
+  list containing `hynitron.ko`; this is the stock on-demand touch selection
+  path and is frozen as workspace/phase4-hynitron/oracle/init.touch.rc.
+Recovery: platform modules.load.recovery has no hynitron entry; it is not in the
+  normal recovery load path.
+modules.dep:
+  /vendor_dlkm/lib/modules/hynitron.ko: /vendor_dlkm/lib/modules/yft_devinfo.ko
+  /vendor_dlkm/lib/modules/spi_tiny_co5300_lcd.ko:
+      /vendor_dlkm/lib/modules/hynitron.ko /vendor_dlkm/lib/modules/yft_devinfo.ko
+modules.alias: the three aliases listed above are present.
+modules.softdep: file exists, no hynitron entry.
+
+ABI SUMMARY
+-----------
+Defined ELF functions: 65
+Defined ELF objects: 40
+Undefined ELF symbols: 53
+__versions entries / total imports: 54 (51 kernel/module-loader + 3 yft_devinfo)
+Exports: 2
+  tiny_tp_gesture_contorl
+  tiny_tp_power_contorl
+The stock spelling `contorl` is immutable ABI.
+
+FROZEN SUPPORTING WITNESSES
+---------------------------
+workspace/phase4-hynitron/oracle/yft_devinfo.ko
+workspace/phase4-hynitron/oracle/spi_tiny_co5300_lcd.ko
+workspace/phase4-hynitron/oracle/modules.dep
+workspace/phase4-hynitron/oracle/modules.alias
+workspace/phase4-hynitron/oracle/modules.softdep
+workspace/phase4-hynitron/oracle/modules.load
+workspace/phase4-hynitron/oracle/init.touch.rc
+workspace/phase4-hynitron/raw/ (readelf, objdump, section, strings, and metadata captures)
+
+SAFETY
+------
+All evidence collection was static/offline. No module was loaded and no device,
+GPIO, pinctrl, reset, power, gesture, I2C, firmware, slot, DT, or filesystem
+state on the phone was modified.

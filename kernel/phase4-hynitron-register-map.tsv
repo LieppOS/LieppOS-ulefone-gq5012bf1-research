@@ -1,0 +1,12 @@
+address	width	direction	meaning	call_sites	expected/status	error_behavior	variant
+0x00	1 command + 9 data	read	touch report packet	cst8xx_touch_report	byte1 low nibble contact count	negative transfer drops frame and reenables IRQ	CST8xx/CST820
+0xE5	2-byte write	write	deep-sleep command	hyn_enter_deep_sleep	value 0x03	write result logged/otherwise ignored by power export	CST8xx/CST820
+0xA6	1 command + 6 data	read	running firmware/project/module/checksum	cst8xx_firmware_info	bytes 1..4 parsed	negative transfer aborts info/probe path	CST8xx/CST820
+0xA001	2-byte register + 1 data	write	enter CST8xx ROM/bootloader detection mode	hyn_detect_bootloader	value 0xAA	up to 10 attempts; 2 ms delay after failed transfer/status	CST8xx/CST820
+0xA003	2-byte register + 1 data	read	ROM/bootloader-ready flag	hyn_detect_bootloader	value 0x55	mismatch retries; exhaustion returns -1 and reset exits loader	CST8xx/CST820
+0xD3	1 command + 12 data	read	gesture ID and terminal point	hyn_gesture_readdata	byte0 gesture ID; bytes8..11 point	read error suppresses key event	CST8xx/CST820
+0xEC	2-byte write / 1-byte read	read-write	gesture-mode enable/status	hyn_gesture_suspend,resume,readdata	0 disable, 1 enable	three enable/readback attempts with 10 ms sleeps	CST8xx/CST820
+0xD000	2 command + header	read	legacy touch header	cst3xx_touch_report	legacy packet header	transfer failure drops report	CST3xx
+0xD007	2 command + continuation	read	legacy additional contacts	cst3xx_touch_report	bounded by configured contacts	transfer failure drops report	CST3xx
+0xD024	3-byte command	write	legacy report acknowledge	cst3xx_touch_report	command/status acknowledge	failure logged	CST3xx
+0xD109	2 command + firmware data	read	legacy firmware identity	cst3xx_firmware_info	checkcode/project/version fields	failure returned	CST3xx

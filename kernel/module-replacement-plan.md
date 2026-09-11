@@ -51,13 +51,17 @@ existing DT and userspace-facing behavior.
 
 ## Priority 3 — Rear display stack
 
-Treat together:
+Provider-first status:
 
-- hynitron
-- spi_tiny_co5300_lcd
+- `hynitron` — **STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE**, SOURCE_NOW,
+  FROZEN FOR RE; exact stock-yft provider imports and exact two downstream
+  export CRCs; 34/34 verifier
+- `spi_tiny_co5300_lcd` — remains stock/next task; its two Hynitron import edges
+  are READY/EXACT but the module itself is not done
 
-hynitron is a module-ABI provider for another stock module, therefore the rear
-display stack should be migrated as a subsystem rather than independently.
+Hynitron was closed independently as an ABI provider against the frozen stock
+LCD consumer. Rear-display migration can now proceed to that consumer without
+reopening Hynitron.
 
 ## Priority 4 — yft_devinfo ecosystem
 

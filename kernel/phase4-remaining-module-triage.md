@@ -190,7 +190,7 @@ view below carries the decision-relevant columns.
 | `custom_ldo_wl2868` | vendor_dlkm | yes (idx 101) | no | 27 / 0 / 2 | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | YES_SAFE_TRANSITION | **SOURCE_RECONSTRUCTED** | P2_MAJOR_FEATURE |
 | `yft_gpio_keys` | vendor_boot platform | yes (idx 179) | yes (idx 183) | 65 / 0 / 0 | **STOCK_ORACLE_PROVEN** | SOURCE_NOW | **SOURCE_DELTA_RECONSTRUCTION_EXACT / FROZEN FOR RE** | CLOSED |
 | `spi_tiny_co5300_lcd` | vendor_dlkm | yes (idx 191) | no | 54 / 4 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
-| `hynitron` | vendor_dlkm | on demand (init.touch.rc) | no | 51 / 3 / 2 | STRUCTURAL_DONOR_ONLY | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
+| `hynitron` | vendor_dlkm | on demand (init.touch.rc) | no | 51 / 3 / 2 | **STRUCTURAL_DONOR_ONLY / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | **SOURCE_NOW_WITH_STOCK_YFT_PROVIDER** | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | P3_OPTIONAL_FEATURE |
 | `leds_ln2403` | vendor_dlkm | yes (idx 192) | no | 30 / 2 / 0 | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | P3_OPTIONAL_FEATURE |
 | `yft_tiny2c_usb` | vendor_dlkm | yes (idx 194) | no | 22 / 1 / 0 | **NO_PUBLIC_DONOR_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED / SOURCE_NOW / FROZEN FOR RE** | P3_OPTIONAL_FEATURE |
 
@@ -639,9 +639,10 @@ produce all 23 stock function bytes and all 65 stock CRCs.
 All 23 are ABI-safe against the source-built exact GKI. The five for which
 "keep stock" is the *recommended final disposition for now* are:
 
-`tkcore`, `tkcore_drv`, `microarray_fp_tee`, `spi_tiny_co5300_lcd`, `hynitron`.
-`leds_ln2403` and `yft_tiny2c_usb` have graduated to `SOURCE_NOW` and are
-FROZEN FOR RE.
+`tkcore`, `tkcore_drv`, `microarray_fp_tee`, `spi_tiny_co5300_lcd`.
+`leds_ln2403`, `yft_tiny2c_usb`, and `hynitron` have graduated to
+`SOURCE_NOW` and are FROZEN FOR RE. Only the two exact Hynitron provider edges
+of `spi_tiny_co5300_lcd` are READY/EXACT; that consumer is not closed.
 
 Of the 23, seven are `YES_SAFE_TRANSITION` (no module-to-module provider at
 all): `yft_devinfo`, `sc851x_charger`, `tkcore`, `wmt_chrdev_wifi_connac2`,
@@ -700,7 +701,10 @@ DONE 15B SOURCE_NOW      yft_tiny2c_usb — stock-behavior complete, exact 22
                          12/12 KCFI, complete thermal/USB/uSmart/DT/GPIO/sysfs/
                          lifecycle contracts, 68/68 verifier, FROZEN FOR RE
 NEXT 16  TRANSITION_BLOB hold: microarray_fp_tee, tkcore, tkcore_drv,
-                         spi_tiny_co5300_lcd, hynitron
+                         spi_tiny_co5300_lcd
+DONE     hynitron — STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE, 65/65 functions,
+                    54/54 import map, 2/2 consumer exports, 34/34 verifier,
+                    FROZEN FOR RE
 NEXT 17  SOURCE_DELTA    yft_devinfo — only if a YFT BSP drop supplying the missing
                          73-character enum text ever becomes available
 NEXT 18  DROP            nothing
