@@ -34,12 +34,13 @@
 > | `sc8571_charger` | absent from the original 22-entry scan | **SOURCE_RECONSTRUCTED** from stock oracle: dual master/slave topology, 58 fields, 40 DT settings, 14 exact charger-class callback slots, exact provider CRC/KCFI/`__versions`, clean exact-GKI build and bounded static parity pass |
 > | `sh366003_fg` | `NO_EXACT_HIT` | no donor found, but **BEHAVIORAL_RECONSTRUCTION_WITH_DOCUMENTED_RESIDUALS** completed from the stock oracle: exact 39-function name set, 35-import/36-MODVERSION map, 8 KCFI IDs, embedded AFI bytes/state machine, exact-GKI build, and 527-check verifier PASS; stock `yft_devinfo` remains mandatory |
 > | `yft_gpio_keys` | absent from the original 22-entry scan | **SOURCE_DELTA_RECONSTRUCTION_EXACT / SOURCE_RECONSTRUCTED / FROZEN FOR RE** — pinned exact-GKI `gpio_keys.c` plus the recovered YFT identity, 16-ms default, IRQ mask/re-enable, edge-rearm and logging delta gives 23/23 byte-identical functions, 65/65 exact MODVERSIONs, a clean build and 40/40 verifier |
-> | `leds_ln2403`, `tkcore_drv` | `NO_EXACT_HIT` | unchanged — **NO_USEFUL_SOURCE** re-confirmed against the Nothing trees, the MiCode vendor-reference BSPs and public source indexes |
+> | `leds_ln2403` | `NO_EXACT_HIT` | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE / SOURCE_NOW / FROZEN FOR RE** — complete 16-function hardware/state reconstruction, 12/12 applicable KCFI IDs, 32/32 exact MODVERSIONs, exact five-GPIO/PWM3/timer/sysfs behavior, and source-built real-provider functions byte-exact; clean build and 50/50 verifier |
+> | `tkcore_drv` | `NO_EXACT_HIT` | unchanged — **NO_USEFUL_SOURCE** re-confirmed against local/public source indexes |
 >
 > Modules resolved since this scan and therefore no longer unresolved:
 > `aw883xx_driver`, `aw36515`, `aw36518`, `aw36518_v2`, `leds_rgb_aw2013`,
 > `connfem`, `custom_ldo_wl2868`, `custom_ldo`, `sc851x_charger`, `sc8571_charger`,
-> `fingerprint`, `yft_gpio_keys`.
+> `fingerprint`, `yft_gpio_keys`, `leds_ln2403`.
 >
 > Modules **missing** from this 22-entry scan that remain unresolved after later
 > stock-oracle closures: `microarray_fp_tee`, `spi_tiny_co5300_lcd`, `hynitron`,

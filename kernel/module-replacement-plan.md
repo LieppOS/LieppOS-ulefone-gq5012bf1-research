@@ -102,12 +102,15 @@ stock panel + `mtk_panel_ext` + `mediatek-drm` ABI island meanwhile.
 
 Modules include:
 
-- leds_ln2403
+- leds_ln2403 (**completed**; `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`)
 - custom LDO glue (**completed**; retained here as historical priority)
 
-The custom LDO shim is now reconstructed exactly at the consumer ABI/function
-level. `leds_ln2403` remains relatively contained and should follow its
-underlying power dependencies.
+Both leaves are source-reconstructed. `leds_ln2403` has its full GPIO/pinctrl,
+legacy PWM3, six camping-light modes, seven warning-light modes, two timer state
+machines, sysfs/userspace ABI and stock defects closed. Its exact source-built
+`mtk-pwm` provider reproduces both consumed functions and CRCs byte-for-byte;
+target build is warning-free with 32/32 MODVERSION parity and a 50/50 verifier.
+It is `SOURCE_NOW` and FROZEN FOR RE.
 
 ## Priority 8 — TrustKernel / fingerprint
 

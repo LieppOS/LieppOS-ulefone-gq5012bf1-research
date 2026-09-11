@@ -350,10 +350,12 @@ Both consumers stay stock through Level B.
 ## 9. Cluster: LIGHTS / PERIPHERALS
 
 ```
-   mtk-pwm [port] V:23 ──2──▶ leds_ln2403 [stock] V:192      → LEAF (0 exports)
-                              mediatek,yft_camplight
-                              sysfs: camplight_mode, leds_ctl,
-                                     camplight_set_brightness
+   mtk-pwm [exact source provider] V:23 ──2──▶ leds_ln2403 [SOURCE_NOW] V:192
+                                             LEAF · 0 exports · FROZEN FOR RE
+                                             mediatek,yft_camplight
+                                             32/32 CRCs · 50/50 verifier
+                                             sysfs: camplight_mode, leds_ctl,
+                                                    camplight_set_brightness
 
    (kernel only) ───────────▶ yft_gpio_keys [SOURCE_NOW/EXACT] P:179 / R:183
                               LEAF · 0 exports · FROZEN FOR RE
@@ -366,12 +368,13 @@ Both consumers stay stock through Level B.
    leds_rgb_aw2013 [frozen] P:178 · aw36515/aw36518/aw36518_v2 [frozen]
 ```
 
-All four members are **leaves with zero exports**. `yft_gpio_keys` is now
-source-reconstructed and stock-oracle closed. The remaining stock-held leaves
-stay individually reconstructible without provider ABI risk.
+All four members are **leaves with zero exports**. `yft_gpio_keys` and
+`leds_ln2403` are now source-reconstructed and stock-oracle closed. LN2403's two
+provider edges are additionally closed by a byte-identical source build of the
+real MT6878 provider entry points.
 
-**Remaining order:** `leds_ln2403` and `yft_tiny2c_usb` only when separately
-tasked; `yft_gpio_keys` is DONE and must not be reopened as donor-only work.
+**Remaining order:** `yft_tiny2c_usb` only when separately tasked;
+`yft_gpio_keys` and `leds_ln2403` are DONE and must not be reopened.
 
 ---
 
@@ -393,8 +396,9 @@ TIER 6  connadp/connscp/ccci_md_all/aee_aed/device-apc-common
           → gps_drv_dl_v051 → gps_pwr → gps_scp
 TIER 7  fingerprint [frozen/recon-complete; 10/10 provider CRCs exact]
 TIER 8  yft_gpio_keys [SOURCE_DELTA_RECONSTRUCTION_EXACT; FROZEN FOR RE]
-TIER 9  held on stock indefinitely: tkcore, tkcore_drv, microarray_fp_tee,
-        spi_tiny_co5300_lcd, hynitron, leds_ln2403, yft_tiny2c_usb
+TIER 9  leds_ln2403 [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
+TIER 10 held on stock indefinitely: tkcore, tkcore_drv, microarray_fp_tee,
+        spi_tiny_co5300_lcd, hynitron, yft_tiny2c_usb
 ```
 
 ## 11. Leaf modules (zero exports — safe to touch in any order)

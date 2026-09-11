@@ -1,0 +1,11 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+package(default_visibility = ["//visibility:public"])
+
+kernel_module(
+    name = "leds_ln2403_recon",
+    srcs = glob(["**/*"], exclude = ["BUILD.bazel"]),
+    outs = ["leds_ln2403.ko"],
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//lieppos/mtk-pwm-provider:mtk_pwm_provider"],
+)

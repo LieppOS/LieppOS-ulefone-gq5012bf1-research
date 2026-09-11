@@ -9,8 +9,10 @@ updates from later dedicated reconstruction tasks; `custom_ldo`,
 `sc851x_charger`, and `fingerprint` are complete; `custom_ldo_wl2868` and
 `fingerprint` are behaviorally complete and frozen for RE. `yft_gpio_keys` is
 also `SOURCE_DELTA_RECONSTRUCTION_EXACT`, `SOURCE_NOW`, and FROZEN FOR RE after
-23/23 byte-identical functions, 65/65 CRC parity and a 40/40 verifier. All
-device evidence remains static/read-only.
+23/23 byte-identical functions, 65/65 CRC parity and a 40/40 verifier.
+`leds_ln2403` is now `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`, `SOURCE_NOW`,
+and FROZEN FOR RE with 32/32 CRC parity, exact provider edges and a 50/50
+verifier. All device evidence remains static/read-only.
 
 Baseline (unchanged):
 
@@ -34,10 +36,10 @@ Machine-readable form of this table: `kernel/phase4-remaining-module-triage.tsv`
 | DIRECT_SOURCE         |     0 |
 | SOURCE_DELTA          |     2 |
 | FORWARD_PORT          |     7 |
-| SOURCE_RECONSTRUCTED  |     5 |
+| SOURCE_RECONSTRUCTED  |     6 |
 | RE_REQUIRED           |     1 |
 | BLOCKED_WITH_EXACT_MISSING_EVIDENCE | 1 |
-| STOCK_TRANSITION_BLOB |     7 |
+| STOCK_TRANSITION_BLOB |     6 |
 | NOT_REQUIRED          |     0 |
 | UNKNOWN               |     0 |
 | **total**             |**23** |
@@ -61,10 +63,10 @@ Machine-readable form of this table: `kernel/phase4-remaining-module-triage.tsv`
 | EXACT_SOURCE | 7 |
 | STRONG_SOURCE_MATCH | 1 |
 | STRUCTURAL_DONOR_ONLY | 1 |
-| NO_USEFUL_SOURCE | 9 |
+| NO_USEFUL_SOURCE | 8 |
 | NO_USEFUL_SOURCE / ORACLE_RECONSTRUCTED | 2 |
 | ORACLE_RECONSTRUCTION_PROVIDER_ABI_BLOCKED | 1 |
-| NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE | 2 |
+| NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE | 3 |
 
 ## 4. Summary — stock transition-blob safety
 
@@ -115,7 +117,7 @@ exists (per the user's frozen list and the reports in this directory):
 `aw36518_v2`, `leds_rgb_aw2013`, `st21nfc`, `connfem`, `tcpc_class`,
 `tcpc_mt6375`, `pd_dbg_info`, `mtk_disp_notify`, `mtk_mbox`,
 `mtk_tinysys_ipi`, `mtk_rpmsg_mbox`, `mtk-mbox-mailbox`, `yft_tpd_gesture`,
-`fingerprint`.
+`fingerprint`, `yft_gpio_keys`, `leds_ln2403`.
 
 Removed because the platform-source question is already settled: the 336
 `LIKELY_PLATFORM_MATCH` + 100 `DIRECT_SOURCE_MATCH` modules, for which Phase 3
@@ -189,7 +191,7 @@ view below carries the decision-relevant columns.
 | `yft_gpio_keys` | vendor_boot platform | yes (idx 179) | yes (idx 183) | 65 / 0 / 0 | **STOCK_ORACLE_PROVEN** | SOURCE_NOW | **SOURCE_DELTA_RECONSTRUCTION_EXACT / FROZEN FOR RE** | CLOSED |
 | `spi_tiny_co5300_lcd` | vendor_dlkm | yes (idx 191) | no | 54 / 4 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
 | `hynitron` | vendor_dlkm | on demand (init.touch.rc) | no | 51 / 3 / 2 | STRUCTURAL_DONOR_ONLY | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
-| `leds_ln2403` | vendor_dlkm | yes (idx 192) | no | 30 / 2 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
+| `leds_ln2403` | vendor_dlkm | yes (idx 192) | no | 30 / 2 / 0 | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | P3_OPTIONAL_FEATURE |
 | `yft_tiny2c_usb` | vendor_dlkm | yes (idx 194) | no | 22 / 1 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
 
 `sc8571_charger` is now exact-GKI buildable and passes the bounded static
@@ -509,17 +511,18 @@ task.**
 * **Known compatible:** `mediatek,yft_camplight` — confirmed present in the
   merged GQ5012BF1 DT with `status = "okay"`.
 * **Userspace / sysfs ABI:** `/sys/devices/platform/yft_camplight/camplight_mode`,
-  `…/leds_ctl`, `…/camplight_set_brightness` — all chmod'd by
-  `/vendor/etc/init/hw/init.yft.rc` (lines 222-224) and labelled
-  `u:object_r:sysfs_yft_file:s0` in `vendor_file_contexts`. A legacy alias
-  `/sys/devices/platform/soc/soc:gftk_camplight/camplight_mode` is also
-  chmod'd. Userspace consumers are the stock `YftOutdoorLightUlefone` and
-  `YftRedBlueLight` apps.
+  `…/leds_ctl`, `…/camplight_set_brightness`. `init.yft.rc` lines 222–224 chmod
+  all three 0777 and `vendor_file_contexts` labels them `sysfs_yft_file`;
+  stock apps and framework policy use them directly. A separate line-113 chmod
+  names legacy `/sys/devices/platform/soc/soc:gftk_camplight/camplight_mode`.
+  Userspace consumers are stock `com.yft.lamp`, `com.yft.redbluelight`, and
+  `YftPowerSavingSwitchService`.
 * **PWM/GPIO relationship:** `depends=mtk-pwm` with exactly **2** imported
-  symbols; brightness is produced by PWM on the LN2403 enable pin, with four
-  pinctrl states `default`, `ln2403_pwmoff_high`, `ln2403_pwmoff_low`,
-  `ln2403_pwmon`. Internals: `ln2403_gpio_ctrl_apply`, `ln2403_pwm_work`,
-  `gpio_ctrl_timer_handler`, `set_leds`, `ln2403_get_gpio`.
+  symbols; brightness is legacy PWM channel 3 on GPIO22 mux 1, while GPIO91 is
+  the LN2403 gate. States are `default`, `ln2403_pwmoff_high`,
+  `ln2403_pwmoff_low`, `ln2403_pwmon`. Both provider CRCs and provider function
+  bytes reproduce stock exactly. Internals: `ln2403_gpio_ctrl_apply`,
+  `ln2403_pwm_work`, `gpio_ctrl_timer_handler`, `set_leds`, `ln2403_get_gpio`.
 * **Public LN2403 source:** **none found.** `grep -rli ln2403` over the Nothing
   MT6878 trees, the MiCode vendor-reference BSPs and the exact GKI tree returns
   zero. Targeted public searches for `"Module For PWM LN2403"` and
@@ -529,10 +532,13 @@ task.**
   `modules.load.recovery`**, it exports **zero** symbols so nothing can depend on
   it, and it has no boot-path consumers. Removing it cannot affect boot.
 
-**Disposition: `STOCK_TRANSITION_BLOB`, `P3_OPTIONAL_FEATURE`.** Because it has
-0 exports there are no CRC constraints on a future rewrite, and the DT + sysfs
-ABI recovered above is already sufficient for a clean-room reimplementation
-whenever it is wanted.
+**Disposition: `SOURCE_RECONSTRUCTED`, `SOURCE_NOW`, `P3_OPTIONAL_FEATURE`,
+FROZEN FOR RE.** The completed clean-room reconstruction closes all 16
+functions, 32/32 import CRCs, exact five-GPIO/pinctrl/PWM3 behavior, both timer
+state machines, three sysfs ABIs, userspace policy boundary, failure/lifecycle
+quirks, and its two real-provider edges. The exact-GKI build is warning-free and
+the fail-closed verifier passes 50/50. See
+`phase4-leds-ln2403-reconstruction.md`. No live hardware was touched.
 
 ---
 
@@ -608,7 +614,7 @@ side). Provider closure does not classify the consumer complete.
 
 ## 14. Modules that genuinely require reverse engineering
 
-No board-glue module remains in this queue. `fingerprint`,
+No board-glue module remains in this queue. `fingerprint`, `leds_ln2403`,
 `custom_ldo_wl2868`, `custom_ldo`, `sc851x_charger`, `sc8571_charger`, and
 `sh366003_fg` have graduated after stock-oracle reconstruction. VTDR6115 panel
 logic is reconstructed but separately blocked on exact provider ABI evidence.
@@ -630,11 +636,11 @@ produce all 23 stock function bytes and all 65 stock CRCs.
 
 ## 16. Safe to keep temporarily as stock transition blobs
 
-All 23 are ABI-safe against the source-built exact GKI. The seven for which
+All 23 are ABI-safe against the source-built exact GKI. The six for which
 "keep stock" is the *recommended final disposition for now* are:
 
 `tkcore`, `tkcore_drv`, `microarray_fp_tee`, `spi_tiny_co5300_lcd`, `hynitron`,
-`leds_ln2403`, `yft_tiny2c_usb`.
+`yft_tiny2c_usb`. `leds_ln2403` has graduated to `SOURCE_NOW`.
 
 Of the 23, seven are `YES_SAFE_TRANSITION` (no module-to-module provider at
 all): `yft_devinfo`, `sc851x_charger`, `tkcore`, `wmt_chrdev_wifi_connac2`,
@@ -685,11 +691,14 @@ DONE 13  RE              fingerprint: STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE,
                          16/16 function bytes, 10/10 exports, 39/39 verifier
 DONE 14  SOURCE_NOW      yft_gpio_keys — exact donor delta, 23/23 function bytes,
                          65/65 CRCs, 40/40 verifier, FROZEN FOR RE
-NEXT 15  TRANSITION_BLOB hold: microarray_fp_tee, tkcore, tkcore_drv,
-                         spi_tiny_co5300_lcd, hynitron, leds_ln2403, yft_tiny2c_usb
-NEXT 16  SOURCE_DELTA    yft_devinfo — only if a YFT BSP drop supplying the missing
+DONE 15  SOURCE_NOW      leds_ln2403 — stock-behavior complete, exact five-GPIO/
+                         PWM/timer/sysfs contracts, 32/32 CRCs, 50/50 verifier,
+                         exact source-built provider edges, FROZEN FOR RE
+NEXT 16  TRANSITION_BLOB hold: microarray_fp_tee, tkcore, tkcore_drv,
+                         spi_tiny_co5300_lcd, hynitron, yft_tiny2c_usb
+NEXT 17  SOURCE_DELTA    yft_devinfo — only if a YFT BSP drop supplying the missing
                          73-character enum text ever becomes available
-NEXT 17  DROP            nothing
+NEXT 18  DROP            nothing
 ```
 
 Steps 1-4 require **zero** of the 23 unresolved modules to be reconstructed.

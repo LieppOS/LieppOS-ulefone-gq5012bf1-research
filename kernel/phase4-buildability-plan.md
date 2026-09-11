@@ -66,6 +66,14 @@ Remaining hardware-specific port tracks:
   warnings, 0 modpost warnings and 0 unresolved symbols.
   Hardware role: the front notification / charging-indicator RGB LED,
   I2C bus 11 @0x45, enable GPIO 188, channels red/green/blue at 5 mA.)
+- ~~leds_ln2403~~ — **done**, see
+  `kernel/phase4-leds-ln2403-reconstruction.md`
+  (`NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`:
+  complete 16/16 function set, 12/12 applicable KCFI IDs, 32/32 exact imports
+  and MODVERSION CRCs, exact five-GPIO/pinctrl/PWM3 and timer state machines,
+  genuine source-built `mtk-pwm` provider with both consumed function bytes
+  exact, clean exact-GKI build, 50/50 fail-closed verifier; SOURCE_NOW and
+  FROZEN FOR RE.)
 
 UARTHUB is excluded from the required-port set because stock GQ5012BF1 has:
 
@@ -1070,6 +1078,14 @@ The 16 named in the triage brief, plus 7 that were missing from it:
 > contracts, a clean build and a 40/40 fail-closed verifier. It is removed from
 > the active RE queue; the 23-module count above remains the historical input to
 > this triage.
+>
+> **Subsequent closure:** `leds_ln2403` is now
+> `NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`,
+> `SOURCE_RECONSTRUCTED`, `SOURCE_NOW`, and FROZEN FOR RE. Its clean exact-GKI
+> build has the complete 16-function set, 12/12 applicable KCFI IDs, 32/32 CRC
+> parity, exact source-built MTK PWM provider edges, all light/timer/sysfs
+> contracts closed, and a 50/50 verifier. It is removed from the ZERO-BLOB RE
+> queue without changing any other module.
 
 ### Dispositions
 
@@ -1078,10 +1094,10 @@ The 16 named in the triage brief, plus 7 that were missing from it:
 | DIRECT_SOURCE         |     0 |
 | SOURCE_DELTA          |     2 |
 | FORWARD_PORT          |     7 |
-| SOURCE_RECONSTRUCTED  |     5 |
+| SOURCE_RECONSTRUCTED  |     6 |
 | RE_REQUIRED           |     1 |
 | BLOCKED_WITH_EXACT_MISSING_EVIDENCE | 1 |
-| STOCK_TRANSITION_BLOB |     7 |
+| STOCK_TRANSITION_BLOB |     6 |
 | NOT_REQUIRED          |     0 |
 | UNKNOWN               |     0 |
 
@@ -1110,7 +1126,7 @@ class of problem already seen and solved for ST21 (donor 2.2.0.15 vs stock
 
 ### Modules that genuinely require reverse engineering
 
-No board-glue module remains in this queue. `fingerprint` and
+No board-glue module remains in this queue. `fingerprint`, `leds_ln2403`, and
 `custom_ldo_wl2868` are now closed and frozen for RE. The separate
 `microarray_fp_tee` sensor/TEE driver remains a stock-held future task and was
 not reconstructed as part of the provider closure.

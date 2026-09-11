@@ -142,6 +142,7 @@ rear touch, rear display, camera sensors and motion sensors simultaneously.
 | order | module | label | disposition | why Level B |
 |--:|---|---|---|---|
 | 1 | `panel_ky_vtdr6115_dphy_cmd` | ABI_SOURCE | BLOCKED_WITH_EXACT_MISSING_EVIDENCE | panel logic reconstructed; exact provider type graph needed for 7 CRCs |
+| 2 | `leds_ln2403` | DONE | SOURCE_RECONSTRUCTED | full stock hardware/sysfs state machines; exact source-built MTK PWM provider edges; 32/32 CRCs and 50/50 verifier; FROZEN FOR RE |
 | 4 | `sh366003_fg` | DONE | SOURCE_RECONSTRUCTED | `3rd-gauge`; behavioral reconstruction with documented residuals; exact stock YFT ABI, exact AFI image, exact-GKI/verifier PASS |
 | 5 | `conninfra` | SOURCE_NOW | FORWARD_PORT | root of all connectivity |
 | 6 | `wmt_chrdev_wifi_connac2` | SOURCE_NOW | FORWARD_PORT | WLAN adaptor |
@@ -168,7 +169,6 @@ Plus the platform prerequisites named in the dependency graph:
 | `yft_devinfo` | STOCK_TRANSITION | ABI pin, §B.2 |
 | `spi_tiny_co5300_lcd` | STOCK_TRANSITION | rear display; `P3` |
 | `hynitron` | STOCK_TRANSITION | rear touch; `P3` |
-| `leds_ln2403` | STOCK_TRANSITION | camping light; `P3` |
 | `yft_tiny2c_usb` | STOCK_TRANSITION | thermal camera; `P3` |
 
 ### Level B acceptance criteria
@@ -189,7 +189,7 @@ Everything we intend to replace from source. Promotes the Level-B holds:
 | module | label at Level C | blocker to clear |
 |---|---|---|
 | `yft_gpio_keys` | SOURCE_NOW | **closed** — `SOURCE_DELTA_RECONSTRUCTION_EXACT`, FROZEN FOR RE; pinned donor plus proven identity/default-debounce/IRQ/logging delta |
-| `leds_ln2403` | SOURCE_NOW | none technical — 0 exports, DT + sysfs ABI already fully recovered; clean-room rewrite |
+| `leds_ln2403` | SOURCE_NOW | **closed** — `NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`; exact hardware/sysfs/timer behavior, exact provider edges, clean exact-GKI build, 50/50 verifier, FROZEN FOR RE |
 | `yft_tiny2c_usb` | SOURCE_NOW | none technical — 0 exports, DT + sysfs ABI recovered; pair with the ThermoVue userspace work |
 | `hynitron` | SOURCE_NOW | 65 functions incl. an embedded CST816D/CST816T firmware-update engine; must reproduce 2 export CRCs for `spi_tiny_co5300_lcd` |
 | `spi_tiny_co5300_lcd` | SOURCE_NOW | 25 functions + the `TINY_LCM_IOC_*` misc-device ABI; needs `yft_devinfo` and `hynitron` settled first |
