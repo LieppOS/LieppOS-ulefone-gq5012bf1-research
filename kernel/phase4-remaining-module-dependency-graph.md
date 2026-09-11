@@ -80,7 +80,7 @@ anything downstream — the risk is entirely upstream (its 7 imported CRCs).
     yft_fuelgauge_device_add,         35 imports/36 MODVERSIONs exact; AFI exact
     yft_set_fuelgauge_device_used)    → `3rd-gauge` → MT6375 battery/charger consumers
 
-   mt6375_charger [port] ──1────────▶ yft_tiny2c_usb [stock] V:194   → LEAF
+   mt6375_charger [stock runtime] ──1────────▶ yft_tiny2c_usb [SOURCE_NOW; frozen] V:194   → LEAF
 ```
 
 Stock load neighbourhood (P:129-147) shows the charging framework is fully
@@ -362,8 +362,10 @@ Both consumers stay stock through Level B.
                               GPIO13/F1 (0x3b) · GPIO8/F2 (0x3c), active-low
                               23/23 function bytes · 65/65 CRCs · 40/40 verifier
 
-   mt6375_charger [port] ──1─▶ yft_tiny2c_usb [stock] V:194    → LEAF (0 exports)
+   mt6375_charger [stock runtime] ──1─▶ yft_tiny2c_usb [SOURCE_NOW; frozen] V:194
+                              → LEAF (0 exports), exact yft_usb_flag CRC/semantics
                               mediatek,yft_tiny2c_usb · thermal camera mode
+                              12/12 KCFI · 23/23 MODVERSIONs · 68/68 verifier
 
    leds_rgb_aw2013 [frozen] P:178 · aw36515/aw36518/aw36518_v2 [frozen]
 ```
@@ -373,8 +375,8 @@ All four members are **leaves with zero exports**. `yft_gpio_keys` and
 provider edges are additionally closed by a byte-identical source build of the
 real MT6878 provider entry points.
 
-**Remaining order:** `yft_tiny2c_usb` only when separately tasked;
-`yft_gpio_keys` and `leds_ln2403` are DONE and must not be reopened.
+**Remaining order:** `yft_gpio_keys`, `leds_ln2403`, and `yft_tiny2c_usb` are
+DONE and must not be reopened.
 
 ---
 
@@ -397,8 +399,9 @@ TIER 6  connadp/connscp/ccci_md_all/aee_aed/device-apc-common
 TIER 7  fingerprint [frozen/recon-complete; 10/10 provider CRCs exact]
 TIER 8  yft_gpio_keys [SOURCE_DELTA_RECONSTRUCTION_EXACT; FROZEN FOR RE]
 TIER 9  leds_ln2403 [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
-TIER 10 held on stock indefinitely: tkcore, tkcore_drv, microarray_fp_tee,
-        spi_tiny_co5300_lcd, hynitron, yft_tiny2c_usb
+TIER 10 yft_tiny2c_usb [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
+TIER 11 held on stock indefinitely: tkcore, tkcore_drv, microarray_fp_tee,
+        spi_tiny_co5300_lcd, hynitron
 ```
 
 ## 11. Leaf modules (zero exports — safe to touch in any order)

@@ -169,7 +169,6 @@ Plus the platform prerequisites named in the dependency graph:
 | `yft_devinfo` | STOCK_TRANSITION | ABI pin, §B.2 |
 | `spi_tiny_co5300_lcd` | STOCK_TRANSITION | rear display; `P3` |
 | `hynitron` | STOCK_TRANSITION | rear touch; `P3` |
-| `yft_tiny2c_usb` | STOCK_TRANSITION | thermal camera; `P3` |
 
 ### Level B acceptance criteria
 
@@ -190,7 +189,7 @@ Everything we intend to replace from source. Promotes the Level-B holds:
 |---|---|---|
 | `yft_gpio_keys` | SOURCE_NOW | **closed** — `SOURCE_DELTA_RECONSTRUCTION_EXACT`, FROZEN FOR RE; pinned donor plus proven identity/default-debounce/IRQ/logging delta |
 | `leds_ln2403` | SOURCE_NOW | **closed** — `NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`; exact hardware/sysfs/timer behavior, exact provider edges, clean exact-GKI build, 50/50 verifier, FROZEN FOR RE |
-| `yft_tiny2c_usb` | SOURCE_NOW | none technical — 0 exports, DT + sysfs ABI recovered; pair with the ThermoVue userspace work |
+| `yft_tiny2c_usb` | SOURCE_NOW | **closed** — `NO_PUBLIC_DONOR_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`; exact 22-symbol/23-MODVERSION ABI, exact MT6375 flag edge, full thermal/USB/uSmart/DT/GPIO/sysfs/lifecycle contracts, clean exact-GKI build, 68/68 verifier, FROZEN FOR RE |
 | `hynitron` | SOURCE_NOW | 65 functions incl. an embedded CST816D/CST816T firmware-update engine; must reproduce 2 export CRCs for `spi_tiny_co5300_lcd` |
 | `spi_tiny_co5300_lcd` | SOURCE_NOW | 25 functions + the `TINY_LCM_IOC_*` misc-device ABI; needs `yft_devinfo` and `hynitron` settled first |
 | `microarray_fp_tee` | SOURCE_NOW | requires a TEE-side oracle; only attempt after `tkcore` is understood |

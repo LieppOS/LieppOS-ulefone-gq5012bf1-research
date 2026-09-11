@@ -1,0 +1,11 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+package(default_visibility = ["//visibility:public"])
+
+# Build-only ABI witness. Never ship or load; runtime provider is stock.
+kernel_module(
+    name = "mt6375_charger_provider_abi",
+    srcs = ["Makefile", "mt6375-charger.c"],
+    outs = ["mt6375-charger.ko"],
+    kernel_build = "//common:kernel_aarch64",
+)

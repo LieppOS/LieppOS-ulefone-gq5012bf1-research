@@ -1086,6 +1086,14 @@ The 16 named in the triage brief, plus 7 that were missing from it:
 > parity, exact source-built MTK PWM provider edges, all light/timer/sysfs
 > contracts closed, and a 50/50 verifier. It is removed from the ZERO-BLOB RE
 > queue without changing any other module.
+>
+> **Subsequent closure:** `yft_tiny2c_usb` is now
+> `NO_PUBLIC_DONOR_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`,
+> `SOURCE_RECONSTRUCTED`, `SOURCE_NOW`, and FROZEN FOR RE. Its exact-GKI build
+> has 12/12 functions, 11 size-identical, 9 byte-identical, 12/12 KCFI,
+> 23/23 MODVERSION parity, the exact MT6375 `yft_usb_flag` CRC/semantics,
+> complete thermal/USB/uSmart/DT/GPIO/sysfs/lifecycle contracts, and a 68/68
+> verifier. It is removed from the active ZERO-BLOB queue only.
 
 ### Dispositions
 

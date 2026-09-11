@@ -79,7 +79,7 @@ Candidate modules:
 - sh366003_fg — reconstructed from stock oracle with documented residuals; exact 35-import/36-MODVERSION/8-KCFI maps, byte-exact AFI image, exact-GKI build and 527-check verifier PASS; keep stock yft_devinfo and default AFI programming gate
 - sc8571_charger
 - sc851x_charger — reconstructed from the stock oracle; exact-GKI build clean
-- yft_tiny2c_usb
+- yft_tiny2c_usb — `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`, `SOURCE_RECONSTRUCTED`, `SOURCE_NOW`, FROZEN FOR RE; exact MT6375 flag edge and complete thermal/USB/uSmart contract; clean exact-GKI build and 68/68 verifier
 - custom_ldo — reconstructed exactly at the consumer ABI/function level
 - custom_ldo_wl2868 — `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`, FROZEN FOR RE; camera-power provider source-ready
 
