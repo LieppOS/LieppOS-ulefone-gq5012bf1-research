@@ -167,7 +167,7 @@ Plus the platform prerequisites named in the dependency graph:
 | `tkcore_drv` | STOCK_TRANSITION | same |
 | `microarray_fp_tee` | STOCK_TRANSITION | TEE-mediated SPI; not observable from Linux |
 | `yft_devinfo` | STOCK_TRANSITION | ABI pin, §B.2 |
-| `spi_tiny_co5300_lcd` | STOCK_TRANSITION | rear display; `P3` |
+| `spi_tiny_co5300_lcd` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | rear display; exact rebuilt-Hynitron plus stock-YFT provider ABI; 30/30 verifier; `P3` |
 | `hynitron` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | rear touch; stock `yft_devinfo` provider ABI pinned; `P3` |
 
 ### Level B acceptance criteria
@@ -176,8 +176,9 @@ Display + backlight + 60/90/120 Hz mode switching · FT3680 touch · charging
 including PD/PPS · both fuel gauges · audio through the AW883xx smart PA ·
 Wi-Fi · Bluetooth · GNSS fix · cameras enumerate and stream · NFC · RGB
 notification LED · flashlight. Fingerprint uses the source-reconstructed YFT
-provider with stock `microarray_fp_tee`/TrustKernel; the rear/mini display
-continues to work off stock blobs.
+provider with stock `microarray_fp_tee`/TrustKernel. The rear/mini display and
+rear touch are source-reconstructed; stock `yft_devinfo` remains their pinned
+registry ABI provider.
 
 ---
 
@@ -191,7 +192,7 @@ Everything we intend to replace from source. Promotes the Level-B holds:
 | `leds_ln2403` | SOURCE_NOW | **closed** — `NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`; exact hardware/sysfs/timer behavior, exact provider edges, clean exact-GKI build, 50/50 verifier, FROZEN FOR RE |
 | `yft_tiny2c_usb` | SOURCE_NOW | **closed** — `NO_PUBLIC_DONOR_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`; exact 22-symbol/23-MODVERSION ABI, exact MT6375 flag edge, full thermal/USB/uSmart/DT/GPIO/sysfs/lifecycle contracts, clean exact-GKI build, 68/68 verifier, FROZEN FOR RE |
 | `hynitron` | SOURCE_NOW | **closed** — `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`; fitted CST820, exact 65-function/54-import set, exact two export CRCs accepted by stock `spi_tiny_co5300_lcd`, exact images/negative programmer proof, clean build, 34/34 verifier, FROZEN FOR RE |
-| `spi_tiny_co5300_lcd` | SOURCE_NOW | 25 functions + the `TINY_LCM_IOC_*` misc-device ABI; needs `yft_devinfo` and `hynitron` settled first |
+| `spi_tiny_co5300_lcd` | SOURCE_NOW | **closed** — `NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`; exact 25-function/58-MODVERSION sets, exact CO5300 table/image/ABI/state machine, clean exact-GKI build, 30/30 verifier, FROZEN FOR RE |
 | `microarray_fp_tee` | SOURCE_NOW | requires a TEE-side oracle; only attempt after `tkcore` is understood |
 | `yft_devinfo` | SOURCE_NOW | **the 73-character vendor enum type text.** 409 061 884 semantically plausible spellings and 56 495 harvested real enum definitions were already excluded by exhaustion. Only a YFT/Ulefone BSP drop containing `yft_devinfo.h` can close it. |
 | `tkcore` | SOURCE_NOW *(aspirational)* | complete TEE client core RE; 25-symbol ABI; VERY_HIGH |

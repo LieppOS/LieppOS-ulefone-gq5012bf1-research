@@ -189,7 +189,7 @@ view below carries the decision-relevant columns.
 | `custom_ldo` | vendor_dlkm | yes (idx 102) | no | 1 / 2 / 2 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED** | P2_MAJOR_FEATURE |
 | `custom_ldo_wl2868` | vendor_dlkm | yes (idx 101) | no | 27 / 0 / 2 | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | YES_SAFE_TRANSITION | **SOURCE_RECONSTRUCTED** | P2_MAJOR_FEATURE |
 | `yft_gpio_keys` | vendor_boot platform | yes (idx 179) | yes (idx 183) | 65 / 0 / 0 | **STOCK_ORACLE_PROVEN** | SOURCE_NOW | **SOURCE_DELTA_RECONSTRUCTION_EXACT / FROZEN FOR RE** | CLOSED |
-| `spi_tiny_co5300_lcd` | vendor_dlkm | yes (idx 191) | no | 54 / 4 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P3_OPTIONAL_FEATURE |
+| `spi_tiny_co5300_lcd` | vendor_dlkm | yes (idx 191) | no | 54 / 4 / 0 | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | **SOURCE_NOW_WITH_STOCK_YFT_PROVIDER** | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | CLOSED |
 | `hynitron` | vendor_dlkm | on demand (init.touch.rc) | no | 51 / 3 / 2 | **STRUCTURAL_DONOR_ONLY / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | **SOURCE_NOW_WITH_STOCK_YFT_PROVIDER** | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | P3_OPTIONAL_FEATURE |
 | `leds_ln2403` | vendor_dlkm | yes (idx 192) | no | 30 / 2 / 0 | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | P3_OPTIONAL_FEATURE |
 | `yft_tiny2c_usb` | vendor_dlkm | yes (idx 194) | no | 22 / 1 / 0 | **NO_PUBLIC_DONOR_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED / SOURCE_NOW / FROZEN FOR RE** | P3_OPTIONAL_FEATURE |
@@ -198,6 +198,13 @@ view below carries the decision-relevant columns.
 ABI/behavioral-contract verifier. It still requires a stock-compatible
 `charger_class` provider (`charger_device_register`, CRC `0x36325d38`) and has
 not been runtime-tested under the charging safety boundary.
+
+`spi_tiny_co5300_lcd` is now closed and FROZEN FOR RE. The source build has the
+exact 25-function set and exact 58-entry MODVERSION map, naturally consumes the
+real source-built Hynitron CRCs plus the permitted stock-YFT TinyLCD ABI, and
+preserves the exact CO5300 command/image/DT/SPI/TE/ioctl/power behavior. Its
+fail-closed verifier passes 30/30. The historical inventory line above remains
+a stock-oracle dependency count, not an unresolved status.
 
 ---
 

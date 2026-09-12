@@ -9,10 +9,13 @@
   SOURCE_RECONSTRUCTED; SOURCE_NOW; FROZEN FOR RE; 34/34 verifier; stock
   `yft_devinfo` provider ABI pinned; both `spi_tiny_co5300_lcd` consumer edges
   READY/EXACT
+- `spi_tiny_co5300_lcd` — **NO_PUBLIC_SOURCE_FOUND /
+  STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE**; SOURCE_RECONSTRUCTED; SOURCE_NOW;
+  FROZEN FOR RE; exact 25-function/58-MODVERSION sets; exact rebuilt-Hynitron
+  and stock-YFT provider edges; 30/30 verifier
 
 ## Active remaining queue
 
-- `spi_tiny_co5300_lcd` — next rear-display consumer; not done
 - `microarray_fp_tee`
 - `tkcore`
 - `tkcore_drv`

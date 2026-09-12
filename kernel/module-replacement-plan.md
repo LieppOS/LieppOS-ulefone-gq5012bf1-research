@@ -56,12 +56,16 @@ Provider-first status:
 - `hynitron` — **STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE**, SOURCE_NOW,
   FROZEN FOR RE; exact stock-yft provider imports and exact two downstream
   export CRCs; 34/34 verifier
-- `spi_tiny_co5300_lcd` — remains stock/next task; its two Hynitron import edges
-  are READY/EXACT but the module itself is not done
+- `spi_tiny_co5300_lcd` — **NO_PUBLIC_SOURCE_FOUND /
+  STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE**, SOURCE_RECONSTRUCTED, SOURCE_NOW,
+  FROZEN FOR RE; exact 25-function and 58-MODVERSION sets, byte-identical
+  command/image/driver/fops/misc objects, clean exact-GKI build, 30/30 verifier
 
-Hynitron was closed independently as an ABI provider against the frozen stock
-LCD consumer. Rear-display migration can now proceed to that consumer without
-reopening Hynitron.
+The rear-display consumer now links to the real source-built frozen Hynitron
+provider and the permitted stock `yft_devinfo` ABI witness for its two historical
+`*_device_add()`-family gaps. Hynitron was not reopened. The complete rear
+TinyLCD kernel stack is source-ready except for the intentionally retained stock
+`yft_devinfo` provider policy.
 
 ## Priority 4 — yft_devinfo ecosystem
 

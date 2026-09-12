@@ -44,9 +44,11 @@
 > `fingerprint`, `yft_gpio_keys`, `leds_ln2403`, `yft_tiny2c_usb`.
 >
 > Modules **missing** from this 22-entry scan that remain unresolved after later
-> stock-oracle closures: `microarray_fp_tee`, `spi_tiny_co5300_lcd`,
-> `yft_devinfo`. `hynitron` is now `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`
-> and FROZEN FOR RE (34/34 verifier; stock yft_devinfo ABI pinned).
+> stock-oracle closures: `microarray_fp_tee` and `yft_devinfo`. `hynitron` is
+> `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE (34/34 verifier;
+> stock yft_devinfo ABI pinned). `spi_tiny_co5300_lcd` is now also
+> `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`, SOURCE_RECONSTRUCTED, and FROZEN
+> FOR RE (exact 25-function/58-MODVERSION sets; 30/30 verifier).
 >
 > Transition-blob result applying to **all** of them: every one imports 0
 > unresolved and 0 CRC-mismatched kernel symbols against the exact Google GKI

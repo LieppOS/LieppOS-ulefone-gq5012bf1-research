@@ -1230,7 +1230,13 @@ definitions and acceptance criteria.
 `hynitron.ko` has graduated from `STOCK_TRANSITION_BLOB` to
 `SOURCE_RECONSTRUCTED / SOURCE_NOW / FROZEN FOR RE`. The exact-GKI build has an
 identical 65-function set, exact 54-symbol MODVERSION map, exact three stock
-`yft_devinfo` provider CRCs, and naturally exact two exports accepted by stock
-`spi_tiny_co5300_lcd.ko`; the fail-closed verifier reports 34/34. The stock
-`yft_devinfo` rule above remains mandatory. `spi_tiny_co5300_lcd` is still an
-active target; only its Hynitron provider edges are READY/EXACT.
+`yft_devinfo` provider CRCs, and naturally exact two exports accepted by the
+TinyLCD consumer; its fail-closed verifier reports 34/34.
+
+`spi_tiny_co5300_lcd.ko` has now also graduated to
+`NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE /
+SOURCE_RECONSTRUCTED / SOURCE_NOW / FROZEN FOR RE`. Its exact-GKI build has the
+identical 25-function set, exact 58-entry MODVERSION map, exact rebuilt-Hynitron
+and stock-YFT provider edges, byte-identical 1232-byte init and 231200-byte image
+objects, and a 30/30 verifier. The stock `yft_devinfo` rule above remains
+mandatory; the rear-display consumer itself is no longer an active RE target.

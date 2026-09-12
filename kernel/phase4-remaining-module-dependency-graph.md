@@ -259,7 +259,7 @@ therefore KeyMint/Gatekeeper/FBE — will not come up.
        ▼          ▼          ▼           ▼           ▼          ▼          ▼
   focaltech_  hynitron   sh366003_fg  hf_manager  imgsensor  spi_tiny_  aw36518
   ft3680      [frozen]   [recon]      [port]      [port]     co5300_lcd [frozen]
-  [frozen]                                                   [stock]
+  [frozen]                                                   [recon]
        ▲ 3 symbols
        │
   yft_tpd_gesture [frozen] P:183 / R:188   (tpgesture_value/status/hander)
@@ -274,7 +274,7 @@ therefore KeyMint/Gatekeeper/FBE — will not come up.
 |---|---|
 | `yft_fuelgauge_device_add` | `sh366003_fg` [reconstructed consumer, stock provider CRC] |
 | `yft_touchpanel_device_add` | `hynitron` [reconstructed consumer, stock provider CRC] |
-| `yft_tinylcd_device_add` | `spi_tiny_co5300_lcd` [stock] |
+| `yft_tinylcd_device_add` | `spi_tiny_co5300_lcd` [reconstructed/frozen consumer, stock provider CRC] |
 | `yft_camera_device_add` | `imgsensor` [port] |
 | `yft_{acc,m,alsps,sar,baro}sensor_device_add` | `hf_manager` [port] |
 | `yft_spitouchpanel_device_add` | `focaltech_touch_spi_ft3680` [frozen] |
@@ -323,9 +323,9 @@ the sensor/TEE driver.
 ## 8. Cluster: REAR / SECONDARY DISPLAY
 
 ```
-   yft_devinfo [stock] ──2──┐
-                            ├──▶ spi_tiny_co5300_lcd [stock] V:191   → LEAF
-   hynitron    [recon/frozen] ─2─┘ hxytech,spi_tiny_lcd @ SPI0
+   yft_devinfo [stock ABI] ─2─┐
+                              ├──▶ spi_tiny_co5300_lcd [recon/frozen] V:191 → LEAF
+   hynitron [source-built/frozen] ─2─┘ hxytech, spi_tiny_lcd @ SPI0
    hynitron,hyn_ts @ I2C 0-0015   /sys/class/misc/tiny_lcd_miscdev
    (on-demand load: init.touch.rc)
         ▲
@@ -342,9 +342,10 @@ the stock list; the registration is therefore late-bound (module_init /
 deferred), not load-order dependent. Preserve the list verbatim rather than
 "fixing" it.
 
-**Resolved build order:** stock `yft_devinfo` ABI → reconstructed/frozen
-`hynitron` → future `spi_tiny_co5300_lcd`. Hynitron's two provider edges are
-READY/EXACT; the LCD consumer itself remains stock and unresolved.
+**Resolved build order:** stock `yft_devinfo` ABI → source-built/frozen
+`hynitron` → reconstructed/frozen `spi_tiny_co5300_lcd`. All four vendor edges
+and all 58 consumer MODVERSION entries are exact. The leaf passes its 30/30
+verifier and no longer remains in the RE queue.
 
 ---
 
@@ -402,8 +403,8 @@ TIER 8  yft_gpio_keys [SOURCE_DELTA_RECONSTRUCTION_EXACT; FROZEN FOR RE]
 TIER 9  leds_ln2403 [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 10 yft_tiny2c_usb [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 11 hynitron [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
-TIER 12 held on stock: tkcore, tkcore_drv, microarray_fp_tee,
-        spi_tiny_co5300_lcd
+TIER 12 spi_tiny_co5300_lcd [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
+TIER 13 held on stock: tkcore, tkcore_drv, microarray_fp_tee
 ```
 
 ## 11. Leaf modules (zero exports — safe to touch in any order)
