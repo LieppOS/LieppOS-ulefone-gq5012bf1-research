@@ -124,9 +124,10 @@ It is `SOURCE_NOW` and FROZEN FOR RE.
 
 Treat as one late-stage security subsystem:
 
-- tkcore
-- tkcore_drv
-- microarray_fp_tee
+- tkcore — still stock, untouched
+- tkcore_drv — still stock, untouched
+- microarray_fp_tee — **completed** at
+  `BEHAVIORALLY-COMPLETE, LOAD-COMPATIBLE, WITH DECLARED ABI PROVENANCE SPLIT`
 - fingerprint — **completed** at `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`,
   FROZEN FOR RE; source-ready provider with all 10 export CRCs exact
 
@@ -139,9 +140,12 @@ reverse-engineering and integration difficulty because it crosses:
 - secure-world interaction
 
 It should not block earlier custom-kernel development. The completed
-`fingerprint` board-glue provider can be source-built while
-`microarray_fp_tee`, `tkcore`, and `tkcore_drv` remain stock; the four consumed
-provider CRCs are exact.
+`fingerprint` board-glue provider and the completed `microarray_fp_tee`
+consumer can both be source-built while `tkcore` and `tkcore_drv` remain stock.
+The four `yft_*` provider CRCs are exact; the three vendor-provider CRCs
+(`mt_spi_enable_master_clk`, `mt_spi_disable_master_clk`, `tee_spi_transfer`)
+are inherited from the stock provider ELFs, not regenerated — see the
+`microarray_fp_tee` closure below.
 
 ## Strategy
 
@@ -178,6 +182,67 @@ are reproduced. Exact-GKI build succeeds with zero compiler/modpost warnings
 and zero unresolved symbols against the reconstructed WL2868 provider's real
 `Module.symvers`. Only generated srcversion/vermagic provenance differs. It is
 removed from the remaining reverse-engineering queue.
+
+## Phase 4 microarray_fp_tee closure (2026-09-12)
+
+`microarray_fp_tee` is complete at
+`BEHAVIORALLY-COMPLETE, LOAD-COMPATIBLE, WITH DECLARED ABI PROVENANCE SPLIT`
+and is removed from the active RE queue.
+
+No donor source exists (`NO_USEFUL_SOURCE`, `EMPTY-SOURCE RED`). The
+reconstruction is clean-room against the frozen oracle
+`8e1449cea5d07ef663d368ce5eea27e8c879a9cd70d39f8fc2b5b25445c2cf33`.
+
+Closed: all 27 functions with stock-matching static/global linkage, the
+complete 24-command ioctl table including its holes and its return-value
+quirks, the `/dev/madev0` character-device ABI (six-member `file_operations`,
+no `open`/`release`/`poll`), the 0xc000 read/write clamps, the `mmap`
+`pgprot_noncached` mapping, the input/IRQ/workqueue/regulator/probe ordering,
+the sysfs `chip_id` attribute, and the exact `tee_spi_transfer` TEEC ABI
+(TrustKernel SPI proxy TA `966d3f7c-04ef-1beb-08b7-57f37a6d87f9`, command 0,
+`paramTypes 0x75`) with the five-step chip-identification sequence and the
+byte-exact 80-byte secure-world configuration blob.
+
+The data path is hybrid and preserved exactly: probe-time identification uses
+TrustKernel `tee_spi_transfer` only; runtime `read`/`write` uses normal-world
+`spi_sync` under `dev_lock`. `tee_spi_transfer` was never replaced by a generic
+TEE call or a direct SPI transfer, and `tkcore`/`tkcore_drv` were not touched.
+
+Two targets are produced from a single source file:
+
+- `//lieppos/microarray-fp-tee-recon` — 63/66 MODVERSION edges naturally
+  regenerated; the 3 vendor-provider edges are reported as declared
+  `PROVIDER_ABI_GAP` and are not hidden.
+- `//lieppos/microarray-fp-tee-recon-stockabi` — 66/66 exact MODVERSION parity
+  and exact `depends = fingerprint,spi-mt65xx,tkcore`, using CRCs extracted
+  read-only from the stock provider ELFs' own `__kcrctab`.
+
+**63/66 naturally regenerated; 3/66 inherited from real stock provider ABI
+witnesses; the stock-compatible target reaches 66/66 exact.** Source purity of
+`microarray_fp_tee` is separate from source purity of `spi-mt65xx` and
+`tkcore`, which remain stock binaries with no purity claim.
+
+Root cause of the 3-edge gap, proven by control experiment: a provider's export
+CRCs are computed by genksyms in the *provider's* build against MediaTek vendor
+headers. MediaTek's verbatim
+`void mtk_spi_set_autosuspend_delay(struct spi_device *, int)` yields
+`0x063a223e` under exact GKI while stock `spi-mt65xx.ko` publishes
+`0xd3e99558`. All 59 GKI CRCs and all 4 `yft_*` CRCs match exactly, so the
+workspace is correct and the divergence is provider-side only.
+
+Both builds are warning-free with zero unresolved symbols; the fail-closed
+verifier returns `PASS_WITH_DECLARED_DELTAS` with an empty failure list.
+Remaining declared deltas: the 3 provider CRCs (handled by the stock-ABI
+target), the natural target's witness `depends` names, and the workspace-wide
+`vermagic` scmversion stamp (`-maybe-dirty` vs `-g945dff7bc1bf`; GKI commit
+`945dff7bc1bf` is absent from this mirror and the delta is identical for the
+already-accepted `fingerprint.ko`).
+
+Reports: `phase4-microarray-fp-tee-reconstruction.md`,
+`phase4-microarray-fp-tee-abi-provenance.md`,
+`phase4-microarray-fp-tee-behavior.md`,
+`phase4-microarray-fp-tee-source-candidates.md`,
+`phase4-microarray-fp-tee-RED.md`.
 
 ## Phase 4 fingerprint provider closure
 

@@ -1,0 +1,18 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+package(default_visibility = ["//visibility:public"])
+
+# Single source of truth: microarray_fp_tee.c in this package is a symlink to
+# //lieppos/microarray-fp-tee-recon/microarray_fp_tee.c.  There is exactly one
+# copy of the driver source in the tree; both targets compile the same bytes.
+kernel_module(
+    name = "microarray_fp_tee_recon_stockabi",
+    srcs = [
+        "Makefile",
+        "stock-provider.symvers",
+        "microarray_fp_tee.c",
+    ],
+    outs = ["microarray_fp_tee.ko"],
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//lieppos/fingerprint-recon:fingerprint_recon"],
+)

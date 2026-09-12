@@ -1,0 +1,20 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+package(default_visibility = ["//visibility:public"])
+
+kernel_module(
+    name = "microarray_fp_tee_recon",
+    srcs = [
+        "Makefile",
+        "microarray_fp_tee.c",
+    ],
+    outs = ["microarray_fp_tee.ko"],
+    kernel_build = "//common:kernel_aarch64",
+    deps = [
+        "//lieppos/fingerprint-recon:fingerprint_recon",
+        "//lieppos/spi-mt65xx-provider-abi:spi_mt65xx_provider_abi",
+        "//lieppos/tkcore-provider-abi:tkcore_provider_abi",
+    ],
+)
+
+exports_files(["microarray_fp_tee.c"])

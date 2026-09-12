@@ -1,0 +1,39 @@
+# Stock-provider-compatible target for microarray_fp_tee.
+#
+# Identical C source to //lieppos/microarray-fp-tee-recon (the file is copied
+# in by a genrule, there is no second copy of the driver source).
+#
+# ABI inputs:
+#   fingerprint-recon/Module.symvers  - REAL source-built provider, naturally
+#                                       regenerated yft_* CRCs
+#   stock-provider.symvers            - the three CRCs that exact-GKI genksyms
+#                                       provably cannot regenerate, extracted
+#                                       read-only from the stock provider ELFs'
+#                                       own __kcrctab by
+#                                       tools/phase4-extract-stock-provider-symvers.py
+#                                       (see stock-provider.provenance.json)
+#
+# Nothing here is handwritten, patched or invented: the symvers file is a
+# machine extraction of the authoritative stock vendor ABI record, and it is
+# consumed through the normal kbuild KBUILD_EXTRA_SYMBOLS mechanism.
+# $(M) is relative to the kernel objtree; $(KERNEL_SRC) anchors it back
+# to the module directory in the execroot.
+LIEPPOS_STOCK_SYMVERS := $(abspath $(KERNEL_SRC)/$(M)/stock-provider.symvers)
+LIEPPOS_PROVIDER_SYMVERS := \
+	$(wildcard $(COMMON_OUT_DIR)/lieppos/fingerprint-recon/Module.symvers) \
+	$(LIEPPOS_STOCK_SYMVERS)
+
+ifneq ($(KERNELRELEASE),)
+ccflags-y += -faddrsig
+obj-m += microarray_fp_tee.o
+KBUILD_EXTRA_SYMBOLS += $(LIEPPOS_PROVIDER_SYMVERS)
+else
+.PHONY: all modules modules_install clean
+all modules:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) \
+		KBUILD_EXTRA_SYMBOLS="$(LIEPPOS_PROVIDER_SYMVERS)" modules
+modules_install:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules_install
+clean:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
+endif

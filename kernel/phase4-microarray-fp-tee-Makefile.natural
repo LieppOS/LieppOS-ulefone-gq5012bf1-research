@@ -1,0 +1,31 @@
+# Provider ABI inputs for microarray_fp_tee.
+#
+#   fingerprint-recon         - REAL source-built fingerprint.ko symvers
+#                               (yft_* edges, naturally regenerated CRCs)
+#   spi-mt65xx-provider-abi   - build-only ABI witness, naturally derived CRCs
+#   tkcore-provider-abi       - build-only ABI witness, naturally derived CRCs
+#
+# This is the NATURAL target: every CRC in the resulting __versions table is
+# regenerated from C by genksyms.  The three stock vendor-provider CRCs are
+# known to be non-regenerable from exact-GKI headers and are deliberately NOT
+# hidden here - see microarray-fp-tee-recon-stockabi for the stock-compatible
+# variant and the phase4 provenance report for the proof.
+LIEPPOS_PROVIDER_SYMVERS := \
+	$(wildcard $(COMMON_OUT_DIR)/lieppos/fingerprint-recon/Module.symvers) \
+	$(wildcard $(COMMON_OUT_DIR)/lieppos/spi-mt65xx-provider-abi/Module.symvers) \
+	$(wildcard $(COMMON_OUT_DIR)/lieppos/tkcore-provider-abi/Module.symvers)
+
+ifneq ($(KERNELRELEASE),)
+ccflags-y += -faddrsig
+obj-m += microarray_fp_tee.o
+KBUILD_EXTRA_SYMBOLS += $(LIEPPOS_PROVIDER_SYMVERS)
+else
+.PHONY: all modules modules_install clean
+all modules:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) \
+		KBUILD_EXTRA_SYMBOLS="$(LIEPPOS_PROVIDER_SYMVERS)" modules
+modules_install:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules_install
+clean:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
+endif

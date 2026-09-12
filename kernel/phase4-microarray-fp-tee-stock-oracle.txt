@@ -1,0 +1,55 @@
+microarray_fp_tee stock oracle freeze
+=====================================
+
+Canonical extraction path:
+  workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/microarray_fp_tee.ko
+Frozen oracle path:
+  workspace/phase4-microarray-fp-tee/oracle/microarray_fp_tee.stock.ko
+SHA256: 8e1449cea5d07ef663d368ce5eea27e8c879a9cd70d39f8fc2b5b25445c2cf33
+File size: 69296 bytes
+GNU Build ID: 86663a082016489fa896fcd81e4e3377c2b3c29f
+Compiler: Android clang 17.0.2, Android build 10087095, +pgo +bolt +lto -mlgo, LLVM revision d9f89f4d16663d5012e5c09495f3b30ece3d2362
+Vermagic: 6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+Module name: microarray_fp_tee
+Description: Driver for microarray fingerprint sensor
+Author: Microarray
+License: GPL
+Depends: fingerprint,spi-mt65xx,tkcore
+Srcversion: absent from .modinfo
+Aliases:
+  of:N*T*Cmediatek,madev_finger
+  of:N*T*Cmediatek,madev_fingerC*
+Module parameters: none (__param absent)
+ELF properties: AArch64 PAC; .note.Linux OPEN and func notes
+
+Copy search
+-----------
+A full /home/armol filename search found one extracted stock file. The pre-existing
+workspace/phase4-fingerprint/oracle/microarray_fp_tee.stock.ko witness is a
+byte-identical duplicate (same size and SHA256), not a second partition image.
+No vendor_dlkm, system_dlkm, separate recovery, backup, or other stock copy was
+found. Both normal and recovery module lists address the same platform-ramdisk
+ELF.
+
+Placement and ordering
+----------------------
+Stock placement: vendor_boot platform ramdisk, /lib/modules/microarray_fp_tee.ko
+modules.load physical line 183, zero-based load index P:182; immediately after
+fingerprint.ko at physical line 182 / P:181.
+modules.load.recovery physical line 187, zero-based load index R:186; immediately
+after fingerprint.ko at physical line 186 / R:185.
+Adjacency requirement: preserve fingerprint.ko -> microarray_fp_tee.ko.
+
+modules.dep:
+  /lib/modules/microarray_fp_tee.ko: /lib/modules/tkcore.ko /lib/modules/spi-mt65xx.ko /lib/modules/fingerprint.ko
+
+modules.alias:
+  alias of:N*T*Cmediatek,madev_finger microarray_fp_tee
+  alias of:N*T*Cmediatek,madev_fingerC* microarray_fp_tee
+
+modules.softdep: no microarray_fp_tee entry (NONE).
+
+Normal/recovery comparison
+--------------------------
+There is no distinct recovery ELF to compare. Recovery loads the exact same
+platform-ramdisk file. Canonical selection is therefore unambiguous.
