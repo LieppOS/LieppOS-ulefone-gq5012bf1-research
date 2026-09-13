@@ -61,8 +61,8 @@ All 23 stay `STOCK_TRANSITION`, including the two `P0_BOOT_CRITICAL` ones:
 
 | module | why it must stay | blob safety |
 |---|---|---|
-| `tkcore` | KeyMint 3.0 + Gatekeeper + Widevine + FBE unlock | `YES_SAFE_TRANSITION` (101/101 kernel CRCs, 0 intermodule imports) |
-| `tkcore_drv` | TEE transport for the above | `YES_WITH_STOCK_PROVIDER_CHAIN` (`tkcore` + `ffa_v10`) |
+| `tkcore` | KeyMint 3.0 + Gatekeeper + Widevine + FBE unlock | `YES_SAFE_TRANSITION` (101/101 kernel CRCs, 0 intermodule imports) — **stock, NOT RECONSTRUCTED** |
+| `tkcore_drv` | TEE transport for the above | `SOURCE_NOW_WITH_PROVIDER_WITNESSES` — **SOURCE_RECONSTRUCTED / FROZEN FOR RE**; still needs stock `tkcore` + `ffa_v10` at runtime |
 | `panel_ky_vtdr6115_dphy_cmd` | main display | `YES_WITH_STOCK_PROVIDER_CHAIN` |
 | all other 20 | see triage TSV | 7 `YES_SAFE_TRANSITION`, 16 `YES_WITH_STOCK_PROVIDER_CHAIN` |
 
@@ -163,8 +163,8 @@ Plus the platform prerequisites named in the dependency graph:
 
 | module | label | reason |
 |---|---|---|
-| `tkcore` | STOCK_TRANSITION | no source anywhere; `P0`; VERY_HIGH RE risk |
-| `tkcore_drv` | STOCK_TRANSITION | same |
+| `tkcore` | STOCK_TRANSITION | no source anywhere; `P0`; **PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER**, blocked on original TrustKernel private headers |
+| `tkcore_drv` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | closed 2026-09-13 with `SOURCE_NOW_WITH_PROVIDER_WITNESSES`; still runs against stock `tkcore` + `ffa_v10` |
 | `microarray_fp_tee` | STOCK_TRANSITION | TEE-mediated SPI; not observable from Linux |
 | `yft_devinfo` | STOCK_TRANSITION | ABI pin, §B.2 |
 | `spi_tiny_co5300_lcd` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | rear display; exact rebuilt-Hynitron plus stock-YFT provider ABI; 30/30 verifier; `P3` |
@@ -195,8 +195,8 @@ Everything we intend to replace from source. Promotes the Level-B holds:
 | `spi_tiny_co5300_lcd` | SOURCE_NOW | **closed** — `NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`; exact 25-function/58-MODVERSION sets, exact CO5300 table/image/ABI/state machine, clean exact-GKI build, 30/30 verifier, FROZEN FOR RE |
 | `microarray_fp_tee` | SOURCE_NOW | requires a TEE-side oracle; only attempt after `tkcore` is understood |
 | `yft_devinfo` | SOURCE_NOW | **the 73-character vendor enum type text.** 409 061 884 semantically plausible spellings and 56 495 harvested real enum definitions were already excluded by exhaustion. Only a YFT/Ulefone BSP drop containing `yft_devinfo.h` can close it. |
-| `tkcore` | SOURCE_NOW *(aspirational)* | complete TEE client core RE; 25-symbol ABI; VERY_HIGH |
-| `tkcore_drv` | SOURCE_NOW *(aspirational)* | SMC/FF-A transport RE; VERY_HIGH |
+| `tkcore` | SOURCE_NOW *(aspirational, still blocked)* | complete TEE client core RE; 25-symbol ABI; 14/25 natural, 11/25 blocked on TrustKernel private member names; VERY_HIGH |
+| `tkcore_drv` | **DONE — SOURCE_RECONSTRUCTED / FROZEN FOR RE** | SMC/FF-A transport RE completed 2026-09-13; `phase4-tkcore-drv-reconstruction.md` |
 | `uarthub_drv` | **NOT_REQUIRED** | disabled in DT on this board |
 
 Level C is explicitly **not** a precondition for anything. Two entries

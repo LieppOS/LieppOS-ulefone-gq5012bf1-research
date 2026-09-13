@@ -1240,3 +1240,45 @@ identical 25-function set, exact 58-entry MODVERSION map, exact rebuilt-Hynitron
 and stock-YFT provider edges, byte-identical 1232-byte init and 231200-byte image
 objects, and a 30/30 verifier. The stock `yft_devinfo` rule above remains
 mandatory; the rear-display consumer itself is no longer an active RE target.
+
+## tkcore_drv closure update
+
+`tkcore_drv.ko` has graduated from `STOCK_TRANSITION_BLOB` to
+`SOURCE_RECONSTRUCTED / SOURCE_NOW_WITH_PROVIDER_WITNESSES / FROZEN FOR RE`.
+
+Two kleaf targets share one source tree (the `-stockabi` package holds only
+symlinks, so both compile identical bytes):
+
+| target | provider record | modpost | purpose |
+|---|---|---|---|
+| `//lieppos/tkcore-drv-recon` | `//lieppos/tkcore-recon` `Module.symvers` (natural CRCs only) | warns on 7 declared `PROVIDER_ABI_GAP` edges | natural evidence; never loadable |
+| `//lieppos/tkcore-drv-recon-stockabi` | `stock-provider.symvers` (13 stock edges) | **fail-closed, clean** | stock-compatible, shippable |
+
+Build-side lessons worth reusing on other TEE/FF-A consumers:
+
+* **`-DCONFIG_ARM_FFA_TRANSPORT_MODULE=1` is mandatory** for any module that
+  imports `ffa_driver_register()`. GKI's `arm_ffa.h` substitutes
+  `!IS_REACHABLE()` stubs otherwise, and the module silently stops importing the
+  FF-A symbols instead of failing loudly. MediaTek's own out-of-tree build sees
+  the header this way because `ffa_v10` is a module.
+* **Clang kCFI type ids are a build-verifiable prototype oracle.** The id
+  emitted immediately before each function entry hashes the full prototype,
+  including the struct *tag names* of pointer parameters, so comparing stock and
+  rebuilt ids proves prototype identity without any source. `tools/phase4-kcfi-probe/`
+  turns this into a solver: emit N candidate prototypes into one throwaway
+  module, build once (~12 s), and read all N ids back. 20/21 ids now match stock.
+* The import set is a stronger design oracle than intuition: it decided `pr_*`
+  vs `dev_*`, `devm_kzalloc` vs `kzalloc`, and `spin_lock` vs
+  `spin_lock_irqsave` in this module.
+
+Results: 50/50 stock functions by name (17 byte-identical, 24 size-identical),
+53/54 kernel imports, 13/13 provider imports with zero CRC mismatches and zero
+extra imports, 0 exports (matching stock), and a 37/37 fail-closed verifier
+(`kernel/scripts/phase4_tkcore_drv_verify.py`). The single unreproduced import
+`alt_cb_patch_nops` (2 arm64 `ALTERNATIVE_CB` sites) is an explicitly
+allowlisted codegen artefact.
+
+`tkcore` itself is **not** affected and must not be moved into any
+"source-ready" section: it stays `PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED /
+STOCK RUNTIME PROVIDER`, blocked on original TrustKernel private headers.
+`ffa_v10` likewise remains a stock binary with no purity claim.

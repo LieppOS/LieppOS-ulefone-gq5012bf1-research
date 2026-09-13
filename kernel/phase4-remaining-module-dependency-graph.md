@@ -220,7 +220,7 @@ entire cluster.
 
 ```
    ffa_v10 [port] P:97 ──2──┐
-                            ├──▶ tkcore_drv [stock] P:100 / R:98   → LEAF (0 exports)
+                            ├──▶ tkcore_drv [RECONSTRUCTED] P:100 / R:98 → LEAF (0 exports)
    tkcore  [stock] P:99 ─11─┘
       │  25 exports
       ├──1──▶ microarray_fp_tee [stock] P:182 / R:186   (tee_spi_transfer)
@@ -404,7 +404,10 @@ TIER 9  leds_ln2403 [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 10 yft_tiny2c_usb [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 11 hynitron [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 12 spi_tiny_co5300_lcd [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
-TIER 13 held on stock: tkcore, tkcore_drv, microarray_fp_tee
+TIER 13 held on stock: tkcore, microarray_fp_tee
+(tkcore_drv is SOURCE_RECONSTRUCTED / FROZEN FOR RE as of 2026-09-13, but it
+still *runs against* stock tkcore + stock ffa_v10, so the tier stays stock-
+dependent at runtime.)
 ```
 
 ## 11. Leaf modules (zero exports — safe to touch in any order)

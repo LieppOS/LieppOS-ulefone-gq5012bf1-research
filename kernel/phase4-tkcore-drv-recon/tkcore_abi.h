@@ -30,10 +30,10 @@
 #include <linux/list.h>
 #include <linux/types.h>
 
-struct tk_tee;
-struct tk_tee_shm;
-struct tk_tee_session;
-struct tk_tee_cmd;
+struct tee;
+struct tee_shm;
+struct tee_session;
+struct tee_cmd;
 
 /* tkcore enum tee_state values, from tkcore's tee_state_string table. */
 #define TK_TEE_OFFLINE		0
@@ -54,7 +54,7 @@ struct tk_tee_cmd;
 #define TK_TEE_SHM_CACHED		0x20000000
 
 /**
- * struct tk_tee_ops - backend operation table handed to tee_core_alloc()
+ * struct tee_ops - backend operation table handed to tee_core_alloc()
  *
  * 88 bytes, 11 slots.  Slot order proven by the stock .rodata image of
  * tee_tz_fops (.rodata+0x70) and its relocations:
@@ -64,28 +64,28 @@ struct tk_tee_cmd;
  * tkcore's tee_core_alloc() rejects the table unless slots +0x20, +0x28,
  * +0x40 and +0x48 are non-NULL.
  */
-struct tk_tee_ops {
+struct tee_ops {
 	struct module *owner;
 	const char *type;
-	int (*start)(struct tk_tee *tee);
-	int (*stop)(struct tk_tee *tee);
-	int (*open)(struct tk_tee_session *sess, struct tk_tee_cmd *cmd);
-	int (*close)(struct tk_tee_session *sess);
-	int (*invoke)(struct tk_tee_session *sess, struct tk_tee_cmd *cmd);
-	int (*cancel)(struct tk_tee_session *sess, struct tk_tee_cmd *cmd);
-	struct tk_tee_shm *(*alloc)(struct tk_tee *tee, size_t size, u32 flags);
-	void (*free)(struct tk_tee_shm *shm);
-	int (*shm_inc_ref)(struct tk_tee_shm *shm);
+	int (*start)(struct tee *tee);
+	int (*stop)(struct tee *tee);
+	int (*open)(struct tee_session *sess, struct tee_cmd *cmd);
+	int (*close)(struct tee_session *sess);
+	int (*invoke)(struct tee_session *sess, struct tee_cmd *cmd);
+	int (*cancel)(struct tee_session *sess, struct tee_cmd *cmd);
+	struct tee_shm *(*alloc)(struct tee *tee, size_t size, u32 flags);
+	void (*free)(struct tee_shm *shm);
+	int (*shm_inc_ref)(struct tee_shm *shm);
 };
 
 /**
- * struct tk_tee - tkcore's struct tee (312 bytes), as far as tkcore_drv uses it
+ * struct tee - tkcore's struct tee (312 bytes), as far as tkcore_drv uses it
  *
  * tkcore owns this object; tkcore_drv only reads/writes the members below.
  * The opaque runs are tkcore-private (klist node, misc device list, stats,
  * context/shm lists, mutex) and are never touched by this module.
  */
-struct tk_tee {
+struct tee {
 	u8 tkcore_node[0x20];			/* 0x000 klist_node */
 	char name[64];				/* 0x020 */
 	int id;					/* 0x060 */
@@ -95,7 +95,7 @@ struct tk_tee {
 	u32 log_irq;				/* 0x080 */
 	u32 tkcore_pad084;			/* 0x084 */
 	void *priv;				/* 0x088 backend private area */
-	const struct tk_tee_ops *ops;		/* 0x090 */
+	const struct tee_ops *ops;		/* 0x090 */
 	struct device *dev;			/* 0x098 */
 	u8 tkcore_private[0x130 - 0xa0];	/* 0x0a0 lists/stats/mutex */
 	u32 conf;				/* 0x130 */
@@ -103,15 +103,15 @@ struct tk_tee {
 };
 
 /**
- * struct tk_tee_shm - tkcore's struct tee_shm (104 bytes)
+ * struct tee_shm - tkcore's struct tee_shm (104 bytes)
  *
  * tz_alloc() allocates it with devm_kmalloc(dev, 0x68, GFP_KERNEL) and fills
  * size_req/size_alloc/flags/kaddr/paddr; tz_free() reads tee and paddr.
  */
-struct tk_tee_shm {
+struct tee_shm {
 	struct list_head entry;			/* 0x00 */
 	void *ctx;				/* 0x10 struct tee_context * */
-	struct tk_tee *tee;			/* 0x18 */
+	struct tee *tee;			/* 0x18 */
 	struct device *dev;			/* 0x20 */
 	size_t size_req;			/* 0x28 */
 	size_t size_alloc;			/* 0x30 */
@@ -122,29 +122,29 @@ struct tk_tee_shm {
 	u8 tkcore_private[0x68 - 0x50];		/* 0x50 sgt/dma-buf state */
 };
 
-/** struct tk_tee_context - tkcore's struct tee_context, first member only */
-struct tk_tee_context {
-	struct tk_tee *tee;			/* 0x00 */
+/** struct tee_context - tkcore's struct tee_context, first member only */
+struct tee_context {
+	struct tee *tee;			/* 0x00 */
 };
 
-/** struct tk_tee_session - tkcore's struct tee_session (tz_open/tz_close) */
-struct tk_tee_session {
+/** struct tee_session - tkcore's struct tee_session (tz_open/tz_close) */
+struct tee_session {
 	struct list_head entry;			/* 0x00 */
-	struct tk_tee_context *ctx;		/* 0x10 */
+	struct tee_context *ctx;		/* 0x10 */
 	u32 sessid;				/* 0x18 */
 	u32 tkcore_pad01c;			/* 0x1c */
 	void *priv;				/* 0x20 */
 };
 
 /**
- * struct tk_tee_data / struct tk_tee_cmd - tkcore's command payload
+ * struct tee_data / struct tee_cmd - tkcore's command payload
  *
  * tz_open()/tz_invoke() read cmd->uuid (0x10), cmd->ta (0x18) and write the
  * four parameter slots at 0xc8/0xd0/0xd8/0xe0 plus the value pairs; that
  * places struct tee_data at 0x20 with the classic
  * {type, type_original, TEEC_SharedMemory c_shm[4], params[4]} layout.
  */
-struct tk_teec_shared_memory {
+struct teec_shared_memory {
 	void *buffer;
 	size_t size;
 	u32 flags;
@@ -157,29 +157,29 @@ struct tk_teec_shared_memory {
 	u64 registered;
 };
 
-struct tk_teec_value {
+struct teec_value {
 	u32 a;
 	u32 b;
 };
 
-struct tk_tee_data {
+struct tee_data {
 	u32 type;					/* +0x00 */
 	u32 type_original;				/* +0x04 */
-	struct tk_teec_shared_memory c_shm[4];		/* +0x08 */
+	struct teec_shared_memory c_shm[4];		/* +0x08 */
 	union {
-		struct tk_tee_shm *shm;
-		struct tk_teec_value value;
+		struct tee_shm *shm;
+		struct teec_value value;
 	} params[4];					/* +0xa8 */
 };
 
-struct tk_tee_cmd {
+struct tee_cmd {
 	u32 err;				/* 0x00 */
 	u32 origin;				/* 0x04 */
 	u32 cmd;				/* 0x08 */
 	u32 tkcore_pad00c;			/* 0x0c */
-	struct tk_tee_shm *uuid;		/* 0x10 */
-	struct tk_tee_shm *ta;			/* 0x18 */
-	struct tk_tee_data param;		/* 0x20 */
+	struct tee_shm *uuid;		/* 0x10 */
+	struct tee_shm *ta;			/* 0x18 */
+	struct tee_data param;		/* 0x20 */
 };
 
 /*
@@ -207,11 +207,11 @@ void tee_wait_queue_wakeup(struct device *dev,
 
 int tee_clkmgr_handle(uint32_t id, uint32_t command);
 
-struct tk_tee *tee_core_alloc(struct device *dev, char *name, int id,
-			      const struct tk_tee_ops *ops, size_t len);
-int tee_core_add(struct tk_tee *tee);
-int tee_core_del(struct tk_tee *tee);
-int __tee_get(struct tk_tee *tee);
+struct tee *tee_core_alloc(struct device *dev, char *name, int id,
+			      const struct tee_ops *ops, size_t len);
+int tee_core_add(struct tee *tee);
+int tee_core_del(struct tee *tee);
+int __tee_get(struct tee *tee);
 
 /* tkcore supplicant RPC ids, from the stock tee_supp_cmd() call sites. */
 #define TK_TEE_RPC_ICMD_ALLOCATE	0x1001
@@ -223,19 +223,19 @@ enum tk_teec_rpc_result {
 	TK_TEEC_RPC_FAIL,
 };
 
-enum tk_teec_rpc_result tee_supp_cmd(struct tk_tee *tee, u32 id, void *data,
+enum tk_teec_rpc_result tee_supp_cmd(struct tee *tee, u32 id, void *data,
 				     size_t datalen);
 
 /* tkcore RPC buffer descriptor used with TK_TEE_RPC_ICMD_ALLOCATE/FREE. */
-struct tk_tee_rpc_alloc {
+struct tee_rpc_alloc {
 	u32 size;
 	u32 pad;
 	void *data;
-	struct tk_tee_shm *shm;
+	struct tee_shm *shm;
 };
 
-struct tk_tee_rpc_free {
-	struct tk_tee_shm *shm;
+struct tee_rpc_free {
+	struct tee_shm *shm;
 };
 
 #endif /* TKCORE_DRV_TKCORE_ABI_H */

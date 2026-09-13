@@ -47,17 +47,17 @@ static int nr_cpus __read_mostly;
  * Default policy: never bind a call to a particular CPU.  The stock table is
  * three no-ops returning false/true/0 (.rodata+0xc8).
  */
-static bool default_affinity_need_bind_cpu(unsigned long arg)
+static bool default_affinity_need_bind_cpu(void *arg)
 {
 	return false;
 }
 
-static bool default_affinity_match_cpu(unsigned long arg, int cpu)
+static bool default_affinity_match_cpu(void *arg, int cpu)
 {
 	return true;
 }
 
-static int default_affinity_get_candidate_cpu(unsigned long arg)
+static int default_affinity_get_candidate_cpu(void *arg)
 {
 	return 0;
 }
@@ -75,19 +75,19 @@ const struct tee_affinity_ops default_affinity_operations = {
  *   match_cpu      -> cmp arg,cpu -> eq
  *   get_candidate_cpu -> return arg
  */
-static bool tee_bind_cpu_request_need_bind_cpu(unsigned long arg)
+static bool tee_bind_cpu_request_need_bind_cpu(void *arg)
 {
 	return true;
 }
 
-static bool tee_bind_cpu_request_match_cpu(unsigned long arg, int cpu)
+static bool tee_bind_cpu_request_match_cpu(void *arg, int cpu)
 {
-	return (int)arg == cpu;
+	return (int)(uintptr_t)arg == cpu;
 }
 
-static int tee_bind_cpu_request_get_candidate_cpu(unsigned long arg)
+static int tee_bind_cpu_request_get_candidate_cpu(void *arg)
 {
-	return (int)arg;
+	return (int)(uintptr_t)arg;
 }
 
 const struct tee_affinity_ops tee_bind_cpu_request_operations = {
@@ -437,13 +437,13 @@ queue:
 		switch ((u32)param->a0) {
 		case TKCORE_SMC_RETURN_BIND_CPU:
 			aff->ops = &tee_bind_cpu_request_operations;
-			aff->arg = (unsigned long)(u32)param->a1;
+			aff->arg = (void *)(uintptr_t)(u32)param->a1;
 			param->a0 = out.a0;
 			param->a1 = out.a1;
 			continue;
 		case TKCORE_SMC_RETURN_RPC_BIND_CPU:
 			aff->ops = &tee_bind_cpu_request_operations;
-			aff->arg = (unsigned long)(u32)param->a1;
+			aff->arg = (void *)(uintptr_t)(u32)param->a1;
 			param->a0 = rpc_resume;
 			param->a1 = 0;
 			continue;

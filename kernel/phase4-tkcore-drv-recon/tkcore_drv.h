@@ -114,15 +114,15 @@ struct smc_param {
  *   tee_bind_cpu_request_operations  (.rodata+0x290)
  */
 struct tee_affinity_ops {
-	bool (*need_bind_cpu)(unsigned long arg);
-	bool (*match_cpu)(unsigned long arg, int cpu);
-	int (*get_candidate_cpu)(unsigned long arg);
+	bool (*need_bind_cpu)(void *arg);
+	bool (*match_cpu)(void *arg, int cpu);
+	int (*get_candidate_cpu)(void *arg);
 };
 
 /** struct tee_affinity - policy + policy argument for one secure call */
 struct tee_affinity {
 	const struct tee_affinity_ops *ops;
-	unsigned long arg;
+	void *arg;
 };
 
 /**
@@ -173,7 +173,7 @@ struct tee_task_ctl {
  */
 struct tee_tz {
 	bool started;					/* 0x00 */
-	struct tk_tee *tee;				/* 0x08 */
+	struct tee *tee;				/* 0x08 */
 	unsigned long shm_paddr;			/* 0x10 */
 	void *shm_vaddr;				/* 0x18 */
 	bool shm_cached;				/* 0x20 */

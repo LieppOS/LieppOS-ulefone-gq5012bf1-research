@@ -142,8 +142,8 @@ proven still-unresolved:
 | 7 | `gps_scp` | task list; `RELATED_SOURCE_HIT` only |
 | 8 | `wmt_chrdev_wifi_connac2` | task list; `STRONG_API_HIT` only |
 | 9 | `sc851x_charger` | task list; `NO_EXACT_HIT` |
-| 10 | `tkcore` | task list; `STRONG_API_HIT` (API-name collision only) |
-| 11 | `tkcore_drv` | task list; `NO_EXACT_HIT` |
+| 10 | `tkcore` | task list; `STRONG_API_HIT` (API-name collision only) — **still NOT RECONSTRUCTED**, stock runtime provider |
+| 11 | `tkcore_drv` | task list; `NO_EXACT_HIT` — **CLOSED: SOURCE_RECONSTRUCTED / FROZEN FOR RE**, see `phase4-tkcore-drv-reconstruction.md` |
 | 12 | `custom_ldo_wl2868` | task list; `NO_EXACT_HIT` |
 | 13 | `fingerprint` | task list; `RELATED_SOURCE_HIT` (generic word noise) |
 | 14 | `bt_drv_6878` | task list; `STRONG_API_HIT` only |
@@ -175,8 +175,8 @@ view below carries the decision-relevant columns.
 | `sh366003_fg` | vendor_boot platform | yes (idx 133) | yes (idx 131) | 33 / 3 / 0 | **NO_USEFUL_SOURCE / ORACLE_RECONSTRUCTED** | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED** | P1_CORE_HARDWARE |
 | `sc8571_charger` | vendor_boot platform | yes (idx 147) | yes (idx 145) | 41 / 1 / 0 | **NO_USEFUL_SOURCE / ORACLE_RECONSTRUCTED** | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED** | P1_CORE_HARDWARE |
 | `sc851x_charger` | vendor_boot platform | yes (idx 146) | yes (idx 144) | 30 / 0 / 0 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | **SOURCE_RECONSTRUCTED** | P1_CORE_HARDWARE |
-| `tkcore` | vendor_boot platform | yes (idx 99) | yes (idx 97) | 101 / 0 / 25 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | STOCK_TRANSITION_BLOB | **P0_BOOT_CRITICAL** |
-| `tkcore_drv` | vendor_boot platform | yes (idx 100) | yes (idx 98) | 54 / 13 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | **P0_BOOT_CRITICAL** |
+| `tkcore` | vendor_boot platform | yes (idx 99) | yes (idx 97) | 101 / 0 / 25 | **NO_PUBLIC_SOURCE_FOUND / PROVIDER_ABI_PARTIAL** | YES_SAFE_TRANSITION | **NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER** (14/25 natural, 11/25 blocked on TrustKernel private headers) | **P0_BOOT_CRITICAL** |
+| `tkcore_drv` | vendor_boot platform | yes (idx 100) | yes (idx 98) | 54 / 13 / 0 | **NO_PUBLIC_SOURCE_FOUND / PROVIDER_ABI_PARTIAL** | **SOURCE_NOW_WITH_PROVIDER_WITNESSES** | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** (6 NATURAL + 7 STOCK_PROVIDER_WITNESS; 37/37 verifier) | **P0_BOOT_CRITICAL** |
 | `conninfra` | vendor_dlkm | yes (idx 120) | no (vendor_dlkm unmounted) | 175 / 19 / 81 | **EXACT_SOURCE** | YES_WITH_STOCK_PROVIDER_CHAIN | FORWARD_PORT | P2_MAJOR_FEATURE |
 | `wmt_chrdev_wifi_connac2` | vendor_dlkm | yes (idx 121) | no | 40 / 0 / 18 | **EXACT_SOURCE** | YES_SAFE_TRANSITION | FORWARD_PORT | P2_MAJOR_FEATURE |
 | `wlan_drv_gen4m_6878` | vendor_dlkm | yes (idx 122) | no | 295 / 95 / 0 | **EXACT_SOURCE** | YES_WITH_STOCK_PROVIDER_CHAIN | FORWARD_PORT | P2_MAJOR_FEATURE |
@@ -351,7 +351,7 @@ They are two distinct modules with a hard dependency, not two outputs of one
 target:
 
 * `tkcore.ko` — 221 352 B, 25 exports, 101 kernel imports, **0** intermodule imports, `depends=` empty. Provides the client/TEEC surface: `TEEC_{InitializeContext,FinalizeContext,OpenSession,CloseSession,InvokeCommand,RegisterSharedMemory,ReleaseSharedMemory,AllocateSharedMemory}`, `tee_core_{add,alloc,del,free}`, `tee_wait_queue_*`, `tee_clkmgr_*`, `tee_map_cached_shm`, `tee_unmap_cached_shm`, `tee_supp_cmd`, `__tee_get`, `tee_spi_transfer`, `tee_spi_transfer_disable`, `tee_spi_cfg_padsel`.
-* `tkcore_drv.ko` — 63 480 B, 0 exports, `depends=tkcore,ffa_v10`. The SMC/FF-A transport: shared-memory pool, TEE log buffer, `tkcore_smc_task.%u` kthreads, `tkcoreos-rev: %d.%d.%d-gp`.
+* `tkcore_drv.ko` — 63 480 B, 0 exports, `depends=tkcore,ffa_v10`. The SMC/FF-A transport: shared-memory pool, TEE log buffer, `tkcore_smc_task.%u` kthreads, `tkcoreos-rev: %d.%d.%d-gp`. **Reconstructed 2026-09-13** (`SOURCE_RECONSTRUCTED / FROZEN FOR RE`): 50/50 functions, 53/54 kernel imports, 13/13 provider imports, FF-A UUID `8bf0ccc3-42a3-5271-860d-66580469479c`, DT `trustkernel,tzdrv` + `trustkernel,shared_mem` + `trustkernel,tkcore`, fast calls `0xf2000001/0xf2005704/0xf2005705`.
 
 Load order is adjacent and fixed: platform ramdisk `97 ffa_v10.ko`,
 `98 teeperf.ko`, `99 tkcore.ko`, `100 tkcore_drv.ko` (recovery: 95/96/97/98).

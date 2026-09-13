@@ -135,7 +135,7 @@ static void tee_smc_call(struct tee_tz *ptee, struct smc_param *param)
 {
 	struct tee_affinity aff = {
 		.ops = &default_affinity_operations,
-		.arg = 0,
+		.arg = NULL,
 	};
 
 	run_tee_task(ptee, param, &aff);
@@ -151,11 +151,11 @@ static void tee_smc_call(struct tee_tz *ptee, struct smc_param *param)
 static void call_tee(struct tee_tz *ptee, unsigned long parg,
 		     void *arg_vaddr, u32 func_id, u32 cmd_id)
 {
-	struct tk_tee *tee = ptee->tee;
+	struct tee *tee = ptee->tee;
 	struct smc_param param = { 0 };
 	unsigned long rpc_paddr = parg;
 	void *rpc_vaddr = arg_vaddr;
-	struct tk_tee_shm *supp_shm = NULL;
+	struct tee_shm *supp_shm = NULL;
 	u32 *msg;
 	int handle;
 
@@ -185,7 +185,7 @@ static void call_tee(struct tee_tz *ptee, unsigned long parg,
 			/* Nothing to do: the call is simply resumed. */
 			break;
 		case TKCORE_RPC_FUNC_SUPP_ALLOC: {
-			struct tk_tee_rpc_alloc alloc = { 0 };
+			struct tee_rpc_alloc alloc = { 0 };
 
 			alloc.size = (u32)rpc_paddr;
 			tee_supp_cmd(tee, TK_TEE_RPC_ICMD_ALLOCATE, &alloc,
@@ -197,7 +197,7 @@ static void call_tee(struct tee_tz *ptee, unsigned long parg,
 			}
 			handle = handle_get(&ptee->handle_db, supp_shm);
 			if (handle < 0) {
-				struct tk_tee_rpc_free free_arg = {
+				struct tee_rpc_free free_arg = {
 					.shm = supp_shm,
 				};
 
@@ -210,11 +210,11 @@ static void call_tee(struct tee_tz *ptee, unsigned long parg,
 			break;
 		}
 		case TKCORE_RPC_FUNC_SUPP_FREE: {
-			struct tk_tee_shm *shm;
+			struct tee_shm *shm;
 
 			shm = handle_put(&ptee->handle_db, (int)rpc_paddr);
 			if (shm) {
-				struct tk_tee_rpc_free free_arg = { .shm = shm };
+				struct tee_rpc_free free_arg = { .shm = shm };
 
 				tee_supp_cmd(tee, TK_TEE_RPC_ICMD_FREE,
 					     &free_arg, sizeof(free_arg));
@@ -269,7 +269,7 @@ static void call_tee(struct tee_tz *ptee, unsigned long parg,
 /* struct tee_ops backend                                              */
 /* ------------------------------------------------------------------ */
 
-static int tz_start(struct tk_tee *tee)
+static int tz_start(struct tee *tee)
 {
 	struct tee_tz *ptee;
 	struct device_node *np;
@@ -364,7 +364,7 @@ err:
 	return ret;
 }
 
-static int tz_stop(struct tk_tee *tee)
+static int tz_stop(struct tee *tee)
 {
 	struct tee_tz *ptee;
 
@@ -384,7 +384,7 @@ static int tz_stop(struct tk_tee *tee)
 	return 0;
 }
 
-static void set_params(struct tee_tz *ptee, struct tk_tee_data *data,
+static void set_params(struct tee_tz *ptee, struct tee_data *data,
 		       u32 *msg_params)
 {
 	/*
@@ -415,9 +415,9 @@ static void set_params(struct tee_tz *ptee, struct tk_tee_data *data,
 	}
 }
 
-static int tz_open(struct tk_tee_session *sess, struct tk_tee_cmd *cmd)
+static int tz_open(struct tee_session *sess, struct tee_cmd *cmd)
 {
-	struct tk_tee *tee;
+	struct tee *tee;
 	struct tee_tz *ptee;
 	unsigned long parg;
 	void *arg;
@@ -450,9 +450,9 @@ static int tz_open(struct tk_tee_session *sess, struct tk_tee_cmd *cmd)
 	return 0;
 }
 
-static int tz_close(struct tk_tee_session *sess)
+static int tz_close(struct tee_session *sess)
 {
-	struct tk_tee *tee;
+	struct tee *tee;
 	struct tee_tz *ptee;
 	unsigned long parg;
 	void *arg;
@@ -483,9 +483,9 @@ static int tz_close(struct tk_tee_session *sess)
 	return 0;
 }
 
-static int tz_invoke(struct tk_tee_session *sess, struct tk_tee_cmd *cmd)
+static int tz_invoke(struct tee_session *sess, struct tee_cmd *cmd)
 {
-	struct tk_tee *tee;
+	struct tee *tee;
 	struct tee_tz *ptee;
 	unsigned long parg;
 	void *arg;
@@ -518,9 +518,9 @@ static int tz_invoke(struct tk_tee_session *sess, struct tk_tee_cmd *cmd)
 	return 0;
 }
 
-static int tz_cancel(struct tk_tee_session *sess, struct tk_tee_cmd *cmd)
+static int tz_cancel(struct tee_session *sess, struct tee_cmd *cmd)
 {
-	struct tk_tee *tee;
+	struct tee *tee;
 	struct tee_tz *ptee;
 	unsigned long parg;
 	void *arg;
@@ -551,10 +551,10 @@ static int tz_cancel(struct tk_tee_session *sess, struct tk_tee_cmd *cmd)
 	return 0;
 }
 
-static struct tk_tee_shm *tz_alloc(struct tk_tee *tee, size_t size, u32 flags)
+static struct tee_shm *tz_alloc(struct tee *tee, size_t size, u32 flags)
 {
 	struct tee_tz *ptee = tee->priv;
-	struct tk_tee_shm *shm;
+	struct tee_shm *shm;
 	size_t alloc_size;
 
 	if (WARN_ON(!ptee))
@@ -597,9 +597,9 @@ static struct tk_tee_shm *tz_alloc(struct tk_tee *tee, size_t size, u32 flags)
 	return shm;
 }
 
-static void tz_free(struct tk_tee_shm *shm)
+static void tz_free(struct tee_shm *shm)
 {
-	struct tk_tee *tee = shm->tee;
+	struct tee *tee = shm->tee;
 	struct tee_tz *ptee;
 	size_t size = 0;
 
@@ -611,9 +611,9 @@ static void tz_free(struct tk_tee_shm *shm)
 		devm_kfree(tee->dev, shm);
 }
 
-static int tz_shm_inc_ref(struct tk_tee_shm *shm)
+static int tz_shm_inc_ref(struct tee_shm *shm)
 {
-	struct tk_tee *tee = shm->tee;
+	struct tee *tee = shm->tee;
 	struct tee_tz *ptee;
 
 	if (WARN_ON(!tee) || WARN_ON(!tee->priv))
@@ -624,7 +624,7 @@ static int tz_shm_inc_ref(struct tk_tee_shm *shm)
 	return tee_shm_pool_incref(tee->dev, ptee->shm_pool, shm->paddr);
 }
 
-static const struct tk_tee_ops tee_tz_fops = {
+static const struct tee_ops tee_tz_fops = {
 	.owner = THIS_MODULE,
 	.type = TKCORE_BACKEND_TYPE,
 	.start = tz_start,
@@ -660,12 +660,12 @@ static int tee_tz_new(struct device *dev, int id,
 					struct smc_param *),
 		      int (*build_mem_share_handle)(struct tee_tz *, void *,
 						    size_t, u32, u64 *, u32 *),
-		      struct tk_tee **tee_out)
+		      struct tee **tee_out)
 {
 	struct smc_param param = { 0 };
 	struct device_node *np;
 	struct tee_tz *ptee;
-	struct tk_tee *tee;
+	struct tee *tee;
 	unsigned long log_buf;
 	u32 log_flags = 0;
 	u64 log_handle = 0;
@@ -788,7 +788,7 @@ add:
 	return 0;
 }
 
-static void tee_tz_destroy(struct tk_tee *tee)
+static void tee_tz_destroy(struct tee *tee)
 {
 	struct tee_tz *ptee = tee->priv;
 
@@ -812,7 +812,7 @@ static const struct ffa_device_id tkcore_ffa_device_id[] = {
 
 static int tkcore_ffa_probe(struct ffa_device *ffa_dev)
 {
-	struct tk_tee *tee = NULL;
+	struct tee *tee = NULL;
 	int ret;
 
 	ret = tee_tz_new(&ffa_dev->dev, ffa_dev->id, invoke_tee_ffa,
@@ -828,7 +828,7 @@ static int tkcore_ffa_probe(struct ffa_device *ffa_dev)
 
 static void tkcore_ffa_remove(struct ffa_device *ffa_dev)
 {
-	struct tk_tee *tee = dev_get_drvdata(&ffa_dev->dev);
+	struct tee *tee = dev_get_drvdata(&ffa_dev->dev);
 
 	tee_tz_destroy(tee);
 }
@@ -852,7 +852,7 @@ MODULE_DEVICE_TABLE(of, tkcore_smc_device_id);
 
 static int tkcore_smc_probe(struct platform_device *pdev)
 {
-	struct tk_tee *tee = NULL;
+	struct tee *tee = NULL;
 	int ret;
 
 	ret = tee_tz_new(&pdev->dev, pdev->id, invoke_tee_smc,
@@ -865,7 +865,7 @@ static int tkcore_smc_probe(struct platform_device *pdev)
 
 static int tkcore_smc_remove(struct platform_device *pdev)
 {
-	struct tk_tee *tee = platform_get_drvdata(pdev);
+	struct tee *tee = platform_get_drvdata(pdev);
 
 	tee_tz_destroy(tee);
 

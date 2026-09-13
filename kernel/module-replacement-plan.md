@@ -124,8 +124,12 @@ It is `SOURCE_NOW` and FROZEN FOR RE.
 
 Treat as one late-stage security subsystem:
 
-- tkcore — still stock, untouched
-- tkcore_drv — still stock, untouched
+- tkcore — still stock, untouched (`PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED /
+  STOCK RUNTIME PROVIDER`, blocked on original TrustKernel private headers)
+- tkcore_drv — **SOURCE_RECONSTRUCTED / SOURCE_NOW_WITH_PROVIDER_WITNESSES /
+  FROZEN FOR RE** (2026-09-13). Ship only the `-stockabi` target; keep the
+  stock load order `ffa_v10 -> teeperf -> tkcore -> tkcore_drv`. Replacing it
+  does **not** make `tkcore` or `ffa_v10` replaceable.
 - microarray_fp_tee — **completed** at
   `BEHAVIORALLY-COMPLETE, LOAD-COMPATIBLE, WITH DECLARED ABI PROVENANCE SPLIT`
 - fingerprint — **completed** at `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`,

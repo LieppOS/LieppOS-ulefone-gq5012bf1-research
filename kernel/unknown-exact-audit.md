@@ -56,6 +56,15 @@
 
 ## tkcore
 
+**Phase 4 status (2026-09-13): `PROVIDER_ABI_PARTIAL` / `NOT RECONSTRUCTED` /
+`STOCK RUNTIME PROVIDER` / blocked on original TrustKernel private headers.**
+14/25 export CRCs regenerate naturally; 11/25 are `PROVIDER_ABI_BLOCKED`
+because their genksyms CRCs expand TrustKernel's private `struct tee` /
+`struct tee_context` / `struct tee_ops` member *names*. The `tkcore_drv`
+reconstruction does **not** change this: it consumed 5 of those edges as
+declared `STOCK_PROVIDER_WITNESS` CRCs, which is evidence of the ABI, not of
+the source. Do not move this module into any "source-ready" section.
+
 - locations: `vendor_boot_platform`
 - result: **STRONG_API_HIT**
 - evidence kinds: `EXPORT`
@@ -435,13 +444,25 @@ software/control path. See `phase4-sc851x-reconstruction.md` and `usmart/`.
 ## tkcore_drv
 
 - locations: `vendor_boot_platform`
-- result: **NO_EXACT_HIT**
+- result: **NO_EXACT_HIT** → **NO_PUBLIC_SOURCE_FOUND / SOURCE_RECONSTRUCTED**
 - evidence kinds: ``
 - exact hit records: 0
 - description: `TrustKernel TKCore TZ driver`
 - aliases: ``
 
-- No exact source hit found.
+- No exact source hit found, and none is needed any more.
+
+**Phase 4 status (2026-09-13):** **`SOURCE_RECONSTRUCTED` /
+`SOURCE_NOW_WITH_PROVIDER_WITNESSES` / `FROZEN FOR RE`.** Real readable C in
+`kernel/phase4-tkcore-drv-recon/`, built by `//lieppos/tkcore-drv-recon-stockabi`
+against exact GKI 12901745: 50/50 stock functions by name, 17 byte-identical,
+53/54 kernel imports, 13/13 provider imports with zero CRC mismatches, 20/21
+kCFI prototype identities, 0 exports (matching stock), 37/37 verifier checks.
+Provider ABI is split and labelled per symbol: **6 `NATURAL`**, **7
+`STOCK_PROVIDER_WITNESS`**. See `kernel/phase4-tkcore-drv-reconstruction.md`.
+`tkcore` and `ffa_v10` are **not** source-pure and remain stock runtime
+providers.
+
 
 ## aw36518_v2
 

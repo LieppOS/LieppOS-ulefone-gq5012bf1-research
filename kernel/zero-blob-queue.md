@@ -34,8 +34,8 @@
   `kernel/phase4-tkcore-stock-inventory.md`,
   `kernel/phase4-tkcore-source-candidates.md`.
 
-- `tkcore_drv` — **RECONSTRUCTED / PROVIDER_ABI_PARTIAL**; SOURCE_RECONSTRUCTED;
-  FROZEN FOR RE; stock oracle
+- `tkcore_drv` — **SOURCE_RECONSTRUCTED / SOURCE_NOW_WITH_PROVIDER_WITNESSES /
+  PROVIDER_ABI_PARTIAL**; **FROZEN FOR RE**; stock oracle
   `c13503baf7c13828d0d666cbd364d8cadaa7d1282442405c72d28073bd51235d` (63480 B).
   Pure consumer (0 exports). Real readable C in
   `//lieppos/tkcore-drv-recon` (4 .c + 4 .h: transports, `struct tee_ops`
@@ -49,8 +49,15 @@
   `STOCK_PROVIDER_WITNESS`** (`tee_core_alloc/add/del`, `__tee_get`,
   `tee_supp_cmd`, `ffa_driver_register/unregister`) read read-only from the
   stock provider `__kcrctab`/`__kcrctab_gpl`. The natural-evidence target
-  reports those same 7 as `PROVIDER_ABI_GAP`. 34/34 fail-closed verifier
-  (`kernel/scripts/phase4_tkcore_drv_verify.py`).
+  reports those same 7 as `PROVIDER_ABI_GAP`. **50/50 functions by name**
+  (17 byte-identical, 24 size-identical) and **20/21 Clang kCFI type ids equal
+  stock**, which proves the prototypes — including TrustKernel's struct tag
+  names `tee`/`tee_session`/`tee_cmd`/`tee_shm` — are spelled exactly as stock
+  spelled them. The 21st (`run_tee_task`) is a declared residual: its arity and
+  argument roles are proven from the stock call sites, but 3,690 candidate
+  spellings of its two private parameter struct tag names hashed to zero hits.
+  37/37 fail-closed verifier (`kernel/scripts/phase4_tkcore_drv_verify.py`),
+  verdict `PASS_WITH_DECLARED_PROVIDER_WITNESSES`.
   See `kernel/phase4-tkcore-drv-reconstruction.md`.
 
 ## Active remaining queue

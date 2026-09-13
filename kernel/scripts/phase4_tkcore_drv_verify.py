@@ -25,7 +25,10 @@ Checks (all assertions; any failure exits non-zero):
   6.  natural build: the PROVIDER_ABI_GAP set is exactly the 7 expected edges
   7.  neither build exports anything (tkcore_drv publishes 0 symbols)
   8.  function inventory parity: same 50 defined functions as stock
-  9.  one source of truth: the stockabi package contains only symlinks
+  9.  KCFI prototype identity: 20/21 Clang kCFI type ids equal stock, and the
+      single known-unresolved one (run_tee_task) is still exactly unresolved -
+      it may never silently "become" resolved without updating this list
+ 10.  one source of truth: the stockabi package contains only symlinks
 
 Usage:
   python3 kernel/scripts/phase4_tkcore_drv_verify.py [--repo <path>] [--ws <path>]
@@ -99,6 +102,43 @@ CODEGEN_ALLOWLIST = {
     # corresponding C-level construct is recoverable from the stripped binary.
     "alt_cb_patch_nops",
 }
+
+# Clang kCFI type ids are a hash of the *function prototype*, including the
+# struct tag names of pointer parameters.  Equality therefore proves the
+# reconstruction spells each prototype exactly as TrustKernel did.  These 21
+# are every function whose address stock takes (tee_ops table, both affinity
+# policy tables, both driver probe/remove pairs, the kthread body) plus
+# run_tee_task.
+KCFI_EXPECT_MATCH = {
+    "tz_start": 0xA1200A70,        # int (struct tee *)
+    "tz_stop": 0xA1200A70,
+    "tz_open": 0x48C6E9CF,         # int (struct tee_session *, struct tee_cmd *)
+    "tz_invoke": 0x48C6E9CF,
+    "tz_cancel": 0x48C6E9CF,
+    "tz_close": 0x5FFCFF8B,        # int (struct tee_session *)
+    "tz_alloc": 0x45B20CE9,        # struct tee_shm *(struct tee *, size_t, u32)
+    "tz_free": 0xA7E6969F,         # void (struct tee_shm *)
+    "tz_shm_inc_ref": 0x4C262249,  # int (struct tee_shm *)
+    "default_affinity_need_bind_cpu": 0x98D3AD02,          # bool (void *)
+    "tee_bind_cpu_request_need_bind_cpu": 0x98D3AD02,
+    "default_affinity_match_cpu": 0x7850C00B,              # bool (void *, int)
+    "tee_bind_cpu_request_match_cpu": 0x7850C00B,
+    "default_affinity_get_candidate_cpu": 0x89FB613D,      # int (void *)
+    "tee_bind_cpu_request_get_candidate_cpu": 0x89FB613D,
+    "tkcore_smc_task": 0x89FB613D,                         # int (void *)
+    "tkcore_ffa_probe": 0xD353E493,
+    "tkcore_ffa_remove": 0xA30D19CC,
+    "tkcore_smc_probe": 0x63DF1691,
+    "tkcore_smc_remove": 0x63DF1691,
+}
+
+# Known-unresolved prototype: stock 0xc2052128 vs reconstruction 0xef18cf2f.
+# 3,690 candidate spellings of its two private parameter struct *tag names*
+# were compiled and hashed (tools/phase4-kcfi-probe) with zero hits, so the
+# tag names are declared unrecoverable, exactly like tkcore's member names.
+# Arity and argument roles ARE proven, from the stock call sites at
+# call_tee+0x74 and call_tee+0x120: (x0=ptee, x1=&param, x2=&affinity).
+KCFI_KNOWN_UNRESOLVED = {"run_tee_task": (0xC2052128, 0xEF18CF2F)}
 
 NATURAL_KO = ("bazel-bin/lieppos/tkcore-drv-recon/tkcore_drv_recon/"
               "tkcore_drv.ko")
@@ -178,6 +218,34 @@ def local_funcs(path: Path) -> set:
         f = line.split()
         if len(f) >= 8 and f[3] == "FUNC" and f[6] != "UND":
             res.add(f[7].split(".")[0])
+    return res
+
+
+def kcfi_ids(path: Path) -> dict:
+    """name -> Clang kCFI type id (the word immediately before the entry)."""
+    blob = path.read_bytes()
+    e_shoff, = struct.unpack_from("<Q", blob, 0x28)
+    shentsize, shnum, shstrndx = struct.unpack_from("<HHH", blob, 0x3A)
+
+    def raw(i):
+        return struct.unpack_from("<IIQQQQIIQQ", blob, e_shoff + i * shentsize)
+
+    offs = {i: raw(i)[4] for i in range(shnum)}
+    out = subprocess.run(["readelf", "-sW", str(path)], capture_output=True,
+                         text=True, check=True).stdout
+    res = {}
+    for line in out.splitlines():
+        f = line.split()
+        if len(f) < 8 or f[3] != "FUNC" or f[6] in ("UND", "ABS"):
+            continue
+        try:
+            value, idx = int(f[1], 16), int(f[6])
+        except ValueError:
+            continue
+        if value < 4:
+            continue
+        res[f[7].split(".")[0]], = struct.unpack_from("<I", blob,
+                                                      offs[idx] + value - 4)
     return res
 
 
@@ -345,7 +413,20 @@ def main() -> int:
                         "extra %s)" % (len(sf), sorted(sf - bf),
                                        sorted(bf - sf)))
 
-    print("8. one source of truth")
+    print("8. KCFI prototype identity")
+    if ko.is_file():
+        sk, bk = kcfi_ids(stock_ko), kcfi_ids(ko)
+        bad = sorted(n for n, want in KCFI_EXPECT_MATCH.items()
+                     if sk.get(n) != want or bk.get(n) != want)
+        check(not bad, "%d/%d kCFI type ids match stock exactly%s"
+              % (len(KCFI_EXPECT_MATCH) - len(bad), len(KCFI_EXPECT_MATCH),
+                 " (bad: %s)" % bad if bad else ""))
+        for n, (want_s, want_b) in KCFI_KNOWN_UNRESOLVED.items():
+            check(sk.get(n) == want_s and bk.get(n) == want_b,
+                  "%s still exactly the declared unresolved pair "
+                  "(stock 0x%08x / recon 0x%08x)" % (n, want_s, want_b))
+
+    print("9. one source of truth")
     if stockabi.is_dir():
         srcs = sorted(p for p in stockabi.iterdir()
                       if p.suffix in (".c", ".h"))
