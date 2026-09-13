@@ -169,8 +169,27 @@ revision and parent directory as `ffa_v10`), 141/141 functions byte-identical,
 141/141 KCFI, 76/76 imports, 77/77 MODVERSIONs, **15/15 export CRCs natural**,
 76/76 verifier. Its FF-A edge is served by the real source-built `ffa_v10`;
 its 7 `TEEC_*` edges (tkcore) and 9 `KREE_*` edges (gz_tz_system) stay stock
-runtime provider edges. `gz_tz_system` is now an explicitly declared,
-unreconstructed provider boundary. `tmem_ffa`'s own 15 exports are consumed by
+runtime provider edges.
+
+`gz_tz_system` closed 2026-09-13 as **`SOURCE_DELTA_RECONSTRUCTION_EXACT /
+FROZEN FOR RE`**, which retires that second boundary: the MediaTek GenieZone
+KREE provider comes from the same pinned revision (`device_modules@957dac18`,
+`drivers/misc/mediatek/geniezone/`), rebuilds **61/61 functions
+byte-identically** with 50/50 imports, 51/51 MODVERSIONs and **27/27 export
+CRCs natural**, and all 5 stock consumers (`gz_main_mod`, `tmem_ffa`,
+`cmdq-sec-drv`, `sapu`, `mtk-cam-isp7sp`) keep every one of their 35 edges
+natural. 120/120 verifier.
+
+Consequence for `tmem_ffa`: its 9 `KREE_*` edges were rebuilt against the
+**real source-built provider** and resolve 9/9 NATURAL, with the module itself
+byte-identical to its frozen baseline apart from the GNU build-id. `tmem_ffa`
+provider provenance is now 59 GKI / 1 ffa_v10 / **9 gz_tz_system natural** /
+7 tkcore stock-runtime. The only remaining stock-runtime provider in the
+trusted-memory path is therefore `tkcore`.
+
+New declared boundaries introduced by this closure (both genuinely stock, both
+unreconstructed): `gz_ipc_mod` (5 `tipc_k_*`/`port_lookup_tid` edges) and
+`gz_trusty_mod` (2 `trusty_*` edges). `tmem_ffa`'s own 15 exports are consumed by
 `mtk_sec_heap`, `gz_main_mod` and `mali_kbase_mt6878_r44`, all of which accept
 the source-built module unchanged.
 

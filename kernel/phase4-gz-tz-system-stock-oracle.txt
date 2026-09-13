@@ -1,0 +1,101 @@
+GQ5012BF1 — gz_tz_system.ko FROZEN STOCK ORACLE
+===============================================
+Device : Ulefone Armor 29 Pro Thermal / GQ5012BF1 / MediaTek MT6878(T)
+Frozen : workspace/phase4-gz-tz-system/oracle/gz_tz_system.stock.ko (mode 444)
+
+IDENTITY
+--------
+canonical path   workspace/gq5012bf1/stock/partitions/vendor_dlkm/lib/modules/gz_tz_system.ko
+SHA256           4b29f9b401c43fe98373d17c0360340c0c58f2cc15e2dfbfd536a60bb9484e38
+size             79648 bytes
+Build ID         dcba5910d6fc9b3d5e71f9d172d49a68b3189b1a
+compiler         Android (10087095, +pgo, +bolt, +lto, -mlgo, based on r487747c)
+                 clang version 17.0.2
+                 (llvm-project d9f89f4d16663d5012e5c09495f3b30ece3d2362)
+
+.modinfo (verbatim, complete)
+-----------------------------
+license   = GPL v2
+vermagic  = 6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+name      = gz_tz_system
+depends   = gz_ipc_mod,gz_trusty_mod
+alias     = of:N*T*Cmediatek,trusty-tz
+alias     = of:N*T*Cmediatek,trusty-tzC*
+
+NOT PRESENT (proven absent, not omitted):
+  description      — no MODULE_DESCRIPTION in the vendor source
+  author           — no MODULE_AUTHOR in the vendor source
+  srcversion       — absent
+  parm / parmtype  — module takes NO parameters
+  import_ns        — no import namespaces
+  intree / retpoline / staging — absent
+
+DUPLICATE COPIES
+----------------
+Searched vendor_boot, vendor_dlkm, system_dlkm, recovery ramdisk and every
+stock extraction: 471 .ko files scanned repo-wide.
+EXACTLY ONE copy of gz_tz_system.ko exists. No duplicate-identity question
+arises. No gz-tz-system.ko (hyphen spelling) exists anywhere.
+
+PLACEMENT AND LOAD ORDER
+------------------------
+partition                      vendor_dlkm
+modules.load index (1-based)   149   of 195
+modules.load index (0-based)   148
+recovery                       NOT PRESENT
+  - vendor-ramdisks/platform-extracted/lib/modules/modules.load          : absent
+  - vendor-ramdisks/platform-extracted/lib/modules/modules.load.recovery : absent
+  - system_dlkm/lib/modules/modules.load                                 : absent
+
+Stock load neighbourhood (vendor_dlkm modules.load):
+  145 gz_trusty_mod.ko     <- provider
+  146 gz_ipc_mod.ko        <- provider
+  147 gz_irq_mod.ko
+  148 gz_virtio_mod.ko
+  149 gz_tz_system.ko      <- THIS MODULE
+  150 gz_main_mod.ko       <- consumer (15 symbols)
+  151 gz_log_mod.ko
+  152 tmem_ffa.ko          <- consumer (9 symbols)
+  153 camera_af_media.ko
+Both providers load strictly before it; all consumers strictly after it.
+
+modules.dep
+-----------
+/vendor_dlkm/lib/modules/gz_tz_system.ko: \
+    /vendor_dlkm/lib/modules/gz_ipc_mod.ko \
+    /vendor_dlkm/lib/modules/gz_trusty_mod.ko
+
+Reverse-dependency closure naming gz_tz_system (17 modules.dep lines):
+  tmem_ffa, mtk_sec_heap, mtk_heap_debug, sapu, widevine_driver,
+  gz_main_mod, mtk_disp_sec, cmdq-sec-drv, cmdq-test, mtk_aie,
+  mtk_aie_debug_7sp_2, mtk_imgsys_cmdq, mtk_imgsys_v4l2, mtk_imgsys_isp7sp,
+  mtk-cam-isp7sp, mali_kbase_mt6878_r44
+(modules.dep is a transitive closure; the 5 DIRECT symbol-level consumers are
+ listed in kernel/phase4-gz-tz-system-consumer-abi.md.)
+
+modules.alias
+-------------
+alias of:N*T*Cmediatek,trusty-tz  gz_tz_system
+alias of:N*T*Cmediatek,trusty-tzC* gz_tz_system
+
+modules.softdep
+---------------
+No entry for gz_tz_system.
+
+ELF SHAPE
+---------
+sections     48
+functions    61
+objects      35
+imports      50 (undefined symbols)
+MODVERSIONs  51 (50 imports + module_layout)
+exports      27 (all EXPORT_SYMBOL, none _GPL)
+relocations  1082
+strings      106
+
+SAFETY
+------
+Everything above was derived statically from committed stock images and the
+frozen oracle copy. The module was never loaded, GenieZone was never invoked,
+no secure-memory API was called, and no device interaction of any kind took
+place.

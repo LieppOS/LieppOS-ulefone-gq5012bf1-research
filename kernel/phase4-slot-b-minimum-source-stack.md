@@ -177,8 +177,11 @@ unresolved reconstruction.
 | `tkcore` | STOCK_TRANSITION | no source anywhere; `P0`; **PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER**, blocked on original TrustKernel private headers |
 | `tkcore_drv` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | closed 2026-09-13 with `SOURCE_NOW_WITH_PROVIDER_WITNESSES` (now 8 NATURAL/5 STOCK_PROVIDER_WITNESS after the `ffa_v10` closure); still runs against stock `tkcore` |
 | `ffa_v10` | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** | closed 2026-09-13; exact MediaTek vendor source, 34/34 byte-identical, 5/5 export CRCs natural, 49/49 verifier |
-| `tmem_ffa` | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** | closed 2026-09-13; same pinned vendor revision/directory as `ffa_v10`; 141/141 byte-identical, 15/15 export CRCs natural, 76/76 verifier; runs against stock `tkcore` (7 `TEEC_*`) and stock `gz_tz_system` (9 `KREE_*`) |
-| `gz_tz_system` | STOCK_TRANSITION | GenieZone KREE provider for `tmem_ffa`; vendor source exists at the pinned revision but is **not reconstructed**; explicitly declared provider boundary |
+| `tmem_ffa` | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** | closed 2026-09-13; same pinned vendor revision/directory as `ffa_v10`; 141/141 byte-identical, 15/15 export CRCs natural, 76/76 verifier; its 9 `KREE_*` edges are now **source-built natural** against the closed `gz_tz_system`; only the 7 `TEEC_*` (stock `tkcore`) edges remain stock-runtime |
+| `gz_tz_system` | **SOURCE_DELTA_RECONSTRUCTION_EXACT / FROZEN FOR RE** | closed 2026-09-13; same pinned vendor revision (`device_modules@957dac18`, `geniezone/`); 61/61 byte-identical, 27/27 export CRCs natural, 35/35 consumer edges natural, 120/120 verifier; runs against stock `gz_ipc_mod` + `gz_trusty_mod` |
+| `gz_ipc_mod` | STOCK_TRANSITION | GenieZone TIPC transport; provides 5 `tipc_k_*`/`port_lookup_tid` edges to `gz_tz_system`; **not reconstructed**, explicitly declared provider boundary |
+| `gz_trusty_mod` | STOCK_TRANSITION | GenieZone Trusty SMC layer; provides `trusty_std_call32` + `trusty_enqueue_nop`; **not reconstructed**, explicitly declared provider boundary |
+| `gz_main_mod` | STOCK_TRANSITION | GenieZone main driver, owns the GenieZone **userspace** ABI; largest `gz_tz_system` consumer (15 symbols); not started |
 | `microarray_fp_tee` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | behavior frozen; 65 natural ABI edges after real source-built SPI provider; still uses stock runtime tkcore |
 | `yft_devinfo` | STOCK_TRANSITION | ABI pin, §B.2 |
 | `spi_tiny_co5300_lcd` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | rear display; exact rebuilt-Hynitron plus stock-YFT provider ABI; 30/30 verifier; `P3` |

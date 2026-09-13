@@ -1333,6 +1333,35 @@ byte-identical, 141/141 KCFI, 76/76 imports, 77/77 MODVERSIONs, 15/15 export
 CRCs natural, 2208/2208 relocations, 76/76 verifier
 (`kernel/scripts/phase4_tmem_ffa_verify.py`). Build inputs: exact GKI
 12901745, the real source-built `//lieppos/ffa-v10` symvers, and stock
-`__kcrctab` records for the 7 tkcore and 9 gz_tz_system edges. Buildability
+`__kcrctab` records for the 7 tkcore and (at the time) 9 gz_tz_system edges.
+
+**Update — `gz_tz_system.ko` closed as `SOURCE_DELTA_RECONSTRUCTION_EXACT /
+FROZEN FOR RE`.** The same pinned revision that supplied `ffa_v10` and
+`tmem_ffa` also supplies `drivers/misc/mediatek/geniezone/`, whose
+`CONFIG_MTK_GZ_TZ_SYSTEM` target is built from exactly three objects
+(`tz_system.o`, `mtee-kree/tz_mmap.o`, `mtee-kree/kree_mem.o`). Result:
+61/61 functions byte-identical, 61/61 KCFI, 50/50 imports, 51/51 MODVERSIONs,
+**27/27 export CRCs natural**, 1082/1082 relocations, 48/48 sections, 120/120
+verifier (`kernel/scripts/phase4_gz_tz_system_verify.py`).
+
+Buildability consequences:
+
+* `tmem_ffa`'s 9 `KREE_*` edges no longer need a stock witness — they link
+  against the real `//lieppos/gz-tz-system` and are 9/9 NATURAL, with the
+  resulting `tmem_ffa.ko` byte-identical to its frozen baseline apart from the
+  build-id.
+* `gz_main_mod`, `cmdq-sec-drv`, `sapu` and `mtk-cam-isp7sp` can all keep
+  loading against a source-built `gz_tz_system` with no re-link (35/35 edges
+  natural).
+* Two new explicit provider boundaries are now declared rather than implicit:
+  `gz_ipc_mod` (TIPC transport, 5 edges) and `gz_trusty_mod` (Trusty SMC,
+  2 edges). Both remain genuinely stock and unreconstructed.
+* One RED finding worth carrying forward for other geniezone work: the pinned
+  revision's `CONFIG_TEE` block in `tz_system.c` does not compile at all
+  (`struct teec_*` undefined tree-wide), so any future geniezone module that
+  enables `CONFIG_TEE` will hit the same wall and needs the same
+  kCFI-pinned CamelCase fix.
+
+Buildability
 consequence: `mtk_sec_heap`, `gz_main_mod` and `mali_kbase_mt6878_r44` can all
 keep loading against a source-built `tmem_ffa` with no re-link.

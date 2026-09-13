@@ -105,11 +105,47 @@ not, and `tkcore` itself remains stock.
   naturally**, 2208/2208 relocations, 292/292 strings, 50/50 sections. No CRC
   injection, no fake symvers, no ELF patch, no `KBUILD_MODPOST_WARN`. The FF-A
   edge is served by the **real source-built** `//lieppos/ffa-v10`; the 7
-  `TEEC_*` (tkcore) and 9 `KREE_*` (gz_tz_system) edges use those providers'
+  `TEEC_*` (tkcore) and (at the time) 9 `KREE_*` (gz_tz_system) edges use those providers'
   own stock `__kcrctab` records — both providers are genuinely stock at
   runtime. 76/76 fail-closed verifier
   (`kernel/scripts/phase4_tmem_ffa_verify.py`). See
   `kernel/phase4-tmem-ffa-reconstruction.md`.
+  **Update (gz_tz_system closure):** the 9 `KREE_*` edges are no longer stock
+  witnesses — they are now served by the real source-built
+  `//lieppos/gz-tz-system` and resolve **9/9 NATURAL**. `tmem_ffa`'s provider
+  provenance is now 59 GKI / 1 ffa_v10 / 9 gz_tz_system / 7 tkcore, and its
+  binary is unchanged apart from the GNU build-id.
+
+- `gz_tz_system` — **SOURCE_DELTA_RECONSTRUCTION_EXACT / FROZEN FOR RE**
+  (2026-09-13). Stock oracle
+  `4b29f9b401c43fe98373d17c0360340c0c58f2cc15e2dfbfd536a60bb9484e38`
+  (79648 B, vendor_dlkm `modules.load` idx 149, absent from recovery, exactly
+  one copy repo-wide). MediaTek GenieZone KREE provider, built from the **same
+  pinned revision** as `ffa_v10` and `tmem_ffa`
+  (`device_modules@957dac185efe46cbf6336b0fff9516d84c8cd78f`,
+  `drivers/misc/mediatek/geniezone/`), object list
+  `tz_system.o mtee-kree/tz_mmap.o mtee-kree/kree_mem.o` proven from the vendor
+  Makefile. Mandatory RED recorded first and is unusually informative: RED-A
+  (donor unmodified, stock config) **fails to compile** — the pinned revision's
+  `CONFIG_TEE` block references `struct teec_*` types that exist in no header
+  anywhere in the tree (9 x `-Werror,-Wvisibility`); RED-B (donor unmodified,
+  `CONFIG_TEE` off) already gave 54/56 byte-identical, 50/50 imports, 51/51
+  MODVERSIONs and **27/27 natural export CRCs**. One evidence-backed source
+  delta closed it: the five weak `TEEC_*` fallbacks, whose exact prototypes are
+  pinned by **five kCFI type ids byte-identical to tkcore's real
+  implementations** (`0x124b473b`, `0xf4c49135`, `0xde69c0a6`, `0x31bed4ef`,
+  `0x593c5866`). Result: **61/61 functions byte-identical**, 61/61 KCFI,
+  50/50 imports, 51/51 MODVERSIONs, **27/27 export CRCs natural**,
+  1082/1082 relocations, 106/106 strings, 48/48 sections, residual 16 bytes
+  (vermagic git-describe + `.llvm_addrsig` encoding). All 471 stock modules
+  scanned: 5 consumers (`gz_main_mod` 15, `tmem_ffa` 9, `cmdq-sec-drv` 5,
+  `sapu` 3, `mtk-cam-isp7sp` 3), **35/35 edges NATURAL, 0 broken**. No CRC
+  injection, no fake symvers, no ELF patch, no `KBUILD_MODPOST_WARN`. Userspace
+  ABI proven **NONE**. Remaining boundary: `gz_ipc_mod` (5 edges) and
+  `gz_trusty_mod` (2 edges) are genuine stock runtime providers, explicitly
+  declared and not reconstructed. 120/120 fail-closed verifier
+  (`kernel/scripts/phase4_gz_tz_system_verify.py`). See
+  `kernel/phase4-gz-tz-system-reconstruction.md`.
 
 Likewise, `tkcore_drv` being reconstructed does **not** mark `tkcore`
 reconstructed or source-pure: 5 of its 13 provider edges are still only

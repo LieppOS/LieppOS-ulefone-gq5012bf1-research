@@ -235,8 +235,20 @@ entire cluster.
                                         3 of the 7 edges are in tkcore's NATURAL
                                         14/25 set, 4 in the BLOCKED 11/25 set
 
-   gz_tz_system [stock runtime provider, out of scope] V:149
-      └──9──▶ tmem_ffa          [DIRECT_SOURCE_MATCH / FROZEN] V:152 (KREE_*)
+   gz_trusty_mod [stock runtime provider] V:145 ──2──┐  (trusty_std_call32, trusty_enqueue_nop)
+   gz_ipc_mod    [stock runtime provider] V:146 ──5──┤  (tipc_k_*, port_lookup_tid)
+                                                     │
+                                                     ▼
+   gz_tz_system [SOURCE_DELTA_RECONSTRUCTION_EXACT / FROZEN] V:149 ── 27 exports, ALL NATURAL
+      ├──9──▶ tmem_ffa          [DIRECT_SOURCE_MATCH / FROZEN] V:152 (KREE_*, now NATURAL)
+      ├──15─▶ gz_main_mod       [port] V:150   (largest consumer; owns GZ userspace ABI)
+      ├──5──▶ cmdq-sec-drv      [port]         (secure CMDQ)
+      ├──3──▶ sapu              [port]         (secure APU)
+      └──3──▶ mtk-cam-isp7sp    [port]         (secure camera buffers)
+
+   All 471 stock modules scanned: 5 direct consumers, 35 edges, 35/35 NATURAL.
+   16 of the 27 exports have a consumer; the other 11 are a legacy/test
+   surface that still reproduces naturally.
 
    userspace (all vendor VINTF-declared):
      keymint@3.0-service.trustkernel · gatekeeper-service.trustkernel

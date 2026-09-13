@@ -368,7 +368,21 @@ tkcore ──1───▶ microarray_fp_tee    (tee_spi_transfer)
 tkcore ──7───▶ tmem_ffa             (TEEC_* — MediaTek Trusted Memory Driver,
                                      vendor_dlkm modules.load idx 152 (1-based),
                                      depends=gz_tz_system,tkcore,ffa_v10)
-gz_tz_system ──9──▶ tmem_ffa        (KREE_*; stock runtime provider, out of scope)
+gz_tz_system ──9──▶ tmem_ffa        (KREE_*; NOW SOURCE-CLOSED, 9/9 natural)
+```
+
+`gz_tz_system` itself is **closed**: `SOURCE_DELTA_RECONSTRUCTION_EXACT /
+FROZEN FOR RE` (2026-09-13) — same pinned revision as `ffa_v10`/`tmem_ffa`
+(`device_modules@957dac18`, `drivers/misc/mediatek/geniezone/`), 61/61
+functions byte-identical, 61/61 KCFI, 50/50 imports, 51/51 MODVERSIONs,
+**27/27 export CRCs natural**, 120/120 verifier. All 471 stock modules were
+scanned: 5 direct consumers (`gz_main_mod` 15, `tmem_ffa` 9, `cmdq-sec-drv` 5,
+`sapu` 3, `mtk-cam-isp7sp` 3), **35/35 edges natural, 0 broken**. Userspace ABI
+proven NONE. Its own remaining providers — `gz_ipc_mod` (5 TIPC edges) and
+`gz_trusty_mod` (2 SMC edges) — are genuine stock runtime providers and are now
+explicitly declared boundaries. See
+`kernel/phase4-gz-tz-system-reconstruction.md`.
+
 ```
 
 `tmem_ffa` itself is **closed**: `DIRECT_SOURCE_MATCH / SOURCE_NOW / FROZEN FOR
