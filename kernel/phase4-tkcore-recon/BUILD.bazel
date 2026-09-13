@@ -1,0 +1,16 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+package(default_visibility = ["//visibility:public"])
+
+kernel_module(
+    name = "tkcore_recon",
+    srcs = [
+        "BUILD.bazel",
+        "Makefile",
+        "tkcore-abi-witness.c",
+        "include/tk_tee_client_api.h",
+        "include/tk_tee_wait_queue.h",
+    ],
+    outs = ["tkcore-abi-witness.ko"],
+    kernel_build = "//common:kernel_aarch64",
+)

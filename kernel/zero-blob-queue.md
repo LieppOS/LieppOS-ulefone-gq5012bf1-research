@@ -22,9 +22,22 @@
   66/66 exact**; `fingerprint` edges use the real source-built provider
   `Module.symvers`
 
+- `tkcore` — **NO_PUBLIC_SOURCE_FOUND / PROVIDER_ABI_PARTIAL — NOT
+  RECONSTRUCTED**; stock oracle frozen and fully inventoried (122 functions,
+  25 exports, 101 MODVERSIONs, 3098 relocations); **14/25 export CRCs +
+  KCFI type ids naturally regenerated** against exact GKI 12901745 by
+  `//lieppos/tkcore-recon` (build-only ABI witness, never loadable);
+  **11/25 declared `PROVIDER_ABI_BLOCKED`** because their genksyms CRCs expand
+  TrustKernel's private `struct tee` / `struct tee_context` member names, which
+  exist in no binary and no public source; 36/36 fail-closed verifier.
+  See `kernel/phase4-tkcore-provider-abi.md`,
+  `kernel/phase4-tkcore-stock-inventory.md`,
+  `kernel/phase4-tkcore-source-candidates.md`.
+
 ## Active remaining queue
 
-- `tkcore`
+- `tkcore` — blocked on original TrustKernel headers only (no further binary
+  analysis can unblock it); stays a stock vendor binary meanwhile
 - `tkcore_drv`
 - connectivity and panel/provider work per remaining-module triage
 
@@ -36,3 +49,9 @@ reconstructed or source-pure. Those remain stock vendor binaries; only their
 published export CRCs were read out of the shipped ELFs so the consumer can
 link against them. Source purity of the consumer is a separate question from
 source purity of those providers.
+
+The `tkcore` work above upgrades one of those edges: `tee_spi_transfer` is no
+longer "read out of the shipped ELF" — its prototype is now confirmed by the
+stock KCFI type id `0xffeb18b3` and its CRC `0x184ce7da` is regenerated
+naturally from C. The other 10 `tkcore_drv` / 4 `tmem_ffa` blocked edges are
+not, and `tkcore` itself remains stock.

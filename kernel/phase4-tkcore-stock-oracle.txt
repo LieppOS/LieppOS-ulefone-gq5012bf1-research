@@ -1,0 +1,89 @@
+GQ5012BF1 TrustKernel TKCore frozen stock oracle
+================================================
+
+Target
+------
+device: Ulefone Armor 29 Pro Thermal / GQ5012BF1
+SoC: MediaTek MT6878 / MT6878T
+kernel baseline: Linux 6.1.115-android14-11
+Android CI baseline: ab/12901745
+common commit: 6b18f0b574ab3267615ae6ce642d5a7c3c21ac09
+
+Canonical stock artifact
+------------------------
+source container: workspace/gq5012bf1/stock/vendor-ramdisks/platform.cpio
+source member: lib/modules/tkcore.ko
+extracted source path: workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/tkcore.ko
+frozen oracle path: workspace/phase4-tkcore/oracle/tkcore.ko
+SHA256: 03837d13863e3f6694918e2e049edbc3bd5ca5cb02e10d6f374620cca98ed226
+size: 221352 bytes
+ELF: ELF64 little-endian AArch64 relocatable
+Build ID: 6b6663820488959123f26a85dded547e305c56d6
+compiler: Android (10087095, +pgo, +bolt, +lto, -mlgo, based on r487747c) clang version 17.0.2 (https://android.googlesource.com/toolchain/llvm-project d9f89f4d16663d5012e5c09495f3b30ece3d2362)
+AArch64 GNU property: PAC
+
+Module metadata
+---------------
+name: tkcore
+version: 6:1.1-k6.6
+description: TrustKernel TKCore TEEC v1.0
+author: TrustKernel
+license: GPL
+srcversion: 604D4583E310DBFAC768366
+depends: empty
+import namespace: DMA_BUF
+vermagic: 6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+aliases: none
+parameters: none
+
+Placement and uniqueness
+------------------------
+Placement is vendor_boot platform ramdisk. A bounded search of the stock extraction,
+slot-B investigation tree, and backup extraction found exactly one extracted tkcore.ko.
+The platform.cpio member and frozen oracle are byte-identical and have the same SHA256.
+The recovery.cpio contains no tkcore.ko. No tkcore.ko was found in vendor_dlkm,
+system_dlkm, recovery ramdisk, or the searched backups.
+
+Load metadata
+-------------
+normal modules.load index: 100 of 184 (1-based)
+recovery modules.load.recovery index: 98 of 189 (1-based)
+modules.dep: /lib/modules/tkcore.ko: (no module dependencies)
+modules.alias: no tkcore entry
+modules.softdep: no tkcore entry
+
+Known adjacent stock consumers frozen for static ABI inspection
+---------------------------------------------------------------
+workspace/phase4-tkcore/oracle/tkcore_drv.ko
+  SHA256 c13503baf7c13828d0d666cbd364d8cadaa7d1282442405c72d28073bd51235d
+workspace/phase4-tkcore/oracle/microarray_fp_tee.ko
+  SHA256 8e1449cea5d07ef663d368ce5eea27e8c879a9cd70d39f8fc2b5b25445c2cf33
+workspace/phase4-tkcore/oracle/tmem_ffa.ko
+  SHA256 707e26674abbe7f9c695bb949d74fd5de04972d4bbb991cddc3a2ea9ab45f01b
+
+Immediate ELF counts
+--------------------
+__versions entries: 101
+undefined ELF symbols: 100 (module_layout is a MODVERSION-only entry)
+intermodule imports: 0
+exports: 25, all plain EXPORT_SYMBOL class (__ksymtab, not __ksymtab_gpl)
+defined functions: 121 including init_module and cleanup_module
+
+Prompt-hash verification
+------------------------
+The prompt SHA256 03837d13863e3f6694918e2e049edbc3bd5ca5cb02e10d6f374620cca98ed226
+is verified as the canonical stock oracle hash.
+
+Reconstruction status (2026-09-13)
+----------------------------------
+classification: NO_PUBLIC_SOURCE_FOUND / PROVIDER_ABI_PARTIAL - NOT RECONSTRUCTED
+natural export CRC closure: 14 of 25 (CRC and KCFI type id both equal stock)
+declared PROVIDER_ABI_BLOCKED: 11 of 25 (CRCs expand TrustKernel's private
+  struct tee / struct tee_context member names; unrecoverable from a stripped
+  binary and absent from every public source)
+rebuilt witness: workspace/phase4-tkcore/build/tkcore-abi-witness.ko
+  (//lieppos/tkcore-recon, exact GKI 12901745; build-only, never loadable)
+verifier: kernel/scripts/phase4_tkcore_verify.py -> 36/36 PASS
+reports: kernel/phase4-tkcore-provider-abi.md,
+  kernel/phase4-tkcore-stock-inventory.md,
+  kernel/phase4-tkcore-source-candidates.md
