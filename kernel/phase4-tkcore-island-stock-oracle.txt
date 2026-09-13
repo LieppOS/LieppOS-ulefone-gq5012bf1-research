@@ -1,0 +1,87 @@
+GQ5012BF1 tkcore stock oracle (TrustKernel ABI island)
+======================================================
+
+Device: Ulefone Armor 29 Pro Thermal (GQ5012BF1, MT6878/MT6878T)
+Analysis mode: static/offline only. Nothing was loaded, opened or invoked.
+
+Canonical stock path
+--------------------
+workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/tkcore.ko
+
+Frozen copy
+-----------
+workspace/phase4-tkcore-island/oracle/tkcore.stock.ko
+
+Identity
+--------
+SHA256: 03837d13863e3f6694918e2e049edbc3bd5ca5cb02e10d6f374620cca98ed226
+Size: 221352 bytes
+GNU Build ID: 6b6663820488959123f26a85dded547e305c56d6
+Compiler: Android clang 17.0.2 (10087095, +pgo +bolt +lto, r487747c)
+vermagic: 6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+module name: tkcore
+author: TrustKernel
+description: TrustKernel TKCore TEEC v1.0
+version: 6:1.1-k6.6
+license: GPL
+import namespace: DMA_BUF
+parameters: none
+depends: (empty - zero intermodule dependencies)
+aliases: none
+
+CORRECTION to earlier notes
+---------------------------
+Earlier summaries recorded srcversion as empty. It is NOT empty:
+
+  srcversion: 604D4583E310DBFAC768366
+
+This is the only correction this task makes to the historical oracle record.
+
+Placement and load metadata
+---------------------------
+Partition: vendor ramdisk (platform-extracted), NOT vendor_dlkm.
+  modules.load line 100: tkcore.ko
+  modules.load line 101: tkcore_drv.ko
+tkcore therefore loads immediately before its backend tkcore_drv.
+No tkcore entry exists in the vendor_dlkm modules.load/dep/alias set.
+
+Complete ELF inventory (independently re-derived)
+-------------------------------------------------
+defined functions:        122
+defined objects:           54
+undefined (imported):     100
+MODVERSION records:       101   (100 imports + module_layout)
+exports:                   25
+relocations:             3098
+extracted strings:        176
+
+Note on the "101 kernel imports" figure used in earlier reports: there are
+100 undefined symbols; the 101st MODVERSION record is module_layout. Both
+numbers are correct, they count different things. All 100 imports are exact
+GKI; there are zero intermodule imports, consistent with depends= being empty.
+
+Sections of interest
+--------------------
+__versions, __ksymtab_strings, .llvm_addrsig, __ex_table, .hyp.bss,
+.hyp.data, .hyp.rodata, per-export ___ksymtab+<sym> sections.
+
+Machine-readable inventories
+----------------------------
+  kernel/phase4-tkcore-island-functions.tsv
+  kernel/phase4-tkcore-island-objects.tsv
+  kernel/phase4-tkcore-island-imports.tsv
+  kernel/phase4-tkcore-island-modversions.tsv
+  kernel/phase4-tkcore-island-exports.tsv
+  kernel/phase4-tkcore-island-relocations.tsv
+  kernel/phase4-tkcore-island-strings.tsv
+  kernel/phase4-tkcore-function-closure.tsv
+
+Runtime version strings present in stock
+----------------------------------------
+  TrustKernel TKCore
+  TEEC v1.0
+  version 6:1.1-k6.6
+
+Source-path leakage observed in stock
+-------------------------------------
+  kernel_device_modules-6.1/drivers/tee/tkcore/core/
