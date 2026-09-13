@@ -160,6 +160,19 @@ not, and `tkcore` itself remains stock.
   relocations. All 6 stock-consumer edges accept it. The real userspace cdev
   ABI and four-state TIPC machine are closed. 269/269 verifier; stack 738/738.
   See `kernel/phase4-gz-transport-stack-closure.md`.
+- `gz_main_mod` — **DIRECT_SOURCE_MATCH / FROZEN FOR RE** (2026-09-13).
+  Exact pinned `gz_main.c + 4x mtee_ut + gz_ffa.c`, built in the vendor
+  directory layout for `__FILE__` parity; 42/42 byte/KCFI exact, 76/76
+  imports, 77/77 MODVERSIONs, 2817/2817 relocations, **0 exports and 0 kernel
+  consumers** (proven leaf across all 471 stock placements). The pinned donor
+  reproduced stock with **zero source delta** — RED and final are the same
+  bytes. 75/76 provider edges are natural (51 GKI, 15 gz_tz_system, 5
+  gz_trusty_mod, 2 tmem_ffa, 1 gz_ipc_mod, 1 ffa_v10); the single remaining
+  edge, `dmabuf_to_secure_handle`, is a **declared stock `mtk_sec_heap`
+  runtime provider**. Owns the higher-level GenieZone/KREE userspace ABI:
+  `/dev/gz_kree` (9 ioctls, compat supported) and `/dev/gz_ffa_dev` (8
+  ioctls, no compat). 206/206 verifier.
+  See `kernel/phase4-gz-main-mod-reconstruction.md`.
 
 Likewise, `tkcore_drv` being reconstructed does **not** mark `tkcore`
 reconstructed or source-pure: 5 of its 13 provider edges are still only

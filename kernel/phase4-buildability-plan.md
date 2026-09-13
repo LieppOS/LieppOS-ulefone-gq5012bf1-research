@@ -1353,6 +1353,14 @@ Buildability consequences:
 * `gz_main_mod`, `cmdq-sec-drv`, `sapu` and `mtk-cam-isp7sp` can all keep
   loading against a source-built `gz_tz_system` with no re-link (35/35 edges
   natural).
+* **Update — `gz_main_mod` is itself now source-built and frozen**
+  (`DIRECT_SOURCE_MATCH / FROZEN FOR RE`), built in the vendor directory
+  layout as
+  `//kernel_device_modules-6.1/drivers/misc/mediatek/geniezone:gz_main_mod`
+  with zero source delta. It links against the real source-built
+  `gz_transport`, `gz-tz-system-accept`, `ffa-v10` and `tmem-ffa-gzaccept`
+  targets, needs no re-link of anything else (0 exports, 0 consumers), and
+  leaves one declared stock provider edge into `mtk_sec_heap`.
 * **Update — both transport boundaries are now closed.** `gz_trusty_mod` and
   `gz_ipc_mod` are `DIRECT_SOURCE_MATCH / FROZEN FOR RE` from the same pinned
   revision: 33/33 + 43/43 function bytes/KCFI and 14/14 + 15/15 natural

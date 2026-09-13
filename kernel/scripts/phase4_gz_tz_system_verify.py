@@ -315,8 +315,17 @@ def main() -> int:
     # ---- scope guards -----------------------------------------------------
     check(not (k / "phase4-tkcore-reconstruction.md").exists(),
           "tkcore still NOT claimed as reconstructed")
-    check(not (k / "phase4-gz-main-mod-reconstruction.md").exists(),
-          "gz_main_mod NOT started (out of scope)")
+    # gz_main_mod was out of scope when this verifier was written and is now
+    # closed in its own right.  The guard is retained but re-pointed at what
+    # still matters: that consumer's closure must not restate gz_tz_system as
+    # anything other than source-built and frozen.
+    gz_main = k / "phase4-gz-main-mod-reconstruction.md"
+    if gz_main.is_file():
+        text = gz_main.read_text()
+        check("gz_tz_system" in text and "NATURAL" in text.upper(),
+              "gz_main_mod closure records its gz_tz_system edges as natural")
+        check("gz_tz_system" not in text.split("Classification:")[1][:200],
+              "gz_main_mod closure does not restate gz_tz_system's own class")
 
     return finish()
 

@@ -384,6 +384,15 @@ naturally. The witness-free acceptance build leaves all 61 function bytes and
 1082 relocations unchanged. See `kernel/phase4-gz-tz-system-reconstruction.md`
 and `kernel/phase4-gz-transport-stack-closure.md`.
 
+Its largest consumer, `gz_main_mod` (15 edges), is now closed as well:
+**DIRECT_SOURCE_MATCH / FROZEN FOR RE** (2026-09-13), same pinned revision,
+zero source delta, 42/42 functions byte-identical, 2817/2817 relocations,
+**0 exports and 0 kernel consumers**. All 15 `gz_tz_system` edges resolve
+naturally against the witness-free acceptance build — including
+`_map_user_pages`, whose only caller in the entire device is
+`gz_main_mod::_reg_shmem_from_userspace`. See
+`kernel/phase4-gz-main-mod-reconstruction.md`.
+
 ```
 
 `tmem_ffa` itself is **closed**: `DIRECT_SOURCE_MATCH / SOURCE_NOW / FROZEN FOR

@@ -223,7 +223,7 @@ entire cluster.
       │
       ├──2──▶ tkcore_drv  [RECONSTRUCTED] P:100 / R:98 → LEAF (0 exports)
       ├──1──▶ tmem_ffa    [DIRECT_SOURCE_MATCH / FROZEN] V:152 (ffa_driver_register only, NATURAL)
-      └──1──▶ gz_main_mod [port]  V:?     (ffa_driver_register only; GenieZone)
+      └──1──▶ gz_main_mod [source/frozen] V:150 (ffa_driver_register only; GenieZone)
 
    tkcore [stock / blocked on TrustKernel private headers] P:99 ── 25 exports
       │
@@ -243,7 +243,7 @@ entire cluster.
 
    gz_tz_system [SOURCE_DELTA_RECONSTRUCTION_EXACT / FROZEN] V:149 ── 27 exports, ALL NATURAL
       ├──9──▶ tmem_ffa          [DIRECT_SOURCE_MATCH / FROZEN] V:152 (KREE_*, now NATURAL)
-      ├──15─▶ gz_main_mod       [port] V:150   (largest consumer; owns higher-level KREE userspace ABI)
+      ├──15─▶ gz_main_mod [source/frozen] V:150 (largest consumer; owns higher-level KREE userspace ABI)
       ├──5──▶ cmdq-sec-drv      [port]         (secure CMDQ)
       ├──3──▶ sapu              [port]         (secure APU)
       └──3──▶ mtk-cam-isp7sp    [port]         (secure camera buffers)
@@ -261,6 +261,8 @@ entire cluster.
      /dev/tkcore_{client,admin,fp} · /proc/tkcore · RPMB · /mnt/vendor/persist/t6
 ```
 
+`gz_main_mod` is now **DIRECT_SOURCE_MATCH / FROZEN FOR RE** and is a proven
+leaf: it exports nothing and no stock module depends on it.
 `gz_main_mod` is a `ffa_driver_register`-only consumer discovered by the
 `ffa_v10` closure's full 471-module consumer scan
 (`kernel/phase4-ffa-v10-consumer-abi.md`); it is GenieZone hypervisor/TEE

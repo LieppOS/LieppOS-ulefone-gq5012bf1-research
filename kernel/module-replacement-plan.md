@@ -198,6 +198,19 @@ stock-consumer edges across both providers accept the natural CRCs. See
 consumed by `mtk_sec_heap`, `gz_main_mod` and `mali_kbase_mt6878_r44`, all of
 which accept the source-built module unchanged.
 
+`gz_main_mod`, the top of the GenieZone Linux stack and the owner of the
+higher-level KREE userspace ABI, is now also **DIRECT_SOURCE_MATCH / FROZEN
+FOR RE** from the same pinned revision, built in the vendor directory layout
+for `__FILE__` parity. The pinned donor reproduced stock with **zero source
+delta**: 42/42 functions byte-identical, 42/42 KCFI, 76/76 imports, 77/77
+MODVERSIONs, 2817/2817 relocations. It exports nothing and has **no kernel
+consumers at all** (proven across all 471 stock placements), so its
+compatibility contract is purely the userspace ioctl ABI, which is reproduced
+exactly. 75 of its 76 provider edges are natural; the sole exception,
+`dmabuf_to_secure_handle`, is a declared stock `mtk_sec_heap` runtime
+provider. See `phase4-gz-main-mod-reconstruction.md` and
+`phase4-geniezone-main-stack-acceptance.md`.
+
 ## Strategy
 
 Development should initially retain the stock Ulefone kernel and progressively
