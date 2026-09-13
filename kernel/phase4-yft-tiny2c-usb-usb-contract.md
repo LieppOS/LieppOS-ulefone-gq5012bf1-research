@@ -11,7 +11,7 @@
 | VBUS / OTG regulator | no | no regulator/charger call; platform 5-V GPIO absent |
 | USB PHY / DPDM | indirect data flag only | `yft_usb_flag` makes MT6375 charger avoid ordinary PHY/BC1.2 transition |
 | gadget | no | none |
-| host mode | no direct call | extcon/USB1 establishes the host route separately |
+| host mode | no direct call | `extcon-mtk-usb` establishes the host route separately on the shared USB0 / MTU3 / USB2 fabric |
 | UVC | no kernel implementation | AC020 UVC handled by USBMonitor/libusb userspace |
 | camera reset | no distinct reset | three populated rail enables are toggled together |
 | port selection/mux | no direct GPIO/API | extcon `tiny2c_mode` owns route work |

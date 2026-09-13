@@ -18,6 +18,6 @@
 | Notification RGB | AW2013 at I2C 11-0045 | VERIFIED binding |
 | Work/warning lights | Stock `YftOutdoorLightUlefone` and `YftRedBlueLight` apps | VERIFIED userspace artifacts; control ABI UNKNOWN |
 | Physical action keys | `yft-gpio-keys` emits F1/F2 | VERIFIED |
-| USB / uSmart | configfs + UDC `11201000.usb0`; accessory host path `11211000.usb1`/xHCI, extcon UVC switch/VBUS GPIOs, MT6375 `usb-otg-vbus` | VERIFIED stock control path; SC8510 proven unrelated to software/VBUS control |
+| USB / uSmart | configfs + UDC `11201000.usb0`; accessory host path is the same shared USB0 / MTU3 / USB2 PHY / xHCI fabric routed by `extcon-mtk-usb` (UVC switch/accessory-power GPIOs) with MT6375 `usb-otg-vbus` | VERIFIED stock control path; legacy `11211000.usb1` userspace references have no live DT controller; SC8510 proven unrelated to software/VBUS control |
 
 The detailed subsystem reports identify dependencies and remaining tests.

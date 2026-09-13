@@ -141,7 +141,8 @@ sc851x | sc8510 | sc8517 | 6-0069 | AUDIO_EN
 
 Ulefone describes the Armor 29 Pro Thermal uSmart connector as supporting its
 E01/E02/E03 endoscopes and C01 microscope. Those are USB camera peripherals,
-consistent with the stock UVC/USB1 host path. This context is not used to infer
+consistent with the stock UVC host path over the shared USB0 / MTU3 / USB2
+fabric. This context is not used to infer
 register behavior.
 
 ## Conclusions

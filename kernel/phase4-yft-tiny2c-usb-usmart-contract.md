@@ -9,14 +9,15 @@ controller and does not share a direct power-control edge with uSmart.
 |---|---|---|
 | `DIRECT_CONTROLLER` | no | no uSmart/UVC switch/detect GPIO, no extcon/role/VBUS call, no uSmart userspace ABI |
 | `SHARED_POWER_PATH` | no direct edge | yft GPIO 192/191/149 are thermal low-voltage enables; uSmart VBUS is the separate MT6375 OTG/extcon path |
-| `SHARED_USB_PATH` | **yes, board-level** | thermal applications pair this module with `yft_extcon/tiny2c_mode`; uSmart accessories use the same secondary USB/extcon infrastructure through different UVC GPIO/USB1 controls |
+| `SHARED_USB_PATH` | **yes, board-level** | thermal applications pair this module with `yft_extcon/tiny2c_mode`; uSmart accessories use the same shared USB0 / MTU3 / USB2 fabric and `extcon-mtk-usb` infrastructure through different UVC/accessory GPIO controls |
 | `UNRELATED` | false only at board USB-fabric level | control and endpoint functions are distinct, but the common secondary USB route is proven |
 | `UNKNOWN` | no for software topology | direct versus shared responsibilities are separated by imports, DT nodes and userspace paths |
 
 The direct uSmart chain remains:
 
 ```text
-MT6375 OTG/VBUS -> extcon-mtk-usb -> USB1/UVC switch/detect GPIO path -> uSmart accessory
+MT6375 usb-otg-vbus -> extcon-mtk-usb -> shared USB0 / MTU3 / USB2 fabric
+                    -> UVC switch / accessory-detect GPIO path -> uSmart accessory
 ```
 
 The built-in thermal chain is:

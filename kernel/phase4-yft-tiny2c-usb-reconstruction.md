@@ -104,7 +104,8 @@ interrupt, extcon, USB-controller, PHY, role-switch or charger phandle is consum
 The module directly drives raw active-high enables on GPIO 149 (I/O 3.3 V), 191 (3.3 V) and
 192 (1.8 V), and reads the module ID endpoint over I2C8/0x3c. Its generic optional 5-V GPIO
 slot has no GQ5012BF1 DT property and therefore proves no direct 5-V/VBUS output. USB data
-and VBUS routing are the separate extcon/MT6375/USB1 path.
+and VBUS routing are the separate `extcon-mtk-usb` / MT6375 path over the shared
+USB0 / MTU3 / USB2 fabric.
 
 `tiny2c` is the stock YFT/InfiRay internal thermal-module family/path name. The legacy node
 name `fm78100` is not evidence that the bound endpoint is an independent thermopile.
@@ -122,7 +123,8 @@ userspace first controls the rail and route nodes.
 
 **`SHARED_USB_PATH` at board-fabric level; not `DIRECT_CONTROLLER` and not direct
 `SHARED_POWER_PATH`.** The module has no uSmart switch/detect/VBUS GPIO or ABI. uSmart uses
-MT6375 OTG -> extcon -> USB1/UVC GPIOs. Thermal uses its own low-voltage rails plus the
+MT6375 `usb-otg-vbus` -> `extcon-mtk-usb` -> shared USB0 / MTU3 / USB2 fabric plus the
+UVC switch/accessory GPIOs. Thermal uses its own low-voltage rails plus the
 paired extcon tiny2c route. SC851x remains unrelated.
 
 # USB contract

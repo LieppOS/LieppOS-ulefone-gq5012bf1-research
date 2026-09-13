@@ -32,7 +32,9 @@ uSmart UVC accessory
   │    ├─ usb_role_switch_set_role
   │    ├─ extcon_set_state_sync
   │    └─ depends=tcpc_class,mt6375-charger
-  └─ USB host controller: 11211000.usb1/11210000.xhci
+  └─ USB host route: shared USB0 / MTU3 / USB2 PHY / xHCI fabric
+       ├─ userspace/fstab still names the dead 11211000.usb1/11210000.xhci path
+       │   (no live DT controller backs it)
        └─ voldmanaged=usbotg:auto
 ```
 
@@ -130,7 +132,8 @@ No stock software support was found for using the uSmart connector as a phone
 charging **sink**:
 
 - the mapped regulator is named `usb-otg-vbus` and is driven as a source;
-- the USB1 path is enumerated/mounted as `usbotg` host media;
+- the accessory path is enumerated/mounted as `usbotg` host media on the shared
+  USB0 fabric (stock fstab still names the dead `11211000.usb1` node);
 - UVC/endoscope accessories are powered peripherals;
 - the extcon node explicitly bypasses the Type-C sink path;
 - no uSmart-specific power-supply/charger sink registration or charge-policy

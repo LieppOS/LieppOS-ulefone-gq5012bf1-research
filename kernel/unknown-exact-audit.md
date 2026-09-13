@@ -438,8 +438,8 @@ instruction delta. Exact-GKI build: `BUILD_RC=0`, warnings 0, unresolved 0.
 
 DT/live identity is `sc,sc8510` at `reg=<0x69>` / `6-0069`; `@6f` is stale.
 The stock driver is a configuration/debug/IRQ leaf, not a charger-class policy
-driver. uSmart control and VBUS are separately mapped to USB1/extcon and MT6375
-`usb-otg-vbus`, so SC851x is classified `PROVEN_UNRELATED` to that connector's
+driver. uSmart control and VBUS are separately mapped to `extcon-mtk-usb`,
+MT6375 `usb-otg-vbus` and the shared USB0 / MTU3 / USB2 fabric, so SC851x is classified `PROVEN_UNRELATED` to that connector's
 software/control path. See `phase4-sc851x-reconstruction.md` and `usmart/`.
 
 ## tkcore_drv

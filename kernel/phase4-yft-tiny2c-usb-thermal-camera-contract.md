@@ -14,7 +14,7 @@ FactoryMode InfirayEcoTest / InfiraySmtTest
 
 same applications coordinate /sys/class/yft_extcon/tiny2c_mode
        ▼
-extcon-mtk-usb / MT6375 / USB1 routing and VBUS
+extcon-mtk-usb / MT6375 routing over the shared USB0 / MTU3 / USB2 fabric, and VBUS
        ▼
 internal InfiRay/InfiSense AC020-family UVC device
        ▼

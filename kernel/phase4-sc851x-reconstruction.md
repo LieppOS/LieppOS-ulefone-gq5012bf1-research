@@ -200,8 +200,9 @@ USMART_CLASSIFICATION = PROVEN_UNRELATED
 CAN_STOCK_USMART_CHARGE_PHONE = NO_SOFTWARE_SUPPORT_FOUND
 ```
 
-The stock uSmart/UVC path is implemented by `extcon-mtk-usb.ko`, USB1/xHCI,
-UVC switch/VBUS GPIOs, and MT6375's `usb-otg-vbus` regulator. SC851x has no DT
+The stock uSmart/UVC path is implemented by `extcon-mtk-usb.ko` over the shared
+USB0 / MTU3 / USB2 PHY / xHCI fabric, UVC switch/accessory-power GPIOs, and
+MT6375's `usb-otg-vbus` regulator. SC851x has no DT
 edge, symbol edge, userspace reference or applicable framework object. Details
 and the distinct internal `yft_tiny2c_usb` thermal-camera path are documented
 under `kernel/usmart/`.

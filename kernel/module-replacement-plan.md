@@ -301,7 +301,8 @@ byte-identical and the inlined probe's compiler-local text delta is reported.
 Hardware identity is SC8510 at `6-0069`: the DT `@6f` suffix is stale while
 `reg=<0x69>` and the live device agree. The module is a converter
 configuration/debug/IRQ shim, not charger policy. uSmart control/VBUS instead
-maps to USB1/extcon and MT6375 `usb-otg-vbus`; classification
+maps to `extcon-mtk-usb`, MT6375 `usb-otg-vbus`, and the shared
+USB0 / MTU3 / USB2 fabric; classification
 `PROVEN_UNRELATED`, with no stock software support found for charging the phone
 through uSmart. Runtime power testing remains intentionally unperformed.
 

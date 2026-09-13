@@ -491,4 +491,6 @@ relocation target/type sequences match; exact-GKI `BUILD_RC=0`, warnings 0,
 unresolved 0. The board is SC8510 at `6-0069` (`@6f` is only a stale node
 suffix). Its graph remains kernel-only: no intermodule import/export edge and
 no charger-class, regulator, extcon or USB edge. uSmart's VBUS/control graph is
-`MT6375 OTG → extcon-mtk-usb → USB1/UVC GPIOs`, explicitly excluding SC851x.
+`MT6375 usb-otg-vbus → extcon-mtk-usb → shared USB0 / MTU3 / USB2 fabric →
+UVC switch / accessory-power GPIOs`, explicitly excluding SC851x. There is no
+live second USB controller on that path.

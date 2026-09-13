@@ -24,7 +24,8 @@ MT6878 GPIO 149 (IO3V3 enable)┘
                                       │
 MT6878 I2C8, GPIO141/142, addr 0x3c ─> module power/ID endpoint (chip ID registers 0/1)
                                       │
-separate extcon/USB1 + MT6375 path ──> internal USB/UVC data and USB VBUS routing
+separate extcon-mtk-usb + MT6375 path ─> internal USB/UVC data and USB VBUS routing
+(shared USB0 / MTU3 / USB2 fabric)
 ```
 
 The last edge is corroborated by stock userspace coordinating two independent sysfs nodes;
@@ -38,12 +39,13 @@ it is not a direct call or DT phandle from this module.
 2. **Built-in thermal camera?** Yes. Exact stock binding, the thermal FactoryMode tests,
    ThermoVue package, AC020/UVC libraries, and coordinated sysfs writes identify this as the
    built-in thermal-imaging path.
-3. **Shares USB1?** Stock userspace powers this module and then selects
-   `/sys/class/yft_extcon/tiny2c_mode`; that separate extcon driver operates the board USB1
-   host/route. Thus the thermal data path uses the board's secondary/internal USB path.
+3. **Shares the board USB fabric?** Stock userspace powers this module and then selects
+   `/sys/class/yft_extcon/tiny2c_mode`; that separate extcon driver operates the board's
+   shared USB0 / MTU3 / USB2 host route. Thus the thermal data path uses the board's one
+   shared internal USB path, not a second USB controller.
 4. **Shares Type-C resources?** It shares MT6375 charger USB-PHY/DPDM attach machinery only
    through `yft_usb_flag`; it has no Type-C/TCPC imports or phandles. Physical lane identity
-   beyond the proven USB1/extcon route is not asserted.
+   beyond the proven shared-USB-fabric/extcon route is not asserted.
 5. **Touches uSmart?** It does not control uSmart GPIOs, VBUS, detection, or accessories.
    The broader board design reuses the secondary USB/extcon infrastructure; see the separate
    uSmart contract.

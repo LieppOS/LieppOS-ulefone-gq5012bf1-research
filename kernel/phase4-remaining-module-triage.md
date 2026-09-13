@@ -806,8 +806,9 @@ sysfs, IRQ, PM and shutdown behavior. Exact-GKI build is clean
 sequences match; 8/9 behavioral functions are byte-identical and the inlined
 probe retains a reported compiler-local text delta. DT/live identity is
 resolved as SC8510 at `6-0069`; the `@6f` suffix is stale. Separate DT,
-extcon, APK and symbol evidence proves uSmart VBUS/control uses USB1 and MT6375
-OTG, not SC851x. Hardware runtime testing remains excluded by the safety policy.
+extcon, APK and symbol evidence proves uSmart VBUS/control uses MT6375
+`usb-otg-vbus` plus `extcon-mtk-usb` over the shared USB0 / MTU3 / USB2 fabric,
+not SC851x and not a separate second USB controller. Hardware runtime testing remains excluded by the safety policy.
 
 ---
 
