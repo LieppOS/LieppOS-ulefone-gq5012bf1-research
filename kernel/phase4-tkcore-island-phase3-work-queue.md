@@ -8,6 +8,20 @@ are already present in the rebuilt ELF (16 of them byte-identical to stock).
 Recommended order is bottom-up: leaf helpers and trace surfaces first, then the
 subsystems that carry exported symbols, then the secure-world proxies last.
 
+## Phase-3A gate result (2026-03-23)
+
+Phase 3A attempted to close the exported core lifecycle before procfs/log and
+SPI/clock-manager work. Stock disassembly proves that ordering is impossible
+without placeholders: `tee_core_add` directly calls `tee_init_procfs` and
+`tee_peridev_init`, while `tee_core_del` directly calls
+`tee_peridev_exit`. The former reaches `plat_register_spi_clk` and
+`tee_clkmgr_register`; the procfs pair creates/removes proc entries, IRQ state
+and a kernel thread. Success-returning stand-ins are forbidden.
+
+**No function was removed from this queue.** The safe next scheduling action is
+to close the directly required Phase-3E/3F leaves first, or explicitly revise
+the phase boundary. See `phase4-tkcore-island-phase3a-blocked.md`.
+
 ## 1. core lifecycle — 5 function(s)
 
 | stock function | current state | available oracle | consumer | risk |

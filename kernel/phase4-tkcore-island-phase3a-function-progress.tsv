@@ -1,0 +1,27 @@
+function	kind	stock offset	stock size	stock KCFI	Phase-2 state	Phase-3A evidence state	implementation state	acceptance	blocker/action
+tee_core_alloc	target	0x1aa4	344	0x89819660	DONOR_PORTED_CALLSET_DIFF	STOCK_ORACLE_CLOSED	RESTORED_PHASE2	INCOMPLETE	Implement only when direct supplicant-init boundary is accepted in scope
+tee_core_add	target	0x1c48	576	0xa1200a70	DONOR_PORTED_CALLSET_DIFF	STOCK_ORACLE_CLOSED	RESTORED_PHASE2	INCOMPLETE_BLOCKED	Requires excluded tee_init_procfs/tee_exit_procfs and tee_peridev_init
+tee_core_del	target	0x1e8c	192	0xa1200a70	DONOR_PORTED_CALLSET_DIFF	STOCK_ORACLE_CLOSED	RESTORED_PHASE2	INCOMPLETE_BLOCKED	Requires excluded tee_peridev_exit and matching subsystem teardown
+tee_core_free	target	0x1c08	60	0xa1200a70	EXACT_BYTE	STOCK_ORACLE_CLOSED	PHASE2_RETAINED	EXACT_BYTE	None
+__tee_get	target	0x168	320	0xa1200a70	MISSING	STOCK_ORACLE_CLOSED	NOT_IMPLEMENTED	INCOMPLETE	Core gate blocked before implementation could be accepted
+TEEC_InitializeContext	target	0x7304	240	0x124b473b	DONOR_PORTED_CALLSET_DIFF	SCOPE_ONLY	PHASE2_RETAINED	NOT_REACHED	Stopped at mandatory Phase-6 core gate
+TEEC_FinalizeContext	target	0x73f8	164	0xf4c49135	DONOR_PORTED_CALLSET_DIFF	SCOPE_ONLY	PHASE2_RETAINED	NOT_REACHED	Stopped at mandatory Phase-6 core gate
+TEEC_OpenSession	target	0x74a0	412	0xde69c0a6	DONOR_PORTED_CALLSET_DIFF	SCOPE_ONLY	PHASE2_RETAINED	NOT_REACHED	Stopped at mandatory Phase-6 core gate
+TEEC_CloseSession	target	0x7640	96	0x31bed4ef	DONOR_PORTED_CALLSET_DIFF	SCOPE_ONLY	PHASE2_RETAINED	NOT_REACHED	Stopped at mandatory Phase-6 core gate
+tee_plt_device_release	helper	0x1c00	4	0x94ee7df3	EXACT_BYTE	CLOSED	PHASE2_RETAINED	EXACT_BYTE	None
+tee_supp_init	helper	0x6c94	176	0xa1200a70	DONOR_PORTED_CALLSET_DIFF	DIRECT_BOUNDARY_IDENTIFIED	PHASE2_RETAINED	INCOMPLETE	Supplicant/RPC explicitly deferred
+tee_supp_deinit	helper	0x6d48	52	0x246c186b	EXACT_BYTE	CLOSED	PHASE2_RETAINED	EXACT_BYTE	None
+tee_init_procfs	helper	0x7c64	760	0xa1200a70	MISSING	DISASSEMBLED_BLOCKER	NOT_IMPLEMENTED	INCOMPLETE_BLOCKED	Phase 3F excluded
+tee_exit_procfs	helper	0x7f60	140	0xa540670c	MISSING	DISASSEMBLED_BLOCKER	NOT_IMPLEMENTED	INCOMPLETE_BLOCKED	Phase 3F excluded
+tee_init_sysfs	helper	0x6dd0	508	0xa1200a70	DONOR_PORTED_KCFI_MISMATCH	KCFI_CORRECTION_PROVEN	PHASE2_RETAINED	INCOMPLETE	Would change void return to int when core work resumes
+tee_cleanup_sysfs	helper	0x6fd0	144	0x246c186b	DONOR_PORTED	SCOPE_FROZEN	PHASE2_RETAINED	HIGH_CONFIDENCE_STRUCTURAL	Compare when core work resumes
+tee_peridev_init	helper	0x951c	28	0x36b1c5a6	MISSING	DISASSEMBLED_BLOCKER	NOT_IMPLEMENTED	INCOMPLETE_BLOCKED	Phase 3E excluded; calls plat_register_spi_clk
+tee_peridev_exit	helper	0x953c	168	0xa540670c	MISSING	DISASSEMBLED_BLOCKER	NOT_IMPLEMENTED	INCOMPLETE_BLOCKED	Phase 3E excluded
+tee_get_tee	helper	0xb0	128	0x32cc700a	DONOR_PORTED_CALLSET_DIFF	SCOPE_FROZEN	PHASE2_RETAINED	NOT_REACHED	Context work not entered
+tee_context_create	helper	0x333c	280	0x0ac50f16	DONOR_PORTED_CALLSET_DIFF	SCOPE_FROZEN	PHASE2_RETAINED	NOT_REACHED	Context work not entered
+tee_context_destroy	helper	0x35dc	76	0x585d8d61	EXACT_BYTE	SCOPE_FROZEN	PHASE2_RETAINED	NOT_REACHED	Context work not entered
+tee_core_alloc_uuid	helper	0x19a0	168	0x89fb613d	MISSING	IDR_ALGORITHM_RECOVERED	NOT_IMPLEMENTED	NOT_REACHED	Context/session implementation correctly withdrawn after core gate failed
+tee_core_uuid2ptr	helper	0x1a4c	40	0xb382e080	MISSING	IDR_ALGORITHM_RECOVERED	NOT_IMPLEMENTED	NOT_REACHED	Context/session implementation correctly withdrawn after core gate failed
+tee_core_free_uuid	helper	0x1a78	40	0x019c0cac	MISSING	IDR_ALGORITHM_RECOVERED	NOT_IMPLEMENTED	NOT_REACHED	Context/session implementation correctly withdrawn after core gate failed
+tee_session_create_and_open	helper	0x4828	640	0x51898546	DONOR_PORTED_CALLSET_DIFF	SCOPE_FROZEN	PHASE2_RETAINED	NOT_REACHED	Session work not entered
+tee_session_close_and_destroy	helper	0x4734	240	0x5ffcff8b	SIZE_IDENTICAL_CFG_EQUIVALENT	SCOPE_FROZEN	PHASE2_RETAINED	NOT_REACHED	Session work not entered
