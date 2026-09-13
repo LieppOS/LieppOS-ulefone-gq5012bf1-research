@@ -26,7 +26,7 @@
 > | `gps_drv_dl_v051` | `RELATED_SOURCE_HIT` (1 hit) | **EXACT_SOURCE / FORWARD_PORT** — `//…/gps/data_link/plat/v051:gps_drv_dl_v051`, Kbuild comment `# For MT6878 SoC + MT6686 A-die` |
 > | `gps_pwr` / `gps_scp` | `RELATED_SOURCE_HIT` | **EXACT_SOURCE / FORWARD_PORT** — `define_mgk_ko(name = "gps_pwr" / "gps_scp")` |
 > | `fingerprint` | `RELATED_SOURCE_HIT`, 97 hits | **NO_PUBLIC_DONOR_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE / FROZEN FOR RE** — the 97 hits are netfilter-OSF / x509 / unrelated-DTS noise. Stock-oracle source reproduces all 16 function bytes/sizes/KCFI IDs, 18 MODVERSIONs, 10 export CRCs, and all four MicroArray consumer edges; verifier 39/39. |
-> | `tkcore` | `STRONG_API_HIT`, 60 hits | **NO_USEFUL_SOURCE / STOCK_TRANSITION_BLOB** — the 60 hits are GlobalPlatform `TEEC_*` API-name collisions with MicroTrust TEEI (`drivers/tee/teei/510/…`). `grep -rl 'trustkernel\|tkcore'` over the Nothing MT6878 trees and the MiCode vendor-reference BSPs returns **zero** files. |
+> | `tkcore` | `STRONG_API_HIT`, 60 hits | **NO_PUBLIC_SOURCE_FOUND / PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER** — 122 functions, 25 exports, 101 MODVERSIONs; 14/25 export CRCs natural and 11/25 blocked on TrustKernel private ABI. Natural `tee_spi_transfer` ABI evidence does not make runtime tkcore source-built. The 60 hits are unrelated GlobalPlatform API-name collisions. |
 > | `panel_ky_vtdr6115_dphy_cmd` | `NO_EXACT_HIT` | **STRUCTURAL_DONOR_ONLY / RE_REQUIRED** — donor located: `MotorolaMobilityLLC/kernel-mtk@0087a407394abd3ab073e1a2df164f1187959a3f` `dsi-panel-mot-csot-vtdr6115-655-fhdp-dphy-vdo-144hz.c` (CSOT 144 Hz VDO vs Ulefone KY 120 Hz cmd) |
 > | `custom_ldo_wl2868` | `NO_EXACT_HIT` | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE / FROZEN FOR RE** — clean-room stock-oracle source closes all hardware-significant behavior; exact 15-function/KCFI/call sets, 27 MODVERSIONs, export CRCs, clean provider/downstream builds, and 50/50 verifier. Sony remains structural-only; Nothing remains DT-only. |
 > | `custom_ldo` | `NO_EXACT_HIT` | no donor found, but **STOCK_CONSUMER_ABI_EXACT_RECONSTRUCTION** completed from stock ELF: 2/2 functions byte-identical, exact CRC/KCFI/relocations, exact-GKI build clean |
@@ -36,19 +36,20 @@
 > | `yft_gpio_keys` | absent from the original 22-entry scan | **SOURCE_DELTA_RECONSTRUCTION_EXACT / SOURCE_RECONSTRUCTED / FROZEN FOR RE** — pinned exact-GKI `gpio_keys.c` plus the recovered YFT identity, 16-ms default, IRQ mask/re-enable, edge-rearm and logging delta gives 23/23 byte-identical functions, 65/65 exact MODVERSIONs, a clean build and 40/40 verifier |
 > | `leds_ln2403` | `NO_EXACT_HIT` | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE / SOURCE_NOW / FROZEN FOR RE** — complete 16-function hardware/state reconstruction, 12/12 applicable KCFI IDs, 32/32 exact MODVERSIONs, exact five-GPIO/PWM3/timer/sysfs behavior, and source-built real-provider functions byte-exact; clean build and 50/50 verifier |
 > | `yft_tiny2c_usb` | absent from the original 22-entry scan | **NO_PUBLIC_DONOR_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE / SOURCE_RECONSTRUCTED / SOURCE_NOW / FROZEN FOR RE** — 12/12 functions, 12/12 KCFI, exact 22-symbol/23-MODVERSION ABI, exact MT6375 object edge, complete thermal/USB/uSmart/DT/GPIO/sysfs/lifecycle contracts, clean build and 68/68 verifier |
-> | `tkcore_drv` | `NO_EXACT_HIT` | unchanged — **NO_USEFUL_SOURCE** re-confirmed against local/public source indexes |
+> | `tkcore_drv` | `NO_EXACT_HIT` | source-search result remains no public donor; **current module status is SOURCE_RECONSTRUCTED / SOURCE_NOW_WITH_PROVIDER_WITNESSES / PROVIDER_ABI_PARTIAL / FROZEN FOR RE**, 8 natural + 5 stock-provider witnesses, 43/43 verifier |
 >
 > Modules resolved since this scan and therefore no longer unresolved:
 > `aw883xx_driver`, `aw36515`, `aw36518`, `aw36518_v2`, `leds_rgb_aw2013`,
 > `connfem`, `custom_ldo_wl2868`, `custom_ldo`, `sc851x_charger`, `sc8571_charger`,
-> `fingerprint`, `yft_gpio_keys`, `leds_ln2403`, `yft_tiny2c_usb`.
+> `fingerprint`, `microarray_fp_tee`, `yft_gpio_keys`, `leds_ln2403`,
+> `yft_tiny2c_usb`, `hynitron`, and `spi_tiny_co5300_lcd`.
 >
-> Modules **missing** from this 22-entry scan that remain unresolved after later
-> stock-oracle closures: `microarray_fp_tee` and `yft_devinfo`. `hynitron` is
-> `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE (34/34 verifier;
-> stock yft_devinfo ABI pinned). `spi_tiny_co5300_lcd` is now also
-> `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`, SOURCE_RECONSTRUCTED, and FROZEN
-> FOR RE (exact 25-function/58-MODVERSION sets; 30/30 verifier).
+> Of the modules **missing** from this 22-entry scan, `yft_devinfo` retains its
+> separate provider-ABI gap. `microarray_fp_tee` is now
+> `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE / SOURCE_RECONSTRUCTED / FROZEN FOR
+> RE`; its two SPI edges are natural and only stock-runtime tkcore remains.
+> `spi-mt65xx`, also outside the original scan, is `DIRECT_SOURCE_MATCH /
+> FROZEN FOR RE` with 31/31 exact function bytes and 3/3 natural exports.
 >
 > Transition-blob result applying to **all** of them: every one imports 0
 > unresolved and 0 CRC-mismatched kernel symbols against the exact Google GKI

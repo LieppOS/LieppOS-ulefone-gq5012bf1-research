@@ -228,7 +228,8 @@ entire cluster.
    tkcore [stock / blocked on TrustKernel private headers] P:99 ── 25 exports
       │
       ├─11──▶ tkcore_drv        [RECONSTRUCTED] P:100 / R:98 → LEAF (0 exports)
-      ├──1──▶ microarray_fp_tee [stock] P:182 / R:186   (tee_spi_transfer)
+      ├──1──▶ microarray_fp_tee [SOURCE_RECONSTRUCTED / FROZEN] P:182 / R:186
+      │                                      (stock-runtime `tee_spi_transfer` edge)
       └──7──▶ tmem_ffa          [port]  V:151           (TEEC_*)
                                         depends = gz_tz_system, tkcore, ffa_v10
 
@@ -308,17 +309,18 @@ and it has no module dependencies of its own.
 ## 7. Cluster: FINGERPRINT
 
 ```
-   fingerprint [frozen/recon-complete] P:181 / R:185
+   fingerprint [SOURCE_RECONSTRUCTED / FROZEN] P:181 / R:185
    mediatek,yft_finger · 18 exact kernel imports · 0 intermodule · 10 exact exports
         │
         │ 4 symbols: yft_finger_set_irq, yft_finger_set_reset,
         │            yft_finger_set_spi_mode, yft_waite_for_finger_dts_paser
         ▼
-   microarray_fp_tee [recon/frozen] P:182 / R:186   → LEAF (0 exports)
+   microarray_fp_tee [SOURCE_RECONSTRUCTED / FROZEN] P:182 / R:186 → LEAF
    mediatek,madev_finger · SPI1 · /dev/madev0
-        ▲                              ▲
-        │2 spi-mt65xx [source/frozen]  │1 tkcore [stock] (tee_spi_transfer)
-        │  P:119                       │  P:99
+        ▲                                        ▲
+        │2 spi-mt65xx [DIRECT_SOURCE_MATCH /     │1 tkcore [STOCK RUNTIME /
+        │  FROZEN] P:119                         │  NOT RECONSTRUCTED] P:99
+        │                                        │  (tee_spi_transfer)
 ```
 
 Load order is adjacent and must be preserved: `P:181 fingerprint →
@@ -413,16 +415,18 @@ TIER 6  connadp/connscp/ccci_md_all/aee_aed/device-apc-common
           → wmt_chrdev_wifi_connac2 → wlan_page_pool → wlan_drv_gen4m_6878
           → bt_drv_6878
           → gps_drv_dl_v051 → gps_pwr → gps_scp
-TIER 7  fingerprint [frozen/recon-complete; 10/10 provider CRCs exact]
+TIER 7  fingerprint [source/frozen; 10/10 provider CRCs exact]
+        spi-mt65xx [DIRECT_SOURCE_MATCH / FROZEN; 3/3 exports natural]
+        microarray_fp_tee [source/frozen; 65 natural + 1 stock-runtime tkcore witness]
 TIER 8  yft_gpio_keys [SOURCE_DELTA_RECONSTRUCTION_EXACT; FROZEN FOR RE]
 TIER 9  leds_ln2403 [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 10 yft_tiny2c_usb [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 11 hynitron [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 12 spi_tiny_co5300_lcd [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
-TIER 13 held on stock: tkcore, microarray_fp_tee
-(tkcore_drv is SOURCE_RECONSTRUCTED / FROZEN FOR RE as of 2026-09-13, and
-ffa_v10 is DIRECT_SOURCE_MATCH / FROZEN FOR RE also as of 2026-09-13; the
-tier stays stock-dependent at runtime only because of tkcore itself.)
+TIER 13 runtime stock dependency: tkcore only
+(`microarray_fp_tee`, `tkcore_drv`, and `ffa_v10` are source-closed/frozen.
+An optional conservative integration strategy may temporarily retain their
+stock binaries, but that deployment choice does not change source status.)
 ```
 
 ## 11. Leaf modules (zero exports — safe to touch in any order)
@@ -466,14 +470,18 @@ It builds naturally against the reconstructed provider's real CRCs and exports
 exactly what stock `imgsensor` requires. The graph edge remains, but this node
 is no longer an unresolved RE task.
 
-## Phase 4 fingerprint provider closure
+## Phase 4 fingerprint provider closure (historical provider-only milestone)
 
-`fingerprint` is `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE.
-All 16 function bytes/sizes/KCFI IDs, 18 kernel MODVERSIONs, and 10 export CRCs
-match. The four-symbol edge to stock `microarray_fp_tee` is
-`STOCK_CONSUMER_ABI_EXACT`, and the verifier passes 39/39. The edge and adjacent
-load order remain mandatory, but the provider is source-ready. The stock-held
-consumer and its `spi-mt65xx`/`tkcore` dependencies are unchanged.
+At that milestone, `fingerprint` reached
+`STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE. All 16 function
+bytes/sizes/KCFI IDs, 18 kernel MODVERSIONs, and 10 export CRCs matched. The
+four-symbol edge recorded in the stock MicroArray oracle was
+`STOCK_CONSUMER_ABI_EXACT`, and the verifier passed 39/39.
+
+**Superseding current status:** `microarray_fp_tee` is now source-reconstructed
+and frozen, and `spi-mt65xx` is `DIRECT_SOURCE_MATCH` with both MicroArray SPI
+edges natural. Their behavior and load-order contract remain unchanged.
+`tkcore` alone remains the stock runtime provider in this chain.
 
 ## Phase 4 sc851x_charger update (2026-09-08)
 

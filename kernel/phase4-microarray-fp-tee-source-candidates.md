@@ -26,9 +26,15 @@ No candidate reproduces the stock function set, `mediatek,madev_finger`, the
 and TrustKernel initialization path, or the exact lifecycle. No non-TEE SPI
 driver is promoted to exact source.
 
-## Provenance decision
+## Provenance decision (historical pre-`spi-mt65xx` closure)
 
-Proceed with a clean-room stock-oracle reconstruction. The frozen ELF,
+The original clean-room stock-oracle reconstruction used the frozen ELF,
 relocation-aware disassembly, exact userspace binaries, frozen DT, frozen
-`fingerprint` source-built provider, stock `spi-mt65xx` witness, and stock
-`tkcore` witness are the evidence inputs.
+`fingerprint` source-built provider, a stock `spi-mt65xx` witness, and a stock
+`tkcore` witness as evidence inputs.
+
+**Superseding acceptance provenance:** MicroArray behavior was not reopened.
+The two SPI edges now come naturally from the source-built direct-match
+`spi-mt65xx` provider; only `tee_spi_transfer` remains a stock-runtime witness
+from unreconstructed `tkcore`. Current split: 65/66 natural, 1/66 stock-runtime
+witness.

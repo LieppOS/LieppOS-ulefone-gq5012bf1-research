@@ -1095,7 +1095,12 @@ The 16 named in the triage brief, plus 7 that were missing from it:
 > complete thermal/USB/uSmart/DT/GPIO/sysfs/lifecycle contracts, and a 68/68
 > verifier. It is removed from the active ZERO-BLOB queue only.
 
-### Dispositions
+### Historical triage dispositions (superseded snapshot)
+
+These counts describe the original 23-module triage input at that milestone.
+They are retained for chronology and are not current source-status totals;
+subsequent closure notes below supersede them, including the independent
+`microarray_fp_tee` and `spi-mt65xx` closures.
 
 | disposition           | count |
 | --------------------- | ----: |

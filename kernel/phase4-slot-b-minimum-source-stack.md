@@ -164,7 +164,13 @@ natural, 34/34 functions byte-identical to stock. `spi-mt65xx` likewise closed
 as `DIRECT_SOURCE_MATCH / FROZEN FOR RE`: 31/31 function bytes, all 3 exports
 natural, 82/82 verifier, and its MicroArray consumer accepted.
 
-### B.4 Still `STOCK_TRANSITION` at Level B
+### B.4 Level-B retained binaries and source status
+
+This table separates source status from deployment policy. `tkcore` and
+`yft_devinfo` remain genuine stock-provider dependencies. Every row explicitly
+marked reconstructed/frozen is source-closed; retaining its stock binary for a
+conservative staged Level-B boot is optional integration policy, not an
+unresolved reconstruction.
 
 | module | label | reason |
 |---|---|---|
@@ -181,10 +187,11 @@ natural, 82/82 verifier, and its MicroArray consumer accepted.
 Display + backlight + 60/90/120 Hz mode switching · FT3680 touch · charging
 including PD/PPS · both fuel gauges · audio through the AW883xx smart PA ·
 Wi-Fi · Bluetooth · GNSS fix · cameras enumerate and stream · NFC · RGB
-notification LED · flashlight. Fingerprint uses the source-reconstructed YFT
-provider with stock `microarray_fp_tee`/TrustKernel. The rear/mini display and
-rear touch are source-reconstructed; stock `yft_devinfo` remains their pinned
-registry ABI provider.
+notification LED · flashlight. Fingerprint uses source-built `fingerprint` +
+source-built `microarray_fp_tee` + source-built `spi-mt65xx`, with stock runtime
+`tkcore` retained. This is not a source-pure full stack because `tkcore` is not
+reconstructed. The rear/mini display and rear touch are source-reconstructed;
+stock `yft_devinfo` remains their pinned registry ABI provider.
 
 ---
 
@@ -225,11 +232,11 @@ has not been source-reconstructed. Level C tracks the latter.
 
 ## Label summary
 
-| level | SOURCE_NOW | STOCK_TRANSITION | NOT_REQUIRED |
-|---|---:|---:|---:|
-| **A — first boot** | 1 (the GKI core) | 439 stock modules | `odm_dlkm` modules, `uarthub_drv` |
-| **B — usable phone** | 20 frozen + 10 new = 30, plus platform prereqs | 9 | `uarthub_drv` |
-| **C — source-complete** | all except the two TEE modules if they are held | 0-2 | `uarthub_drv` |
+| level | source status | runtime/deployment stock policy | NOT_REQUIRED |
+|---|---|---|---|
+| **A — first boot** | 1 (the GKI core) | all 439 stock modules deliberately retained for minimum risk | `odm_dlkm` modules, `uarthub_drv` |
+| **B — usable phone** | frozen/source-closed modules may be introduced incrementally | `tkcore` and `yft_devinfo` remain real stock-provider dependencies; any other stock retention is optional staging | `uarthub_drv` |
+| **C — source-complete** | every currently source-closed module, including `microarray_fp_tee` | `tkcore` remains the sole unresolved runtime TEE provider in the fingerprint path; `yft_devinfo` remains a separate ABI-pinned provider | `uarthub_drv` |
 
 ## Answer to the driving question
 
@@ -241,10 +248,10 @@ against it because all 2 946 kernel-facing CRCs and all 23 unresolved modules'
 imports are proven `MATCH` with zero unresolved symbols.
 
 The correct sequencing is therefore: **boot first and validate the source
-stack incrementally**. `fingerprint`, `custom_ldo_wl2868`, and `custom_ldo` are
-source-ready and frozen for RE. Remaining Level-B work is forward-port or
-exact-provider-ABI work; `microarray_fp_tee` remains a separate stock-held
-sensor/TEE task.
+stack incrementally**. `fingerprint`, `spi-mt65xx`, `microarray_fp_tee`,
+`custom_ldo_wl2868`, and `custom_ldo` are source-ready and frozen for RE.
+MicroArray behavior is closed; `tkcore` alone remains its stock TEE runtime
+dependency. Other Level-B work is forward-port or exact-provider-ABI work.
 
 ---
 

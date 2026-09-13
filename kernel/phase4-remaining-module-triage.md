@@ -614,10 +614,11 @@ matches and are rejected. The real identifiers are `mediatek,yft_finger` and
   `yft_finger_set_spi_mode` returned no kernel driver. The only public
   "microarray" fingerprint code is a libfprint USB userspace driver for an
   unrelated USB part.
-* **Can they stay as stock transition blobs for first boot?** **Yes.**
-  `fingerprint` is `YES_SAFE_TRANSITION` (18/18 kernel CRCs `MATCH`, zero
-  intermodule imports). `microarray_fp_tee` is `YES_WITH_STOCK_PROVIDER_CHAIN`
-  (needs stock `fingerprint`, `spi-mt65xx`, `tkcore`).
+* **Can their stock binaries be retained for a conservative first boot?**
+  **Yes.** That is a deployment choice, not reconstruction status.
+  `fingerprint`, `spi-mt65xx`, and `microarray_fp_tee` are now source-closed;
+  their source-built chain is ABI-compatible. Runtime `tkcore` remains stock
+  and is still required by MicroArray's sole witness edge.
 
 Current disposition: `fingerprint`, `microarray_fp_tee`, and `spi-mt65xx` are
 all **SOURCE_RECONSTRUCTED / FROZEN FOR RE**. `spi-mt65xx` closes as
@@ -651,24 +652,29 @@ remaining stock-oracle gap is tracked separately).
 recovered identity/default-debounce/IRQ-mask/re-enable/edge-rearm/logging delta
 produce all 23 stock function bytes and all 65 stock CRCs.
 
-## 16. Safe to keep temporarily as stock transition blobs
+## 16. Source status versus conservative stock deployment
 
-All 23 are ABI-safe against the source-built exact GKI. The modules for which
-"keep stock" is the *recommended final disposition for now* are:
+All original 23 triage modules are ABI-safe against the source-built exact GKI,
+so a minimal-risk first boot may temporarily retain any stock binary. That is
+an **optional conservative integration strategy**, not a current reconstruction
+classification.
 
-`tkcore`, `microarray_fp_tee`, `spi_tiny_co5300_lcd`.
-`leds_ln2403`, `yft_tiny2c_usb`, and `hynitron` have graduated to
-`SOURCE_NOW` and are FROZEN FOR RE. Only the two exact Hynitron provider edges
-of `spi_tiny_co5300_lcd` are READY/EXACT; that consumer is not closed.
-`tkcore_drv` and `ffa_v10` have **also** graduated — both closed 2026-09-13
-(`SOURCE_RECONSTRUCTED / FROZEN FOR RE` and `DIRECT_SOURCE_MATCH / FROZEN FOR
-RE`) — and are **no longer** in the "keep stock" list. Only `tkcore` remains
-in this TEE pair now, blocked on original TrustKernel private headers.
+Current source status in the affected chains:
 
-Of the 23, seven are `YES_SAFE_TRANSITION` (no module-to-module provider at
-all): `yft_devinfo`, `sc851x_charger`, `tkcore`, `wmt_chrdev_wifi_connac2`,
-`fingerprint`, `custom_ldo_wl2868`. `yft_gpio_keys` is no longer a transition
-blob candidate; it is `SOURCE_NOW`.
+- `tkcore`: **NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER**; required stock.
+- `microarray_fp_tee`: **SOURCE_RECONSTRUCTED / FROZEN FOR RE**; stock binary
+  may be retained temporarily for staged integration, but it is not unresolved.
+- `spi_tiny_co5300_lcd`: **SOURCE_RECONSTRUCTED / FROZEN FOR RE**; stock binary
+  may likewise be retained temporarily, but it is not unresolved.
+- `tkcore_drv`: **SOURCE_RECONSTRUCTED / FROZEN FOR RE**, 8 natural + 5 stock
+  provider witnesses, 43/43 verifier.
+- `ffa_v10`: **DIRECT_SOURCE_MATCH / FROZEN FOR RE**, 5/5 natural exports,
+  49/49 verifier.
+
+`yft_devinfo` remains a separate stock ABI-pinned provider. Historical
+`YES_SAFE_TRANSITION` and `YES_WITH_STOCK_PROVIDER_CHAIN` labels describe
+first-boot compatibility of the original triage population, not present-day
+source closure.
 
 ## 17. Modules not required
 
@@ -721,8 +727,10 @@ DONE 15B SOURCE_NOW      yft_tiny2c_usb — stock-behavior complete, exact 22
                          undefined imports/23 MODVERSIONs, exact MT6375 flag edge,
                          12/12 KCFI, complete thermal/USB/uSmart/DT/GPIO/sysfs/
                          lifecycle contracts, 68/68 verifier, FROZEN FOR RE
-NEXT 16  TRANSITION_BLOB hold: microarray_fp_tee, tkcore, tkcore_drv,
-                         spi_tiny_co5300_lcd
+NEXT 16  RUNTIME_STOCK    tkcore only — NOT RECONSTRUCTED; required TEE runtime
+OPTIONAL STAGED_STOCK     source-closed microarray_fp_tee, tkcore_drv, and
+                          spi_tiny_co5300_lcd may retain stock binaries during
+                          conservative integration; they are not unresolved
 DONE     hynitron — STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE, 65/65 functions,
                     54/54 import map, 2/2 consumer exports, 34/34 verifier,
                     FROZEN FOR RE
@@ -731,7 +739,10 @@ NEXT 17  SOURCE_DELTA    yft_devinfo — only if a YFT BSP drop supplying the mi
 NEXT 18  DROP            nothing
 ```
 
-Steps 1-4 require **zero** of the 23 unresolved modules to be reconstructed.
+Steps 1-4 require **zero** reconstructions from the original 23-module triage
+population because Level A intentionally deploys their stock binaries. This is
+a first-boot policy statement, not a claim that later-closed modules remain
+unresolved.
 
 ---
 

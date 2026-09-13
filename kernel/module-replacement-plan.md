@@ -223,14 +223,15 @@ TrustKernel `tee_spi_transfer` only; runtime `read`/`write` uses normal-world
 `spi_sync` under `dev_lock`. `tee_spi_transfer` was never replaced by a generic
 TEE call or a direct SPI transfer, and `tkcore`/`tkcore_drv` were not touched.
 
-Two targets are produced from a single source file:
+Two historical closure targets were produced from a single source file:
 
-- `//lieppos/microarray-fp-tee-recon` — 63/66 MODVERSION edges naturally
-  regenerated; the 3 vendor-provider edges are reported as declared
-  `PROVIDER_ABI_GAP` and are not hidden.
-- `//lieppos/microarray-fp-tee-recon-stockabi` — 66/66 exact MODVERSION parity
-  and exact `depends = fingerprint,spi-mt65xx,tkcore`, using CRCs extracted
-  read-only from the stock provider ELFs' own `__kcrctab`.
+- `//lieppos/microarray-fp-tee-recon` — **pre-`spi-mt65xx` closure evidence
+  target**: 63/66 MODVERSION edges naturally regenerated; the 3
+  vendor-provider edges were reported as declared `PROVIDER_ABI_GAP`.
+- `//lieppos/microarray-fp-tee-recon-stockabi` — the original closure's 66/66
+  exact target. The current post-SPI acceptance build keeps the same exact
+  `depends = fingerprint,spi-mt65xx,tkcore` while taking both SPI edges from
+  the real source-built provider and only `tee_spi_transfer` from stock tkcore.
 
 **Historical closure state:** 63/66 natural and 3/66 stock-provider
 witnesses. **Current post-`spi-mt65xx` acceptance:** 65/66 natural ABI edges,
@@ -278,10 +279,14 @@ remains stock. See `phase4-spi-mt65xx-reconstruction.md`.
 `fingerprint` is `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE.
 The stock-oracle source reproduces 16/16 function bytes, sizes and KCFI IDs,
 18/18 kernel imports/MODVERSIONs, all 10 export CRCs, and the four exact CRCs
-consumed by stock `microarray_fp_tee`. Exact-GKI build succeeds with zero
+recorded by the stock MicroArray oracle. Exact-GKI build succeeds with zero
 compiler/modpost warnings and zero unresolved symbols; the fail-closed verifier
-passes 39/39. The provider is removed from the RE queue. The MicroArray sensor
-and TrustKernel modules remain untouched and incomplete.
+passes 39/39. The provider is removed from the RE queue.
+
+At the time of this provider-only milestone, the MicroArray sensor was
+untouched. **Superseding current status:** MicroArray is now behaviorally
+source-reconstructed/frozen and `spi-mt65xx` is a direct source match;
+TrustKernel `tkcore` alone remains not reconstructed and required at runtime.
 
 ## Phase 4 sc851x_charger update (2026-09-08)
 

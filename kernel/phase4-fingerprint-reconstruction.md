@@ -307,8 +307,10 @@ The reconstructed provider generates all 10 stock export CRCs. The four CRCs
 recorded in the stock MicroArray consumer are exact, yielding
 **`STOCK_CONSUMER_ABI_EXACT`** with 0 mismatches. The remaining six public
 exports are also exact, so the provider itself is
-**`SOURCE_STACK_INTERNAL_ABI_COMPLETE`**. This says nothing about reconstructing
-`microarray_fp_tee.ko`, which remains untouched.
+**`SOURCE_STACK_INTERNAL_ABI_COMPLETE`**. This provider-only milestone did not
+reconstruct or modify MicroArray behavior. **Superseding current status:**
+`microarray_fp_tee` has since been source-reconstructed and frozen without
+reopening that behavior.
 
 ## Behavioral verifier
 
@@ -356,6 +358,10 @@ and exact-GKI offline builds.
 
 `fingerprint.ko` is source-reconstructed, stock-consumer ABI exact, behaviorally
 closed, and **FROZEN FOR RE**. It may replace the stock YFT glue provider after
-the project's separate staged integration process. Stop at this provider:
-`microarray_fp_tee`, `tkcore`, and `tkcore_drv` are not reconstructed or marked
-complete by this work.
+the project's separate staged integration process. This report stops at that
+provider and does not claim downstream closure *by this work*.
+
+Later independent closures now classify `microarray_fp_tee` and `tkcore_drv` as
+source-reconstructed/frozen and `spi-mt65xx` as a direct source match/frozen.
+`tkcore` alone remains `NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER`, so the full
+fingerprint runtime stack is not source-pure.

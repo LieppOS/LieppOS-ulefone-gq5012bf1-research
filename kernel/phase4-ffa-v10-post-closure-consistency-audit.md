@@ -1,5 +1,12 @@
 # Post-`ffa_v10`-closure documentation consistency audit
 
+> **Historical snapshot:** this audit records repository state immediately
+> after `ffa_v10` closure. Its statements that `spi-mt65xx` closure remained
+> open or that MicroArray was stock-held are superseded by
+> `phase4-spi-mt65xx-post-closure-consistency-audit.md`. Current status is
+> source-built/frozen `fingerprint` + `spi-mt65xx` + `microarray_fp_tee`, with
+> unreconstructed stock-runtime `tkcore`.
+
 **Scope:** documentation-only synchronization after the `ffa_v10` source
 closure (`kernel/phase4-ffa-v10-reconstruction.md`, commit `8457d10`). No
 reverse engineering, no source/Kbuild/BUILD.bazel/Module.symvers edits, no
