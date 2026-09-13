@@ -243,7 +243,7 @@ entire cluster.
 
    gz_tz_system [SOURCE_DELTA_RECONSTRUCTION_EXACT / FROZEN] V:149 ── 27 exports, ALL NATURAL
       ├──9──▶ tmem_ffa          [DIRECT_SOURCE_MATCH / FROZEN] V:152 (KREE_*, now NATURAL)
-      ├──15─▶ gz_main_mod       [port] V:150   (largest consumer; owns GZ userspace ABI)
+      ├──15─▶ gz_main_mod       [port] V:150   (largest consumer; owns higher-level KREE userspace ABI)
       ├──5──▶ cmdq-sec-drv      [port]         (secure CMDQ)
       ├──3──▶ sapu              [port]         (secure APU)
       └──3──▶ mtk-cam-isp7sp    [port]         (secure camera buffers)

@@ -52,14 +52,19 @@ there is not even a `/sys/module/gz_tz_system/parameters/` surface. The only
 `/sys/module/gz_tz_system/{coresize,initstate,refcnt,…}` that the module loader
 creates for every module — not an ABI this driver defines.
 
-## 5. Where the userspace interface actually is
+## 5. Where the higher-level KREE userspace interface actually is
 
-`gz_tz_system` is deliberately a **kernel-only KREE provider**. The GenieZone
-userspace ABI belongs to its *consumer* `gz_main_mod.ko` (V:150), which is the
-module that implements `tz_client_open_session()` and friends behind a
-character device. `gz_main_mod` is the largest consumer of this module
-(15 of the 27 exports) — it converts the in-kernel KREE API into the userspace
-one.
+`gz_tz_system` is deliberately a **kernel-only KREE provider**. Its higher-level
+KREE userspace ABI belongs to the consumer `gz_main_mod.ko` (V:150), which
+implements `tz_client_open_session()` and friends behind a character device.
+`gz_main_mod` is the largest consumer of this module (15 of the 27 exports) —
+it converts the in-kernel KREE API into that userspace interface.
+
+This does not mean every GenieZone module is userspace-invisible:
+`gz_ipc_mod.ko` independently exposes the lower TIPC transport cdev with
+connect ioctl, whole-message read/write, and poll. That ABI is documented in
+`phase4-gz-ipc-mod-userspace-abi.md`; it is not an entry point implemented by
+`gz_tz_system`.
 
 That split is why `gz_tz_system` imports `get_user_pages_remote`,
 `find_vma_intersection`, `follow_pfn`, `down_read`/`up_read`, `__folio_put`,

@@ -181,7 +181,7 @@ unresolved reconstruction.
 | `gz_tz_system` | **SOURCE_DELTA_RECONSTRUCTION_EXACT / FROZEN FOR RE** | closed 2026-09-13; same pinned vendor revision (`device_modules@957dac18`, `geniezone/`); 61/61 byte-identical, 27/27 export CRCs natural, 35/35 consumer edges natural, 120/120 verifier; witness-free acceptance against source-built IPC/Trusty is 7/7 natural and behavior-identical |
 | `gz_ipc_mod` | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** | closed 2026-09-13 from exact pinned `trusty-ipc.c`; 43/43 byte/KCFI, 15/15 natural exports, 6/6 consumer edges, 269/269 verifier; uses 3 natural `gz_trusty_mod` edges |
 | `gz_trusty_mod` | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** | closed 2026-09-13 from exact pinned `trusty.c + smcnr-table.c`; 33/33 byte/KCFI, 14/14 natural exports, 34/34 consumer edges, 239/239 verifier; lowest GenieZone transport provider |
-| `gz_main_mod` | STOCK_TRANSITION | GenieZone main driver, owns the GenieZone **userspace** ABI; largest `gz_tz_system` consumer (15 symbols); not started |
+| `gz_main_mod` | STOCK_TRANSITION | GenieZone main driver, owns the higher-level **KREE userspace** ABI; largest `gz_tz_system` consumer (15 symbols); separate from `gz_ipc_mod`'s lower TIPC transport cdev; not started |
 | `microarray_fp_tee` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | behavior frozen; 65 natural ABI edges after real source-built SPI provider; still uses stock runtime tkcore |
 | `yft_devinfo` | STOCK_TRANSITION | ABI pin, §B.2 |
 | `spi_tiny_co5300_lcd` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | rear display; exact rebuilt-Hynitron plus stock-YFT provider ABI; 30/30 verifier; `P3` |
