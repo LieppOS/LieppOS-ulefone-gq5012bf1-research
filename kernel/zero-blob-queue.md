@@ -141,11 +141,25 @@ not, and `tkcore` itself remains stock.
   scanned: 5 consumers (`gz_main_mod` 15, `tmem_ffa` 9, `cmdq-sec-drv` 5,
   `sapu` 3, `mtk-cam-isp7sp` 3), **35/35 edges NATURAL, 0 broken**. No CRC
   injection, no fake symvers, no ELF patch, no `KBUILD_MODPOST_WARN`. Userspace
-  ABI proven **NONE**. Remaining boundary: `gz_ipc_mod` (5 edges) and
-  `gz_trusty_mod` (2 edges) are genuine stock runtime providers, explicitly
-  declared and not reconstructed. 120/120 fail-closed verifier
+  ABI proven **NONE**. 120/120 fail-closed verifier
   (`kernel/scripts/phase4_gz_tz_system_verify.py`). See
   `kernel/phase4-gz-tz-system-reconstruction.md`.
+  **Transport update:** its former 5-edge `gz_ipc_mod` and 2-edge
+  `gz_trusty_mod` stock-runtime boundaries are now source-built NATURAL; the
+  witness-free acceptance build preserves all 61 function bytes/KCFI and all
+  1082 relocations.
+
+- `gz_trusty_mod` — **DIRECT_SOURCE_MATCH / FROZEN FOR RE** (2026-09-13).
+  Exact pinned `trusty.c + smcnr-table.c`; 33/33 byte/KCFI exact, 59/59
+  imports, 60/60 MODVERSIONs, 14/14 natural exports, 553/553 relocations.
+  Lowest transport provider; all 34 stock-consumer edges accept it. 239/239
+  verifier.
+- `gz_ipc_mod` — **DIRECT_SOURCE_MATCH / FROZEN FOR RE** (2026-09-13).
+  Exact pinned `trusty-ipc.c`; 43/43 byte/KCFI exact, 81/81 imports (78 GKI +
+  3 natural Trusty), 82/82 MODVERSIONs, 15/15 natural exports, 1003/1003
+  relocations. All 6 stock-consumer edges accept it. The real userspace cdev
+  ABI and four-state TIPC machine are closed. 269/269 verifier; stack 738/738.
+  See `kernel/phase4-gz-transport-stack-closure.md`.
 
 Likewise, `tkcore_drv` being reconstructed does **not** mark `tkcore`
 reconstructed or source-pure: 5 of its 13 provider edges are still only

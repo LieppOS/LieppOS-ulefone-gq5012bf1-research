@@ -86,7 +86,7 @@ off), the TrustKernel TEE-client header family, `TEEC_InitializeContext(NULL,…
 `TEEC_ReleaseSharedMemory 0xc4d15e1c` — **3 NATURAL / 4 PROVIDER_ABI_BLOCKED**
 in tkcore's own 14/11 split.
 
-### gz_tz_system edges (9, exact stock CRCs)
+### gz_tz_system edges (9; closure-time stock CRCs, now source-built natural)
 
 `KREE_CreateSession 0x552d4efc`, `KREE_CloseSession 0x5878d629`,
 `KREE_TeeServiceCall 0xec19e146`, `KREE_ION_AllocChunkmem 0x3d5d5254`,
@@ -95,10 +95,12 @@ in tkcore's own 14/11 split.
 `KREE_ReleaseSecureMultichunkmem 0x44781e48`,
 `KREE_ConfigSecureMultiChunkMemInfo 0xbdb6a34b`.
 
-Both provider records are machine extractions of the stock providers' own
-`__kcrctab` (`stock-provider.symvers` + `.provenance.json`). No CRC injection,
-no fake symvers, no `__versions` editing, no ELF patching, no
-`KBUILD_MODPOST_WARN`.
+At the original tmem closure, both provider records were machine extractions of
+the stock providers' own `__kcrctab` (`stock-provider.symvers` +
+`.provenance.json`). No CRC injection, fake symvers, `__versions` editing, ELF
+patching, or `KBUILD_MODPOST_WARN` was used. Superseding acceptance builds now
+resolve all 9 KREE edges from source-built `gz_tz_system`, and that provider's
+7 transport edges from source-built `gz_ipc_mod`/`gz_trusty_mod`.
 
 ## 6. Exports and consumers
 
@@ -137,10 +139,10 @@ drop-in for all of them. See `kernel/phase4-tmem-ffa-consumer-abi.md`.
   `.llvm_addrsig` table encoding (8 bytes total). No functional residual.
 - The content of the stock lines behind the `__LINE__` padding is unknown and
   deliberately not invented.
-- `tkcore` remains a **stock runtime provider** (`NOT RECONSTRUCTED`), and
-  `gz_tz_system` remains a stock runtime provider **outside this task's scope**.
-  Both dependencies are explicitly identified and their exact consumer CRCs are
-  preserved, which is what permits `FROZEN FOR RE: YES` for `tmem_ffa` itself.
+- `tkcore` remains a **stock runtime provider** (`NOT RECONSTRUCTED`).
+  `gz_tz_system` is now source-built/frozen and all 9 KREE edges are natural;
+  its `gz_ipc_mod` + `gz_trusty_mod` providers are also source-built/frozen.
+  This status update does not reopen `tmem_ffa` classification or behavior.
 - Nothing was loaded, unloaded, flashed, rebooted or invoked in the secure
   world. Analysis was fully static.
 

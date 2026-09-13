@@ -168,8 +168,8 @@ FOR RE`**: exact pinned MediaTek vendor source
 revision and parent directory as `ffa_v10`), 141/141 functions byte-identical,
 141/141 KCFI, 76/76 imports, 77/77 MODVERSIONs, **15/15 export CRCs natural**,
 76/76 verifier. Its FF-A edge is served by the real source-built `ffa_v10`;
-its 7 `TEEC_*` edges (tkcore) and 9 `KREE_*` edges (gz_tz_system) stay stock
-runtime provider edges.
+its 7 `TEEC_*` edges (tkcore) remain stock-runtime, while all 9 `KREE_*`
+edges are natural from the source-built `gz_tz_system`.
 
 `gz_tz_system` closed 2026-09-13 as **`SOURCE_DELTA_RECONSTRUCTION_EXACT /
 FROZEN FOR RE`**, which retires that second boundary: the MediaTek GenieZone
@@ -187,11 +187,16 @@ provider provenance is now 59 GKI / 1 ffa_v10 / **9 gz_tz_system natural** /
 7 tkcore stock-runtime. The only remaining stock-runtime provider in the
 trusted-memory path is therefore `tkcore`.
 
-New declared boundaries introduced by this closure (both genuinely stock, both
-unreconstructed): `gz_ipc_mod` (5 `tipc_k_*`/`port_lookup_tid` edges) and
-`gz_trusty_mod` (2 `trusty_*` edges). `tmem_ffa`'s own 15 exports are consumed by
-`mtk_sec_heap`, `gz_main_mod` and `mali_kbase_mt6878_r44`, all of which accept
-the source-built module unchanged.
+The two transport boundaries introduced by that closure are now retired:
+`gz_trusty_mod` and `gz_ipc_mod` are both **DIRECT_SOURCE_MATCH / FROZEN FOR
+RE** from the same pinned revision. Trusty is the lower provider (59 GKI
+imports); IPC consumes exactly 3 natural Trusty edges. A witness-free
+`gz_tz_system` acceptance build resolves its 5 IPC + 2 Trusty edges naturally
+while retaining 61/61 byte/KCFI and 1082/1082 relocation parity. All 40 direct
+stock-consumer edges across both providers accept the natural CRCs. See
+`phase4-gz-transport-stack-closure.md`. `tmem_ffa`'s own 15 exports are
+consumed by `mtk_sec_heap`, `gz_main_mod` and `mali_kbase_mt6878_r44`, all of
+which accept the source-built module unchanged.
 
 ## Strategy
 

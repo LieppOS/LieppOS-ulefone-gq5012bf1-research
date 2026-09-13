@@ -378,10 +378,11 @@ functions byte-identical, 61/61 KCFI, 50/50 imports, 51/51 MODVERSIONs,
 **27/27 export CRCs natural**, 120/120 verifier. All 471 stock modules were
 scanned: 5 direct consumers (`gz_main_mod` 15, `tmem_ffa` 9, `cmdq-sec-drv` 5,
 `sapu` 3, `mtk-cam-isp7sp` 3), **35/35 edges natural, 0 broken**. Userspace ABI
-proven NONE. Its own remaining providers — `gz_ipc_mod` (5 TIPC edges) and
-`gz_trusty_mod` (2 SMC edges) — are genuine stock runtime providers and are now
-explicitly declared boundaries. See
-`kernel/phase4-gz-tz-system-reconstruction.md`.
+proven NONE. Its former providers are now source-closed: `gz_ipc_mod` supplies
+all 5 TIPC edges naturally and `gz_trusty_mod` supplies both SMC/NOP edges
+naturally. The witness-free acceptance build leaves all 61 function bytes and
+1082 relocations unchanged. See `kernel/phase4-gz-tz-system-reconstruction.md`
+and `kernel/phase4-gz-transport-stack-closure.md`.
 
 ```
 
@@ -389,8 +390,8 @@ explicitly declared boundaries. See
 RE` (2026-09-13) — exact pinned MediaTek vendor source
 (`device_modules@957dac18`, `drivers/misc/mediatek/trusted_mem/`), 141/141
 functions byte-identical, 141/141 KCFI, 76/76 imports, 77/77 MODVERSIONs,
-15/15 export CRCs natural, 2208/2208 relocations, 76/76 verifier. Its tkcore
-and gz_tz_system edges remain stock-runtime provider edges.
+15/15 export CRCs natural, 2208/2208 relocations, 76/76 verifier. Its 7 tkcore
+edges remain stock-runtime; its 9 gz_tz_system edges are source-built natural.
 See `kernel/phase4-tmem-ffa-reconstruction.md` and the tkcore ABI evidence it
 contributes in `kernel/phase4-tkcore-evidence-from-tmem-ffa.md`.
 

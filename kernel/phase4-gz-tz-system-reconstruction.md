@@ -121,17 +121,21 @@ Tables: `phase4-gz-tz-system-function-parity.tsv` (61 rows, all `EXACT`),
 
 ## 6. Provider provenance (never lumped together)
 
-| class | count | symbols |
-|---|---:|---|
-| `GKI_NATURAL` | 43 | exact-GKI ab/12901745 kernel symbols |
-| `GZ_IPC_STOCK_RUNTIME` | 5 | `tipc_k_connect`, `tipc_k_disconnect`, `tipc_k_read`, `tipc_k_write`, `port_lookup_tid` |
-| `GZ_TRUSTY_STOCK_RUNTIME` | 2 | `trusty_std_call32`, `trusty_enqueue_nop` |
+| class | closure-time count | current accepted count | symbols |
+|---|---:|---:|---|
+| `GKI_NATURAL` | 43 | 43 | exact-GKI ab/12901745 kernel symbols |
+| `GZ_IPC_STOCK_RUNTIME` | 5 | 0 | former witness state |
+| `GZ_IPC_NATURAL` | 0 | 5 | `tipc_k_connect`, `tipc_k_disconnect`, `tipc_k_read`, `tipc_k_write`, `port_lookup_tid` |
+| `GZ_TRUSTY_STOCK_RUNTIME` | 2 | 0 | former witness state |
+| `GZ_TRUSTY_NATURAL` | 0 | 2 | `trusty_std_call32`, `trusty_enqueue_nop` |
 
 `kernel/phase4-gz-tz-system-provider-map.tsv` — all 50 rows, all `EXACT`.
 
-`gz_ipc_mod` and `gz_trusty_mod` are **genuine stock runtime providers**, not
-reconstructed modules; their 7 CRCs come from their own `__kcrctab`
-(`stock-provider.provenance.json`). This is a declared, open boundary.
+**Transport-closure update:** both former boundaries are now
+`DIRECT_SOURCE_MATCH / FROZEN FOR RE`. A witness-free acceptance target deletes
+all seven stock records and resolves them from the real source-built provider
+`Module.symvers`; all 61 function bytes/KCFI and 1082 relocations remain exact.
+See `kernel/phase4-gz-transport-gz-tz-system-acceptance.md`.
 
 ## 7. Exports and consumers
 
@@ -232,8 +236,9 @@ No functional residual. No unexplained Linux-visible behaviour.
 
 ## 12. Boundaries and scope
 
-- `gz_ipc_mod` and `gz_trusty_mod` remain **stock runtime providers**, now
-  explicitly declared with exact CRCs. Not reconstructed; not claimed to be.
+- `gz_ipc_mod` and `gz_trusty_mod` are now **DIRECT_SOURCE_MATCH / FROZEN FOR
+  RE**; all 5 + 2 provider edges are source-built natural. The historical
+  closure-time witness evidence remains in the RED artifacts only.
 - `gz_main_mod`, `tkcore`, GenieZone hypervisor/secure-world, TA code and SMC
   semantics are **out of scope** and were not started.
 - Static/offline only: nothing loaded, no GenieZone invocation, no

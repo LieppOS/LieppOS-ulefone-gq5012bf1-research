@@ -1353,9 +1353,13 @@ Buildability consequences:
 * `gz_main_mod`, `cmdq-sec-drv`, `sapu` and `mtk-cam-isp7sp` can all keep
   loading against a source-built `gz_tz_system` with no re-link (35/35 edges
   natural).
-* Two new explicit provider boundaries are now declared rather than implicit:
-  `gz_ipc_mod` (TIPC transport, 5 edges) and `gz_trusty_mod` (Trusty SMC,
-  2 edges). Both remain genuinely stock and unreconstructed.
+* **Update — both transport boundaries are now closed.** `gz_trusty_mod` and
+  `gz_ipc_mod` are `DIRECT_SOURCE_MATCH / FROZEN FOR RE` from the same pinned
+  revision: 33/33 + 43/43 function bytes/KCFI and 14/14 + 15/15 natural
+  exports. Trusty builds first; IPC's three Trusty edges are natural. The
+  witness-free `gz_tz_system` acceptance build resolves its 5 IPC + 2 Trusty
+  edges naturally with all 61 function bytes and 1082 relocations unchanged.
+  All 40 transport-provider stock-consumer edges pass; stack verifier 738/738.
 * One RED finding worth carrying forward for other geniezone work: the pinned
   revision's `CONFIG_TEE` block in `tz_system.c` does not compile at all
   (`struct teec_*` undefined tree-wide), so any future geniezone module that
