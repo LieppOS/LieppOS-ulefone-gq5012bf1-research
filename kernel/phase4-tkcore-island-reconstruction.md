@@ -3,6 +3,14 @@
 **Classification: `TRUSTKERNEL_ABI_ISLAND_PARTIAL`**
 **Runtime validation: NOT PERFORMED (and not attempted).**
 
+> **SUPERSEDED IN PART BY PHASE 2.** Section 2.1 below ("tkcore implementation
+> does not build") is no longer current: the module now builds cleanly with
+> BUILD_RC=0, 0 warnings, 0 modpost warnings and 0 unresolved symbols, and a
+> frozen rebuilt ELF exists. See
+> `kernel/phase4-tkcore-island-phase2-status.md`.
+> The overall classification is unchanged: tkcore is still NOT reconstructed,
+> NOT runtime ready, and stock tkcore remains the runtime provider.
+
 GQ5012BF1 (Ulefone Armor 29 Pro Thermal, MT6878/MT6878T), LieppOS.
 Static/offline only. No module was loaded, no device node opened, no TEEC
 command issued, no secure world contacted.

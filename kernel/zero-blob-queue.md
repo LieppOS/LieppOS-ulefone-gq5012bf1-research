@@ -35,6 +35,16 @@
   See `kernel/phase4-tkcore-provider-abi.md`,
   `kernel/phase4-tkcore-stock-inventory.md`,
   `kernel/phase4-tkcore-source-candidates.md`.
+  **2026 island Phase 2 update:** a reconstructed source island
+  (`//lieppos/tkcore-island:tkcore`) now **compiles cleanly** against exact
+  GKI (BUILD_RC=0, 0 warnings, 0 modpost warnings, 0 unresolved symbols, no
+  vendor-module dependency) and produces a comparable ELF: **67/122 stock
+  functions present, 16 of them byte-identical to stock, 60 KCFI type ids
+  exact, 57/57 shared GKI import CRCs matching, 17/25 exports emitted and
+  0 fabricated**. 55 functions remain unimplemented. tkcore is still
+  **NOT RECONSTRUCTED, NOT RUNTIME READY, stock runtime provider**.
+  See `kernel/phase4-tkcore-island-phase2-status.md` and
+  `kernel/phase4-tkcore-island-phase3-work-queue.md`.
 
 - `tkcore_drv` — **SOURCE_RECONSTRUCTED / SOURCE_NOW_WITH_PROVIDER_WITNESSES /
   PROVIDER_ABI_PARTIAL**; **FROZEN FOR RE**; stock oracle

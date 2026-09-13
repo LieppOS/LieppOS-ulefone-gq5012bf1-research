@@ -1,0 +1,15 @@
+package(default_visibility = ["//visibility:public"])
+
+# The single common TrustKernel type graph shared by every source-built
+# module of the ABI island: tkcore, tkcore_drv, tmem_ffa, microarray_fp_tee.
+#
+# Consuming ONE header set is what makes the island internally consistent:
+# genksyms then produces mutually agreeing CRCs across all four modules
+# without any CRC injection, witness record or ELF patching.
+filegroup(
+    name = "trustkernel_headers",
+    srcs = glob([
+        "include/**/*.h",
+        "*.h",
+    ]),
+)

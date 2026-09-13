@@ -1,0 +1,45 @@
+# GQ5012BF1 tkcore island — Phase 2 baseline
+
+Research HEAD at start: f55ce53b766791bd3cb7f430845947e1476a7de0
+Exact GKI: Linux 6.1.115-android14-11, ab/12901745, common 6b18f0b574ab3267615ae6ce642d5a7c3c21ac09
+Stock oracle: 03837d13863e3f6694918e2e049edbc3bd5ca5cb02e10d6f374620cca98ed226 (221352 bytes)
+
+Bazel targets:
+  //lieppos/tkcore-island:tkcore            (kernel_module -> tkcore.ko)
+  //lieppos/trustkernel:trustkernel_headers (filegroup, common type graph)
+  //lieppos/trustkernel-layout:tk_layout_probe (analysis-only layout assertions)
+
+Build status at start of Phase 2: DOES NOT COMPILE (330 compiler errors)
+
+## Pre-modification file hashes
+
+```
+8de8b3a80bdfce7bac7878a592d47f3e81b6413fe37bc48e126561c062ca5b85  tkcore-island/BUILD.bazel
+cd5d0dc04f00217b69eb9c425261701fa062edd96dd6ee7399c92ca8b754ebee  tkcore-island/Makefile
+2c6df42e1d625335206c95d7219b98b420799623430c0a5f91db6258d036d88e  tkcore-island/tkcore/tee_context.c
+fd7e813bb9972e0e541ad3fd02fc6e0df97d84f431853cfb60d95eb4fa59aa97  tkcore-island/tkcore/tee_core.c
+b9c2fd396d46c7e0fe28c5a4e6f428bdda7a30ef0e148b8530d7c4b28b5dd960  tkcore-island/tkcore/tee_core_priv.h
+4f4916d47f0e96bb574ae872dd625de513f5e2c96bdbff1b652f9f857bf1145b  tkcore-island/tkcore/tee_ioc.h
+008b73c7cb409bfc02e237c2f8dcf3104b3850f4ad650a5eea748bcc3ed5c937  tkcore-island/tkcore/tee_kernel_api.c
+f8e0421f5175f0802860824792fc7b4de53b743b76b211d90029dd0babd336b7  tkcore-island/tkcore/tee_session.c
+6178f81801175d10aaa45eb21ece69f745754404f9dc21245155db2ad54b96a0  tkcore-island/tkcore/tee_shm.c
+0c9fc164c7e6145676626a8cbcb4d4ce8da54c0670753fb1800914d88676f035  tkcore-island/tkcore/tee_shm.h
+55912e46522d07424d6c6308ee777b720233aec5df02a9b70e37e4612e718ce7  tkcore-island/tkcore/tee_supp_com.c
+354e7e948edad7d74806c9019f9ac85989e6e7b996d07d272daf4f8727890de8  tkcore-island/tkcore/tee_supp_com.h
+4796615f5ac479b3cf01c692cdf5407653e9b5c78825b04773a46fce75ba3647  tkcore-island/tkcore/tee_sysfs.c
+71ef1992ae3ed76681ffe26bae97141f2f07fdd9e98becb4d9bb75b976653cca  tkcore-island/tkcore/tee_sysfs.h
+83f56b7afdd75fa345837c5fa7b71d0a7d33a9b91a0e960e8a223b172fb22086  tkcore-island/tkcore/tee_wait_queue.c
+bf5728b95878168e4e48c7b1a8029d2f2d389a7bde32a031622afaa03b09ccff  tkcore-island/tkcore/tee_wait_queue.h
+a4c9f2c1d244b84ea66b46b3ce49cd9d8ccc5f7828bb9a53b5627cd6829efd7a  trustkernel/BUILD.bazel
+7dbdbd39399fa792abc26c8415a312fa05dab742a86b6e31f7ff8791e3d66c43  trustkernel/include/trustkernel/layout-assert.h
+7e72027aa395ab3dfbd1ec0d7e98842d24c06fac7419a41732cd60fb645826ea  trustkernel/include/trustkernel/tee_client_api.h
+b23833f104a48563cf8bd6b3e8defbc62adafa4d7fa54b1263344863e76fe5ba  trustkernel/include/trustkernel/tee_clkmgr.h
+6d81b835eb60e58584a3214c030c63781399d637167fc2e968f7f82ce143fe57  trustkernel/include/trustkernel/tee_core.h
+5834facb52b8c0ddf8dbc424cc8b912f2ce390307e6152382572df8db24ea12c  trustkernel/include/trustkernel/tee_shm.h
+3c8ed39847c26bc9938b1cd06744fe904268e7d27c821a414ce493466c3d74a0  trustkernel/include/trustkernel/tee_spi.h
+3a45d011cb903fdc70981e564c3d02a49077ebaae73f962b92b8251c22459fa1  trustkernel/include/trustkernel/tee_supp.h
+5fa4ec4b0ebd9334b84091287bd9ab5dcd02c9fb47b6116d1ca75a5d07c847e2  trustkernel/include/trustkernel/tee_wait_queue.h
+6b1f017ce5085a9717bf30858444e20b316557534ddf99fc5ddf948c1f87d87f  trustkernel-layout/BUILD.bazel
+8146958f06dd79483d720d8d71b2f9bda878b6daa9faa95ccba3e2e7e3b3788d  trustkernel-layout/layout-probe.c
+cdb30c802d060d97c6e5ac9e6d4b10ac1fe34b3f58b04197d8fa89553c667429  trustkernel-layout/Makefile
+```

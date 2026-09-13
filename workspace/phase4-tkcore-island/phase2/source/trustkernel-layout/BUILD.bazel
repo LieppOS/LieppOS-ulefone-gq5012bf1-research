@@ -1,0 +1,17 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+package(default_visibility = ["//visibility:public"])
+
+# Analysis-only: forces evaluation of every TrustKernel island layout
+# assertion against the exact-GKI headers.  Produces no shippable driver.
+kernel_module(
+    name = "tk_layout_probe",
+    srcs = [
+        "BUILD.bazel",
+        "Makefile",
+        "layout-probe.c",
+        "//lieppos/trustkernel:trustkernel_headers",
+    ],
+    outs = ["tk_layout_probe.ko"],
+    kernel_build = "//common:kernel_aarch64",
+)
