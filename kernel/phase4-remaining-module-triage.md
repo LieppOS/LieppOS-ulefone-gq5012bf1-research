@@ -176,7 +176,8 @@ view below carries the decision-relevant columns.
 | `sc8571_charger` | vendor_boot platform | yes (idx 147) | yes (idx 145) | 41 / 1 / 0 | **NO_USEFUL_SOURCE / ORACLE_RECONSTRUCTED** | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED** | P1_CORE_HARDWARE |
 | `sc851x_charger` | vendor_boot platform | yes (idx 146) | yes (idx 144) | 30 / 0 / 0 | NO_USEFUL_SOURCE | YES_SAFE_TRANSITION | **SOURCE_RECONSTRUCTED** | P1_CORE_HARDWARE |
 | `tkcore` | vendor_boot platform | yes (idx 99) | yes (idx 97) | 101 / 0 / 25 | **NO_PUBLIC_SOURCE_FOUND / PROVIDER_ABI_PARTIAL** | YES_SAFE_TRANSITION | **NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER** (14/25 natural, 11/25 blocked on TrustKernel private headers) | **P0_BOOT_CRITICAL** |
-| `tkcore_drv` | vendor_boot platform | yes (idx 100) | yes (idx 98) | 54 / 13 / 0 | **NO_PUBLIC_SOURCE_FOUND / PROVIDER_ABI_PARTIAL** | **SOURCE_NOW_WITH_PROVIDER_WITNESSES** | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** (6 NATURAL + 7 STOCK_PROVIDER_WITNESS; 37/37 verifier) | **P0_BOOT_CRITICAL** |
+| `tkcore_drv` | vendor_boot platform | yes (idx 100) | yes (idx 98) | 54 / 13 / 0 | **NO_PUBLIC_SOURCE_FOUND / PROVIDER_ABI_PARTIAL** | **SOURCE_NOW_WITH_PROVIDER_WITNESSES** | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** (8 NATURAL + 5 STOCK_PROVIDER_WITNESS; 43/43 verifier — was 6/7 and 37/37 before the 2026-09-13 `ffa_v10` closure) | **P0_BOOT_CRITICAL** |
+| `ffa_v10` *(cross-ref, not one of the 23 §5.3 entries — listed here as `tkcore_drv`'s provider)* | vendor_boot platform | yes (idx 97) | yes (idx 95) | 40 / 0 / 5 | **EXACT_SOURCE** | YES_SAFE_TRANSITION | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** (5/5 export CRCs natural, 34/34 functions byte-identical, 49/49 verifier) | **P0_BOOT_CRITICAL** |
 | `conninfra` | vendor_dlkm | yes (idx 120) | no (vendor_dlkm unmounted) | 175 / 19 / 81 | **EXACT_SOURCE** | YES_WITH_STOCK_PROVIDER_CHAIN | FORWARD_PORT | P2_MAJOR_FEATURE |
 | `wmt_chrdev_wifi_connac2` | vendor_dlkm | yes (idx 121) | no | 40 / 0 / 18 | **EXACT_SOURCE** | YES_SAFE_TRANSITION | FORWARD_PORT | P2_MAJOR_FEATURE |
 | `wlan_drv_gen4m_6878` | vendor_dlkm | yes (idx 122) | no | 295 / 95 / 0 | **EXACT_SOURCE** | YES_WITH_STOCK_PROVIDER_CHAIN | FORWARD_PORT | P2_MAJOR_FEATURE |
@@ -651,13 +652,17 @@ produce all 23 stock function bytes and all 65 stock CRCs.
 
 ## 16. Safe to keep temporarily as stock transition blobs
 
-All 23 are ABI-safe against the source-built exact GKI. The five for which
+All 23 are ABI-safe against the source-built exact GKI. The modules for which
 "keep stock" is the *recommended final disposition for now* are:
 
-`tkcore`, `tkcore_drv`, `microarray_fp_tee`, `spi_tiny_co5300_lcd`.
+`tkcore`, `microarray_fp_tee`, `spi_tiny_co5300_lcd`.
 `leds_ln2403`, `yft_tiny2c_usb`, and `hynitron` have graduated to
 `SOURCE_NOW` and are FROZEN FOR RE. Only the two exact Hynitron provider edges
 of `spi_tiny_co5300_lcd` are READY/EXACT; that consumer is not closed.
+`tkcore_drv` and `ffa_v10` have **also** graduated — both closed 2026-09-13
+(`SOURCE_RECONSTRUCTED / FROZEN FOR RE` and `DIRECT_SOURCE_MATCH / FROZEN FOR
+RE`) — and are **no longer** in the "keep stock" list. Only `tkcore` remains
+in this TEE pair now, blocked on original TrustKernel private headers.
 
 Of the 23, seven are `YES_SAFE_TRANSITION` (no module-to-module provider at
 all): `yft_devinfo`, `sc851x_charger`, `tkcore`, `wmt_chrdev_wifi_connac2`,

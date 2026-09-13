@@ -1271,12 +1271,18 @@ Build-side lessons worth reusing on other TEE/FF-A consumers:
   vs `dev_*`, `devm_kzalloc` vs `kzalloc`, and `spin_lock` vs
   `spin_lock_irqsave` in this module.
 
-Results: 50/50 stock functions by name (17 byte-identical, 24 size-identical),
-53/54 kernel imports, 13/13 provider imports with zero CRC mismatches and zero
-extra imports, 0 exports (matching stock), and a 37/37 fail-closed verifier
-(`kernel/scripts/phase4_tkcore_drv_verify.py`). The single unreproduced import
-`alt_cb_patch_nops` (2 arm64 `ALTERNATIVE_CB` sites) is an explicitly
-allowlisted codegen artefact.
+Results **at the time of this closure** (2026-09-13, pre-`ffa_v10`; see the
+"ffa_v10 closure update" section immediately below for the superseding
+current numbers): 50/50 stock functions by name (17 byte-identical, 24
+size-identical), 53/54 kernel imports, 13/13 provider imports with zero CRC
+mismatches and zero extra imports, 0 exports (matching stock), and a 37/37
+fail-closed verifier (`kernel/scripts/phase4_tkcore_drv_verify.py`). The
+single unreproduced import `alt_cb_patch_nops` (2 arm64 `ALTERNATIVE_CB`
+sites) is an explicitly allowlisted codegen artefact and is unaffected by the
+later `ffa_v10` closure.
+
+**Current status (post-`ffa_v10` closure): 43/43 verifier**, provider split
+8 NATURAL / 5 STOCK_PROVIDER_WITNESS — see below.
 
 `tkcore` itself is **not** affected and must not be moved into any
 "source-ready" section: it stays `PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED /

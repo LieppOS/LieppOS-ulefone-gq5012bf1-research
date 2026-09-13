@@ -219,10 +219,15 @@ entire cluster.
 ## 5. Cluster: TEE / SECURITY
 
 ```
-   ffa_v10 [RECONSTRUCTED] P:97 ──2──┐
-                            ├──▶ tkcore_drv [RECONSTRUCTED] P:100 / R:98 → LEAF (0 exports)
-   tkcore  [stock] P:99 ─11─┘
-      │  25 exports
+   ffa_v10 [SOURCE / FROZEN] P:97 ── 5 exports, all NATURAL
+      │
+      ├──2──▶ tkcore_drv  [RECONSTRUCTED] P:100 / R:98 → LEAF (0 exports)
+      ├──1──▶ tmem_ffa    [port]  V:151   (ffa_driver_register only)
+      └──1──▶ gz_main_mod [port]  V:?     (ffa_driver_register only; GenieZone)
+
+   tkcore [stock / blocked on TrustKernel private headers] P:99 ── 25 exports
+      │
+      ├─11──▶ tkcore_drv        [RECONSTRUCTED] P:100 / R:98 → LEAF (0 exports)
       ├──1──▶ microarray_fp_tee [stock] P:182 / R:186   (tee_spi_transfer)
       └──7──▶ tmem_ffa          [port]  V:151           (TEEC_*)
                                         depends = gz_tz_system, tkcore, ffa_v10
@@ -232,6 +237,14 @@ entire cluster.
      secureclock / sharedsecret .trustkernel · libwv_trustkernel.so
      /dev/tkcore_{client,admin,fp} · /proc/tkcore · RPMB · /mnt/vendor/persist/t6
 ```
+
+`gz_main_mod` is a `ffa_driver_register`-only consumer discovered by the
+`ffa_v10` closure's full 471-module consumer scan
+(`kernel/phase4-ffa-v10-consumer-abi.md`); it is GenieZone hypervisor/TEE
+glue and is out of scope for this graph beyond recording the edge. Its own
+`modules.load` index was not re-derived here — do not invent one; see the
+`ffa_v10` report for the authoritative consumer list (`tkcore_drv`,
+`tmem_ffa`, `gz_main_mod`).
 
 Stock load neighbourhood: `P:96 clkbuf → P:97 ffa_v10 → P:98 teeperf →
 P:99 tkcore → P:100 tkcore_drv` (recovery: 94/95/96/97/98).

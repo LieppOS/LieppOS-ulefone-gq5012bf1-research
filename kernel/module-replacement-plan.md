@@ -151,11 +151,18 @@ reverse-engineering and integration difficulty because it crosses:
 
 It should not block earlier custom-kernel development. The completed
 `fingerprint` board-glue provider and the completed `microarray_fp_tee`
-consumer can both be source-built while `tkcore` and `tkcore_drv` remain stock.
-The four `yft_*` provider CRCs are exact; the three vendor-provider CRCs
-(`mt_spi_enable_master_clk`, `mt_spi_disable_master_clk`, `tee_spi_transfer`)
-are inherited from the stock provider ELFs, not regenerated — see the
-`microarray_fp_tee` closure below.
+consumer can both be source-built while `tkcore` remains stock. `tkcore_drv`
+and `ffa_v10` are **no longer** stock — both closed 2026-09-13
+(`SOURCE_RECONSTRUCTED / FROZEN FOR RE` and `DIRECT_SOURCE_MATCH / FROZEN FOR
+RE` respectively) — but that closure is orthogonal to `microarray_fp_tee`:
+`ffa_v10` is not a direct `microarray_fp_tee` provider (its only consumers are
+`tkcore_drv`, `tmem_ffa`, `gz_main_mod`), and `microarray_fp_tee`'s own
+remaining provider-CRC gap is entirely `spi-mt65xx` + `tkcore`, both still
+stock. The four `yft_*` provider CRCs are exact; the three vendor-provider
+CRCs (`mt_spi_enable_master_clk`, `mt_spi_disable_master_clk`,
+`tee_spi_transfer`) are inherited from the stock provider ELFs, not
+regenerated — see the `microarray_fp_tee` closure below. `spi-mt65xx` provider
+closure work remains open and separate from this TEE subsystem.
 
 ## Strategy
 

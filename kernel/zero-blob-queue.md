@@ -43,22 +43,31 @@
   **66/67 stock `__versions` entries reproduced with zero CRC mismatches and
   zero extra imports**; the single unreproduced import `alt_cb_patch_nops`
   (2 arm64 `ALTERNATIVE_CB` sites) is an allowlisted codegen artefact.
-  Provider ABI split, never conflated: **6/13 `NATURAL`** (regenerated from C
-  by `//lieppos/tkcore-recon`: `tee_map_cached_shm`, `tee_clkmgr_handle`,
-  `tee_wait_queue_init/exit/sleep/wakeup`) and **7/13
+  **Current provider ABI split (post-2026-09-13 `ffa_v10` closure), never
+  conflated: 8/13 `NATURAL`** (6 tkcore edges regenerated from C by
+  `//lieppos/tkcore-recon` — `tee_map_cached_shm`, `tee_clkmgr_handle`,
+  `tee_wait_queue_init/exit/sleep/wakeup` — plus 2 `NATURAL_FFA` edges,
+  `ffa_driver_register`/`ffa_driver_unregister`, regenerated from C by the now
+  source-closed `//lieppos/ffa-v10` provider) and **5/13
   `STOCK_PROVIDER_WITNESS`** (`tee_core_alloc/add/del`, `__tee_get`,
-  `tee_supp_cmd`, `ffa_driver_register/unregister`) read read-only from the
-  stock provider `__kcrctab`/`__kcrctab_gpl`. The natural-evidence target
-  reports those same 7 as `PROVIDER_ABI_GAP`. **50/50 functions by name**
-  (17 byte-identical, 24 size-identical) and **20/21 Clang kCFI type ids equal
-  stock**, which proves the prototypes — including TrustKernel's struct tag
-  names `tee`/`tee_session`/`tee_cmd`/`tee_shm` — are spelled exactly as stock
+  `tee_supp_cmd` — all tkcore, read read-only from the stock provider
+  `__kcrctab`). The natural-evidence target reports those same 5 as
+  `PROVIDER_ABI_GAP`. **50/50 functions by name** (17 byte-identical, 24
+  size-identical) and **20/21 Clang kCFI type ids equal stock**, which proves
+  the prototypes — including TrustKernel's struct tag names
+  `tee`/`tee_session`/`tee_cmd`/`tee_shm` — are spelled exactly as stock
   spelled them. The 21st (`run_tee_task`) is a declared residual: its arity and
   argument roles are proven from the stock call sites, but 3,690 candidate
   spellings of its two private parameter struct tag names hashed to zero hits.
-  37/37 fail-closed verifier (`kernel/scripts/phase4_tkcore_drv_verify.py`),
-  verdict `PASS_WITH_DECLARED_PROVIDER_WITNESSES`.
+  **43/43 fail-closed verifier** (`kernel/scripts/phase4_tkcore_drv_verify.py`),
+  verdict `PASS_WITH_DECLARED_PROVIDER_WITNESSES`. The rebuilt `.ko` is
+  byte-identical to the pre-`ffa_v10`-closure build — behavior was not
+  reopened, only ABI provenance improved.
   See `kernel/phase4-tkcore-drv-reconstruction.md`.
+
+  *(Historical, pre-`ffa_v10`-closure result: 6/13 `NATURAL`, 7/13
+  `STOCK_PROVIDER_WITNESS` including both `ffa_driver_*` edges, 37/37
+  verifier.)*
 
 ## Active remaining queue
 

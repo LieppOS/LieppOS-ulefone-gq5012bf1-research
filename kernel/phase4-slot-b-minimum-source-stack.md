@@ -200,13 +200,24 @@ Everything we intend to replace from source. Promotes the Level-B holds:
 | `microarray_fp_tee` | SOURCE_NOW | requires a TEE-side oracle; only attempt after `tkcore` is understood |
 | `yft_devinfo` | SOURCE_NOW | **the 73-character vendor enum type text.** 409 061 884 semantically plausible spellings and 56 495 harvested real enum definitions were already excluded by exhaustion. Only a YFT/Ulefone BSP drop containing `yft_devinfo.h` can close it. |
 | `tkcore` | SOURCE_NOW *(aspirational, still blocked)* | complete TEE client core RE; 25-symbol ABI; 14/25 natural, 11/25 blocked on TrustKernel private member names; VERY_HIGH |
-| `tkcore_drv` | **DONE — SOURCE_RECONSTRUCTED / FROZEN FOR RE** | SMC/FF-A transport RE completed 2026-09-13; `phase4-tkcore-drv-reconstruction.md` |
+| `tkcore_drv` | **DONE — SOURCE_RECONSTRUCTED / FROZEN FOR RE** | SMC/FF-A transport RE completed 2026-09-13; 8 NATURAL/5 STOCK_PROVIDER_WITNESS, 43/43 verifier; `phase4-tkcore-drv-reconstruction.md` |
+| `ffa_v10` | **DONE — DIRECT_SOURCE_MATCH / FROZEN FOR RE** | FF-A transport RE completed 2026-09-13; exact vendor source, 34/34 byte-identical, 5/5 export CRCs natural, 49/49 verifier; `phase4-ffa-v10-reconstruction.md` |
 | `uarthub_drv` | **NOT_REQUIRED** | disabled in DT on this board |
 
-Level C is explicitly **not** a precondition for anything. Two entries
-(`tkcore`, `tkcore_drv`) may reasonably remain stock indefinitely: they are
-`P0_BOOT_CRITICAL`, have no source anywhere, are ABI-safe as blobs, and a
-mistake there costs the device its ability to unlock encrypted `/data`.
+Level C is explicitly **not** a precondition for anything. **Only one entry
+now remains a genuinely open source-reconstruction question: `tkcore`.** It
+is `P0_BOOT_CRITICAL`, has no source anywhere, is ABI-safe as a blob
+(`YES_SAFE_TRANSITION`, 101/101 kernel CRCs), and a mistake there costs the
+device its ability to unlock encrypted `/data` — so it may reasonably remain
+stock indefinitely. `tkcore_drv` and `ffa_v10` are **no longer** in that
+category: both are source-reconstructed and `FROZEN FOR RE` (2026-09-13).
+
+Do not conflate this with the Level-A **boot strategy** above, which
+intentionally keeps every vendor_boot/vendor_dlkm/system_dlkm module
+(including the now-source-closed `tkcore_drv` and `ffa_v10`) on their stock
+binaries for the *first* boot regardless of reconstruction status — that is a
+minimal-change-set decision for bring-up risk, not a claim about what has or
+has not been source-reconstructed. Level C tracks the latter.
 
 ---
 

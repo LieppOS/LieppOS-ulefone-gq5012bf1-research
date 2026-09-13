@@ -7,8 +7,13 @@
 **FROZEN FOR RE: YES.** The stock-observable hardware behavior is closed, all
 10 exports and their CRCs arise naturally, all four stock
 `microarray_fp_tee.ko` dependency edges are exact, the exact-GKI build succeeds,
-and the fail-closed verifier passes 39/39. `microarray_fp_tee`, `tkcore`, and
-`tkcore_drv` remain separate unresolved/stock-held modules.
+and the fail-closed verifier passes 39/39. `microarray_fp_tee` and `tkcore`
+remain separate, unresolved/stock-held modules. `tkcore_drv` and `ffa_v10`
+have since been source-closed in a later task (`SOURCE_RECONSTRUCTED /
+FROZEN FOR RE` and `DIRECT_SOURCE_MATCH / FROZEN FOR RE` respectively, both
+2026-09-13) — neither was affected by, nor affects, this fingerprint
+closure. `tkcore` remains the only stock-held module in this TEE-adjacent
+family.
 
 ## Stock oracle
 
