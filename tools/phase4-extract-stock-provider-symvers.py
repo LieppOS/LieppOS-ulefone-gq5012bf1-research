@@ -84,20 +84,19 @@ def extract(path, wanted):
             raise SystemExit("%s: no __crc_%s in provider" % (path, name))
         sidx, value = crc_syms[name]
         sname = section_name_by_index(path, sidx)
-        if sname != "__kcrctab":
-            raise SystemExit("%s: __crc_%s not in __kcrctab (%s)"
+        # Providers built with EXPORT_SYMBOL_GPL keep their CRCs in
+        # __kcrctab_gpl (e.g. stock ffa_v10.ko); plain EXPORT_SYMBOL
+        # providers use __kcrctab (e.g. stock tkcore.ko).
+        if sname not in ("__kcrctab", "__kcrctab_gpl"):
+            raise SystemExit("%s: __crc_%s not in a __kcrctab* section (%s)"
                              % (path, name, sname))
-        base = sec["__kcrctab"]["off"]
+        base = sec[sname]["off"]
         crc, = struct.unpack_from("<I", blob, base + value)
-        gpl = ("__ksymtab_gpl" in sec and
-               name in symbol_offsets(path, "__ksymtab_") and
-               section_name_by_index(
-                   path,
-                   symbol_offsets(path, "__ksymtab_")[name][0]
-               ) == "__ksymtab_gpl")
+        gpl = sname == "__kcrctab_gpl"
         out[name] = {
             "crc": crc,
             "export": "EXPORT_SYMBOL_GPL" if gpl else "EXPORT_SYMBOL",
+            "kcrctab_section": sname,
             "kcrctab_offset": value,
         }
     return out
@@ -133,6 +132,7 @@ def main():
             "module": modname,
             "symbols": {k: {"crc": "0x%08x" % v["crc"],
                             "export": v["export"],
+                            "kcrctab_section": v["kcrctab_section"],
                             "kcrctab_offset": v["kcrctab_offset"]}
                         for k, v in data.items()},
         }

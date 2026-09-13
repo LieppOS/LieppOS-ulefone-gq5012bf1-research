@@ -1,0 +1,46 @@
+# Stock-provider-compatible target for tkcore_drv.
+#
+# Identical C source to //lieppos/tkcore-drv-recon - every .c/.h in this
+# package is a symlink to that package, so there is exactly one copy of the
+# driver source in the tree and both targets compile the same bytes.
+#
+# ABI input: stock-provider.symvers - all 13 provider edges (11 tkcore +
+# 2 ffa_v10), extracted read-only from the stock provider ELFs' own
+# __kcrctab/__kcrctab_gpl by tools/phase4-extract-stock-provider-symvers.py
+# (see stock-provider.provenance.json).  Feeding the stock record for the whole
+# provider surface - rather than mixing in the tkcore-recon witness module -
+# is what makes modinfo report the stock "depends=tkcore,ffa_v10".
+#
+# Provenance classes, per symbol, are NOT uniform and must not be conflated:
+#   NATURAL                 6 edges (tee_map_cached_shm, tee_clkmgr_handle,
+#                           tee_wait_queue_init/exit/sleep/wakeup) are also
+#                           regenerated naturally from C by
+#                           //lieppos/tkcore-recon, and //lieppos/tkcore-drv-recon
+#                           links against that natural record.
+#   STOCK_PROVIDER_WITNESS  7 edges (tee_core_alloc/add/del, __tee_get,
+#                           tee_supp_cmd, ffa_driver_register/unregister) are
+#                           only available from the stock ELF record.
+#
+# Nothing here is handwritten, patched or invented: the symvers file is a
+# machine extraction of the authoritative stock vendor ABI record, consumed
+# through the normal kbuild KBUILD_EXTRA_SYMBOLS mechanism.
+LIEPPOS_STOCK_SYMVERS := $(abspath $(KERNEL_SRC)/$(M)/stock-provider.symvers)
+LIEPPOS_PROVIDER_SYMVERS := $(LIEPPOS_STOCK_SYMVERS)
+
+ifneq ($(KERNELRELEASE),)
+# The FF-A bus provider is a module on this platform (stock ffa_v10.ko).
+ccflags-y += -DCONFIG_ARM_FFA_TRANSPORT_MODULE=1
+ccflags-y += -faddrsig
+obj-m += tkcore_drv.o
+tkcore_drv-y := tkcore_drv_main.o tee_task.o tee_mem.o handle.o
+KBUILD_EXTRA_SYMBOLS += $(LIEPPOS_PROVIDER_SYMVERS)
+else
+.PHONY: all modules modules_install clean
+all modules:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) \
+		KBUILD_EXTRA_SYMBOLS="$(LIEPPOS_PROVIDER_SYMVERS)" modules
+modules_install:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules_install
+clean:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
+endif

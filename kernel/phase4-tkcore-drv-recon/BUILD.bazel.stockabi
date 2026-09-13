@@ -1,0 +1,28 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+package(default_visibility = ["//visibility:public"])
+
+# Single source of truth: every .c/.h here is a symlink to
+# //lieppos/tkcore-drv-recon.  Both targets compile identical bytes; only the
+# provider ABI record fed to modpost differs.
+#
+# This target resolves all 66 imports, so modpost runs fail-closed (no
+# KBUILD_MODPOST_WARN) and the resulting module is loadable against the stock
+# tkcore.ko / ffa_v10.ko providers.
+kernel_module(
+    name = "tkcore_drv_recon_stockabi",
+    srcs = [
+        "Makefile",
+        "stock-provider.symvers",
+        "tkcore_drv_main.c",
+        "tee_task.c",
+        "tee_mem.c",
+        "handle.c",
+        "tkcore_drv.h",
+        "tkcore_abi.h",
+        "tee_mem.h",
+        "handle.h",
+    ],
+    outs = ["tkcore_drv.ko"],
+    kernel_build = "//common:kernel_aarch64",
+)

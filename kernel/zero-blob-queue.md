@@ -34,11 +34,29 @@
   `kernel/phase4-tkcore-stock-inventory.md`,
   `kernel/phase4-tkcore-source-candidates.md`.
 
+- `tkcore_drv` — **RECONSTRUCTED / PROVIDER_ABI_PARTIAL**; SOURCE_RECONSTRUCTED;
+  FROZEN FOR RE; stock oracle
+  `c13503baf7c13828d0d666cbd364d8cadaa7d1282442405c72d28073bd51235d` (63480 B).
+  Pure consumer (0 exports). Real readable C in
+  `//lieppos/tkcore-drv-recon` (4 .c + 4 .h: transports, `struct tee_ops`
+  backend, RPC loop, per-CPU secure-call dispatcher, SHM pool, handle DB).
+  **66/67 stock `__versions` entries reproduced with zero CRC mismatches and
+  zero extra imports**; the single unreproduced import `alt_cb_patch_nops`
+  (2 arm64 `ALTERNATIVE_CB` sites) is an allowlisted codegen artefact.
+  Provider ABI split, never conflated: **6/13 `NATURAL`** (regenerated from C
+  by `//lieppos/tkcore-recon`: `tee_map_cached_shm`, `tee_clkmgr_handle`,
+  `tee_wait_queue_init/exit/sleep/wakeup`) and **7/13
+  `STOCK_PROVIDER_WITNESS`** (`tee_core_alloc/add/del`, `__tee_get`,
+  `tee_supp_cmd`, `ffa_driver_register/unregister`) read read-only from the
+  stock provider `__kcrctab`/`__kcrctab_gpl`. The natural-evidence target
+  reports those same 7 as `PROVIDER_ABI_GAP`. 34/34 fail-closed verifier
+  (`kernel/scripts/phase4_tkcore_drv_verify.py`).
+  See `kernel/phase4-tkcore-drv-reconstruction.md`.
+
 ## Active remaining queue
 
 - `tkcore` — blocked on original TrustKernel headers only (no further binary
   analysis can unblock it); stays a stock vendor binary meanwhile
-- `tkcore_drv`
 - connectivity and panel/provider work per remaining-module triage
 
 Do not reopen frozen targets. Hynitron's stock provider remains stock
@@ -55,3 +73,9 @@ longer "read out of the shipped ELF" — its prototype is now confirmed by the
 stock KCFI type id `0xffeb18b3` and its CRC `0x184ce7da` is regenerated
 naturally from C. The other 10 `tkcore_drv` / 4 `tmem_ffa` blocked edges are
 not, and `tkcore` itself remains stock.
+
+Likewise, `tkcore_drv` being reconstructed does **not** mark `tkcore` or
+`ffa_v10` reconstructed or source-pure: 7 of its 13 provider edges are still
+only available as stock ELF witnesses, and `ffa_v10` has not been analysed
+beyond reading the two export CRCs it publishes. The stock load order
+(`ffa_v10 → teeperf → tkcore → tkcore_drv`) is preserved.

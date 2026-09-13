@@ -1,0 +1,32 @@
+# Natural-evidence target for tkcore_drv.
+#
+# Provider ABI inputs:
+#   lieppos/tkcore-recon/Module.symvers - the tkcore export CRCs that exact-GKI
+#       genksyms regenerates naturally from C (6 of this module's 11 tkcore
+#       edges).  The other 5 tkcore edges and both ffa_v10 edges are
+#       PROVIDER_ABI_GAPs in this target on purpose: see
+#       //lieppos/tkcore-drv-recon-stockabi for the stock-compatible build.
+LIEPPOS_PROVIDER_SYMVERS := \
+	$(wildcard $(COMMON_OUT_DIR)/lieppos/tkcore-recon/Module.symvers)
+
+ifneq ($(KERNELRELEASE),)
+# The FF-A bus provider is a module on this platform (stock ffa_v10.ko), which
+# is how MediaTek's own out-of-tree build sees it; without this, GKI's
+# arm_ffa.h would substitute its !IS_REACHABLE() stubs and the module would
+# silently stop importing ffa_driver_register()/ffa_driver_unregister().
+ccflags-y += -DCONFIG_ARM_FFA_TRANSPORT_MODULE=1
+ccflags-y += -faddrsig
+obj-m += tkcore_drv.o
+tkcore_drv-y := tkcore_drv_main.o tee_task.o tee_mem.o handle.o
+KBUILD_EXTRA_SYMBOLS += $(LIEPPOS_PROVIDER_SYMVERS)
+else
+.PHONY: all modules modules_install clean
+all modules:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) \
+		KBUILD_EXTRA_SYMBOLS="$(LIEPPOS_PROVIDER_SYMVERS)" \
+		KBUILD_MODPOST_WARN=1 modules
+modules_install:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules_install
+clean:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
+endif

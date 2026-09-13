@@ -1,0 +1,33 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "tkcore_drv_main.c",
+    "tee_task.c",
+    "tee_mem.c",
+    "handle.c",
+    "tkcore_drv.h",
+    "tkcore_abi.h",
+    "tee_mem.h",
+    "handle.h",
+])
+
+# Natural-evidence build: only naturally regenerated provider CRCs are fed in.
+kernel_module(
+    name = "tkcore_drv_recon",
+    srcs = [
+        "Makefile",
+        "tkcore_drv_main.c",
+        "tee_task.c",
+        "tee_mem.c",
+        "handle.c",
+        "tkcore_drv.h",
+        "tkcore_abi.h",
+        "tee_mem.h",
+        "handle.h",
+    ],
+    outs = ["tkcore_drv.ko"],
+    kernel_build = "//common:kernel_aarch64",
+    deps = ["//lieppos/tkcore-recon:tkcore_recon"],
+)
