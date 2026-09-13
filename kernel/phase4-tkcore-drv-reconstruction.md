@@ -1,5 +1,20 @@
 # `tkcore_drv.ko` — authoritative reconstruction report
 
+> **Provenance update (2026-09-13, ffa_v10 closure):** `ffa_v10.ko` has since
+> been source-closed (`DIRECT_SOURCE_MATCH`, all 5 export CRCs natural — see
+> `kernel/phase4-ffa-v10-reconstruction.md`). `tkcore_drv`'s stock-ABI target
+> was rebuilt against the real `//lieppos/ffa-v10` `Module.symvers` in place
+> of the two `ffa_driver_*` stock witnesses. **The rebuilt `.ko` is
+> byte-identical to the pre-closure build** — no behavior was reopened, only
+> ABI provenance improved. Every count below that says "6 NATURAL / 7
+> STOCK_PROVIDER_WITNESS" is superseded by **8 NATURAL / 5
+> STOCK_PROVIDER_WITNESS**: `ffa_driver_register` and `ffa_driver_unregister`
+> moved from `STOCK_PROVIDER_WITNESS` to `NATURAL_FFA` (a source-built
+> provider, not a stock witness). The verifier now runs 43/43 (was 37/37).
+> The remaining 5 witnesses are unchanged: `tee_core_alloc/add/del`,
+> `__tee_get`, `tee_supp_cmd` — all blocked on TrustKernel's private
+> `struct tee` member names. `tkcore` itself is untouched.
+
 **Device:** Ulefone Armor 29 Pro Thermal, GQ5012BF1, MediaTek MT6878/MT6878T
 **Baseline:** Linux 6.1.115-android14-11, Android CI `ab/12901745`, common commit
 `6b18f0b574ab3267615ae6ce642d5a7c3c21ac09`

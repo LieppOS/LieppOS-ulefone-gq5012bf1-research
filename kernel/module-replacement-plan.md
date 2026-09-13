@@ -127,9 +127,15 @@ Treat as one late-stage security subsystem:
 - tkcore — still stock, untouched (`PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED /
   STOCK RUNTIME PROVIDER`, blocked on original TrustKernel private headers)
 - tkcore_drv — **SOURCE_RECONSTRUCTED / SOURCE_NOW_WITH_PROVIDER_WITNESSES /
-  FROZEN FOR RE** (2026-09-13). Ship only the `-stockabi` target; keep the
-  stock load order `ffa_v10 -> teeperf -> tkcore -> tkcore_drv`. Replacing it
-  does **not** make `tkcore` or `ffa_v10` replaceable.
+  FROZEN FOR RE** (2026-09-13, updated 2026-09-13 after the ffa_v10 closure:
+  provenance split is now 8 NATURAL/5 STOCK_PROVIDER_WITNESS, was 6/7). Ship
+  only the `-stockabi` target; keep the stock load order
+  `ffa_v10 -> teeperf -> tkcore -> tkcore_drv`. Replacing it does **not** make
+  `tkcore` replaceable.
+- ffa_v10 — **DIRECT_SOURCE_MATCH / FROZEN FOR RE** (2026-09-13). Exact
+  MediaTek vendor source (Nothing MT6878 `device_modules@957dac185efe`),
+  unmodified, builds 34/34 byte-identical with all 5 export CRCs natural
+  (`kernel/phase4-ffa-v10-reconstruction.md`). Ship `//lieppos/ffa-v10`.
 - microarray_fp_tee — **completed** at
   `BEHAVIORALLY-COMPLETE, LOAD-COMPATIBLE, WITH DECLARED ABI PROVENANCE SPLIT`
 - fingerprint — **completed** at `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`,

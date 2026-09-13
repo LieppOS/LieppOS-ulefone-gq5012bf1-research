@@ -1,0 +1,32 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "bus.c",
+    "driver.c",
+    "smccc.c",
+    "common.h",
+    "Kconfig",
+])
+
+# The exact MediaTek vendor source, byte-identical to
+#   nothing-mt6878/device_modules/drivers/misc/mediatek/trusted_mem/ffa_v10/
+# (pinned device_modules 957dac185efe46cbf6336b0fff9516d84c8cd78f), built
+# against exact GKI 12901745 as ffa_v10.ko.
+#
+# No CRC injection, no witnesses, no ELF/CRC patching: every export CRC is
+# produced by genksyms from this C.
+kernel_module(
+    name = "ffa_v10",
+    srcs = [
+        "Makefile",
+        "bus.c",
+        "driver.c",
+        "smccc.c",
+        "common.h",
+        "Kconfig",
+    ],
+    outs = ["ffa_v10.ko"],
+    kernel_build = "//common:kernel_aarch64",
+)

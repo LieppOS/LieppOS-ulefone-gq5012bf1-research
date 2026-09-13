@@ -81,8 +81,39 @@ stock KCFI type id `0xffeb18b3` and its CRC `0x184ce7da` is regenerated
 naturally from C. The other 10 `tkcore_drv` / 4 `tmem_ffa` blocked edges are
 not, and `tkcore` itself remains stock.
 
-Likewise, `tkcore_drv` being reconstructed does **not** mark `tkcore` or
-`ffa_v10` reconstructed or source-pure: 7 of its 13 provider edges are still
-only available as stock ELF witnesses, and `ffa_v10` has not been analysed
-beyond reading the two export CRCs it publishes. The stock load order
-(`ffa_v10 → teeperf → tkcore → tkcore_drv`) is preserved.
+Likewise, `tkcore_drv` being reconstructed does **not** mark `tkcore`
+reconstructed or source-pure: 5 of its 13 provider edges are still only
+available as stock ELF witnesses (all five are TrustKernel's private-type
+blockers). The stock load order (`ffa_v10 → teeperf → tkcore → tkcore_drv`)
+is preserved.
+
+- `ffa_v10` — **DIRECT_SOURCE_MATCH**; **FROZEN FOR RE**; stock oracle
+  `2f8341d3f920418f3d9f4b8f64299acf97e591ad232a6bbbf6298b63231eebde`
+  (38688 B). Exact MediaTek vendor copy of the upstream Linux FF-A transport
+  found verbatim in the pinned Nothing MT6878 tree
+  (`device_modules@957dac185efe46cbf6336b0fff9516d84c8cd78f`,
+  `drivers/misc/mediatek/trusted_mem/ffa_v10/`), dated to the
+  android14-6.1 v6.1.34–v6.1.56 window by reverting three stable commits from
+  the current GKI copy (mandatory RED performed first: pristine current-GKI
+  donor built unmodified, 5/5 export CRCs matched but only 30/34 functions
+  byte-identical; root-caused and then the exact vendor snapshot located).
+  Built unmodified against exact GKI 12901745: **34/34 functions
+  byte-identical**, **40/40 kernel imports + 41/41 MODVERSION CRCs
+  identical**, **34/34 kCFI type ids identical**, and **all 5/5 export CRCs
+  regenerated NATURALLY by genksyms — no witness, no CRC injection, no ELF
+  patch, no `KBUILD_MODPOST_WARN`** — including both hard-gate symbols
+  `ffa_driver_register` (`0x0d53cde9`) and `ffa_driver_unregister`
+  (`0x3c660e4c`). All 471 stock modules were scanned for consumers: three
+  found (`tkcore_drv`, `tmem_ffa`, and a newly discovered third,
+  `gz_main_mod`), all three accept the rebuilt provider. `tkcore_drv`'s
+  stock-ABI target was rebuilt against the real provider and is
+  byte-identical to its pre-closure build (behavior not reopened); its
+  provenance split moved from 6 NATURAL/7 STOCK_PROVIDER_WITNESS to **8
+  NATURAL/5 STOCK_PROVIDER_WITNESS**, verifier 43/43 (was 37/37).
+  49/49 fail-closed verifier (`kernel/scripts/phase4_ffa_v10_verify.py`).
+  See `kernel/phase4-ffa-v10-reconstruction.md`.
+
+Do not mark `tkcore` reconstructed because `ffa_v10` closed: `tkcore` remains
+`PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER`, blocked
+on original TrustKernel private headers. It was not reopened by the `ffa_v10`
+task.

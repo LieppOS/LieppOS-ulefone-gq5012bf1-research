@@ -1,0 +1,67 @@
+GQ5012BF1 ffa_v10.ko - FROZEN STOCK ORACLE
+==========================================
+
+canonical path
+  workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/ffa_v10.ko
+frozen copy
+  workspace/phase4-ffa-v10/oracle/ffa_v10.ko
+
+sha256            2f8341d3f920418f3d9f4b8f64299acf97e591ad232a6bbbf6298b63231eebde
+size              38688 bytes
+
+all copies found (byte-identical, verified):
+  workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/ffa_v10.ko
+  workspace/phase4-tkcore-drv/oracle/ffa_v10.ko          (phase-4 tkcore_drv copy)
+  workspace/phase4-ffa-v10/oracle/ffa_v10.ko             (this task)
+searched and NOT present in:
+  vendor_dlkm, system_dlkm, odm_dlkm, boot, init_boot, recovery.cpio
+  (recovery.cpio carries no /lib/modules at all - recovery reuses the
+   platform ramdisk module set, which is why the recovery load list lives in
+   the platform ramdisk as modules.load.recovery)
+
+module metadata (.modinfo, verbatim)
+  alias=arm-ffa
+  author=Sudeep Holla <sudeep.holla@arm.com>
+  description=Arm FF-A interface driver
+  license=GPL v2
+  vermagic=6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+  name=ffa_v10
+  depends=
+  (no srcversion, no parm=, no import_ns=, no retpoline=)
+
+build id / notes     .note.Linux OPEN + func (no GNU build-id, no .comment)
+compiler             Clang, GKI prebuilt clang-r487747c (confirmed by exact
+                     byte-for-byte codegen parity of all 34 functions)
+
+load position
+  modules.load            line 98  (ffa_v10.ko)
+  modules.load.recovery   line 96  (ffa_v10.ko)
+  order preserved:  ffa_v10 -> teeperf -> tkcore -> tkcore_drv
+
+modules.dep
+  /lib/modules/ffa_v10.ko:
+  /lib/modules/tkcore_drv.ko: /lib/modules/ffa_v10.ko /lib/modules/tkcore.ko
+modules.alias
+  alias arm-ffa ffa_v10
+modules.softdep
+  (no entry for ffa_v10)
+
+ELF inventory
+  defined functions        34
+  data/rodata/bss objects  28
+  exports                  5   (all EXPORT_SYMBOL_GPL)
+  kernel imports (UND)     40
+  __versions entries       41  (40 imports + module_layout)
+  intermodule imports      0
+  relocations              346
+  strings                  31
+  sections of interest     __ksymtab_gpl 0x3c, __kcrctab_gpl 0x14,
+                           .text 0x1860, .init.text 0x3e4, .exit.text 0xf0,
+                           .rodata 0x150, .bss 0x12, .modinfo 0xdb
+
+exports (name, class, stock CRC)
+  ffa_bus_type           EXPORT_SYMBOL_GPL   0x82c0ded3
+  ffa_device_register    EXPORT_SYMBOL_GPL   0xa400c46e
+  ffa_device_unregister  EXPORT_SYMBOL_GPL   0x85b1f074
+  ffa_driver_register    EXPORT_SYMBOL_GPL   0x0d53cde9
+  ffa_driver_unregister  EXPORT_SYMBOL_GPL   0x3c660e4c

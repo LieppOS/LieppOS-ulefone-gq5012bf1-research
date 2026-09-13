@@ -219,7 +219,7 @@ entire cluster.
 ## 5. Cluster: TEE / SECURITY
 
 ```
-   ffa_v10 [port] P:97 ──2──┐
+   ffa_v10 [RECONSTRUCTED] P:97 ──2──┐
                             ├──▶ tkcore_drv [RECONSTRUCTED] P:100 / R:98 → LEAF (0 exports)
    tkcore  [stock] P:99 ─11─┘
       │  25 exports
@@ -239,10 +239,12 @@ P:99 tkcore → P:100 tkcore_drv` (recovery: 94/95/96/97/98).
 **Root provider:** `tkcore` — and it has **zero** intermodule imports, so it
 sits directly on the GKI core (101/101 kernel CRCs `MATCH`).
 
-**Recommended build order:** none. This cluster stays on stock through Level B.
-If `ffa_v10` is ever rebuilt from platform source, its two consumed export CRCs
-must be verified first or `tkcore_drv` will fail to load and the TEE — and
-therefore KeyMint/Gatekeeper/FBE — will not come up.
+**Recommended build order:** `tkcore` stays on stock through Level B (blocked
+on original TrustKernel private headers). `ffa_v10` and `tkcore_drv` are both
+**DONE** (2026-09-13): `ffa_v10` is `DIRECT_SOURCE_MATCH` (its two consumed
+export CRCs are naturally reproduced, not merely verified), and `tkcore_drv`
+was rebuilt against the real `ffa_v10` provider with a byte-identical `.ko` —
+KeyMint/Gatekeeper/FBE boot path is unaffected.
 
 ---
 
@@ -405,9 +407,9 @@ TIER 10 yft_tiny2c_usb [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 11 hynitron [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 12 spi_tiny_co5300_lcd [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 13 held on stock: tkcore, microarray_fp_tee
-(tkcore_drv is SOURCE_RECONSTRUCTED / FROZEN FOR RE as of 2026-09-13, but it
-still *runs against* stock tkcore + stock ffa_v10, so the tier stays stock-
-dependent at runtime.)
+(tkcore_drv is SOURCE_RECONSTRUCTED / FROZEN FOR RE as of 2026-09-13, and
+ffa_v10 is DIRECT_SOURCE_MATCH / FROZEN FOR RE also as of 2026-09-13; the
+tier stays stock-dependent at runtime only because of tkcore itself.)
 ```
 
 ## 11. Leaf modules (zero exports — safe to touch in any order)

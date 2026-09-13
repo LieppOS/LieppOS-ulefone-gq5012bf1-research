@@ -62,7 +62,7 @@ All 23 stay `STOCK_TRANSITION`, including the two `P0_BOOT_CRITICAL` ones:
 | module | why it must stay | blob safety |
 |---|---|---|
 | `tkcore` | KeyMint 3.0 + Gatekeeper + Widevine + FBE unlock | `YES_SAFE_TRANSITION` (101/101 kernel CRCs, 0 intermodule imports) — **stock, NOT RECONSTRUCTED** |
-| `tkcore_drv` | TEE transport for the above | `SOURCE_NOW_WITH_PROVIDER_WITNESSES` — **SOURCE_RECONSTRUCTED / FROZEN FOR RE**; still needs stock `tkcore` + `ffa_v10` at runtime |
+| `tkcore_drv` | TEE transport for the above | `SOURCE_NOW_WITH_PROVIDER_WITNESSES` — **SOURCE_RECONSTRUCTED / FROZEN FOR RE**; still needs stock `tkcore` at runtime; `ffa_v10` is now source-closed too (`DIRECT_SOURCE_MATCH`) |
 | `panel_ky_vtdr6115_dphy_cmd` | main display | `YES_WITH_STOCK_PROVIDER_CHAIN` |
 | all other 20 | see triage TSV | 7 `YES_SAFE_TRANSITION`, 16 `YES_WITH_STOCK_PROVIDER_CHAIN` |
 
@@ -156,15 +156,19 @@ Plus the platform prerequisites named in the dependency graph:
 `connadp`, `connscp`, `ccci_md_all`, `aee_aed`, `device-apc-common`,
 `wlan_page_pool`, `mtk_panel_ext`, `mediatek_drm`, `charger_class`,
 `mt6375-charger`, `spi-mt65xx`, `mtk-pwm`, `imgsensor`, `hf_manager`,
-`cfg80211`, `bluetooth`, `mddp`, `pmic_lbat_service`, `ffa_v10` — all
+`cfg80211`, `bluetooth`, `mddp`, `pmic_lbat_service` — all
 `LIKELY_PLATFORM_MATCH` bulk forward-port work outside this triage set.
+`ffa_v10` is no longer in that bucket: it closed as `DIRECT_SOURCE_MATCH /
+FROZEN FOR RE` (kernel/phase4-ffa-v10-reconstruction.md), all 5 export CRCs
+natural, 34/34 functions byte-identical to stock.
 
 ### B.4 Still `STOCK_TRANSITION` at Level B
 
 | module | label | reason |
 |---|---|---|
 | `tkcore` | STOCK_TRANSITION | no source anywhere; `P0`; **PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER**, blocked on original TrustKernel private headers |
-| `tkcore_drv` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | closed 2026-09-13 with `SOURCE_NOW_WITH_PROVIDER_WITNESSES`; still runs against stock `tkcore` + `ffa_v10` |
+| `tkcore_drv` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | closed 2026-09-13 with `SOURCE_NOW_WITH_PROVIDER_WITNESSES` (now 8 NATURAL/5 STOCK_PROVIDER_WITNESS after the `ffa_v10` closure); still runs against stock `tkcore` |
+| `ffa_v10` | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** | closed 2026-09-13; exact MediaTek vendor source, 34/34 byte-identical, 5/5 export CRCs natural, 49/49 verifier |
 | `microarray_fp_tee` | STOCK_TRANSITION | TEE-mediated SPI; not observable from Linux |
 | `yft_devinfo` | STOCK_TRANSITION | ABI pin, §B.2 |
 | `spi_tiny_co5300_lcd` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | rear display; exact rebuilt-Hynitron plus stock-YFT provider ABI; 30/30 verifier; `P3` |

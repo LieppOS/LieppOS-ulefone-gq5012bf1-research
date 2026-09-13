@@ -3,11 +3,16 @@
 # Provider ABI inputs:
 #   lieppos/tkcore-recon/Module.symvers - the tkcore export CRCs that exact-GKI
 #       genksyms regenerates naturally from C (6 of this module's 11 tkcore
-#       edges).  The other 5 tkcore edges and both ffa_v10 edges are
-#       PROVIDER_ABI_GAPs in this target on purpose: see
-#       //lieppos/tkcore-drv-recon-stockabi for the stock-compatible build.
+#       edges).
+#   lieppos/ffa-v10/Module.symvers - the real source-built FF-A provider.
+#       ffa_v10 is source-closed (all 5 export CRCs natural), so both FF-A
+#       edges are natural here too.
+#   The remaining 5 tkcore edges are PROVIDER_ABI_GAPs in this target on
+#       purpose: see //lieppos/tkcore-drv-recon-stockabi for the
+#       stock-compatible build.
 LIEPPOS_PROVIDER_SYMVERS := \
-	$(wildcard $(COMMON_OUT_DIR)/lieppos/tkcore-recon/Module.symvers)
+	$(wildcard $(COMMON_OUT_DIR)/lieppos/tkcore-recon/Module.symvers) \
+	$(wildcard $(COMMON_OUT_DIR)/lieppos/ffa-v10/Module.symvers)
 
 ifneq ($(KERNELRELEASE),)
 # The FF-A bus provider is a module on this platform (stock ffa_v10.ko), which

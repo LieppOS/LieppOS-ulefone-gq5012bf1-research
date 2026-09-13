@@ -1281,4 +1281,33 @@ allowlisted codegen artefact.
 `tkcore` itself is **not** affected and must not be moved into any
 "source-ready" section: it stays `PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED /
 STOCK RUNTIME PROVIDER`, blocked on original TrustKernel private headers.
-`ffa_v10` likewise remains a stock binary with no purity claim.
+
+## ffa_v10 closure update
+
+`ffa_v10.ko` has since graduated to **`DIRECT_SOURCE_MATCH` / `FROZEN FOR
+RE`** (kernel/phase4-ffa-v10-reconstruction.md). The exact MediaTek vendor
+source was found verbatim in the pinned Nothing MT6878 tree
+(`device_modules@957dac185efe46cbf6336b0fff9516d84c8cd78f`,
+`drivers/misc/mediatek/trusted_mem/ffa_v10/`) after a mandatory-RED pass on
+the pristine current-GKI `arm_ffa` copy dated the snapshot to the
+v6.1.34–v6.1.56 window (three specific reverted stable commits). Built
+unmodified against exact GKI 12901745: **34/34 functions byte-identical**,
+**40/40 kernel imports identical**, **34/34 kCFI ids identical**, and **all
+5/5 export CRCs regenerated naturally by genksyms**, including both hard
+gates `ffa_driver_register` (`0x0d53cde9`) and `ffa_driver_unregister`
+(`0x3c660e4c`). No witness, no CRC injection, no ELF patch, no
+`KBUILD_MODPOST_WARN` anywhere in the closure — the stricter provider-only
+gate the earlier tkcore_drv bullet flagged as needed for provider modules.
+
+`tkcore_drv`'s stock-ABI target was rebuilt against the real
+`//lieppos/ffa-v10` `Module.symvers` and is **byte-identical** to its
+pre-closure build (behavior not reopened); its provenance split improved
+from 6 NATURAL/7 STOCK_PROVIDER_WITNESS to **8 NATURAL/5
+STOCK_PROVIDER_WITNESS**, verifier 43/43 (was 37/37). All 471 stock modules
+were scanned for ffa_v10 consumers: three found (`tkcore_drv`, `tmem_ffa`,
+and a newly discovered third, `gz_main_mod`), all three accept the rebuilt
+provider without modification.
+
+`tkcore` is **not** affected by the ffa_v10 closure and remains
+`PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER`, blocked
+on original TrustKernel private headers.

@@ -280,7 +280,7 @@ consumers at once.
 
 | if you rebuild… | verify these export CRCs first | because |
 |---|---|---|
-| `ffa_v10` | 2 symbols | `tkcore_drv` imports them |
+| `ffa_v10` | 2 symbols | `tkcore_drv` imports them — **DONE 2026-09-13**: `ffa_v10` is now `DIRECT_SOURCE_MATCH`, both CRCs naturally reproduced (`kernel/phase4-ffa-v10-reconstruction.md`) |
 | `mtk_panel_ext`, `mediatek_drm` | 6 + 1 symbols | `panel_ky_vtdr6115_dphy_cmd` imports them |
 | `charger_class` | 1 symbol | `sc8571_charger` imports it |
 | `mtk-pwm` | 2 symbols | `leds_ln2403` imports them |
@@ -389,14 +389,22 @@ Hence **P0_BOOT_CRITICAL**.
 
 ### Can stock blobs remain?
 
-**Yes, and they should.** `tkcore` is `YES_SAFE_TRANSITION` (101/101 kernel CRCs
-`MATCH`, zero intermodule imports — it depends on nothing but the GKI core).
-`tkcore_drv` is `YES_WITH_STOCK_PROVIDER_CHAIN` (keep stock `tkcore` **and**
-stock `ffa_v10`, or prove `ffa_v10`'s two consumed export CRCs before rebuilding
-it).
+**Yes for `tkcore`.** It is `YES_SAFE_TRANSITION` (101/101 kernel CRCs
+`MATCH`, zero intermodule imports — it depends on nothing but the GKI core)
+and remains `PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME
+PROVIDER`, blocked on original TrustKernel private headers.
 
-Disposition for both: **STOCK_TRANSITION_BLOB**. Secure-world behaviour is
-explicitly out of scope; only the Linux-side ABI is frozen here.
+`tkcore_drv` is **SOURCE_RECONSTRUCTED / FROZEN FOR RE** (2026-09-13) and no
+longer a stock blob; it still depends on stock `tkcore` at runtime. Its
+former other dependency, `ffa_v10`, is **also DIRECT_SOURCE_MATCH / FROZEN
+FOR RE** (2026-09-13) — `ffa_v10`'s two consumed export CRCs
+(`ffa_driver_register`/`ffa_driver_unregister`) are proven naturally
+reproduced, not just "prove before rebuilding" as this section previously
+required.
+
+Disposition: `tkcore` remains **STOCK_TRANSITION_BLOB**; secure-world
+behaviour is explicitly out of scope and only the Linux-side ABI is frozen
+for it.
 
 ---
 
