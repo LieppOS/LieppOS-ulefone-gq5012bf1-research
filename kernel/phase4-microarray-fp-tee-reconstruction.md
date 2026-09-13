@@ -10,11 +10,11 @@ oracle and built against the exact GKI.
 
 - Every Linux-side behaviour the stock binary exhibits is recovered and
   reimplemented; nothing is left as a guess.
-- 63/66 MODVERSION edges are naturally regenerated; 3/66 are inherited from the
-  real stock provider ABI witnesses and are **not** claimed as naturally
-  reconstructed.
-- The stock-provider-compatible target reaches 66/66 exact MODVERSION parity
-  and exact `depends`.
+- Post-`spi-mt65xx` closure, 65/66 MODVERSION edges have natural ABI
+  provenance; the two SPI edges now come from the real source-built provider.
+- One edge, `tee_spi_transfer`, remains a stock-runtime `tkcore` witness.
+- The acceptance target reaches 66/66 exact MODVERSION parity and exact
+  `depends` without changing MicroArray behavior.
 - Secure-world internals remain opaque and are classified, not invented.
 
 ## Artefacts
@@ -39,8 +39,8 @@ tools/bazel build \
 
 | target | provider symvers inputs | MODVERSION result |
 |---|---|---|
-| `microarray_fp_tee_recon` | real source-built `fingerprint-recon`, plus naturally derived witnesses `spi-mt65xx-provider-abi` and `tkcore-provider-abi` | 63 NATURAL + 3 declared `PROVIDER_ABI_GAP` |
-| `microarray_fp_tee_recon_stockabi` | real source-built `fingerprint-recon`, plus `stock-provider.symvers` extracted read-only from the stock provider ELFs | 63 NATURAL + 3 `STOCK_PROVIDER_WITNESS` = **66/66 exact** |
+| `microarray_fp_tee_recon` | historical natural-evidence target | historical 63 NATURAL + 3 declared `PROVIDER_ABI_GAP` |
+| `microarray_fp_tee_recon_stockabi` | real source-built `fingerprint-recon`, real source-built `spi-mt65xx`, plus stock-runtime tkcore ABI record | **65 NATURAL + 1 `STOCK_PROVIDER_WITNESS` = 66/66 exact** |
 
 Both builds: `BUILD_RC = 0`, zero compiler warnings, zero modpost warnings,
 zero unresolved symbols, no `KBUILD_MODPOST_WARN`.
@@ -78,17 +78,17 @@ symbol (only `mas_set_input`, `mas_work`, `mas_interrupt`, `mas_read`,
 
 ## ABI provenance — the required statement
 
-- **63/66 MODVERSION edges naturally regenerated** by genksyms from C in the
-  exact-GKI build, including all four `fingerprint.ko` edges, which use the
-  **real source-built** `fingerprint` `Module.symvers`.
-- **3/66 MODVERSION edges inherited from real stock provider ABI witnesses**:
-  `mt_spi_enable_master_clk`, `mt_spi_disable_master_clk` (from stock
-  `spi-mt65xx.ko`) and `tee_spi_transfer` (from stock `tkcore.ko`). These are
-  **not** reconstructed naturally.
-- **The stock-compatible target reaches 66/66 exact.**
-- **Source purity of `microarray_fp_tee` is a separate question from source
-  purity of `spi-mt65xx` and `tkcore`.** Those two remain stock vendor binaries;
-  this project makes no purity claim about them and does not rebuild them.
+- **65/66 MODVERSION edges have natural ABI provenance**: 59 exact-GKI
+  exports, four real source-built `fingerprint` edges, and the two real
+  source-built `spi-mt65xx` edges.
+- `mt_spi_enable_master_clk` (`0x1cc49782`) and
+  `mt_spi_disable_master_clk` (`0xccc1e350`) changed from
+  `STOCK_PROVIDER_WITNESS` to **`NATURAL_SPI_PROVIDER`**.
+- **1/66 remains `STOCK_PROVIDER_WITNESS`**: `tee_spi_transfer` from runtime
+  stock `tkcore`. Separate tkcore work proves its natural ABI type/CRC, but
+  tkcore itself remains `NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER`.
+- **The acceptance target reaches 66/66 exact.** The MicroArray behavior and
+  source did not change.
 
 Full per-symbol detail, the decisive control experiment, extraction method and
 provider ELF hashes: `phase4-microarray-fp-tee-abi-provenance.md`.
@@ -117,8 +117,8 @@ Key architectural facts preserved exactly:
 
 | delta | scope | status |
 |---|---|---|
-| 3 provider CRCs not regenerable from exact-GKI headers | this module and any other consumer of those vendor exports | proven, documented, handled by the stock-ABI target |
-| natural target's `depends` names the ABI witness modules | natural target only | inherent to the witness mechanism; stock-ABI target is exact |
+| `tee_spi_transfer` still uses stock runtime tkcore ABI | acceptance target | tkcore is not reconstructed; keep stock runtime provider |
+| historical natural target's `depends` names ABI witness modules | historical target only | acceptance target has exact provider names |
 | `vermagic` scmversion stamp is `-maybe-dirty`, stock is `-g945dff7bc1bf` | **workspace-wide**, identical for the already-accepted `fingerprint.ko` reconstruction | GKI commit `945dff7bc1bf` is not present in this mirror (`common` is clean at `6b18f0b574ab`, tag `android14-6.1-2024-12_r4`); a correct stamp requires `--config=stamp` against that commit, or the LieppOS kernel's own stamp at deployment |
 
 The vermagic delta blocks loading against a *stock* kernel image, equally for
@@ -134,18 +134,17 @@ python3 tools/phase4-microarray-fp-tee-verify.py \
   --json   workspace/phase4-microarray-fp-tee/build/verify-natural.json
 
 python3 tools/phase4-microarray-fp-tee-verify.py \
-  --stock  workspace/phase4-microarray-fp-tee/oracle/microarray_fp_tee.stock.ko \
-  --recon  workspace/phase4-microarray-fp-tee/build/microarray_fp_tee.recon-stockabi.ko \
-  --provider workspace/.../lib/modules/spi-mt65xx.ko \
-  --provider workspace/.../lib/modules/tkcore.ko \
+  --stock workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/microarray_fp_tee.ko \
+  --recon workspace/phase4-spi-mt65xx/acceptance/microarray_fp_tee.ko \
+  --natural-provider workspace/phase4-spi-mt65xx/build/spi-mt65xx.ko \
+  --provider workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/tkcore.ko \
   --allow-stock-provider-edges --accept-build-stamp-delta \
-  --json   workspace/phase4-microarray-fp-tee/build/verify-stockabi.json
+  --json workspace/phase4-spi-mt65xx/acceptance/verify.json
 ```
 
-Both return `PASS_WITH_DECLARED_DELTAS` with an empty `failures` list. The
-verifier fails closed on any real mismatch, missing/extra symbol, function-set
-divergence, or an inherited edge whose CRC cannot be found in a supplied stock
-provider ELF.
+The historical natural-evidence run and the current acceptance run return
+`PASS_WITH_DECLARED_DELTAS` with empty failure lists. The current run records
+65 natural edges (two `NATURAL_PROVIDER`) and one stock-runtime witness.
 
 ## Provenance of the source
 
@@ -156,10 +155,12 @@ and the stock userspace binaries.
 
 ## Scope boundaries honoured
 
-- `tkcore` / `tkcore_drv` were not started, modified or rebuilt.
-- Stock ABI is used for `tkcore`; `tee_spi_transfer` was never replaced.
-- `fingerprint.ko` was not reopened or modified; its real source-built
-  `Module.symvers` is used.
+- `tkcore` was not reconstructed or replaced. Stock ABI is used for runtime
+  `tkcore`; `tee_spi_transfer` was never replaced.
+- `fingerprint.ko` and MicroArray behavior were not reopened; their existing
+  source and real provider symvers are reused.
+- `spi-mt65xx` is now source-closed separately as `DIRECT_SOURCE_MATCH`; only
+  the two SPI ABI inputs changed provenance.
 - No connectivity, panel/provider, `yft_devinfo` or uSmart work was touched.
 - Static/offline only: no device interaction, module loading, SPI/TEE calls,
   fingerprint operations, flashing or rebooting.

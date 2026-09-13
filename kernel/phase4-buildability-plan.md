@@ -1134,10 +1134,11 @@ class of problem already seen and solved for ST21 (donor 2.2.0.15 vs stock
 
 ### Modules that genuinely require reverse engineering
 
-No board-glue module remains in this queue. `fingerprint`, `leds_ln2403`, and
-`custom_ldo_wl2868` are now closed and frozen for RE. The separate
-`microarray_fp_tee` sensor/TEE driver remains a stock-held future task and was
-not reconstructed as part of the provider closure.
+No board-glue module remains in this queue. `fingerprint`, `leds_ln2403`,
+`custom_ldo_wl2868`, `microarray_fp_tee`, and `spi-mt65xx` are now closed and
+frozen for RE. `spi-mt65xx` is a direct pinned-source match (31/31 function
+bytes, 3/3 natural exports, 82/82 verifier). The frozen MicroArray acceptance
+build now takes both SPI edges naturally; only runtime `tkcore` remains stock.
 
 `fingerprint` is `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE:
 16/16 functions are byte- and size-identical with exact KCFI, all 18 kernel

@@ -5,8 +5,9 @@ Compares a reconstructed microarray_fp_tee.ko against the frozen stock oracle
 and classifies every MODVERSION edge as:
 
   NATURAL                 - CRC regenerated from C by genksyms in this build
-                            (GKI exports, or the real source-built fingerprint
-                            provider, or a naturally derived ABI witness)
+                            (GKI exports or the real source-built fingerprint)
+  NATURAL_PROVIDER        - CRC supplied by a real source-built provider's
+                            Module.symvers and confirmed in that provider ELF
   STOCK_PROVIDER_WITNESS  - CRC inherited from the authoritative stock provider
                             ELF because the provider's own genksyms ran against
                             MediaTek vendor headers that exact GKI does not have
@@ -130,6 +131,8 @@ def main():
     ap.add_argument("--recon", required=True)
     ap.add_argument("--provider", action="append", default=[],
                     help="stock provider .ko used as authoritative ABI witness")
+    ap.add_argument("--natural-provider", action="append", default=[],
+                    help="source-built provider .ko whose natural exports are accepted")
     ap.add_argument("--allow-stock-provider-edges", action="store_true",
                     help="accept inherited provider CRCs (stockabi target)")
     ap.add_argument("--accept-build-stamp-delta", action="store_true",
@@ -152,8 +155,11 @@ def main():
     published = {}
     for p in args.provider:
         published[p] = kcrctab(p)
+    natural_published = {}
+    for p in args.natural_provider:
+        natural_published[p] = kcrctab(p)
 
-    natural = inherited = 0
+    natural = natural_provider = inherited = 0
     for sym, crc in sorted(stock_v.items()):
         if sym not in recon_v:
             report["edges"][sym] = {"class": "MISSING", "stock": hex(crc)}
@@ -161,7 +167,20 @@ def main():
             continue
         got = recon_v[sym]
         if got == crc:
-            if sym in STOCK_PROVIDER_EDGES and args.allow_stock_provider_edges:
+            natural_src = next(
+                (p for p, table in natural_published.items()
+                 if table.get(sym) == crc), None)
+            if sym in STOCK_PROVIDER_EDGES and natural_src:
+                natural += 1
+                natural_provider += 1
+                report["edges"][sym] = {
+                    "class": "NATURAL_PROVIDER",
+                    "crc": hex(crc),
+                    "provider": STOCK_PROVIDER_EDGES[sym],
+                    "source_built_elf": natural_src,
+                    "extraction": "natural __kcrctab export",
+                }
+            elif sym in STOCK_PROVIDER_EDGES and args.allow_stock_provider_edges:
                 src = None
                 for p, table in published.items():
                     if table.get(sym) == crc:
@@ -204,6 +223,7 @@ def main():
 
     report["checks"]["modversion_total"] = len(stock_v)
     report["checks"]["modversion_natural"] = natural
+    report["checks"]["modversion_natural_provider"] = natural_provider
     report["checks"]["modversion_stock_provider_witness"] = inherited
     report["checks"]["modversion_provider_abi_gap"] = sum(
         1 for e in report["edges"].values() if e["class"] == "PROVIDER_ABI_GAP")
@@ -269,6 +289,9 @@ def main():
         open(args.recon, "rb").read()).hexdigest()
     for p in args.provider:
         report.setdefault("provider_sha256", {})[p] = hashlib.sha256(
+            open(p, "rb").read()).hexdigest()
+    for p in args.natural_provider:
+        report.setdefault("natural_provider_sha256", {})[p] = hashlib.sha256(
             open(p, "rb").read()).hexdigest()
 
     declared = [k for k, v in report["edges"].items()

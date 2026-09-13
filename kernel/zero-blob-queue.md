@@ -16,11 +16,13 @@
 - `microarray_fp_tee` — **NO_USEFUL_SOURCE / EMPTY-SOURCE RED /
   BEHAVIORALLY-COMPLETE, LOAD-COMPATIBLE, WITH DECLARED ABI PROVENANCE SPLIT**;
   FROZEN FOR RE; 27/27 functions; complete ioctl/UAPI/TEE/DT closure;
-  **63/66 MODVERSION edges naturally regenerated, 3/66 inherited from real
-  stock provider ABI witnesses (`mt_spi_enable_master_clk`,
-  `mt_spi_disable_master_clk`, `tee_spi_transfer`), stock-compatible target
-  66/66 exact**; `fingerprint` edges use the real source-built provider
-  `Module.symvers`
+  **post-SPI closure: 65/66 natural ABI edges, including both
+  `NATURAL_SPI_PROVIDER` edges; one stock-runtime tkcore witness
+  (`tee_spi_transfer`); acceptance target 66/66 exact**
+- `spi-mt65xx` — **DIRECT_SOURCE_MATCH / FROZEN FOR RE**; exact pinned Nothing
+  MT6878 MediaTek source; 31/31 function bytes and KCFI exact, 65/65 imports,
+  66/66 MODVERSIONs, all 3 export CRCs natural, sole MicroArray consumer
+  accepted, clean exact-GKI build, 82/82 verifier
 
 - `tkcore` — **NO_PUBLIC_SOURCE_FOUND / PROVIDER_ABI_PARTIAL — NOT
   RECONSTRUCTED**; stock oracle frozen and fully inventoried (122 functions,
@@ -78,11 +80,11 @@
 Do not reopen frozen targets. Hynitron's stock provider remains stock
 `yft_devinfo`; this queue does not mark yft_devinfo reconstructed.
 
-`microarray_fp_tee` being frozen does **not** mark `spi-mt65xx` or `tkcore` as
-reconstructed or source-pure. Those remain stock vendor binaries; only their
-published export CRCs were read out of the shipped ELFs so the consumer can
-link against them. Source purity of the consumer is a separate question from
-source purity of those providers.
+`spi-mt65xx` is now independently source-closed and shippable. Both of its
+MicroArray edges are natural. This does **not** mark `tkcore` reconstructed or
+the full fingerprint runtime stack source-pure: runtime `tkcore` remains the
+stock vendor binary. Source purity of the consumer is separate from that
+remaining provider boundary.
 
 The `tkcore` work above upgrades one of those edges: `tee_spi_transfer` is no
 longer "read out of the shipped ELF" — its prototype is now confirmed by the

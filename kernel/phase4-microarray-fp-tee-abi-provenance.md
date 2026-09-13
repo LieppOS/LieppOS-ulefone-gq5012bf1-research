@@ -1,123 +1,103 @@
 # MicroArray fingerprint TEE — MODVERSION ABI provenance split
 
-This report states, per symbol, where every CRC in the reconstructed
-`microarray_fp_tee.ko` `__versions` table comes from. It is the authoritative
-answer to "is this reconstruction source-pure?".
+This is the authoritative post-`spi-mt65xx`-closure provenance for the frozen
+`microarray_fp_tee.ko` reconstruction. Consumer behavior was not reopened.
 
-## Headline
+## Current acceptance result
 
-- **63 / 66 MODVERSION edges are naturally regenerated** from C by genksyms in
-  the exact-GKI build.
-- **3 / 66 edges are inherited from real stock provider ABI witnesses.** They
-  are **not** reconstructed naturally and must never be described as such.
-- The stock-provider-compatible target reaches **66 / 66 exact** parity with
-  the stock consumer.
-- Source purity of `microarray_fp_tee` itself is a **separate question** from
-  source purity of `spi-mt65xx` and `tkcore`. This project reconstructs the
-  consumer only; the two vendor providers remain stock binaries and their
-  internal source purity is out of scope and unclaimed.
+- **66/66 stock MODVERSION edges exact**.
+- **65/66 natural ABI edges** in the acceptance build.
+- Of those, **2 are `NATURAL_SPI_PROVIDER`** edges from the real source-built
+  `spi-mt65xx/Module.symvers`.
+- **1/66 remains `STOCK_PROVIDER_WITNESS`** in the shippable acceptance build:
+  `tee_spi_transfer` from stock runtime `tkcore`.
+- Defined function set remains 27/27 exact and `depends` remains exactly
+  `fingerprint,spi-mt65xx,tkcore`.
 
-## Why three CRCs cannot be regenerated
+This is ABI provenance, not a claim that the whole fingerprint runtime stack
+is source-pure. `tkcore` is still `NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER`.
+Separate tkcore ABI work has naturally regenerated the `tee_spi_transfer`
+prototype/CRC as evidence, but it has not produced a shippable runtime tkcore.
 
-`modpost` copies a *kernel* export's CRC out of `Module.symvers`. It does not
-recompute it. A *provider module's own* export CRCs are computed by `genksyms`
-during **that provider's build**, from the type graph visible in **that
-provider's headers**.
+## Per-provider split
 
-`spi-mt65xx.ko` and `tkcore.ko` are stock MediaTek/TrustKernel vendor modules.
-Their export CRCs were produced against MediaTek vendor headers that the exact
-GKI workspace does not contain.
+### NATURAL — exact GKI and source-built providers
 
-### Control experiment (decisive)
+| group | edges | source of CRC |
+|---|---:|---|
+| exact-GKI kernel exports | 59 | `//common:kernel_aarch64` |
+| `fingerprint` provider | 4 | real source-built `fingerprint/Module.symvers` |
+| `spi-mt65xx` provider | 2 | real source-built `spi-mt65xx/Module.symvers` |
+| total natural | **65** | real builds/genksyms |
 
-MediaTek's verbatim upstream definition is
+The four fingerprint symbols remain:
+`yft_waite_for_finger_dts_paser`, `yft_finger_set_reset`,
+`yft_finger_set_spi_mode`, and `yft_finger_set_irq`.
 
-```c
-void mt_spi_enable_master_clk(struct spi_device *spidev)
-void mtk_spi_set_autosuspend_delay(struct spi_device *spi, int delay_ms)
+The two newly natural SPI edges are:
+
+| symbol | CRC | before | after |
+|---|---|---|---|
+| `mt_spi_enable_master_clk` | `0x1cc49782` | `STOCK_PROVIDER_WITNESS` | **`NATURAL_SPI_PROVIDER`** |
+| `mt_spi_disable_master_clk` | `0xccc1e350` | `STOCK_PROVIDER_WITNESS` | **`NATURAL_SPI_PROVIDER`** |
+
+They are emitted naturally by:
+`//lieppos/spi-mt65xx:spi_mt65xx`, exact source revision
+`device_modules@957dac185efe46cbf6336b0fff9516d84c8cd78f`. The provider itself
+uses no witness symvers or copied CRCs. See
+`phase4-spi-mt65xx-reconstruction.md` and
+`phase4-spi-mt65xx-export-abi.tsv`.
+
+### Remaining stock runtime witness
+
+| symbol | CRC | provider | reason |
+|---|---|---|---|
+| `tee_spi_transfer` | `0x184ce7da` | stock `tkcore` | acceptance build must retain the actual stock runtime provider; tkcore is not reconstructed |
+
+Stock tkcore oracle SHA256:
+`03837d13863e3f6694918e2e049edbc3bd5ca5cb02e10d6f374620cca98ed226`.
+The edge is extracted read-only from stock `__kcrctab`; it is never injected
+into `spi-mt65xx`.
+
+## Historical state
+
+Before `spi-mt65xx` source closure, the MicroArray stock-compatible build had
+**63 NATURAL + 3 STOCK_PROVIDER_WITNESS** edges. The two SPI witnesses above
+were the only values changed in provenance; the MicroArray C, behavior,
+function set, and TEE boundary were unchanged. Historical build artefacts
+remain under `workspace/phase4-microarray-fp-tee/` and are not relabeled.
+
+## Acceptance build
+
+The post-closure package uses one MicroArray source file and these ABI inputs:
+
+1. real source-built `fingerprint-recon/Module.symvers`;
+2. real source-built `spi-mt65xx/Module.symvers`;
+3. a one-line tkcore provider ABI record for the still-stock runtime edge.
+
+```
+tools/bazel build \
+  //lieppos/microarray-fp-tee-recon-stockabi:microarray_fp_tee_recon_stockabi
+
+python3 tools/phase4-microarray-fp-tee-verify.py \
+  --stock workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/microarray_fp_tee.ko \
+  --recon workspace/phase4-spi-mt65xx/acceptance/microarray_fp_tee.ko \
+  --natural-provider workspace/phase4-spi-mt65xx/build/spi-mt65xx.ko \
+  --provider workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/tkcore.ko \
+  --allow-stock-provider-edges --accept-build-stamp-delta
 ```
 
-Compiling `mtk_spi_set_autosuspend_delay` with that exact prototype in the
-exact-GKI workspace yields CRC `0x063a223e`. The stock `spi-mt65xx.ko`
-publishes `0xd3e99558` for the same symbol. The prototype is not in doubt, so
-the divergence is in the provider-side type graph, not in our declaration.
+Result: `PASS_WITH_DECLARED_DELTAS`, empty failures, 66/66 MODVERSIONs,
+65 natural, 2 `NATURAL_PROVIDER`, 1 stock witness, exact function set and
+exact dependencies. Build RC is zero with no compiler/modpost warnings and no
+unresolved symbols. Evidence:
+`workspace/phase4-spi-mt65xx/acceptance/verify.json`.
 
-Corroborating evidence that the workspace itself is correct:
+## Explicit boundaries
 
-| evidence | result |
-|---|---|
-| 59 GKI-exported imports of the stock consumer vs our GKI `Module.symvers` | **59/59 exact** |
-| 4 `yft_*` imports vs the real source-built `fingerprint.ko` | **4/4 exact** |
-| 16 candidate prototypes for `tee_spi_transfer` (`void*`/`u8*`/`const`/`u32`/`size_t`/extra arg/…) | none reproduce `0x184ce7da` |
-
-`yft_*` reproduce because they are `int f(int)` — no vendor struct in the type
-graph. The three failing symbols all reach MediaTek/TrustKernel vendor types.
-
-## Per-symbol provenance
-
-### NATURAL — 63 edges
-
-All 59 GKI exports plus the four `fingerprint.ko` edges:
-
-| symbol | CRC | source of CRC |
-|---|---|---|
-| `yft_waite_for_finger_dts_paser` | `0x4202702c` | real source-built `fingerprint.ko` |
-| `yft_finger_set_reset` | `0xcae83e02` | real source-built `fingerprint.ko` |
-| `yft_finger_set_spi_mode` | `0x0cf6e61a` | real source-built `fingerprint.ko` |
-| `yft_finger_set_irq` | `0x6d125ec3` | real source-built `fingerprint.ko` |
-| 59 further symbols (`spi_sync`, `spi_setup`, `_printk`, …) | see `phase4-microarray-fp-tee-modversions.tsv` | exact-GKI `//common:kernel_aarch64` |
-
-The `fingerprint` edges continue to use the **real source-built** provider
-`Module.symvers`; no witness or extracted record is used for them.
-
-### STOCK_PROVIDER_WITNESS — 3 edges
-
-| symbol | CRC | provider module | provider ELF sha256 | extraction |
-|---|---|---|---|---|
-| `mt_spi_enable_master_clk` | `0x1cc49782` | `spi-mt65xx` | `5463e06c205623e4b1b713416836e3b5235dc246c7d536595f6613ba3492d712` | `__kcrctab[+0x04]` via `__crc_mt_spi_enable_master_clk` |
-| `mt_spi_disable_master_clk` | `0xccc1e350` | `spi-mt65xx` | `5463e06c205623e4b1b713416836e3b5235dc246c7d536595f6613ba3492d712` | `__kcrctab[+0x00]` via `__crc_mt_spi_disable_master_clk` |
-| `tee_spi_transfer` | `0x184ce7da` | `tkcore` | `03837d13863e3f6694918e2e049edbc3bd5ca5cb02e10d6f374620cca98ed226` | `__kcrctab[+0x44]` via `__crc_tee_spi_transfer` |
-
-Extraction method: `tools/phase4-extract-stock-provider-symvers.py` locates the
-local `__crc_<symbol>` symbol, confirms its defining section is `__kcrctab`,
-and reads the 32-bit CRC at that offset. It is read-only; the provider ELFs are
-never modified. Output:
-`workspace/phase4-microarray-fp-tee/stockabi/stock-provider.symvers`
-with machine-generated provenance in `stock-provider.provenance.json`.
-
-These three values are the ABI the stock providers themselves publish, and they
-match the stock consumer's `__versions` table exactly. They are **inherited**,
-not regenerated.
-
-## What was explicitly NOT done
-
-- No handwritten CRC literal appears anywhere in the reconstruction C.
-- No ELF was patched or edited.
-- No `__versions` section was hand-modified.
-- No `KBUILD_MODPOST_WARN`, no `--allow-undefined`, no forced symbol resolution.
-- No fake provider implementation was substituted for `tee_spi_transfer`; the
-  TrustKernel call path is preserved, and no generic TEE API or direct SPI
-  transfer was put in its place.
-- The stock `tkcore`/`tkcore_drv` subsystem was not started, modified, or
-  rebuilt.
-
-The two build-only ABI witness modules
-(`lieppos/spi-mt65xx-provider-abi`, `lieppos/tkcore-provider-abi`) exist solely
-so `genksyms` derives the *natural* CRCs from C for the primary target. They
-have empty bodies, are never installed, and are documented as non-loadable.
-
-## Verifier classification
-
-`tools/phase4-microarray-fp-tee-verify.py` emits one of:
-
-| class | meaning |
-|---|---|
-| `NATURAL` | CRC regenerated from C in this build |
-| `STOCK_PROVIDER_WITNESS` | CRC inherited from a named stock provider ELF, with that ELF's sha256 recorded |
-| `PROVIDER_ABI_GAP` | natural target: CRC differs from stock because the provider CRC is non-regenerable |
-| `MISMATCH` / `MISSING` / `EXTRA` | genuine defect, always fatal |
-
-The verifier fails closed: any `MISMATCH`, `MISSING`, `EXTRA`, function-set
-divergence, unwitnessed inherited edge, or unexpected modinfo delta is a
-non-zero exit. It refuses to accept an inherited edge unless the CRC is
-actually found in a supplied provider ELF.
+- No MicroArray ioctl, transfer, TEE, fingerprint glue, UUID, probe, or
+  read/write behavior changed.
+- No stock CRC was used to claim the source-built SPI provider reconstructed.
+- No ELF was patched; no `KBUILD_MODPOST_WARN` or symbol laundering was used.
+- Do not claim the fingerprint stack fully source-pure while runtime `tkcore`
+  remains stock.

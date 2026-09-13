@@ -156,13 +156,11 @@ and `ffa_v10` are **no longer** stock — both closed 2026-09-13
 (`SOURCE_RECONSTRUCTED / FROZEN FOR RE` and `DIRECT_SOURCE_MATCH / FROZEN FOR
 RE` respectively) — but that closure is orthogonal to `microarray_fp_tee`:
 `ffa_v10` is not a direct `microarray_fp_tee` provider (its only consumers are
-`tkcore_drv`, `tmem_ffa`, `gz_main_mod`), and `microarray_fp_tee`'s own
-remaining provider-CRC gap is entirely `spi-mt65xx` + `tkcore`, both still
-stock. The four `yft_*` provider CRCs are exact; the three vendor-provider
-CRCs (`mt_spi_enable_master_clk`, `mt_spi_disable_master_clk`,
-`tee_spi_transfer`) are inherited from the stock provider ELFs, not
-regenerated — see the `microarray_fp_tee` closure below. `spi-mt65xx` provider
-closure work remains open and separate from this TEE subsystem.
+`tkcore_drv`, `tmem_ffa`, `gz_main_mod`), and `microarray_fp_tee`'s remaining runtime stock dependency is now only
+`tkcore`. `spi-mt65xx` closed separately as `DIRECT_SOURCE_MATCH / FROZEN FOR
+RE`: both SPI CRCs are natural and the frozen MicroArray acceptance build is
+66/66 exact with 65 natural ABI edges. `tee_spi_transfer` remains the one
+stock-runtime witness because tkcore is not reconstructed.
 
 ## Strategy
 
@@ -234,12 +232,12 @@ Two targets are produced from a single source file:
   and exact `depends = fingerprint,spi-mt65xx,tkcore`, using CRCs extracted
   read-only from the stock provider ELFs' own `__kcrctab`.
 
-**63/66 naturally regenerated; 3/66 inherited from real stock provider ABI
-witnesses; the stock-compatible target reaches 66/66 exact.** Source purity of
-`microarray_fp_tee` is separate from source purity of `spi-mt65xx` and
-`tkcore`, which remain stock binaries with no purity claim.
+**Historical closure state:** 63/66 natural and 3/66 stock-provider
+witnesses. **Current post-`spi-mt65xx` acceptance:** 65/66 natural ABI edges,
+including both real source-built SPI edges, plus one stock-runtime tkcore
+witness; 66/66 exact. `spi-mt65xx` is source-closed; `tkcore` remains stock.
 
-Root cause of the 3-edge gap, proven by control experiment: a provider's export
+Root cause of the historical 3-edge gap, proven by control experiment: a provider's export
 CRCs are computed by genksyms in the *provider's* build against MediaTek vendor
 headers. MediaTek's verbatim
 `void mtk_spi_set_autosuspend_delay(struct spi_device *, int)` yields
@@ -249,8 +247,9 @@ workspace is correct and the divergence is provider-side only.
 
 Both builds are warning-free with zero unresolved symbols; the fail-closed
 verifier returns `PASS_WITH_DECLARED_DELTAS` with an empty failure list.
-Remaining declared deltas: the 3 provider CRCs (handled by the stock-ABI
-target), the natural target's witness `depends` names, and the workspace-wide
+Current remaining declared provider delta: stock-runtime `tee_spi_transfer`;
+the two historical SPI gaps are closed naturally. Other historical-target
+deltas are its witness `depends` names and the workspace-wide
 `vermagic` scmversion stamp (`-maybe-dirty` vs `-g945dff7bc1bf`; GKI commit
 `945dff7bc1bf` is absent from this mirror and the delta is identical for the
 already-accepted `fingerprint.ko`).
@@ -260,6 +259,19 @@ Reports: `phase4-microarray-fp-tee-reconstruction.md`,
 `phase4-microarray-fp-tee-behavior.md`,
 `phase4-microarray-fp-tee-source-candidates.md`,
 `phase4-microarray-fp-tee-RED.md`.
+
+## Phase 4 spi-mt65xx provider closure (2026-09-13)
+
+`spi-mt65xx` is `DIRECT_SOURCE_MATCH / FROZEN FOR RE`. Pinned Nothing MT6878
+`device_modules@957dac185efe46cbf6336b0fff9516d84c8cd78f` reproduces all
+31 stock function bytes/KCFI IDs, 65 imports, 66 MODVERSIONs, 545 relocations,
+and all three natural export CRCs. The only whole-file differences are
+vermagic/build-ID/source-path provenance. The sole stock consumer is
+`microarray_fp_tee`; rebuilding its frozen source against the real provider
+symvers preserves 27/27 functions, exact depends, and 66/66 edges, upgrading
+the two SPI witnesses to `NATURAL_SPI_PROVIDER`. Exact-GKI build is clean and
+`kernel/scripts/phase4_spi_mt65xx_verify.py` passes 82/82. Runtime `tkcore`
+remains stock. See `phase4-spi-mt65xx-reconstruction.md`.
 
 ## Phase 4 fingerprint provider closure
 

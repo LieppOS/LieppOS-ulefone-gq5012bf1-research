@@ -1,0 +1,121 @@
+GQ5012BF1 spi-mt65xx stock oracle
+==================================
+Captured: 2026-09-13 (offline; committed stock extraction only)
+
+Canonical stock path
+--------------------
+workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/spi-mt65xx.ko
+
+Frozen oracle copy
+------------------
+workspace/phase4-spi-mt65xx/oracle/spi-mt65xx.stock.ko
+
+Identity
+--------
+SHA256: 5463e06c205623e4b1b713416836e3b5235dc246c7d536595f6613ba3492d712
+Size: 58144 bytes
+GNU Build ID: 21ef9cb7c85ae00c724cf0f2fadca17f610de905
+Compiler: Android (10087095, +pgo, +bolt, +lto, -mlgo, based on r487747c) clang version 17.0.2 (llvm-project d9f89f4d16663d5012e5c09495f3b30ece3d2362)
+vermagic: 6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+srcversion: absent/empty
+name: spi_mt65xx
+description: MTK SPI Controller driver
+author: Leilk Liu <leilk.liu@mediatek.com>
+license: GPL v2
+depends: empty
+parameters: none
+import namespaces: none
+signer: none
+module signature: absent
+
+Stock-copy proof
+----------------
+Before this task's frozen oracle copy was created, the committed 471-placement
+stock extraction contained exactly one physical spi-mt65xx.ko:
+  vendor_boot_platform  lib/modules/spi-mt65xx.ko
+  SHA256 5463e06c205623e4b1b713416836e3b5235dc246c7d536595f6613ba3492d712
+
+Normal and recovery modules.load both reference that same platform-ramdisk
+file; recovery is a second load-list view, not a second .ko payload. The
+frozen oracle copy is byte-identical to the canonical extraction (same full
+SHA256 and size). No vendor_dlkm, system_dlkm, odm_dlkm, backup, or second
+stock-extraction placement exists in stock-module-placements.tsv or in the
+committed 471-file stock tree.
+
+Placement / load order
+----------------------
+placement: vendor_boot platform ramdisk
+normal modules.load: 1-based line 120; zero-based index P:119
+recovery modules.load.recovery: 1-based line 118; zero-based index R:117
+normal neighbourhood (1-based lines 115-123):
+  pidmap.ko
+  mtk-pmic-keys.ko
+  regulator-vibrator.ko
+  i2c-mt65xx.ko
+  mtk_dramc.ko
+  spi-mt65xx.ko
+  mt6375.ko
+  extdev_io_class.ko
+  rt5133-regulator.ko
+recovery neighbourhood is the same sequence at lines 113-121.
+
+modules.dep
+-----------
+/lib/modules/spi-mt65xx.ko:
+(no provider dependencies)
+
+Reverse dependency recorded by modules.dep:
+/lib/modules/microarray_fp_tee.ko: /lib/modules/tkcore.ko /lib/modules/spi-mt65xx.ko /lib/modules/fingerprint.ko
+
+modules.softdep
+---------------
+No spi-mt65xx/spi_mt65xx entry.
+
+Aliases
+-------
+platform:mtk-spi
+of:N*T*Cmediatek,mt2701-spi[ C*]
+of:N*T*Cmediatek,mt2712-spi[ C*]
+of:N*T*Cmediatek,mt6589-spi[ C*]
+of:N*T*Cmediatek,mt6765-spi[ C*]
+of:N*T*Cmediatek,mt6983-spi[ C*]
+of:N*T*Cmediatek,mt6985-spi[ C*]
+of:N*T*Cmediatek,mt6989-spi[ C*]
+of:N*T*Cmediatek,mt7622-spi[ C*]
+of:N*T*Cmediatek,mt7629-spi[ C*]
+of:N*T*Cmediatek,mt8135-spi[ C*]
+of:N*T*Cmediatek,mt8173-spi[ C*]
+of:N*T*Cmediatek,mt8183-spi[ C*]
+of:N*T*Cmediatek,mt8192-spi[ C*]
+of:N*T*Cmediatek,mt6893-spi[ C*]
+
+Complete stock ELF surface
+--------------------------
+Defined function symbols: 31 (including init_module and cleanup_module)
+Defined object symbols: 60
+Undefined ELF symbols: 65
+Kernel import symbols: 65
+__versions records: 66 (65 imports + module_layout)
+Exports: 3, all EXPORT_SYMBOL (non-GPL class)
+Relocations: 545
+Extracted .rodata.str*/.modinfo strings: 120
+
+Complete export oracle
+----------------------
+0xd3e99558  mtk_spi_set_autosuspend_delay  EXPORT_SYMBOL
+0xccc1e350  mt_spi_disable_master_clk      EXPORT_SYMBOL
+0x1cc49782  mt_spi_enable_master_clk       EXPORT_SYMBOL
+
+The two MicroArray-required CRCs are therefore independently re-confirmed
+from canonical stock __kcrctab rather than accepted from an earlier report.
+
+Raw evidence
+------------
+kernel/phase4-spi-mt65xx-functions.tsv
+kernel/phase4-spi-mt65xx-objects.tsv
+kernel/phase4-spi-mt65xx-imports.tsv
+kernel/phase4-spi-mt65xx-modversions.tsv
+kernel/phase4-spi-mt65xx-exports.tsv
+kernel/phase4-spi-mt65xx-relocations.tsv
+kernel/phase4-spi-mt65xx-strings.tsv
+workspace/phase4-spi-mt65xx/oracle/spi-mt65xx.{text,init.text,exit.text}.asm

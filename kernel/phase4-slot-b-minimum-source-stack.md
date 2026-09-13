@@ -155,12 +155,14 @@ rear touch, rear display, camera sensors and motion sensors simultaneously.
 Plus the platform prerequisites named in the dependency graph:
 `connadp`, `connscp`, `ccci_md_all`, `aee_aed`, `device-apc-common`,
 `wlan_page_pool`, `mtk_panel_ext`, `mediatek_drm`, `charger_class`,
-`mt6375-charger`, `spi-mt65xx`, `mtk-pwm`, `imgsensor`, `hf_manager`,
+`mt6375-charger`, `mtk-pwm`, `imgsensor`, `hf_manager`,
 `cfg80211`, `bluetooth`, `mddp`, `pmic_lbat_service` — all
 `LIKELY_PLATFORM_MATCH` bulk forward-port work outside this triage set.
 `ffa_v10` is no longer in that bucket: it closed as `DIRECT_SOURCE_MATCH /
 FROZEN FOR RE` (kernel/phase4-ffa-v10-reconstruction.md), all 5 export CRCs
-natural, 34/34 functions byte-identical to stock.
+natural, 34/34 functions byte-identical to stock. `spi-mt65xx` likewise closed
+as `DIRECT_SOURCE_MATCH / FROZEN FOR RE`: 31/31 function bytes, all 3 exports
+natural, 82/82 verifier, and its MicroArray consumer accepted.
 
 ### B.4 Still `STOCK_TRANSITION` at Level B
 
@@ -169,7 +171,7 @@ natural, 34/34 functions byte-identical to stock.
 | `tkcore` | STOCK_TRANSITION | no source anywhere; `P0`; **PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER**, blocked on original TrustKernel private headers |
 | `tkcore_drv` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | closed 2026-09-13 with `SOURCE_NOW_WITH_PROVIDER_WITNESSES` (now 8 NATURAL/5 STOCK_PROVIDER_WITNESS after the `ffa_v10` closure); still runs against stock `tkcore` |
 | `ffa_v10` | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** | closed 2026-09-13; exact MediaTek vendor source, 34/34 byte-identical, 5/5 export CRCs natural, 49/49 verifier |
-| `microarray_fp_tee` | STOCK_TRANSITION | TEE-mediated SPI; not observable from Linux |
+| `microarray_fp_tee` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | behavior frozen; 65 natural ABI edges after real source-built SPI provider; still uses stock runtime tkcore |
 | `yft_devinfo` | STOCK_TRANSITION | ABI pin, §B.2 |
 | `spi_tiny_co5300_lcd` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | rear display; exact rebuilt-Hynitron plus stock-YFT provider ABI; 30/30 verifier; `P3` |
 | `hynitron` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | rear touch; stock `yft_devinfo` provider ABI pinned; `P3` |
@@ -197,7 +199,7 @@ Everything we intend to replace from source. Promotes the Level-B holds:
 | `yft_tiny2c_usb` | SOURCE_NOW | **closed** — `NO_PUBLIC_DONOR_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`; exact 22-symbol/23-MODVERSION ABI, exact MT6375 flag edge, full thermal/USB/uSmart/DT/GPIO/sysfs/lifecycle contracts, clean exact-GKI build, 68/68 verifier, FROZEN FOR RE |
 | `hynitron` | SOURCE_NOW | **closed** — `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`; fitted CST820, exact 65-function/54-import set, exact two export CRCs accepted by stock `spi_tiny_co5300_lcd`, exact images/negative programmer proof, clean build, 34/34 verifier, FROZEN FOR RE |
 | `spi_tiny_co5300_lcd` | SOURCE_NOW | **closed** — `NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`; exact 25-function/58-MODVERSION sets, exact CO5300 table/image/ABI/state machine, clean exact-GKI build, 30/30 verifier, FROZEN FOR RE |
-| `microarray_fp_tee` | SOURCE_NOW | requires a TEE-side oracle; only attempt after `tkcore` is understood |
+| `microarray_fp_tee` | **SOURCE_NOW / FROZEN FOR RE** | **closed** — behavioral reconstruction complete; 27/27 functions, 66/66 MODVERSIONs; two SPI edges natural, runtime tkcore retained |
 | `yft_devinfo` | SOURCE_NOW | **the 73-character vendor enum type text.** 409 061 884 semantically plausible spellings and 56 495 harvested real enum definitions were already excluded by exhaustion. Only a YFT/Ulefone BSP drop containing `yft_devinfo.h` can close it. |
 | `tkcore` | SOURCE_NOW *(aspirational, still blocked)* | complete TEE client core RE; 25-symbol ABI; 14/25 natural, 11/25 blocked on TrustKernel private member names; VERY_HIGH |
 | `tkcore_drv` | **DONE — SOURCE_RECONSTRUCTED / FROZEN FOR RE** | SMC/FF-A transport RE completed 2026-09-13; 8 NATURAL/5 STOCK_PROVIDER_WITNESS, 43/43 verifier; `phase4-tkcore-drv-reconstruction.md` |

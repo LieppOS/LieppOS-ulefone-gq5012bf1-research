@@ -178,6 +178,7 @@ view below carries the decision-relevant columns.
 | `tkcore` | vendor_boot platform | yes (idx 99) | yes (idx 97) | 101 / 0 / 25 | **NO_PUBLIC_SOURCE_FOUND / PROVIDER_ABI_PARTIAL** | YES_SAFE_TRANSITION | **NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER** (14/25 natural, 11/25 blocked on TrustKernel private headers) | **P0_BOOT_CRITICAL** |
 | `tkcore_drv` | vendor_boot platform | yes (idx 100) | yes (idx 98) | 54 / 13 / 0 | **NO_PUBLIC_SOURCE_FOUND / PROVIDER_ABI_PARTIAL** | **SOURCE_NOW_WITH_PROVIDER_WITNESSES** | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** (8 NATURAL + 5 STOCK_PROVIDER_WITNESS; 43/43 verifier — was 6/7 and 37/37 before the 2026-09-13 `ffa_v10` closure) | **P0_BOOT_CRITICAL** |
 | `ffa_v10` *(cross-ref, not one of the 23 §5.3 entries — listed here as `tkcore_drv`'s provider)* | vendor_boot platform | yes (idx 97) | yes (idx 95) | 40 / 0 / 5 | **EXACT_SOURCE** | YES_SAFE_TRANSITION | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** (5/5 export CRCs natural, 34/34 functions byte-identical, 49/49 verifier) | **P0_BOOT_CRITICAL** |
+| `spi-mt65xx` *(cross-ref provider)* | vendor_boot platform | yes (idx 119) | yes (idx 117) | 65 / 0 / 3 | **EXACT_SOURCE** | YES_SAFE_TRANSITION | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** (31/31 function bytes, 3/3 export CRCs natural, 82/82 verifier) | **CLOSED** |
 | `conninfra` | vendor_dlkm | yes (idx 120) | no (vendor_dlkm unmounted) | 175 / 19 / 81 | **EXACT_SOURCE** | YES_WITH_STOCK_PROVIDER_CHAIN | FORWARD_PORT | P2_MAJOR_FEATURE |
 | `wmt_chrdev_wifi_connac2` | vendor_dlkm | yes (idx 121) | no | 40 / 0 / 18 | **EXACT_SOURCE** | YES_SAFE_TRANSITION | FORWARD_PORT | P2_MAJOR_FEATURE |
 | `wlan_drv_gen4m_6878` | vendor_dlkm | yes (idx 122) | no | 295 / 95 / 0 | **EXACT_SOURCE** | YES_WITH_STOCK_PROVIDER_CHAIN | FORWARD_PORT | P2_MAJOR_FEATURE |
@@ -186,7 +187,7 @@ view below carries the decision-relevant columns.
 | `gps_pwr` | vendor_dlkm | on demand (init.gps_pwr.rc) | no | 21 / 3 / 0 | **EXACT_SOURCE** | YES_WITH_STOCK_PROVIDER_CHAIN | FORWARD_PORT | P2_MAJOR_FEATURE |
 | `gps_scp` | vendor_dlkm | on demand (init.gps_scp.rc) | no | 26 / 5 / 0 | **EXACT_SOURCE** | YES_WITH_STOCK_PROVIDER_CHAIN | FORWARD_PORT | P2_MAJOR_FEATURE |
 | `fingerprint` | vendor_boot platform | yes (idx 181) | yes (idx 185) | 18 / 0 / 10 | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | YES_SAFE_TRANSITION | **SOURCE_RECONSTRUCTED** | P2_MAJOR_FEATURE |
-| `microarray_fp_tee` | vendor_boot platform | yes (idx 182) | yes (idx 186) | 59 / 7 / 0 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | STOCK_TRANSITION_BLOB | P2_MAJOR_FEATURE |
+| `microarray_fp_tee` | vendor_boot platform | yes (idx 182) | yes (idx 186) | 59 / 7 / 0 | **NO_USEFUL_SOURCE / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | **SOURCE_NOW_WITH_STOCK_TKCORE_RUNTIME** | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** (65 natural ABI edges; 2 natural SPI; 1 stock tkcore witness) | **CLOSED** |
 | `custom_ldo` | vendor_dlkm | yes (idx 102) | no | 1 / 2 / 2 | NO_USEFUL_SOURCE | YES_WITH_STOCK_PROVIDER_CHAIN | **SOURCE_RECONSTRUCTED** | P2_MAJOR_FEATURE |
 | `custom_ldo_wl2868` | vendor_dlkm | yes (idx 101) | no | 27 / 0 / 2 | **NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE** | YES_SAFE_TRANSITION | **SOURCE_RECONSTRUCTED** | P2_MAJOR_FEATURE |
 | `yft_gpio_keys` | vendor_boot platform | yes (idx 179) | yes (idx 183) | 65 / 0 / 0 | **STOCK_ORACLE_PROVEN** | SOURCE_NOW | **SOURCE_DELTA_RECONSTRUCTION_EXACT / FROZEN FOR RE** | CLOSED |
@@ -618,13 +619,12 @@ matches and are rejected. The real identifiers are `mediatek,yft_finger` and
   intermodule imports). `microarray_fp_tee` is `YES_WITH_STOCK_PROVIDER_CHAIN`
   (needs stock `fingerprint`, `spi-mt65xx`, `tkcore`).
 
-Disposition: `fingerprint` → **SOURCE_RECONSTRUCTED /
-STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE / FROZEN FOR RE**. Its 16/16 function
-bytes/sizes/KCFI IDs, 18 imports/MODVERSIONs, all 10 export CRCs, and all four
-stock MicroArray consumer edges are exact; exact-GKI build and 39/39 verifier
-pass. `microarray_fp_tee` remains a **STOCK_TRANSITION_BLOB** (HIGH difficulty:
-all sensor traffic is TEE-mediated and therefore not observable from the Linux
-side). Provider closure does not classify the consumer complete.
+Current disposition: `fingerprint`, `microarray_fp_tee`, and `spi-mt65xx` are
+all **SOURCE_RECONSTRUCTED / FROZEN FOR RE**. `spi-mt65xx` closes as
+`DIRECT_SOURCE_MATCH`; its two MicroArray edges are natural and the frozen
+MicroArray acceptance remains 27/27 functions and 66/66 MODVERSIONs. Runtime
+`tkcore` remains stock, so this does not make the full fingerprint stack
+source-pure.
 
 ---
 
@@ -634,8 +634,9 @@ No board-glue module remains in this queue. `fingerprint`, `leds_ln2403`,
 `custom_ldo_wl2868`, `custom_ldo`, `sc851x_charger`, `sc8571_charger`, and
 `sh366003_fg` have graduated after stock-oracle reconstruction. VTDR6115 panel
 logic is reconstructed but separately blocked on exact provider ABI evidence.
-The TEE-mediated `microarray_fp_tee` sensor remains stock-held and is not made
-complete by the fingerprint provider closure.
+The TEE-mediated `microarray_fp_tee` sensor has since been behaviorally
+reconstructed and frozen. Its two SPI provider edges are now natural after the
+independent `spi-mt65xx` direct-source closure; runtime `tkcore` remains stock.
 
 ## 15. Modules that have usable source and need only build / forward-port work
 

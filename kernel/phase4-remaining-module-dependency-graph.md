@@ -314,11 +314,11 @@ and it has no module dependencies of its own.
         │ 4 symbols: yft_finger_set_irq, yft_finger_set_reset,
         │            yft_finger_set_spi_mode, yft_waite_for_finger_dts_paser
         ▼
-   microarray_fp_tee [stock] P:182 / R:186          → LEAF (0 exports)
+   microarray_fp_tee [recon/frozen] P:182 / R:186   → LEAF (0 exports)
    mediatek,madev_finger · SPI1 · /dev/madev0
-        ▲                    ▲
-        │2 spi-mt65xx [port] │1 tkcore [stock]  (tee_spi_transfer)
-        │  P:119             │  P:99
+        ▲                              ▲
+        │2 spi-mt65xx [source/frozen]  │1 tkcore [stock] (tee_spi_transfer)
+        │  P:119                       │  P:99
 ```
 
 Load order is adjacent and must be preserved: `P:181 fingerprint →
@@ -326,12 +326,12 @@ P:182 microarray_fp_tee`.
 
 **Root providers:** `fingerprint`, `spi-mt65xx`, `tkcore`.
 
-**Current closure/build order:** `fingerprint` is
-`STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE. Its 10/10 export
-CRCs include all four stock consumer edges, so it remains first in load/build
-order. `microarray_fp_tee` stays stock and still separately depends on
-`spi-mt65xx` and stock `tkcore`; provider completion does not complete or alter
-the sensor/TEE driver.
+**Current closure/build order:** `fingerprint`, `spi-mt65xx`, and
+`microarray_fp_tee` are reconstructed/frozen. `spi-mt65xx` is
+`DIRECT_SOURCE_MATCH` with all three export CRCs natural; its two MicroArray
+edges are `NATURAL_SPI_PROVIDER`. The frozen MicroArray acceptance build keeps
+exact dependencies and behavior. `tkcore` alone remains the stock runtime
+provider for `tee_spi_transfer`; do not call the full stack source-pure.
 
 ---
 
