@@ -162,6 +162,18 @@ RE`: both SPI CRCs are natural and the frozen MicroArray acceptance build is
 66/66 exact with 65 natural ABI edges. `tee_spi_transfer` remains the one
 stock-runtime witness because tkcore is not reconstructed.
 
+`tmem_ffa` closed 2026-09-13 as **`DIRECT_SOURCE_MATCH / SOURCE_NOW / FROZEN
+FOR RE`**: exact pinned MediaTek vendor source
+(`device_modules@957dac18`, `drivers/misc/mediatek/trusted_mem/` — the same
+revision and parent directory as `ffa_v10`), 141/141 functions byte-identical,
+141/141 KCFI, 76/76 imports, 77/77 MODVERSIONs, **15/15 export CRCs natural**,
+76/76 verifier. Its FF-A edge is served by the real source-built `ffa_v10`;
+its 7 `TEEC_*` edges (tkcore) and 9 `KREE_*` edges (gz_tz_system) stay stock
+runtime provider edges. `gz_tz_system` is now an explicitly declared,
+unreconstructed provider boundary. `tmem_ffa`'s own 15 exports are consumed by
+`mtk_sec_heap`, `gz_main_mod` and `mali_kbase_mt6878_r44`, all of which accept
+the source-built module unchanged.
+
 ## Strategy
 
 Development should initially retain the stock Ulefone kernel and progressively

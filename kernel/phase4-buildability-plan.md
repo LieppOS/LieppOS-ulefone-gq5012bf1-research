@@ -1323,3 +1323,16 @@ provider without modification.
 `tkcore` is **not** affected by the ffa_v10 closure and remains
 `PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER`, blocked
 on original TrustKernel private headers.
+
+`tmem_ffa.ko` has since closed as **`DIRECT_SOURCE_MATCH / SOURCE_NOW / FROZEN
+FOR RE`** (2026-09-13): the pinned Nothing MT6878 revision that supplied
+`ffa_v10` also supplies the whole trusted-memory subsystem
+(`drivers/misc/mediatek/trusted_mem/`), and the second module it builds under
+`CONFIG_ARM_FFA_TRANSPORT` is literally `tmem_ffa`. Result: 141/141 functions
+byte-identical, 141/141 KCFI, 76/76 imports, 77/77 MODVERSIONs, 15/15 export
+CRCs natural, 2208/2208 relocations, 76/76 verifier
+(`kernel/scripts/phase4_tmem_ffa_verify.py`). Build inputs: exact GKI
+12901745, the real source-built `//lieppos/ffa-v10` symvers, and stock
+`__kcrctab` records for the 7 tkcore and 9 gz_tz_system edges. Buildability
+consequence: `mtk_sec_heap`, `gz_main_mod` and `mali_kbase_mt6878_r44` can all
+keep loading against a source-built `tmem_ffa` with no re-link.

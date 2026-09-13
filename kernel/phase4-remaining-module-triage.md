@@ -366,7 +366,21 @@ ffa_v10 ──2──┐
 tkcore ──11──┘
 tkcore ──1───▶ microarray_fp_tee    (tee_spi_transfer)
 tkcore ──7───▶ tmem_ffa             (TEEC_* — MediaTek Trusted Memory Driver,
-                                     vendor_dlkm idx 151, depends=gz_tz_system,tkcore,ffa_v10)
+                                     vendor_dlkm modules.load idx 152 (1-based),
+                                     depends=gz_tz_system,tkcore,ffa_v10)
+gz_tz_system ──9──▶ tmem_ffa        (KREE_*; stock runtime provider, out of scope)
+```
+
+`tmem_ffa` itself is **closed**: `DIRECT_SOURCE_MATCH / SOURCE_NOW / FROZEN FOR
+RE` (2026-09-13) — exact pinned MediaTek vendor source
+(`device_modules@957dac18`, `drivers/misc/mediatek/trusted_mem/`), 141/141
+functions byte-identical, 141/141 KCFI, 76/76 imports, 77/77 MODVERSIONs,
+15/15 export CRCs natural, 2208/2208 relocations, 76/76 verifier. Its tkcore
+and gz_tz_system edges remain stock-runtime provider edges.
+See `kernel/phase4-tmem-ffa-reconstruction.md` and the tkcore ABI evidence it
+contributes in `kernel/phase4-tkcore-evidence-from-tmem-ffa.md`.
+
+```
 ```
 
 ### Userspace consumers (from the committed stock `vendor` extraction)

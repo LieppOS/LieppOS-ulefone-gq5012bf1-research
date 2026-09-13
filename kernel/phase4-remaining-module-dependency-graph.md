@@ -222,7 +222,7 @@ entire cluster.
    ffa_v10 [SOURCE / FROZEN] P:97 ── 5 exports, all NATURAL
       │
       ├──2──▶ tkcore_drv  [RECONSTRUCTED] P:100 / R:98 → LEAF (0 exports)
-      ├──1──▶ tmem_ffa    [port]  V:151   (ffa_driver_register only)
+      ├──1──▶ tmem_ffa    [DIRECT_SOURCE_MATCH / FROZEN] V:152 (ffa_driver_register only, NATURAL)
       └──1──▶ gz_main_mod [port]  V:?     (ffa_driver_register only; GenieZone)
 
    tkcore [stock / blocked on TrustKernel private headers] P:99 ── 25 exports
@@ -230,8 +230,13 @@ entire cluster.
       ├─11──▶ tkcore_drv        [RECONSTRUCTED] P:100 / R:98 → LEAF (0 exports)
       ├──1──▶ microarray_fp_tee [SOURCE_RECONSTRUCTED / FROZEN] P:182 / R:186
       │                                      (stock-runtime `tee_spi_transfer` edge)
-      └──7──▶ tmem_ffa          [port]  V:151           (TEEC_*)
+      └──7──▶ tmem_ffa          [DIRECT_SOURCE_MATCH / FROZEN] V:152 (TEEC_*)
                                         depends = gz_tz_system, tkcore, ffa_v10
+                                        3 of the 7 edges are in tkcore's NATURAL
+                                        14/25 set, 4 in the BLOCKED 11/25 set
+
+   gz_tz_system [stock runtime provider, out of scope] V:149
+      └──9──▶ tmem_ffa          [DIRECT_SOURCE_MATCH / FROZEN] V:152 (KREE_*)
 
    userspace (all vendor VINTF-declared):
      keymint@3.0-service.trustkernel · gatekeeper-service.trustkernel

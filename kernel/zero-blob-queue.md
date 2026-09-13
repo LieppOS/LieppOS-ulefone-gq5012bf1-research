@@ -92,6 +92,25 @@ stock KCFI type id `0xffeb18b3` and its CRC `0x184ce7da` is regenerated
 naturally from C. The other 10 `tkcore_drv` / 4 `tmem_ffa` blocked edges are
 not, and `tkcore` itself remains stock.
 
+- `tmem_ffa` — **DIRECT_SOURCE_MATCH / SOURCE_NOW / FROZEN FOR RE**
+  (2026-09-13). Stock oracle
+  `707e26674abbe7f9c695bb949d74fd5de04972d4bbb991cddc3a2ea9ab45f01b`
+  (151456 B, vendor_dlkm `modules.load` idx 152). Exact pinned MediaTek vendor
+  source — the same revision and parent directory as the closed `ffa_v10`
+  (`device_modules@957dac185efe46cbf6336b0fff9516d84c8cd78f`,
+  `drivers/misc/mediatek/trusted_mem/`). Mandatory RED recorded first on the
+  unmodified donor (141 shared functions, 136/141 byte-identical, 141/141
+  KCFI, 76/76 imports, 77/77 MODVERSIONs); six stock-proven deltas then gave
+  **141/141 functions byte-identical**, **15/15 export CRCs regenerated
+  naturally**, 2208/2208 relocations, 292/292 strings, 50/50 sections. No CRC
+  injection, no fake symvers, no ELF patch, no `KBUILD_MODPOST_WARN`. The FF-A
+  edge is served by the **real source-built** `//lieppos/ffa-v10`; the 7
+  `TEEC_*` (tkcore) and 9 `KREE_*` (gz_tz_system) edges use those providers'
+  own stock `__kcrctab` records — both providers are genuinely stock at
+  runtime. 76/76 fail-closed verifier
+  (`kernel/scripts/phase4_tmem_ffa_verify.py`). See
+  `kernel/phase4-tmem-ffa-reconstruction.md`.
+
 Likewise, `tkcore_drv` being reconstructed does **not** mark `tkcore`
 reconstructed or source-pure: 5 of its 13 provider edges are still only
 available as stock ELF witnesses (all five are TrustKernel's private-type

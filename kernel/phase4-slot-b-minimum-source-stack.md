@@ -177,6 +177,8 @@ unresolved reconstruction.
 | `tkcore` | STOCK_TRANSITION | no source anywhere; `P0`; **PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER**, blocked on original TrustKernel private headers |
 | `tkcore_drv` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | closed 2026-09-13 with `SOURCE_NOW_WITH_PROVIDER_WITNESSES` (now 8 NATURAL/5 STOCK_PROVIDER_WITNESS after the `ffa_v10` closure); still runs against stock `tkcore` |
 | `ffa_v10` | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** | closed 2026-09-13; exact MediaTek vendor source, 34/34 byte-identical, 5/5 export CRCs natural, 49/49 verifier |
+| `tmem_ffa` | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** | closed 2026-09-13; same pinned vendor revision/directory as `ffa_v10`; 141/141 byte-identical, 15/15 export CRCs natural, 76/76 verifier; runs against stock `tkcore` (7 `TEEC_*`) and stock `gz_tz_system` (9 `KREE_*`) |
+| `gz_tz_system` | STOCK_TRANSITION | GenieZone KREE provider for `tmem_ffa`; vendor source exists at the pinned revision but is **not reconstructed**; explicitly declared provider boundary |
 | `microarray_fp_tee` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | behavior frozen; 65 natural ABI edges after real source-built SPI provider; still uses stock runtime tkcore |
 | `yft_devinfo` | STOCK_TRANSITION | ABI pin, §B.2 |
 | `spi_tiny_co5300_lcd` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | rear display; exact rebuilt-Hynitron plus stock-YFT provider ABI; 30/30 verifier; `P3` |
