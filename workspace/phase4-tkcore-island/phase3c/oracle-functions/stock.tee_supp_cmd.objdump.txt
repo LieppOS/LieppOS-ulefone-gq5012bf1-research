@@ -1,0 +1,103 @@
+00000000000066a4 <tee_supp_cmd>:
+    66a4: d503233f     	paciasp
+    66a8: a9bc7bfd     	stp	x29, x30, [sp, #-0x40]!
+    66ac: f9000bf7     	str	x23, [sp, #0x10]
+    66b0: a90257f6     	stp	x22, x21, [sp, #0x20]
+    66b4: a9034ff4     	stp	x20, x19, [sp, #0x30]
+    66b8: 910003fd     	mov	x29, sp
+    66bc: aa0203f3     	mov	x19, x2
+    66c0: 52820028     	mov	w8, #0x1001             // =4097
+    66c4: 6b08003f     	cmp	w1, w8
+    66c8: 540001e0     	b.eq	0x6704 <tee_supp_cmd+0x60>
+    66cc: 52820048     	mov	w8, #0x1002             // =4098
+    66d0: 6b08003f     	cmp	w1, w8
+    66d4: 54000360     	b.eq	0x6740 <tee_supp_cmd+0x9c>
+    66d8: 52820068     	mov	w8, #0x1003             // =4099
+    66dc: 6b08003f     	cmp	w1, w8
+    66e0: 540000e1     	b.ne	0x66fc <tee_supp_cmd+0x58>
+    66e4: f9405815     	ldr	x21, [x0, #0xb0]
+    66e8: b941d2a8     	ldr	w8, [x21, #0x1d0]
+    66ec: 340007a8     	cbz	w8, 0x67e0 <tee_supp_cmd+0x13c>
+    66f0: aa0303f4     	mov	x20, x3
+    66f4: f102207f     	cmp	x3, #0x88
+    66f8: 540002c9     	b.ls	0x6750 <tee_supp_cmd+0xac>
+    66fc: 52800034     	mov	w20, #0x1               // =1
+    6700: 14000031     	b	0x67c4 <tee_supp_cmd+0x120>
+    6704: b9400275     	ldr	w21, [x19]
+    6708: 2a1f03e2     	mov	w2, wzr
+    670c: a900fe7f     	stp	xzr, xzr, [x19, #0x8]
+    6710: f900027f     	str	xzr, [x19]
+    6714: aa1503e1     	mov	x1, x21
+    6718: 94000000     	bl	0x6718 <tee_supp_cmd+0x74>
+		0000000000006718:  R_AARCH64_CALL26	tee_shm_alloc_from_rpc
+    671c: 52800034     	mov	w20, #0x1               // =1
+    6720: b4000520     	cbz	x0, 0x67c4 <tee_supp_cmd+0x120>
+    6724: b140041f     	cmn	x0, #0x1, lsl #12       // =0x1000
+    6728: 540004e8     	b.hi	0x67c4 <tee_supp_cmd+0x120>
+    672c: b9000275     	str	w21, [x19]
+    6730: 2a1f03f4     	mov	w20, wzr
+    6734: f9402408     	ldr	x8, [x0, #0x48]
+    6738: a9008268     	stp	x8, x0, [x19, #0x8]
+    673c: 14000022     	b	0x67c4 <tee_supp_cmd+0x120>
+    6740: f9400260     	ldr	x0, [x19]
+    6744: 94000000     	bl	0x6744 <tee_supp_cmd+0xa0>
+		0000000000006744:  R_AARCH64_CALL26	tee_shm_free_from_rpc
+    6748: 2a1f03f4     	mov	w20, wzr
+    674c: 1400001e     	b	0x67c4 <tee_supp_cmd+0x120>
+    6750: 910502b6     	add	x22, x21, #0x140
+    6754: aa1603e0     	mov	x0, x22
+    6758: 94000000     	bl	0x6758 <tee_supp_cmd+0xb4>
+		0000000000006758:  R_AARCH64_CALL26	mutex_lock
+    675c: 9105c2b7     	add	x23, x21, #0x170
+    6760: aa1703e0     	mov	x0, x23
+    6764: 94000000     	bl	0x6764 <tee_supp_cmd+0xc0>
+		0000000000006764:  R_AARCH64_CALL26	mutex_lock
+    6768: aa1503e0     	mov	x0, x21
+    676c: aa1303e1     	mov	x1, x19
+    6770: aa1403e2     	mov	x2, x20
+    6774: b901d6bf     	str	wzr, [x21, #0x1d4]
+    6778: 94000000     	bl	0x6778 <tee_supp_cmd+0xd4>
+		0000000000006778:  R_AARCH64_CALL26	memcpy
+    677c: aa1703e0     	mov	x0, x23
+    6780: 94000000     	bl	0x6780 <tee_supp_cmd+0xdc>
+		0000000000006780:  R_AARCH64_CALL26	mutex_unlock
+    6784: 910442a0     	add	x0, x21, #0x110
+    6788: 94000000     	bl	0x6788 <tee_supp_cmd+0xe4>
+		0000000000006788:  R_AARCH64_CALL26	up
+    678c: 9104a2a0     	add	x0, x21, #0x128
+    6790: 94000000     	bl	0x6790 <tee_supp_cmd+0xec>
+		0000000000006790:  R_AARCH64_CALL26	down
+    6794: 910682b7     	add	x23, x21, #0x1a0
+    6798: aa1703e0     	mov	x0, x23
+    679c: 94000000     	bl	0x679c <tee_supp_cmd+0xf8>
+		000000000000679c:  R_AARCH64_CALL26	mutex_lock
+    67a0: 910222a1     	add	x1, x21, #0x88
+    67a4: aa1303e0     	mov	x0, x19
+    67a8: aa1403e2     	mov	x2, x20
+    67ac: 94000000     	bl	0x67ac <tee_supp_cmd+0x108>
+		00000000000067ac:  R_AARCH64_CALL26	memcpy
+    67b0: aa1703e0     	mov	x0, x23
+    67b4: 94000000     	bl	0x67b4 <tee_supp_cmd+0x110>
+		00000000000067b4:  R_AARCH64_CALL26	mutex_unlock
+    67b8: aa1603e0     	mov	x0, x22
+    67bc: b941d6b4     	ldr	w20, [x21, #0x1d4]
+    67c0: 94000000     	bl	0x67c0 <tee_supp_cmd+0x11c>
+		00000000000067c0:  R_AARCH64_CALL26	mutex_unlock
+    67c4: 2a1403e0     	mov	w0, w20
+    67c8: a9434ff4     	ldp	x20, x19, [sp, #0x30]
+    67cc: a94257f6     	ldp	x22, x21, [sp, #0x20]
+    67d0: f9400bf7     	ldr	x23, [sp, #0x10]
+    67d4: a8c47bfd     	ldp	x29, x30, [sp], #0x40
+    67d8: d50323bf     	autiasp
+    67dc: d65f03c0     	ret
+    67e0: 90000000     	adrp	x0, 0x6000 <tee_shm_free_io+0x74>
+		00000000000067e0:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x8ed
+    67e4: 91000000     	add	x0, x0, #0x0
+		00000000000067e4:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x8ed
+    67e8: 52820061     	mov	w1, #0x1003             // =4099
+    67ec: 94000000     	bl	0x67ec <tee_supp_cmd+0x148>
+		00000000000067ec:  R_AARCH64_CALL26	_printk
+    67f0: 52800034     	mov	w20, #0x1               // =1
+    67f4: 17fffff4     	b	0x67c4 <tee_supp_cmd+0x120>
+    67f8: f4 e2 66 e8  	.word	0xe866e2f4
+

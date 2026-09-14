@@ -1,0 +1,62 @@
+0000000000007430 <TEEC_InvokeCommand>:
+    7430: d503233f     	paciasp
+    7434: d101c3ff     	sub	sp, sp, #0x70
+    7438: a9047bfd     	stp	x29, x30, [sp, #0x40]
+    743c: f9002bf5     	str	x21, [sp, #0x50]
+    7440: a9064ff4     	stp	x20, x19, [sp, #0x60]
+    7444: 910103fd     	add	x29, sp, #0x40
+    7448: d5384109     	mrs	x9, SP_EL0
+    744c: aa0003e8     	mov	x8, x0
+    7450: f9431d29     	ldr	x9, [x9, #0x638]
+    7454: 129fff20     	mov	w0, #-0xfffa            // =-65530
+    7458: f81f83a9     	stur	x9, [x29, #-0x8]
+    745c: b4000428     	cbz	x8, 0x74e0 <TEEC_InvokeCommand+0xb0>
+    7460: aa0203f4     	mov	x20, x2
+    7464: b40003e2     	cbz	x2, 0x74e0 <TEEC_InvokeCommand+0xb0>
+    7468: aa0303f3     	mov	x19, x3
+    746c: b40003a3     	cbz	x3, 0x74e0 <TEEC_InvokeCommand+0xb0>
+    7470: b9400100     	ldr	w0, [x8]
+    7474: 340002e0     	cbz	w0, 0x74d0 <TEEC_InvokeCommand+0xa0>
+    7478: 2a0103f5     	mov	w21, w1
+    747c: 94000000     	bl	0x747c <TEEC_InvokeCommand+0x4c>
+		000000000000747c:  R_AARCH64_CALL26	tee_core_uuid2ptr
+    7480: b4000280     	cbz	x0, 0x74d0 <TEEC_InvokeCommand+0xa0>
+    7484: d2c00028     	mov	x8, #0x100000000        // =4294967296
+    7488: 12800009     	mov	w9, #-0x1               // =-1
+    748c: 910023e1     	add	x1, sp, #0x8
+    7490: a902fff4     	stp	x20, xzr, [sp, #0x28]
+    7494: a901ffff     	stp	xzr, xzr, [sp, #0x18]
+    7498: f90007e8     	str	x8, [sp, #0x8]
+    749c: b90033ff     	str	wzr, [sp, #0x30]
+    74a0: 290227f5     	stp	w21, w9, [sp, #0x10]
+    74a4: 94000000     	bl	0x74a4 <TEEC_InvokeCommand+0x74>
+		00000000000074a4:  R_AARCH64_CALL26	tee_session_invoke_be
+    74a8: b9400fe8     	ldr	w8, [sp, #0xc]
+    74ac: 34000160     	cbz	w0, 0x74d8 <TEEC_InvokeCommand+0xa8>
+    74b0: b9400be9     	ldr	w9, [sp, #0x8]
+    74b4: 7100011f     	cmp	w8, #0x0
+    74b8: 5280004a     	mov	w10, #0x2               // =2
+    74bc: 1a880148     	csel	w8, w10, w8, eq
+    74c0: 129ffe2a     	mov	w10, #-0xfff2           // =-65522
+    74c4: 7100013f     	cmp	w9, #0x0
+    74c8: 1a890140     	csel	w0, w10, w9, eq
+    74cc: 14000004     	b	0x74dc <TEEC_InvokeCommand+0xac>
+    74d0: 129fff20     	mov	w0, #-0xfffa            // =-65530
+    74d4: 14000003     	b	0x74e0 <TEEC_InvokeCommand+0xb0>
+    74d8: b9400be0     	ldr	w0, [sp, #0x8]
+    74dc: b9000268     	str	w8, [x19]
+    74e0: d5384108     	mrs	x8, SP_EL0
+    74e4: f9431d08     	ldr	x8, [x8, #0x638]
+    74e8: f85f83a9     	ldur	x9, [x29, #-0x8]
+    74ec: eb09011f     	cmp	x8, x9
+    74f0: 540000e1     	b.ne	0x750c <TEEC_InvokeCommand+0xdc>
+    74f4: a9464ff4     	ldp	x20, x19, [sp, #0x60]
+    74f8: a9447bfd     	ldp	x29, x30, [sp, #0x40]
+    74fc: f9402bf5     	ldr	x21, [sp, #0x50]
+    7500: 9101c3ff     	add	sp, sp, #0x70
+    7504: d50323bf     	autiasp
+    7508: d65f03c0     	ret
+    750c: 94000000     	bl	0x750c <TEEC_InvokeCommand+0xdc>
+		000000000000750c:  R_AARCH64_CALL26	__stack_chk_fail
+    7510: 43 92 2c 10  	.word	0x102c9243
+

@@ -1,0 +1,85 @@
+00000000000076a4 <TEEC_InvokeCommand>:
+    76a4: d503233f     	paciasp
+    76a8: d10643ff     	sub	sp, sp, #0x190
+    76ac: a9157bfd     	stp	x29, x30, [sp, #0x150]
+    76b0: f900b3fc     	str	x28, [sp, #0x160]
+    76b4: a91757f6     	stp	x22, x21, [sp, #0x170]
+    76b8: a9184ff4     	stp	x20, x19, [sp, #0x180]
+    76bc: 910543fd     	add	x29, sp, #0x150
+    76c0: d5384108     	mrs	x8, SP_EL0
+    76c4: aa0203f5     	mov	x21, x2
+    76c8: 2a0103f4     	mov	w20, w1
+    76cc: f9431d08     	ldr	x8, [x8, #0x638]
+    76d0: aa0003f6     	mov	x22, x0
+    76d4: 9100c3e0     	add	x0, sp, #0x30
+    76d8: 2a1f03e1     	mov	w1, wzr
+    76dc: 52802302     	mov	w2, #0x118              // =280
+    76e0: aa0303f3     	mov	x19, x3
+    76e4: f81f83a8     	stur	x8, [x29, #-0x8]
+    76e8: 94000000     	bl	0x76e8 <TEEC_InvokeCommand+0x44>
+		00000000000076e8:  R_AARCH64_CALL26	memset
+    76ec: b4000576     	cbz	x22, 0x7798 <TEEC_InvokeCommand+0xf4>
+    76f0: b94002c0     	ldr	w0, [x22]
+    76f4: 34000520     	cbz	w0, 0x7798 <TEEC_InvokeCommand+0xf4>
+    76f8: 94000000     	bl	0x76f8 <TEEC_InvokeCommand+0x54>
+		00000000000076f8:  R_AARCH64_CALL26	tee_core_uuid2ptr
+    76fc: b40003c0     	cbz	x0, 0x7774 <TEEC_InvokeCommand+0xd0>
+    7700: d2c00028     	mov	x8, #0x100000000        // =4294967296
+    7704: f10002bf     	cmp	x21, #0x0
+    7708: 9100c3e9     	add	x9, sp, #0x30
+    770c: 910003e1     	mov	x1, sp
+    7710: 9a950129     	csel	x9, x9, x21, eq
+    7714: a9017fff     	stp	xzr, xzr, [sp, #0x10]
+    7718: f90003e8     	str	x8, [sp]
+    771c: 12800008     	mov	w8, #-0x1               // =-1
+    7720: a9027fe9     	stp	x9, xzr, [sp, #0x20]
+    7724: b9002bff     	str	wzr, [sp, #0x28]
+    7728: 290123f4     	stp	w20, w8, [sp, #0x8]
+    772c: 94000000     	bl	0x772c <TEEC_InvokeCommand+0x88>
+		000000000000772c:  R_AARCH64_CALL26	tee_session_invoke_be
+    7730: 34000180     	cbz	w0, 0x7760 <TEEC_InvokeCommand+0xbc>
+    7734: b40000d3     	cbz	x19, 0x774c <TEEC_InvokeCommand+0xa8>
+    7738: b94007e8     	ldr	w8, [sp, #0x4]
+    773c: 52800049     	mov	w9, #0x2                // =2
+    7740: 7100011f     	cmp	w8, #0x0
+    7744: 1a880128     	csel	w8, w9, w8, eq
+    7748: b9000268     	str	w8, [x19]
+    774c: b94003e8     	ldr	w8, [sp]
+    7750: 129ffe29     	mov	w9, #-0xfff2            // =-65522
+    7754: 7100011f     	cmp	w8, #0x0
+    7758: 1a880120     	csel	w0, w9, w8, eq
+    775c: 14000010     	b	0x779c <TEEC_InvokeCommand+0xf8>
+    7760: b4000073     	cbz	x19, 0x776c <TEEC_InvokeCommand+0xc8>
+    7764: b94007e8     	ldr	w8, [sp, #0x4]
+    7768: b9000268     	str	w8, [x19]
+    776c: b94003e0     	ldr	w0, [sp]
+    7770: 1400000b     	b	0x779c <TEEC_InvokeCommand+0xf8>
+    7774: b94002c1     	ldr	w1, [x22]
+    7778: 90000000     	adrp	x0, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007778:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x6d6
+    777c: 91000000     	add	x0, x0, #0x0
+		000000000000777c:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x6d6
+    7780: 94000000     	bl	0x7780 <TEEC_InvokeCommand+0xdc>
+		0000000000007780:  R_AARCH64_CALL26	_printk
+    7784: b40000b3     	cbz	x19, 0x7798 <TEEC_InvokeCommand+0xf4>
+    7788: 52800048     	mov	w8, #0x2                // =2
+    778c: 129fff20     	mov	w0, #-0xfffa            // =-65530
+    7790: b9000268     	str	w8, [x19]
+    7794: 14000002     	b	0x779c <TEEC_InvokeCommand+0xf8>
+    7798: 129fff20     	mov	w0, #-0xfffa            // =-65530
+    779c: d5384108     	mrs	x8, SP_EL0
+    77a0: f9431d08     	ldr	x8, [x8, #0x638]
+    77a4: f85f83a9     	ldur	x9, [x29, #-0x8]
+    77a8: eb09011f     	cmp	x8, x9
+    77ac: 54000101     	b.ne	0x77cc <TEEC_InvokeCommand+0x128>
+    77b0: a9584ff4     	ldp	x20, x19, [sp, #0x180]
+    77b4: a95757f6     	ldp	x22, x21, [sp, #0x170]
+    77b8: a9557bfd     	ldp	x29, x30, [sp, #0x150]
+    77bc: f940b3fc     	ldr	x28, [sp, #0x160]
+    77c0: 910643ff     	add	sp, sp, #0x190
+    77c4: d50323bf     	autiasp
+    77c8: d65f03c0     	ret
+    77cc: 94000000     	bl	0x77cc <TEEC_InvokeCommand+0x128>
+		00000000000077cc:  R_AARCH64_CALL26	__stack_chk_fail
+    77d0: 43 92 2c 10  	.word	0x102c9243
+

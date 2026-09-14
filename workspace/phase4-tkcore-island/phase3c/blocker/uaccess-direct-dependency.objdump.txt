@@ -1,0 +1,83 @@
+# convert_compat_tee_cmd direct dependency callsite
+
+workspace/phase4-tkcore/oracle/tkcore.ko:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+     790: 39411a89     	ldrb	w9, [x20, #0x46]
+     794: 9101b108     	add	x8, x8, #0x6c
+     798: 37280089     	tbnz	w9, #0x5, 0x7a8 <convert_compat_tee_cmd+0x424>
+     79c: f940028a     	ldr	x10, [x20]
+     7a0: aa0803e9     	mov	x9, x8
+     7a4: 36d0006a     	tbz	w10, #0x1a, 0x7b0 <convert_compat_tee_cmd+0x42c>
+     7a8: d378dd09     	lsl	x9, x8, #8
+     7ac: 8a892109     	and	x9, x8, x9, asr #8
+     7b0: eb15013f     	cmp	x9, x21
+     7b4: 54004702     	b.hs	0x1094 <convert_compat_tee_cmd+0xd10>
+     7b8: 9248f913     	and	x19, x8, #0xff7fffffffffffff
+     7bc: 94000281     	bl	0x11c0 <uaccess_ttbr0_enable>
+     7c0: 2a1f03f6     	mov	w22, wzr
+     7c4: b8000a76     	sttr	w22, [x19]
+     7c8: 94000297     	bl	0x1224 <uaccess_ttbr0_disable>
+     7cc: 35004656     	cbnz	w22, 0x1094 <convert_compat_tee_cmd+0xd10>
+# dependency functions
+
+workspace/phase4-tkcore/oracle/tkcore.ko:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+00000000000011c0 <uaccess_ttbr0_enable>:
+    11c0: 14000013     	b	0x120c <uaccess_ttbr0_enable+0x4c>
+    11c4: d503201f     	nop
+    11c8: d53b4228     	mrs	x8, DAIF
+    11cc: 12190109     	and	w9, w8, #0x80
+    11d0: 35000089     	cbnz	w9, 0x11e0 <uaccess_ttbr0_enable+0x20>
+    11d4: d503201f     	nop
+    11d8: 52800c09     	mov	w9, #0x60               // =96
+    11dc: d50343df     	msr	DAIFSet, #0x3
+    11e0: d5384109     	mrs	x9, SP_EL0
+    11e4: f9400529     	ldr	x9, [x9, #0x8]
+    11e8: d538202a     	mrs	x10, TTBR1_EL1
+    11ec: aa0903eb     	mov	x11, x9
+    11f0: b340bd4b     	bfxil	x11, x10, #0, #48
+    11f4: d518202b     	msr	TTBR1_EL1, x11
+    11f8: d5033fdf     	isb
+    11fc: d5182009     	msr	TTBR0_EL1, x9
+    1200: d5033fdf     	isb
+    1204: d51b4228     	msr	DAIF, x8
+    1208: d65f03c0     	ret
+    120c: 90000008     	adrp	x8, 0x1000 <convert_compat_tee_cmd+0xc7c>
+		000000000000120c:  R_AARCH64_ADR_PREL_PG_HI21	cpu_hwcaps
+    1210: f9400108     	ldr	x8, [x8]
+		0000000000001210:  R_AARCH64_LDST64_ABS_LO12_NC	cpu_hwcaps
+    1214: 37efffa8     	tbnz	w8, #0x1d, 0x1208 <uaccess_ttbr0_enable+0x48>
+    1218: 17ffffec     	b	0x11c8 <uaccess_ttbr0_enable+0x8>
+    121c: 52801409     	mov	w9, #0xa0               // =160
+    1220: 17ffffef     	b	0x11dc <uaccess_ttbr0_enable+0x1c>
+
+0000000000001224 <uaccess_ttbr0_disable>:
+    1224: 14000011     	b	0x1268 <uaccess_ttbr0_disable+0x44>
+    1228: d503201f     	nop
+    122c: d53b4228     	mrs	x8, DAIF
+    1230: 12190109     	and	w9, w8, #0x80
+    1234: 35000089     	cbnz	w9, 0x1244 <uaccess_ttbr0_disable+0x20>
+    1238: d503201f     	nop
+    123c: 52800c09     	mov	w9, #0x60               // =96
+    1240: d50343df     	msr	DAIFSet, #0x3
+    1244: d5382029     	mrs	x9, TTBR1_EL1
+    1248: 9240bd29     	and	x9, x9, #0xffffffffffff
+    124c: d140052a     	sub	x10, x9, #0x1, lsl #12  // =0x1000
+    1250: d518200a     	msr	TTBR0_EL1, x10
+    1254: d5033fdf     	isb
+    1258: d5182029     	msr	TTBR1_EL1, x9
+    125c: d5033fdf     	isb
+    1260: d51b4228     	msr	DAIF, x8
+    1264: d65f03c0     	ret
+    1268: 90000008     	adrp	x8, 0x1000 <convert_compat_tee_cmd+0xc7c>
+		0000000000001268:  R_AARCH64_ADR_PREL_PG_HI21	cpu_hwcaps
+    126c: f9400108     	ldr	x8, [x8]
+		000000000000126c:  R_AARCH64_LDST64_ABS_LO12_NC	cpu_hwcaps
+    1270: 37efffa8     	tbnz	w8, #0x1d, 0x1264 <uaccess_ttbr0_disable+0x40>
+    1274: 17ffffee     	b	0x122c <uaccess_ttbr0_disable+0x8>
+    1278: 52801409     	mov	w9, #0xa0               // =160
+    127c: 17fffff1     	b	0x1240 <uaccess_ttbr0_disable+0x1c>
+    1280: 23 56 ee da  	.word	0xdaee5623

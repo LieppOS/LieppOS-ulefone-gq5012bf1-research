@@ -1,0 +1,58 @@
+0000000000005a10 <tee_shm_alloc_from_rpc>:
+    5a10: d503233f     	paciasp
+    5a14: a9bc7bfd     	stp	x29, x30, [sp, #-0x40]!
+    5a18: f9000bf7     	str	x23, [sp, #0x10]
+    5a1c: a90257f6     	stp	x22, x21, [sp, #0x20]
+    5a20: a9034ff4     	stp	x20, x19, [sp, #0x30]
+    5a24: 910003fd     	mov	x29, sp
+    5a28: 9103e013     	add	x19, x0, #0xf8
+    5a2c: aa0003f5     	mov	x21, x0
+    5a30: aa1303e0     	mov	x0, x19
+    5a34: 2a0203f4     	mov	w20, w2
+    5a38: aa0103f6     	mov	x22, x1
+    5a3c: 94000000     	bl	0x5a3c <tee_shm_alloc_from_rpc+0x2c>
+		0000000000005a3c:  R_AARCH64_CALL26	mutex_lock
+    5a40: 32070682     	orr	w2, w20, #0x6000000
+    5a44: aa1503e0     	mov	x0, x21
+    5a48: aa1603e1     	mov	x1, x22
+    5a4c: 94000000     	bl	0x5a4c <tee_shm_alloc_from_rpc+0x3c>
+		0000000000005a4c:  R_AARCH64_CALL26	tkcore_alloc_shm
+    5a50: aa0003f4     	mov	x20, x0
+    5a54: b4000320     	cbz	x0, 0x5ab8 <tee_shm_alloc_from_rpc+0xa8>
+    5a58: b13ffe9f     	cmn	x20, #0xfff
+    5a5c: 540002e2     	b.hs	0x5ab8 <tee_shm_alloc_from_rpc+0xa8>
+    5a60: 910342a0     	add	x0, x21, #0xd0
+    5a64: 94000000     	bl	0x5a64 <tee_shm_alloc_from_rpc+0x54>
+		0000000000005a64:  R_AARCH64_CALL26	tee_inc_stats
+    5a68: f9407ab6     	ldr	x22, [x21, #0xf0]
+    5a6c: 9103a2b7     	add	x23, x21, #0xe8
+    5a70: aa1403e0     	mov	x0, x20
+    5a74: aa1703e2     	mov	x2, x23
+    5a78: aa1603e1     	mov	x1, x22
+    5a7c: 94000000     	bl	0x5a7c <tee_shm_alloc_from_rpc+0x6c>
+		0000000000005a7c:  R_AARCH64_CALL26	__list_add_valid
+    5a80: 36000080     	tbz	w0, #0x0, 0x5a90 <tee_shm_alloc_from_rpc+0x80>
+    5a84: f9007ab4     	str	x20, [x21, #0xf0]
+    5a88: a9005a97     	stp	x23, x22, [x20]
+    5a8c: f90002d4     	str	x20, [x22]
+    5a90: f9000a9f     	str	xzr, [x20, #0x10]
+    5a94: aa1303e0     	mov	x0, x19
+    5a98: 94000000     	bl	0x5a98 <tee_shm_alloc_from_rpc+0x88>
+		0000000000005a98:  R_AARCH64_CALL26	mutex_unlock
+    5a9c: aa1403e0     	mov	x0, x20
+    5aa0: a9434ff4     	ldp	x20, x19, [sp, #0x30]
+    5aa4: a94257f6     	ldp	x22, x21, [sp, #0x20]
+    5aa8: f9400bf7     	ldr	x23, [sp, #0x10]
+    5aac: a8c47bfd     	ldp	x29, x30, [sp], #0x40
+    5ab0: d50323bf     	autiasp
+    5ab4: d65f03c0     	ret
+    5ab8: 90000000     	adrp	x0, 0x5000 <tee_session_internal_ioctl+0x484>
+		0000000000005ab8:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x4df
+    5abc: 91000000     	add	x0, x0, #0x0
+		0000000000005abc:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x4df
+    5ac0: aa1403e1     	mov	x1, x20
+    5ac4: 94000000     	bl	0x5ac4 <tee_shm_alloc_from_rpc+0xb4>
+		0000000000005ac4:  R_AARCH64_CALL26	_printk
+    5ac8: 17fffff3     	b	0x5a94 <tee_shm_alloc_from_rpc+0x84>
+    5acc: 9f 96 e6 a7  	.word	0xa7e6969f
+

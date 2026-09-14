@@ -1,0 +1,223 @@
+0000000000003a3c <_init_tee_cmd>:
+    3a3c: d503233f     	paciasp
+    3a40: d10683ff     	sub	sp, sp, #0x1a0
+    3a44: a9147bfd     	stp	x29, x30, [sp, #0x140]
+    3a48: a9156ffc     	stp	x28, x27, [sp, #0x150]
+    3a4c: a91667fa     	stp	x26, x25, [sp, #0x160]
+    3a50: a9175ff8     	stp	x24, x23, [sp, #0x170]
+    3a54: a91857f6     	stp	x22, x21, [sp, #0x180]
+    3a58: a9194ff4     	stp	x20, x19, [sp, #0x190]
+    3a5c: 910503fd     	add	x29, sp, #0x140
+    3a60: d5384108     	mrs	x8, SP_EL0
+    3a64: aa0203f3     	mov	x19, x2
+    3a68: aa0103f5     	mov	x21, x1
+    3a6c: f9431d08     	ldr	x8, [x8, #0x638]
+    3a70: aa0003f4     	mov	x20, x0
+    3a74: 910063e0     	add	x0, sp, #0x18
+    3a78: 2a1f03e1     	mov	w1, wzr
+    3a7c: 52802302     	mov	w2, #0x118              // =280
+    3a80: f81f03a8     	stur	x8, [x29, #-0x10]
+    3a84: 94000000     	bl	0x3a84 <_init_tee_cmd+0x48>
+		0000000000003a84:  R_AARCH64_CALL26	memset
+    3a88: f9400a96     	ldr	x22, [x20, #0x10]
+    3a8c: f9000bf4     	str	x20, [sp, #0x10]
+    3a90: b40015d6     	cbz	x22, 0x3d48 <_init_tee_cmd+0x30c>
+    3a94: f94002c8     	ldr	x8, [x22]
+    3a98: b40015e8     	cbz	x8, 0x3d54 <_init_tee_cmd+0x318>
+    3a9c: a90f7e7f     	stp	xzr, xzr, [x19, #0xf0]
+    3aa0: b27047e9     	mov	x9, #0x3ffff0000        // =17179803648
+    3aa4: a90e7e7f     	stp	xzr, xzr, [x19, #0xe0]
+    3aa8: f28000c9     	movk	x9, #0x6
+    3aac: a90d7e7f     	stp	xzr, xzr, [x19, #0xd0]
+    3ab0: 5280006a     	mov	w10, #0x3               // =3
+    3ab4: a90c7e7f     	stp	xzr, xzr, [x19, #0xc0]
+    3ab8: 910063e1     	add	x1, sp, #0x18
+    3abc: a90b7e7f     	stp	xzr, xzr, [x19, #0xb0]
+    3ac0: aa1603e0     	mov	x0, x22
+    3ac4: a90a7e7f     	stp	xzr, xzr, [x19, #0xa0]
+    3ac8: 52802303     	mov	w3, #0x118              // =280
+    3acc: a9097e7f     	stp	xzr, xzr, [x19, #0x90]
+    3ad0: a9087e7f     	stp	xzr, xzr, [x19, #0x80]
+    3ad4: a9077e7f     	stp	xzr, xzr, [x19, #0x70]
+    3ad8: a9067e7f     	stp	xzr, xzr, [x19, #0x60]
+    3adc: a9057e7f     	stp	xzr, xzr, [x19, #0x50]
+    3ae0: a9047e7f     	stp	xzr, xzr, [x19, #0x40]
+    3ae4: a9037e7f     	stp	xzr, xzr, [x19, #0x30]
+    3ae8: a9027e7f     	stp	xzr, xzr, [x19, #0x20]
+    3aec: a9017e7f     	stp	xzr, xzr, [x19, #0x10]
+    3af0: a9007e7f     	stp	xzr, xzr, [x19]
+    3af4: b9400aa8     	ldr	w8, [x21, #0x8]
+    3af8: f9000269     	str	x9, [x19]
+    3afc: f90007f5     	str	x21, [sp, #0x8]
+    3b00: b9000a68     	str	w8, [x19, #0x8]
+    3b04: b90006aa     	str	w10, [x21, #0x4]
+    3b08: f94012a2     	ldr	x2, [x21, #0x20]
+    3b0c: b9400268     	ldr	w8, [x19]
+    3b10: b90002a8     	str	w8, [x21]
+    3b14: 910063f5     	add	x21, sp, #0x18
+    3b18: 94000000     	bl	0x3b18 <_init_tee_cmd+0xdc>
+		0000000000003b18:  R_AARCH64_CALL26	tee_context_copy_from_client
+    3b1c: 34000260     	cbz	w0, 0x3b68 <_init_tee_cmd+0x12c>
+    3b20: f9400be0     	ldr	x0, [sp, #0x10]
+    3b24: aa1303e1     	mov	x1, x19
+    3b28: 9400022c     	bl	0x43d8 <_release_tee_cmd>
+    3b2c: 128002a0     	mov	w0, #-0x16              // =-22
+    3b30: d5384108     	mrs	x8, SP_EL0
+    3b34: f9431d08     	ldr	x8, [x8, #0x638]
+    3b38: f85f03a9     	ldur	x9, [x29, #-0x10]
+    3b3c: eb09011f     	cmp	x8, x9
+    3b40: 54001101     	b.ne	0x3d60 <_init_tee_cmd+0x324>
+    3b44: a9594ff4     	ldp	x20, x19, [sp, #0x190]
+    3b48: a95857f6     	ldp	x22, x21, [sp, #0x180]
+    3b4c: a9575ff8     	ldp	x24, x23, [sp, #0x170]
+    3b50: a95667fa     	ldp	x26, x25, [sp, #0x160]
+    3b54: a9556ffc     	ldp	x28, x27, [sp, #0x150]
+    3b58: a9547bfd     	ldp	x29, x30, [sp, #0x140]
+    3b5c: 910683ff     	add	sp, sp, #0x1a0
+    3b60: d50323bf     	autiasp
+    3b64: d65f03c0     	ret
+    3b68: aa1f03fc     	mov	x28, xzr
+    3b6c: 2a1f03f4     	mov	w20, wzr
+    3b70: b9401fe8     	ldr	w8, [sp, #0x1c]
+    3b74: 910042bb     	add	x27, x21, #0x10
+    3b78: 52801915     	mov	w21, #0xc8              // =200
+    3b7c: 90000018     	adrp	x24, 0x3000 <big_core_affinity_get_candidate_cpu+0x3c0>
+		0000000000003b7c:  R_AARCH64_ADR_PREL_PG_HI21	.rodata+0x248
+    3b80: 91000318     	add	x24, x24, #0x0
+		0000000000003b80:  R_AARCH64_ADD_ABS_LO12_NC	.rodata+0x248
+    3b84: b9002668     	str	w8, [x19, #0x24]
+    3b88: 1400000d     	b	0x3bbc <_init_tee_cmd+0x180>
+    3b8c: f85f8368     	ldur	x8, [x27, #-0x8]
+    3b90: f8356a68     	str	x8, [x19, x21]
+    3b94: b9402268     	ldr	w8, [x19, #0x20]
+    3b98: 1ad422e9     	lsl	w9, w23, w20
+    3b9c: 11001294     	add	w20, w20, #0x4
+    3ba0: 9100637b     	add	x27, x27, #0x18
+    3ba4: 910022b5     	add	x21, x21, #0x8
+    3ba8: 9100a39c     	add	x28, x28, #0x28
+    3bac: 2a090108     	orr	w8, w8, w9
+    3bb0: f102839f     	cmp	x28, #0xa0
+    3bb4: b9002268     	str	w8, [x19, #0x20]
+    3bb8: 540009a0     	b.eq	0x3cec <_init_tee_cmd+0x2b0>
+    3bbc: b9401fe8     	ldr	w8, [sp, #0x1c]
+    3bc0: 1ad42508     	lsr	w8, w8, w20
+    3bc4: 12000d17     	and	w23, w8, #0xf
+    3bc8: 71003eff     	cmp	w23, #0xf
+    3bcc: 54000568     	b.hi	0x3c78 <_init_tee_cmd+0x23c>
+    3bd0: 10000008     	adr	x8, 0x3bd0 <_init_tee_cmd+0x194>
+    3bd4: b8b77b09     	ldrsw	x9, [x24, x23, lsl #2]
+    3bd8: 8b090108     	add	x8, x8, x9
+    3bdc: d61f0100     	br	x8
+    3be0: 8b1c0268     	add	x8, x19, x28
+    3be4: f85f8362     	ldur	x2, [x27, #-0x8]
+    3be8: 9100a118     	add	x24, x8, #0x28
+    3bec: aa1603e0     	mov	x0, x22
+    3bf0: aa1803e1     	mov	x1, x24
+    3bf4: 52800503     	mov	w3, #0x28               // =40
+    3bf8: 940005d4     	bl	0x5348 <tee_copy_from_user>
+    3bfc: 35fff920     	cbnz	w0, 0x3b20 <_init_tee_cmd+0xe4>
+    3c00: 710032ff     	cmp	w23, #0xc
+    3c04: 54000181     	b.ne	0x3c34 <_init_tee_cmd+0x1f8>
+    3c08: 8b1c0268     	add	x8, x19, x28
+    3c0c: 2a1f03f9     	mov	w25, wzr
+    3c10: b9403102     	ldr	w2, [x8, #0x30]
+    3c14: 1400000e     	b	0x3c4c <_init_tee_cmd+0x210>
+    3c18: a97f8762     	ldp	x2, x1, [x27, #-0x8]
+    3c1c: aa1603e0     	mov	x0, x22
+    3c20: 2a1703e3     	mov	w3, w23
+    3c24: 94000000     	bl	0x3c24 <_init_tee_cmd+0x1e8>
+		0000000000003c24:  R_AARCH64_CALL26	tee_context_create_tmpref_buffer
+    3c28: f8356a60     	str	x0, [x19, x21]
+    3c2c: b50005a0     	cbnz	x0, 0x3ce0 <_init_tee_cmd+0x2a4>
+    3c30: 17ffffbc     	b	0x3b20 <_init_tee_cmd+0xe4>
+    3c34: 8b1c0268     	add	x8, x19, x28
+    3c38: a9406762     	ldp	x2, x25, [x27]
+    3c3c: f9401901     	ldr	x1, [x8, #0x30]
+    3c40: 0b190048     	add	w8, w2, w25
+    3c44: eb08003f     	cmp	x1, x8
+    3c48: 540006e3     	b.lo	0x3d24 <_init_tee_cmd+0x2e8>
+    3c4c: 8b1c0268     	add	x8, x19, x28
+    3c50: b9403901     	ldr	w1, [x8, #0x38]
+    3c54: 52800068     	mov	w8, #0x3                // =3
+    3c58: 6a21011f     	bics	wzr, w8, w1
+    3c5c: 54000061     	b.ne	0x3c68 <_init_tee_cmd+0x22c>
+    3c60: 528000f7     	mov	w23, #0x7               // =7
+    3c64: 14000008     	b	0x3c84 <_init_tee_cmd+0x248>
+    3c68: 370000c1     	tbnz	w1, #0x0, 0x3c80 <_init_tee_cmd+0x244>
+    3c6c: 36080661     	tbz	w1, #0x1, 0x3d38 <_init_tee_cmd+0x2fc>
+    3c70: 528000d7     	mov	w23, #0x6               // =6
+    3c74: 14000004     	b	0x3c84 <_init_tee_cmd+0x248>
+    3c78: d4210000     	brk	#0x800
+    3c7c: 17ffffc6     	b	0x3b94 <_init_tee_cmd+0x158>
+    3c80: 528000b7     	mov	w23, #0x5               // =5
+    3c84: 92407c5a     	and	x26, x2, #0xffffffff
+    3c88: aa1603e0     	mov	x0, x22
+    3c8c: aa1803e1     	mov	x1, x24
+    3c90: aa1a03e2     	mov	x2, x26
+    3c94: 2a1903e3     	mov	w3, w25
+    3c98: 94000000     	bl	0x3c98 <_init_tee_cmd+0x25c>
+		0000000000003c98:  R_AARCH64_CALL26	tkcore_shm_get
+    3c9c: f8356a60     	str	x0, [x19, x21]
+    3ca0: b40000c0     	cbz	x0, 0x3cb8 <_init_tee_cmd+0x27c>
+    3ca4: b13ffc1f     	cmn	x0, #0xfff
+    3ca8: 54000082     	b.hs	0x3cb8 <_init_tee_cmd+0x27c>
+    3cac: 90000018     	adrp	x24, 0x3000 <big_core_affinity_get_candidate_cpu+0x3c0>
+		0000000000003cac:  R_AARCH64_ADR_PREL_PG_HI21	.rodata+0x248
+    3cb0: 91000318     	add	x24, x24, #0x0
+		0000000000003cb0:  R_AARCH64_ADD_ABS_LO12_NC	.rodata+0x248
+    3cb4: 17ffffb8     	b	0x3b94 <_init_tee_cmd+0x158>
+    3cb8: f9400308     	ldr	x8, [x24]
+    3cbc: aa1603e0     	mov	x0, x22
+    3cc0: aa1a03e1     	mov	x1, x26
+    3cc4: 2a1703e3     	mov	w3, w23
+    3cc8: 8b394102     	add	x2, x8, w25, uxtw
+    3ccc: 94000000     	bl	0x3ccc <_init_tee_cmd+0x290>
+		0000000000003ccc:  R_AARCH64_CALL26	tee_context_create_tmpref_buffer
+    3cd0: 90000018     	adrp	x24, 0x3000 <big_core_affinity_get_candidate_cpu+0x3c0>
+		0000000000003cd0:  R_AARCH64_ADR_PREL_PG_HI21	.rodata+0x248
+    3cd4: 91000318     	add	x24, x24, #0x0
+		0000000000003cd4:  R_AARCH64_ADD_ABS_LO12_NC	.rodata+0x248
+    3cd8: f8356a60     	str	x0, [x19, x21]
+    3cdc: b4fff220     	cbz	x0, 0x3b20 <_init_tee_cmd+0xe4>
+    3ce0: b140041f     	cmn	x0, #0x1, lsl #12       // =0x1000
+    3ce4: 54fff589     	b.ls	0x3b94 <_init_tee_cmd+0x158>
+    3ce8: 17ffff8e     	b	0x3b20 <_init_tee_cmd+0xe4>
+    3cec: f94007e8     	ldr	x8, [sp, #0x8]
+    3cf0: f9400902     	ldr	x2, [x8, #0x10]
+    3cf4: b4000142     	cbz	x2, 0x3d1c <_init_tee_cmd+0x2e0>
+    3cf8: f9400be8     	ldr	x8, [sp, #0x10]
+    3cfc: 52800201     	mov	w1, #0x10               // =16
+    3d00: 52800023     	mov	w3, #0x1                // =1
+    3d04: f9400900     	ldr	x0, [x8, #0x10]
+    3d08: 94000000     	bl	0x3d08 <_init_tee_cmd+0x2cc>
+		0000000000003d08:  R_AARCH64_CALL26	tee_context_alloc_shm_tmp
+    3d0c: f9000a60     	str	x0, [x19, #0x10]
+    3d10: b4fff080     	cbz	x0, 0x3b20 <_init_tee_cmd+0xe4>
+    3d14: b13ffc1f     	cmn	x0, #0xfff
+    3d18: 54fff042     	b.hs	0x3b20 <_init_tee_cmd+0xe4>
+    3d1c: 2a1f03e0     	mov	w0, wzr
+    3d20: 17ffff84     	b	0x3b30 <_init_tee_cmd+0xf4>
+    3d24: 90000000     	adrp	x0, 0x3000 <big_core_affinity_get_candidate_cpu+0x3c0>
+		0000000000003d24:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xe93
+    3d28: 91000000     	add	x0, x0, #0x0
+		0000000000003d28:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xe93
+    3d2c: 2a1903e3     	mov	w3, w25
+    3d30: 94000000     	bl	0x3d30 <_init_tee_cmd+0x2f4>
+		0000000000003d30:  R_AARCH64_CALL26	_printk
+    3d34: 17ffff7b     	b	0x3b20 <_init_tee_cmd+0xe4>
+    3d38: 90000000     	adrp	x0, 0x3000 <big_core_affinity_get_candidate_cpu+0x3c0>
+		0000000000003d38:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xcf8
+    3d3c: 91000000     	add	x0, x0, #0x0
+		0000000000003d3c:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xcf8
+    3d40: 94000000     	bl	0x3d40 <_init_tee_cmd+0x304>
+		0000000000003d40:  R_AARCH64_CALL26	_printk
+    3d44: 17ffff77     	b	0x3b20 <_init_tee_cmd+0xe4>
+    3d48: 128002a0     	mov	w0, #-0x16              // =-22
+    3d4c: d4210000     	brk	#0x800
+    3d50: 17ffff78     	b	0x3b30 <_init_tee_cmd+0xf4>
+    3d54: 128002a0     	mov	w0, #-0x16              // =-22
+    3d58: d4210000     	brk	#0x800
+    3d5c: 17ffff75     	b	0x3b30 <_init_tee_cmd+0xf4>
+    3d60: 94000000     	bl	0x3d60 <_init_tee_cmd+0x324>
+		0000000000003d60:  R_AARCH64_CALL26	__stack_chk_fail
+

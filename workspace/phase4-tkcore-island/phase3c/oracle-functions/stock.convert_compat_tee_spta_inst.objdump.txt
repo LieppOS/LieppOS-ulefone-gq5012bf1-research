@@ -1,0 +1,140 @@
+000000000000139c <convert_compat_tee_spta_inst>:
+    139c: b4000ce0     	cbz	x0, 0x1538 <convert_compat_tee_spta_inst+0x19c>
+    13a0: d5384108     	mrs	x8, SP_EL0
+    13a4: 39411909     	ldrb	w9, [x8, #0x46]
+    13a8: 9100100a     	add	x10, x0, #0x4
+    13ac: 37280089     	tbnz	w9, #0x5, 0x13bc <convert_compat_tee_spta_inst+0x20>
+    13b0: f9400109     	ldr	x9, [x8]
+    13b4: aa0a03eb     	mov	x11, x10
+    13b8: 36d00069     	tbz	w9, #0x1a, 0x13c4 <convert_compat_tee_spta_inst+0x28>
+    13bc: d378dd49     	lsl	x9, x10, #8
+    13c0: 8a89214b     	and	x11, x10, x9, asr #8
+    13c4: b2705be9     	mov	x9, #0x7fffff0000       // =549755748352
+    13c8: f29fffa9     	movk	x9, #0xfffd
+    13cc: eb09017f     	cmp	x11, x9
+    13d0: 54000b02     	b.hs	0x1530 <convert_compat_tee_spta_inst+0x194>
+    13d4: 9248f94a     	and	x10, x10, #0xff7fffffffffffff
+    13d8: 1400005a     	b	0x1540 <convert_compat_tee_spta_inst+0x1a4>
+    13dc: d503201f     	nop
+    13e0: d53b422b     	mrs	x11, DAIF
+    13e4: 1219016c     	and	w12, w11, #0x80
+    13e8: 3500008c     	cbnz	w12, 0x13f8 <convert_compat_tee_spta_inst+0x5c>
+    13ec: d503201f     	nop
+    13f0: 52800c0c     	mov	w12, #0x60              // =96
+    13f4: d50343df     	msr	DAIFSet, #0x3
+    13f8: f940050c     	ldr	x12, [x8, #0x8]
+    13fc: d538202d     	mrs	x13, TTBR1_EL1
+    1400: aa0c03ee     	mov	x14, x12
+    1404: b340bdae     	bfxil	x14, x13, #0, #48
+    1408: d518202e     	msr	TTBR1_EL1, x14
+    140c: d5033fdf     	isb
+    1410: d518200c     	msr	TTBR0_EL1, x12
+    1414: d5033fdf     	isb
+    1418: d51b422b     	msr	DAIF, x11
+    141c: 2a1f03eb     	mov	w11, wzr
+    1420: b800094b     	sttr	w11, [x10]
+    1424: 1400004b     	b	0x1550 <convert_compat_tee_spta_inst+0x1b4>
+    1428: d503201f     	nop
+    142c: d53b422a     	mrs	x10, DAIF
+    1430: 1219014c     	and	w12, w10, #0x80
+    1434: 3500008c     	cbnz	w12, 0x1444 <convert_compat_tee_spta_inst+0xa8>
+    1438: d503201f     	nop
+    143c: 52800c0c     	mov	w12, #0x60              // =96
+    1440: d50343df     	msr	DAIFSet, #0x3
+    1444: d538202c     	mrs	x12, TTBR1_EL1
+    1448: 9240bd8c     	and	x12, x12, #0xffffffffffff
+    144c: d140058d     	sub	x13, x12, #0x1, lsl #12 // =0x1000
+    1450: d518200d     	msr	TTBR0_EL1, x13
+    1454: d5033fdf     	isb
+    1458: d518202c     	msr	TTBR1_EL1, x12
+    145c: d5033fdf     	isb
+    1460: d51b422a     	msr	DAIF, x10
+    1464: 3500066b     	cbnz	w11, 0x1530 <convert_compat_tee_spta_inst+0x194>
+    1468: 3941190b     	ldrb	w11, [x8, #0x46]
+    146c: 9100500a     	add	x10, x0, #0x14
+    1470: 3728008b     	tbnz	w11, #0x5, 0x1480 <convert_compat_tee_spta_inst+0xe4>
+    1474: f940010c     	ldr	x12, [x8]
+    1478: aa0a03eb     	mov	x11, x10
+    147c: 36d0006c     	tbz	w12, #0x1a, 0x1488 <convert_compat_tee_spta_inst+0xec>
+    1480: d378dd4b     	lsl	x11, x10, #8
+    1484: 8a8b214b     	and	x11, x10, x11, asr #8
+    1488: eb09017f     	cmp	x11, x9
+    148c: 54000522     	b.hs	0x1530 <convert_compat_tee_spta_inst+0x194>
+    1490: 9248f949     	and	x9, x10, #0xff7fffffffffffff
+    1494: 14000033     	b	0x1560 <convert_compat_tee_spta_inst+0x1c4>
+    1498: d503201f     	nop
+    149c: d53b422a     	mrs	x10, DAIF
+    14a0: 1219014b     	and	w11, w10, #0x80
+    14a4: 3500008b     	cbnz	w11, 0x14b4 <convert_compat_tee_spta_inst+0x118>
+    14a8: d503201f     	nop
+    14ac: 52800c0b     	mov	w11, #0x60              // =96
+    14b0: d50343df     	msr	DAIFSet, #0x3
+    14b4: f9400508     	ldr	x8, [x8, #0x8]
+    14b8: d538202b     	mrs	x11, TTBR1_EL1
+    14bc: aa0803ec     	mov	x12, x8
+    14c0: b340bd6c     	bfxil	x12, x11, #0, #48
+    14c4: d518202c     	msr	TTBR1_EL1, x12
+    14c8: d5033fdf     	isb
+    14cc: d5182008     	msr	TTBR0_EL1, x8
+    14d0: d5033fdf     	isb
+    14d4: d51b422a     	msr	DAIF, x10
+    14d8: 2a1f03e8     	mov	w8, wzr
+    14dc: b8000928     	sttr	w8, [x9]
+    14e0: 14000024     	b	0x1570 <convert_compat_tee_spta_inst+0x1d4>
+    14e4: d503201f     	nop
+    14e8: d53b4229     	mrs	x9, DAIF
+    14ec: 1219012a     	and	w10, w9, #0x80
+    14f0: 3500008a     	cbnz	w10, 0x1500 <convert_compat_tee_spta_inst+0x164>
+    14f4: d503201f     	nop
+    14f8: 52800c0a     	mov	w10, #0x60              // =96
+    14fc: d50343df     	msr	DAIFSet, #0x3
+    1500: d538202a     	mrs	x10, TTBR1_EL1
+    1504: 9240bd4a     	and	x10, x10, #0xffffffffffff
+    1508: d140054b     	sub	x11, x10, #0x1, lsl #12 // =0x1000
+    150c: d518200b     	msr	TTBR0_EL1, x11
+    1510: d5033fdf     	isb
+    1514: d518202a     	msr	TTBR1_EL1, x10
+    1518: d5033fdf     	isb
+    151c: d51b4229     	msr	DAIF, x9
+    1520: 7100011f     	cmp	w8, #0x0
+    1524: 128001a8     	mov	w8, #-0xe               // =-14
+    1528: 1a8803e0     	csel	w0, wzr, w8, eq
+    152c: d65f03c0     	ret
+    1530: 128001a0     	mov	w0, #-0xe               // =-14
+    1534: d65f03c0     	ret
+    1538: 128002a0     	mov	w0, #-0x16              // =-22
+    153c: d65f03c0     	ret
+    1540: 9000000b     	adrp	x11, 0x1000 <convert_compat_tee_cmd+0xc7c>
+		0000000000001540:  R_AARCH64_ADR_PREL_PG_HI21	cpu_hwcaps
+    1544: f940016b     	ldr	x11, [x11]
+		0000000000001544:  R_AARCH64_LDST64_ABS_LO12_NC	cpu_hwcaps
+    1548: 37eff6ab     	tbnz	w11, #0x1d, 0x141c <convert_compat_tee_spta_inst+0x80>
+    154c: 17ffffa5     	b	0x13e0 <convert_compat_tee_spta_inst+0x44>
+    1550: 9000000a     	adrp	x10, 0x1000 <convert_compat_tee_cmd+0xc7c>
+		0000000000001550:  R_AARCH64_ADR_PREL_PG_HI21	cpu_hwcaps
+    1554: f940014a     	ldr	x10, [x10]
+		0000000000001554:  R_AARCH64_LDST64_ABS_LO12_NC	cpu_hwcaps
+    1558: 37eff86a     	tbnz	w10, #0x1d, 0x1464 <convert_compat_tee_spta_inst+0xc8>
+    155c: 17ffffb4     	b	0x142c <convert_compat_tee_spta_inst+0x90>
+    1560: 9000000a     	adrp	x10, 0x1000 <convert_compat_tee_cmd+0xc7c>
+		0000000000001560:  R_AARCH64_ADR_PREL_PG_HI21	cpu_hwcaps
+    1564: f940014a     	ldr	x10, [x10]
+		0000000000001564:  R_AARCH64_LDST64_ABS_LO12_NC	cpu_hwcaps
+    1568: 37effb8a     	tbnz	w10, #0x1d, 0x14d8 <convert_compat_tee_spta_inst+0x13c>
+    156c: 17ffffcc     	b	0x149c <convert_compat_tee_spta_inst+0x100>
+    1570: 90000009     	adrp	x9, 0x1000 <convert_compat_tee_cmd+0xc7c>
+		0000000000001570:  R_AARCH64_ADR_PREL_PG_HI21	cpu_hwcaps
+    1574: f9400129     	ldr	x9, [x9]
+		0000000000001574:  R_AARCH64_LDST64_ABS_LO12_NC	cpu_hwcaps
+    1578: 37effd49     	tbnz	w9, #0x1d, 0x1520 <convert_compat_tee_spta_inst+0x184>
+    157c: 17ffffdb     	b	0x14e8 <convert_compat_tee_spta_inst+0x14c>
+    1580: 5280140c     	mov	w12, #0xa0              // =160
+    1584: 17ffff9c     	b	0x13f4 <convert_compat_tee_spta_inst+0x58>
+    1588: 5280140c     	mov	w12, #0xa0              // =160
+    158c: 17ffffad     	b	0x1440 <convert_compat_tee_spta_inst+0xa4>
+    1590: 5280140b     	mov	w11, #0xa0              // =160
+    1594: 17ffffc7     	b	0x14b0 <convert_compat_tee_spta_inst+0x114>
+    1598: 5280140a     	mov	w10, #0xa0              // =160
+    159c: 17ffffd8     	b	0x14fc <convert_compat_tee_spta_inst+0x160>
+    15a0: cd 08 14 e0  	.word	0xe01408cd
+

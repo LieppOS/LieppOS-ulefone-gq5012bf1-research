@@ -1,0 +1,19 @@
+00000000000015a4 <tee_ioctl>:
+    15a4: d503233f     	paciasp
+    15a8: a9bf7bfd     	stp	x29, x30, [sp, #-0x10]!
+    15ac: 910003fd     	mov	x29, sp
+    15b0: f9406c00     	ldr	x0, [x0, #0xd8]
+    15b4: b40000e0     	cbz	x0, 0x15d0 <tee_ioctl+0x2c>
+    15b8: f9400008     	ldr	x8, [x0]
+    15bc: b4000108     	cbz	x8, 0x15dc <tee_ioctl+0x38>
+    15c0: 94000263     	bl	0x1f4c <tee_internal_ioctl>
+    15c4: a8c17bfd     	ldp	x29, x30, [sp], #0x10
+    15c8: d50323bf     	autiasp
+    15cc: d65f03c0     	ret
+    15d0: d4210000     	brk	#0x800
+    15d4: f9400008     	ldr	x8, [x0]
+    15d8: b5ffff48     	cbnz	x8, 0x15c0 <tee_ioctl+0x1c>
+    15dc: d4210000     	brk	#0x800
+    15e0: 17fffff8     	b	0x15c0 <tee_ioctl+0x1c>
+    15e4: cd 08 14 e0  	.word	0xe01408cd
+
