@@ -1,5 +1,22 @@
 # GQ5012BF1 tkcore command-marshalling path — static audit
 
+> **STATUS: the `_update_client_tee_cmd` finding below is CLOSED by Phase 3C-R.**
+>
+> Two corrections, recorded here so this report is not misread. They do not
+> alter the audit's conclusion that the function was **present but not closed**,
+> which was correct and is what triggered Phase 3C-R.
+>
+> 1. This report describes the residual as stock re-reading the parent
+>    `TEEC_SharedMemory` record. That is **wrong in detail**. Stock re-reads
+>    the entire 280-byte `TEEC_Operation` once, before the parameter loop; the
+>    parent record legitimately stays cached. The authoritative description is
+>    `phase4-tkcore-update-client-cmd-contract.md`.
+> 2. The defect is **more severe** than "stale cached copy": the island was
+>    dereferencing a `__user` operation pointer directly from kernel context.
+>
+> Closure evidence: `phase4-tkcore-island-phase3c-r-regression.md`.
+> The historical text below is otherwise unmodified.
+
 Scope: the five command-path functions named for the Phase-3C audit. All five were already **present** from earlier phases. This audit tests whether presence equals closure. It does not modify them.
 
 Method: per-function stock-vs-island size, linkage, and complete `R_AARCH64_CALL26` call-edge set.

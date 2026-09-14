@@ -142,7 +142,7 @@ proven still-unresolved:
 | 7 | `gps_scp` | task list; `RELATED_SOURCE_HIT` only |
 | 8 | `wmt_chrdev_wifi_connac2` | task list; `STRONG_API_HIT` only |
 | 9 | `sc851x_charger` | task list; `NO_EXACT_HIT` |
-| 10 | `tkcore` | task list; `STRONG_API_HIT` (API-name collision only) — **still NOT RECONSTRUCTED**, stock runtime provider; island Phase 3B now **compiles** (104/122 functions, 44 byte-identical, 21/25 exports; proc/log, clock, core, context/session and shared-memory subsystems closed) — see `phase4-tkcore-island-phase3b-acceptance.md` |
+| 10 | `tkcore` | task list; `STRONG_API_HIT` (API-name collision only) — **still NOT RECONSTRUCTED**, stock runtime provider; current status Phase 3C-R: Phase 3A-R / 3B / 3C / 3C-R command-output residual all CLOSED, island **compiles clean** (113/122 functions, 9 missing, 47 byte-identical, 21/25 exports, 0 island-only; proc/log, core, context/session, shared-memory and ioctl/compat/command-marshalling subsystems closed; clock + secure SPI + affinity/platform remain) — see `phase4-tkcore-island-phase3c-closure.md` and `phase4-tkcore-island-phase3c-r-regression.md` |
 | 11 | `tkcore_drv` | task list; `NO_EXACT_HIT` — **CLOSED: SOURCE_RECONSTRUCTED / FROZEN FOR RE**, see `phase4-tkcore-drv-reconstruction.md` |
 | 12 | `custom_ldo_wl2868` | task list; `NO_EXACT_HIT` |
 | 13 | `fingerprint` | task list; `RELATED_SOURCE_HIT` (generic word noise) |

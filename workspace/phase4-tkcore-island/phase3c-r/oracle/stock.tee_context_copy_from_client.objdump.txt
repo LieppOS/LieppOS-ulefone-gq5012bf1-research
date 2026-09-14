@@ -1,0 +1,123 @@
+
+workspace/phase4-tkcore/oracle/tkcore.ko:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+000000000000362c <tee_context_copy_from_client>:
+    362c: d503233f     	paciasp
+    3630: a9bd7bfd     	stp	x29, x30, [sp, #-0x30]!
+    3634: a90157f6     	stp	x22, x21, [sp, #0x10]
+    3638: a9024ff4     	stp	x20, x19, [sp, #0x20]
+    363c: 910003fd     	mov	x29, sp
+    3640: aa0003e8     	mov	x8, x0
+    3644: 2a1f03e0     	mov	w0, wzr
+    3648: b4000941     	cbz	x1, 0x3770 <tee_context_copy_from_client+0x144>
+    364c: aa0203f5     	mov	x21, x2
+    3650: b4000902     	cbz	x2, 0x3770 <tee_context_copy_from_client+0x144>
+    3654: aa0303f3     	mov	x19, x3
+    3658: b40008c3     	cbz	x3, 0x3770 <tee_context_copy_from_client+0x144>
+    365c: aa0103f4     	mov	x20, x1
+    3660: b9408d08     	ldr	w8, [x8, #0x8c]
+    3664: 340007c8     	cbz	w8, 0x375c <tee_context_copy_from_client+0x130>
+    3668: d35ffe68     	lsr	x8, x19, #31
+    366c: b50009c8     	cbnz	x8, 0x37a4 <tee_context_copy_from_client+0x178>
+    3670: aa1403e0     	mov	x0, x20
+    3674: aa1303e1     	mov	x1, x19
+    3678: 2a1f03e2     	mov	w2, wzr
+    367c: 94000000     	bl	0x367c <tee_context_copy_from_client+0x50>
+		000000000000367c:  R_AARCH64_CALL26	__check_object_size
+    3680: d5384108     	mrs	x8, SP_EL0
+    3684: 39411909     	ldrb	w9, [x8, #0x46]
+    3688: 37280089     	tbnz	w9, #0x5, 0x3698 <tee_context_copy_from_client+0x6c>
+    368c: f940010a     	ldr	x10, [x8]
+    3690: aa1503e9     	mov	x9, x21
+    3694: 36d0006a     	tbz	w10, #0x1a, 0x36a0 <tee_context_copy_from_client+0x74>
+    3698: d378dea9     	lsl	x9, x21, #8
+    369c: 8a8922a9     	and	x9, x21, x9, asr #8
+    36a0: d2c0100a     	mov	x10, #0x8000000000      // =549755813888
+    36a4: aa1303f6     	mov	x22, x19
+    36a8: cb13014a     	sub	x10, x10, x19
+    36ac: eb09015f     	cmp	x10, x9
+    36b0: 540006a3     	b.lo	0x3784 <tee_context_copy_from_client+0x158>
+    36b4: 1400003f     	b	0x37b0 <tee_context_copy_from_client+0x184>
+    36b8: d503201f     	nop
+    36bc: d53b4229     	mrs	x9, DAIF
+    36c0: 1219012a     	and	w10, w9, #0x80
+    36c4: 3500008a     	cbnz	w10, 0x36d4 <tee_context_copy_from_client+0xa8>
+    36c8: d503201f     	nop
+    36cc: 52800c0a     	mov	w10, #0x60              // =96
+    36d0: d50343df     	msr	DAIFSet, #0x3
+    36d4: f9400508     	ldr	x8, [x8, #0x8]
+    36d8: d538202a     	mrs	x10, TTBR1_EL1
+    36dc: aa0803eb     	mov	x11, x8
+    36e0: b340bd4b     	bfxil	x11, x10, #0, #48
+    36e4: d518202b     	msr	TTBR1_EL1, x11
+    36e8: d5033fdf     	isb
+    36ec: d5182008     	msr	TTBR0_EL1, x8
+    36f0: d5033fdf     	isb
+    36f4: d51b4229     	msr	DAIF, x9
+    36f8: 9248faa1     	and	x1, x21, #0xff7fffffffffffff
+    36fc: aa1403e0     	mov	x0, x20
+    3700: aa1303e2     	mov	x2, x19
+    3704: 94000000     	bl	0x3704 <tee_context_copy_from_client+0xd8>
+		0000000000003704:  R_AARCH64_CALL26	__arch_copy_from_user
+    3708: aa0003f6     	mov	x22, x0
+    370c: 1400002d     	b	0x37c0 <tee_context_copy_from_client+0x194>
+    3710: d503201f     	nop
+    3714: d53b4228     	mrs	x8, DAIF
+    3718: 12190109     	and	w9, w8, #0x80
+    371c: 35000089     	cbnz	w9, 0x372c <tee_context_copy_from_client+0x100>
+    3720: d503201f     	nop
+    3724: 52800c09     	mov	w9, #0x60               // =96
+    3728: d50343df     	msr	DAIFSet, #0x3
+    372c: d5382029     	mrs	x9, TTBR1_EL1
+    3730: 9240bd29     	and	x9, x9, #0xffffffffffff
+    3734: d140052a     	sub	x10, x9, #0x1, lsl #12  // =0x1000
+    3738: d518200a     	msr	TTBR0_EL1, x10
+    373c: d5033fdf     	isb
+    3740: d5182029     	msr	TTBR1_EL1, x9
+    3744: d5033fdf     	isb
+    3748: d51b4228     	msr	DAIF, x8
+    374c: b50001d6     	cbnz	x22, 0x3784 <tee_context_copy_from_client+0x158>
+    3750: aa1f03f3     	mov	x19, xzr
+    3754: 2a1303e0     	mov	w0, w19
+    3758: 14000006     	b	0x3770 <tee_context_copy_from_client+0x144>
+    375c: aa1403e0     	mov	x0, x20
+    3760: aa1503e1     	mov	x1, x21
+    3764: aa1303e2     	mov	x2, x19
+    3768: 94000000     	bl	0x3768 <tee_context_copy_from_client+0x13c>
+		0000000000003768:  R_AARCH64_CALL26	memcpy
+    376c: 2a1f03e0     	mov	w0, wzr
+    3770: a9424ff4     	ldp	x20, x19, [sp, #0x20]
+    3774: a94157f6     	ldp	x22, x21, [sp, #0x10]
+    3778: a8c37bfd     	ldp	x29, x30, [sp], #0x30
+    377c: d50323bf     	autiasp
+    3780: d65f03c0     	ret
+    3784: cb160268     	sub	x8, x19, x22
+    3788: 2a1f03e1     	mov	w1, wzr
+    378c: 8b080280     	add	x0, x20, x8
+    3790: aa1603e2     	mov	x2, x22
+    3794: 94000000     	bl	0x3794 <tee_context_copy_from_client+0x168>
+		0000000000003794:  R_AARCH64_CALL26	memset
+    3798: aa1603f3     	mov	x19, x22
+    379c: 2a1303e0     	mov	w0, w19
+    37a0: 17fffff4     	b	0x3770 <tee_context_copy_from_client+0x144>
+    37a4: d4210000     	brk	#0x800
+    37a8: 2a1303e0     	mov	w0, w19
+    37ac: 17fffff1     	b	0x3770 <tee_context_copy_from_client+0x144>
+    37b0: 90000009     	adrp	x9, 0x3000 <big_core_affinity_get_candidate_cpu+0x3c0>
+		00000000000037b0:  R_AARCH64_ADR_PREL_PG_HI21	cpu_hwcaps
+    37b4: f9400129     	ldr	x9, [x9]
+		00000000000037b4:  R_AARCH64_LDST64_ABS_LO12_NC	cpu_hwcaps
+    37b8: 37effa09     	tbnz	w9, #0x1d, 0x36f8 <tee_context_copy_from_client+0xcc>
+    37bc: 17ffffc0     	b	0x36bc <tee_context_copy_from_client+0x90>
+    37c0: 90000008     	adrp	x8, 0x3000 <big_core_affinity_get_candidate_cpu+0x3c0>
+		00000000000037c0:  R_AARCH64_ADR_PREL_PG_HI21	cpu_hwcaps
+    37c4: f9400108     	ldr	x8, [x8]
+		00000000000037c4:  R_AARCH64_LDST64_ABS_LO12_NC	cpu_hwcaps
+    37c8: 37effc28     	tbnz	w8, #0x1d, 0x374c <tee_context_copy_from_client+0x120>
+    37cc: 17ffffd2     	b	0x3714 <tee_context_copy_from_client+0xe8>
+    37d0: 5280140a     	mov	w10, #0xa0              // =160
+    37d4: 17ffffbf     	b	0x36d0 <tee_context_copy_from_client+0xa4>
+    37d8: 52801409     	mov	w9, #0xa0               // =160
+    37dc: 17ffffd3     	b	0x3728 <tee_context_copy_from_client+0xfc>

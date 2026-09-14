@@ -41,12 +41,19 @@
   vendor-module dependency) and produces a comparable ELF: **67/122 stock
   functions present, 16 of them byte-identical to stock, 60 KCFI type ids
   exact, 57/57 shared GKI import CRCs matching, 17/25 exports emitted and
-  0 fabricated**. After the Phase-3P lifecycle-prerequisite closure
-  (2026-09-14; updated Phase 3B) **18 functions remain unimplemented** (104/122
-  present, 44 byte-identical, 21/25 exports; core + context/session + shared
-  memory closed). tkcore is still
-  **NOT RECONSTRUCTED, NOT RUNTIME READY, stock runtime provider**.
-  See `kernel/phase4-tkcore-island-phase2-status.md`,
+  0 fabricated**.
+  **Current status (Phase 3C-R):** Phase 3A-R CLOSED, Phase 3B CLOSED,
+  Phase 3C CLOSED, Phase 3C-R command-output residual CLOSED.
+  **113/122 stock functions present, 9 missing, 47 byte-identical,
+  21/25 exports, 0 island-only functions.** The 9 remaining functions are
+  exactly `tee_clkmgr_handle`, the three secure-SPI functions, the three
+  big-core-affinity functions, `plat_cpu_is_big` and `plat_tee_init`.
+  tkcore is still
+  **PARTIAL, NOT RUNTIME READY, stock runtime provider**
+  (`TKCORE REPLACEMENT READY: NO`).
+  See `kernel/phase4-tkcore-island-phase3c-closure.md`,
+  `kernel/phase4-tkcore-island-phase3c-r-regression.md`,
+  `kernel/phase4-tkcore-island-phase2-status.md`,
   `kernel/phase4-tkcore-island-phase3p-core-unblock.md` and
   `kernel/phase4-tkcore-island-phase3-work-queue.md`.
 
