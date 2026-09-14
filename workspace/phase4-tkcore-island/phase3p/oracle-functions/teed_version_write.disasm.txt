@@ -1,0 +1,115 @@
+00000000000087ec <teed_version_write>:
+    87ec: d503233f     	paciasp
+    87f0: a9bd7bfd     	stp	x29, x30, [sp, #-0x30]!
+    87f4: a90157f6     	stp	x22, x21, [sp, #0x10]
+    87f8: a9024ff4     	stp	x20, x19, [sp, #0x20]
+    87fc: 910003fd     	mov	x29, sp
+    8800: f100c85f     	cmp	x2, #0x32
+    8804: 54000069     	b.ls	0x8810 <teed_version_write+0x24>
+    8808: 92800176     	mov	x22, #-0xc              // =-12
+    880c: 14000043     	b	0x8918 <teed_version_write+0x12c>
+    8810: 90000014     	adrp	x20, 0x8000 <tee_log_read+0x10>
+		0000000000008810:  R_AARCH64_ADR_PREL_PG_HI21	teed_version
+    8814: 91000294     	add	x20, x20, #0x0
+		0000000000008814:  R_AARCH64_ADD_ABS_LO12_NC	teed_version
+    8818: aa0203f3     	mov	x19, x2
+    881c: aa0103f5     	mov	x21, x1
+    8820: aa1403e0     	mov	x0, x20
+    8824: aa0203e1     	mov	x1, x2
+    8828: 2a1f03e2     	mov	w2, wzr
+    882c: 94000000     	bl	0x882c <teed_version_write+0x40>
+		000000000000882c:  R_AARCH64_CALL26	__check_object_size
+    8830: d5384108     	mrs	x8, SP_EL0
+    8834: 39411909     	ldrb	w9, [x8, #0x46]
+    8838: 37280089     	tbnz	w9, #0x5, 0x8848 <teed_version_write+0x5c>
+    883c: f940010a     	ldr	x10, [x8]
+    8840: aa1503e9     	mov	x9, x21
+    8844: 36d0006a     	tbz	w10, #0x1a, 0x8850 <teed_version_write+0x64>
+    8848: d378dea9     	lsl	x9, x21, #8
+    884c: 8a8922a9     	and	x9, x21, x9, asr #8
+    8850: d2c0100a     	mov	x10, #0x8000000000      // =549755813888
+    8854: aa1303f6     	mov	x22, x19
+    8858: cb13014a     	sub	x10, x10, x19
+    885c: eb09015f     	cmp	x10, x9
+    8860: 54000503     	b.lo	0x8900 <teed_version_write+0x114>
+    8864: 1400003b     	b	0x8950 <teed_version_write+0x164>
+    8868: d503201f     	nop
+    886c: d53b4229     	mrs	x9, DAIF
+    8870: 1219012a     	and	w10, w9, #0x80
+    8874: 3500008a     	cbnz	w10, 0x8884 <teed_version_write+0x98>
+    8878: d503201f     	nop
+    887c: 52800c0a     	mov	w10, #0x60              // =96
+    8880: d50343df     	msr	DAIFSet, #0x3
+    8884: f9400508     	ldr	x8, [x8, #0x8]
+    8888: d538202a     	mrs	x10, TTBR1_EL1
+    888c: aa0803eb     	mov	x11, x8
+    8890: b340bd4b     	bfxil	x11, x10, #0, #48
+    8894: d518202b     	msr	TTBR1_EL1, x11
+    8898: d5033fdf     	isb
+    889c: d5182008     	msr	TTBR0_EL1, x8
+    88a0: d5033fdf     	isb
+    88a4: d51b4229     	msr	DAIF, x9
+    88a8: 9248faa1     	and	x1, x21, #0xff7fffffffffffff
+    88ac: 90000000     	adrp	x0, 0x8000 <tee_log_read+0x10>
+		00000000000088ac:  R_AARCH64_ADR_PREL_PG_HI21	teed_version
+    88b0: 91000000     	add	x0, x0, #0x0
+		00000000000088b0:  R_AARCH64_ADD_ABS_LO12_NC	teed_version
+    88b4: aa1303e2     	mov	x2, x19
+    88b8: 94000000     	bl	0x88b8 <teed_version_write+0xcc>
+		00000000000088b8:  R_AARCH64_CALL26	__arch_copy_from_user
+    88bc: aa0003f6     	mov	x22, x0
+    88c0: 14000028     	b	0x8960 <teed_version_write+0x174>
+    88c4: d503201f     	nop
+    88c8: d53b4228     	mrs	x8, DAIF
+    88cc: 12190109     	and	w9, w8, #0x80
+    88d0: 35000089     	cbnz	w9, 0x88e0 <teed_version_write+0xf4>
+    88d4: d503201f     	nop
+    88d8: 52800c09     	mov	w9, #0x60               // =96
+    88dc: d50343df     	msr	DAIFSet, #0x3
+    88e0: d5382029     	mrs	x9, TTBR1_EL1
+    88e4: 9240bd29     	and	x9, x9, #0xffffffffffff
+    88e8: d140052a     	sub	x10, x9, #0x1, lsl #12  // =0x1000
+    88ec: d518200a     	msr	TTBR0_EL1, x10
+    88f0: d5033fdf     	isb
+    88f4: d5182029     	msr	TTBR1_EL1, x9
+    88f8: d5033fdf     	isb
+    88fc: d51b4228     	msr	DAIF, x8
+    8900: b5000196     	cbnz	x22, 0x8930 <teed_version_write+0x144>
+    8904: f100ca7f     	cmp	x19, #0x32
+    8908: 54000222     	b.hs	0x894c <teed_version_write+0x160>
+    890c: 8b140268     	add	x8, x19, x20
+    8910: aa1303f6     	mov	x22, x19
+    8914: 3900051f     	strb	wzr, [x8, #0x1]
+    8918: aa1603e0     	mov	x0, x22
+    891c: a9424ff4     	ldp	x20, x19, [sp, #0x20]
+    8920: a94157f6     	ldp	x22, x21, [sp, #0x10]
+    8924: a8c37bfd     	ldp	x29, x30, [sp], #0x30
+    8928: d50323bf     	autiasp
+    892c: d65f03c0     	ret
+    8930: cb160268     	sub	x8, x19, x22
+    8934: 2a1f03e1     	mov	w1, wzr
+    8938: 8b080280     	add	x0, x20, x8
+    893c: aa1603e2     	mov	x2, x22
+    8940: 94000000     	bl	0x8940 <teed_version_write+0x154>
+		0000000000008940:  R_AARCH64_CALL26	memset
+    8944: b6fffe16     	tbz	x22, #0x3f, 0x8904 <teed_version_write+0x118>
+    8948: 17fffff4     	b	0x8918 <teed_version_write+0x12c>
+    894c: d42aa240     	brk	#0x5512
+    8950: 90000009     	adrp	x9, 0x8000 <tee_log_read+0x10>
+		0000000000008950:  R_AARCH64_ADR_PREL_PG_HI21	cpu_hwcaps
+    8954: f9400129     	ldr	x9, [x9]
+		0000000000008954:  R_AARCH64_LDST64_ABS_LO12_NC	cpu_hwcaps
+    8958: 37effa89     	tbnz	w9, #0x1d, 0x88a8 <teed_version_write+0xbc>
+    895c: 17ffffc4     	b	0x886c <teed_version_write+0x80>
+    8960: 90000008     	adrp	x8, 0x8000 <tee_log_read+0x10>
+		0000000000008960:  R_AARCH64_ADR_PREL_PG_HI21	cpu_hwcaps
+    8964: f9400108     	ldr	x8, [x8]
+		0000000000008964:  R_AARCH64_LDST64_ABS_LO12_NC	cpu_hwcaps
+    8968: 37effcc8     	tbnz	w8, #0x1d, 0x8900 <teed_version_write+0x114>
+    896c: 17ffffd7     	b	0x88c8 <teed_version_write+0xdc>
+    8970: 5280140a     	mov	w10, #0xa0              // =160
+    8974: 17ffffc3     	b	0x8880 <teed_version_write+0x94>
+    8978: 52801409     	mov	w9, #0xa0               // =160
+    897c: 17ffffd8     	b	0x88dc <teed_version_write+0xf0>
+    8980: 3d 61 fb 89  	.word	0x89fb613d
+

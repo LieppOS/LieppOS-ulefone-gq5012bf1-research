@@ -1,0 +1,56 @@
+0000000000007f60 <tee_exit_procfs>:
+    7f60: d503233f     	paciasp
+    7f64: a9be7bfd     	stp	x29, x30, [sp, #-0x20]!
+    7f68: a9014ff4     	stp	x20, x19, [sp, #0x10]
+    7f6c: 910003fd     	mov	x29, sp
+    7f70: 90000014     	adrp	x20, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007f70:  R_AARCH64_ADR_PREL_PG_HI21	tee_proc_dir
+    7f74: f9400280     	ldr	x0, [x20]
+		0000000000007f74:  R_AARCH64_LDST64_ABS_LO12_NC	tee_proc_dir
+    7f78: 94000000     	bl	0x7f78 <tee_exit_procfs+0x18>
+		0000000000007f78:  R_AARCH64_CALL26	proc_remove
+    7f7c: 90000013     	adrp	x19, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007f7c:  R_AARCH64_ADR_PREL_PG_HI21	.bss+0x70
+    7f80: 90000008     	adrp	x8, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007f80:  R_AARCH64_ADR_PREL_PG_HI21	tee_proc_log_file
+    7f84: 90000009     	adrp	x9, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007f84:  R_AARCH64_ADR_PREL_PG_HI21	tee_proc_drv_version
+    7f88: 9000000a     	adrp	x10, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007f88:  R_AARCH64_ADR_PREL_PG_HI21	tee_proc_tee_version
+    7f8c: f900029f     	str	xzr, [x20]
+		0000000000007f8c:  R_AARCH64_LDST64_ABS_LO12_NC	tee_proc_dir
+    7f90: b9400260     	ldr	w0, [x19]
+		0000000000007f90:  R_AARCH64_LDST32_ABS_LO12_NC	.bss+0x70
+    7f94: f900011f     	str	xzr, [x8]
+		0000000000007f94:  R_AARCH64_LDST64_ABS_LO12_NC	tee_proc_log_file
+    7f98: f900013f     	str	xzr, [x9]
+		0000000000007f98:  R_AARCH64_LDST64_ABS_LO12_NC	tee_proc_drv_version
+    7f9c: f900015f     	str	xzr, [x10]
+		0000000000007f9c:  R_AARCH64_LDST64_ABS_LO12_NC	tee_proc_tee_version
+    7fa0: 7100041f     	cmp	w0, #0x1
+    7fa4: 5400008b     	b.lt	0x7fb4 <tee_exit_procfs+0x54>
+    7fa8: aa1f03e1     	mov	x1, xzr
+    7fac: 94000000     	bl	0x7fac <tee_exit_procfs+0x4c>
+		0000000000007fac:  R_AARCH64_CALL26	free_irq
+    7fb0: b900027f     	str	wzr, [x19]
+		0000000000007fb0:  R_AARCH64_LDST32_ABS_LO12_NC	.bss+0x70
+    7fb4: 90000013     	adrp	x19, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007fb4:  R_AARCH64_ADR_PREL_PG_HI21	.bss+0x50
+    7fb8: 91000273     	add	x19, x19, #0x0
+		0000000000007fb8:  R_AARCH64_ADD_ABS_LO12_NC	.bss+0x50
+    7fbc: f9400e60     	ldr	x0, [x19, #0x18]
+    7fc0: 94000000     	bl	0x7fc0 <tee_exit_procfs+0x60>
+		0000000000007fc0:  R_AARCH64_CALL26	kthread_stop
+    7fc4: aa1303e0     	mov	x0, x19
+    7fc8: 52800061     	mov	w1, #0x3                // =3
+    7fcc: 2a1f03e2     	mov	w2, wzr
+    7fd0: aa1f03e3     	mov	x3, xzr
+    7fd4: f9000e7f     	str	xzr, [x19, #0x18]
+    7fd8: 94000000     	bl	0x7fd8 <tee_exit_procfs+0x78>
+		0000000000007fd8:  R_AARCH64_CALL26	__wake_up
+    7fdc: a9414ff4     	ldp	x20, x19, [sp, #0x10]
+    7fe0: a8c27bfd     	ldp	x29, x30, [sp], #0x20
+    7fe4: d50323bf     	autiasp
+    7fe8: d65f03c0     	ret
+    7fec: f4 e2 66 e8  	.word	0xe866e2f4
+

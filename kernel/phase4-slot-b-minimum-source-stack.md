@@ -174,7 +174,7 @@ unresolved reconstruction.
 
 | module | label | reason |
 |---|---|---|
-| `tkcore` | STOCK_TRANSITION | no source anywhere; `P0`; **PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER**, blocked on original TrustKernel private headers |
+| `tkcore` | STOCK_TRANSITION | no source anywhere; `P0`; **PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER**, blocked on original TrustKernel private headers; island reconstruction at Phase 3P (85/122 functions, lifecycle prerequisites closed) |
 | `tkcore_drv` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | closed 2026-09-13 with `SOURCE_NOW_WITH_PROVIDER_WITNESSES` (now 8 NATURAL/5 STOCK_PROVIDER_WITNESS after the `ffa_v10` closure); still runs against stock `tkcore` |
 | `ffa_v10` | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** | closed 2026-09-13; exact MediaTek vendor source, 34/34 byte-identical, 5/5 export CRCs natural, 49/49 verifier |
 | `tmem_ffa` | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** | closed 2026-09-13; same pinned vendor revision/directory as `ffa_v10`; 141/141 byte-identical, 15/15 export CRCs natural, 76/76 verifier; its 9 `KREE_*` edges are now **source-built natural** against the closed `gz_tz_system`; only the 7 `TEEC_*` (stock `tkcore`) edges remain stock-runtime |

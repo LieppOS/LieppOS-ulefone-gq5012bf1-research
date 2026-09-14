@@ -41,9 +41,12 @@
   vendor-module dependency) and produces a comparable ELF: **67/122 stock
   functions present, 16 of them byte-identical to stock, 60 KCFI type ids
   exact, 57/57 shared GKI import CRCs matching, 17/25 exports emitted and
-  0 fabricated**. 55 functions remain unimplemented. tkcore is still
+  0 fabricated**. After the Phase-3P lifecycle-prerequisite closure
+  (2026-09-14) **37 functions remain unimplemented** (85/122 present, 27
+  byte-identical, 18/25 exports). tkcore is still
   **NOT RECONSTRUCTED, NOT RUNTIME READY, stock runtime provider**.
-  See `kernel/phase4-tkcore-island-phase2-status.md` and
+  See `kernel/phase4-tkcore-island-phase2-status.md`,
+  `kernel/phase4-tkcore-island-phase3p-core-unblock.md` and
   `kernel/phase4-tkcore-island-phase3-work-queue.md`.
 
 - `tkcore_drv` — **SOURCE_RECONSTRUCTED / SOURCE_NOW_WITH_PROVIDER_WITNESSES /

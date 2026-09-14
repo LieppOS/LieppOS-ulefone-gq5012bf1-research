@@ -1,0 +1,55 @@
+000000000000953c <tee_peridev_exit>:
+    953c: d503233f     	paciasp
+    9540: a9bc7bfd     	stp	x29, x30, [sp, #-0x40]!
+    9544: f9000bf7     	str	x23, [sp, #0x10]
+    9548: a90257f6     	stp	x22, x21, [sp, #0x20]
+    954c: a9034ff4     	stp	x20, x19, [sp, #0x30]
+    9550: 910003fd     	mov	x29, sp
+    9554: 90000000     	adrp	x0, 0x9000 <tee_clkmgr_register+0x140>
+		0000000000009554:  R_AARCH64_ADR_PREL_PG_HI21	.data+0x1b8
+    9558: 91000000     	add	x0, x0, #0x0
+		0000000000009558:  R_AARCH64_ADD_ABS_LO12_NC	.data+0x1b8
+    955c: 94000000     	bl	0x955c <tee_peridev_exit+0x20>
+		000000000000955c:  R_AARCH64_CALL26	mutex_lock
+    9560: 90000015     	adrp	x21, 0x9000 <tee_clkmgr_register+0x140>
+		0000000000009560:  R_AARCH64_ADR_PREL_PG_HI21	.data+0x1e8
+    9564: 910002b5     	add	x21, x21, #0x0
+		0000000000009564:  R_AARCH64_ADD_ABS_LO12_NC	.data+0x1e8
+    9568: f94002b3     	ldr	x19, [x21]
+    956c: eb15027f     	cmp	x19, x21
+    9570: 54000280     	b.eq	0x95c0 <tee_peridev_exit+0x84>
+    9574: d2802016     	mov	x22, #0x100             // =256
+    9578: f2fbd5b6     	movk	x22, #0xdead, lsl #48
+    957c: 14000008     	b	0x959c <tee_peridev_exit+0x60>
+    9580: 91008ac8     	add	x8, x22, #0x22
+    9584: aa1403e0     	mov	x0, x20
+    9588: a9002276     	stp	x22, x8, [x19]
+    958c: 94000000     	bl	0x958c <tee_peridev_exit+0x50>
+		000000000000958c:  R_AARCH64_CALL26	kfree
+    9590: aa1703f3     	mov	x19, x23
+    9594: eb1502ff     	cmp	x23, x21
+    9598: 54000140     	b.eq	0x95c0 <tee_peridev_exit+0x84>
+    959c: aa1303f4     	mov	x20, x19
+    95a0: aa1303e0     	mov	x0, x19
+    95a4: f85c8697     	ldr	x23, [x20], #-0x38
+    95a8: 94000000     	bl	0x95a8 <tee_peridev_exit+0x6c>
+		00000000000095a8:  R_AARCH64_CALL26	__list_del_entry_valid
+    95ac: 3607fea0     	tbz	w0, #0x0, 0x9580 <tee_peridev_exit+0x44>
+    95b0: a9402269     	ldp	x9, x8, [x19]
+    95b4: f9000528     	str	x8, [x9, #0x8]
+    95b8: f9000109     	str	x9, [x8]
+    95bc: 17fffff1     	b	0x9580 <tee_peridev_exit+0x44>
+    95c0: 90000000     	adrp	x0, 0x9000 <tee_clkmgr_register+0x140>
+		00000000000095c0:  R_AARCH64_ADR_PREL_PG_HI21	.data+0x1b8
+    95c4: 91000000     	add	x0, x0, #0x0
+		00000000000095c4:  R_AARCH64_ADD_ABS_LO12_NC	.data+0x1b8
+    95c8: 94000000     	bl	0x95c8 <tee_peridev_exit+0x8c>
+		00000000000095c8:  R_AARCH64_CALL26	mutex_unlock
+    95cc: a9434ff4     	ldp	x20, x19, [sp, #0x30]
+    95d0: a94257f6     	ldp	x22, x21, [sp, #0x20]
+    95d4: f9400bf7     	ldr	x23, [sp, #0x10]
+    95d8: a8c47bfd     	ldp	x29, x30, [sp], #0x40
+    95dc: d50323bf     	autiasp
+    95e0: d65f03c0     	ret
+    95e4: ae fe 7e bd  	.word	0xbd7efeae
+

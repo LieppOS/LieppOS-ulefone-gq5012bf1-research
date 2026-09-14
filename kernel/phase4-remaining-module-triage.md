@@ -142,7 +142,7 @@ proven still-unresolved:
 | 7 | `gps_scp` | task list; `RELATED_SOURCE_HIT` only |
 | 8 | `wmt_chrdev_wifi_connac2` | task list; `STRONG_API_HIT` only |
 | 9 | `sc851x_charger` | task list; `NO_EXACT_HIT` |
-| 10 | `tkcore` | task list; `STRONG_API_HIT` (API-name collision only) — **still NOT RECONSTRUCTED**, stock runtime provider; island Phase 2 now **compiles** (67/122 functions, 16 byte-identical, 17/25 exports) — see `phase4-tkcore-island-phase2-status.md` |
+| 10 | `tkcore` | task list; `STRONG_API_HIT` (API-name collision only) — **still NOT RECONSTRUCTED**, stock runtime provider; island Phase 3P now **compiles** (85/122 functions, 27 byte-identical, 18/25 exports; proc/log + clock lifecycle closed, Phase-3A core dependencies READY) — see `phase4-tkcore-island-phase3p-core-unblock.md` |
 | 11 | `tkcore_drv` | task list; `NO_EXACT_HIT` — **CLOSED: SOURCE_RECONSTRUCTED / FROZEN FOR RE**, see `phase4-tkcore-drv-reconstruction.md` |
 | 12 | `custom_ldo_wl2868` | task list; `NO_EXACT_HIT` |
 | 13 | `fingerprint` | task list; `RELATED_SOURCE_HIT` (generic word noise) |

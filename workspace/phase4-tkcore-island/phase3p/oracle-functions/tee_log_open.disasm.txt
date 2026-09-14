@@ -1,0 +1,62 @@
+0000000000007b84 <tee_log_open>:
+    7b84: d503233f     	paciasp
+    7b88: a9bd7bfd     	stp	x29, x30, [sp, #-0x30]!
+    7b8c: f9000bf5     	str	x21, [sp, #0x10]
+    7b90: a9024ff4     	stp	x20, x19, [sp, #0x20]
+    7b94: 910003fd     	mov	x29, sp
+    7b98: 90000008     	adrp	x8, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007b98:  R_AARCH64_ADR_PREL_PG_HI21	kmalloc_caches+0x30
+    7b9c: aa0103f3     	mov	x19, x1
+    7ba0: aa0003f5     	mov	x21, x0
+    7ba4: 52819801     	mov	w1, #0xcc0              // =3264
+    7ba8: 52800302     	mov	w2, #0x18               // =24
+    7bac: f9400100     	ldr	x0, [x8]
+		0000000000007bac:  R_AARCH64_LDST64_ABS_LO12_NC	kmalloc_caches+0x30
+    7bb0: 94000000     	bl	0x7bb0 <tee_log_open+0x2c>
+		0000000000007bb0:  R_AARCH64_CALL26	kmalloc_trace
+    7bb4: b4000220     	cbz	x0, 0x7bf8 <tee_log_open+0x74>
+    7bb8: 90000008     	adrp	x8, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007bb8:  R_AARCH64_ADR_PREL_PG_HI21	.bss+0x38
+    7bbc: f9400108     	ldr	x8, [x8]
+		0000000000007bbc:  R_AARCH64_LDST64_ABS_LO12_NC	.bss+0x38
+    7bc0: b4000208     	cbz	x8, 0x7c00 <tee_log_open+0x7c>
+    7bc4: 90000008     	adrp	x8, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007bc4:  R_AARCH64_ADR_PREL_PG_HI21	.rodata+0x4e0
+    7bc8: 91000108     	add	x8, x8, #0x0
+		0000000000007bc8:  R_AARCH64_ADD_ABS_LO12_NC	.rodata+0x4e0
+    7bcc: 90000009     	adrp	x9, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007bcc:  R_AARCH64_ADR_PREL_PG_HI21	.bss+0x38
+    7bd0: 91000129     	add	x9, x9, #0x0
+		0000000000007bd0:  R_AARCH64_ADD_ABS_LO12_NC	.bss+0x38
+    7bd4: aa0003f4     	mov	x20, x0
+    7bd8: aa1303e1     	mov	x1, x19
+    7bdc: a900a408     	stp	x8, x9, [x0, #0x8]
+    7be0: aa1503e0     	mov	x0, x21
+    7be4: 94000000     	bl	0x7be4 <tee_log_open+0x60>
+		0000000000007be4:  R_AARCH64_CALL26	nonseekable_open
+    7be8: 2a0003f5     	mov	w21, w0
+    7bec: 35000180     	cbnz	w0, 0x7c1c <tee_log_open+0x98>
+    7bf0: f9006e74     	str	x20, [x19, #0xd8]
+    7bf4: 14000004     	b	0x7c04 <tee_log_open+0x80>
+    7bf8: 12800175     	mov	w21, #-0xc              // =-12
+    7bfc: 14000002     	b	0x7c04 <tee_log_open+0x80>
+    7c00: 12800095     	mov	w21, #-0x5              // =-5
+    7c04: 2a1503e0     	mov	w0, w21
+    7c08: a9424ff4     	ldp	x20, x19, [sp, #0x20]
+    7c0c: f9400bf5     	ldr	x21, [sp, #0x10]
+    7c10: a8c37bfd     	ldp	x29, x30, [sp], #0x30
+    7c14: d50323bf     	autiasp
+    7c18: d65f03c0     	ret
+    7c1c: aa1403e0     	mov	x0, x20
+    7c20: 94000000     	bl	0x7c20 <tee_log_open+0x9c>
+		0000000000007c20:  R_AARCH64_CALL26	kfree
+    7c24: 90000000     	adrp	x0, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007c24:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xbcd
+    7c28: 91000000     	add	x0, x0, #0x0
+		0000000000007c28:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xbcd
+    7c2c: 2a1503e1     	mov	w1, w21
+    7c30: 94000000     	bl	0x7c30 <tee_log_open+0xac>
+		0000000000007c30:  R_AARCH64_CALL26	_printk
+    7c34: 17fffff4     	b	0x7c04 <tee_log_open+0x80>
+    7c38: 55 ca 07 8f  	.word	0x8f07ca55
+

@@ -1,0 +1,22 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+package(default_visibility = ["//visibility:public"])
+
+# Reconstructed TrustKernel TKCore for GQ5012BF1, built against exact GKI
+# ab/12901745 and the common TrustKernel island header graph.
+#
+# Stock tkcore.ko has 0 intermodule imports; this target therefore declares no
+# module deps and must resolve entirely against //common:kernel_aarch64.
+kernel_module(
+    name = "tkcore",
+    srcs = glob([
+        "tkcore/*.c",
+        "tkcore/*.h",
+    ]) + [
+        "BUILD.bazel",
+        "Makefile",
+        "//lieppos/trustkernel:trustkernel_headers",
+    ],
+    outs = ["tkcore.ko"],
+    kernel_build = "//common:kernel_aarch64",
+)

@@ -1,0 +1,357 @@
+0000000000007ff0 <tee_log_read>:
+    7ff0: d503233f     	paciasp
+    7ff4: d10283ff     	sub	sp, sp, #0xa0
+    7ff8: a9047bfd     	stp	x29, x30, [sp, #0x40]
+    7ffc: a9056ffc     	stp	x28, x27, [sp, #0x50]
+    8000: a90667fa     	stp	x26, x25, [sp, #0x60]
+    8004: a9075ff8     	stp	x24, x23, [sp, #0x70]
+    8008: a90857f6     	stp	x22, x21, [sp, #0x80]
+    800c: a9094ff4     	stp	x20, x19, [sp, #0x90]
+    8010: 910103fd     	add	x29, sp, #0x40
+    8014: d5384108     	mrs	x8, SP_EL0
+    8018: 928002b6     	mov	x22, #-0x16             // =-22
+    801c: f9431d08     	ldr	x8, [x8, #0x638]
+    8020: f81f83a8     	stur	x8, [x29, #-0x8]
+    8024: b4002160     	cbz	x0, 0x8450 <tee_log_read+0x460>
+    8028: aa0103f5     	mov	x21, x1
+    802c: b4002121     	cbz	x1, 0x8450 <tee_log_read+0x460>
+    8030: aa0303f3     	mov	x19, x3
+    8034: b40020e3     	cbz	x3, 0x8450 <tee_log_read+0x460>
+    8038: f9406c1a     	ldr	x26, [x0, #0xd8]
+    803c: b400229a     	cbz	x26, 0x848c <tee_log_read+0x49c>
+    8040: 39410408     	ldrb	w8, [x0, #0x41]
+    8044: 37180608     	tbnz	w8, #0x3, 0x8104 <tee_log_read+0x114>
+    8048: a940ef48     	ldp	x8, x27, [x26, #0x8]
+    804c: aa0203f4     	mov	x20, x2
+    8050: b5000628     	cbnz	x8, 0x8114 <tee_log_read+0x124>
+    8054: 91006376     	add	x22, x27, #0x18
+    8058: f9400368     	ldr	x8, [x27]
+    805c: b9400349     	ldr	w9, [x26]
+    8060: b9401d08     	ldr	w8, [x8, #0x1c]
+    8064: 6b08013f     	cmp	w9, w8
+    8068: 54000561     	b.ne	0x8114 <tee_log_read+0x124>
+    806c: 910043e0     	add	x0, sp, #0x10
+    8070: 2a1f03e1     	mov	w1, wzr
+    8074: a902ffff     	stp	xzr, xzr, [sp, #0x28]
+    8078: a901ffff     	stp	xzr, xzr, [sp, #0x18]
+    807c: f9000bff     	str	xzr, [sp, #0x10]
+    8080: 94000000     	bl	0x8080 <tee_log_read+0x90>
+		0000000000008080:  R_AARCH64_CALL26	init_wait_entry
+    8084: 910043e1     	add	x1, sp, #0x10
+    8088: aa1603e0     	mov	x0, x22
+    808c: 52800022     	mov	w2, #0x1                // =1
+    8090: 94000000     	bl	0x8090 <tee_log_read+0xa0>
+		0000000000008090:  R_AARCH64_CALL26	prepare_to_wait_event
+    8094: f9400368     	ldr	x8, [x27]
+    8098: b9400349     	ldr	w9, [x26]
+    809c: b9401d08     	ldr	w8, [x8, #0x1c]
+    80a0: 6b08013f     	cmp	w9, w8
+    80a4: 54002081     	b.ne	0x84b4 <tee_log_read+0x4c4>
+    80a8: 52800fb7     	mov	w23, #0x7d              // =125
+    80ac: b5000300     	cbnz	x0, 0x810c <tee_log_read+0x11c>
+    80b0: aa1703e0     	mov	x0, x23
+    80b4: 94000000     	bl	0x80b4 <tee_log_read+0xc4>
+		00000000000080b4:  R_AARCH64_CALL26	schedule_timeout
+    80b8: aa0003f7     	mov	x23, x0
+    80bc: 910043e1     	add	x1, sp, #0x10
+    80c0: aa1603e0     	mov	x0, x22
+    80c4: 52800022     	mov	w2, #0x1                // =1
+    80c8: 94000000     	bl	0x80c8 <tee_log_read+0xd8>
+		00000000000080c8:  R_AARCH64_CALL26	prepare_to_wait_event
+    80cc: f9400368     	ldr	x8, [x27]
+    80d0: f10002ff     	cmp	x23, #0x0
+    80d4: b9400349     	ldr	w9, [x26]
+    80d8: b9401d08     	ldr	w8, [x8, #0x1c]
+    80dc: 7a480124     	ccmp	w9, w8, #0x4, eq
+    80e0: 9a9f06f7     	csinc	x23, x23, xzr, eq
+    80e4: 6b08013f     	cmp	w9, w8
+    80e8: 54000041     	b.ne	0x80f0 <tee_log_read+0x100>
+    80ec: b5fffe17     	cbnz	x23, 0x80ac <tee_log_read+0xbc>
+    80f0: 910043e1     	add	x1, sp, #0x10
+    80f4: aa1603e0     	mov	x0, x22
+    80f8: 94000000     	bl	0x80f8 <tee_log_read+0x108>
+		00000000000080f8:  R_AARCH64_CALL26	finish_wait
+    80fc: b4fffaf7     	cbz	x23, 0x8058 <tee_log_read+0x68>
+    8100: 14000004     	b	0x8110 <tee_log_read+0x120>
+    8104: 92800156     	mov	x22, #-0xb              // =-11
+    8108: 140000d2     	b	0x8450 <tee_log_read+0x460>
+    810c: aa0003f7     	mov	x23, x0
+    8110: b7f81c77     	tbnz	x23, #0x3f, 0x849c <tee_log_read+0x4ac>
+    8114: f940037c     	ldr	x28, [x27]
+    8118: b9401f88     	ldr	w8, [x28, #0x1c]
+    811c: b40018d4     	cbz	x20, 0x8434 <tee_log_read+0x444>
+    8120: aa1f03f6     	mov	x22, xzr
+    8124: f90007f3     	str	x19, [sp, #0x8]
+    8128: d5384117     	mrs	x23, SP_EL0
+    812c: 14000009     	b	0x8150 <tee_log_read+0x160>
+    8130: b9400349     	ldr	w9, [x26]
+    8134: cb000308     	sub	x8, x24, x0
+    8138: 0b080129     	add	w9, w9, w8
+    813c: b9000349     	str	w9, [x26]
+    8140: 8b160116     	add	x22, x8, x22
+    8144: b9401f88     	ldr	w8, [x28, #0x1c]
+    8148: eb1402df     	cmp	x22, x20
+    814c: 54001780     	b.eq	0x843c <tee_log_read+0x44c>
+    8150: b9400349     	ldr	w9, [x26]
+    8154: f9400758     	ldr	x24, [x26, #0x8]
+    8158: 6b09010a     	subs	w10, w8, w9
+    815c: 540000a1     	b.ne	0x8170 <tee_log_read+0x180>
+    8160: b4001718     	cbz	x24, 0x8440 <tee_log_read+0x450>
+    8164: 39400308     	ldrb	w8, [x24]
+    8168: 350002c8     	cbnz	w8, 0x81c0 <tee_log_read+0x1d0>
+    816c: 140000b5     	b	0x8440 <tee_log_read+0x450>
+    8170: b40001b8     	cbz	x24, 0x81a4 <tee_log_read+0x1b4>
+    8174: 39400309     	ldrb	w9, [x24]
+    8178: 35000249     	cbnz	w9, 0x81c0 <tee_log_read+0x1d0>
+    817c: b9401369     	ldr	w9, [x27, #0x10]
+    8180: 3940536a     	ldrb	w10, [x27, #0x14]
+    8184: f900075f     	str	xzr, [x26, #0x8]
+    8188: 6b090109     	subs	w9, w8, w9
+    818c: 7a403940     	ccmp	w10, #0x0, #0x0, lo
+    8190: 1a8903e9     	csel	w9, wzr, w9, eq
+    8194: 4b09010a     	sub	w10, w8, w9
+    8198: b9000349     	str	w9, [x26]
+    819c: b940136b     	ldr	w11, [x27, #0x10]
+    81a0: 1400004a     	b	0x82c8 <tee_log_read+0x2d8>
+    81a4: b940136b     	ldr	w11, [x27, #0x10]
+    81a8: 6b0b015f     	cmp	w10, w11
+    81ac: 540008e9     	b.ls	0x82c8 <tee_log_read+0x2d8>
+    81b0: 90000008     	adrp	x8, 0x8000 <tee_log_read+0x10>
+		00000000000081b0:  R_AARCH64_ADR_PREL_PG_HI21	.rodata+0x680
+    81b4: 91000108     	add	x8, x8, #0x0
+		00000000000081b4:  R_AARCH64_ADD_ABS_LO12_NC	.rodata+0x680
+    81b8: aa0803f8     	mov	x24, x8
+    81bc: f9000748     	str	x8, [x26, #0x8]
+    81c0: aa1803e0     	mov	x0, x24
+    81c4: 94000000     	bl	0x81c4 <tee_log_read+0x1d4>
+		00000000000081c4:  R_AARCH64_CALL26	strlen
+    81c8: cb160288     	sub	x8, x20, x22
+    81cc: eb08001f     	cmp	x0, x8
+    81d0: 9a883008     	csel	x8, x0, x8, lo
+    81d4: d35f7d09     	ubfx	x9, x8, #31, #1
+    81d8: b5001769     	cbnz	x9, 0x84c4 <tee_log_read+0x4d4>
+    81dc: 92407d19     	and	x25, x8, #0xffffffff
+    81e0: aa1803e0     	mov	x0, x24
+    81e4: aa1903e1     	mov	x1, x25
+    81e8: 52800022     	mov	w2, #0x1                // =1
+    81ec: 8b1602b3     	add	x19, x21, x22
+    81f0: 94000000     	bl	0x81f0 <tee_log_read+0x200>
+		00000000000081f0:  R_AARCH64_CALL26	__check_object_size
+    81f4: 39411ae8     	ldrb	w8, [x23, #0x46]
+    81f8: 37280088     	tbnz	w8, #0x5, 0x8208 <tee_log_read+0x218>
+    81fc: f94002e9     	ldr	x9, [x23]
+    8200: aa1303e8     	mov	x8, x19
+    8204: 36d00069     	tbz	w9, #0x1a, 0x8210 <tee_log_read+0x220>
+    8208: d378de68     	lsl	x8, x19, #8
+    820c: 8a882268     	and	x8, x19, x8, asr #8
+    8210: d2c01009     	mov	x9, #0x8000000000       // =549755813888
+    8214: cb190129     	sub	x9, x9, x25
+    8218: eb08013f     	cmp	x9, x8
+    821c: 54001443     	b.lo	0x84a4 <tee_log_read+0x4b4>
+    8220: 1400006d     	b	0x83d4 <tee_log_read+0x3e4>
+    8224: d503201f     	nop
+    8228: d53b4228     	mrs	x8, DAIF
+    822c: 12190109     	and	w9, w8, #0x80
+    8230: 35000089     	cbnz	w9, 0x8240 <tee_log_read+0x250>
+    8234: d503201f     	nop
+    8238: 52800c09     	mov	w9, #0x60               // =96
+    823c: d50343df     	msr	DAIFSet, #0x3
+    8240: f94006e9     	ldr	x9, [x23, #0x8]
+    8244: d538202a     	mrs	x10, TTBR1_EL1
+    8248: aa0903eb     	mov	x11, x9
+    824c: b340bd4b     	bfxil	x11, x10, #0, #48
+    8250: d518202b     	msr	TTBR1_EL1, x11
+    8254: d5033fdf     	isb
+    8258: d5182009     	msr	TTBR0_EL1, x9
+    825c: d5033fdf     	isb
+    8260: d51b4228     	msr	DAIF, x8
+    8264: 9248fa60     	and	x0, x19, #0xff7fffffffffffff
+    8268: aa1803e1     	mov	x1, x24
+    826c: aa1903e2     	mov	x2, x25
+    8270: 94000000     	bl	0x8270 <tee_log_read+0x280>
+		0000000000008270:  R_AARCH64_CALL26	__arch_copy_to_user
+    8274: 1400005c     	b	0x83e4 <tee_log_read+0x3f4>
+    8278: d503201f     	nop
+    827c: d53b4228     	mrs	x8, DAIF
+    8280: 12190109     	and	w9, w8, #0x80
+    8284: 35000089     	cbnz	w9, 0x8294 <tee_log_read+0x2a4>
+    8288: d503201f     	nop
+    828c: 52800c09     	mov	w9, #0x60               // =96
+    8290: d50343df     	msr	DAIFSet, #0x3
+    8294: d5382029     	mrs	x9, TTBR1_EL1
+    8298: 9240bd29     	and	x9, x9, #0xffffffffffff
+    829c: d140052a     	sub	x10, x9, #0x1, lsl #12  // =0x1000
+    82a0: d518200a     	msr	TTBR0_EL1, x10
+    82a4: d5033fdf     	isb
+    82a8: d5182029     	msr	TTBR1_EL1, x9
+    82ac: d5033fdf     	isb
+    82b0: d51b4228     	msr	DAIF, x8
+    82b4: eb000328     	subs	x8, x25, x0
+    82b8: 54000f60     	b.eq	0x84a4 <tee_log_read+0x4b4>
+    82bc: 8b080309     	add	x9, x24, x8
+    82c0: f9000749     	str	x9, [x26, #0x8]
+    82c4: 17ffff9f     	b	0x8140 <tee_log_read+0x150>
+    82c8: 1acb0928     	udiv	w8, w9, w11
+    82cc: 1b0ba508     	msub	w8, w8, w11, w9
+    82d0: 4b080169     	sub	w9, w11, w8
+    82d4: 4b16028b     	sub	w11, w20, w22
+    82d8: 6b0a013f     	cmp	w9, w10
+    82dc: 1a8a3129     	csel	w9, w9, w10, lo
+    82e0: 6b0b013f     	cmp	w9, w11
+    82e4: 1a8b3138     	csel	w24, w9, w11, lo
+    82e8: 37f80f98     	tbnz	w24, #0x1f, 0x84d8 <tee_log_read+0x4e8>
+    82ec: f9400769     	ldr	x9, [x27, #0x8]
+    82f0: aa1803e1     	mov	x1, x24
+    82f4: 52800022     	mov	w2, #0x1                // =1
+    82f8: 8b1602b3     	add	x19, x21, x22
+    82fc: 8b080139     	add	x25, x9, x8
+    8300: aa1903e0     	mov	x0, x25
+    8304: 94000000     	bl	0x8304 <tee_log_read+0x314>
+		0000000000008304:  R_AARCH64_CALL26	__check_object_size
+    8308: 39411ae8     	ldrb	w8, [x23, #0x46]
+    830c: 37280088     	tbnz	w8, #0x5, 0x831c <tee_log_read+0x32c>
+    8310: f94002e9     	ldr	x9, [x23]
+    8314: aa1303e8     	mov	x8, x19
+    8318: 36d00069     	tbz	w9, #0x1a, 0x8324 <tee_log_read+0x334>
+    831c: d378de68     	lsl	x8, x19, #8
+    8320: 8a882268     	and	x8, x19, x8, asr #8
+    8324: d2c01009     	mov	x9, #0x8000000000       // =549755813888
+    8328: cb180129     	sub	x9, x9, x24
+    832c: eb08013f     	cmp	x9, x8
+    8330: 54000d63     	b.lo	0x84dc <tee_log_read+0x4ec>
+    8334: 14000034     	b	0x8404 <tee_log_read+0x414>
+    8338: d503201f     	nop
+    833c: d53b4228     	mrs	x8, DAIF
+    8340: 12190109     	and	w9, w8, #0x80
+    8344: 35000089     	cbnz	w9, 0x8354 <tee_log_read+0x364>
+    8348: d503201f     	nop
+    834c: 52800c09     	mov	w9, #0x60               // =96
+    8350: d50343df     	msr	DAIFSet, #0x3
+    8354: f94006e9     	ldr	x9, [x23, #0x8]
+    8358: d538202a     	mrs	x10, TTBR1_EL1
+    835c: aa0903eb     	mov	x11, x9
+    8360: b340bd4b     	bfxil	x11, x10, #0, #48
+    8364: d518202b     	msr	TTBR1_EL1, x11
+    8368: d5033fdf     	isb
+    836c: d5182009     	msr	TTBR0_EL1, x9
+    8370: d5033fdf     	isb
+    8374: d51b4228     	msr	DAIF, x8
+    8378: 9248fa60     	and	x0, x19, #0xff7fffffffffffff
+    837c: aa1903e1     	mov	x1, x25
+    8380: aa1803e2     	mov	x2, x24
+    8384: 94000000     	bl	0x8384 <tee_log_read+0x394>
+		0000000000008384:  R_AARCH64_CALL26	__arch_copy_to_user
+    8388: 14000023     	b	0x8414 <tee_log_read+0x424>
+    838c: d503201f     	nop
+    8390: d53b4228     	mrs	x8, DAIF
+    8394: 12190109     	and	w9, w8, #0x80
+    8398: 35000089     	cbnz	w9, 0x83a8 <tee_log_read+0x3b8>
+    839c: d503201f     	nop
+    83a0: 52800c09     	mov	w9, #0x60               // =96
+    83a4: d50343df     	msr	DAIFSet, #0x3
+    83a8: d5382029     	mrs	x9, TTBR1_EL1
+    83ac: 9240bd29     	and	x9, x9, #0xffffffffffff
+    83b0: d140052a     	sub	x10, x9, #0x1, lsl #12  // =0x1000
+    83b4: d518200a     	msr	TTBR0_EL1, x10
+    83b8: d5033fdf     	isb
+    83bc: d5182029     	msr	TTBR1_EL1, x9
+    83c0: d5033fdf     	isb
+    83c4: d51b4228     	msr	DAIF, x8
+    83c8: eb18001f     	cmp	x0, x24
+    83cc: 54ffeb21     	b.ne	0x8130 <tee_log_read+0x140>
+    83d0: 14000043     	b	0x84dc <tee_log_read+0x4ec>
+    83d4: 90000008     	adrp	x8, 0x8000 <tee_log_read+0x10>
+		00000000000083d4:  R_AARCH64_ADR_PREL_PG_HI21	cpu_hwcaps
+    83d8: f9400108     	ldr	x8, [x8]
+		00000000000083d8:  R_AARCH64_LDST64_ABS_LO12_NC	cpu_hwcaps
+    83dc: 37eff448     	tbnz	w8, #0x1d, 0x8264 <tee_log_read+0x274>
+    83e0: 17ffff92     	b	0x8228 <tee_log_read+0x238>
+    83e4: 90000008     	adrp	x8, 0x8000 <tee_log_read+0x10>
+		00000000000083e4:  R_AARCH64_ADR_PREL_PG_HI21	cpu_hwcaps
+    83e8: f9400108     	ldr	x8, [x8]
+		00000000000083e8:  R_AARCH64_LDST64_ABS_LO12_NC	cpu_hwcaps
+    83ec: 37eff648     	tbnz	w8, #0x1d, 0x82b4 <tee_log_read+0x2c4>
+    83f0: 17ffffa3     	b	0x827c <tee_log_read+0x28c>
+    83f4: 52801409     	mov	w9, #0xa0               // =160
+    83f8: 17ffff91     	b	0x823c <tee_log_read+0x24c>
+    83fc: 52801409     	mov	w9, #0xa0               // =160
+    8400: 17ffffa4     	b	0x8290 <tee_log_read+0x2a0>
+    8404: 90000008     	adrp	x8, 0x8000 <tee_log_read+0x10>
+		0000000000008404:  R_AARCH64_ADR_PREL_PG_HI21	cpu_hwcaps
+    8408: f9400108     	ldr	x8, [x8]
+		0000000000008408:  R_AARCH64_LDST64_ABS_LO12_NC	cpu_hwcaps
+    840c: 37effb68     	tbnz	w8, #0x1d, 0x8378 <tee_log_read+0x388>
+    8410: 17ffffcb     	b	0x833c <tee_log_read+0x34c>
+    8414: 90000008     	adrp	x8, 0x8000 <tee_log_read+0x10>
+		0000000000008414:  R_AARCH64_ADR_PREL_PG_HI21	cpu_hwcaps
+    8418: f9400108     	ldr	x8, [x8]
+		0000000000008418:  R_AARCH64_LDST64_ABS_LO12_NC	cpu_hwcaps
+    841c: 36effba8     	tbz	w8, #0x1d, 0x8390 <tee_log_read+0x3a0>
+    8420: 17ffffea     	b	0x83c8 <tee_log_read+0x3d8>
+    8424: 52801409     	mov	w9, #0xa0               // =160
+    8428: 17ffffca     	b	0x8350 <tee_log_read+0x360>
+    842c: 52801409     	mov	w9, #0xa0               // =160
+    8430: 17ffffdd     	b	0x83a4 <tee_log_read+0x3b4>
+    8434: aa1f03f6     	mov	x22, xzr
+    8438: 14000003     	b	0x8444 <tee_log_read+0x454>
+    843c: aa1403f6     	mov	x22, x20
+    8440: f94007f3     	ldr	x19, [sp, #0x8]
+    8444: f9400268     	ldr	x8, [x19]
+    8448: 8b160108     	add	x8, x8, x22
+    844c: f9000268     	str	x8, [x19]
+    8450: d5384108     	mrs	x8, SP_EL0
+    8454: f9431d08     	ldr	x8, [x8, #0x638]
+    8458: f85f83a9     	ldur	x9, [x29, #-0x8]
+    845c: eb09011f     	cmp	x8, x9
+    8460: 54000461     	b.ne	0x84ec <tee_log_read+0x4fc>
+    8464: aa1603e0     	mov	x0, x22
+    8468: a9494ff4     	ldp	x20, x19, [sp, #0x90]
+    846c: a94857f6     	ldp	x22, x21, [sp, #0x80]
+    8470: a9475ff8     	ldp	x24, x23, [sp, #0x70]
+    8474: a94667fa     	ldp	x26, x25, [sp, #0x60]
+    8478: a9456ffc     	ldp	x28, x27, [sp, #0x50]
+    847c: a9447bfd     	ldp	x29, x30, [sp, #0x40]
+    8480: 910283ff     	add	sp, sp, #0xa0
+    8484: d50323bf     	autiasp
+    8488: d65f03c0     	ret
+    848c: 90000000     	adrp	x0, 0x8000 <tee_log_read+0x10>
+		000000000000848c:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x8a9
+    8490: 91000000     	add	x0, x0, #0x0
+		0000000000008490:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x8a9
+    8494: 94000000     	bl	0x8494 <tee_log_read+0x4a4>
+		0000000000008494:  R_AARCH64_CALL26	_printk
+    8498: 17ffffee     	b	0x8450 <tee_log_read+0x460>
+    849c: 92800076     	mov	x22, #-0x4              // =-4
+    84a0: 17ffffec     	b	0x8450 <tee_log_read+0x460>
+    84a4: 90000000     	adrp	x0, 0x8000 <tee_log_read+0x10>
+		00000000000084a4:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x7d2
+    84a8: 91000000     	add	x0, x0, #0x0
+		00000000000084a8:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x7d2
+    84ac: 94000000     	bl	0x84ac <tee_log_read+0x4bc>
+		00000000000084ac:  R_AARCH64_CALL26	_printk
+    84b0: 17ffffe4     	b	0x8440 <tee_log_read+0x450>
+    84b4: 910043e1     	add	x1, sp, #0x10
+    84b8: aa1603e0     	mov	x0, x22
+    84bc: 94000000     	bl	0x84bc <tee_log_read+0x4cc>
+		00000000000084bc:  R_AARCH64_CALL26	finish_wait
+    84c0: 17ffff15     	b	0x8114 <tee_log_read+0x124>
+    84c4: 90000000     	adrp	x0, 0x8000 <tee_log_read+0x10>
+		00000000000084c4:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x7d2
+    84c8: 91000000     	add	x0, x0, #0x0
+		00000000000084c8:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x7d2
+    84cc: d4210000     	brk	#0x800
+    84d0: 94000000     	bl	0x84d0 <tee_log_read+0x4e0>
+		00000000000084d0:  R_AARCH64_CALL26	_printk
+    84d4: 17ffffdb     	b	0x8440 <tee_log_read+0x450>
+    84d8: d4210000     	brk	#0x800
+    84dc: 90000000     	adrp	x0, 0x8000 <tee_log_read+0x10>
+		00000000000084dc:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x1b7
+    84e0: 91000000     	add	x0, x0, #0x0
+		00000000000084e0:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x1b7
+    84e4: 94000000     	bl	0x84e4 <tee_log_read+0x4f4>
+		00000000000084e4:  R_AARCH64_CALL26	_printk
+    84e8: 17ffffd6     	b	0x8440 <tee_log_read+0x450>
+    84ec: 94000000     	bl	0x84ec <tee_log_read+0x4fc>
+		00000000000084ec:  R_AARCH64_CALL26	__stack_chk_fail
+    84f0: f4 e2 66 e8  	.word	0xe866e2f4
+

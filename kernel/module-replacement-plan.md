@@ -124,7 +124,9 @@ It is `SOURCE_NOW` and FROZEN FOR RE.
 
 Treat as one late-stage security subsystem:
 
-- tkcore — still stock, untouched (`PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED /
+- tkcore — still stock, untouched; island reconstruction reached Phase 3P
+  (lifecycle prerequisites closed, Phase-3A core dependencies READY)
+  (`PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED /
   STOCK RUNTIME PROVIDER`, blocked on original TrustKernel private headers)
 - tkcore_drv — **SOURCE_RECONSTRUCTED / SOURCE_NOW_WITH_PROVIDER_WITNESSES /
   FROZEN FOR RE** (2026-09-13, updated 2026-09-13 after the ffa_v10 closure:

@@ -1,0 +1,51 @@
+00000000000086f4 <tee_version_read>:
+    86f4: d503233f     	paciasp
+    86f8: d10183ff     	sub	sp, sp, #0x60
+    86fc: a9037bfd     	stp	x29, x30, [sp, #0x30]
+    8700: f90023f5     	str	x21, [sp, #0x40]
+    8704: a9054ff4     	stp	x20, x19, [sp, #0x50]
+    8708: 9100c3fd     	add	x29, sp, #0x30
+    870c: d5384109     	mrs	x9, SP_EL0
+    8710: aa0003e8     	mov	x8, x0
+    8714: f9431d29     	ldr	x9, [x9, #0x638]
+    8718: 928002a0     	mov	x0, #-0x16              // =-22
+    871c: f81f83a9     	stur	x9, [x29, #-0x8]
+    8720: a901ffff     	stp	xzr, xzr, [sp, #0x18]
+    8724: a900ffff     	stp	xzr, xzr, [sp, #0x8]
+    8728: b4000261     	cbz	x1, 0x8774 <tee_version_read+0x80>
+    872c: aa0303f3     	mov	x19, x3
+    8730: b4000223     	cbz	x3, 0x8774 <tee_version_read+0x80>
+    8734: f9401108     	ldr	x8, [x8, #0x20]
+    8738: aa0203f4     	mov	x20, x2
+    873c: aa0103f5     	mov	x21, x1
+    8740: 90000002     	adrp	x2, 0x8000 <tee_log_read+0x10>
+		0000000000008740:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x387
+    8744: 91000042     	add	x2, x2, #0x0
+		0000000000008744:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x387
+    8748: 910023e0     	add	x0, sp, #0x8
+    874c: f9415d08     	ldr	x8, [x8, #0x2b8]
+    8750: 52800401     	mov	w1, #0x20               // =32
+    8754: 294c9103     	ldp	w3, w4, [x8, #0x64]
+    8758: b9406d05     	ldr	w5, [x8, #0x6c]
+    875c: 94000000     	bl	0x875c <tee_version_read+0x68>
+		000000000000875c:  R_AARCH64_CALL26	snprintf
+    8760: 910023e3     	add	x3, sp, #0x8
+    8764: aa1503e0     	mov	x0, x21
+    8768: aa1403e1     	mov	x1, x20
+    876c: aa1303e2     	mov	x2, x19
+    8770: 97ffff71     	bl	0x8534 <copy_to_user_str>
+    8774: d5384108     	mrs	x8, SP_EL0
+    8778: f9431d08     	ldr	x8, [x8, #0x638]
+    877c: f85f83a9     	ldur	x9, [x29, #-0x8]
+    8780: eb09011f     	cmp	x8, x9
+    8784: 540000e1     	b.ne	0x87a0 <tee_version_read+0xac>
+    8788: a9454ff4     	ldp	x20, x19, [sp, #0x50]
+    878c: a9437bfd     	ldp	x29, x30, [sp, #0x30]
+    8790: f94023f5     	ldr	x21, [sp, #0x40]
+    8794: 910183ff     	add	sp, sp, #0x60
+    8798: d50323bf     	autiasp
+    879c: d65f03c0     	ret
+    87a0: 94000000     	bl	0x87a0 <tee_version_read+0xac>
+		00000000000087a0:  R_AARCH64_CALL26	__stack_chk_fail
+    87a4: f4 e2 66 e8  	.word	0xe866e2f4
+
