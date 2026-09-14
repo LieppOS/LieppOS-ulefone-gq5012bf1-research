@@ -1,0 +1,28 @@
+NON-SHIPPABLE BUILD EVIDENCE -- DO NOT SHIP, DO NOT LOAD
+========================================================
+This directory contains NO source and NO loadable module. It holds a single
+Module.symvers whose CRCs were extracted from the STOCK tcpc_class.ko:
+
+  workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/tcpc_class.ko
+
+Extraction method (provider side, authoritative):
+  __ksymtab entries are struct kernel_symbol {s32 value,name,namespace}; the
+  per-entry name field carries a R_AARCH64_PREL32 relocation into
+  __ksymtab_strings, and __kcrctab holds one u32 CRC per entry in the same
+  order. 204 exports were recovered this way.
+
+Why it exists:
+  extcon-mtk-usb is a CONSUMER-ONLY edge of tcpc_class. Building it against the
+  LieppOS tcpc-class reconstruction embeds that reconstruction's CRCs, which
+  differ from stock, so the resulting module would be refused by a stock
+  tcpc_class.ko at modprobe time ("disagrees about version of symbol").
+  This witness lets the consumer be built and verified against the exact stock
+  provider ABI without claiming the provider itself is reconstructed.
+
+Cross-check (both directions agree):
+  tcpc_dev_get_by_name        provider 0xa4a78f74 == extcon __versions 0xa4a78f74
+  register_tcp_dev_notifier   provider 0x796a05c1 == extcon __versions 0x796a05c1
+  tcpm_inquire_remote_cc      provider 0x199e53c1 == extcon __versions 0x199e53c1
+
+This does NOT constitute a tcpc_class source reconstruction and must never be
+used to claim one. See kernel/phase4-extcon-mtk-usb-provider-abi.md.

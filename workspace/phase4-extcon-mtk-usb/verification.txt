@@ -1,0 +1,147 @@
+extcon-mtk-usb (GQ5012BF1 / MT6878) -- source closure verification
+=================================================================
+Target      : drivers/mediatek/typec/extcon-mtk-usb.c  ->  extcon-mtk-usb.ko
+Recon tree  : /home/armol/kernel-work/gki-12901745-workspace/lieppos/extcon-mtk-usb-recon
+Oracle      : oracle/extcon-mtk-usb.ko  (stock, vermagic 6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload aarch64)
+Toolchain   : GKI 6.1 common tree, clang/ld.lld (LLVM=1), MODULE_VER_MAGIC aarch64
+
+1. BUILD (RED -> GREEN)
+-----------------------
+Prerequisites (the module has external providers, so their symbol versions must
+be visible to modpost):
+
+  cd $G/common
+  make -j48 ARCH=arm64 LLVM=1 CC=clang LD=ld.lld gki_defconfig modules_prepare
+  cp out/bazel/output_user_root/*/external/gki_prebuilts_vmlinux.symvers/.../vmlinux.symvers Module.symvers
+  clang -E -P -D__ASSEMBLY__ -nostdinc -D__KERNEL__ \
+        -Iarch/arm64/include -Iarch/arm64/include/generated -Iinclude -Iinclude/generated \
+        -include linux/kconfig.h -include include/generated/autoconf.h \
+        scripts/module.lds.S -o scripts/module.lds
+
+  make -j16 ARCH=arm64 LLVM=1 CC=clang LD=ld.lld \
+       M=$G/lieppos/extcon-mtk-usb-recon CONFIG_EXTCON_MTK_USB_RECON=m \
+       KERNEL_SRC=$G/common \
+       KBUILD_EXTRA_SYMBOLS="$G/lieppos/tcpc-class-recon/baseline/Module.symvers \
+                             $G/lieppos/mt6375-charger-provider-abi/Module.symvers" \
+       modules
+
+Result: rc=0, 0 warnings, extcon_mtk_usb.ko 442 KB.
+Gotcha 1: an aborted modules_prepare wipes scripts/module.lds; the link stage
+          then fails with "ld.lld: error: cannot open script: scripts/module.lds".
+          Regenerate it as above (it is a preprocessed linker script).
+Gotcha 2: the tree must stay in the GKI defconfig state; M=... module builds do
+          not run scripts/mod/Makefile.build's prepare target implicitly.
+
+1b. THE CONFIG_TCPC_CLASS GATE (root cause of the silent TCPC gap)
+----------------------------------------------------------------
+The Type-C half of the driver is compiled out unless the preprocessor macro
+CONFIG_TCPC_CLASS is defined. The private gate name originally used in this
+reconstruction (CONFIG_MTK_TCPC_CLASS) built clean and *did* emit the procfs
+skeleton, yet produced a module with **zero** tcpc_class references:
+
+  inc/tcpm.h selects between the real externs and no-op stubs on exactly that
+  spelling --
+      #if IS_ENABLED(CONFIG_TCPC_CLASS)
+              extern struct tcpc_device *tcpc_dev_get_by_name(const char *name);
+              extern int register_tcp_dev_notifier(...);
+              extern int tcpm_inquire_remote_cc(...);
+      #endif
+      #define TCPC_CLASS_NA
+      static inline int register_tcp_dev_notifier(...) { return 0; }   etc.
+  so a differently-named gate silently bound every call to a `return 0` stub and
+  linked successfully. Any -D gate must therefore reuse the vendor macro name.
+  Fixed: Makefile passes -DCONFIG_TCPC_CLASS=1 (both ccflags-y for M= builds and
+  ccflags-$(CONFIG_EXTCON_MTK_USB_RECON_TCPM) for Kconfig builds); the source
+  uses IS_ENABLED(CONFIG_TCPC_CLASS). tcpc_class baseline was built with
+  -DCONFIG_TCPC_CLASS_MODULE=1; the consumer only passes opaque struct pointers,
+  so it does not need that second define.
+
+2. UNDEFINED- SYMBOL PARITY (the acceptance gate)
+-------------------------------------------------
+  stock undefined symbols : 63
+  recon undefined symbols : 63
+  missing                 : NONE
+  extra                   : NONE
+
+including the CONFIG_TCPC_CLASS-dependent half (tcpc_dev_get_by_name,
+register_tcp_dev_notifier, tcpm_inquire_remote_cc), the procfs half (proc_mkdir,
+proc_create_data, single_open, single_release, seq_lseek, seq_read), and the
+provider symbol yft_usb_flag.
+
+3. DEFINED-SYMBOL / SIZE DIFFS  (llvm-nm -S, hex sizes; see digest.py)
+---------------------------------------------------------------------
+only in stock : mtk_usb_extcon_of_match (0x400)       -- table emitted with
+                external-ish linkage in stock, merged into .rodata locally here.
+only in recon : mtk_usb_extcon_set_vbus (0x348), mtk_usb_extcon_procfs_init,
+                yft_tiny2c_mode_work.
+Explanation: stock has NO out-of-line mtk_usb_extcon_set_vbus -- clang inlined it
+into its three callers. The arithmetic closes: notifier 0x832 (2098 B) versus
+1142 B here is exactly the ~348 B set_vbus body plus its two call sites, and
+probe (2252 vs 2028) / detect_cable (468 vs 532, +call overhead) move in the
+opposite directions. So these are inlining-shape deltas, not behaviour deltas.
+get_otg_select_gpio, usb_cc_smt_procfs_open, mtk_usb_idpin_handle,
+mtk_usb_extcon_set_role/update_role/psy_notifier differ by <= 16 B (padding /
+pointer-auth scheduling).
+
+4. LOG-STRING PARITY (behavioural fingerprint)
+----------------------------------------------
+  oracle/logstring-diff.txt: stock 70 literals, recon 67, 44 shared, and after
+  removing the leading-byte artifacts of the merged .rodata pool the residuals
+  are confined to yft_parse_dts() / get_otg_select_gpio() wording:
+      %s: YFT_OTG_cannot get the node: 'mediatek,usb3'.
+      %s: YFT_OTG_of_get_named_gpio fail.
+      %s: YFT_OTG_yft_parse_dts 1 fail.
+      YFT_OTG_get_otg_select_gpio failed.[ yft_otg_select_gpio_num=%d]
+  Closed in this pass (each quoted verbatim from stock .rodata):
+      [%s] YFT_OTG_yft_otg_gpio set_high     (set_vbus enable path; stock has
+                                             one set_high vs two set_low)
+      %s: yft_parse_dts fail.                \
+      %s: yft_parse_dts fail. yft_uvc_switch_gpio_num=%d   | probe's uvc block
+      yft_uvc_{switch,vbus}_gpio_num failed. ...=%d        |  (vendor copy-paste)
+      Failed to create uvc sysfs file %d     /
+      yft_tiny2c_mode=%d                     (probe bootstrap log)
+      "Invalid input" now one shared literal across both store paths.
+  The recon-only class/procreg failure strings were removed: stock carries no
+  failure literal for class_create()/class_create_file_ns() error paths.
+
+5. EVIDENCE GRADES still recorded in the source
+----------------------------------------------
+  PROVEN_EXACT     symbol names/sizes, import census, string census, struct
+                   field order (4B/4B/4B/1B layout), DT property names, the
+                   store_tiny2c_mode call census (sscanf -> _printk ->
+                   kmalloc_trace -> init_timer_key -> queue_delayed_work_on).
+  INFERRED         which branch emits each individual uvc log, the class
+                   attribute mode 0644, the set_high log placement inside
+                   set_vbus, extcon-usb DT node <-> gpio numbers (55/152/37).
+  UNPROVEN         runtime notify-type coverage vs stock's 832-line notifier;
+                   no on-device trace has been captured yet.
+
+6. OPEN WORK
+------------
+  * Per-function instruction-level comparison is available via ./check.py
+    (--stock/--recon plus function names); its intra-module bl resolution is
+    approximate because stock's symtab sizes overrun into following symbols, so
+    treat its per-function string windows as hints, not as evidence. The
+    module-wide diffs in sections 2 and 4 are the ones that are exact.
+  * On-device: modprobe + extcon state polling + /proc/mtk_typec/smt_u2_cc_mode
+    to grade section 5's UNPROVEN rows.
+
+7. FINAL CLOSURE  (supersedes the residual list in section 4)
+-------------------------------------------------------------
+Rebuilt after the log-string edits above (rc=0, 0 warnings, 442616 bytes;
+rebuilt/ holds extcon_mtk_usb.c + Makefile + Kconfig + BUILD.bazel + .ko):
+
+  imports       stock=63  recon=63  missing=NONE  extra=NONE
+  log literals  stock=70  recon=70  STOCK-ONLY=0        (oracle/logstring-substr-diff.txt)
+
+The substring-mode comparison is the correct one: comparing literal sets
+literally leaves 26 "recon-only" rows that all start with the byte 0x36 ('6'),
+i.e. the last byte of the preceding pooled string in this build's .rodata pool.
+They are the same literals stock carries, so they are merge artifacts rather
+than added behaviour. With that normalisation every stock log literal is present
+in the reconstruction, which is the behavioural half of the acceptance gate.
+
+Still open (unchanged from section 6): on-device trace to grade the notifier's
+notify-type coverage, and instruction-level comparison of
+mtk_extcon_tcpc_notifier (stock 0x832 vs recon 0x476), whose whole delta is the
+inlined mtk_usb_extcon_set_vbus body plus its call sites.

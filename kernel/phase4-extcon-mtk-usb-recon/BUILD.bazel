@@ -1,0 +1,32 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+package(default_visibility = ["//visibility:public"])
+
+# Reconstruction of the stock Ulefone GQ5012BF1 vendor module
+# //vendor/lib/modules/extcon-mtk-usb.ko
+# (sha256 9e6adf23de6729f9983f680be75c8aca9eabe22aa6efcaafe7704257b37cb2bf).
+#
+# TODO(provider-abi): `deps` must carry the two modules that supply the stock
+# module's four non-GKI imports (tcpc_class: register_tcp_dev_notifier,
+# tcpc_dev_get_by_name, tcpm_inquire_remote_cc; mt6375_charger_provider_abi:
+# yft_usb_flag). Their headers live in tcpc-class-recon/inc and
+# .../vendor-include/power-supply, so they have to be exposed as
+# local_includes/data here -- until that is done build with CONFIG_TCPC_CLASS=n,
+# which compiles the extcon + YFT half of the source only.
+kernel_module(
+    name = "extcon_mtk_usb_recon",
+    srcs = glob([
+        "*.c",
+        "*.h",
+        "inc/**/*.h",
+        "Makefile",
+        "Kconfig",
+    ]),
+    outs = ["extcon_mtk_usb.ko"],
+    kernel_build = "//common:kernel_aarch64",
+    local_includes = ["."],
+    # deps = [
+    #     "//lieppos/mt6375-charger-provider-abi:mt6375_charger_provider_abi",
+    #     "//lieppos/tcpc-class-recon:tcpc_class_gki",
+    # ],
+)

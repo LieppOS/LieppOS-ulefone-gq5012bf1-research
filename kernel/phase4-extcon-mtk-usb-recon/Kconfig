@@ -1,0 +1,31 @@
+#
+# Reconstruction of the stock Ulefone GQ5012BF1 extcon USB driver.
+#
+
+config EXTCON_MTK_USB_RECON
+	tristate "MediaTek Extcon USB driver (GQ5012BF1 reconstruction)"
+	depends on OF && GPIOLIB && EXTCON
+	help
+	  Reconstruction of the Ulefone GQ5012BF1 (MT6878) vendor module
+	  //vendor/lib/modules/extcon-mtk-usb.ko from the sibling MT6878 MediaTek
+	  v17 donor plus the stock ELF oracle: donor body plus the Usmart/YFT
+	  thermal-camera delta (otg_gpio_select, uvc_switch_gpio, uvc_vbus_gpio,
+	  uvc_insert_status, tiny2c_mode).
+
+	  The Type-C / TCPM notifier half additionally needs the tcpc_class
+	  provider module (see EXTCON_MTK_USB_RECON_TCPM).
+
+config EXTCON_MTK_USB_RECON_TCPM
+	bool "Enable the tcpc_class / TCPM Type-C paths"
+	depends on EXTCON_MTK_USB_RECON
+	default y
+	help
+	  Compile the tcpc notifier and the /proc/mtk_typec/smt_u2_cc_mode
+	  seq_file procfs. Stock's symbol table proves these were built into the
+	  shipping module, so this defaults to y; it additionally needs the
+	  tcpc_class provider headers and Module.symvers at build time.
+
+	  The vendor charger_device API (get_charger_by_name,
+	  charger_dev_enable_vac_otgovp) is deliberately not used: neither
+	  symbol appears among stock's 63 imports, so Usmart dropped that part
+	  of the MediaTek donor.

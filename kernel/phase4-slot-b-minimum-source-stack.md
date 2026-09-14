@@ -266,3 +266,15 @@ Static/read-only analysis only. No flashing, slot switch, boot-control change,
 `insmod`/`rmmod`, bind/unbind, sysfs write, GPIO change, I2C write, charging
 test, panel command, light enable, or calibration/NVRAM/DT/DTBO modification was
 performed in producing this plan.
+
+## extcon-mtk-usb (Phase 4 closure)
+
+`extcon-mtk-usb` is source-closed and shippable: SOURCE_DELTA_RECONSTRUCTION_EXACT,
+FROZEN FOR RE, 22/22 functions, 63/63 imports, 64/64 MODVERSION CRCs, 4/4 kCFI,
+85/85 verifier. It is the owner of the uSmart accessory path (GPIO 28 detect,
+GPIO 55 UVC/USB switch, GPIO 152 accessory VBUS, GPIO 37 Type-C OTG companion)
+and of the `yft_usb_flag` read gate. Replacement is drop-in: ship the module as
+`extcon-mtk-usb.ko` (hyphen filename, as `modules.dep` expects) while `.modinfo`
+keeps `name=extcon_mtk_usb`, exactly as stock. Providers stay stock-compatible —
+the reconstruction carries stock `tcpc_class` and `mt6375-charger` CRCs.
+Detail: `kernel/phase4-extcon-mtk-usb-reconstruction.md`.

@@ -84,6 +84,23 @@
   `STOCK_PROVIDER_WITNESS` including both `ffa_driver_*` edges, 37/37
   verifier.)*
 
+- `extcon_mtk_usb` — **SOURCE_DELTA_RECONSTRUCTION_EXACT**; SOURCE_NOW;
+  FROZEN FOR RE; the central uSmart USB routing / accessory-detect /
+  USB-role / Type-C coexistence owner. Donor = Nothing MT6878 device_modules
+  `957dac18` v17 (the device's own UsMart drop ships no extcon driver at all);
+  the Ulefone delta is 5 YFT functions + 13 imports, and the donor's
+  `charger_class`/dvchg1 path is absent from stock. Parity: **22/22 stock
+  functions**, **63/63 imports exact**, **64/64 MODVERSION CRCs identical**,
+  **4/4 kCFI type ids identical**, 0 exports, and **every one of the 70 stock
+  log literals present**. `yft_usb_flag` CRC `0x398e9c8b` matches stock, with
+  ownership unchanged (`mt6375-charger` remains the single real provider;
+  `yft_tiny2c_usb` was not reopened). The three `tcpc_class` CRCs required a
+  declared NON-SHIPPABLE stock-provider witness extracted provider-side from
+  the stock `tcpc_class.ko` — no CRC injection, no ELF patch, no copied
+  `__versions`, no `KBUILD_MODPOST_WARN`. 85/85 fail-closed verifier
+  (`kernel/scripts/phase4_extcon_mtk_usb_verify.py`).
+  See `kernel/phase4-extcon-mtk-usb-reconstruction.md`.
+
 ## Active remaining queue
 
 - `tkcore` — blocked on original TrustKernel headers only (no further binary
@@ -223,3 +240,8 @@ Do not mark `tkcore` reconstructed because `ffa_v10` closed: `tkcore` remains
 `PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER`, blocked
 on original TrustKernel private headers. It was not reopened by the `ffa_v10`
 task.
+
+`extcon_mtk_usb` closing does NOT mark `tcpc_class` reconstructed: that edge is
+consumer-only and was closed with a declared non-shippable stock-provider ABI
+witness. `mt6375-charger` likewise remains the single real `yft_usb_flag`
+provider and was not reopened.

@@ -1,0 +1,255 @@
+GQ5012BF1 STOCK ORACLE - extcon-mtk-usb.ko (Phase 1, FROZEN)
+================================================================
+Static/offline extraction only. No device was touched.
+
+1. STOCK COPIES (repo-wide + GKI-workspace sweep)
+----------------------------------------------------------------
+  canonical : workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/extcon-mtk-usb.ko
+  sha256    : 9e6adf23de6729f9983f680be75c8aca9eabe22aa6efcaafe7704257b37cb2bf
+  size      : 46864 bytes
+  derived   : workspace/usmart-audit/kernel/extcon-mtk-usb.ko          identical=YES
+  derived   : workspace/phase4-extcon-mtk-usb/oracle/extcon-mtk-usb.ko identical=YES
+
+  PROVEN: there is exactly ONE physical stock ELF. Every located copy is
+  byte-identical to it (cmp + sha256). No underscore-basename variant
+  (extcon_mtk_usb.ko) exists anywhere.
+  Swept with 0 extcon hits: stock/partitions/{system_dlkm,vendor_dlkm,
+  odm_dlkm,vendor,system}, stock/{boot,vendor_boot,init_boot}-unpacked,
+  stock/vendor-ramdisks/recovery.cpio (cpio -itv), snapshots/,
+  pre-lineage-refactor-vendor/, /home/armol/kernel-work/.
+
+2. PLACEMENT / LOAD INDICES
+----------------------------------------------------------------
+  modules.load           153/184  extcon-mtk-usb.ko
+  modules.load.recovery  151/189  extcon-mtk-usb.ko
+  modules.dep            :57  extcon-mtk-usb.ko: mt6375-charger.ko tcpc_class.ko pd_dbg_info.ko charger_class.ko
+  modules.alias          : 0 matches (platform ramdisk ships no alias db)
+  modules.softdep        : 0 matches
+  modules.blocklist      : not shipped in this ramdisk
+  NOTE: both load indices live in the SAME platform ramdisk dir and name the
+        SAME ELF (/lib/modules/extcon-mtk-usb.ko); recovery re-uses it.
+
+3. MODULE METADATA (.modinfo)
+----------------------------------------------------------------
+  name:        extcon_mtk_usb
+  description: MediaTek Extcon USB Driver
+  author:      -
+  license:     GPL
+  depends:     tcpc_class,mt6375-charger
+  alias:       of:N*T*Cmediatek,extcon-usb
+  alias:       of:N*T*Cmediatek,extcon-usbC*
+  vermagic:    6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64
+  srcversion:  -
+  import_from: -
+  retpoline:   -
+  intree:      -
+  staging:     -
+  softdep:     -
+
+  compiler (.comment):
+    Android (10087095, +pgo, +bolt, +lto, -mlgo, based on r487747c) clang version 17.0.2 (https://android.googlesource.com/toolchain/llvm-project d9f89f4d16663d5012e5c09495f3b30ece3d2362)
+  build-id          : bdfe8ed88c1df7083329acd2e2999c3c2b043796
+
+4. ABI COUNTS
+----------------------------------------------------------------
+  func_count =       22
+  import_count =     63
+  export_count =     0
+  modversion_count = 64
+  kcfi_typeid_count = 4
+  reloc_count =      649
+  section_count =    38
+  63 UND symtab imports + implicit module_layout = 64 __versions CRCs
+  exports: NONE - no __ksymtab/__kcrctab sections. extcon-mtk-usb is a
+  pure CONSUMER module; yft_usb_flag is an IMPORT here (provider is
+  mt6375-charger.ko).
+  module parameters: none (no __param/__param_addr sections)
+  namespace imports (__namespace_*): none
+  tracepoints (__tracepoint_*): none
+
+5. KCFI CONTRACT (exact clang type ids carried by stock)
+----------------------------------------------------------------
+  delayed_work_timer_fn        0x91b4a83a
+  seq_lseek                    0xe61887de
+  seq_read                     0xe866e2f4
+  single_release               0x8f07ca55
+  clang KCFI is ENABLED. No __cfi_* symbols exist, so GCC-style CFI jump
+  tables are unused: this typeid set IS the whole CFI contract and must
+  be reproduced bit-for-bit by any reconstruction.
+
+6. STOCK FUNCTION INVENTORY (22 functions)
+----------------------------------------------------------------
+  cleanup_module                   .exit.text   off=0x4     size=36    body-sha256:-
+  init_module                      .init.text   off=0x4     size=44    body-sha256:-
+  get_otg_select_gpio              .text        off=0x4     size=160   body-sha256:a4ad1a55003240f2
+  mtk_extcon_tcpc_notifier         .text        off=0x1664  size=832   body-sha256:cc6ab2c9d8aed7cb
+  mtk_usb_extcon_detect_cable      .text        off=0x11c4  size=468   body-sha256:f03b99aa26383ee2
+  mtk_usb_extcon_probe             .text        off=0x204   size=2252  body-sha256:9f2cb2f96b35ad39
+  mtk_usb_extcon_psy_detector      .text        off=0x13d4  size=364   body-sha256:82535ac4b3bc6c60
+  mtk_usb_extcon_psy_notifier      .text        off=0x1544  size=68    body-sha256:a32a20b13edeb139
+  mtk_usb_extcon_remove            .text        off=0xad4   size=8     body-sha256:2b59db05426e0f31
+  mtk_usb_extcon_set_role          .text        off=0xff8   size=168   body-sha256:da8b8c3b04c889ca
+  mtk_usb_extcon_shutdown          .text        off=0xae0   size=152   body-sha256:3bf33128ce6d9d39
+  mtk_usb_extcon_update_role       .text        off=0x10a4  size=284   body-sha256:f5a04445eb4140f5
+  mtk_usb_idpin_handle             .text        off=0x139c  size=52    body-sha256:dcdb2ff95d645d5c
+  show_tiny2c_mode                 .text        off=0xe64   size=88    body-sha256:5a02970884dfec94
+  show_uvc_insert_status           .text        off=0xe0c   size=84    body-sha256:b90bd7c0d0b9c404
+  store_tiny2c_mode                .text        off=0xec0   size=312   body-sha256:fef08089ed48e792
+  usb_cc_smt_procfs_open           .text        off=0xcdc   size=48    body-sha256:1a0577ffb2d585a7
+  usb_cc_smt_procfs_show           .text        off=0xd10   size=248   body-sha256:479f1cb0ff0b62fb
+  usb_is_online                    .text        off=0x1588  size=216   body-sha256:353ee949eb080f42
+  vbus_limit_cur_show              .text        off=0xb7c   size=80    body-sha256:4963fbd86da4cead
+  vbus_limit_cur_store             .text        off=0xbd0   size=264   body-sha256:a2027b9f60ca5917
+  yft_parse_dts                    .text        off=0xa4    size=348   body-sha256:9ef5e9bcadc1177d
+
+7. STOCK IMPORTS (63)
+----------------------------------------------------------------
+  __class_create                   __platform_driver_register       __stack_chk_fail                 _dev_err                         _dev_info
+  _printk                          alloc_workqueue                  class_create_file_ns             delayed_work_timer_fn            device_create_file
+  devm_extcon_dev_allocate         devm_extcon_dev_register         devm_gpiod_get                   devm_kmalloc                     devm_power_supply_get_by_phandle
+  devm_regulator_get_exclusive     devm_request_threaded_irq        extcon_set_state_sync            gpio_request                     gpio_to_desc
+  gpiod_direction_output_raw       gpiod_get_raw_value              gpiod_get_value_cansleep         gpiod_set_raw_value              gpiod_to_irq
+  init_timer_key                   kfree                            kmalloc_caches                   kmalloc_trace                    kstrtoint
+  of_find_compatible_node          of_find_property                 of_get_named_gpio_flags          of_property_read_string          of_property_read_variable_u32_array
+  platform_driver_unregister       power_supply_get_by_name         power_supply_get_property        power_supply_reg_notifier        proc_create_data
+  proc_mkdir                       queue_delayed_work_on            register_tcp_dev_notifier        regulator_disable                regulator_enable
+  regulator_is_enabled             regulator_set_current_limit      regulator_set_voltage            scnprintf                        seq_lseek
+  seq_puts                         seq_read                         single_open                      single_release                   sprintf
+  sscanf                           strcmp                           system_power_efficient_wq        tcpc_dev_get_by_name             tcpm_inquire_remote_cc
+  usb_role_switch_get              usb_role_switch_set_role         yft_usb_flag
+
+8. MODVERSION CRC CONTRACT (consumer side)
+----------------------------------------------------------------
+  _printk                                  0x92997ed8
+  of_find_compatible_node                  0x3d6e4570
+  of_get_named_gpio_flags                  0xb9ab15e7
+  gpio_to_desc                             0x0ec43f6f
+  gpio_request                             0x47229b5c
+  gpiod_direction_output_raw               0x1aadfa2a
+  gpiod_set_raw_value                      0x8dae9ed0
+  gpiod_get_raw_value                      0xe7edce8c
+  __platform_driver_register               0x894c433a
+  platform_driver_unregister               0xe1b15563
+  devm_kmalloc                             0xd50f026e
+  devm_extcon_dev_allocate                 0x791836df
+  _dev_err                                 0xf27ed00b
+  devm_extcon_dev_register                 0xd0e76d8f
+  _dev_info                                0xef3cb484
+  usb_role_switch_get                      0x8f4a6fa5
+  of_find_property                         0xe35274a3
+  devm_regulator_get_exclusive             0x881c7bc4
+  regulator_is_enabled                     0xeb66df15
+  of_property_read_variable_u32_array      0x94a3f9c7
+  of_property_read_string                  0x000c9569
+  strcmp                                   0xe2d5255a
+  alloc_workqueue                          0x49cd25ed
+  proc_mkdir                               0x1e39ba1c
+  device_create_file                       0xe25f59ab
+  __class_create                           0x13f8371b
+  class_create_file_ns                     0x7f96615d
+  devm_gpiod_get                           0x66e8ab95
+  gpiod_to_irq                             0xe46623a3
+  proc_create_data                         0x7ae3018a
+  delayed_work_timer_fn                    0x253af43d
+  init_timer_key                           0x79cf5987
+  devm_request_threaded_irq                0x0570ef04
+  devm_power_supply_get_by_phandle         0xddd61e77
+  power_supply_get_by_name                 0x60e98d99
+  power_supply_reg_notifier                0x136209db
+  tcpc_dev_get_by_name                     0xa4a78f74
+  register_tcp_dev_notifier                0x796a05c1
+  gpiod_get_value_cansleep                 0x5a83086b
+  kmalloc_caches                           0x0f15b38a
+  kmalloc_trace                            0xb78e7543
+  queue_delayed_work_on                    0xbf57e89e
+  __stack_chk_fail                         0xc2c193d2
+  regulator_disable                        0x8b37c47c
+  sprintf                                  0x3c3ff9fd
+  kstrtoint                                0x8c8569cb
+  regulator_set_current_limit              0xf807c1fa
+  single_open                              0x4adb51eb
+  tcpm_inquire_remote_cc                   0x199e53c1
+  seq_puts                                 0x18d2d657
+  scnprintf                                0x96848186
+  sscanf                                   0xbcab6ee6
+  extcon_set_state_sync                    0xad30aa24
+  usb_role_switch_set_role                 0xd5474690
+  kfree                                    0x037a0cba
+  yft_usb_flag                             0x398e9c8b
+  system_power_efficient_wq                0x47884890
+  power_supply_get_property                0xd351924c
+  regulator_set_voltage                    0xee5baf2d
+  regulator_enable                         0xe8decd2e
+  seq_read                                 0xd963f308
+  seq_lseek                                0x11f8a681
+  single_release                           0xe8f7183d
+  module_layout                            0xea759d7f
+
+9. ELF OBJECT/SECTION TABLE
+----------------------------------------------------------------
+  .plt                               0x0      0x40     size=1       syms=0
+  .init.plt                          0x0      0x41     size=1       syms=0
+  .text.ftrace_trampoline            0x0      0x42     size=1       syms=0
+  .hyp.text                          0x0      0x1000   size=0       syms=0
+  .hyp.bss                           0x0      0x1000   size=0       syms=0
+  .hyp.rodata                        0x0      0x1000   size=0       syms=0
+  .hyp.data                          0x0      0x1000   size=0       syms=0
+  .init.eh_frame                     0x0      0x1000   size=1136    syms=2
+  .text                              0x0      0x1470   size=6564    syms=55
+  .rela.text                         0x0      0x5248   size=14352   syms=0
+  .init.text                         0x0      0x2e14   size=48      syms=4
+  .rela.init.text                    0x0      0x8a58   size=120     syms=0
+  .exit.text                         0x0      0x2e44   size=40      syms=4
+  .rela.exit.text                    0x0      0x8ad0   size=72      syms=0
+  .rodata.str1.1                     0x0      0x2e6c   size=2693    syms=2
+  .bss                               0x0      0x38f8   size=34      syms=9
+  .rodata                            0x0      0x38f8   size=512     syms=6
+  .rela.rodata                       0x0      0x8b18   size=96      syms=0
+  .init.data                         0x0      0x3af8   size=8       syms=3
+  .rela.init.data                    0x0      0x8b78   size=24      syms=0
+  .exit.data                         0x0      0x3b00   size=8       syms=3
+  .rela.exit.data                    0x0      0x8b90   size=24      syms=0
+  .modinfo                           0x0      0x3b08   size=262     syms=10
+  .data                              0x0      0x3c10   size=376     syms=6
+  .rela.data                         0x0      0x8ba8   size=312     syms=0
+  .comment                           0x0      0x8ce0   size=185     syms=3
+  .rela.eh_frame                     0x0      0x8da0   size=528     syms=0
+  .llvm_addrsig                      0x0      0x8fb0   size=49      syms=1
+  .note.Linux                        0x0      0x3d88   size=48      syms=4
+  .gnu.linkonce.this_module          0x0      0x3dc0   size=1088    syms=3
+  .rela.gnu.linkonce.this_module     0x0      0x8fe8   size=48      syms=0
+  __versions                         0x0      0x4200   size=4096    syms=3
+  .note.gnu.build-id                 0x0      0x5200   size=36      syms=0
+  .note.gnu.property                 0x0      0x5228   size=32      syms=0
+  .note.GNU-stack                    0x0      0x9018   size=0       syms=0
+  .symtab                            0x0      0x9018   size=4464    syms=0
+  .shstrtab                          0x0      0xa188   size=386     syms=0
+  .strtab                            0x0      0xa30a   size=2623    syms=0
+
+10. RELOCATION SUMMARY
+----------------------------------------------------------------
+  .rela.data                         13
+  .rela.eh_frame                     22
+  .rela.exit.data                    1
+  .rela.exit.text                    3
+  .rela.gnu.linkonce.this_module     2
+  .rela.init.data                    1
+  .rela.init.text                    5
+  .rela.rodata                       4
+  .rela.text                         598
+  TOTAL                              649
+
+11. VERIFICATION ARTIFACTS
+----------------------------------------------------------------
+  oracle/SHA256SUMS        self-hashing manifest of this frozen oracle tree
+  oracle/disasm-*.txt      llvm-objdump -dr (.text/.init.text/.exit.text)
+  oracle/symbols.txt       llvm-readelf -sW
+  oracle/sections.txt      llvm-readelf -SW
+  oracle/relocations.txt   llvm-readelf -rW
+  oracle/modinfo.txt       llvm-readelf -p .modinfo
+  oracle/build-id-notes.txt llvm-readelf -n
+  oracle/strings-all.txt   strings -a -t x
+  oracle/raw/*.bin         .text/.init.text/.exit.text/__versions payloads
+
+STATUS: FROZEN. Any future stock-vs-rebuild comparison must pin
+        sha256 9e6adf23de6729f9983f680be75c8aca9eabe22aa6efcaafe7704257b37cb2bf and size 46864.
