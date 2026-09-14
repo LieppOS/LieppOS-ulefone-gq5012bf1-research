@@ -1,5 +1,23 @@
 # GQ5012BF1 tkcore island Phase 3C — direct uaccess prerequisite blocker
 
+> **STATUS: `RESOLVED_BY_AUTHORIZED_DIRECT_PREREQUISITE_EXPANSION`**
+>
+> The stop recorded below was correct and is preserved verbatim as the
+> historical reason the Phase-3C scope was expanded. Scope expansion to
+> `uaccess_ttbr0_enable` and `uaccess_ttbr0_disable` — and to nothing else —
+> was subsequently authorized.
+>
+> Outcome: **candidate interpretation 1 was confirmed.** Implementing only the
+> proven source-level `put_user` shape caused the exact-GKI toolchain to
+> materialise both helpers on its own, LOCAL and **byte-identical to stock**
+> (100 and 92 bytes, `cpu_hwcaps` relocations only). No helper body was
+> hand-written and no symbol was fabricated. Resolution evidence:
+> `phase4-tkcore-island-phase3c-closure.md`.
+>
+> Everything below this line is the original, unmodified blocker record.
+
+---
+
 ## Result
 
 **PHASE 3C STOPPED BEFORE IMPLEMENTATION.**

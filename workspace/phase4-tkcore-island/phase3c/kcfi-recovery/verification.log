@@ -1,0 +1,17 @@
+== hash and mangling self-test ==
+  xxh64(b''   ) = ef46db3751d8e999 want ef46db3751d8e999 OK
+  xxh64(b'a'  ) = d24ec4f1a98c6e5b want d24ec4f1a98c6e5b OK
+  xxh64(b'abc') = 44bc2cf5ad770999 want 44bc2cf5ad770999 OK
+  mangling tee_cmd_io     -> bb8e9218 want bb8e9218 OK
+  mangling tee_shm_io     -> daee5623 want daee5623 OK
+  mangling tee_spta_inst  -> 014a7540 want 014a7540 OK
+PASS
+
+== recovered tag cross-checked against the real compiler ==
+tee_spta_inst_desc   model=ba9dd2d9 clang=ba9dd2d9 MATCHES STOCK ba9dd2d9
+tee_spta_inst        model=014a7540 clang=014a7540 
+
+== search result (from the Go port) ==
+corpus=77066616 candidates, depth=4, 66 tokens
+hits=[tee_spta_inst_desc]
+expected false positives = 77066616 / 2**32 = 0.0179

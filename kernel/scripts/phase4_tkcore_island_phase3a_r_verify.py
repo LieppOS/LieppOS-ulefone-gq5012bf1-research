@@ -324,7 +324,16 @@ def main() -> None:
     # The immutable snapshot is still pinned, and the Phase-3A-R behaviours in
     # that file are independently asserted above (handle-free ordering, no
     # pointer truncation, stock default name, no stub).
-    CO_OWNED = {"lieppos/tkcore-island/tkcore/tee_kernel_api.c": "Phase 3B (TEEC SHM APIs)"}
+    # Phase 3C reconstructs the ioctl/compat/marshalling layer, which lives in
+    # tee_core.c (tee_internal_ioctl, tee_compat_ioctl and the three
+    # convert_compat_* helpers).  Same reasoning as tee_kernel_api.c above: the
+    # immutable snapshot stays pinned and the Phase-3A-R behaviours in the file
+    # are asserted independently, so pinning the LIVE hash would only assert
+    # that no later phase may ever touch the file.
+    CO_OWNED = {
+        "lieppos/tkcore-island/tkcore/tee_kernel_api.c": "Phase 3B (TEEC SHM APIs)",
+        "lieppos/tkcore-island/tkcore/tee_core.c": "Phase 3C (ioctl/compat marshalling)",
+    }
     for row in source_manifest or []:
         live = GKI / row["path"]
         archived = snapshot / row["path"]
@@ -339,8 +348,12 @@ def main() -> None:
 
     # Stronger than a source hash: the Phase-3A-R targets must still be closed
     # in whatever the island builds TODAY, not merely in the frozen 3A-R ELF.
+    # Prefer the module the island builds RIGHT NOW.  The recorded per-phase
+    # ELFs are snapshots and go stale as soon as a later phase lands, which
+    # would quietly downgrade this check to re-validating an old artifact.
     current = None
-    for cand in (REPO / "workspace/phase4-tkcore-island/phase3b/build/tkcore.phase3b.ko",
+    for cand in (GKI / "bazel-bin/lieppos/tkcore-island/tkcore/tkcore.ko",
+                 REPO / "workspace/phase4-tkcore-island/phase3b/build/tkcore.phase3b.ko",
                  FINAL):
         if cand.is_file():
             current = cand
