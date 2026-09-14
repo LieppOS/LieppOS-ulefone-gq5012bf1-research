@@ -1,0 +1,89 @@
+00000000000017c0 <tee_supp_open>:
+    17c0: d503233f     	paciasp
+    17c4: a9bd7bfd     	stp	x29, x30, [sp, #-0x30]!
+    17c8: a90157f6     	stp	x22, x21, [sp, #0x10]
+    17cc: a9024ff4     	stp	x20, x19, [sp, #0x20]
+    17d0: 910003fd     	mov	x29, sp
+    17d4: f9406c36     	ldr	x22, [x1, #0xd8]
+    17d8: b9404c08     	ldr	w8, [x0, #0x4c]
+    17dc: b94002c9     	ldr	w9, [x22]
+    17e0: 12004d08     	and	w8, w8, #0xfffff
+    17e4: 6b08013f     	cmp	w9, w8
+    17e8: 54000421     	b.ne	0x186c <tee_supp_open+0xac>
+    17ec: f94016c8     	ldr	x8, [x22, #0x28]
+    17f0: f9404d00     	ldr	x0, [x8, #0x98]
+    17f4: b4000420     	cbz	x0, 0x1878 <tee_supp_open+0xb8>
+    17f8: aa0103f4     	mov	x20, x1
+    17fc: 94000000     	bl	0x17fc <tee_supp_open+0x3c>
+		00000000000017fc:  R_AARCH64_CALL26	tee_context_create
+    1800: 12800015     	mov	w21, #-0x1              // =-1
+    1804: b4000280     	cbz	x0, 0x1854 <tee_supp_open+0x94>
+    1808: aa0003f3     	mov	x19, x0
+    180c: b140041f     	cmn	x0, #0x1, lsl #12       // =0x1000
+    1810: 54000228     	b.hi	0x1854 <tee_supp_open+0x94>
+    1814: 52800028     	mov	w8, #0x1                // =1
+    1818: f9400275     	ldr	x21, [x19]
+    181c: b9008e68     	str	w8, [x19, #0x8c]
+    1820: f9402ac8     	ldr	x8, [x22, #0x50]
+    1824: f9006668     	str	x8, [x19, #0xc8]
+    1828: f9405aa8     	ldr	x8, [x21, #0xb0]
+    182c: b40002c8     	cbz	x8, 0x1884 <tee_supp_open+0xc4>
+    1830: 14000018     	b	0x1890 <tee_supp_open+0xd0>
+    1834: 91074108     	add	x8, x8, #0x1d0
+    1838: 52800029     	mov	w9, #0x1                // =1
+    183c: b8e90108     	ldaddal	w9, w8, [x8]
+    1840: 11000508     	add	w8, w8, #0x1
+    1844: 7100091f     	cmp	w8, #0x2
+    1848: 5400036a     	b.ge	0x18b4 <tee_supp_open+0xf4>
+    184c: 2a1f03f5     	mov	w21, wzr
+    1850: f9006e93     	str	x19, [x20, #0xd8]
+    1854: 2a1503e0     	mov	w0, w21
+    1858: a9424ff4     	ldp	x20, x19, [sp, #0x20]
+    185c: a94157f6     	ldp	x22, x21, [sp, #0x10]
+    1860: a8c37bfd     	ldp	x29, x30, [sp], #0x30
+    1864: d50323bf     	autiasp
+    1868: d65f03c0     	ret
+    186c: 12800015     	mov	w21, #-0x1              // =-1
+    1870: d4210000     	brk	#0x800
+    1874: 17fffff8     	b	0x1854 <tee_supp_open+0x94>
+    1878: 12800015     	mov	w21, #-0x1              // =-1
+    187c: d4210000     	brk	#0x800
+    1880: 17fffff5     	b	0x1854 <tee_supp_open+0x94>
+    1884: 12800015     	mov	w21, #-0x1              // =-1
+    1888: d4210000     	brk	#0x800
+    188c: 14000013     	b	0x18d8 <tee_supp_open+0x118>
+    1890: 91074109     	add	x9, x8, #0x1d0
+    1894: f9800131     	prfm	pstl1strm, [x9]
+    1898: 885f7d28     	ldxr	w8, [x9]
+    189c: 11000508     	add	w8, w8, #0x1
+    18a0: 880afd28     	stlxr	w10, w8, [x9]
+    18a4: 35ffffaa     	cbnz	w10, 0x1898 <tee_supp_open+0xd8>
+    18a8: d5033bbf     	dmb	ish
+    18ac: 7100091f     	cmp	w8, #0x2
+    18b0: 54fffceb     	b.lt	0x184c <tee_supp_open+0x8c>
+    18b4: 90000000     	adrp	x0, 0x1000 <convert_compat_tee_cmd+0xc7c>
+		00000000000018b4:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x3ad
+    18b8: 91000000     	add	x0, x0, #0x0
+		00000000000018b8:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x3ad
+    18bc: 94000000     	bl	0x18bc <tee_supp_open+0xfc>
+		00000000000018bc:  R_AARCH64_CALL26	_printk
+    18c0: f9405aa8     	ldr	x8, [x21, #0xb0]
+    18c4: 14000008     	b	0x18e4 <tee_supp_open+0x124>
+    18c8: 91074108     	add	x8, x8, #0x1d0
+    18cc: 12800009     	mov	w9, #-0x1               // =-1
+    18d0: b829011f     	stadd	w9, [x8]
+    18d4: 128001f5     	mov	w21, #-0x10             // =-16
+    18d8: aa1303e0     	mov	x0, x19
+    18dc: 94000000     	bl	0x18dc <tee_supp_open+0x11c>
+		00000000000018dc:  R_AARCH64_CALL26	tee_context_destroy
+    18e0: 17ffffdd     	b	0x1854 <tee_supp_open+0x94>
+    18e4: 91074108     	add	x8, x8, #0x1d0
+    18e8: 52800029     	mov	w9, #0x1                // =1
+    18ec: f9800111     	prfm	pstl1strm, [x8]
+    18f0: 885f7d0a     	ldxr	w10, [x8]
+    18f4: 4b09014a     	sub	w10, w10, w9
+    18f8: 880b7d0a     	stxr	w11, w10, [x8]
+    18fc: 35ffffab     	cbnz	w11, 0x18f0 <tee_supp_open+0x130>
+    1900: 17fffff5     	b	0x18d4 <tee_supp_open+0x114>
+    1904: 55 ca 07 8f  	.word	0x8f07ca55
+

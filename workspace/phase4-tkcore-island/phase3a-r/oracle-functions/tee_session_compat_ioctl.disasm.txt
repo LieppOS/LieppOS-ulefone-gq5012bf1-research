@@ -1,0 +1,37 @@
+0000000000004670 <tee_session_compat_ioctl>:
+    4670: d503233f     	paciasp
+    4674: a9bd7bfd     	stp	x29, x30, [sp, #-0x30]!
+    4678: f9000bf5     	str	x21, [sp, #0x10]
+    467c: a9024ff4     	stp	x20, x19, [sp, #0x20]
+    4680: 910003fd     	mov	x29, sp
+    4684: aa0203f3     	mov	x19, x2
+    4688: f9406c15     	ldr	x21, [x0, #0xd8]
+    468c: 2a0103f4     	mov	w20, w1
+    4690: b40000b5     	cbz	x21, 0x46a4 <tee_session_compat_ioctl+0x34>
+    4694: f9400aa8     	ldr	x8, [x21, #0x10]
+    4698: b4000068     	cbz	x8, 0x46a4 <tee_session_compat_ioctl+0x34>
+    469c: f9400108     	ldr	x8, [x8]
+    46a0: b5000048     	cbnz	x8, 0x46a8 <tee_session_compat_ioctl+0x38>
+    46a4: d4210000     	brk	#0x800
+    46a8: 52916ba8     	mov	w8, #0x8b5d             // =35677
+    46ac: 72a7f9e8     	movk	w8, #0x3fcf, lsl #16
+    46b0: 0b080288     	add	w8, w20, w8
+    46b4: 7100051f     	cmp	w8, #0x1
+    46b8: 540000c8     	b.hi	0x46d0 <tee_session_compat_ioctl+0x60>
+    46bc: aa1303e0     	mov	x0, x19
+    46c0: 94000000     	bl	0x46c0 <tee_session_compat_ioctl+0x50>
+		00000000000046c0:  R_AARCH64_CALL26	convert_compat_tee_cmd
+    46c4: 34000060     	cbz	w0, 0x46d0 <tee_session_compat_ioctl+0x60>
+    46c8: 928001a0     	mov	x0, #-0xe               // =-14
+    46cc: 14000005     	b	0x46e0 <tee_session_compat_ioctl+0x70>
+    46d0: aa1503e0     	mov	x0, x21
+    46d4: 2a1403e1     	mov	w1, w20
+    46d8: aa1303e2     	mov	x2, x19
+    46dc: 94000128     	bl	0x4b7c <tee_session_internal_ioctl>
+    46e0: a9424ff4     	ldp	x20, x19, [sp, #0x20]
+    46e4: f9400bf5     	ldr	x21, [sp, #0x10]
+    46e8: a8c37bfd     	ldp	x29, x30, [sp], #0x30
+    46ec: d50323bf     	autiasp
+    46f0: d65f03c0     	ret
+    46f4: 55 ca 07 8f  	.word	0x8f07ca55
+

@@ -1,0 +1,70 @@
+0000000000004734 <tee_session_close_and_destroy>:
+    4734: d503233f     	paciasp
+    4738: a9bc7bfd     	stp	x29, x30, [sp, #-0x40]!
+    473c: f9000bf7     	str	x23, [sp, #0x10]
+    4740: a90257f6     	stp	x22, x21, [sp, #0x20]
+    4744: a9034ff4     	stp	x20, x19, [sp, #0x30]
+    4748: 910003fd     	mov	x29, sp
+    474c: b40005c0     	cbz	x0, 0x4804 <tee_session_close_and_destroy+0xd0>
+    4750: aa0003f6     	mov	x22, x0
+    4754: f9400814     	ldr	x20, [x0, #0x10]
+    4758: b4000574     	cbz	x20, 0x4804 <tee_session_close_and_destroy+0xd0>
+    475c: f9400295     	ldr	x21, [x20]
+    4760: b4000535     	cbz	x21, 0x4804 <tee_session_close_and_destroy+0xd0>
+    4764: b9401ac8     	ldr	w8, [x22, #0x18]
+    4768: 340004e8     	cbz	w8, 0x4804 <tee_session_close_and_destroy+0xd0>
+    476c: f9404aa8     	ldr	x8, [x21, #0x90]
+    4770: aa1603e0     	mov	x0, x22
+    4774: f9401508     	ldr	x8, [x8, #0x28]
+    4778: b85fc110     	ldur	w16, [x8, #-0x4]
+    477c: 729ff171     	movk	w17, #0xff8b
+    4780: 72abff91     	movk	w17, #0x5ffc, lsl #16
+    4784: 6b11021f     	cmp	w16, w17
+    4788: 54000040     	b.eq	0x4790 <tee_session_close_and_destroy+0x5c>
+    478c: d4304500     	brk	#0x8228
+    4790: d63f0100     	blr	x8
+    4794: 9103e2b7     	add	x23, x21, #0xf8
+    4798: 2a0003f3     	mov	w19, w0
+    479c: aa1703e0     	mov	x0, x23
+    47a0: b9001adf     	str	wzr, [x22, #0x18]
+    47a4: 94000000     	bl	0x47a4 <tee_session_close_and_destroy+0x70>
+		00000000000047a4:  R_AARCH64_CALL26	mutex_lock
+    47a8: 910322a0     	add	x0, x21, #0xc8
+    47ac: 94000000     	bl	0x47ac <tee_session_close_and_destroy+0x78>
+		00000000000047ac:  R_AARCH64_CALL26	tee_dec_stats
+    47b0: aa1603e0     	mov	x0, x22
+    47b4: 94000000     	bl	0x47b4 <tee_session_close_and_destroy+0x80>
+		00000000000047b4:  R_AARCH64_CALL26	__list_del_entry_valid
+    47b8: 36000080     	tbz	w0, #0x0, 0x47c8 <tee_session_close_and_destroy+0x94>
+    47bc: a94022c9     	ldp	x9, x8, [x22]
+    47c0: f9000528     	str	x8, [x9, #0x8]
+    47c4: f9000109     	str	x9, [x8]
+    47c8: d2802008     	mov	x8, #0x100              // =256
+    47cc: 52800449     	mov	w9, #0x22               // =34
+    47d0: f2fbd5a8     	movk	x8, #0xdead, lsl #48
+    47d4: aa1603e1     	mov	x1, x22
+    47d8: aa090109     	orr	x9, x8, x9
+    47dc: a90026c8     	stp	x8, x9, [x22]
+    47e0: f9404ea0     	ldr	x0, [x21, #0x98]
+    47e4: 94000000     	bl	0x47e4 <tee_session_close_and_destroy+0xb0>
+		00000000000047e4:  R_AARCH64_CALL26	devm_kfree
+    47e8: aa1403e0     	mov	x0, x20
+    47ec: 94000000     	bl	0x47ec <tee_session_close_and_destroy+0xb8>
+		00000000000047ec:  R_AARCH64_CALL26	tee_context_put
+    47f0: aa1503e0     	mov	x0, x21
+    47f4: 94000000     	bl	0x47f4 <tee_session_close_and_destroy+0xc0>
+		00000000000047f4:  R_AARCH64_CALL26	tee_put
+    47f8: aa1703e0     	mov	x0, x23
+    47fc: 94000000     	bl	0x47fc <tee_session_close_and_destroy+0xc8>
+		00000000000047fc:  R_AARCH64_CALL26	mutex_unlock
+    4800: 14000002     	b	0x4808 <tee_session_close_and_destroy+0xd4>
+    4804: 128002b3     	mov	w19, #-0x16             // =-22
+    4808: 2a1303e0     	mov	w0, w19
+    480c: a9434ff4     	ldp	x20, x19, [sp, #0x30]
+    4810: a94257f6     	ldp	x22, x21, [sp, #0x20]
+    4814: f9400bf7     	ldr	x23, [sp, #0x10]
+    4818: a8c47bfd     	ldp	x29, x30, [sp], #0x40
+    481c: d50323bf     	autiasp
+    4820: d65f03c0     	ret
+    4824: 46 85 89 51  	.word	0x51898546
+

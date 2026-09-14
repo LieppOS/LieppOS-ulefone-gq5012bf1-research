@@ -1,0 +1,67 @@
+00000000000015e8 <tee_compat_ioctl>:
+    15e8: d503233f     	paciasp
+    15ec: a9bd7bfd     	stp	x29, x30, [sp, #-0x30]!
+    15f0: f9000bf5     	str	x21, [sp, #0x10]
+    15f4: a9024ff4     	stp	x20, x19, [sp, #0x20]
+    15f8: 910003fd     	mov	x29, sp
+    15fc: f9406c14     	ldr	x20, [x0, #0xd8]
+    1600: 2a0103f3     	mov	w19, w1
+    1604: b4000634     	cbz	x20, 0x16c8 <tee_compat_ioctl+0xe0>
+    1608: f9400288     	ldr	x8, [x20]
+    160c: b4000648     	cbz	x8, 0x16d4 <tee_compat_ioctl+0xec>
+    1610: d5384108     	mrs	x8, SP_EL0
+    1614: 92407c49     	and	x9, x2, #0xffffffff
+    1618: f9400108     	ldr	x8, [x8]
+    161c: f26a011f     	tst	x8, #0x400000
+    1620: 528e95a8     	mov	w8, #0x74ad             // =29869
+    1624: 9a890055     	csel	x21, x2, x9, eq
+    1628: 72b80308     	movk	w8, #0xc018, lsl #16
+    162c: 6b08027f     	cmp	w19, w8
+    1630: 540001ac     	b.gt	0x1664 <tee_compat_ioctl+0x7c>
+    1634: 528e94a8     	mov	w8, #0x74a5             // =29861
+    1638: 72b80308     	movk	w8, #0xc018, lsl #16
+    163c: 6b08027f     	cmp	w19, w8
+    1640: 540000a0     	b.eq	0x1654 <tee_compat_ioctl+0x6c>
+    1644: 528e94e8     	mov	w8, #0x74a7             // =29863
+    1648: 72b80308     	movk	w8, #0xc018, lsl #16
+    164c: 6b08027f     	cmp	w19, w8
+    1650: 540002a1     	b.ne	0x16a4 <tee_compat_ioctl+0xbc>
+    1654: aa1503e0     	mov	x0, x21
+    1658: 94000000     	bl	0x1658 <tee_compat_ioctl+0x70>
+		0000000000001658:  R_AARCH64_CALL26	convert_compat_tee_shm_io
+    165c: 350001a0     	cbnz	w0, 0x1690 <tee_compat_ioctl+0xa8>
+    1660: 14000011     	b	0x16a4 <tee_compat_ioctl+0xbc>
+    1664: 528e95c8     	mov	w8, #0x74ae             // =29870
+    1668: 72b80308     	movk	w8, #0xc018, lsl #16
+    166c: 6b08027f     	cmp	w19, w8
+    1670: 54000140     	b.eq	0x1698 <tee_compat_ioctl+0xb0>
+    1674: 528e9428     	mov	w8, #0x74a1             // =29857
+    1678: 72b80608     	movk	w8, #0xc030, lsl #16
+    167c: 6b08027f     	cmp	w19, w8
+    1680: 54000121     	b.ne	0x16a4 <tee_compat_ioctl+0xbc>
+    1684: aa1503e0     	mov	x0, x21
+    1688: 94000000     	bl	0x1688 <tee_compat_ioctl+0xa0>
+		0000000000001688:  R_AARCH64_CALL26	convert_compat_tee_cmd
+    168c: 340000c0     	cbz	w0, 0x16a4 <tee_compat_ioctl+0xbc>
+    1690: 928001a0     	mov	x0, #-0xe               // =-14
+    1694: 14000008     	b	0x16b4 <tee_compat_ioctl+0xcc>
+    1698: aa1503e0     	mov	x0, x21
+    169c: 94000000     	bl	0x169c <tee_compat_ioctl+0xb4>
+		000000000000169c:  R_AARCH64_CALL26	convert_compat_tee_spta_inst
+    16a0: 35ffff80     	cbnz	w0, 0x1690 <tee_compat_ioctl+0xa8>
+    16a4: aa1403e0     	mov	x0, x20
+    16a8: 2a1303e1     	mov	w1, w19
+    16ac: aa1503e2     	mov	x2, x21
+    16b0: 94000227     	bl	0x1f4c <tee_internal_ioctl>
+    16b4: a9424ff4     	ldp	x20, x19, [sp, #0x20]
+    16b8: f9400bf5     	ldr	x21, [sp, #0x10]
+    16bc: a8c37bfd     	ldp	x29, x30, [sp], #0x30
+    16c0: d50323bf     	autiasp
+    16c4: d65f03c0     	ret
+    16c8: d4210000     	brk	#0x800
+    16cc: f9400288     	ldr	x8, [x20]
+    16d0: b5fffa08     	cbnz	x8, 0x1610 <tee_compat_ioctl+0x28>
+    16d4: d4210000     	brk	#0x800
+    16d8: 17ffffce     	b	0x1610 <tee_compat_ioctl+0x28>
+    16dc: 55 ca 07 8f  	.word	0x8f07ca55
+

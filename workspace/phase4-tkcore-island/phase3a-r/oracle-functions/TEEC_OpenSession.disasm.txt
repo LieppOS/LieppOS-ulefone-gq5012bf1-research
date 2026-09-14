@@ -1,0 +1,116 @@
+00000000000074a0 <TEEC_OpenSession>:
+    74a0: d503233f     	paciasp
+    74a4: d10643ff     	sub	sp, sp, #0x190
+    74a8: a9157bfd     	stp	x29, x30, [sp, #0x150]
+    74ac: a9165ffc     	stp	x28, x23, [sp, #0x160]
+    74b0: a91757f6     	stp	x22, x21, [sp, #0x170]
+    74b4: a9184ff4     	stp	x20, x19, [sp, #0x180]
+    74b8: 910543fd     	add	x29, sp, #0x150
+    74bc: d5384108     	mrs	x8, SP_EL0
+    74c0: aa0203f5     	mov	x21, x2
+    74c4: aa0103f4     	mov	x20, x1
+    74c8: f9431d08     	ldr	x8, [x8, #0x638]
+    74cc: aa0003f7     	mov	x23, x0
+    74d0: 9100c3e0     	add	x0, sp, #0x30
+    74d4: 2a1f03e1     	mov	w1, wzr
+    74d8: 52802302     	mov	w2, #0x118              // =280
+    74dc: aa0603f3     	mov	x19, x6
+    74e0: aa0503f6     	mov	x22, x5
+    74e4: f81f83a8     	stur	x8, [x29, #-0x8]
+    74e8: 94000000     	bl	0x74e8 <TEEC_OpenSession+0x48>
+		00000000000074e8:  R_AARCH64_CALL26	memset
+    74ec: b50000d6     	cbnz	x22, 0x7504 <TEEC_OpenSession+0x64>
+    74f0: 9100c3e0     	add	x0, sp, #0x30
+    74f4: 2a1f03e1     	mov	w1, wzr
+    74f8: 52802302     	mov	w2, #0x118              // =280
+    74fc: 9100c3f6     	add	x22, sp, #0x30
+    7500: 94000000     	bl	0x7500 <TEEC_OpenSession+0x60>
+		0000000000007500:  R_AARCH64_CALL26	memset
+    7504: 129fff20     	mov	w0, #-0xfffa            // =-65530
+    7508: b40004d7     	cbz	x23, 0x75a0 <TEEC_OpenSession+0x100>
+    750c: b40004b4     	cbz	x20, 0x75a0 <TEEC_OpenSession+0x100>
+    7510: b4000495     	cbz	x21, 0x75a0 <TEEC_OpenSession+0x100>
+    7514: b900029f     	str	wzr, [x20]
+    7518: b94102e0     	ldr	w0, [x23, #0x100]
+    751c: 94000000     	bl	0x751c <TEEC_OpenSession+0x7c>
+		000000000000751c:  R_AARCH64_CALL26	tee_core_uuid2ptr
+    7520: b4000760     	cbz	x0, 0x760c <TEEC_OpenSession+0x16c>
+    7524: b2607fe8     	mov	x8, #-0x100000000       // =-4294967296
+    7528: d2c00029     	mov	x9, #0x100000000        // =4294967296
+    752c: 910003e1     	mov	x1, sp
+    7530: a9027ff6     	stp	x22, xzr, [sp, #0x20]
+    7534: b9002bff     	str	wzr, [sp, #0x28]
+    7538: a90023e9     	stp	x9, x8, [sp]
+    753c: a9017ff5     	stp	x21, xzr, [sp, #0x10]
+    7540: 94000000     	bl	0x7540 <TEEC_OpenSession+0xa0>
+		0000000000007540:  R_AARCH64_CALL26	tee_session_create_and_open
+    7544: b40001a0     	cbz	x0, 0x7578 <TEEC_OpenSession+0xd8>
+    7548: aa0003f5     	mov	x21, x0
+    754c: b13ffc1f     	cmn	x0, #0xfff
+    7550: 54000142     	b.hs	0x7578 <TEEC_OpenSession+0xd8>
+    7554: aa1503e0     	mov	x0, x21
+    7558: b94007f6     	ldr	w22, [sp, #0x4]
+    755c: 94000000     	bl	0x755c <TEEC_OpenSession+0xbc>
+		000000000000755c:  R_AARCH64_CALL26	tee_core_alloc_uuid
+    7560: b9000280     	str	w0, [x20]
+    7564: 37f80360     	tbnz	w0, #0x1f, 0x75d0 <TEEC_OpenSession+0x130>
+    7568: b4000053     	cbz	x19, 0x7570 <TEEC_OpenSession+0xd0>
+    756c: b9000276     	str	w22, [x19]
+    7570: b94003e0     	ldr	w0, [sp]
+    7574: 1400000b     	b	0x75a0 <TEEC_OpenSession+0x100>
+    7578: b40000d3     	cbz	x19, 0x7590 <TEEC_OpenSession+0xf0>
+    757c: b94007e8     	ldr	w8, [sp, #0x4]
+    7580: 52800049     	mov	w9, #0x2                // =2
+    7584: 7100011f     	cmp	w8, #0x0
+    7588: 1a880128     	csel	w8, w9, w8, eq
+    758c: b9000268     	str	w8, [x19]
+    7590: b94003e8     	ldr	w8, [sp]
+    7594: 129ffe29     	mov	w9, #-0xfff2            // =-65522
+    7598: 7100011f     	cmp	w8, #0x0
+    759c: 1a880120     	csel	w0, w9, w8, eq
+    75a0: d5384108     	mrs	x8, SP_EL0
+    75a4: f9431d08     	ldr	x8, [x8, #0x638]
+    75a8: f85f83a9     	ldur	x9, [x29, #-0x8]
+    75ac: eb09011f     	cmp	x8, x9
+    75b0: 54000441     	b.ne	0x7638 <TEEC_OpenSession+0x198>
+    75b4: a9584ff4     	ldp	x20, x19, [sp, #0x180]
+    75b8: a95757f6     	ldp	x22, x21, [sp, #0x170]
+    75bc: a9565ffc     	ldp	x28, x23, [sp, #0x160]
+    75c0: a9557bfd     	ldp	x29, x30, [sp, #0x150]
+    75c4: 910643ff     	add	sp, sp, #0x190
+    75c8: d50323bf     	autiasp
+    75cc: d65f03c0     	ret
+    75d0: aa1503e0     	mov	x0, x21
+    75d4: 94000000     	bl	0x75d4 <TEEC_OpenSession+0x134>
+		00000000000075d4:  R_AARCH64_CALL26	tee_session_close_and_destroy
+    75d8: b4000073     	cbz	x19, 0x75e4 <TEEC_OpenSession+0x144>
+    75dc: 52800048     	mov	w8, #0x2                // =2
+    75e0: b9000268     	str	w8, [x19]
+    75e4: b9400288     	ldr	w8, [x20]
+    75e8: 129ffe60     	mov	w0, #-0xfff4            // =-65524
+    75ec: 3100711f     	cmn	w8, #0x1c
+    75f0: 54fffd80     	b.eq	0x75a0 <TEEC_OpenSession+0x100>
+    75f4: 3100311f     	cmn	w8, #0xc
+    75f8: 54fffd40     	b.eq	0x75a0 <TEEC_OpenSession+0x100>
+    75fc: 3100591f     	cmn	w8, #0x16
+    7600: 54000180     	b.eq	0x7630 <TEEC_OpenSession+0x190>
+    7604: 52bfffe0     	mov	w0, #-0x10000           // =-65536
+    7608: 17ffffe6     	b	0x75a0 <TEEC_OpenSession+0x100>
+    760c: b94102e1     	ldr	w1, [x23, #0x100]
+    7610: 90000000     	adrp	x0, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007610:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xf9a
+    7614: 91000000     	add	x0, x0, #0x0
+		0000000000007614:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xf9a
+    7618: 94000000     	bl	0x7618 <TEEC_OpenSession+0x178>
+		0000000000007618:  R_AARCH64_CALL26	_printk
+    761c: b40000b3     	cbz	x19, 0x7630 <TEEC_OpenSession+0x190>
+    7620: 52800048     	mov	w8, #0x2                // =2
+    7624: 129fff20     	mov	w0, #-0xfffa            // =-65530
+    7628: b9000268     	str	w8, [x19]
+    762c: 17ffffdd     	b	0x75a0 <TEEC_OpenSession+0x100>
+    7630: 129fff20     	mov	w0, #-0xfffa            // =-65530
+    7634: 17ffffdb     	b	0x75a0 <TEEC_OpenSession+0x100>
+    7638: 94000000     	bl	0x7638 <TEEC_OpenSession+0x198>
+		0000000000007638:  R_AARCH64_CALL26	__stack_chk_fail
+    763c: ef d4 be 31  	.word	0x31bed4ef
+

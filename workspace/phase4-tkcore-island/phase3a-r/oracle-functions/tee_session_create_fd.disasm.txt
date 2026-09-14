@@ -1,0 +1,67 @@
+0000000000004aac <tee_session_create_fd>:
+    4aac: d503233f     	paciasp
+    4ab0: a9bd7bfd     	stp	x29, x30, [sp, #-0x30]!
+    4ab4: f9000bf5     	str	x21, [sp, #0x10]
+    4ab8: a9024ff4     	stp	x20, x19, [sp, #0x20]
+    4abc: 910003fd     	mov	x29, sp
+    4ac0: b9400c28     	ldr	w8, [x1, #0xc]
+    4ac4: 7100051f     	cmp	w8, #0x1
+    4ac8: 5400054a     	b.ge	0x4b70 <tee_session_create_fd+0xc4>
+    4acc: aa0103f3     	mov	x19, x1
+    4ad0: 94000000     	bl	0x4ad0 <tee_session_create_fd+0x24>
+		0000000000004ad0:  R_AARCH64_CALL26	tee_session_create_and_open
+    4ad4: aa0003f4     	mov	x20, x0
+    4ad8: b40002c0     	cbz	x0, 0x4b30 <tee_session_create_fd+0x84>
+    4adc: b13ffe9f     	cmn	x20, #0xfff
+    4ae0: 54000282     	b.hs	0x4b30 <tee_session_create_fd+0x84>
+    4ae4: 12800008     	mov	w8, #-0x1               // =-1
+    4ae8: 90000000     	adrp	x0, 0x4000 <_update_client_tee_cmd+0x29c>
+		0000000000004ae8:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x93b
+    4aec: 91000000     	add	x0, x0, #0x0
+		0000000000004aec:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x93b
+    4af0: 90000001     	adrp	x1, 0x4000 <_update_client_tee_cmd+0x29c>
+		0000000000004af0:  R_AARCH64_ADR_PREL_PG_HI21	tee_session_fops
+    4af4: 91000021     	add	x1, x1, #0x0
+		0000000000004af4:  R_AARCH64_ADD_ABS_LO12_NC	tee_session_fops
+    4af8: aa1403e2     	mov	x2, x20
+    4afc: 52a00103     	mov	w3, #0x80000            // =524288
+    4b00: b9000e68     	str	w8, [x19, #0xc]
+    4b04: 94000000     	bl	0x4b04 <tee_session_create_fd+0x58>
+		0000000000004b04:  R_AARCH64_CALL26	anon_inode_getfd
+    4b08: 2a0003f5     	mov	w21, w0
+    4b0c: 37f80240     	tbnz	w0, #0x1f, 0x4b54 <tee_session_create_fd+0xa8>
+    4b10: b9000e75     	str	w21, [x19, #0xc]
+    4b14: 2a1f03f5     	mov	w21, wzr
+    4b18: 2a1503e0     	mov	w0, w21
+    4b1c: a9424ff4     	ldp	x20, x19, [sp, #0x20]
+    4b20: f9400bf5     	ldr	x21, [sp, #0x10]
+    4b24: a8c37bfd     	ldp	x29, x30, [sp], #0x30
+    4b28: d50323bf     	autiasp
+    4b2c: d65f03c0     	ret
+    4b30: 29400e62     	ldp	w2, w3, [x19]
+    4b34: 90000000     	adrp	x0, 0x4000 <_update_client_tee_cmd+0x29c>
+		0000000000004b34:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x786
+    4b38: 91000000     	add	x0, x0, #0x0
+		0000000000004b38:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x786
+    4b3c: 2a1403e1     	mov	w1, w20
+    4b40: 94000000     	bl	0x4b40 <tee_session_create_fd+0x94>
+		0000000000004b40:  R_AARCH64_CALL26	_printk
+    4b44: 12800008     	mov	w8, #-0x1               // =-1
+    4b48: 2a1403f5     	mov	w21, w20
+    4b4c: b9000e68     	str	w8, [x19, #0xc]
+    4b50: 17fffff2     	b	0x4b18 <tee_session_create_fd+0x6c>
+    4b54: 90000000     	adrp	x0, 0x4000 <_update_client_tee_cmd+0x29c>
+		0000000000004b54:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xc29
+    4b58: 91000000     	add	x0, x0, #0x0
+		0000000000004b58:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xc29
+    4b5c: 2a1503e1     	mov	w1, w21
+    4b60: 94000000     	bl	0x4b60 <tee_session_create_fd+0xb4>
+		0000000000004b60:  R_AARCH64_CALL26	_printk
+    4b64: aa1403e0     	mov	x0, x20
+    4b68: 94000000     	bl	0x4b68 <tee_session_create_fd+0xbc>
+		0000000000004b68:  R_AARCH64_CALL26	tee_session_close_and_destroy
+    4b6c: 17ffffeb     	b	0x4b18 <tee_session_create_fd+0x6c>
+    4b70: 128002b5     	mov	w21, #-0x16             // =-22
+    4b74: d4210000     	brk	#0x800
+    4b78: 17ffffe8     	b	0x4b18 <tee_session_create_fd+0x6c>
+

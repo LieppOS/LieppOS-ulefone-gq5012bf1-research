@@ -1,0 +1,86 @@
+000000000000333c <tee_context_create>:
+    333c: d503233f     	paciasp
+    3340: a9bc7bfd     	stp	x29, x30, [sp, #-0x40]!
+    3344: a9015ff8     	stp	x24, x23, [sp, #0x10]
+    3348: a90257f6     	stp	x22, x21, [sp, #0x20]
+    334c: a9034ff4     	stp	x20, x19, [sp, #0x30]
+    3350: 910003fd     	mov	x29, sp
+    3354: aa0003f4     	mov	x20, x0
+    3358: f9404c00     	ldr	x0, [x0, #0x98]
+    335c: 52801a01     	mov	w1, #0xd0               // =208
+    3360: 5281b802     	mov	w2, #0xdc0              // =3520
+    3364: 94000000     	bl	0x3364 <tee_context_create+0x28>
+		0000000000003364:  R_AARCH64_CALL26	devm_kmalloc
+    3368: b40006c0     	cbz	x0, 0x3440 <tee_context_create+0x104>
+    336c: 52800028     	mov	w8, #0x1                // =1
+    3370: 91028009     	add	x9, x0, #0xa0
+    3374: 9102c00a     	add	x10, x0, #0xb0
+    3378: aa0003f3     	mov	x19, x0
+    337c: d5384115     	mrs	x21, SP_EL0
+    3380: 912122a3     	add	x3, x21, #0x848
+    3384: b900c008     	str	w8, [x0, #0xc0]
+    3388: 90000002     	adrp	x2, 0x3000 <big_core_affinity_get_candidate_cpu+0x3c0>
+		0000000000003388:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x481
+    338c: 91000042     	add	x2, x2, #0x0
+		000000000000338c:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x481
+    3390: f9005009     	str	x9, [x0, #0xa0]
+    3394: f9005409     	str	x9, [x0, #0xa8]
+    3398: 52801001     	mov	w1, #0x80               // =128
+    339c: f900580a     	str	x10, [x0, #0xb0]
+    33a0: 91002000     	add	x0, x0, #0x8
+    33a4: f9005e6a     	str	x10, [x19, #0xb8]
+    33a8: f9000274     	str	x20, [x19]
+    33ac: 94000000     	bl	0x33ac <tee_context_create+0x70>
+		00000000000033ac:  R_AARCH64_CALL26	snprintf
+    33b0: b94636a8     	ldr	w8, [x21, #0x634]
+    33b4: aa1403e0     	mov	x0, x20
+    33b8: b9008a68     	str	w8, [x19, #0x88]
+    33bc: 94000000     	bl	0x33bc <tee_context_create+0x80>
+		00000000000033bc:  R_AARCH64_CALL26	tee_get
+    33c0: 340000e0     	cbz	w0, 0x33dc <tee_context_create+0xa0>
+    33c4: 2a0003f5     	mov	w21, w0
+    33c8: f9404e80     	ldr	x0, [x20, #0x98]
+    33cc: aa1303e1     	mov	x1, x19
+    33d0: 94000000     	bl	0x33d0 <tee_context_create+0x94>
+		00000000000033d0:  R_AARCH64_CALL26	devm_kfree
+    33d4: 93407eb3     	sxtw	x19, w21
+    33d8: 14000013     	b	0x3424 <tee_context_create+0xe8>
+    33dc: 9103e295     	add	x21, x20, #0xf8
+    33e0: aa1503e0     	mov	x0, x21
+    33e4: 94000000     	bl	0x33e4 <tee_context_create+0xa8>
+		00000000000033e4:  R_AARCH64_CALL26	mutex_lock
+    33e8: 91030280     	add	x0, x20, #0xc0
+    33ec: 94000000     	bl	0x33ec <tee_context_create+0xb0>
+		00000000000033ec:  R_AARCH64_CALL26	tee_inc_stats
+    33f0: f9407297     	ldr	x23, [x20, #0xe0]
+    33f4: 91024276     	add	x22, x19, #0x90
+    33f8: 91036298     	add	x24, x20, #0xd8
+    33fc: aa1603e0     	mov	x0, x22
+    3400: aa1803e2     	mov	x2, x24
+    3404: aa1703e1     	mov	x1, x23
+    3408: 94000000     	bl	0x3408 <tee_context_create+0xcc>
+		0000000000003408:  R_AARCH64_CALL26	__list_add_valid
+    340c: 36000080     	tbz	w0, #0x0, 0x341c <tee_context_create+0xe0>
+    3410: f9007296     	str	x22, [x20, #0xe0]
+    3414: a9095e78     	stp	x24, x23, [x19, #0x90]
+    3418: f90002f6     	str	x22, [x23]
+    341c: aa1503e0     	mov	x0, x21
+    3420: 94000000     	bl	0x3420 <tee_context_create+0xe4>
+		0000000000003420:  R_AARCH64_CALL26	mutex_unlock
+    3424: aa1303e0     	mov	x0, x19
+    3428: a9434ff4     	ldp	x20, x19, [sp, #0x30]
+    342c: a94257f6     	ldp	x22, x21, [sp, #0x20]
+    3430: a9415ff8     	ldp	x24, x23, [sp, #0x10]
+    3434: a8c47bfd     	ldp	x29, x30, [sp], #0x40
+    3438: d50323bf     	autiasp
+    343c: d65f03c0     	ret
+    3440: 90000000     	adrp	x0, 0x3000 <big_core_affinity_get_candidate_cpu+0x3c0>
+		0000000000003440:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x8cc
+    3444: 91000000     	add	x0, x0, #0x0
+		0000000000003444:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x8cc
+    3448: 94000000     	bl	0x3448 <tee_context_create+0x10c>
+		0000000000003448:  R_AARCH64_CALL26	_printk
+    344c: 92800173     	mov	x19, #-0xc              // =-12
+    3450: 17fffff5     	b	0x3424 <tee_context_create+0xe8>
+    3454: 61 8d 5d 58  	.word	0x585d8d61
+

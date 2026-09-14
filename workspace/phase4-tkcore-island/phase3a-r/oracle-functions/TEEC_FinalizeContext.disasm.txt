@@ -1,0 +1,59 @@
+00000000000073f8 <TEEC_FinalizeContext>:
+    73f8: d503233f     	paciasp
+    73fc: a9be7bfd     	stp	x29, x30, [sp, #-0x20]!
+    7400: a9014ff4     	stp	x20, x19, [sp, #0x10]
+    7404: 910003fd     	mov	x29, sp
+    7408: aa0003f3     	mov	x19, x0
+    740c: b40001e0     	cbz	x0, 0x7448 <TEEC_FinalizeContext+0x50>
+    7410: b9410260     	ldr	w0, [x19, #0x100]
+    7414: 340001a0     	cbz	w0, 0x7448 <TEEC_FinalizeContext+0x50>
+    7418: 94000000     	bl	0x7418 <TEEC_FinalizeContext+0x20>
+		0000000000007418:  R_AARCH64_CALL26	tee_core_uuid2ptr
+    741c: b9410261     	ldr	w1, [x19, #0x100]
+    7420: b4000300     	cbz	x0, 0x7480 <TEEC_FinalizeContext+0x88>
+    7424: aa0003f4     	mov	x20, x0
+    7428: 2a0103e0     	mov	w0, w1
+    742c: 94000000     	bl	0x742c <TEEC_FinalizeContext+0x34>
+		000000000000742c:  R_AARCH64_CALL26	tee_core_free_uuid
+    7430: aa1403e0     	mov	x0, x20
+    7434: 94000000     	bl	0x7434 <TEEC_FinalizeContext+0x3c>
+		0000000000007434:  R_AARCH64_CALL26	tee_context_destroy
+    7438: a9414ff4     	ldp	x20, x19, [sp, #0x10]
+    743c: a8c27bfd     	ldp	x29, x30, [sp], #0x20
+    7440: d50323bf     	autiasp
+    7444: d65f03c0     	ret
+    7448: aa1303e0     	mov	x0, x19
+    744c: 52802001     	mov	w1, #0x100              // =256
+    7450: 94000000     	bl	0x7450 <TEEC_FinalizeContext+0x58>
+		0000000000007450:  R_AARCH64_CALL26	strnlen
+    7454: f104041f     	cmp	x0, #0x101
+    7458: 540001c2     	b.hs	0x7490 <TEEC_FinalizeContext+0x98>
+    745c: 90000008     	adrp	x8, 0x7000 <tee_cleanup_sysfs+0x30>
+		000000000000745c:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xc9
+    7460: 91000108     	add	x8, x8, #0x0
+		0000000000007460:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xc9
+    7464: f104001f     	cmp	x0, #0x100
+    7468: 90000000     	adrp	x0, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007468:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x1062
+    746c: 91000000     	add	x0, x0, #0x0
+		000000000000746c:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x1062
+    7470: 9a930102     	csel	x2, x8, x19, eq
+    7474: aa1303e1     	mov	x1, x19
+    7478: 94000000     	bl	0x7478 <TEEC_FinalizeContext+0x80>
+		0000000000007478:  R_AARCH64_CALL26	_printk
+    747c: 17ffffef     	b	0x7438 <TEEC_FinalizeContext+0x40>
+    7480: 90000000     	adrp	x0, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007480:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x53c
+    7484: 91000000     	add	x0, x0, #0x0
+		0000000000007484:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x53c
+    7488: 94000000     	bl	0x7488 <TEEC_FinalizeContext+0x90>
+		0000000000007488:  R_AARCH64_CALL26	_printk
+    748c: 17ffffeb     	b	0x7438 <TEEC_FinalizeContext+0x40>
+    7490: 90000000     	adrp	x0, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007490:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xd3
+    7494: 91000000     	add	x0, x0, #0x0
+		0000000000007494:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xd3
+    7498: 94000000     	bl	0x7498 <TEEC_FinalizeContext+0xa0>
+		0000000000007498:  R_AARCH64_CALL26	fortify_panic
+    749c: a6 c0 69 de  	.word	0xde69c0a6
+

@@ -2,9 +2,9 @@
 
 Derived from the Phase-2 ELF comparison, not from estimation.
 
-**37 stock functions remain unimplemented** (was 55 at Phase 2; Phase 3P closed
-18). 85 of the 122 stock functions are now present in the rebuilt ELF, 27 of
-them byte-identical to stock.
+**31 stock functions remain unimplemented** (was 55 at Phase 2; Phase 3P closed
+18 and Phase 3A-R added 6 more stock functions). 91 of the 122 stock functions
+are now present in the rebuilt ELF, 33 of them byte-identical to stock.
 
 Recommended order is bottom-up: leaf helpers and trace surfaces first, then the
 subsystems that carry exported symbols, then the secure-world proxies last.
@@ -33,19 +33,29 @@ the peripheral/clock lifecycle (`tee_peridev_init`, `plat_register_spi_clk`,
 now byte-identical to stock.
 
 Result: **PHASE3A_CORE_DEPENDENCIES_READY** — see
-`phase4-tkcore-island-phase3p-core-unblock.md`. Phase 3A can be rerun.
-`tee_clkmgr_handle` was deliberately left for the dedicated clock-manager phase;
-registration and teardown do not depend on it.
+`phase4-tkcore-island-phase3p-core-unblock.md`. `tee_clkmgr_handle` was
+deliberately left for the dedicated clock-manager phase; registration and
+teardown do not depend on it.
 
-## 1. core lifecycle — 5 function(s)
+## Phase 3A-R core + context/session closure
+
+Phase 3A-R now closes all five core APIs, all three IDR handle helpers, and all
+four TEEC context/session lifecycle APIs. It adds `__tee_get`,
+`tee_core_alloc_uuid`, `tee_core_uuid2ptr`, `tee_core_free_uuid`,
+`tee_supp_open`, and `tee_supp_release` to the rebuilt stock-function set. The
+supplicant open/release pair was required only to install the stock core device
+fops; general supplicant/RPC command handling was not entered.
+
+Static lifecycle traces pass for frozen `tmem_ffa` and `tkcore_drv`. This is not
+runtime acceptance. Overall tkcore remains **PARTIAL**, **NOT RUNTIME READY**,
+and still depends on the **STOCK RUNTIME PROVIDER**. The next task is **Phase 3B
+shared-memory reconstruction**.
+
+## 1. core lifecycle — 1 function(s) remaining
 
 | stock function | current state | available oracle | consumer | risk |
 |---|---|---|---|---|
-| `__tee_get` **(EXPORTED)** | MISSING | tkcore_drv call sites + donor | tkcore_drv | MEDIUM - lifecycle and ioctl surface |
-| `tee_core_alloc_uuid` | MISSING | stock ELF only | tkcore_drv | MEDIUM - lifecycle and ioctl surface |
-| `tee_core_free_uuid` | MISSING | stock ELF only | tkcore_drv | MEDIUM - lifecycle and ioctl surface |
-| `tee_core_uuid2ptr` | MISSING | stock ELF only | tkcore_drv | MEDIUM - lifecycle and ioctl surface |
-| `tee_internal_ioctl` | MISSING | stock ELF only | tkcore_drv | MEDIUM - lifecycle and ioctl surface |
+| `tee_internal_ioctl` | MISSING | stock ELF only | tkcore_drv | MEDIUM - ioctl surface; not part of the closed core/context/session lifecycle |
 
 ## 2. context/session — 2 function(s)
 
@@ -71,12 +81,12 @@ registration and teardown do not depend on it.
 | `tkcore_shm_get` | MISSING | stock ELF only | tkcore_drv, tmem_ffa | HIGH - dma-buf + secure memory lifetime |
 | `tkcore_shm_put` | MISSING | stock ELF only | tkcore_drv, tmem_ffa | HIGH - dma-buf + secure memory lifetime |
 
-## 5. supplicant/RPC — 2 function(s)
+## 5. supplicant/RPC — 0 function(s) remaining in the stock inventory
 
 | stock function | current state | available oracle | consumer | risk |
 |---|---|---|---|---|
-| `tee_supp_open` | MISSING | OP-TEE donor analogue | tkcore_drv | MEDIUM - RPC handshake |
-| `tee_supp_release` | MISSING | OP-TEE donor analogue | tkcore_drv | MEDIUM - RPC handshake |
+| `tee_supp_open` | **CLOSED (Phase 3A-R, core fops prerequisite only)** | stock ELF + donor | tkcore core fops | MEDIUM - command handling remains out of scope |
+| `tee_supp_release` | **CLOSED (Phase 3A-R, core fops prerequisite only)** | stock ELF + donor | tkcore core fops | MEDIUM - command handling remains out of scope |
 
 ## 7. clock manager — 1 function(s) remaining (1 closed in Phase 3P)
 
@@ -132,11 +142,10 @@ registration and teardown do not depend on it.
 | `uaccess_ttbr0_disable` | MISSING | stock ELF strings/relocations | (internal) | LOW - leaf helpers |
 | `uaccess_ttbr0_enable` | MISSING | stock ELF strings/relocations | (internal) | LOW - leaf helpers |
 
-## Exported symbols still absent (7 of 25)
+## Exported symbols still absent (6 of 25)
 
 These are the only export-name gaps; every other stock export is already emitted.
 
-* `__tee_get` — subsystem `core`
 * `tee_clkmgr_handle` — subsystem `clkmgr`
 * `tee_map_cached_shm` — subsystem `shared_memory`
 * `tee_spi_cfg_padsel` — subsystem `spi`
@@ -144,8 +153,8 @@ These are the only export-name gaps; every other stock export is already emitted
 * `tee_spi_transfer_disable` — subsystem `spi`
 * `tee_unmap_cached_shm` — subsystem `shared_memory`
 
-## Explicit non-goals for Phase 3
+## Explicit non-goals for current reconstruction
 
-* Do NOT reopen historical CRC brute forcing for the 11 blocked exports.
-* Do NOT rebuild tkcore_drv / tmem_ffa / microarray_fp_tee until the exports above exist.
+* Do NOT reopen historical CRC brute forcing for blocked exports.
+* Do NOT require final-natural tkcore_drv / tmem_ffa / microarray_fp_tee acceptance until the remaining subsystems and exports exist.
 * Do NOT attempt runtime validation until a dedicated, separately authorised phase.

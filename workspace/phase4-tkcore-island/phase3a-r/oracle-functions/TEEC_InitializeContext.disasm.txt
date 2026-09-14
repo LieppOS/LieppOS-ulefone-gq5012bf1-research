@@ -1,0 +1,77 @@
+0000000000007304 <TEEC_InitializeContext>:
+    7304: d503233f     	paciasp
+    7308: a9be7bfd     	stp	x29, x30, [sp, #-0x20]!
+    730c: a9014ff4     	stp	x20, x19, [sp, #0x10]
+    7310: 910003fd     	mov	x29, sp
+    7314: b4000101     	cbz	x1, 0x7334 <TEEC_InitializeContext+0x30>
+    7318: aa0103f3     	mov	x19, x1
+    731c: aa0003f4     	mov	x20, x0
+    7320: b901003f     	str	wzr, [x1, #0x100]
+    7324: b40000c0     	cbz	x0, 0x733c <TEEC_InitializeContext+0x38>
+    7328: aa1303e0     	mov	x0, x19
+    732c: aa1403e1     	mov	x1, x20
+    7330: 14000006     	b	0x7348 <TEEC_InitializeContext+0x44>
+    7334: 129fff20     	mov	w0, #-0xfffa            // =-65530
+    7338: 14000014     	b	0x7388 <TEEC_InitializeContext+0x84>
+    733c: 90000001     	adrp	x1, 0x7000 <tee_cleanup_sysfs+0x30>
+		000000000000733c:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x55b
+    7340: 91000021     	add	x1, x1, #0x0
+		0000000000007340:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x55b
+    7344: aa1303e0     	mov	x0, x19
+    7348: 52802002     	mov	w2, #0x100              // =256
+    734c: 94000000     	bl	0x734c <TEEC_InitializeContext+0x48>
+		000000000000734c:  R_AARCH64_CALL26	strncpy
+    7350: aa1303e0     	mov	x0, x19
+    7354: 94000000     	bl	0x7354 <TEEC_InitializeContext+0x50>
+		0000000000007354:  R_AARCH64_CALL26	tee_get_tee
+    7358: b4000320     	cbz	x0, 0x73bc <TEEC_InitializeContext+0xb8>
+    735c: 94000000     	bl	0x735c <TEEC_InitializeContext+0x58>
+		000000000000735c:  R_AARCH64_CALL26	tee_context_create
+    7360: b40003a0     	cbz	x0, 0x73d4 <TEEC_InitializeContext+0xd0>
+    7364: b13ffc1f     	cmn	x0, #0xfff
+    7368: 54000362     	b.hs	0x73d4 <TEEC_InitializeContext+0xd0>
+    736c: b9008c1f     	str	wzr, [x0, #0x8c]
+    7370: f900641f     	str	xzr, [x0, #0xc8]
+    7374: 94000000     	bl	0x7374 <TEEC_InitializeContext+0x70>
+		0000000000007374:  R_AARCH64_CALL26	tee_core_alloc_uuid
+    7378: 2a0003e8     	mov	w8, w0
+    737c: 2a1f03e0     	mov	w0, wzr
+    7380: b9010268     	str	w8, [x19, #0x100]
+    7384: 37f800a8     	tbnz	w8, #0x1f, 0x7398 <TEEC_InitializeContext+0x94>
+    7388: a9414ff4     	ldp	x20, x19, [sp, #0x10]
+    738c: a8c27bfd     	ldp	x29, x30, [sp], #0x20
+    7390: d50323bf     	autiasp
+    7394: d65f03c0     	ret
+    7398: 129ffe60     	mov	w0, #-0xfff4            // =-65524
+    739c: 3100711f     	cmn	w8, #0x1c
+    73a0: 54ffff40     	b.eq	0x7388 <TEEC_InitializeContext+0x84>
+    73a4: 3100311f     	cmn	w8, #0xc
+    73a8: 54ffff00     	b.eq	0x7388 <TEEC_InitializeContext+0x84>
+    73ac: 3100591f     	cmn	w8, #0x16
+    73b0: 540001c0     	b.eq	0x73e8 <TEEC_InitializeContext+0xe4>
+    73b4: 52bfffe0     	mov	w0, #-0x10000           // =-65536
+    73b8: 17fffff4     	b	0x7388 <TEEC_InitializeContext+0x84>
+    73bc: 90000000     	adrp	x0, 0x7000 <tee_cleanup_sysfs+0x30>
+		00000000000073bc:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xb1d
+    73c0: 91000000     	add	x0, x0, #0x0
+		00000000000073c0:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xb1d
+    73c4: aa1403e1     	mov	x1, x20
+    73c8: 94000000     	bl	0x73c8 <TEEC_InitializeContext+0xc4>
+		00000000000073c8:  R_AARCH64_CALL26	_printk
+    73cc: 129ffee0     	mov	w0, #-0xfff8            // =-65528
+    73d0: 17ffffee     	b	0x7388 <TEEC_InitializeContext+0x84>
+    73d4: 90000000     	adrp	x0, 0x7000 <tee_cleanup_sysfs+0x30>
+		00000000000073d4:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xb36
+    73d8: 91000000     	add	x0, x0, #0x0
+		00000000000073d8:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xb36
+    73dc: 94000000     	bl	0x73dc <TEEC_InitializeContext+0xd8>
+		00000000000073dc:  R_AARCH64_CALL26	_printk
+    73e0: 129fff20     	mov	w0, #-0xfffa            // =-65530
+    73e4: 17ffffe9     	b	0x7388 <TEEC_InitializeContext+0x84>
+    73e8: 90000000     	adrp	x0, 0x7000 <tee_cleanup_sysfs+0x30>
+		00000000000073e8:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x467
+    73ec: 91000000     	add	x0, x0, #0x0
+		00000000000073ec:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x467
+    73f0: 17fffffb     	b	0x73dc <TEEC_InitializeContext+0xd8>
+    73f4: 35 91 c4 f4  	.word	0xf4c49135
+

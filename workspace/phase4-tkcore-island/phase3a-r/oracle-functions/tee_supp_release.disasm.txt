@@ -1,0 +1,41 @@
+0000000000001908 <tee_supp_release>:
+    1908: d503233f     	paciasp
+    190c: a9be7bfd     	stp	x29, x30, [sp, #-0x20]!
+    1910: f9000bf3     	str	x19, [sp, #0x10]
+    1914: 910003fd     	mov	x29, sp
+    1918: f9406c20     	ldr	x0, [x1, #0xd8]
+    191c: b40001e0     	cbz	x0, 0x1958 <tee_supp_release+0x50>
+    1920: f9400013     	ldr	x19, [x0]
+    1924: b4000213     	cbz	x19, 0x1964 <tee_supp_release+0x5c>
+    1928: 94000000     	bl	0x1928 <tee_supp_release+0x20>
+		0000000000001928:  R_AARCH64_CALL26	tee_context_destroy
+    192c: f9405a68     	ldr	x8, [x19, #0xb0]
+    1930: b4000208     	cbz	x8, 0x1970 <tee_supp_release+0x68>
+    1934: 14000012     	b	0x197c <tee_supp_release+0x74>
+    1938: 91074108     	add	x8, x8, #0x1d0
+    193c: 12800009     	mov	w9, #-0x1               // =-1
+    1940: b829011f     	stadd	w9, [x8]
+    1944: 2a1f03e0     	mov	w0, wzr
+    1948: f9400bf3     	ldr	x19, [sp, #0x10]
+    194c: a8c27bfd     	ldp	x29, x30, [sp], #0x20
+    1950: d50323bf     	autiasp
+    1954: d65f03c0     	ret
+    1958: 128002a0     	mov	w0, #-0x16              // =-22
+    195c: d4210000     	brk	#0x800
+    1960: 17fffffa     	b	0x1948 <tee_supp_release+0x40>
+    1964: 128002a0     	mov	w0, #-0x16              // =-22
+    1968: d4210000     	brk	#0x800
+    196c: 17fffff7     	b	0x1948 <tee_supp_release+0x40>
+    1970: 12800000     	mov	w0, #-0x1               // =-1
+    1974: d4210000     	brk	#0x800
+    1978: 17fffff4     	b	0x1948 <tee_supp_release+0x40>
+    197c: 91074108     	add	x8, x8, #0x1d0
+    1980: 52800029     	mov	w9, #0x1                // =1
+    1984: f9800111     	prfm	pstl1strm, [x8]
+    1988: 885f7d0a     	ldxr	w10, [x8]
+    198c: 4b09014a     	sub	w10, w10, w9
+    1990: 880b7d0a     	stxr	w11, w10, [x8]
+    1994: 35ffffab     	cbnz	w11, 0x1988 <tee_supp_release+0x80>
+    1998: 17ffffeb     	b	0x1944 <tee_supp_release+0x3c>
+    199c: 3d 61 fb 89  	.word	0x89fb613d
+

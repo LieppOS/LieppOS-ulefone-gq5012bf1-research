@@ -1,0 +1,33 @@
+0000000000007640 <TEEC_CloseSession>:
+    7640: d503233f     	paciasp
+    7644: a9be7bfd     	stp	x29, x30, [sp, #-0x20]!
+    7648: a9014ff4     	stp	x20, x19, [sp, #0x10]
+    764c: 910003fd     	mov	x29, sp
+    7650: b4000180     	cbz	x0, 0x7680 <TEEC_CloseSession+0x40>
+    7654: aa0003f3     	mov	x19, x0
+    7658: b9400000     	ldr	w0, [x0]
+    765c: 34000120     	cbz	w0, 0x7680 <TEEC_CloseSession+0x40>
+    7660: 94000000     	bl	0x7660 <TEEC_CloseSession+0x20>
+		0000000000007660:  R_AARCH64_CALL26	tee_core_uuid2ptr
+    7664: b9400261     	ldr	w1, [x19]
+    7668: b4000140     	cbz	x0, 0x7690 <TEEC_CloseSession+0x50>
+    766c: aa0003f4     	mov	x20, x0
+    7670: 2a0103e0     	mov	w0, w1
+    7674: 94000000     	bl	0x7674 <TEEC_CloseSession+0x34>
+		0000000000007674:  R_AARCH64_CALL26	tee_core_free_uuid
+    7678: aa1403e0     	mov	x0, x20
+    767c: 94000000     	bl	0x767c <TEEC_CloseSession+0x3c>
+		000000000000767c:  R_AARCH64_CALL26	tee_session_close_and_destroy
+    7680: a9414ff4     	ldp	x20, x19, [sp, #0x10]
+    7684: a8c27bfd     	ldp	x29, x30, [sp], #0x20
+    7688: d50323bf     	autiasp
+    768c: d65f03c0     	ret
+    7690: 90000000     	adrp	x0, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007690:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xadc
+    7694: 91000000     	add	x0, x0, #0x0
+		0000000000007694:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xadc
+    7698: 94000000     	bl	0x7698 <TEEC_CloseSession+0x58>
+		0000000000007698:  R_AARCH64_CALL26	_printk
+    769c: 17fffff9     	b	0x7680 <TEEC_CloseSession+0x40>
+    76a0: 66 58 3c 59  	.word	0x593c5866
+

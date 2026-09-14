@@ -1,0 +1,74 @@
+00000000000034d0 <tee_context_put>:
+    34d0: d503233f     	paciasp
+    34d4: a9bd7bfd     	stp	x29, x30, [sp, #-0x30]!
+    34d8: a90157f6     	stp	x22, x21, [sp, #0x10]
+    34dc: a9024ff4     	stp	x20, x19, [sp, #0x20]
+    34e0: 910003fd     	mov	x29, sp
+    34e4: b40004e0     	cbz	x0, 0x3580 <tee_context_put+0xb0>
+    34e8: aa0003f3     	mov	x19, x0
+    34ec: f9400008     	ldr	x8, [x0]
+    34f0: b4000488     	cbz	x8, 0x3580 <tee_context_put+0xb0>
+    34f4: aa1303f4     	mov	x20, x19
+    34f8: d2802016     	mov	x22, #0x100             // =256
+    34fc: f2fbd5b6     	movk	x22, #0xdead, lsl #48
+    3500: f8490e88     	ldr	x8, [x20, #0x90]!
+    3504: eb16011f     	cmp	x8, x22
+    3508: 540000a1     	b.ne	0x351c <tee_context_put+0x4c>
+    350c: f9404e68     	ldr	x8, [x19, #0x98]
+    3510: 91008ac9     	add	x9, x22, #0x22
+    3514: eb09011f     	cmp	x8, x9
+    3518: 54000500     	b.eq	0x35b8 <tee_context_put+0xe8>
+    351c: 91030260     	add	x0, x19, #0xc0
+    3520: 1400001c     	b	0x3590 <tee_context_put+0xc0>
+    3524: 12800008     	mov	w8, #-0x1               // =-1
+    3528: b8680008     	ldaddl	w8, w8, [x0]
+    352c: 7100051f     	cmp	w8, #0x1
+    3530: 54000401     	b.ne	0x35b0 <tee_context_put+0xe0>
+    3534: d50339bf     	dmb	ishld
+    3538: f9400275     	ldr	x21, [x19]
+    353c: b4000275     	cbz	x21, 0x3588 <tee_context_put+0xb8>
+    3540: 910302a0     	add	x0, x21, #0xc0
+    3544: 94000000     	bl	0x3544 <tee_context_put+0x74>
+		0000000000003544:  R_AARCH64_CALL26	tee_dec_stats
+    3548: aa1403e0     	mov	x0, x20
+    354c: 94000000     	bl	0x354c <tee_context_put+0x7c>
+		000000000000354c:  R_AARCH64_CALL26	__list_del_entry_valid
+    3550: 36000080     	tbz	w0, #0x0, 0x3560 <tee_context_put+0x90>
+    3554: a9492269     	ldp	x9, x8, [x19, #0x90]
+    3558: f9000528     	str	x8, [x9, #0x8]
+    355c: f9000109     	str	x9, [x8]
+    3560: 91008ac8     	add	x8, x22, #0x22
+    3564: aa1303e1     	mov	x1, x19
+    3568: a9092276     	stp	x22, x8, [x19, #0x90]
+    356c: f9404ea0     	ldr	x0, [x21, #0x98]
+    3570: 94000000     	bl	0x3570 <tee_context_put+0xa0>
+		0000000000003570:  R_AARCH64_CALL26	devm_kfree
+    3574: aa1503e0     	mov	x0, x21
+    3578: 94000000     	bl	0x3578 <tee_context_put+0xa8>
+		0000000000003578:  R_AARCH64_CALL26	tee_put
+    357c: 1400000f     	b	0x35b8 <tee_context_put+0xe8>
+    3580: d4210000     	brk	#0x800
+    3584: 1400000d     	b	0x35b8 <tee_context_put+0xe8>
+    3588: d4210000     	brk	#0x800
+    358c: 1400000b     	b	0x35b8 <tee_context_put+0xe8>
+    3590: 52800029     	mov	w9, #0x1                // =1
+    3594: f9800011     	prfm	pstl1strm, [x0]
+    3598: 885f7c08     	ldxr	w8, [x0]
+    359c: 4b09010a     	sub	w10, w8, w9
+    35a0: 880bfc0a     	stlxr	w11, w10, [x0]
+    35a4: 35ffffab     	cbnz	w11, 0x3598 <tee_context_put+0xc8>
+    35a8: 7100051f     	cmp	w8, #0x1
+    35ac: 54fffc40     	b.eq	0x3534 <tee_context_put+0x64>
+    35b0: 7100011f     	cmp	w8, #0x0
+    35b4: 540000cd     	b.le	0x35cc <tee_context_put+0xfc>
+    35b8: a9424ff4     	ldp	x20, x19, [sp, #0x20]
+    35bc: a94157f6     	ldp	x22, x21, [sp, #0x10]
+    35c0: a8c37bfd     	ldp	x29, x30, [sp], #0x30
+    35c4: d50323bf     	autiasp
+    35c8: d65f03c0     	ret
+    35cc: 52800061     	mov	w1, #0x3                // =3
+    35d0: 94000000     	bl	0x35d0 <tee_context_put+0x100>
+		00000000000035d0:  R_AARCH64_CALL26	refcount_warn_saturate
+    35d4: 17fffff9     	b	0x35b8 <tee_context_put+0xe8>
+    35d8: 61 8d 5d 58  	.word	0x585d8d61
+

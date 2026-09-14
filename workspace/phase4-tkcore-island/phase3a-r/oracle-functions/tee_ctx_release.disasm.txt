@@ -1,0 +1,22 @@
+0000000000001774 <tee_ctx_release>:
+    1774: d503233f     	paciasp
+    1778: a9bf7bfd     	stp	x29, x30, [sp, #-0x10]!
+    177c: 910003fd     	mov	x29, sp
+    1780: f9406c20     	ldr	x0, [x1, #0xd8]
+    1784: b4000100     	cbz	x0, 0x17a4 <tee_ctx_release+0x30>
+    1788: f9400008     	ldr	x8, [x0]
+    178c: b4000128     	cbz	x8, 0x17b0 <tee_ctx_release+0x3c>
+    1790: 94000000     	bl	0x1790 <tee_ctx_release+0x1c>
+		0000000000001790:  R_AARCH64_CALL26	tee_context_destroy
+    1794: 2a1f03e0     	mov	w0, wzr
+    1798: a8c17bfd     	ldp	x29, x30, [sp], #0x10
+    179c: d50323bf     	autiasp
+    17a0: d65f03c0     	ret
+    17a4: 128002a0     	mov	w0, #-0x16              // =-22
+    17a8: d4210000     	brk	#0x800
+    17ac: 17fffffb     	b	0x1798 <tee_ctx_release+0x24>
+    17b0: 128002a0     	mov	w0, #-0x16              // =-22
+    17b4: d4210000     	brk	#0x800
+    17b8: 17fffff8     	b	0x1798 <tee_ctx_release+0x24>
+    17bc: 55 ca 07 8f  	.word	0x8f07ca55
+

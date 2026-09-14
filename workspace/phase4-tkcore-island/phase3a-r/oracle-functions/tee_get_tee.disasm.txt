@@ -1,0 +1,43 @@
+00000000000000b0 <tee_get_tee>:
+      b0: d503233f     	paciasp
+      b4: a9be7bfd     	stp	x29, x30, [sp, #-0x20]!
+      b8: f9000bf3     	str	x19, [sp, #0x10]
+      bc: 910003fd     	mov	x29, sp
+      c0: b4000300     	cbz	x0, 0x120 <tee_get_tee+0x70>
+      c4: 90000008     	adrp	x8, 0x0 <.text>
+		00000000000000c4:  R_AARCH64_ADR_PREL_PG_HI21	.bss
+      c8: aa0003f3     	mov	x19, x0
+      cc: 90000003     	adrp	x3, 0x0 <.text>
+		00000000000000cc:  R_AARCH64_ADR_PREL_PG_HI21	device_match_name
+      d0: 91000063     	add	x3, x3, #0x0
+		00000000000000d0:  R_AARCH64_ADD_ABS_LO12_NC	device_match_name
+      d4: aa1f03e1     	mov	x1, xzr
+      d8: aa1303e2     	mov	x2, x19
+      dc: f9400100     	ldr	x0, [x8]
+		00000000000000dc:  R_AARCH64_LDST64_ABS_LO12_NC	.bss
+      e0: 94000000     	bl	0xe0 <tee_get_tee+0x30>
+		00000000000000e0:  R_AARCH64_CALL26	class_find_device
+      e4: b4000140     	cbz	x0, 0x10c <tee_get_tee+0x5c>
+      e8: f9404c08     	ldr	x8, [x0, #0x98]
+      ec: f9402908     	ldr	x8, [x8, #0x50]
+      f0: 39406508     	ldrb	w8, [x8, #0x19]
+      f4: 34000148     	cbz	w8, 0x11c <tee_get_tee+0x6c>
+      f8: f9403008     	ldr	x8, [x0, #0x60]
+      fc: f9404d00     	ldr	x0, [x8, #0x98]
+     100: b5000100     	cbnz	x0, 0x120 <tee_get_tee+0x70>
+     104: d4210000     	brk	#0x800
+     108: 14000006     	b	0x120 <tee_get_tee+0x70>
+     10c: 90000000     	adrp	x0, 0x0 <.text>
+		000000000000010c:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x27b
+     110: 91000000     	add	x0, x0, #0x0
+		0000000000000110:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x27b
+     114: aa1303e1     	mov	x1, x19
+     118: 94000000     	bl	0x118 <tee_get_tee+0x68>
+		0000000000000118:  R_AARCH64_CALL26	_printk
+     11c: aa1f03e0     	mov	x0, xzr
+     120: f9400bf3     	ldr	x19, [sp, #0x10]
+     124: a8c27bfd     	ldp	x29, x30, [sp], #0x20
+     128: d50323bf     	autiasp
+     12c: d65f03c0     	ret
+     130: 04 e2 52 07  	.word	0x0752e204
+

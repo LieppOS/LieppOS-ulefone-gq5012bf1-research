@@ -1,0 +1,25 @@
+00000000000035dc <tee_context_destroy>:
+    35dc: d503233f     	paciasp
+    35e0: a9be7bfd     	stp	x29, x30, [sp, #-0x20]!
+    35e4: a9014ff4     	stp	x20, x19, [sp, #0x10]
+    35e8: 910003fd     	mov	x29, sp
+    35ec: b4000160     	cbz	x0, 0x3618 <tee_context_destroy+0x3c>
+    35f0: aa0003f3     	mov	x19, x0
+    35f4: f9400008     	ldr	x8, [x0]
+    35f8: b4000108     	cbz	x8, 0x3618 <tee_context_destroy+0x3c>
+    35fc: 9103e114     	add	x20, x8, #0xf8
+    3600: aa1403e0     	mov	x0, x20
+    3604: 94000000     	bl	0x3604 <tee_context_destroy+0x28>
+		0000000000003604:  R_AARCH64_CALL26	mutex_lock
+    3608: aa1303e0     	mov	x0, x19
+    360c: 94000000     	bl	0x360c <tee_context_destroy+0x30>
+		000000000000360c:  R_AARCH64_CALL26	tee_context_put
+    3610: aa1403e0     	mov	x0, x20
+    3614: 94000000     	bl	0x3614 <tee_context_destroy+0x38>
+		0000000000003614:  R_AARCH64_CALL26	mutex_unlock
+    3618: a9414ff4     	ldp	x20, x19, [sp, #0x10]
+    361c: a8c27bfd     	ldp	x29, x30, [sp], #0x20
+    3620: d50323bf     	autiasp
+    3624: d65f03c0     	ret
+    3628: 9b 29 50 70  	.word	0x7050299b
+
