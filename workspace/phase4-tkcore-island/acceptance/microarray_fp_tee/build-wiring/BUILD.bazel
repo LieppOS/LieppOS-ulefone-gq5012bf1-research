@@ -1,0 +1,21 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+package(default_visibility = ["//visibility:public"])
+
+# Phase-3F final TrustKernel source-island acceptance build.
+# microarray_fp_tee.c is a symlink to the frozen reconstruction; only the
+# tkcore provider provenance changes (stock witness -> final source provider).
+kernel_module(
+    name = "microarray_fp_tee_phase3f",
+    srcs = [
+        "Makefile",
+        "microarray_fp_tee.c",
+    ],
+    outs = ["microarray_fp_tee.ko"],
+    kernel_build = "//common:kernel_aarch64",
+    deps = [
+        "//lieppos/fingerprint-recon:fingerprint_recon",
+        "//lieppos/spi-mt65xx:spi_mt65xx",
+        "//lieppos/tkcore-island:tkcore",
+    ],
+)

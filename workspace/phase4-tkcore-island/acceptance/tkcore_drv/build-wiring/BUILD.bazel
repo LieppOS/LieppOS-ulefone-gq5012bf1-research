@@ -1,0 +1,29 @@
+load("//build/kernel/kleaf:kernel.bzl", "kernel_module")
+
+package(default_visibility = ["//visibility:public"])
+
+# Phase-3F final-provider acceptance. All C/H files are symlinks to the frozen
+# reconstruction; this package changes provider provenance only.
+kernel_module(
+    name = "tkcore_drv_phase3f",
+    srcs = [
+        "Makefile",
+        "tkcore_drv_main.c",
+        "tee_task.c",
+        "tee_mem.c",
+        "handle.c",
+        "tkcore_drv.h",
+        "tkcore_abi.h",
+        "tee_mem.h",
+        "handle.h",
+        "include/trustkernel/tee_core.h",
+        "include/trustkernel/tee_supp.h",
+        "//lieppos/trustkernel:trustkernel_headers",
+    ],
+    outs = ["tkcore_drv.ko"],
+    kernel_build = "//common:kernel_aarch64",
+    deps = [
+        "//lieppos/tkcore-island:tkcore",
+        "//lieppos/ffa-v10:ffa_v10",
+    ],
+)

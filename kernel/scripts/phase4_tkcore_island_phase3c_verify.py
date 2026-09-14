@@ -10,6 +10,7 @@ big-core affinity, platform init, or three-consumer natural-link acceptance.
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import re
 import subprocess
 import sys
@@ -320,8 +321,14 @@ def main() -> int:
 
     # --- acceptance must remain deferred -----------------------------------
     acc = REPO / "workspace/phase4-tkcore-island/acceptance"
-    ck("three-consumer acceptance still empty",
-       not acc.is_dir() or not any(acc.rglob("*")))
+    # Monotone acceptance gate: empty (pre-Phase-3F) OR a complete, valid
+    # Phase-3F acceptance.  Partial/witness-contaminated states still fail.
+    _gspec = importlib.util.spec_from_file_location(
+        "acc_gate", REPO / "kernel/scripts/phase4_tkcore_acceptance_gate.py")
+    _gate = importlib.util.module_from_spec(_gspec)
+    _gspec.loader.exec_module(_gate)
+    ck("three-consumer acceptance empty or complete Phase-3F",
+       _gate.ok(acc), _gate.state(acc))
 
     return report()
 

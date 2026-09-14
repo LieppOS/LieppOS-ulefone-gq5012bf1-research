@@ -1,0 +1,56 @@
+1. stock oracles frozen
+  [ok]   tkcore_drv.ko present
+  [ok]   tkcore_drv.ko sha256/size match (c13503baf7c13828, 63480 B)
+  [ok]   tkcore.ko present
+  [ok]   tkcore.ko sha256/size match (03837d13863e3f66, 221352 B)
+  [ok]   ffa_v10.ko present
+  [ok]   ffa_v10.ko sha256/size match (2f8341d3f920418f, 38688 B)
+  [ok]   stock vermagic
+  [ok]   stock srcversion 0A6E96ED7F723D4F0883C3D
+  [ok]   stock depends=tkcore,ffa_v10
+2. stock-provider.symvers is a faithful re-extraction
+  [ok]   stock-provider.symvers present
+  [ok]   all 11 symvers entries re-extract identically from the stock ELFs
+  [ok]   symvers covers exactly the 11 tkcore provider edges
+  [ok]   no ffa_v10 witness remains in the record - the FF-A edges now come from the source-built provider
+3. NATURAL set really is natural (regenerated from C)
+  [ok]   //lieppos/tkcore-recon Module.symvers built
+  [ok]   tee_clkmgr_handle regenerated naturally as 0x6913f6b2
+  [ok]   tee_map_cached_shm regenerated naturally as 0x6a4e508b
+  [ok]   tee_wait_queue_exit regenerated naturally as 0xe773ba45
+  [ok]   tee_wait_queue_init regenerated naturally as 0x03c4c343
+  [ok]   tee_wait_queue_sleep regenerated naturally as 0xcca24950
+  [ok]   tee_wait_queue_wakeup regenerated naturally as 0xe2de5bad
+3b. ffa_v10 edges are NATURAL, from a source-built provider
+  [ok]   //lieppos/ffa-v10 Module.symvers built
+  [ok]   ffa_driver_register regenerated naturally as 0x0d53cde9 by //lieppos/ffa-v10
+  [ok]   ffa_driver_unregister regenerated naturally as 0x3c660e4c by //lieppos/ffa-v10
+  [ok]   the FF-A provider publishes its full 5-export surface
+4. STOCK_PROVIDER_WITNESS set is never claimed natural
+  [ok]   no witness-only edge is published by the natural provider build
+5. stock-ABI build reproduces the stock import ABI
+  [ok]   stock-ABI module built
+  [ok]   zero CRC mismatches over 66 shared imports
+  [ok]   no missing imports outside the codegen allowlist
+  [ok]   no imports the stock module does not have
+  [ok]   unreproduced imports are exactly ['alt_cb_patch_nops']
+  [ok]   depends=ffa_v10,tkcore
+  [ok]   exports nothing (consumer module)
+  [ok]   65 undefined symbols, all version-checked
+6. natural-evidence build declares its gaps honestly
+  [ok]   natural module built
+  [ok]   PROVIDER_ABI_GAP set is exactly the 5 remaining witness-only tkcore edges (was 7 before the ffa_v10 closure)
+  [ok]   the natural-evidence build now resolves both FF-A edges
+  [ok]   every CRC the natural build does carry matches stock
+  [ok]   exports nothing (consumer module)
+7. function inventory parity
+  [ok]   same 50 defined functions as stock (missing [], extra [])
+8. KCFI prototype identity
+  [ok]   20/20 kCFI type ids match stock exactly
+  [ok]   run_tee_task still exactly the declared unresolved pair (stock 0xc2052128 / recon 0xef18cf2f)
+9. one source of truth
+  [ok]   all 8 .c/.h files in the stockabi package are symlinks
+  [ok]   both packages compile the same 8 files
+
+checks: 43, failures: 0
+RESULT: tkcore_drv reconstruction verified (PROVIDER_ABI_PARTIAL / stock-ABI complete)

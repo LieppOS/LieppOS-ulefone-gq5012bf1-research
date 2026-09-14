@@ -1,0 +1,64 @@
+1. canonical stock oracle frozen
+  [ok]   oracle present
+  [ok]   sha256 2f8341d3f920418f3d9f4b8f64299acf
+  [ok]   size 38688 B
+  [ok]   all 3 stock copies byte-identical
+2. stock module metadata
+  [ok]   vermagic
+  [ok]   alias=arm-ffa
+  [ok]   author=Sudeep Holla <sudeep.holla@arm.com>
+  [ok]   depends=
+  [ok]   description=Arm FF-A interface driver
+  [ok]   license=GPL v2
+  [ok]   name=ffa_v10
+  [ok]   no srcversion (stock has none)
+3. donor provenance (exact MediaTek vendor source)
+  [ok]   Kconfig byte-identical to the pinned vendor tree
+  [ok]   bus.c byte-identical to the pinned vendor tree
+  [ok]   common.h byte-identical to the pinned vendor tree
+  [ok]   driver.c byte-identical to the pinned vendor tree
+  [ok]   smccc.c byte-identical to the pinned vendor tree
+4. export surface
+  [ok]   stock exports exactly 5 symbols
+  [ok]   every export is EXPORT_SYMBOL_GPL
+5. NATURAL export CRC gate (no witnesses allowed)
+  [ok]   rebuilt Module.symvers present
+  [ok]   rebuilt publishes exactly the stock export set
+  [ok]   ffa_bus_type naturally regenerated as 0x82c0ded3
+  [ok]   ffa_device_register naturally regenerated as 0xa400c46e
+  [ok]   ffa_device_unregister naturally regenerated as 0x85b1f074
+  [ok]   ffa_driver_register naturally regenerated as 0x0d53cde9 [HARD GATE]
+  [ok]   ffa_driver_unregister naturally regenerated as 0x3c660e4c [HARD GATE]
+  [ok]   export classes match stock (all GPL)
+6. CRCs really come from this build
+  [ok]   rebuilt module present
+  [ok]   rebuilt __kcrctab_gpl equals the stock CRC record
+  [ok]   __kcrctab_gpl agrees with Module.symvers (genksyms output)
+7. no CRC injection / witness artefacts in the provider build
+  [ok]   no symvers/witness/patch files in the package
+  [ok]   no KBUILD_MODPOST_WARN
+  [ok]   no external symbol record at all
+8. function parity
+  [ok]   same 34 functions (missing [], extra [])
+  [ok]   all 34 functions byte-identical
+  [ok]   all 34 kCFI type ids identical
+9. import parity
+  [ok]   same 41 __versions entries
+  [ok]   every imported MODVERSION CRC identical
+10. stock consumer edges resolve against the rebuilt provider
+  [ok]   consumer gz_main_mod.ko found
+  [ok]   gz_main_mod.ko: 1/1 edge(s) match the rebuilt provider
+  [ok]   consumer tkcore_drv.ko found
+  [ok]   tkcore_drv.ko: 2/2 edge(s) match the rebuilt provider
+  [ok]   consumer tmem_ffa.ko found
+  [ok]   tmem_ffa.ko: 1/1 edge(s) match the rebuilt provider
+11. tkcore_drv acceptance (rebuilt against the real provider)
+  [ok]   tkcore_drv stock-ABI module present
+  [ok]   both FF-A edges carry the naturally regenerated CRCs
+  [ok]   depends=ffa_v10,tkcore unchanged
+  [ok]   tkcore_drv function set still 50/50 (behaviour not reopened)
+  [ok]   tkcore_drv still has zero CRC mismatches vs stock
+
+residual (documented, build-provenance only): rebuilt vermagic carries '-maybe-dirty'
+49/49 CHECKS PASSED
+RESULT: ffa_v10 SOURCE-CLOSED - all 5 export CRCs NATURAL, no provider witnesses

@@ -12,6 +12,7 @@ tkcore can be removed.
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import re
 import struct
 import subprocess
@@ -419,8 +420,14 @@ def main() -> int:
         ck(f"Phase-3E boundary is absent or complete: {n}",
            not phase3e_seen or phase3e_seen == PHASE3E_TARGETS)
     acc = REPO / "workspace/phase4-tkcore-island/acceptance"
-    ck("full three-consumer acceptance still unexecuted",
-       not acc.is_dir() or not any(acc.rglob("*")))
+    # Monotone acceptance gate: empty (pre-Phase-3F) OR a complete, valid
+    # Phase-3F acceptance.  Partial/witness-contaminated states still fail.
+    _gspec = importlib.util.spec_from_file_location(
+        "acc_gate", REPO / "kernel/scripts/phase4_tkcore_acceptance_gate.py")
+    _gate = importlib.util.module_from_spec(_gspec)
+    _gspec.loader.exec_module(_gate)
+    ck("three-consumer acceptance unexecuted or complete Phase-3F",
+       _gate.ok(acc), _gate.state(acc))
 
     # ---- reports ---------------------------------------------------------
     for name, token in REQUIRED_DOCS.items():

@@ -42,14 +42,21 @@
   functions present, 16 of them byte-identical to stock, 60 KCFI type ids
   exact, 57/57 shared GKI import CRCs matching, 17/25 exports emitted and
   0 fabricated**.
-  **Current status (Phase 3E):** all behavioral reconstruction phases through
-  Phase 3E are CLOSED. **122/122 stock functions present by exact name-set
-  equality, 0 missing, 54 byte-identical, 25/25 exports retained, and 0
-  island-only functions.** Platform topology and dormant `tkcore_fp` big-core
-  affinity are reconstructed without guessed CPU numbering. This is static
-  provider completeness only: **NOT RUNTIME VALIDATED; FINAL THREE-CONSUMER
-  ACCEPTANCE PENDING; stock remains the runtime provider; TKCORE REPLACEMENT
-  READY: NO**.
+  **Current status (Phase 3F):** all behavioral reconstruction phases through
+  Phase 3E are CLOSED, and **Phase 3F final three-consumer static acceptance is
+  complete**. **122/122 stock functions present by exact name-set equality, 0
+  missing, 54 byte-identical, 25/25 exports retained, and 0 island-only
+  functions.** Platform topology and dormant `tkcore_fp` big-core affinity are
+  reconstructed without guessed CPU numbering. All **19/19** tkcore consumer
+  edges across `tkcore_drv`, `tmem_ffa` and `microarray_fp_tee` are accepted
+  from source with **0 stock-tkcore ABI witnesses** and 0 blocked edges.
+  The stock provider is therefore **no longer statically required by the source
+  island; runtime deployment remains pending separately authorized validation**:
+  **STOCK TKCORE RUNTIME DEPENDENCY: STATICALLY ELIMINATED; RUNTIME VALIDATION:
+  NOT PERFORMED; TKCORE REPLACEMENT READY: NO**.
+  See `kernel/phase4-tkcore-island-phase3f-acceptance.md` and
+  `kernel/phase4-tkcore-island-phase3f-deployment-unit.md` (deployment requires
+  moving `tkcore` + `tkcore_drv` + `tmem_ffa` together).
   See `kernel/phase4-tkcore-island-phase3e-regression.md`,
   `kernel/phase4-tkcore-island-phase3e-function-set-acceptance.md`,
   `kernel/phase4-tkcore-island-phase3c-closure.md`,
@@ -247,7 +254,8 @@ is preserved.
   49/49 fail-closed verifier (`kernel/scripts/phase4_ffa_v10_verify.py`).
   See `kernel/phase4-ffa-v10-reconstruction.md`.
 
-Do not mark `tkcore` reconstructed because `ffa_v10` closed: `tkcore` remains
+**HISTORICAL (at the `ffa_v10` closure):** do not mark `tkcore` reconstructed
+because `ffa_v10` closed — `tkcore` then remained
 `PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER`, blocked
 on original TrustKernel private headers. It was not reopened by the `ffa_v10`
 task.

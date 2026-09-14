@@ -1145,14 +1145,17 @@ frozen for RE. `spi-mt65xx` is a direct pinned-source match (31/31 function
 bytes, 3/3 natural exports, 82/82 verifier). The frozen MicroArray acceptance
 build now takes both SPI edges naturally; only runtime `tkcore` remains stock.
 
-**Current `tkcore` status (Phase 3E):** every behavioral reconstruction phase
+**Current `tkcore` status (Phase 3F):** every behavioral reconstruction phase
 through 3E is CLOSED — **122/122** stock functions by exact name-set equality,
 0 missing, 54 byte-identical, **25/25 exports** retained, 0 island-only
-functions, and a clean exact-GKI build with empty `depends`. This is static
-provider-internal completeness only: `NOT RUNTIME VALIDATED / FINAL
-THREE-CONSUMER ACCEPTANCE PENDING / STOCK RUNTIME PROVIDER / TKCORE
-REPLACEMENT READY: NO`. Phase 3F must independently accept `tkcore_drv`,
-`tmem_ffa`, and `microarray_fp_tee`; it is not performed here.
+functions, and a clean exact-GKI build with empty `depends`. **Phase 3F final
+three-consumer static acceptance is complete**: `tkcore_drv` (11 edges),
+`tmem_ffa` (7) and `microarray_fp_tee` (1) all accept the final provider from
+source with **0 stock-tkcore ABI witnesses**, 0 blocked edges, and
+byte-identical behavior versus their frozen baselines (50/50, 141/141, 27/27).
+Status: `STOCK TKCORE RUNTIME DEPENDENCY: STATICALLY ELIMINATED / RUNTIME
+VALIDATION: NOT PERFORMED / TKCORE REPLACEMENT READY: NO`. Static deployment
+unit: `tkcore` + `tkcore_drv` + `tmem_ffa` must move together.
 
 `fingerprint` is `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE:
 16/16 functions are byte- and size-identical with exact KCFI, all 18 kernel
@@ -1299,9 +1302,14 @@ later `ffa_v10` closure.
 **Current status (post-`ffa_v10` closure): 43/43 verifier**, provider split
 8 NATURAL / 5 STOCK_PROVIDER_WITNESS — see below.
 
-`tkcore` itself is **not** affected and must not be moved into any
-"source-ready" section: it stays `PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED /
-STOCK RUNTIME PROVIDER`. (Historical note: earlier revisions called this blocked on original TrustKernel private headers; see the current Phase-3D status above.)
+`tkcore` itself is **not** affected by the `ffa_v10` closure. **HISTORICAL (as
+of the ffa_v10 closure):** it then stayed `PROVIDER_ABI_PARTIAL / NOT
+RECONSTRUCTED / STOCK RUNTIME PROVIDER`. (Earlier revisions called this blocked
+on original TrustKernel private headers.) **SUPERSEDED BY PHASE 3F:** the
+tkcore source island is now statically complete — 122/122 functions, 25/25
+exports, 19/19 consumer edges accepted, 0 stock-tkcore ABI witnesses — see the
+current `tkcore` status section above and
+`kernel/phase4-tkcore-island-phase3f-acceptance.md`.
 
 ## ffa_v10 closure update
 
@@ -1329,9 +1337,12 @@ were scanned for ffa_v10 consumers: three found (`tkcore_drv`, `tmem_ffa`,
 and a newly discovered third, `gz_main_mod`), all three accept the rebuilt
 provider without modification.
 
-`tkcore` is **not** affected by the ffa_v10 closure and remains
-`PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER`, blocked
-on original TrustKernel private headers.
+`tkcore` is **not** affected by the ffa_v10 closure. **HISTORICAL:** at that
+time it remained `PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME
+PROVIDER`, blocked on original TrustKernel private headers. **SUPERSEDED BY
+PHASE 3F:** the source island is statically complete and the stock provider is
+no longer statically required; only separately authorized runtime validation
+remains.
 
 `tmem_ffa.ko` has since closed as **`DIRECT_SOURCE_MATCH / SOURCE_NOW / FROZEN
 FOR RE`** (2026-09-13): the pinned Nothing MT6878 revision that supplied

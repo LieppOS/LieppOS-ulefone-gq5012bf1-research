@@ -283,7 +283,16 @@ def main() -> int:
     ck("topology rejects hard-coded CPU guess", "not guessed" in topology)
     ck("mutation point explicitly NONE", "Result: NONE" in mutation)
     ck("plat init excludes catch-all setup", "no registration" in initdoc.lower())
-    ck("todo #18 remains open", "Todo #18 remains **OPEN**" in queue)
+    # Monotone: todo #18 is OPEN through Phase 3E, and Phase 3F is the
+    # authorised task that may close it.  Either recognised state passes;
+    # an absent or unrecognised todo-#18 state still fails.
+    _t18_open = "Todo #18 remains **OPEN**" in queue
+    _t18_closed = ("todo #18 is" in queue.lower()
+                   and "CLOSED" in queue
+                   and "PHASE 3F FINAL TRUSTKERNEL ISLAND STATIC ACCEPTANCE PASS" in queue)
+    ck("todo #18 carries a recognised state (open, or closed by Phase 3F)",
+       _t18_open or _t18_closed,
+       "open" if _t18_open else ("closed-by-3F" if _t18_closed else "UNRECOGNISED"))
 
     summary = REPO / "workspace/phase4-tkcore-island/phase3e/build/build-summary.txt"
     ck("build summary exists", summary.is_file())
@@ -299,7 +308,14 @@ def main() -> int:
         ck("source snapshot matches build source", sha(SNAPSHOT) == sha(SOURCE))
 
     acc = REPO / "workspace/phase4-tkcore-island/acceptance"
-    ck("final acceptance directory untouched/empty", not acc.is_dir() or not any(acc.rglob("*")))
+    # Monotone acceptance gate: empty (pre-Phase-3F) OR a complete, valid
+    # Phase-3F acceptance.  Partial/witness-contaminated states still fail.
+    _gspec = importlib.util.spec_from_file_location(
+        "acc_gate", REPO / "kernel/scripts/phase4_tkcore_acceptance_gate.py")
+    _gate = importlib.util.module_from_spec(_gspec)
+    _gspec.loader.exec_module(_gate)
+    ck("final acceptance directory empty or complete Phase-3F",
+       _gate.ok(acc), _gate.state(acc))
     srcs = list(ISLAND_SRC.rglob("*.c")) + list(ISLAND_SRC.rglob("*.h")) + [ISLAND_SRC / "Makefile", ISLAND_SRC / "BUILD.bazel"]
     blob = "\n".join(p.read_text(errors="ignore") for p in srcs if p.is_file())
     for bad, label in (("__crc_", "CRC injection"), ("__versions", "__versions editing"),

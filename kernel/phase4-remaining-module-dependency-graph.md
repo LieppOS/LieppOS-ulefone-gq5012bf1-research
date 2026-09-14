@@ -441,17 +441,21 @@ TIER 6  connadp/connscp/ccci_md_all/aee_aed/device-apc-common
           → gps_drv_dl_v051 → gps_pwr → gps_scp
 TIER 7  fingerprint [source/frozen; 10/10 provider CRCs exact]
         spi-mt65xx [DIRECT_SOURCE_MATCH / FROZEN; 3/3 exports natural]
-        microarray_fp_tee [source/frozen; 65 natural + 1 stock-runtime tkcore witness]
+        microarray_fp_tee [source/frozen; Phase 3F: 66 natural, 0 witnesses]
 TIER 8  yft_gpio_keys [SOURCE_DELTA_RECONSTRUCTION_EXACT; FROZEN FOR RE]
 TIER 9  leds_ln2403 [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 10 yft_tiny2c_usb [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 11 hynitron [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 12 spi_tiny_co5300_lcd [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
-TIER 13 runtime stock dependency: tkcore only, pending Phase 3F final
-        three-consumer island acceptance and later runtime validation
-(`tkcore` is provider-internally static-complete at 122/122 through Phase 3E;
-`microarray_fp_tee`, `tkcore_drv`, and `ffa_v10` are source-closed/frozen.
-Stock retention remains deployment policy, not a function-coverage gap.)
+TIER 13 runtime stock dependency: tkcore only, and it is now STATICALLY
+        ELIMINATED by Phase 3F final three-consumer island acceptance;
+        only separately authorized runtime validation remains
+(`tkcore` is provider-internally static-complete at 122/122 through Phase 3E,
+and Phase 3F accepted all 19/19 consumer edges with 0 stock-tkcore ABI
+witnesses; `microarray_fp_tee`, `tkcore_drv`, and `ffa_v10` are
+source-closed/frozen. Stock retention is now purely deployment policy pending
+runtime validation, not a function-coverage or ABI gap. Static deployment unit:
+`tkcore` + `tkcore_drv` + `tmem_ffa` must move together.)
 ```
 
 ## 11. Leaf modules (zero exports — safe to touch in any order)

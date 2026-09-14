@@ -9,10 +9,16 @@ byte-identical to stock, **all 25 exports remain present**, and there are **0
 island-only functions**. Classification:
 `TKCORE_ISLAND_PHASE3E_PLATFORM_AFFINITY_CLOSED`.
 
-This is static provider-internal completeness only. Todo #18 remains **OPEN**:
-Phase 3F must independently accept `tkcore_drv`, `tmem_ffa`, and
-`microarray_fp_tee`. No runtime validation has occurred and stock remains the
-runtime provider; replacement readiness is not claimed.
+Provider-internal completeness was closed in Phase 3E. **Phase 3F final
+three-consumer static acceptance is now complete**, so todo #18 is
+**CLOSED — PHASE 3F FINAL TRUSTKERNEL ISLAND STATIC ACCEPTANCE PASS**:
+`tkcore_drv` (11 edges), `tmem_ffa` (7) and `microarray_fp_tee` (1) each accept
+the final provider from source with **0 stock-tkcore ABI witnesses**, 0 blocked
+edges, and byte-identical behavior versus their frozen baselines.
+Classification: `TKCORE_ISLAND_PHASE3F_FINAL_CONSUMER_ACCEPTANCE_PASS`.
+The stock provider is no longer statically required by the source island;
+runtime deployment remains pending separately authorized validation. No runtime
+validation has occurred and replacement readiness is not claimed.
 
 Recommended order is bottom-up: leaf helpers and trace surfaces first, then the
 subsystems that carry exported symbols, then the secure-world proxies last.
@@ -56,9 +62,11 @@ supplicant open/release pair was required only to install the stock core device
 fops; general supplicant/RPC command handling was not entered.
 
 Static lifecycle traces pass for frozen `tmem_ffa` and `tkcore_drv`. This is not
-runtime acceptance. Overall tkcore remains **PARTIAL**, **NOT RUNTIME READY**,
-and still depends on the **STOCK RUNTIME PROVIDER**. The next task is **Phase 3B
-shared-memory reconstruction**.
+runtime acceptance. **HISTORICAL (Phase 3A):** overall tkcore was then
+**PARTIAL**, **NOT RUNTIME READY**, and still depended on the **STOCK RUNTIME
+PROVIDER**; the next task was **Phase 3B shared-memory reconstruction**.
+(Superseded: Phase 3E closed 122/122 and Phase 3F accepted 19/19 consumer
+edges — see the current status at the top of this document.)
 
 ## 1. core lifecycle — 1 function(s) remaining
 

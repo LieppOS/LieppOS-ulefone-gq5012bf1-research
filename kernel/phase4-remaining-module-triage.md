@@ -432,8 +432,13 @@ Hence **P0_BOOT_CRITICAL**.
 **Yes for `tkcore`.** It is `YES_SAFE_TRANSITION` (101/101 kernel CRCs
 `MATCH`, zero intermodule imports — it depends on nothing but the GKI core).
 The source island is now statically behavior-complete through Phase 3E
-(122/122 functions, 25/25 exports), but stock remains the runtime provider
-until final three-consumer acceptance and runtime validation. (Historical
+(122/122 functions, 25/25 exports), and **Phase 3F final three-consumer static
+acceptance is complete** (19/19 edges, 0 stock-tkcore witnesses). The stock
+provider is no longer statically required by the source island; runtime
+deployment remains pending separately authorized validation. Note the static
+deployment conclusion: `tkcore` cannot be swapped alone — it must move together
+with `tkcore_drv` and `tmem_ffa` (see
+`kernel/phase4-tkcore-island-phase3f-deployment-unit.md`). (Historical
 claims that binary analysis could not unblock reconstruction are superseded;
 the remaining private-type genksyms issue is ABI provenance, not a behavioral
 reconstruction blocker.)
@@ -703,7 +708,12 @@ classification.
 
 Current source status in the affected chains:
 
-- `tkcore`: **NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER**; required stock.
+- `tkcore`: **SOURCE ISLAND STATICALLY COMPLETE** — Phase 3E closed 122/122
+  functions and 25/25 exports, and Phase 3F accepted all 19/19 consumer edges
+  with 0 stock-tkcore ABI witnesses. Stock is no longer *statically* required
+  by the source island; it is retained only as deployment policy pending
+  separately authorized runtime validation. (Superseded: this line previously
+  read `NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER`.)
 - `microarray_fp_tee`: **SOURCE_RECONSTRUCTED / FROZEN FOR RE**; stock binary
   may be retained temporarily for staged integration, but it is not unresolved.
 - `spi_tiny_co5300_lcd`: **SOURCE_RECONSTRUCTED / FROZEN FOR RE**; stock binary
@@ -769,7 +779,10 @@ DONE 15B SOURCE_NOW      yft_tiny2c_usb — stock-behavior complete, exact 22
                          undefined imports/23 MODVERSIONs, exact MT6375 flag edge,
                          12/12 KCFI, complete thermal/USB/uSmart/DT/GPIO/sysfs/
                          lifecycle contracts, 68/68 verifier, FROZEN FOR RE
-NEXT 16  RUNTIME_STOCK    tkcore only — NOT RECONSTRUCTED; required TEE runtime
+DONE 16  RUNTIME_STOCK    tkcore only — source island STATICALLY COMPLETE
+                          (Phase 3E 122/122 + Phase 3F 19/19 edges accepted,
+                          0 stock-tkcore witnesses); stock retained pending
+                          separately authorized runtime validation only
 OPTIONAL STAGED_STOCK     source-closed microarray_fp_tee, tkcore_drv, and
                           spi_tiny_co5300_lcd may retain stock binaries during
                           conservative integration; they are not unresolved

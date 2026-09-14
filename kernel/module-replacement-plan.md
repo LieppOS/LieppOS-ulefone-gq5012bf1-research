@@ -125,14 +125,19 @@ It is `SOURCE_NOW` and FROZEN FOR RE.
 Treat as one late-stage security subsystem:
 
 - tkcore — stock remains deployed, but the source island has closed **Phase
-  3E** and every behavioral reconstruction phase: **122/122** stock functions
+  3E** and every behavioral reconstruction phase, and **Phase 3F final
+  three-consumer static acceptance is complete**: **122/122** stock functions
   by exact name-set equality, 0 missing, 54 byte-identical, **25/25 exports**
-  retained, and 0 island-only functions. This is provider-internal static
-  completeness, not runtime acceptance: `NOT RUNTIME VALIDATED / FINAL
-  THREE-CONSUMER ACCEPTANCE PENDING / STOCK RUNTIME PROVIDER / TKCORE
+  retained, and 0 island-only functions, plus **19/19** consumer edges accepted
+  with **0 stock-tkcore ABI witnesses**. The stock provider is no longer
+  statically required by the source island; runtime deployment remains pending
+  separately authorized validation: `STOCK TKCORE RUNTIME DEPENDENCY:
+  STATICALLY ELIMINATED / RUNTIME VALIDATION: NOT PERFORMED / TKCORE
   REPLACEMENT READY: NO`. The residual private-type genksyms CRC provenance
   limitation is separate from behavioral completeness and is **not** an
-  analysis blocker
+  analysis blocker; it is fully characterised in
+  `kernel/phase4-tkcore-island-phase3f-private-abi-provenance.md` (5 edges
+  natural-historical, 14 island-natural)
 - tkcore_drv — **SOURCE_RECONSTRUCTED / SOURCE_NOW_WITH_PROVIDER_WITNESSES /
   FROZEN FOR RE** (2026-09-13, updated 2026-09-13 after the ffa_v10 closure:
   provenance split is now 8 NATURAL/5 STOCK_PROVIDER_WITNESS, was 6/7). Ship
