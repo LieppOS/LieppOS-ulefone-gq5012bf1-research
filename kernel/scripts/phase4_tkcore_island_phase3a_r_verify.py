@@ -317,12 +317,45 @@ def main() -> None:
     snapshot = PHASE / "source"
     source_manifest = tsv_path(PHASE / "interrupted-checkpoint/source-hashes.tsv")
     ck("modified-source manifest has four files", source_manifest is not None and len(source_manifest) == 4, len(source_manifest or []))
+    # Files that later phases legitimately co-own.  tee_kernel_api.c holds the
+    # three TEEC shared-memory APIs, which Phase 3B rewrote against the stock
+    # oracle.  Pinning its live hash here would assert that no later phase may
+    # ever touch the file, which is not what Phase 3A-R needs to guarantee.
+    # The immutable snapshot is still pinned, and the Phase-3A-R behaviours in
+    # that file are independently asserted above (handle-free ordering, no
+    # pointer truncation, stock default name, no stub).
+    CO_OWNED = {"lieppos/tkcore-island/tkcore/tee_kernel_api.c": "Phase 3B (TEEC SHM APIs)"}
     for row in source_manifest or []:
         live = GKI / row["path"]
         archived = snapshot / row["path"]
         expected = row["sha256"]
-        ck(f"live source hash preserved: {row['path']}", live.is_file() and sha256(live) == expected)
+        if row["path"] in CO_OWNED:
+            ck(f"co-owned source still present: {row['path']} ({CO_OWNED[row['path']]})",
+               live.is_file())
+        else:
+            ck(f"live source hash preserved: {row['path']}",
+               live.is_file() and sha256(live) == expected)
         ck(f"source snapshot hash preserved: {row['path']}", archived.is_file() and sha256(archived) == expected)
+
+    # Stronger than a source hash: the Phase-3A-R targets must still be closed
+    # in whatever the island builds TODAY, not merely in the frozen 3A-R ELF.
+    current = None
+    for cand in (REPO / "workspace/phase4-tkcore-island/phase3b/build/tkcore.phase3b.ko",
+                 FINAL):
+        if cand.is_file():
+            current = cand
+            break
+    ck("a current island ELF is available", current is not None)
+    if current is not None:
+        cf, ct, _, _, cb = elf(current)
+        drift = [n for n in TARGETS
+                 if n not in cf or kcfi(st, sf[n]) != kcfi(ct, cf[n])]
+        ck("Phase-3A-R targets still KCFI-exact in the current build", not drift, drift)
+        lost = [n for n in TARGETS if n not in cf]
+        ck("Phase-3A-R targets still present in the current build", not lost, lost)
+        regressed = [n for n in ("tee_core_del", "tee_core_free", "TEEC_CloseSession") + tuple(IDR)
+                     if n in cf and st[sf[n][0]:sf[n][0] + sf[n][1]] != ct[cf[n][0]:cf[n][0] + cf[n][1]]]
+        ck("Phase-3A-R byte-identical targets still byte-identical today", not regressed, regressed)
 
     text_tree = ""
     forbidden_binary = []
