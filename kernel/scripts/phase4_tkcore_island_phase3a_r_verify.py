@@ -171,9 +171,17 @@ def main() -> None:
        FINAL.stat().st_size if FINAL.is_file() else "missing")
 
     head = command("git", "rev-parse", "HEAD", cwd=COMMON).strip()
-    dirty = command("git", "status", "--porcelain", cwd=COMMON).strip()
+    porcelain = [l for l in command("git", "status", "--porcelain", cwd=COMMON).splitlines() if l.strip()]
+    tracked = [l for l in porcelain if not l.startswith("??")]
+    untracked = [l[3:].strip() for l in porcelain if l.startswith("??")]
+    # The kleaf sandbox regenerates this build byproduct inside common/; it is
+    # removed before every build.  It is NOT a source modification, but nothing
+    # else may appear either.
+    KLEAF_BYPRODUCTS = {"tools/bpf/resolve_btfids/libsubcmd/"}
     ck("common at exact GKI commit", head == COMMON_COMMIT, head)
-    ck("common exact-GKI tree clean", dirty == "", dirty)
+    ck("common exact-GKI tracked source unmodified", not tracked, tracked)
+    ck("common untracked residue limited to known kleaf byproduct",
+       set(untracked) <= KLEAF_BYPRODUCTS, sorted(set(untracked) - KLEAF_BYPRODUCTS))
 
     if not all(p.is_file() for p in (STOCK, PHASE3P, FINAL)):
         report()
