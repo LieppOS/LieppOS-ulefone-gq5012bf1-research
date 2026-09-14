@@ -73,6 +73,7 @@ Full delta: `phase4-extcon-mtk-usb-RED.md`.
 | axis | stock | rebuilt | result |
 |---|---|---|---|
 | functions | 22 | 25 | **22/22 present, 0 missing** |
+| function bytes | — | — | 8/22 size-identical, **3/22 byte-identical** |
 | objects | 28 | 27 | 27 shared, 25 size-identical |
 | imports | 63 | 63 | **exact** (0 missing / 0 extra) |
 | MODVERSION symbols | 64 | 64 | **exact** |
@@ -91,8 +92,14 @@ Residuals, each explained and none Linux-visible:
 2. **`mtk_usb_extcon_of_match` local symbol** — the 400-byte table is present
    and identical in size; stock retains both the local symbol and the
    `__mod_of__…_device_table` alias, this build retains only the alias.
-3. **Module size** (46864 vs 443624) — build provenance only: the stock module
-   is stripped and LTO/BOLT/PGO-optimised, this one is not.
+3. **Module size** (46864 vs 443624) and the low byte-identity count — build
+   provenance only: the stock module is stripped and built `+pgo +bolt +lto`,
+   this one is not. The 3 byte-identical functions are `init_module`,
+   `cleanup_module` and `mtk_usb_extcon_remove`; the 5 further size-identical
+   ones are `mtk_usb_extcon_shutdown`, `show_uvc_insert_status`,
+   `usb_cc_smt_procfs_show`, `usb_is_online` and `vbus_limit_cur_show`.
+   Whole-ELF identity is explicitly not claimed and is not required, because
+   every residual is accounted for as build provenance rather than behaviour.
 
 Per-symbol evidence: `phase4-extcon-mtk-usb-function-parity.tsv`,
 `-object-parity.tsv`, `-modversion-parity.tsv`.
