@@ -1,0 +1,58 @@
+0000000000006328 <tkcore_shm_put>:
+    6328: d503233f     	paciasp
+    632c: a9bd7bfd     	stp	x29, x30, [sp, #-0x30]!
+    6330: a90157f6     	stp	x22, x21, [sp, #0x10]
+    6334: a9024ff4     	stp	x20, x19, [sp, #0x20]
+    6338: 910003fd     	mov	x29, sp
+    633c: b4000440     	cbz	x0, 0x63c4 <tkcore_shm_put+0x9c>
+    6340: aa0003f3     	mov	x19, x0
+    6344: f9400008     	ldr	x8, [x0]
+    6348: b4000428     	cbz	x8, 0x63cc <tkcore_shm_put+0xa4>
+    634c: aa0103f4     	mov	x20, x1
+    6350: b4000421     	cbz	x1, 0x63d4 <tkcore_shm_put+0xac>
+    6354: 3940ee89     	ldrb	w9, [x20, #0x3b]
+    6358: 36200429     	tbz	w9, #0x4, 0x63dc <tkcore_shm_put+0xb4>
+    635c: 9103e100     	add	x0, x8, #0xf8
+    6360: 94000000     	bl	0x6360 <tkcore_shm_put+0x38>
+		0000000000006360:  R_AARCH64_CALL26	mutex_lock
+    6364: 3940ea88     	ldrb	w8, [x20, #0x3a]
+    6368: 360001a8     	tbz	w8, #0x0, 0x639c <tkcore_shm_put+0x74>
+    636c: f9403295     	ldr	x21, [x20, #0x60]
+    6370: 52800062     	mov	w2, #0x3                // =3
+    6374: a94006a0     	ldp	x0, x1, [x21]
+    6378: f9400016     	ldr	x22, [x0]
+    637c: 94000000     	bl	0x637c <tkcore_shm_put+0x54>
+		000000000000637c:  R_AARCH64_CALL26	dma_buf_unmap_attachment
+    6380: f94002a1     	ldr	x1, [x21]
+    6384: aa1603e0     	mov	x0, x22
+    6388: 94000000     	bl	0x6388 <tkcore_shm_put+0x60>
+		0000000000006388:  R_AARCH64_CALL26	dma_buf_detach
+    638c: aa1603e0     	mov	x0, x22
+    6390: 94000000     	bl	0x6390 <tkcore_shm_put+0x68>
+		0000000000006390:  R_AARCH64_CALL26	dma_buf_put
+    6394: aa1503e0     	mov	x0, x21
+    6398: 94000000     	bl	0x6398 <tkcore_shm_put+0x70>
+		0000000000006398:  R_AARCH64_CALL26	kfree
+    639c: aa1403e0     	mov	x0, x20
+    63a0: 94000000     	bl	0x63a0 <tkcore_shm_put+0x78>
+		00000000000063a0:  R_AARCH64_CALL26	kfree
+    63a4: f9400268     	ldr	x8, [x19]
+    63a8: 9103e100     	add	x0, x8, #0xf8
+    63ac: 94000000     	bl	0x63ac <tkcore_shm_put+0x84>
+		00000000000063ac:  R_AARCH64_CALL26	mutex_unlock
+    63b0: a9424ff4     	ldp	x20, x19, [sp, #0x20]
+    63b4: a94157f6     	ldp	x22, x21, [sp, #0x10]
+    63b8: a8c37bfd     	ldp	x29, x30, [sp], #0x30
+    63bc: d50323bf     	autiasp
+    63c0: d65f03c0     	ret
+    63c4: d4210000     	brk	#0x800
+    63c8: 17fffffa     	b	0x63b0 <tkcore_shm_put+0x88>
+    63cc: d4210000     	brk	#0x800
+    63d0: 17fffff8     	b	0x63b0 <tkcore_shm_put+0x88>
+    63d4: d4210000     	brk	#0x800
+    63d8: 17fffff6     	b	0x63b0 <tkcore_shm_put+0x88>
+    63dc: d4210000     	brk	#0x800
+    63e0: f9400268     	ldr	x8, [x19]
+    63e4: 17ffffde     	b	0x635c <tkcore_shm_put+0x34>
+    63e8: fe 57 55 97  	.word	0x975557fe
+

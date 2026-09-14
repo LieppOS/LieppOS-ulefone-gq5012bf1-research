@@ -1,0 +1,37 @@
+000000000000001c <tee_map_cached_shm>:
+      1c: d503233f     	paciasp
+      20: a9be7bfd     	stp	x29, x30, [sp, #-0x20]!
+      24: a9014ff4     	stp	x20, x19, [sp, #0x10]
+      28: 910003fd     	mov	x29, sp
+      2c: aa0003f3     	mov	x19, x0
+      30: d34cfc00     	lsr	x0, x0, #12
+      34: aa0103f4     	mov	x20, x1
+      38: 94000000     	bl	0x38 <tee_map_cached_shm+0x1c>
+		0000000000000038:  R_AARCH64_CALL26	pfn_is_map_memory
+      3c: 340000c0     	cbz	w0, 0x54 <tee_map_cached_shm+0x38>
+      40: 90000008     	adrp	x8, 0x0 <.text>
+		0000000000000040:  R_AARCH64_ADR_PREL_PG_HI21	memstart_addr
+      44: f9400108     	ldr	x8, [x8]
+		0000000000000044:  R_AARCH64_LDST64_ABS_LO12_NC	memstart_addr
+      48: cb080268     	sub	x8, x19, x8
+      4c: b2596100     	orr	x0, x8, #0xffffff8000000000
+      50: 1400000b     	b	0x7c <tee_map_cached_shm+0x60>
+      54: 90000008     	adrp	x8, 0x0 <.text>
+		0000000000000054:  R_AARCH64_ADR_PREL_PG_HI21	arm64_use_ng_mappings
+      58: d280e069     	mov	x9, #0x703              // =1795
+      5c: f2e00d09     	movk	x9, #0x68, lsl #48
+      60: aa1303e0     	mov	x0, x19
+      64: b275012a     	orr	x10, x9, #0x800
+      68: aa1403e1     	mov	x1, x20
+      6c: 39400108     	ldrb	w8, [x8]
+		000000000000006c:  R_AARCH64_LDST8_ABS_LO12_NC	arm64_use_ng_mappings
+      70: 7100011f     	cmp	w8, #0x0
+      74: 9a8a0122     	csel	x2, x9, x10, eq
+      78: 94000000     	bl	0x78 <tee_map_cached_shm+0x5c>
+		0000000000000078:  R_AARCH64_CALL26	ioremap_prot
+      7c: a9414ff4     	ldp	x20, x19, [sp, #0x10]
+      80: a8c27bfd     	ldp	x29, x30, [sp], #0x20
+      84: d50323bf     	autiasp
+      88: d65f03c0     	ret
+      8c: fc eb 88 a4  	.word	0xa488ebfc
+

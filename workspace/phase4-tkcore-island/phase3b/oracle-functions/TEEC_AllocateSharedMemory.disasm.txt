@@ -1,0 +1,68 @@
+00000000000077f8 <TEEC_AllocateSharedMemory>:
+    77f8: d503233f     	paciasp
+    77fc: d10103ff     	sub	sp, sp, #0x40
+    7800: a9027bfd     	stp	x29, x30, [sp, #0x20]
+    7804: a9034ff4     	stp	x20, x19, [sp, #0x30]
+    7808: 910083fd     	add	x29, sp, #0x20
+    780c: d5384108     	mrs	x8, SP_EL0
+    7810: f9431d08     	ldr	x8, [x8, #0x638]
+    7814: f81f83a8     	stur	x8, [x29, #-0x8]
+    7818: a900ffff     	stp	xzr, xzr, [sp, #0x8]
+    781c: f90003ff     	str	xzr, [sp]
+    7820: b4000380     	cbz	x0, 0x7890 <TEEC_AllocateSharedMemory+0x98>
+    7824: aa0103f3     	mov	x19, x1
+    7828: aa0003f4     	mov	x20, x0
+    782c: 129fff20     	mov	w0, #-0xfffa            // =-65530
+    7830: b4000321     	cbz	x1, 0x7894 <TEEC_AllocateSharedMemory+0x9c>
+    7834: b9410288     	ldr	w8, [x20, #0x100]
+    7838: 340002e8     	cbz	w8, 0x7894 <TEEC_AllocateSharedMemory+0x9c>
+    783c: b9401269     	ldr	w9, [x19, #0x10]
+    7840: 2a0803e0     	mov	w0, w8
+    7844: f940066a     	ldr	x10, [x19, #0x8]
+    7848: 320f0129     	orr	w9, w9, #0x20000
+    784c: 290127ea     	stp	w10, w9, [sp, #0x8]
+    7850: 94000000     	bl	0x7850 <TEEC_AllocateSharedMemory+0x58>
+		0000000000007850:  R_AARCH64_CALL26	tee_core_uuid2ptr
+    7854: b4000160     	cbz	x0, 0x7880 <TEEC_AllocateSharedMemory+0x88>
+    7858: 910003e1     	mov	x1, sp
+    785c: 94000000     	bl	0x785c <TEEC_AllocateSharedMemory+0x64>
+		000000000000785c:  R_AARCH64_CALL26	tee_shm_alloc_io
+    7860: 350002e0     	cbnz	w0, 0x78bc <TEEC_AllocateSharedMemory+0xc4>
+    7864: b9400fe8     	ldr	w8, [sp, #0xc]
+    7868: f94003e9     	ldr	x9, [sp]
+    786c: b9001268     	str	w8, [x19, #0x10]
+    7870: a901fe69     	stp	x9, xzr, [x19, #0x18]
+    7874: f9402128     	ldr	x8, [x9, #0x40]
+    7878: f9000268     	str	x8, [x19]
+    787c: 14000006     	b	0x7894 <TEEC_AllocateSharedMemory+0x9c>
+    7880: b9410281     	ldr	w1, [x20, #0x100]
+    7884: 90000000     	adrp	x0, 0x7000 <tee_cleanup_sysfs+0x30>
+		0000000000007884:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x1083
+    7888: 91000000     	add	x0, x0, #0x0
+		0000000000007888:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x1083
+    788c: 94000000     	bl	0x788c <TEEC_AllocateSharedMemory+0x94>
+		000000000000788c:  R_AARCH64_CALL26	_printk
+    7890: 129fff20     	mov	w0, #-0xfffa            // =-65530
+    7894: d5384108     	mrs	x8, SP_EL0
+    7898: f9431d08     	ldr	x8, [x8, #0x638]
+    789c: f85f83a9     	ldur	x9, [x29, #-0x8]
+    78a0: eb09011f     	cmp	x8, x9
+    78a4: 54000181     	b.ne	0x78d4 <TEEC_AllocateSharedMemory+0xdc>
+    78a8: a9434ff4     	ldp	x20, x19, [sp, #0x30]
+    78ac: a9427bfd     	ldp	x29, x30, [sp, #0x20]
+    78b0: 910103ff     	add	sp, sp, #0x40
+    78b4: d50323bf     	autiasp
+    78b8: d65f03c0     	ret
+    78bc: f9400661     	ldr	x1, [x19, #0x8]
+    78c0: 90000000     	adrp	x0, 0x7000 <tee_cleanup_sysfs+0x30>
+		00000000000078c0:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xb45
+    78c4: 91000000     	add	x0, x0, #0x0
+		00000000000078c4:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xb45
+    78c8: 94000000     	bl	0x78c8 <TEEC_AllocateSharedMemory+0xd0>
+		00000000000078c8:  R_AARCH64_CALL26	_printk
+    78cc: 129ffe60     	mov	w0, #-0xfff4            // =-65524
+    78d0: 17fffff1     	b	0x7894 <TEEC_AllocateSharedMemory+0x9c>
+    78d4: 94000000     	bl	0x78d4 <TEEC_AllocateSharedMemory+0xdc>
+		00000000000078d4:  R_AARCH64_CALL26	__stack_chk_fail
+    78d8: 58 97 c7 0d  	.word	0x0dc79758
+

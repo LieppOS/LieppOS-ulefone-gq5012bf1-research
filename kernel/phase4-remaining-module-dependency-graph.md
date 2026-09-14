@@ -225,7 +225,7 @@ entire cluster.
       ├──1──▶ tmem_ffa    [DIRECT_SOURCE_MATCH / FROZEN] V:152 (ffa_driver_register only, NATURAL)
       └──1──▶ gz_main_mod [source/frozen] V:150 (ffa_driver_register only; GenieZone)
 
-   tkcore [stock / blocked on TrustKernel private headers; island Phase 3P: 85/122 fns] P:99 ── 25 exports
+   tkcore [stock / blocked on TrustKernel private headers; island Phase 3B: 104/122 fns, 21/25 exports] P:99 ── 25 exports
       │
       ├─11──▶ tkcore_drv        [RECONSTRUCTED] P:100 / R:98 → LEAF (0 exports)
       ├──1──▶ microarray_fp_tee [SOURCE_RECONSTRUCTED / FROZEN] P:182 / R:186

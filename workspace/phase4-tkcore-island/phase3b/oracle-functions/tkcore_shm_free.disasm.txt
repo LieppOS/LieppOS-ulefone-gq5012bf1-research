@@ -1,0 +1,33 @@
+0000000000005998 <tkcore_shm_free>:
+    5998: d503233f     	paciasp
+    599c: a9be7bfd     	stp	x29, x30, [sp, #-0x20]!
+    59a0: f9000bf3     	str	x19, [sp, #0x10]
+    59a4: 910003fd     	mov	x29, sp
+    59a8: b4000260     	cbz	x0, 0x59f4 <tkcore_shm_free+0x5c>
+    59ac: aa0003f3     	mov	x19, x0
+    59b0: b140041f     	cmn	x0, #0x1, lsl #12       // =0x1000
+    59b4: 54000208     	b.hi	0x59f4 <tkcore_shm_free+0x5c>
+    59b8: f9400e68     	ldr	x8, [x19, #0x18]
+    59bc: b4000248     	cbz	x8, 0x5a04 <tkcore_shm_free+0x6c>
+    59c0: 91014260     	add	x0, x19, #0x50
+    59c4: 94000000     	bl	0x59c4 <tkcore_shm_free+0x2c>
+		00000000000059c4:  R_AARCH64_CALL26	sg_free_table
+    59c8: f9400e68     	ldr	x8, [x19, #0x18]
+    59cc: aa1303e0     	mov	x0, x19
+    59d0: f9404908     	ldr	x8, [x8, #0x90]
+    59d4: f9402508     	ldr	x8, [x8, #0x48]
+    59d8: b85fc110     	ldur	w16, [x8, #-0x4]
+    59dc: 7292d3f1     	movk	w17, #0x969f
+    59e0: 72b4fcd1     	movk	w17, #0xa7e6, lsl #16
+    59e4: 6b11021f     	cmp	w16, w17
+    59e8: 54000040     	b.eq	0x59f0 <tkcore_shm_free+0x58>
+    59ec: d4304500     	brk	#0x8228
+    59f0: d63f0100     	blr	x8
+    59f4: f9400bf3     	ldr	x19, [sp, #0x10]
+    59f8: a8c27bfd     	ldp	x29, x30, [sp], #0x20
+    59fc: d50323bf     	autiasp
+    5a00: d65f03c0     	ret
+    5a04: d4210000     	brk	#0x800
+    5a08: 17fffffb     	b	0x59f4 <tkcore_shm_free+0x5c>
+    5a0c: e9 0c b2 45  	.word	0x45b20ce9
+

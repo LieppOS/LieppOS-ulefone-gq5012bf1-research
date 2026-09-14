@@ -1,0 +1,91 @@
+00000000000064d4 <__tee_shm_dma_buf_map_dma_buf>:
+    64d4: d503233f     	paciasp
+    64d8: a9bc7bfd     	stp	x29, x30, [sp, #-0x40]!
+    64dc: a9015ff8     	stp	x24, x23, [sp, #0x10]
+    64e0: a90257f6     	stp	x22, x21, [sp, #0x20]
+    64e4: a9034ff4     	stp	x20, x19, [sp, #0x30]
+    64e8: 910003fd     	mov	x29, sp
+    64ec: f9402013     	ldr	x19, [x0, #0x40]
+    64f0: 2a0103f5     	mov	w21, w1
+    64f4: f9400008     	ldr	x8, [x0]
+    64f8: aa0003f4     	mov	x20, x0
+    64fc: b9401269     	ldr	w9, [x19, #0x10]
+    6500: f9405117     	ldr	x23, [x8, #0xa0]
+    6504: 6b01013f     	cmp	w9, w1
+    6508: 54000061     	b.ne	0x6514 <__tee_shm_dma_buf_map_dma_buf+0x40>
+    650c: 39405268     	ldrb	w8, [x19, #0x14]
+    6510: 35000568     	cbnz	w8, 0x65bc <__tee_shm_dma_buf_map_dma_buf+0xe8>
+    6514: b9405ee1     	ldr	w1, [x23, #0x5c]
+    6518: aa1303e0     	mov	x0, x19
+    651c: 52819802     	mov	w2, #0xcc0              // =3264
+    6520: 94000000     	bl	0x6520 <__tee_shm_dma_buf_map_dma_buf+0x4c>
+		0000000000006520:  R_AARCH64_CALL26	sg_alloc_table
+    6524: 350005a0     	cbnz	w0, 0x65d8 <__tee_shm_dma_buf_map_dma_buf+0x104>
+    6528: b9400e68     	ldr	w8, [x19, #0xc]
+    652c: 340002e8     	cbz	w8, 0x6588 <__tee_shm_dma_buf_map_dma_buf+0xb4>
+    6530: 2a1f03f8     	mov	w24, wzr
+    6534: f9400276     	ldr	x22, [x19]
+    6538: f9402af7     	ldr	x23, [x23, #0x50]
+    653c: f94002e8     	ldr	x8, [x23]
+    6540: aa1703e0     	mov	x0, x23
+    6544: f94002c9     	ldr	x9, [x22]
+    6548: b3400528     	bfxil	x8, x9, #0, #2
+    654c: 29412ae9     	ldp	w9, w10, [x23, #0x8]
+    6550: f90002c8     	str	x8, [x22]
+    6554: 29012ac9     	stp	w9, w10, [x22, #0x8]
+    6558: 94000000     	bl	0x6558 <__tee_shm_dma_buf_map_dma_buf+0x84>
+		0000000000006558:  R_AARCH64_CALL26	sg_next
+    655c: aa0003f7     	mov	x23, x0
+    6560: aa1603e0     	mov	x0, x22
+    6564: 94000000     	bl	0x6564 <__tee_shm_dma_buf_map_dma_buf+0x90>
+		0000000000006564:  R_AARCH64_CALL26	sg_next
+    6568: b9400e62     	ldr	w2, [x19, #0xc]
+    656c: aa0003f6     	mov	x22, x0
+    6570: 11000718     	add	w24, w24, #0x1
+    6574: 6b02031f     	cmp	w24, w2
+    6578: 54fffe23     	b.lo	0x653c <__tee_shm_dma_buf_map_dma_buf+0x68>
+    657c: 71000ebf     	cmp	w21, #0x3
+    6580: 540000a1     	b.ne	0x6594 <__tee_shm_dma_buf_map_dma_buf+0xc0>
+    6584: 1400000a     	b	0x65ac <__tee_shm_dma_buf_map_dma_buf+0xd8>
+    6588: 2a1f03e2     	mov	w2, wzr
+    658c: 71000ebf     	cmp	w21, #0x3
+    6590: 540000e0     	b.eq	0x65ac <__tee_shm_dma_buf_map_dma_buf+0xd8>
+    6594: f9400680     	ldr	x0, [x20, #0x8]
+    6598: 2a1503e3     	mov	w3, w21
+    659c: f9400261     	ldr	x1, [x19]
+    65a0: aa1f03e4     	mov	x4, xzr
+    65a4: 94000000     	bl	0x65a4 <__tee_shm_dma_buf_map_dma_buf+0xd0>
+		00000000000065a4:  R_AARCH64_CALL26	dma_map_sg_attrs
+    65a8: 34000220     	cbz	w0, 0x65ec <__tee_shm_dma_buf_map_dma_buf+0x118>
+    65ac: 52800028     	mov	w8, #0x1                // =1
+    65b0: b9001275     	str	w21, [x19, #0x10]
+    65b4: 39005268     	strb	w8, [x19, #0x14]
+    65b8: f9002293     	str	x19, [x20, #0x40]
+    65bc: aa1303e0     	mov	x0, x19
+    65c0: a9434ff4     	ldp	x20, x19, [sp, #0x30]
+    65c4: a94257f6     	ldp	x22, x21, [sp, #0x20]
+    65c8: a9415ff8     	ldp	x24, x23, [sp, #0x10]
+    65cc: a8c47bfd     	ldp	x29, x30, [sp], #0x40
+    65d0: d50323bf     	autiasp
+    65d4: d65f03c0     	ret
+    65d8: 90000000     	adrp	x0, 0x6000 <tee_shm_free_io+0x74>
+		00000000000065d8:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x1217
+    65dc: 91000000     	add	x0, x0, #0x0
+		00000000000065dc:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x1217
+    65e0: 94000000     	bl	0x65e0 <__tee_shm_dma_buf_map_dma_buf+0x10c>
+		00000000000065e0:  R_AARCH64_CALL26	_printk
+    65e4: 92800173     	mov	x19, #-0xc              // =-12
+    65e8: 17fffff5     	b	0x65bc <__tee_shm_dma_buf_map_dma_buf+0xe8>
+    65ec: 90000000     	adrp	x0, 0x6000 <tee_shm_free_io+0x74>
+		00000000000065ec:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xdd9
+    65f0: 91000000     	add	x0, x0, #0x0
+		00000000000065f0:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xdd9
+    65f4: 94000000     	bl	0x65f4 <__tee_shm_dma_buf_map_dma_buf+0x120>
+		00000000000065f4:  R_AARCH64_CALL26	_printk
+    65f8: aa1303e0     	mov	x0, x19
+    65fc: 94000000     	bl	0x65fc <__tee_shm_dma_buf_map_dma_buf+0x128>
+		00000000000065fc:  R_AARCH64_CALL26	sg_free_table
+    6600: 92800093     	mov	x19, #-0x5              // =-5
+    6604: 17ffffee     	b	0x65bc <__tee_shm_dma_buf_map_dma_buf+0xe8>
+    6608: 9a 8c a0 c0  	.word	0xc0a08c9a
+

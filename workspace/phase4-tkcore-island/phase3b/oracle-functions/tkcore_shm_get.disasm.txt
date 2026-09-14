@@ -1,0 +1,208 @@
+0000000000006084 <tkcore_shm_get>:
+    6084: d503233f     	paciasp
+    6088: a9bb7bfd     	stp	x29, x30, [sp, #-0x50]!
+    608c: a90167fa     	stp	x26, x25, [sp, #0x10]
+    6090: a9025ff8     	stp	x24, x23, [sp, #0x20]
+    6094: a90357f6     	stp	x22, x21, [sp, #0x30]
+    6098: a9044ff4     	stp	x20, x19, [sp, #0x40]
+    609c: 910003fd     	mov	x29, sp
+    60a0: f9400019     	ldr	x25, [x0]
+    60a4: aa0003f6     	mov	x22, x0
+    60a8: 2a0303f7     	mov	w23, w3
+    60ac: aa0203f8     	mov	x24, x2
+    60b0: aa0103f5     	mov	x21, x1
+    60b4: 9103e333     	add	x19, x25, #0xf8
+    60b8: aa1303e0     	mov	x0, x19
+    60bc: 94000000     	bl	0x60bc <tkcore_shm_get+0x38>
+		00000000000060bc:  R_AARCH64_CALL26	mutex_lock
+    60c0: 90000008     	adrp	x8, 0x6000 <tee_shm_free_io+0x74>
+		00000000000060c0:  R_AARCH64_ADR_PREL_PG_HI21	kmalloc_caches+0x38
+    60c4: 5281b801     	mov	w1, #0xdc0              // =3520
+    60c8: 52800d02     	mov	w2, #0x68               // =104
+    60cc: f9400100     	ldr	x0, [x8]
+		00000000000060cc:  R_AARCH64_LDST64_ABS_LO12_NC	kmalloc_caches+0x38
+    60d0: 94000000     	bl	0x60d0 <tkcore_shm_get+0x4c>
+		00000000000060d0:  R_AARCH64_CALL26	kmalloc_trace
+    60d4: aa0003f4     	mov	x20, x0
+    60d8: b4000bc0     	cbz	x0, 0x6250 <tkcore_shm_get+0x1cc>
+    60dc: b13ffe9f     	cmn	x20, #0xfff
+    60e0: 54000b82     	b.hs	0x6250 <tkcore_shm_get+0x1cc>
+    60e4: b94012a8     	ldr	w8, [x21, #0x10]
+    60e8: a9016696     	stp	x22, x25, [x20, #0x10]
+    60ec: f9404f29     	ldr	x9, [x25, #0x98]
+    60f0: f9001a9f     	str	xzr, [x20, #0x30]
+    60f4: 3204010a     	orr	w10, w8, #0x10000000
+    60f8: a9026289     	stp	x9, x24, [x20, #0x20]
+    60fc: b9003a8a     	str	w10, [x20, #0x38]
+    6100: 37880148     	tbnz	w8, #0x11, 0x6128 <tkcore_shm_get+0xa4>
+    6104: b9401aa0     	ldr	w0, [x21, #0x18]
+    6108: 34000260     	cbz	w0, 0x6154 <tkcore_shm_get+0xd0>
+    610c: 94000000     	bl	0x610c <tkcore_shm_get+0x88>
+		000000000000610c:  R_AARCH64_CALL26	dma_buf_get
+    6110: aa0003f5     	mov	x21, x0
+    6114: b13ffc1f     	cmn	x0, #0xfff
+    6118: 54000243     	b.lo	0x6160 <tkcore_shm_get+0xdc>
+    611c: 2a1503f7     	mov	w23, w21
+    6120: 35000d15     	cbnz	w21, 0x62c0 <tkcore_shm_get+0x23c>
+    6124: 14000009     	b	0x6148 <tkcore_shm_get+0xc4>
+    6128: f9400ea8     	ldr	x8, [x21, #0x18]
+    612c: b40009c8     	cbz	x8, 0x6264 <tkcore_shm_get+0x1e0>
+    6130: f9402509     	ldr	x9, [x8, #0x48]
+    6134: f9002689     	str	x9, [x20, #0x48]
+    6138: f9401901     	ldr	x1, [x8, #0x30]
+    613c: 8b37c308     	add	x8, x24, w23, sxtw
+    6140: eb08003f     	cmp	x1, x8
+    6144: 54000983     	b.lo	0x6274 <tkcore_shm_get+0x1f0>
+    6148: aa1303e0     	mov	x0, x19
+    614c: 94000000     	bl	0x614c <tkcore_shm_get+0xc8>
+		000000000000614c:  R_AARCH64_CALL26	mutex_unlock
+    6150: 14000061     	b	0x62d4 <tkcore_shm_get+0x250>
+    6154: f94002a8     	ldr	x8, [x21]
+    6158: b5000988     	cbnz	x8, 0x6288 <tkcore_shm_get+0x204>
+    615c: 17fffffb     	b	0x6148 <tkcore_shm_get+0xc4>
+    6160: 90000008     	adrp	x8, 0x6000 <tee_shm_free_io+0x74>
+		0000000000006160:  R_AARCH64_ADR_PREL_PG_HI21	kmalloc_caches+0x30
+    6164: 5281b801     	mov	w1, #0xdc0              // =3520
+    6168: 52800302     	mov	w2, #0x18               // =24
+    616c: f9400100     	ldr	x0, [x8]
+		000000000000616c:  R_AARCH64_LDST64_ABS_LO12_NC	kmalloc_caches+0x30
+    6170: 94000000     	bl	0x6170 <tkcore_shm_get+0xec>
+		0000000000006170:  R_AARCH64_CALL26	kmalloc_trace
+    6174: aa0003f6     	mov	x22, x0
+    6178: b4000be0     	cbz	x0, 0x62f4 <tkcore_shm_get+0x270>
+    617c: b13ffedf     	cmn	x22, #0xfff
+    6180: 54000ba2     	b.hs	0x62f4 <tkcore_shm_get+0x270>
+    6184: f9003296     	str	x22, [x20, #0x60]
+    6188: 93407efa     	sxtw	x26, w23
+    618c: f94002a1     	ldr	x1, [x21]
+    6190: 8b180348     	add	x8, x26, x24
+    6194: eb08003f     	cmp	x1, x8
+    6198: 54000b83     	b.lo	0x6308 <tkcore_shm_get+0x284>
+    619c: f9404f21     	ldr	x1, [x25, #0x98]
+    61a0: aa1503e0     	mov	x0, x21
+    61a4: 94000000     	bl	0x61a4 <tkcore_shm_get+0x120>
+		00000000000061a4:  R_AARCH64_CALL26	dma_buf_attach
+    61a8: f90002c0     	str	x0, [x22]
+    61ac: b40004e0     	cbz	x0, 0x6248 <tkcore_shm_get+0x1c4>
+    61b0: b13ffc1f     	cmn	x0, #0xfff
+    61b4: 540004a2     	b.hs	0x6248 <tkcore_shm_get+0x1c4>
+    61b8: 52800061     	mov	w1, #0x3                // =3
+    61bc: 94000000     	bl	0x61bc <tkcore_shm_get+0x138>
+		00000000000061bc:  R_AARCH64_CALL26	dma_buf_map_attachment
+    61c0: aa0003f7     	mov	x23, x0
+    61c4: f90006c0     	str	x0, [x22, #0x8]
+    61c8: b40006c0     	cbz	x0, 0x62a0 <tkcore_shm_get+0x21c>
+    61cc: b13ffeff     	cmn	x23, #0xfff
+    61d0: 54000682     	b.hs	0x62a0 <tkcore_shm_get+0x21c>
+    61d4: f94002e0     	ldr	x0, [x23]
+    61d8: 94000000     	bl	0x61d8 <tkcore_shm_get+0x154>
+		00000000000061d8:  R_AARCH64_CALL26	sg_nents
+    61dc: 7100041f     	cmp	w0, #0x1
+    61e0: 54000581     	b.ne	0x6290 <tkcore_shm_get+0x20c>
+    61e4: f94006c8     	ldr	x8, [x22, #0x8]
+    61e8: 90000009     	adrp	x9, 0x6000 <tee_shm_free_io+0x74>
+		00000000000061e8:  R_AARCH64_ADR_PREL_PG_HI21	memstart_addr
+    61ec: f9400108     	ldr	x8, [x8]
+    61f0: f9400129     	ldr	x9, [x9]
+		00000000000061f0:  R_AARCH64_LDST64_ABS_LO12_NC	memstart_addr
+    61f4: f940010a     	ldr	x10, [x8]
+    61f8: cb4933e9     	neg	x9, x9, lsr #12
+    61fc: b9400908     	ldr	w8, [x8, #0x8]
+    6200: 927edd4a     	and	x10, x10, #0x3fffffffffffffc
+    6204: cb091949     	sub	x9, x10, x9, lsl #6
+    6208: 8b1a0108     	add	x8, x8, x26
+    620c: d2c0100a     	mov	x10, #0x8000000000      // =549755813888
+    6210: 8b091908     	add	x8, x8, x9, lsl #6
+    6214: 90000009     	adrp	x9, 0x6000 <tee_shm_free_io+0x74>
+		0000000000006214:  R_AARCH64_ADR_PREL_PG_HI21	.text+0x63ec
+    6218: 91000129     	add	x9, x9, #0x0
+		0000000000006218:  R_AARCH64_ADD_ABS_LO12_NC	.text+0x63ec
+    621c: 8b0a0108     	add	x8, x8, x10
+    6220: b9403a8a     	ldr	w10, [x20, #0x38]
+    6224: f9002688     	str	x8, [x20, #0x48]
+    6228: f94012a8     	ldr	x8, [x21, #0x20]
+    622c: f9400508     	ldr	x8, [x8, #0x8]
+    6230: eb09011f     	cmp	x8, x9
+    6234: 32100149     	orr	w9, w10, #0x10000
+    6238: 1a9f17e8     	cset	w8, eq
+    623c: b9003a89     	str	w9, [x20, #0x38]
+    6240: 390042c8     	strb	w8, [x22, #0x10]
+    6244: 17ffffc1     	b	0x6148 <tkcore_shm_get+0xc4>
+    6248: 2a0003f7     	mov	w23, w0
+    624c: 14000018     	b	0x62ac <tkcore_shm_get+0x228>
+    6250: 90000000     	adrp	x0, 0x6000 <tee_shm_free_io+0x74>
+		0000000000006250:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x9bc
+    6254: 91000000     	add	x0, x0, #0x0
+		0000000000006254:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x9bc
+    6258: 94000000     	bl	0x6258 <tkcore_shm_get+0x1d4>
+		0000000000006258:  R_AARCH64_CALL26	_printk
+    625c: 12800177     	mov	w23, #-0xc              // =-12
+    6260: 14000018     	b	0x62c0 <tkcore_shm_get+0x23c>
+    6264: 90000000     	adrp	x0, 0x6000 <tee_shm_free_io+0x74>
+		0000000000006264:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x2ba
+    6268: 91000000     	add	x0, x0, #0x0
+		0000000000006268:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x2ba
+    626c: 94000000     	bl	0x626c <tkcore_shm_get+0x1e8>
+		000000000000626c:  R_AARCH64_CALL26	_printk
+    6270: 14000006     	b	0x6288 <tkcore_shm_get+0x204>
+    6274: 90000000     	adrp	x0, 0x6000 <tee_shm_free_io+0x74>
+		0000000000006274:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x81e
+    6278: 91000000     	add	x0, x0, #0x0
+		0000000000006278:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x81e
+    627c: aa1803e2     	mov	x2, x24
+    6280: 2a1703e3     	mov	w3, w23
+    6284: 94000000     	bl	0x6284 <tkcore_shm_get+0x200>
+		0000000000006284:  R_AARCH64_CALL26	_printk
+    6288: 128002b7     	mov	w23, #-0x16             // =-22
+    628c: 1400000d     	b	0x62c0 <tkcore_shm_get+0x23c>
+    6290: a94006c0     	ldp	x0, x1, [x22]
+    6294: 52800062     	mov	w2, #0x3                // =3
+    6298: 94000000     	bl	0x6298 <tkcore_shm_get+0x214>
+		0000000000006298:  R_AARCH64_CALL26	dma_buf_unmap_attachment
+    629c: 128002b7     	mov	w23, #-0x16             // =-22
+    62a0: f94002c1     	ldr	x1, [x22]
+    62a4: aa1503e0     	mov	x0, x21
+    62a8: 94000000     	bl	0x62a8 <tkcore_shm_get+0x224>
+		00000000000062a8:  R_AARCH64_CALL26	dma_buf_detach
+    62ac: aa1603e0     	mov	x0, x22
+    62b0: 94000000     	bl	0x62b0 <tkcore_shm_get+0x22c>
+		00000000000062b0:  R_AARCH64_CALL26	kfree
+    62b4: aa1503e0     	mov	x0, x21
+    62b8: 94000000     	bl	0x62b8 <tkcore_shm_get+0x234>
+		00000000000062b8:  R_AARCH64_CALL26	dma_buf_put
+    62bc: 34fff477     	cbz	w23, 0x6148 <tkcore_shm_get+0xc4>
+    62c0: aa1403e0     	mov	x0, x20
+    62c4: 94000000     	bl	0x62c4 <tkcore_shm_get+0x240>
+		00000000000062c4:  R_AARCH64_CALL26	kfree
+    62c8: aa1303e0     	mov	x0, x19
+    62cc: 94000000     	bl	0x62cc <tkcore_shm_get+0x248>
+		00000000000062cc:  R_AARCH64_CALL26	mutex_unlock
+    62d0: 93407ef4     	sxtw	x20, w23
+    62d4: aa1403e0     	mov	x0, x20
+    62d8: a9444ff4     	ldp	x20, x19, [sp, #0x40]
+    62dc: a94357f6     	ldp	x22, x21, [sp, #0x30]
+    62e0: a9425ff8     	ldp	x24, x23, [sp, #0x20]
+    62e4: a94167fa     	ldp	x26, x25, [sp, #0x10]
+    62e8: a8c57bfd     	ldp	x29, x30, [sp], #0x50
+    62ec: d50323bf     	autiasp
+    62f0: d65f03c0     	ret
+    62f4: 90000000     	adrp	x0, 0x6000 <tee_shm_free_io+0x74>
+		00000000000062f4:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x36
+    62f8: 91000000     	add	x0, x0, #0x0
+		00000000000062f8:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x36
+    62fc: 94000000     	bl	0x62fc <tkcore_shm_get+0x278>
+		00000000000062fc:  R_AARCH64_CALL26	_printk
+    6300: 2a1603f7     	mov	w23, w22
+    6304: 17ffffec     	b	0x62b4 <tkcore_shm_get+0x230>
+    6308: 90000000     	adrp	x0, 0x6000 <tee_shm_free_io+0x74>
+		0000000000006308:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x11c6
+    630c: 91000000     	add	x0, x0, #0x0
+		000000000000630c:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x11c6
+    6310: aa1803e2     	mov	x2, x24
+    6314: 2a1703e3     	mov	w3, w23
+    6318: 94000000     	bl	0x6318 <tkcore_shm_get+0x294>
+		0000000000006318:  R_AARCH64_CALL26	_printk
+    631c: 128002b7     	mov	w23, #-0x16             // =-22
+    6320: 17ffffe3     	b	0x62ac <tkcore_shm_get+0x228>
+    6324: a5 a7 09 23  	.word	0x2309a7a5
+

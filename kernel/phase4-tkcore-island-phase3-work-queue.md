@@ -2,9 +2,10 @@
 
 Derived from the Phase-2 ELF comparison, not from estimation.
 
-**31 stock functions remain unimplemented** (was 55 at Phase 2; Phase 3P closed
-18 and Phase 3A-R added 6 more stock functions). 91 of the 122 stock functions
-are now present in the rebuilt ELF, 33 of them byte-identical to stock.
+**18 stock functions remain unimplemented** (was 55 at Phase 2; Phase 3P closed
+18, Phase 3A-R added 6, Phase 3B added 13). 104 of the 122 stock functions are
+now present in the rebuilt ELF, 44 of them byte-identical to stock, and the
+island now defines **no function that is not a stock function**.
 
 Recommended order is bottom-up: leaf helpers and trace surfaces first, then the
 subsystems that carry exported symbols, then the secure-world proxies last.
@@ -64,22 +65,27 @@ shared-memory reconstruction**.
 | `tee_session_compat_ioctl` | MISSING | stock ELF only | tkcore_drv | MEDIUM - session lifecycle |
 | `tee_session_internal_ioctl` | MISSING | stock ELF only | tkcore_drv | MEDIUM - session lifecycle |
 
-## 3. shared memory — 12 function(s)
+## 3. shared memory — 0 function(s) remaining (all 12 closed in Phase 3B)
 
-| stock function | current state | available oracle | consumer | risk |
-|---|---|---|---|---|
-| `__tee_shm_attach_dma_buf` | MISSING | stock ELF only | tkcore_drv, tmem_ffa | HIGH - dma-buf + secure memory lifetime |
-| `__tee_shm_detach_dma_buf` | MISSING | stock ELF only | tkcore_drv, tmem_ffa | HIGH - dma-buf + secure memory lifetime |
-| `__tee_shm_dma_buf_map_dma_buf` | MISSING | stock ELF only | tkcore_drv, tmem_ffa | HIGH - dma-buf + secure memory lifetime |
-| `__tee_shm_dma_buf_mmap` | MISSING | stock ELF only | tkcore_drv, tmem_ffa | HIGH - dma-buf + secure memory lifetime |
-| `__tee_shm_dma_buf_release` | MISSING | stock ELF only | tkcore_drv, tmem_ffa | HIGH - dma-buf + secure memory lifetime |
-| `__tee_shm_dma_buf_unmap_dma_buf` | MISSING | stock ELF only | tkcore_drv, tmem_ffa | HIGH - dma-buf + secure memory lifetime |
-| `tee_map_cached_shm` **(EXPORTED)** | MISSING | historical CRC already natural + consumer | tkcore_drv, tmem_ffa | HIGH - dma-buf + secure memory lifetime |
-| `tee_unmap_cached_shm` **(EXPORTED)** | MISSING | historical CRC already natural + consumer | tkcore_drv, tmem_ffa | HIGH - dma-buf + secure memory lifetime |
-| `tkcore_alloc_shm` | MISSING | stock ELF only | tkcore_drv, tmem_ffa | HIGH - dma-buf + secure memory lifetime |
-| `tkcore_shm_free` | MISSING | stock ELF only | tkcore_drv, tmem_ffa | HIGH - dma-buf + secure memory lifetime |
-| `tkcore_shm_get` | MISSING | stock ELF only | tkcore_drv, tmem_ffa | HIGH - dma-buf + secure memory lifetime |
-| `tkcore_shm_put` | MISSING | stock ELF only | tkcore_drv, tmem_ffa | HIGH - dma-buf + secure memory lifetime |
+| stock function | current state | class | consumer |
+|---|---|---|---|
+| `__tee_shm_attach_dma_buf` | **CLOSED (Phase 3B)** | EXACT_BYTE | dma_buf_ops |
+| `__tee_shm_detach_dma_buf` | **CLOSED (Phase 3B)** | EXACT_BYTE | dma_buf_ops |
+| `__tee_shm_dma_buf_map_dma_buf` | **CLOSED (Phase 3B)** | EXACT_BYTE | dma_buf_ops |
+| `__tee_shm_dma_buf_mmap` | **CLOSED (Phase 3B)** | EXACT_BYTE | dma_buf_ops |
+| `__tee_shm_dma_buf_release` | **CLOSED (Phase 3B)** | EXACT_BYTE | dma_buf_ops |
+| `__tee_shm_dma_buf_unmap_dma_buf` | **CLOSED (Phase 3B)** | EXACT_BYTE | dma_buf_ops |
+| `tee_map_cached_shm` **(EXPORTED)** | **CLOSED (Phase 3B)** | EXACT_BYTE | tkcore_drv `tz_start` |
+| `tee_unmap_cached_shm` **(EXPORTED)** | **CLOSED (Phase 3B)** | EXACT_BYTE | exported; NOT_CALLED by frozen tkcore_drv |
+| `tkcore_alloc_shm` | **CLOSED (Phase 3B)** | CFG_EQUIVALENT | tee_shm_alloc_io etc. |
+| `tkcore_shm_free` | **CLOSED (Phase 3B)** | CFG_EQUIVALENT | tee_shm_free_io etc. |
+| `tkcore_shm_get` | **CLOSED (Phase 3B)** | EXACT_BYTE | `_init_tee_cmd` |
+| `tkcore_shm_put` | **CLOSED (Phase 3B)** | CFG_EQUIVALENT | `_release_tee_cmd` |
+
+The three public TEEC shared-memory APIs were audited in the same phase:
+`TEEC_RegisterSharedMemory` **EXACT_BYTE**, `TEEC_AllocateSharedMemory` and
+`TEEC_ReleaseSharedMemory` **CFG_EQUIVALENT** — each had a real defect that is
+now fixed (see `phase4-tkcore-island-phase3b-acceptance.md`).
 
 ## 5. supplicant/RPC — 0 function(s) remaining in the stock inventory
 
@@ -135,23 +141,25 @@ shared-memory reconstruction**.
 | `plat_cpu_is_big` | MISSING | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
 | `plat_register_spi_clk` | **CLOSED (Phase 3P)** | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
 | `plat_tee_init` | MISSING | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
-| `sg_nents` | MISSING | stock ELF strings/relocations | (internal) | LOW - leaf helpers |
+| `sg_nents` | **CLOSED (Phase 3B)** | stock ELF (WEAK local definition) | (internal) | LOW - leaf helpers; required by `tkcore_shm_get` |
 | `tee_compat_ioctl` | MISSING | stock ELF strings/relocations | (internal) | MEDIUM - 32-bit compat marshalling |
 | `tee_peridev_exit` | **CLOSED (Phase 3P)** | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
 | `tee_peridev_init` | **CLOSED (Phase 3P)** | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
 | `uaccess_ttbr0_disable` | MISSING | stock ELF strings/relocations | (internal) | LOW - leaf helpers |
 | `uaccess_ttbr0_enable` | MISSING | stock ELF strings/relocations | (internal) | LOW - leaf helpers |
 
-## Exported symbols still absent (6 of 25)
+## Exported symbols still absent (4 of 25)
 
 These are the only export-name gaps; every other stock export is already emitted.
 
 * `tee_clkmgr_handle` — subsystem `clkmgr`
-* `tee_map_cached_shm` — subsystem `shared_memory`
 * `tee_spi_cfg_padsel` — subsystem `spi`
 * `tee_spi_transfer` — subsystem `spi`
 * `tee_spi_transfer_disable` — subsystem `spi`
-* `tee_unmap_cached_shm` — subsystem `shared_memory`
+
+Both shared-memory exports (`tee_map_cached_shm`, `tee_unmap_cached_shm`) were
+closed naturally in Phase 3B — no CRC injection, no export-name fabrication.
+Export count: 19/25 → **21/25**.
 
 ## Explicit non-goals for current reconstruction
 

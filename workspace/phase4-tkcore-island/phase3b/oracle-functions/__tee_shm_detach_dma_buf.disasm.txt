@@ -1,0 +1,42 @@
+000000000000644c <__tee_shm_detach_dma_buf>:
+    644c: d503233f     	paciasp
+    6450: a9bd7bfd     	stp	x29, x30, [sp, #-0x30]!
+    6454: f9000bf5     	str	x21, [sp, #0x10]
+    6458: a9024ff4     	stp	x20, x19, [sp, #0x20]
+    645c: 910003fd     	mov	x29, sp
+    6460: f9402034     	ldr	x20, [x1, #0x40]
+    6464: b40002f4     	cbz	x20, 0x64c0 <__tee_shm_detach_dma_buf+0x74>
+    6468: f9405008     	ldr	x8, [x0, #0xa0]
+    646c: aa0103f3     	mov	x19, x1
+    6470: b9401283     	ldr	w3, [x20, #0x10]
+    6474: f9400d15     	ldr	x21, [x8, #0x18]
+    6478: 71000c7f     	cmp	w3, #0x3
+    647c: 540000c0     	b.eq	0x6494 <__tee_shm_detach_dma_buf+0x48>
+    6480: f9400660     	ldr	x0, [x19, #0x8]
+    6484: aa1f03e4     	mov	x4, xzr
+    6488: f9400281     	ldr	x1, [x20]
+    648c: b9400a82     	ldr	w2, [x20, #0x8]
+    6490: 94000000     	bl	0x6490 <__tee_shm_detach_dma_buf+0x44>
+		0000000000006490:  R_AARCH64_CALL26	dma_unmap_sg_attrs
+    6494: aa1403e0     	mov	x0, x20
+    6498: 94000000     	bl	0x6498 <__tee_shm_detach_dma_buf+0x4c>
+		0000000000006498:  R_AARCH64_CALL26	sg_free_table
+    649c: f9404ea0     	ldr	x0, [x21, #0x98]
+    64a0: aa1403e1     	mov	x1, x20
+    64a4: 94000000     	bl	0x64a4 <__tee_shm_detach_dma_buf+0x58>
+		00000000000064a4:  R_AARCH64_CALL26	devm_kfree
+    64a8: f900227f     	str	xzr, [x19, #0x40]
+    64ac: a9424ff4     	ldp	x20, x19, [sp, #0x20]
+    64b0: f9400bf5     	ldr	x21, [sp, #0x10]
+    64b4: a8c37bfd     	ldp	x29, x30, [sp], #0x30
+    64b8: d50323bf     	autiasp
+    64bc: d65f03c0     	ret
+    64c0: 90000000     	adrp	x0, 0x6000 <tee_shm_free_io+0x74>
+		00000000000064c0:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x509
+    64c4: 91000000     	add	x0, x0, #0x0
+		00000000000064c4:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x509
+    64c8: 94000000     	bl	0x64c8 <__tee_shm_detach_dma_buf+0x7c>
+		00000000000064c8:  R_AARCH64_CALL26	_printk
+    64cc: 17fffff8     	b	0x64ac <__tee_shm_detach_dma_buf+0x60>
+    64d0: be 5f 6e 7c  	.word	0x7c6e5fbe
+

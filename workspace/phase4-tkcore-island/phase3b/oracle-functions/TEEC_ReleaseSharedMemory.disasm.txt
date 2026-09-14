@@ -1,0 +1,24 @@
+00000000000078dc <TEEC_ReleaseSharedMemory>:
+    78dc: d503233f     	paciasp
+    78e0: a9be7bfd     	stp	x29, x30, [sp, #-0x20]!
+    78e4: f9000bf3     	str	x19, [sp, #0x10]
+    78e8: 910003fd     	mov	x29, sp
+    78ec: b4000140     	cbz	x0, 0x7914 <TEEC_ReleaseSharedMemory+0x38>
+    78f0: aa0003f3     	mov	x19, x0
+    78f4: f9401008     	ldr	x8, [x0, #0x20]
+    78f8: b50000e8     	cbnz	x8, 0x7914 <TEEC_ReleaseSharedMemory+0x38>
+    78fc: 39404a68     	ldrb	w8, [x19, #0x12]
+    7900: 36080128     	tbz	w8, #0x1, 0x7924 <TEEC_ReleaseSharedMemory+0x48>
+    7904: f9400e60     	ldr	x0, [x19, #0x18]
+    7908: 94000000     	bl	0x7908 <TEEC_ReleaseSharedMemory+0x2c>
+		0000000000007908:  R_AARCH64_CALL26	tee_shm_free_io
+    790c: f900027f     	str	xzr, [x19]
+    7910: f9000e7f     	str	xzr, [x19, #0x18]
+    7914: f9400bf3     	ldr	x19, [sp, #0x10]
+    7918: a8c27bfd     	ldp	x29, x30, [sp], #0x20
+    791c: d50323bf     	autiasp
+    7920: d65f03c0     	ret
+    7924: d4210000     	brk	#0x800
+    7928: 17fffffb     	b	0x7914 <TEEC_ReleaseSharedMemory+0x38>
+    792c: cd 19 98 8d  	.word	0x8d9819cd
+
