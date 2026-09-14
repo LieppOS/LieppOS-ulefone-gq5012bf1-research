@@ -1,0 +1,12 @@
+caller_or_owner	callee_or_target	edge	stock_callsite	semantics
+init_module	plat_tee_init	DIRECT	.init.text+0x30	return discarded; module returns 0
+big_core_affinity_match_cpu	plat_cpu_is_big	DIRECT	stock 0x2c28	returns same-polarity boolean
+big_core_affinity_get_candidate_cpu	_find_next_bit	DIRECT	stock 0x2c7c	possible-mask loop
+big_core_affinity_get_candidate_cpu	plat_cpu_is_big	DIRECT	stock 0x2c94	first true is cached
+big_core_affinity_get_candidate_cpu	_printk	DIRECT	stock 0x2cb4	first match only
+plat_tee_init	_find_next_bit	DIRECT	stock 0x9818	possible-mask loop
+plat_tee_init	_printk	DIRECT	stock 0x9860	after global store
+big_core_affinity_operations+0	big_core_affinity_need_bind_cpu	DATA_ADDRESS	.rodata relocation	no executable caller
+big_core_affinity_operations+8	big_core_affinity_match_cpu	DATA_ADDRESS	.rodata relocation	no executable caller
+big_core_affinity_operations+16	big_core_affinity_get_candidate_cpu	DATA_ADDRESS	.rodata relocation	no executable caller
+tee_device_configs[2].affinity	big_core_affinity	DATA_ADDRESS	.data relocation	tkcore_fp only; never dereferenced

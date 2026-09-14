@@ -42,15 +42,16 @@
   functions present, 16 of them byte-identical to stock, 60 KCFI type ids
   exact, 57/57 shared GKI import CRCs matching, 17/25 exports emitted and
   0 fabricated**.
-  **Current status (Phase 3D):** Phase 3A-R, 3B, 3C, 3C-R and 3D are all CLOSED.
-  **117/122 stock functions present, 5 missing, 47 byte-identical, 25/25 exports
-  with naturally reproduced CRCs, 0 island-only functions.** The five remaining
-  functions are exactly `big_core_affinity_get_candidate_cpu`,
-  `big_core_affinity_match_cpu`, `big_core_affinity_need_bind_cpu`,
-  `plat_cpu_is_big` and `plat_tee_init` (Phase 3E). tkcore is still
-  **PARTIAL, NOT RUNTIME READY, stock runtime provider**
-  (`TKCORE REPLACEMENT READY: NO`).
-  See `kernel/phase4-tkcore-island-phase3d-regression.md`,
+  **Current status (Phase 3E):** all behavioral reconstruction phases through
+  Phase 3E are CLOSED. **122/122 stock functions present by exact name-set
+  equality, 0 missing, 54 byte-identical, 25/25 exports retained, and 0
+  island-only functions.** Platform topology and dormant `tkcore_fp` big-core
+  affinity are reconstructed without guessed CPU numbering. This is static
+  provider completeness only: **NOT RUNTIME VALIDATED; FINAL THREE-CONSUMER
+  ACCEPTANCE PENDING; stock remains the runtime provider; TKCORE REPLACEMENT
+  READY: NO**.
+  See `kernel/phase4-tkcore-island-phase3e-regression.md`,
+  `kernel/phase4-tkcore-island-phase3e-function-set-acceptance.md`,
   `kernel/phase4-tkcore-island-phase3c-closure.md`,
   `kernel/phase4-tkcore-island-phase3c-r-regression.md`,
   `kernel/phase4-tkcore-island-phase2-status.md`,

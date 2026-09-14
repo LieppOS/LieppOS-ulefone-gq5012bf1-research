@@ -225,7 +225,7 @@ entire cluster.
       ├──1──▶ tmem_ffa    [DIRECT_SOURCE_MATCH / FROZEN] V:152 (ffa_driver_register only, NATURAL)
       └──1──▶ gz_main_mod [source/frozen] V:150 (ffa_driver_register only; GenieZone)
 
-   tkcore [stock / island Phase 3D: 117/122 fns, 5 missing, 25/25 exports naturally CRC-matched] P:99 ── 25 exports
+   tkcore [stock runtime / island Phase 3E static: 122/122 fns, 0 missing, 25/25 exports retained] P:99 ── 25 exports
       │
       ├─11──▶ tkcore_drv        [RECONSTRUCTED] P:100 / R:98 → LEAF (0 exports)
       ├──1──▶ microarray_fp_tee [SOURCE_RECONSTRUCTED / FROZEN] P:182 / R:186
@@ -447,10 +447,11 @@ TIER 9  leds_ln2403 [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 10 yft_tiny2c_usb [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 11 hynitron [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
 TIER 12 spi_tiny_co5300_lcd [STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE; FROZEN FOR RE]
-TIER 13 runtime stock dependency: tkcore only
-(`microarray_fp_tee`, `tkcore_drv`, and `ffa_v10` are source-closed/frozen.
-An optional conservative integration strategy may temporarily retain their
-stock binaries, but that deployment choice does not change source status.)
+TIER 13 runtime stock dependency: tkcore only, pending Phase 3F final
+        three-consumer island acceptance and later runtime validation
+(`tkcore` is provider-internally static-complete at 122/122 through Phase 3E;
+`microarray_fp_tee`, `tkcore_drv`, and `ffa_v10` are source-closed/frozen.
+Stock retention remains deployment policy, not a function-coverage gap.)
 ```
 
 ## 11. Leaf modules (zero exports — safe to touch in any order)

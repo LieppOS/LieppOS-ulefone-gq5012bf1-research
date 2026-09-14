@@ -1,0 +1,63 @@
+
+workspace/phase4-tkcore/oracle/tkcore.ko:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+00000000000097d4 <plat_tee_init>:
+    97d4: d503233f     	paciasp
+    97d8: a9bc7bfd     	stp	x29, x30, [sp, #-0x40]!
+    97dc: f9000bf7     	str	x23, [sp, #0x10]
+    97e0: a90257f6     	stp	x22, x21, [sp, #0x20]
+    97e4: a9034ff4     	stp	x20, x19, [sp, #0x30]
+    97e8: 910003fd     	mov	x29, sp
+    97ec: 90000015     	adrp	x21, 0x9000 <tee_clkmgr_register+0x140>
+		00000000000097ec:  R_AARCH64_ADR_PREL_PG_HI21	nr_cpu_ids
+    97f0: aa1f03e8     	mov	x8, xzr
+    97f4: 12800013     	mov	w19, #-0x1              // =-1
+    97f8: 52800716     	mov	w22, #0x38              // =56
+    97fc: 90000014     	adrp	x20, 0x9000 <tee_clkmgr_register+0x140>
+		00000000000097fc:  R_AARCH64_ADR_PREL_PG_HI21	__cpu_possible_mask
+    9800: 91000294     	add	x20, x20, #0x0
+		0000000000009800:  R_AARCH64_ADD_ABS_LO12_NC	__cpu_possible_mask
+    9804: b94002a1     	ldr	w1, [x21]
+		0000000000009804:  R_AARCH64_LDST32_ABS_LO12_NC	nr_cpu_ids
+    9808: 90000017     	adrp	x23, 0x9000 <tee_clkmgr_register+0x140>
+		0000000000009808:  R_AARCH64_ADR_PREL_PG_HI21	cpu_topology
+    980c: 910002f7     	add	x23, x23, #0x0
+		000000000000980c:  R_AARCH64_ADD_ABS_LO12_NC	cpu_topology
+    9810: 93407d02     	sxtw	x2, w8
+    9814: aa1403e0     	mov	x0, x20
+    9818: 94000000     	bl	0x9818 <plat_tee_init+0x44>
+		0000000000009818:  R_AARCH64_CALL26	_find_next_bit
+    981c: b94002a1     	ldr	w1, [x21]
+		000000000000981c:  R_AARCH64_LDST32_ABS_LO12_NC	nr_cpu_ids
+    9820: eb20403f     	cmp	x1, w0, uxtw
+    9824: 54000149     	b.ls	0x984c <plat_tee_init+0x78>
+    9828: f27b681f     	tst	x0, #0xffffffe0
+    982c: 540002a1     	b.ne	0x9880 <plat_tee_init+0xac>
+    9830: 92407c08     	and	x8, x0, #0xffffffff
+    9834: 9bb65d08     	umaddl	x8, w8, w22, x23
+    9838: b9400908     	ldr	w8, [x8, #0x8]
+    983c: 6b13011f     	cmp	w8, w19
+    9840: 1a93c113     	csel	w19, w8, w19, gt
+    9844: 91000408     	add	x8, x0, #0x1
+    9848: 17fffff2     	b	0x9810 <plat_tee_init+0x3c>
+    984c: 90000008     	adrp	x8, 0x9000 <tee_clkmgr_register+0x140>
+		000000000000984c:  R_AARCH64_ADR_PREL_PG_HI21	.data+0x208
+    9850: 90000000     	adrp	x0, 0x9000 <tee_clkmgr_register+0x140>
+		0000000000009850:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x254
+    9854: 91000000     	add	x0, x0, #0x0
+		0000000000009854:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x254
+    9858: 2a1303e1     	mov	w1, w19
+    985c: b9000113     	str	w19, [x8]
+		000000000000985c:  R_AARCH64_LDST32_ABS_LO12_NC	.data+0x208
+    9860: 94000000     	bl	0x9860 <plat_tee_init+0x8c>
+		0000000000009860:  R_AARCH64_CALL26	_printk
+    9864: 2a1f03e0     	mov	w0, wzr
+    9868: a9434ff4     	ldp	x20, x19, [sp, #0x30]
+    986c: a94257f6     	ldp	x22, x21, [sp, #0x20]
+    9870: f9400bf7     	ldr	x23, [sp, #0x10]
+    9874: a8c47bfd     	ldp	x29, x30, [sp], #0x40
+    9878: d50323bf     	autiasp
+    987c: d65f03c0     	ret
+    9880: d42aa240     	brk	#0x5512

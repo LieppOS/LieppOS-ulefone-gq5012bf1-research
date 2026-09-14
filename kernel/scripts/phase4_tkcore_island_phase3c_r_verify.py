@@ -256,7 +256,8 @@ def main() -> int:
     changed = [n for n in sorted(set(b.funcs) & set(c.funcs))
                if b.body(n) != c.body(n)]
     resized = [n for n in changed if b.funcs[n][1] != c.funcs[n][1]]
-    ck("only the target changed size", resized == [TARGET], resized)
+    ck("only target and optional stock-exact Phase-3E init/exit changed size",
+       set(resized) in ({TARGET}, {TARGET, "init_module", "cleanup_module"}), resized)
     # Added functions are allowed only if a later phase legitimately owns them.
     added = set(c.funcs) - set(b.funcs)
     ck("no function added outside a later phase's declared scope",
@@ -281,11 +282,13 @@ def main() -> int:
     ck("remaining export gaps stay within the declared set",
        not ((s.exports - c.exports) - EXPECTED_EXPORT_GAPS),
        sorted((s.exports - c.exports) - EXPECTED_EXPORT_GAPS))
-    ck("no new imports", not (c.undefined - b.undefined),
-       sorted(c.undefined - b.undefined))
+    ck("later imports are stock-only",
+       not ((c.undefined - b.undefined) - s.undefined),
+       sorted((c.undefined - b.undefined) - s.undefined))
     ck("no removed imports", not (b.undefined - c.undefined),
        sorted(b.undefined - c.undefined))
-    ck("import count unchanged at 97", len(c.undefined) == 97, len(c.undefined))
+    ck("import count is Phase-3C-R 97 through Phase-3E 101",
+       len(c.undefined) in (97, 101), len(c.undefined))
 
     # ---- module hygiene --------------------------------------------------
     p = subprocess.run(["llvm-objcopy", "--dump-section", ".modinfo=/dev/stdout",
@@ -327,12 +330,12 @@ def main() -> int:
        and re.search(r"op\.params\[idx\]\.memref\.size", src) is not None)
 
     # ---- boundary --------------------------------------------------------
-    # Phase 3C-R's own boundary obligation: it must not have reached into the
-    # platform/affinity work, which is still deferred to Phase 3E.  The
-    # clock/SPI four are intentionally NOT asserted absent here, because
-    # Phase 3D closes them by design.
+    # Later live ELFs may contain the complete Phase-3E set, but partial or
+    # non-stock expansion remains forbidden by the checks above.
+    phase3e_seen = PHASE3E_TARGETS & cf
     for n in sorted(PHASE3E_TARGETS):
-        ck(f"boundary honoured, still absent: {n}", n not in cf)
+        ck(f"Phase-3E boundary absent or complete: {n}",
+           not phase3e_seen or phase3e_seen == PHASE3E_TARGETS)
     acc = REPO / "workspace/phase4-tkcore-island/acceptance"
     ck("three-consumer acceptance still empty",
        not acc.is_dir() or not any(acc.rglob("*")))

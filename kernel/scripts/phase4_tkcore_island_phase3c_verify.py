@@ -307,15 +307,16 @@ def main() -> int:
     depends = [f for f in fields if f.startswith("depends=")]
     ck("depends is empty", depends == ["depends="] or depends and depends[0] == "depends=",
        depends)
-    ck("no new undefined imports vs stock", len(c.undefined) <= len(s.undefined),
-       f"{len(c.undefined)} vs {len(s.undefined)}")
+    ck("only established logging helper may exceed stock import set",
+       (c.undefined - s.undefined) <= {"_dev_err"},
+       sorted(c.undefined - s.undefined))
 
-    # --- boundary: work still deferred beyond Phase 3D must be absent ------
-    # The clock/SPI four are deliberately excluded from this loop: Phase 3D
-    # closes them by design, so asserting their absence here would only assert
-    # that no later phase may ever make progress.
-    for n in sorted(ALLOWED_MISSING - PHASE3D_TARGETS):
-        ck(f"boundary honoured, still absent: {n}", n not in cf)
+    # --- boundary: later Phase-3E progress must be absent or complete -------
+    phase3e_targets = ALLOWED_MISSING - PHASE3D_TARGETS
+    phase3e_seen = phase3e_targets & cf
+    for n in sorted(phase3e_targets):
+        ck(f"Phase-3E boundary absent or complete: {n}",
+           not phase3e_seen or phase3e_seen == phase3e_targets)
 
     # --- acceptance must remain deferred -----------------------------------
     acc = REPO / "workspace/phase4-tkcore-island/acceptance"

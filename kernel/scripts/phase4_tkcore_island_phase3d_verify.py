@@ -53,7 +53,8 @@ HISTORICAL_CRC = {
     "tee_spi_transfer_disable": 0xADB9B21C,
 }
 
-# Phase 3E owns these; Phase 3D must not have implemented any of them.
+# Phase 3E owns these.  A later live ELF may contain the complete five, but no
+# partial/non-stock expansion is accepted by this earlier-phase verifier.
 PHASE3E_TARGETS = {
     "big_core_affinity_get_candidate_cpu", "big_core_affinity_match_cpu",
     "big_core_affinity_need_bind_cpu", "plat_cpu_is_big", "plat_tee_init",
@@ -333,16 +334,20 @@ def main() -> int:
     # ---- coverage / imports / objects ------------------------------------
     sf, cf, bf = set(s.funcs), set(c.funcs), set(b.funcs)
     ck("stock function count is 122", len(sf) == 122, len(sf))
-    ck("coverage is 117/122", len(sf & cf) == 117, f"{len(sf & cf)}/{len(sf)}")
-    ck("coverage advanced by exactly four", len(sf & cf) - len(sf & bf) == 4)
-    ck("newly present set is exactly the four targets",
-       (cf - bf) == set(TARGETS), sorted((cf - bf) ^ set(TARGETS)))
+    ck("coverage is at least the Phase-3D 117/122",
+       len(sf & cf) >= 117, f"{len(sf & cf)}/{len(sf)}")
+    ck("coverage advanced by the four Phase-3D targets or later Phase-3E five",
+       len(sf & cf) - len(sf & bf) in (4, 9))
+    ck("newly present set is Phase 3D plus optional complete Phase 3E",
+       (cf - bf) in (set(TARGETS), set(TARGETS) | PHASE3E_TARGETS),
+       sorted((cf - bf) - (set(TARGETS) | PHASE3E_TARGETS)))
     ck("no function removed", not (bf - cf), sorted(bf - cf))
-    ck("missing set is exactly the Phase-3E five",
-       (sf - cf) == PHASE3E_TARGETS, sorted((sf - cf) ^ PHASE3E_TARGETS))
+    ck("remaining missing set is the Phase-3E five or empty",
+       (sf - cf) in (PHASE3E_TARGETS, set()), sorted(sf - cf))
     ck("no island-only functions", not (cf - sf), sorted(cf - sf))
-    ck("no new imports", not (c.undefined - b.undefined),
-       sorted(c.undefined - b.undefined))
+    ck("later imports are stock-only",
+       not ((c.undefined - b.undefined) - s.undefined),
+       sorted((c.undefined - b.undefined) - s.undefined))
     ck("no removed imports", not (b.undefined - c.undefined),
        sorted(b.undefined - c.undefined))
     # _dev_err is the island's established logging convention (dev_err/dev_dbg
@@ -359,9 +364,14 @@ def main() -> int:
        sorted((c.undefined - b.undefined) - s.undefined))
     ck("the known non-stock import predates Phase 3D",
        KNOWN_NON_STOCK_IMPORTS <= b.undefined or not (KNOWN_NON_STOCK_IMPORTS & c.undefined))
-    ck("only one new object symbol, the SPI TA UUID",
-       (set(c.objects) - set(b.objects)) <= {"tee_spi_ta_uuid"},
-       sorted(set(c.objects) - set(b.objects)))
+    LATER_OBJECTS = {
+        "tee_spi_ta_uuid", "big_core_affinity",
+        "big_core_affinity_get_candidate_cpu.candidate_cpu",
+        "big_core_affinity_operations", "large_cluster_id",
+    }
+    ck("new objects are only Phase-3D/3E evidence-backed objects",
+       (set(c.objects) - set(b.objects)) <= LATER_OBJECTS,
+       sorted((set(c.objects) - set(b.objects)) - LATER_OBJECTS))
     ck("byte-identical count did not regress",
        sum(1 for n in sf & cf if s.body(n) == c.body(n))
        >= sum(1 for n in sf & bf if s.body(n) == b.body(n)))
@@ -404,8 +414,10 @@ def main() -> int:
            for p in srcs if p.is_file()))
 
     # ---- scope -----------------------------------------------------------
+    phase3e_seen = PHASE3E_TARGETS & cf
     for n in sorted(PHASE3E_TARGETS):
-        ck(f"Phase-3E boundary honoured, still absent: {n}", n not in cf)
+        ck(f"Phase-3E boundary is absent or complete: {n}",
+           not phase3e_seen or phase3e_seen == PHASE3E_TARGETS)
     acc = REPO / "workspace/phase4-tkcore-island/acceptance"
     ck("full three-consumer acceptance still unexecuted",
        not acc.is_dir() or not any(acc.rglob("*")))

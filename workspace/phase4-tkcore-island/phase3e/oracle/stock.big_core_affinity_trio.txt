@@ -1,0 +1,74 @@
+
+workspace/phase4-tkcore/oracle/tkcore.ko:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+0000000000002c0c <big_core_affinity_need_bind_cpu>:
+    2c0c: 52800020     	mov	w0, #0x1                // =1
+    2c10: d65f03c0     	ret
+    2c14: 0b c0 50 78  	.word	0x7850c00b
+
+0000000000002c18 <big_core_affinity_match_cpu>:
+    2c18: d503233f     	paciasp
+    2c1c: a9bf7bfd     	stp	x29, x30, [sp, #-0x10]!
+    2c20: 910003fd     	mov	x29, sp
+    2c24: 2a0103e0     	mov	w0, w1
+    2c28: 94000000     	bl	0x2c28 <big_core_affinity_match_cpu+0x10>
+		0000000000002c28:  R_AARCH64_CALL26	plat_cpu_is_big
+    2c2c: 12000000     	and	w0, w0, #0x1
+    2c30: a8c17bfd     	ldp	x29, x30, [sp], #0x10
+    2c34: d50323bf     	autiasp
+    2c38: d65f03c0     	ret
+    2c3c: 3d 61 fb 89  	.word	0x89fb613d
+
+0000000000002c40 <big_core_affinity_get_candidate_cpu>:
+    2c40: d503233f     	paciasp
+    2c44: a9bd7bfd     	stp	x29, x30, [sp, #-0x30]!
+    2c48: a90157f6     	stp	x22, x21, [sp, #0x10]
+    2c4c: a9024ff4     	stp	x20, x19, [sp, #0x20]
+    2c50: 910003fd     	mov	x29, sp
+    2c54: 90000015     	adrp	x21, 0x2000 <tee_internal_ioctl+0xb4>
+		0000000000002c54:  R_AARCH64_ADR_PREL_PG_HI21	.data+0x78
+    2c58: b94002a0     	ldr	w0, [x21]
+		0000000000002c58:  R_AARCH64_LDST32_ABS_LO12_NC	.data+0x78
+    2c5c: 36f80300     	tbz	w0, #0x1f, 0x2cbc <big_core_affinity_get_candidate_cpu+0x7c>
+    2c60: aa1f03e8     	mov	x8, xzr
+    2c64: 90000016     	adrp	x22, 0x2000 <tee_internal_ioctl+0xb4>
+		0000000000002c64:  R_AARCH64_ADR_PREL_PG_HI21	nr_cpu_ids
+    2c68: 90000013     	adrp	x19, 0x2000 <tee_internal_ioctl+0xb4>
+		0000000000002c68:  R_AARCH64_ADR_PREL_PG_HI21	__cpu_possible_mask
+    2c6c: 91000273     	add	x19, x19, #0x0
+		0000000000002c6c:  R_AARCH64_ADD_ABS_LO12_NC	__cpu_possible_mask
+    2c70: 93407d02     	sxtw	x2, w8
+    2c74: b94002c1     	ldr	w1, [x22]
+		0000000000002c74:  R_AARCH64_LDST32_ABS_LO12_NC	nr_cpu_ids
+    2c78: aa1303e0     	mov	x0, x19
+    2c7c: 94000000     	bl	0x2c7c <big_core_affinity_get_candidate_cpu+0x3c>
+		0000000000002c7c:  R_AARCH64_CALL26	_find_next_bit
+    2c80: b94002c8     	ldr	w8, [x22]
+		0000000000002c80:  R_AARCH64_LDST32_ABS_LO12_NC	nr_cpu_ids
+    2c84: aa0003f4     	mov	x20, x0
+    2c88: 6b14011f     	cmp	w8, w20
+    2c8c: 54000169     	b.ls	0x2cb8 <big_core_affinity_get_candidate_cpu+0x78>
+    2c90: 2a1403e0     	mov	w0, w20
+    2c94: 94000000     	bl	0x2c94 <big_core_affinity_get_candidate_cpu+0x54>
+		0000000000002c94:  R_AARCH64_CALL26	plat_cpu_is_big
+    2c98: 37000060     	tbnz	w0, #0x0, 0x2ca4 <big_core_affinity_get_candidate_cpu+0x64>
+    2c9c: 91000688     	add	x8, x20, #0x1
+    2ca0: 17fffff4     	b	0x2c70 <big_core_affinity_get_candidate_cpu+0x30>
+    2ca4: 90000000     	adrp	x0, 0x2000 <tee_internal_ioctl+0xb4>
+		0000000000002ca4:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xc02
+    2ca8: 91000000     	add	x0, x0, #0x0
+		0000000000002ca8:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xc02
+    2cac: 2a1403e1     	mov	w1, w20
+    2cb0: b90002b4     	str	w20, [x21]
+		0000000000002cb0:  R_AARCH64_LDST32_ABS_LO12_NC	.data+0x78
+    2cb4: 94000000     	bl	0x2cb4 <big_core_affinity_get_candidate_cpu+0x74>
+		0000000000002cb4:  R_AARCH64_CALL26	_printk
+    2cb8: b94002a0     	ldr	w0, [x21]
+		0000000000002cb8:  R_AARCH64_LDST32_ABS_LO12_NC	.data+0x78
+    2cbc: a9424ff4     	ldp	x20, x19, [sp, #0x20]
+    2cc0: a94157f6     	ldp	x22, x21, [sp, #0x10]
+    2cc4: a8c37bfd     	ldp	x29, x30, [sp], #0x30
+    2cc8: d50323bf     	autiasp
+    2ccc: d65f03c0     	ret

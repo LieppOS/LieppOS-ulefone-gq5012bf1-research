@@ -124,13 +124,14 @@ It is `SOURCE_NOW` and FROZEN FOR RE.
 
 Treat as one late-stage security subsystem:
 
-- tkcore — still stock, untouched; island reconstruction is at **Phase 3D**:
-  Phase 3A-R, 3B, 3C, 3C-R and 3D all CLOSED. **117/122** stock functions,
-  5 missing, 47 byte-identical, **25/25 exports** with naturally reproduced
-  CRCs, 0 island-only functions. Remaining work is Phase 3E (big-core affinity
-  + `plat_tee_init`). Still `PARTIAL / NOT RUNTIME READY /
-  PROVIDER_ABI_PARTIAL / STOCK RUNTIME PROVIDER`. The residual ABI caveat is a
-  genksyms CRC-spelling limitation for some private-typed exports, **not** an
+- tkcore — stock remains deployed, but the source island has closed **Phase
+  3E** and every behavioral reconstruction phase: **122/122** stock functions
+  by exact name-set equality, 0 missing, 54 byte-identical, **25/25 exports**
+  retained, and 0 island-only functions. This is provider-internal static
+  completeness, not runtime acceptance: `NOT RUNTIME VALIDATED / FINAL
+  THREE-CONSUMER ACCEPTANCE PENDING / STOCK RUNTIME PROVIDER / TKCORE
+  REPLACEMENT READY: NO`. The residual private-type genksyms CRC provenance
+  limitation is separate from behavioral completeness and is **not** an
   analysis blocker
 - tkcore_drv — **SOURCE_RECONSTRUCTED / SOURCE_NOW_WITH_PROVIDER_WITNESSES /
   FROZEN FOR RE** (2026-09-13, updated 2026-09-13 after the ffa_v10 closure:

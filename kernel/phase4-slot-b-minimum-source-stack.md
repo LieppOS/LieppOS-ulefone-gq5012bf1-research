@@ -61,7 +61,7 @@ All 23 stay `STOCK_TRANSITION`, including the two `P0_BOOT_CRITICAL` ones:
 
 | module | why it must stay | blob safety |
 |---|---|---|
-| `tkcore` | KeyMint 3.0 + Gatekeeper + Widevine + FBE unlock | `YES_SAFE_TRANSITION` (101/101 kernel CRCs, 0 intermodule imports) — **stock, NOT RECONSTRUCTED** |
+| `tkcore` | KeyMint 3.0 + Gatekeeper + Widevine + FBE unlock | `YES_SAFE_TRANSITION`; source island static-complete through Phase 3E (122/122, 25/25), but **stock runtime retained pending Phase 3F and runtime validation** |
 | `tkcore_drv` | TEE transport for the above | `SOURCE_NOW_WITH_PROVIDER_WITNESSES` — **SOURCE_RECONSTRUCTED / FROZEN FOR RE**; still needs stock `tkcore` at runtime; `ffa_v10` is now source-closed too (`DIRECT_SOURCE_MATCH`) |
 | `panel_ky_vtdr6115_dphy_cmd` | main display | `YES_WITH_STOCK_PROVIDER_CHAIN` |
 | all other 20 | see triage TSV | 7 `YES_SAFE_TRANSITION`, 16 `YES_WITH_STOCK_PROVIDER_CHAIN` |
@@ -174,7 +174,7 @@ unresolved reconstruction.
 
 | module | label | reason |
 |---|---|---|
-| `tkcore` | STOCK_TRANSITION | no source anywhere; `P0`; **PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER**; island reconstruction at **Phase 3D** (117/122 functions, 5 missing, **25/25 exports** naturally CRC-matched; core, context/session, shared memory, ioctl/compat/command marshalling, clock runtime and secure SPI all closed; Phase 3E big-core affinity + `plat_tee_init` next). Residual ABI caveat is a genksyms CRC-spelling limitation for some private-typed exports, not an analysis blocker |
+| `tkcore` | STOCK_TRANSITION | `P0`; source island **static-complete through Phase 3E** (122/122 function set, 0 missing, 54 byte-identical, **25/25 exports** retained, 0 island-only). **NOT RUNTIME VALIDATED; final three-consumer acceptance pending; stock runtime provider retained; replacement not claimed.** Private-type genksyms CRC provenance remains separate from behavioral completeness |
 | `tkcore_drv` | **SOURCE_RECONSTRUCTED / FROZEN FOR RE** | closed 2026-09-13 with `SOURCE_NOW_WITH_PROVIDER_WITNESSES` (now 8 NATURAL/5 STOCK_PROVIDER_WITNESS after the `ffa_v10` closure); still runs against stock `tkcore` |
 | `ffa_v10` | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** | closed 2026-09-13; exact MediaTek vendor source, 34/34 byte-identical, 5/5 export CRCs natural, 49/49 verifier |
 | `tmem_ffa` | **DIRECT_SOURCE_MATCH / FROZEN FOR RE** | closed 2026-09-13; same pinned vendor revision/directory as `ffa_v10`; 141/141 byte-identical, 15/15 export CRCs natural, 76/76 verifier; its 9 `KREE_*` edges are now **source-built natural** against the closed `gz_tz_system`; only the 7 `TEEC_*` (stock `tkcore`) edges remain stock-runtime |
@@ -213,17 +213,17 @@ Everything we intend to replace from source. Promotes the Level-B holds:
 | `spi_tiny_co5300_lcd` | SOURCE_NOW | **closed** — `NO_PUBLIC_SOURCE_FOUND / STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE`; exact 25-function/58-MODVERSION sets, exact CO5300 table/image/ABI/state machine, clean exact-GKI build, 30/30 verifier, FROZEN FOR RE |
 | `microarray_fp_tee` | **SOURCE_NOW / FROZEN FOR RE** | **closed** — behavioral reconstruction complete; 27/27 functions, 66/66 MODVERSIONs; two SPI edges natural, runtime tkcore retained |
 | `yft_devinfo` | SOURCE_NOW | **the 73-character vendor enum type text.** 409 061 884 semantically plausible spellings and 56 495 harvested real enum definitions were already excluded by exhaustion. Only a YFT/Ulefone BSP drop containing `yft_devinfo.h` can close it. |
-| `tkcore` | SOURCE_NOW *(aspirational, still blocked)* | complete TEE client core RE; 25-symbol ABI; 14/25 natural, 11/25 blocked on TrustKernel private member names; VERY_HIGH |
+| `tkcore` | **SOURCE ISLAND STATIC-COMPLETE / NOT YET DEPLOYABLE** | Phase 3E proves 122/122 functions, 25/25 exports and exact internal callgraph; Phase 3F three-consumer acceptance and later runtime validation remain. Historical 14/25-vs-11/25 private-type CRC provenance is not a behavioral coverage gap |
 | `tkcore_drv` | **DONE — SOURCE_RECONSTRUCTED / FROZEN FOR RE** | SMC/FF-A transport RE completed 2026-09-13; 8 NATURAL/5 STOCK_PROVIDER_WITNESS, 43/43 verifier; `phase4-tkcore-drv-reconstruction.md` |
 | `ffa_v10` | **DONE — DIRECT_SOURCE_MATCH / FROZEN FOR RE** | FF-A transport RE completed 2026-09-13; exact vendor source, 34/34 byte-identical, 5/5 export CRCs natural, 49/49 verifier; `phase4-ffa-v10-reconstruction.md` |
 | `uarthub_drv` | **NOT_REQUIRED** | disabled in DT on this board |
 
-Level C is explicitly **not** a precondition for anything. **Only one entry
-now remains a genuinely open source-reconstruction question: `tkcore`.** It
-is `P0_BOOT_CRITICAL`, has no source anywhere, is ABI-safe as a blob
-(`YES_SAFE_TRANSITION`, 101/101 kernel CRCs), and a mistake there costs the
-device its ability to unlock encrypted `/data` — so it may reasonably remain
-stock indefinitely. `tkcore_drv` and `ffa_v10` are **no longer** in that
+Level C is explicitly **not** a precondition for anything. `tkcore` no longer
+has an open static function-reconstruction gap: Phase 3E reaches 122/122 with
+25/25 exports. It remains the one unresolved **deployment/runtime acceptance**
+question because it is `P0_BOOT_CRITICAL`; a mistake there costs the device its
+ability to unlock encrypted `/data`, so stock remains appropriate until Phase
+3F consumer acceptance and separately authorized runtime validation. `tkcore_drv` and `ffa_v10` are **no longer** in that
 category: both are source-reconstructed and `FROZEN FOR RE` (2026-09-13).
 
 Do not conflate this with the Level-A **boot strategy** above, which
@@ -240,8 +240,8 @@ has not been source-reconstructed. Level C tracks the latter.
 | level | source status | runtime/deployment stock policy | NOT_REQUIRED |
 |---|---|---|---|
 | **A — first boot** | 1 (the GKI core) | all 439 stock modules deliberately retained for minimum risk | `odm_dlkm` modules, `uarthub_drv` |
-| **B — usable phone** | frozen/source-closed modules may be introduced incrementally | `tkcore` and `yft_devinfo` remain real stock-provider dependencies; any other stock retention is optional staging | `uarthub_drv` |
-| **C — source-complete** | every currently source-closed module, including `microarray_fp_tee` | `tkcore` remains the sole unresolved runtime TEE provider in the fingerprint path; `yft_devinfo` remains a separate ABI-pinned provider | `uarthub_drv` |
+| **B — usable phone** | frozen/source-closed modules may be introduced incrementally | `tkcore` remains a stock runtime provider pending Phase 3F/runtime validation; `yft_devinfo` remains ABI-pinned; other stock retention is optional staging | `uarthub_drv` |
+| **C — source-complete** | every currently source-closed module, including statically complete `tkcore` and `microarray_fp_tee` | `tkcore` deployment awaits consumer/runtime acceptance; `yft_devinfo` remains a separate ABI-pinned provider | `uarthub_drv` |
 
 ## Answer to the driving question
 

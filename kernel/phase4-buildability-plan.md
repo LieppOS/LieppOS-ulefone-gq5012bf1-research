@@ -1145,14 +1145,14 @@ frozen for RE. `spi-mt65xx` is a direct pinned-source match (31/31 function
 bytes, 3/3 natural exports, 82/82 verifier). The frozen MicroArray acceptance
 build now takes both SPI edges naturally; only runtime `tkcore` remains stock.
 
-**Current `tkcore` status (Phase 3D):** Phase 3A-R, 3B, 3C, 3C-R and 3D are all
-CLOSED — **117/122** stock functions, 5 missing, 47 byte-identical, **25/25
-exports** with naturally reproduced CRCs, 0 island-only functions, exact-GKI
-build clean with empty `depends`. tkcore remains
-`PARTIAL / NOT RUNTIME READY / STOCK RUNTIME PROVIDER`. The five missing
-functions are `big_core_affinity_get_candidate_cpu`,
-`big_core_affinity_match_cpu`, `big_core_affinity_need_bind_cpu`,
-`plat_cpu_is_big` and `plat_tee_init`, and they are the Phase-3E target.
+**Current `tkcore` status (Phase 3E):** every behavioral reconstruction phase
+through 3E is CLOSED — **122/122** stock functions by exact name-set equality,
+0 missing, 54 byte-identical, **25/25 exports** retained, 0 island-only
+functions, and a clean exact-GKI build with empty `depends`. This is static
+provider-internal completeness only: `NOT RUNTIME VALIDATED / FINAL
+THREE-CONSUMER ACCEPTANCE PENDING / STOCK RUNTIME PROVIDER / TKCORE
+REPLACEMENT READY: NO`. Phase 3F must independently accept `tkcore_drv`,
+`tmem_ffa`, and `microarray_fp_tee`; it is not performed here.
 
 `fingerprint` is `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE:
 16/16 functions are byte- and size-identical with exact KCFI, all 18 kernel

@@ -1,0 +1,27 @@
+
+workspace/phase4-tkcore/oracle/tkcore.ko:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+00000000000095e8 <plat_cpu_is_big>:
+    95e8: 90000008     	adrp	x8, 0x9000 <tee_clkmgr_register+0x140>
+		00000000000095e8:  R_AARCH64_ADR_PREL_PG_HI21	.data+0x208
+    95ec: b9400108     	ldr	w8, [x8]
+		00000000000095ec:  R_AARCH64_LDST32_ABS_LO12_NC	.data+0x208
+    95f0: 3100051f     	cmn	w8, #0x1
+    95f4: 54000160     	b.eq	0x9620 <plat_cpu_is_big+0x38>
+    95f8: 7100801f     	cmp	w0, #0x20
+    95fc: 54000162     	b.hs	0x9628 <plat_cpu_is_big+0x40>
+    9600: 52800709     	mov	w9, #0x38               // =56
+    9604: 9000000a     	adrp	x10, 0x9000 <tee_clkmgr_register+0x140>
+		0000000000009604:  R_AARCH64_ADR_PREL_PG_HI21	cpu_topology
+    9608: 9100014a     	add	x10, x10, #0x0
+		0000000000009608:  R_AARCH64_ADD_ABS_LO12_NC	cpu_topology
+    960c: 9ba92809     	umaddl	x9, w0, w9, x10
+    9610: b9400929     	ldr	w9, [x9, #0x8]
+    9614: 6b08013f     	cmp	w9, w8
+    9618: 1a9f17e0     	cset	w0, eq
+    961c: d65f03c0     	ret
+    9620: 2a1f03e0     	mov	w0, wzr
+    9624: d65f03c0     	ret
+    9628: d42aa240     	brk	#0x5512

@@ -2,17 +2,17 @@
 
 Derived from the Phase-2 ELF comparison, not from estimation.
 
-**5 stock functions remain unimplemented** (was 55 at Phase 2; Phase 3P closed
-18, Phase 3A-R added 6, Phase 3B added 13, Phase 3C closed the ioctl/compat and
-command-marshalling layer, Phase 3C-R closed the command-output residual, and
-Phase 3D added the final 4). **117 of the 122 stock functions** are now present
-in the rebuilt ELF, 47 of them byte-identical to stock, **all 25 exports are
-present with naturally reproduced CRCs**, and the island still defines **no
-function that is not a stock function**.
+**0 stock functions remain unimplemented** (was 55 at Phase 2). Phase 3E
+closed the final platform/topology and dormant big-core-affinity five.
+**122/122 stock functions** are present by exact name-set equality, 54 are
+byte-identical to stock, **all 25 exports remain present**, and there are **0
+island-only functions**. Classification:
+`TKCORE_ISLAND_PHASE3E_PLATFORM_AFFINITY_CLOSED`.
 
-The only remaining work is Phase 3E: `big_core_affinity_get_candidate_cpu`,
-`big_core_affinity_match_cpu`, `big_core_affinity_need_bind_cpu`,
-`plat_cpu_is_big` and `plat_tee_init`.
+This is static provider-internal completeness only. Todo #18 remains **OPEN**:
+Phase 3F must independently accept `tkcore_drv`, `tmem_ffa`, and
+`microarray_fp_tee`. No runtime validation has occurred and stock remains the
+runtime provider; replacement readiness is not claimed.
 
 Recommended order is bottom-up: leaf helpers and trace surfaces first, then the
 subsystems that carry exported symbols, then the secure-world proxies last.
@@ -133,41 +133,34 @@ now fixed (see `phase4-tkcore-island-phase3b-acceptance.md`).
 | `teed_version_write` | **CLOSED (Phase 3P)** | stock ELF strings/relocations | (internal) | LOW - trace surface |
 | `tkcore_log_irq_handler` | **CLOSED (Phase 3P)** | stock ELF strings/relocations | (internal) | LOW - trace surface |
 
-## 10. other TrustKernel-specific helpers — 12 function(s) remaining (6 closed in Phase 3P)
+## 10. other TrustKernel-specific helpers — 0 function(s) remaining (closed through Phase 3E)
 
 | stock function | current state | available oracle | consumer | risk |
 |---|---|---|---|---|
-| `big_core_affinity_get_candidate_cpu` | MISSING | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
-| `big_core_affinity_match_cpu` | MISSING | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
-| `big_core_affinity_need_bind_cpu` | MISSING | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
-| `convert_compat_tee_cmd` | MISSING | stock ELF strings/relocations | (internal) | MEDIUM - 32-bit compat marshalling |
-| `convert_compat_tee_shm_io` | MISSING | stock ELF strings/relocations | (internal) | MEDIUM - 32-bit compat marshalling |
-| `convert_compat_tee_spta_inst` | MISSING | stock ELF strings/relocations | (internal) | MEDIUM - 32-bit compat marshalling |
+| `big_core_affinity_get_candidate_cpu` | **CLOSED (Phase 3E), EXACT_BYTE** | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
+| `big_core_affinity_match_cpu` | **CLOSED (Phase 3E), EXACT_BYTE** | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
+| `big_core_affinity_need_bind_cpu` | **CLOSED (Phase 3E), EXACT_BYTE** | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
+| `convert_compat_tee_cmd` | **CLOSED (Phase 3C)** | stock ELF strings/relocations | (internal) | MEDIUM - 32-bit compat marshalling |
+| `convert_compat_tee_shm_io` | **CLOSED (Phase 3C)** | stock ELF strings/relocations | (internal) | MEDIUM - 32-bit compat marshalling |
+| `convert_compat_tee_spta_inst` | **CLOSED (Phase 3C)** | stock ELF strings/relocations | (internal) | MEDIUM - 32-bit compat marshalling |
 | `copy_to_user_str` | **CLOSED (Phase 3P)** | stock ELF strings/relocations | (internal) | LOW - leaf helpers |
 | `mtk_disable_clk` | **CLOSED (Phase 3P)** | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
 | `mtk_enable_clk` | **CLOSED (Phase 3P)** | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
-| `plat_cpu_is_big` | MISSING | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
+| `plat_cpu_is_big` | **CLOSED (Phase 3E), EXACT_BYTE** | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
 | `plat_register_spi_clk` | **CLOSED (Phase 3P)** | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
-| `plat_tee_init` | MISSING | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
+| `plat_tee_init` | **CLOSED (Phase 3E), EXACT_BYTE** | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
 | `sg_nents` | **CLOSED (Phase 3B)** | stock ELF (WEAK local definition) | (internal) | LOW - leaf helpers; required by `tkcore_shm_get` |
-| `tee_compat_ioctl` | MISSING | stock ELF strings/relocations | (internal) | MEDIUM - 32-bit compat marshalling |
+| `tee_compat_ioctl` | **CLOSED (Phase 3C)** | stock ELF strings/relocations | (internal) | MEDIUM - 32-bit compat marshalling |
 | `tee_peridev_exit` | **CLOSED (Phase 3P)** | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
 | `tee_peridev_init` | **CLOSED (Phase 3P)** | stock ELF strings/relocations | (internal) | MEDIUM - MT6878 platform init / big-core affinity |
-| `uaccess_ttbr0_disable` | MISSING | stock ELF strings/relocations | (internal) | LOW - leaf helpers |
-| `uaccess_ttbr0_enable` | MISSING | stock ELF strings/relocations | (internal) | LOW - leaf helpers |
+| `uaccess_ttbr0_disable` | **CLOSED (Phase 3C, naturally emitted)** | stock ELF strings/relocations | (internal) | LOW - leaf helpers |
+| `uaccess_ttbr0_enable` | **CLOSED (Phase 3C, naturally emitted)** | stock ELF strings/relocations | (internal) | LOW - leaf helpers |
 
-## Exported symbols still absent (4 of 25)
+## Exported symbols still absent (0 of 25)
 
-These are the only export-name gaps; every other stock export is already emitted.
-
-* `tee_clkmgr_handle` — subsystem `clkmgr`
-* `tee_spi_cfg_padsel` — subsystem `spi`
-* `tee_spi_transfer` — subsystem `spi`
-* `tee_spi_transfer_disable` — subsystem `spi`
-
-Both shared-memory exports (`tee_map_cached_shm`, `tee_unmap_cached_shm`) were
-closed naturally in Phase 3B — no CRC injection, no export-name fabrication.
-Export count: 19/25 → **21/25**.
+All 25 stock export names remain present. Phase 3D closed the four final export
+name gaps (`tee_clkmgr_handle` and the three secure-SPI APIs); Phase 3E adds no
+exports and does not change any Phase-3D export CRC.
 
 ## Explicit non-goals for current reconstruction
 
