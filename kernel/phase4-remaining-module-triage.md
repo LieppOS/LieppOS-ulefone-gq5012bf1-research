@@ -142,7 +142,7 @@ proven still-unresolved:
 | 7 | `gps_scp` | task list; `RELATED_SOURCE_HIT` only |
 | 8 | `wmt_chrdev_wifi_connac2` | task list; `STRONG_API_HIT` only |
 | 9 | `sc851x_charger` | task list; `NO_EXACT_HIT` |
-| 10 | `tkcore` | task list; `STRONG_API_HIT` (API-name collision only) — **still NOT RECONSTRUCTED**, stock runtime provider; current status Phase 3C-R: Phase 3A-R / 3B / 3C / 3C-R command-output residual all CLOSED, island **compiles clean** (113/122 functions, 9 missing, 47 byte-identical, 21/25 exports, 0 island-only; proc/log, core, context/session, shared-memory and ioctl/compat/command-marshalling subsystems closed; clock + secure SPI + affinity/platform remain) — see `phase4-tkcore-island-phase3c-closure.md` and `phase4-tkcore-island-phase3c-r-regression.md` |
+| 10 | `tkcore` | task list; `STRONG_API_HIT` (API-name collision only) — **still NOT RECONSTRUCTED**, stock runtime provider; current status **Phase 3D**: Phase 3A-R / 3B / 3C / 3C-R / 3D all CLOSED, island **compiles clean** (117/122 functions, 5 missing, 47 byte-identical, **25/25 exports** naturally CRC-matched, 0 island-only; proc/log, core, context/session, shared memory, ioctl/compat/command marshalling, clock runtime and secure-SPI proxy all closed; only big-core affinity + `plat_tee_init` remain for Phase 3E) — see `phase4-tkcore-island-phase3d-regression.md` |
 | 11 | `tkcore_drv` | task list; `NO_EXACT_HIT` — **CLOSED: SOURCE_RECONSTRUCTED / FROZEN FOR RE**, see `phase4-tkcore-drv-reconstruction.md` |
 | 12 | `custom_ldo_wl2868` | task list; `NO_EXACT_HIT` |
 | 13 | `fingerprint` | task list; `RELATED_SOURCE_HIT` (generic word noise) |
@@ -432,7 +432,7 @@ Hence **P0_BOOT_CRITICAL**.
 **Yes for `tkcore`.** It is `YES_SAFE_TRANSITION` (101/101 kernel CRCs
 `MATCH`, zero intermodule imports — it depends on nothing but the GKI core)
 and remains `PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME
-PROVIDER`, blocked on original TrustKernel private headers.
+PROVIDER`. (Historical note: earlier revisions described this as blocked on original TrustKernel private headers; the island is now reconstructed to 117/122 with 25/25 exports, and the residual is a genksyms CRC-spelling limitation, not an analysis blocker.)
 
 `tkcore_drv` is **SOURCE_RECONSTRUCTED / FROZEN FOR RE** (2026-09-13) and no
 longer a stock blob; it still depends on stock `tkcore` at runtime. Its

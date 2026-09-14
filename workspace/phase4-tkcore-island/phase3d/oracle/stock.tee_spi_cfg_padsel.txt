@@ -1,0 +1,111 @@
+
+workspace/phase4-tkcore/oracle/tkcore.ko:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+00000000000090c8 <tee_spi_cfg_padsel>:
+    90c8: d503233f     	paciasp
+    90cc: a9bd7bfd     	stp	x29, x30, [sp, #-0x30]!
+    90d0: f9000bfc     	str	x28, [sp, #0x10]
+    90d4: a9024ff4     	stp	x20, x19, [sp, #0x20]
+    90d8: 910003fd     	mov	x29, sp
+    90dc: d10903ff     	sub	sp, sp, #0x240
+    90e0: d5384108     	mrs	x8, SP_EL0
+    90e4: 2a0003f4     	mov	w20, w0
+    90e8: f9431d08     	ldr	x8, [x8, #0x638]
+    90ec: 90000000     	adrp	x0, 0x9000 <tee_clkmgr_register+0x140>
+		00000000000090ec:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xf05
+    90f0: 91000000     	add	x0, x0, #0x0
+		00000000000090f0:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xf05
+    90f4: 2a1403e1     	mov	w1, w20
+    90f8: f81f83a8     	stur	x8, [x29, #-0x8]
+    90fc: b9000fff     	str	wzr, [sp, #0xc]
+    9100: 94000000     	bl	0x9100 <tee_spi_cfg_padsel+0x38>
+		0000000000009100:  R_AARCH64_CALL26	_printk
+    9104: 9104c3e0     	add	x0, sp, #0x130
+    9108: 2a1f03e1     	mov	w1, wzr
+    910c: 52802102     	mov	w2, #0x108              // =264
+    9110: 94000000     	bl	0x9110 <tee_spi_cfg_padsel+0x48>
+		0000000000009110:  R_AARCH64_CALL26	memset
+    9114: 910063e0     	add	x0, sp, #0x18
+    9118: 2a1f03e1     	mov	w1, wzr
+    911c: 52802302     	mov	w2, #0x118              // =280
+    9120: b90013ff     	str	wzr, [sp, #0x10]
+    9124: 94000000     	bl	0x9124 <tee_spi_cfg_padsel+0x5c>
+		0000000000009124:  R_AARCH64_CALL26	memset
+    9128: 9104c3e1     	add	x1, sp, #0x130
+    912c: aa1f03e0     	mov	x0, xzr
+    9130: 94000000     	bl	0x9130 <tee_spi_cfg_padsel+0x68>
+		0000000000009130:  R_AARCH64_CALL26	TEEC_InitializeContext
+    9134: 35000480     	cbnz	w0, 0x91c4 <tee_spi_cfg_padsel+0xfc>
+    9138: 90000002     	adrp	x2, 0x9000 <tee_clkmgr_register+0x140>
+		0000000000009138:  R_AARCH64_ADR_PREL_PG_HI21	.data+0x1f8
+    913c: 91000042     	add	x2, x2, #0x0
+		000000000000913c:  R_AARCH64_ADD_ABS_LO12_NC	.data+0x1f8
+    9140: 9104c3e0     	add	x0, sp, #0x130
+    9144: 910043e1     	add	x1, sp, #0x10
+    9148: 910033e6     	add	x6, sp, #0xc
+    914c: 2a1f03e3     	mov	w3, wzr
+    9150: aa1f03e4     	mov	x4, xzr
+    9154: aa1f03e5     	mov	x5, xzr
+    9158: 94000000     	bl	0x9158 <tee_spi_cfg_padsel+0x90>
+		0000000000009158:  R_AARCH64_CALL26	TEEC_OpenSession
+    915c: 35000400     	cbnz	w0, 0x91dc <tee_spi_cfg_padsel+0x114>
+    9160: 52800028     	mov	w8, #0x1                // =1
+    9164: 910043e0     	add	x0, sp, #0x10
+    9168: 910063e2     	add	x2, sp, #0x18
+    916c: 910033e3     	add	x3, sp, #0xc
+    9170: 52800041     	mov	w1, #0x2                // =2
+    9174: 2903d3e8     	stp	w8, w20, [sp, #0x1c]
+    9178: 94000000     	bl	0x9178 <tee_spi_cfg_padsel+0xb0>
+		0000000000009178:  R_AARCH64_CALL26	TEEC_InvokeCommand
+    917c: 2a0003f3     	mov	w19, w0
+    9180: 350003c0     	cbnz	w0, 0x91f8 <tee_spi_cfg_padsel+0x130>
+    9184: 910043e0     	add	x0, sp, #0x10
+    9188: 94000000     	bl	0x9188 <tee_spi_cfg_padsel+0xc0>
+		0000000000009188:  R_AARCH64_CALL26	TEEC_CloseSession
+    918c: 9104c3e0     	add	x0, sp, #0x130
+    9190: 94000000     	bl	0x9190 <tee_spi_cfg_padsel+0xc8>
+		0000000000009190:  R_AARCH64_CALL26	TEEC_FinalizeContext
+    9194: d5384108     	mrs	x8, SP_EL0
+    9198: f9431d08     	ldr	x8, [x8, #0x638]
+    919c: f85f83a9     	ldur	x9, [x29, #-0x8]
+    91a0: eb09011f     	cmp	x8, x9
+    91a4: 54000361     	b.ne	0x9210 <tee_spi_cfg_padsel+0x148>
+    91a8: 2a1303e0     	mov	w0, w19
+    91ac: 910903ff     	add	sp, sp, #0x240
+    91b0: a9424ff4     	ldp	x20, x19, [sp, #0x20]
+    91b4: f9400bfc     	ldr	x28, [sp, #0x10]
+    91b8: a8c37bfd     	ldp	x29, x30, [sp], #0x30
+    91bc: d50323bf     	autiasp
+    91c0: d65f03c0     	ret
+    91c4: 2a0003f3     	mov	w19, w0
+    91c8: 90000000     	adrp	x0, 0x9000 <tee_clkmgr_register+0x140>
+		00000000000091c8:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x1de
+    91cc: 91000000     	add	x0, x0, #0x0
+		00000000000091cc:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x1de
+    91d0: 2a1303e1     	mov	w1, w19
+    91d4: 94000000     	bl	0x91d4 <tee_spi_cfg_padsel+0x10c>
+		00000000000091d4:  R_AARCH64_CALL26	_printk
+    91d8: 17ffffef     	b	0x9194 <tee_spi_cfg_padsel+0xcc>
+    91dc: 2a0003f3     	mov	w19, w0
+    91e0: b9400fe2     	ldr	w2, [sp, #0xc]
+    91e4: 90000000     	adrp	x0, 0x9000 <tee_clkmgr_register+0x140>
+		00000000000091e4:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xc52
+    91e8: 91000000     	add	x0, x0, #0x0
+		00000000000091e8:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xc52
+    91ec: 2a1303e1     	mov	w1, w19
+    91f0: 94000000     	bl	0x91f0 <tee_spi_cfg_padsel+0x128>
+		00000000000091f0:  R_AARCH64_CALL26	_printk
+    91f4: 17ffffe6     	b	0x918c <tee_spi_cfg_padsel+0xc4>
+    91f8: b9400fe2     	ldr	w2, [sp, #0xc]
+    91fc: 90000000     	adrp	x0, 0x9000 <tee_clkmgr_register+0x140>
+		00000000000091fc:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x5cf
+    9200: 91000000     	add	x0, x0, #0x0
+		0000000000009200:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x5cf
+    9204: 2a1303e1     	mov	w1, w19
+    9208: 94000000     	bl	0x9208 <tee_spi_cfg_padsel+0x140>
+		0000000000009208:  R_AARCH64_CALL26	_printk
+    920c: 17ffffde     	b	0x9184 <tee_spi_cfg_padsel+0xbc>
+    9210: 94000000     	bl	0x9210 <tee_spi_cfg_padsel+0x148>
+		0000000000009210:  R_AARCH64_CALL26	__stack_chk_fail

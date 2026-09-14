@@ -30,16 +30,28 @@ PHASE3C_SHA = "e7a8e2a725d7cd3dde2f674fdf9806edcc3766740fd9aa22df1e610b2c1a98fd"
 TARGET = "_update_client_tee_cmd"
 HELPER = "tee_context_copy_from_client"
 
-ALLOWED_MISSING = {
+# Functions Phase 3C-R deliberately left out of scope.  Split by the phase that
+# owns them so that this verifier stays valid once a LATER phase closes them.
+#
+# Phase 3C-R guarantees it did not implement these itself and that its own
+# subject matter is unchanged.  It must NOT assert that they stay missing
+# forever -- that would make a correct Phase 3D look like a regression.  The
+# same reasoning the Phase-3A-R verifier already applies to co-owned files.
+PHASE3D_TARGETS = {
     "tee_clkmgr_handle",
     "tee_spi_cfg_padsel", "tee_spi_transfer", "tee_spi_transfer_disable",
+}
+PHASE3E_TARGETS = {
     "big_core_affinity_get_candidate_cpu", "big_core_affinity_match_cpu",
     "big_core_affinity_need_bind_cpu", "plat_cpu_is_big", "plat_tee_init",
 }
-EXPECTED_EXPORT_GAPS = {
-    "tee_clkmgr_handle", "tee_spi_cfg_padsel",
-    "tee_spi_transfer", "tee_spi_transfer_disable",
-}
+ALLOWED_MISSING = PHASE3D_TARGETS | PHASE3E_TARGETS
+EXPECTED_EXPORT_GAPS = set(PHASE3D_TARGETS)
+
+# Coverage/export floors achieved by Phase 3C-R.  Later phases may exceed them;
+# dropping below them is a real regression.
+PHASE3C_R_COVERAGE = 113
+PHASE3C_R_EXPORTS = 21
 
 # Parameter-type classes stock's dispatch table must impose.
 SKIPPED = {0, 1, 5, 13}          # NONE, VALUE_INPUT, TEMP_INPUT, PARTIAL_INPUT
@@ -245,25 +257,30 @@ def main() -> int:
                if b.body(n) != c.body(n)]
     resized = [n for n in changed if b.funcs[n][1] != c.funcs[n][1]]
     ck("only the target changed size", resized == [TARGET], resized)
-    ck("no function added", not (set(c.funcs) - set(b.funcs)),
-       sorted(set(c.funcs) - set(b.funcs)))
+    # Added functions are allowed only if a later phase legitimately owns them.
+    added = set(c.funcs) - set(b.funcs)
+    ck("no function added outside a later phase's declared scope",
+       not (added - ALLOWED_MISSING), sorted(added - ALLOWED_MISSING))
     ck("no function removed", not (set(b.funcs) - set(c.funcs)),
        sorted(set(b.funcs) - set(c.funcs)))
 
     # ---- coverage / exports / imports unchanged --------------------------
     sf, cf, bf = set(s.funcs), set(c.funcs), set(b.funcs)
     ck("stock function count is 122", len(sf) == 122, len(sf))
-    ck("coverage still 113/122", len(sf & cf) == 113, f"{len(sf & cf)}/{len(sf)}")
-    ck("coverage did not change", len(sf & cf) == len(sf & bf))
-    ck("missing set is exactly the excluded subsystems",
-       (sf - cf) == ALLOWED_MISSING, sorted((sf - cf) ^ ALLOWED_MISSING))
+    ck("coverage never regressed below Phase 3C-R's 113/122",
+       len(sf & cf) >= PHASE3C_R_COVERAGE, f"{len(sf & cf)}/{len(sf)}")
+    ck("coverage never regressed below the frozen baseline",
+       len(sf & cf) >= len(sf & bf), f"{len(sf & cf)} vs {len(sf & bf)}")
+    ck("nothing outside the declared out-of-scope set is missing",
+       not ((sf - cf) - ALLOWED_MISSING), sorted((sf - cf) - ALLOWED_MISSING))
     ck("no island-only functions", not (cf - sf), sorted(cf - sf))
-    ck("exports still 21", len(c.exports) == 21, len(c.exports))
-    ck("exports unchanged from Phase 3C", c.exports == b.exports,
-       sorted(c.exports ^ b.exports))
-    ck("remaining export gaps are exactly the four expected",
-       (s.exports - c.exports) == EXPECTED_EXPORT_GAPS,
-       sorted((s.exports - c.exports) ^ EXPECTED_EXPORT_GAPS))
+    ck("exports never regressed below Phase 3C-R's 21",
+       len(c.exports) >= PHASE3C_R_EXPORTS, len(c.exports))
+    ck("no export present at Phase 3C-R was lost",
+       not (b.exports - c.exports), sorted(b.exports - c.exports))
+    ck("remaining export gaps stay within the declared set",
+       not ((s.exports - c.exports) - EXPECTED_EXPORT_GAPS),
+       sorted((s.exports - c.exports) - EXPECTED_EXPORT_GAPS))
     ck("no new imports", not (c.undefined - b.undefined),
        sorted(c.undefined - b.undefined))
     ck("no removed imports", not (b.undefined - c.undefined),
@@ -310,7 +327,11 @@ def main() -> int:
        and re.search(r"op\.params\[idx\]\.memref\.size", src) is not None)
 
     # ---- boundary --------------------------------------------------------
-    for n in sorted(ALLOWED_MISSING):
+    # Phase 3C-R's own boundary obligation: it must not have reached into the
+    # platform/affinity work, which is still deferred to Phase 3E.  The
+    # clock/SPI four are intentionally NOT asserted absent here, because
+    # Phase 3D closes them by design.
+    for n in sorted(PHASE3E_TARGETS):
         ck(f"boundary honoured, still absent: {n}", n not in cf)
     acc = REPO / "workspace/phase4-tkcore-island/acceptance"
     ck("three-consumer acceptance still empty",

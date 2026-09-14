@@ -1145,15 +1145,14 @@ frozen for RE. `spi-mt65xx` is a direct pinned-source match (31/31 function
 bytes, 3/3 natural exports, 82/82 verifier). The frozen MicroArray acceptance
 build now takes both SPI edges naturally; only runtime `tkcore` remains stock.
 
-**Current `tkcore` status (Phase 3C-R):** Phase 3A-R CLOSED, Phase 3B CLOSED,
-Phase 3C CLOSED, Phase 3C-R command-output residual CLOSED — 113/122 stock
-functions, 9 missing, 47 byte-identical, 21/25 exports, 0 island-only
-functions, exact-GKI build clean with empty `depends`. tkcore remains
-`PARTIAL / NOT RUNTIME READY / STOCK RUNTIME PROVIDER`. The nine missing
-functions are `tee_clkmgr_handle`, the three secure-SPI functions, the three
-big-core-affinity functions, `plat_cpu_is_big` and `plat_tee_init`; the first
-four of those are also the final four missing exports and are the Phase-3D
-target.
+**Current `tkcore` status (Phase 3D):** Phase 3A-R, 3B, 3C, 3C-R and 3D are all
+CLOSED — **117/122** stock functions, 5 missing, 47 byte-identical, **25/25
+exports** with naturally reproduced CRCs, 0 island-only functions, exact-GKI
+build clean with empty `depends`. tkcore remains
+`PARTIAL / NOT RUNTIME READY / STOCK RUNTIME PROVIDER`. The five missing
+functions are `big_core_affinity_get_candidate_cpu`,
+`big_core_affinity_match_cpu`, `big_core_affinity_need_bind_cpu`,
+`plat_cpu_is_big` and `plat_tee_init`, and they are the Phase-3E target.
 
 `fingerprint` is `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` and FROZEN FOR RE:
 16/16 functions are byte- and size-identical with exact KCFI, all 18 kernel
@@ -1302,7 +1301,7 @@ later `ffa_v10` closure.
 
 `tkcore` itself is **not** affected and must not be moved into any
 "source-ready" section: it stays `PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED /
-STOCK RUNTIME PROVIDER`, blocked on original TrustKernel private headers.
+STOCK RUNTIME PROVIDER`. (Historical note: earlier revisions called this blocked on original TrustKernel private headers; see the current Phase-3D status above.)
 
 ## ffa_v10 closure update
 

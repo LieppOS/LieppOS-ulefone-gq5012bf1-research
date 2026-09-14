@@ -124,14 +124,14 @@ It is `SOURCE_NOW` and FROZEN FOR RE.
 
 Treat as one late-stage security subsystem:
 
-- tkcore — still stock, untouched; island reconstruction is at Phase 3C-R:
-  Phase 3A-R CLOSED, Phase 3B CLOSED, Phase 3C CLOSED, Phase 3C-R
-  command-output residual CLOSED. 113/122 stock functions, 9 missing,
-  47 byte-identical, 21/25 exports, 0 island-only functions. Remaining work is
-  Phase 3D (clock runtime + secure SPI), which also holds the final four
-  missing exports. Still `PARTIAL / NOT RUNTIME READY /
-  PROVIDER_ABI_PARTIAL / NOT RECONSTRUCTED / STOCK RUNTIME PROVIDER`,
-  blocked on original TrustKernel private headers
+- tkcore — still stock, untouched; island reconstruction is at **Phase 3D**:
+  Phase 3A-R, 3B, 3C, 3C-R and 3D all CLOSED. **117/122** stock functions,
+  5 missing, 47 byte-identical, **25/25 exports** with naturally reproduced
+  CRCs, 0 island-only functions. Remaining work is Phase 3E (big-core affinity
+  + `plat_tee_init`). Still `PARTIAL / NOT RUNTIME READY /
+  PROVIDER_ABI_PARTIAL / STOCK RUNTIME PROVIDER`. The residual ABI caveat is a
+  genksyms CRC-spelling limitation for some private-typed exports, **not** an
+  analysis blocker
 - tkcore_drv — **SOURCE_RECONSTRUCTED / SOURCE_NOW_WITH_PROVIDER_WITNESSES /
   FROZEN FOR RE** (2026-09-13, updated 2026-09-13 after the ffa_v10 closure:
   provenance split is now 8 NATURAL/5 STOCK_PROVIDER_WITNESS, was 6/7). Ship

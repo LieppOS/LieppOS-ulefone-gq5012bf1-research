@@ -52,11 +52,19 @@ BYTE_EXACT = ["convert_compat_tee_shm_io", "uaccess_ttbr0_enable", "uaccess_ttbr
 
 # The only functions still permitted to be absent: the explicitly excluded
 # clock / SPI / affinity / platform subsystems.
-ALLOWED_MISSING = {
+#
+# Split by owning phase so this verifier stays valid once a LATER phase closes
+# them.  Phase 3C must guarantee it did not implement them itself; it must not
+# assert they remain missing forever, which would make a correct Phase 3D look
+# like a regression.
+PHASE3D_TARGETS = {
     "tee_clkmgr_handle",
     "tee_spi_cfg_padsel",
     "tee_spi_transfer",
     "tee_spi_transfer_disable",
+}
+PHASE3C_COVERAGE = 113
+ALLOWED_MISSING = PHASE3D_TARGETS | {
     "big_core_affinity_get_candidate_cpu",
     "big_core_affinity_match_cpu",
     "big_core_affinity_need_bind_cpu",
@@ -266,9 +274,10 @@ def main() -> int:
     missing = sf - cf
     island_only = cf - sf
     ck("stock function count is 122", len(sf) == 122, len(sf))
-    ck("coverage is 113/122", len(sf & cf) == 113, f"{len(sf & cf)}/{len(sf)}")
-    ck("missing set is exactly the excluded subsystems",
-       missing == ALLOWED_MISSING, sorted(missing ^ ALLOWED_MISSING))
+    ck("coverage never regressed below Phase 3C's 113/122",
+       len(sf & cf) >= PHASE3C_COVERAGE, f"{len(sf & cf)}/{len(sf)}")
+    ck("nothing outside the declared out-of-scope set is missing",
+       not (missing - ALLOWED_MISSING), sorted(missing - ALLOWED_MISSING))
     ck("no island-only (fabricated) functions", not island_only, sorted(island_only))
 
     # --- file_operations edges --------------------------------------------
@@ -301,8 +310,11 @@ def main() -> int:
     ck("no new undefined imports vs stock", len(c.undefined) <= len(s.undefined),
        f"{len(c.undefined)} vs {len(s.undefined)}")
 
-    # --- boundary: excluded subsystems must NOT have been implemented ------
-    for n in sorted(ALLOWED_MISSING):
+    # --- boundary: work still deferred beyond Phase 3D must be absent ------
+    # The clock/SPI four are deliberately excluded from this loop: Phase 3D
+    # closes them by design, so asserting their absence here would only assert
+    # that no later phase may ever make progress.
+    for n in sorted(ALLOWED_MISSING - PHASE3D_TARGETS):
         ck(f"boundary honoured, still absent: {n}", n not in cf)
 
     # --- acceptance must remain deferred -----------------------------------

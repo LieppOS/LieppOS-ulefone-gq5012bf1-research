@@ -462,7 +462,18 @@ def main() -> None:
     ck("stock runtime provider retained", "Runtime provider: **STOCK RUNTIME PROVIDER**" in acc)
     ck("not declared replacement ready", "Replacement ready: **NO**" in acc)
     queue = read(KERNEL / "phase4-tkcore-island-phase3-work-queue.md")
-    ck("work queue updated to 104/122", "104 of the 122 stock functions" in queue)
+    # The work queue is a LIVE shared document that every later phase updates.
+    # Pinning the literal Phase-3B count here would assert that no later phase
+    # may ever record progress.  Assert instead that the queue still records a
+    # coverage figure, that it never regressed below the 104/122 Phase 3B
+    # achieved, and that Phase 3B's own closure is still credited.
+    m = re.search(r"(\d+) of the 122 stock functions", queue)
+    ck("work queue records a stock-function coverage figure", m is not None)
+    ck("work queue coverage never regressed below Phase 3B's 104/122",
+       m is not None and int(m.group(1)) >= 104,
+       m.group(1) if m else "absent")
+    ck("work queue still credits the Phase 3B shared-memory closure",
+       "Phase 3B added 13" in queue and "closed in Phase 3B" in queue)
     ck("work queue marks shared memory closed",
        "0 function(s) remaining (all 12 closed in Phase 3B)" in queue)
 

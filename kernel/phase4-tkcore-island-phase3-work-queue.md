@@ -2,10 +2,17 @@
 
 Derived from the Phase-2 ELF comparison, not from estimation.
 
-**18 stock functions remain unimplemented** (was 55 at Phase 2; Phase 3P closed
-18, Phase 3A-R added 6, Phase 3B added 13). 104 of the 122 stock functions are
-now present in the rebuilt ELF, 44 of them byte-identical to stock, and the
-island now defines **no function that is not a stock function**.
+**5 stock functions remain unimplemented** (was 55 at Phase 2; Phase 3P closed
+18, Phase 3A-R added 6, Phase 3B added 13, Phase 3C closed the ioctl/compat and
+command-marshalling layer, Phase 3C-R closed the command-output residual, and
+Phase 3D added the final 4). **117 of the 122 stock functions** are now present
+in the rebuilt ELF, 47 of them byte-identical to stock, **all 25 exports are
+present with naturally reproduced CRCs**, and the island still defines **no
+function that is not a stock function**.
+
+The only remaining work is Phase 3E: `big_core_affinity_get_candidate_cpu`,
+`big_core_affinity_match_cpu`, `big_core_affinity_need_bind_cpu`,
+`plat_cpu_is_big` and `plat_tee_init`.
 
 Recommended order is bottom-up: leaf helpers and trace surfaces first, then the
 subsystems that carry exported symbols, then the secure-world proxies last.
@@ -35,7 +42,8 @@ now byte-identical to stock.
 
 Result: **PHASE3A_CORE_DEPENDENCIES_READY** — see
 `phase4-tkcore-island-phase3p-core-unblock.md`. `tee_clkmgr_handle` was
-deliberately left for the dedicated clock-manager phase; registration and
+deliberately left for the dedicated clock-manager phase and is now **closed in
+Phase 3D**; registration and
 teardown do not depend on it.
 
 ## Phase 3A-R core + context/session closure
@@ -94,20 +102,20 @@ now fixed (see `phase4-tkcore-island-phase3b-acceptance.md`).
 | `tee_supp_open` | **CLOSED (Phase 3A-R, core fops prerequisite only)** | stock ELF + donor | tkcore core fops | MEDIUM - command handling remains out of scope |
 | `tee_supp_release` | **CLOSED (Phase 3A-R, core fops prerequisite only)** | stock ELF + donor | tkcore core fops | MEDIUM - command handling remains out of scope |
 
-## 7. clock manager — 1 function(s) remaining (1 closed in Phase 3P)
+## 7. clock manager — 0 function(s) remaining (1 closed in Phase 3P, 1 in Phase 3D)
 
 | stock function | current state | available oracle | consumer | risk |
 |---|---|---|---|---|
-| `tee_clkmgr_handle` **(EXPORTED)** | MISSING | historical CRC already natural + consumer | tkcore_drv | HIGH - secure-world clock gating |
+| `tee_clkmgr_handle` **(EXPORTED)** | **CLOSED (Phase 3D)** SIZE_EXACT_SEMANTIC_EXACT | historical CRC already natural + consumer | tkcore_drv | HIGH - secure-world clock gating |
 | `tee_clkmgr_register` **(EXPORTED)** | **CLOSED (Phase 3P)** | historical CRC already natural + consumer | tkcore_drv | HIGH - secure-world clock gating |
 
-## 8. SPI proxy — 3 function(s)
+## 8. SPI proxy — 0 function(s) remaining (all 3 closed in Phase 3D)
 
 | stock function | current state | available oracle | consumer | risk |
 |---|---|---|---|---|
-| `tee_spi_cfg_padsel` **(EXPORTED)** | MISSING | historical CRC already natural + consumer | microarray_fp_tee | HIGH - secure SPI proxy touches fingerprint TA path |
-| `tee_spi_transfer` **(EXPORTED)** | MISSING | historical CRC already natural + consumer | microarray_fp_tee | HIGH - secure SPI proxy touches fingerprint TA path |
-| `tee_spi_transfer_disable` **(EXPORTED)** | MISSING | historical CRC already natural + consumer | microarray_fp_tee | HIGH - secure SPI proxy touches fingerprint TA path |
+| `tee_spi_cfg_padsel` **(EXPORTED)** | **CLOSED (Phase 3D)** SIZE_EXACT_SEMANTIC_EXACT | historical CRC already natural + consumer | microarray_fp_tee | HIGH - secure SPI proxy touches fingerprint TA path |
+| `tee_spi_transfer` **(EXPORTED)** | **CLOSED (Phase 3D)** SIZE_EXACT_SEMANTIC_EXACT | historical CRC already natural + consumer | microarray_fp_tee | HIGH - secure SPI proxy touches fingerprint TA path |
+| `tee_spi_transfer_disable` **(EXPORTED)** | **CLOSED (Phase 3D)** SIZE_EXACT_SEMANTIC_EXACT | historical CRC already natural + consumer | microarray_fp_tee | HIGH - secure SPI proxy touches fingerprint TA path |
 
 ## 9. logging/proc/sysfs/misc glue — 0 function(s) remaining (all 11 closed in Phase 3P)
 

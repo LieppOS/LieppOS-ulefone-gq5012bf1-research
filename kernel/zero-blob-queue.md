@@ -42,16 +42,16 @@
   functions present, 16 of them byte-identical to stock, 60 KCFI type ids
   exact, 57/57 shared GKI import CRCs matching, 17/25 exports emitted and
   0 fabricated**.
-  **Current status (Phase 3C-R):** Phase 3A-R CLOSED, Phase 3B CLOSED,
-  Phase 3C CLOSED, Phase 3C-R command-output residual CLOSED.
-  **113/122 stock functions present, 9 missing, 47 byte-identical,
-  21/25 exports, 0 island-only functions.** The 9 remaining functions are
-  exactly `tee_clkmgr_handle`, the three secure-SPI functions, the three
-  big-core-affinity functions, `plat_cpu_is_big` and `plat_tee_init`.
-  tkcore is still
+  **Current status (Phase 3D):** Phase 3A-R, 3B, 3C, 3C-R and 3D are all CLOSED.
+  **117/122 stock functions present, 5 missing, 47 byte-identical, 25/25 exports
+  with naturally reproduced CRCs, 0 island-only functions.** The five remaining
+  functions are exactly `big_core_affinity_get_candidate_cpu`,
+  `big_core_affinity_match_cpu`, `big_core_affinity_need_bind_cpu`,
+  `plat_cpu_is_big` and `plat_tee_init` (Phase 3E). tkcore is still
   **PARTIAL, NOT RUNTIME READY, stock runtime provider**
   (`TKCORE REPLACEMENT READY: NO`).
-  See `kernel/phase4-tkcore-island-phase3c-closure.md`,
+  See `kernel/phase4-tkcore-island-phase3d-regression.md`,
+  `kernel/phase4-tkcore-island-phase3c-closure.md`,
   `kernel/phase4-tkcore-island-phase3c-r-regression.md`,
   `kernel/phase4-tkcore-island-phase2-status.md`,
   `kernel/phase4-tkcore-island-phase3p-core-unblock.md` and
@@ -111,7 +111,9 @@
 
 ## Active remaining queue
 
-- `tkcore` — blocked on original TrustKernel headers only (no further binary
+- `tkcore` — HISTORICAL NOTE (superseded; see the current status above):
+  at the time of writing this line, tkcore was described as blocked on original
+  TrustKernel headers only (no further binary
   analysis can unblock it); stays a stock vendor binary meanwhile
 - connectivity and panel/provider work per remaining-module triage
 
