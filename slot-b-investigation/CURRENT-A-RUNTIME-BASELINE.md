@@ -12,3 +12,11 @@ Conclusion:
 
 Current running Android is confirmed to be stock-derived Slot A.
 Slot B has passed static AVB/payload integrity verification but has not yet been proven to boot.
+
+## Root bootctl confirmation
+
+A subsequent privileged query succeeded:
+
+`su -c "bootctl get-current-slot"` returned `0`.
+
+This independently confirms the currently running slot is slot A.
