@@ -1,0 +1,83 @@
+===== PRE-FLIGHT =====
+2026-09-16T02:23:51+03:00
+
+slot suffix:
+_a
+
+current-slot:
+0
+slot-a-bootable:
+1
+slot-b-bootable:
+1
+slot-a-successful:
+1
+slot-b-successful:
+0
+snapshot:
+none
+
+===== B FAILED / FASTBOOT RECOVERY =====
+2026-09-16T02:29:37+03:00
+< waiting for any device >
+current-slot: b
+Finished. Total time: 0.002s
+(bootloader) 	slot-retry-count:b: 4
+(bootloader) 	slot-retry-count:a: 1
+(bootloader) 	slot-successful:b: no
+(bootloader) 	slot-successful:a: yes
+(bootloader) 	slot-unbootable:b: no
+(bootloader) 	slot-unbootable:a: no
+(bootloader) 	current-slot: b
+
+===== FINAL A RECOVERY =====
+2026-09-16T02:33:50+03:00
+slot_suffix:
+_a
+fingerprint:
+Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+verifiedbootstate:
+green
+current-slot:
+0
+slot-a-bootable:
+1
+slot-b-bootable:
+1
+slot-a-successful:
+1
+slot-b-successful:
+0
+snapshot:
+none
+
+===== CLASSIFICATION =====
+
+UNTOUCHED_B_RUNTIME_FAIL
+
+The pre-existing B installation was selected without flashing, wiping,
+module replacement, vbmeta reconstruction, or other image modification.
+
+Preflight:
+- running slot A
+- A bootable and successful
+- B bootable and not successful
+- snapshot state none
+
+Experiment:
+- bootctl set-active-boot-slot 1 succeeded
+- exactly one reboot was attempted
+- no ADB appeared during the ~5 minute observation window
+
+Recovery observation:
+- Fastboot reported current-slot b
+- slot-b-unbootable: no
+- slot-b-successful: no
+- slot-retry-count:b: 4
+- A was explicitly selected again
+
+Conclusion:
+The existing B baseline itself is not currently proven runtime-bootable.
+TrustKernel runtime remains untested.
+Earlier modified-B failures cannot isolate TrustKernel or replacement vbmeta
+because the unchanged B baseline also fails.
