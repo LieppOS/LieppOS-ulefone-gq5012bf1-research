@@ -1,12 +1,12 @@
 check	status	evidence	interpretation	blocker	next action
-C0 image static validation	PASS	kernel/phase4-tkcore-island-phase3g-r-c0-vbmeta.md	27/27 raw descriptor records stock-identical as multiset; flags/rollback preserved; zero module replacements	NONE	request fresh explicit C0 authorization
-C0 write verification	NOT_PERFORMED	NONE	no Phase-3G-R device write authorized	EXPLICIT_AUTHORIZATION_REQUIRED	request authorization after device gate
-C0 B boot	NOT_PERFORMED	NONE	local top-level test-key acceptance remains unknown	C0_WRITE_NOT_PERFORMED	forbidden until authorized write verifies
-C1 artifact parity	BLOCKED	NONE	C1 forbidden before C0 PASS	C0_NOT_PASS	stop
-C1 19-edge ABI	BLOCKED	NONE	C1 forbidden before C0 PASS	C0_NOT_PASS	stop
-C1 image static validation	BLOCKED	NONE	C1 forbidden before C0 PASS	C0_NOT_PASS	stop
-C1 write verification	BLOCKED	NONE	C1 forbidden before C0 PASS	C0_NOT_PASS	stop
-C1 B boot	BLOCKED	NONE	C1 forbidden before C0 PASS	C0_NOT_PASS	stop
-C1 G1 source module identity	BLOCKED	NONE	C1 forbidden before C0 PASS	C0_NOT_PASS	stop
-C1 G1 unknown symbols	BLOCKED	NONE	C1 forbidden before C0 PASS	C0_NOT_PASS	stop
-C1 G1 modversion disagreement	BLOCKED	NONE	C1 forbidden before C0 PASS	C0_NOT_PASS	stop
+C0 image static validation	PASS	kernel/phase4-tkcore-island-phase3g-r-c0-vbmeta.md	27/27 raw descriptor records stock-identical as multiset; flags/rollback preserved; zero module replacements	NONE	complete
+C0 write verification	PASS	workspace/phase4-tkcore-island/phase3g-r/c0/device-write/c0-post-write-hashes.tsv	vbmeta_b readback exact candidate; vendor_boot_b and vendor_dlkm_b remained stock	NONE	complete
+C0 B boot	FAIL	workspace/phase4-tkcore-island/phase3g-r/c0/device-write/c0-single-boot.txt	one B boot produced no ADB or Fastboot for 300 seconds and required manual bootloader recovery	PHASE3G_R_C0_LOCAL_VBMETA_BOOT_BLOCKED	stop; AVB/Slot-B boot-chain diagnosis
+C1 artifact parity	BLOCKED	kernel/phase4-tkcore-island-phase3g-r-C0-result.md	C1 forbidden after C0 FAIL	C0_FAIL	do not build C1
+C1 19-edge ABI	BLOCKED	kernel/phase4-tkcore-island-phase3g-r-C0-result.md	C1 forbidden after C0 FAIL	C0_FAIL	do not build C1
+C1 image static validation	BLOCKED	kernel/phase4-tkcore-island-phase3g-r-C0-result.md	C1 forbidden after C0 FAIL	C0_FAIL	do not build C1
+C1 write verification	BLOCKED	kernel/phase4-tkcore-island-phase3g-r-C0-result.md	C1 forbidden after C0 FAIL	C0_FAIL	do not write C1
+C1 B boot	BLOCKED	kernel/phase4-tkcore-island-phase3g-r-C0-result.md	C1 forbidden after C0 FAIL	C0_FAIL	do not boot C1
+C1 G1 source module identity	BLOCKED	kernel/phase4-tkcore-island-phase3g-r-C0-result.md	G1 not reached; TrustKernel runtime not tested	C0_FAIL	do not claim runtime behavior
+C1 G1 unknown symbols	BLOCKED	kernel/phase4-tkcore-island-phase3g-r-C0-result.md	G1 not reached; no module log exists	C0_FAIL	do not infer
+C1 G1 modversion disagreement	BLOCKED	kernel/phase4-tkcore-island-phase3g-r-C0-result.md	G1 not reached; no module log exists	C0_FAIL	do not infer

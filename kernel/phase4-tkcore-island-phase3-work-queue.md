@@ -175,3 +175,16 @@ exports and does not change any Phase-3D export CRC.
 * Do NOT reopen historical CRC brute forcing for blocked exports.
 * Do NOT require final-natural tkcore_drv / tmem_ffa / microarray_fp_tee acceptance until the remaining subsystems and exports exist.
 * Do NOT attempt runtime validation until a dedicated, separately authorised phase.
+
+---
+
+## CURRENT — TrustKernel Phase 3G-R (2026-09-15)
+
+- **PHASE 3F:** STATIC PASS.
+- **PHASE 3G:** FAILED BEFORE G1.
+- **RUNTIME TRUSTKERNEL:** NOT YET TESTED.
+- **PREVIOUS PHASE-3G CANDIDATE:** RETIRED — INVALID STATIC DEPLOYMENT UNIT.
+- **PHASE 3G-R C0:** LOCAL TOP-LEVEL VBMETA BOOT CONTROL FAILED with stock payloads; C1 was not attempted.
+- **DEVICE:** stock `vbmeta_b` restored exact; A active/bootable/successful; B bootable/not-successful.
+
+The Phase-3G failure must not be attributed to source `tkcore` runtime. Current blocker: `kernel/phase4-tkcore-island-phase3g-r-c0-blocker.md`.

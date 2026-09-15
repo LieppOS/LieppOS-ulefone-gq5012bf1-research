@@ -1,6 +1,6 @@
 # GQ5012BF1 TrustKernel Phase 3G-R C0 — stock-payload vbmeta control
 
-Status: **HOST STATIC PASS / FRESH DEVICE GATE PASS / WRITE NOT YET AUTHORIZED**
+Status: **HOST STATIC PASS / C0 DEVICE BOOT FAIL / STOCK VBMETA RESTORED EXACTLY**
 
 ## Purpose
 
@@ -96,6 +96,10 @@ Evidence:
 - `workspace/phase4-tkcore-island/phase3g-r/c0/device-before/b-payload-hashes.tsv`
 - `workspace/phase4-tkcore-island/phase3g-r/c0/device-before/fastboot-readonly-gate.txt`
 
-## Device boundary
+## Device result
 
-No Phase-3G-R device write has occurred. C0 may write only `vbmeta_b` after fresh explicit authorization for that one write, one B boot attempt, and exact stock-vbmeta restoration afterward whether the control passes or fails.
+Fresh explicit authorization was granted for the bounded C0 operation. `vbmeta_b` was written and read back exact; `vendor_boot_b` and `vendor_dlkm_b` remained stock. Exactly one B boot produced no ADB or Fastboot transport for 300 seconds and required manual bootloader recovery. No retry occurred.
+
+Stock `vbmeta_b` was restored exact, and A is again current/active/bootable/successful while B is bootable/not-successful. Classification: `PHASE3G_R_C0_LOCAL_VBMETA_BOOT_BLOCKED`.
+
+See `kernel/phase4-tkcore-island-phase3g-r-C0-result.md`. C1 is forbidden.
