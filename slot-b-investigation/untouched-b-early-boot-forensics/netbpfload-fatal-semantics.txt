@@ -1,0 +1,769 @@
+===== FATAL DIAGNOSTICS =====
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1493-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1494-    if (isAtLeastV) {
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1495-        bool bad = false;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1496-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1497-        if (!isLtsKernel()) {
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1498-            ALOGW("Android V only supports LTS kernels.");
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1499-            bad = true;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1500-        }
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1501-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1502-#define REQUIRE(maj, min, sub) \
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1503-        if (isKernelVersion(maj, min) && !isAtLeastKernelVersion(maj, min, sub)) { \
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1504-            ALOGW("Android V requires %d.%d kernel to be %d.%d.%d+.", maj, min, maj, min, sub); \
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1505-            bad = true; \
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1506-        }
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1507-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1508-        REQUIRE(4, 19, 236)
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1509-        REQUIRE(5, 4, 186)
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1510-        REQUIRE(5, 10, 199)
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1511-        REQUIRE(5, 15, 136)
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1512-        REQUIRE(6, 1, 57)
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1513-        REQUIRE(6, 6, 0)
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1514-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1515-#undef REQUIRE
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1516-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1517-        if (bad) {
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp:1518:            ALOGE("Unsupported kernel version (%07x).", kernelVersion());
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1519-        }
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1520-    }
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1521-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1522-    /* Android 14/U should only launch on 64-bit kernels
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1523-     *   T launches on 5.10/5.15
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1524-     *   U launches on 5.15/6.1
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1525-     * So >=5.16 implies isKernel64Bit()
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1526-     *
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1527-     * We thus added a test to V VTS which requires 5.16+ devices to use 64-bit kernels.
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1528-     *
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1529-     * Starting with Android V, which is the first to support a post 6.1 Linux Kernel,
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1530-     * we also require 64-bit userspace.
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1531-     *
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1532-     * There are various known issues with 32-bit userspace talking to various
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1533-     * kernel interfaces (especially CAP_NET_ADMIN ones) on a 64-bit kernel.
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1534-     * Some of these have userspace or kernel workarounds/hacks.
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1535-     * Some of them don't...
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1536-     * We're going to be removing the hacks.
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1537-     * (for example "ANDROID: xfrm: remove in_compat_syscall() checks").
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1538-     * Note: this check/enforcement only applies to *system* userspace code,
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1539-     * it does not affect unprivileged apps, the 32-on-64 compatibility
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1540-     * problems are AFAIK limited to various CAP_NET_ADMIN protected interfaces.
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1541-     *
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1542-     * Additionally the 32-bit kernel jit support is poor,
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1543-     * and 32-bit userspace on 64-bit kernel bpf ringbuffer compatibility is broken.
+--
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1604-        // Enable JIT kallsyms export for privileged users only
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1605-        // (Note: this (open) will fail with ENOENT 'No such file or directory' if
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1606-        //  kernel does not have CONFIG_HAVE_EBPF_JIT=y)
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1607-        if (writeProcSysFile("/proc/sys/net/core/bpf_jit_kallsyms", "1\n") &&
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1608-            android::bpf::isAtLeastKernelVersion(4, 14, 0)) return 1;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1609-    }
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1610-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1611-    // Create all the pin subdirectories
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1612-    // (this must be done first to allow selinux_context and pin_subdir functionality,
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1613-    //  which could otherwise fail with ENOENT during object pinning or renaming,
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1614-    //  due to ordering issues)
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1615-    for (const auto& location : locations) {
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1616-        if (createSysFsBpfSubDir(location.prefix)) return 1;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1617-    }
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1618-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1619-    // Note: there's no actual src dir for fs_bpf_loader .o's,
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1620-    // so it is not listed in 'locations[].prefix'.
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1621-    // This is because this is primarily meant for triggering genfscon rules,
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1622-    // and as such this will likely always be the case.
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1623-    // Thus we need to manually create the /sys/fs/bpf/loader subdirectory.
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1624-    if (createSysFsBpfSubDir("loader")) return 1;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1625-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1626-    // Load all ELF objects, create programs and maps, and pin them
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1627-    for (const auto& location : locations) {
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1628-        if (loadAllElfObjects(bpfloader_ver, location) != 0) {
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp:1629:            ALOGE("=== CRITICAL FAILURE LOADING BPF PROGRAMS FROM %s ===", location.dir);
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp:1630:            ALOGE("If this triggers reliably, you're probably missing kernel options or patches.");
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1631-            ALOGE("If this triggers randomly, you might be hitting some memory allocation "
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1632-                  "problems or startup script race.");
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp:1633:            ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1634-            sleep(20);
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1635-            return 2;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1636-        }
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1637-    }
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1638-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1639-    int key = 1;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1640-    int value = 123;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1641-    unique_fd map(
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1642-            createMap(BPF_MAP_TYPE_ARRAY, sizeof(key), sizeof(value), 2, 0));
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1643-    if (writeToMapEntry(map, &key, &value, BPF_ANY)) {
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1644-        ALOGE("Critical kernel bug - failure to write into index 1 of 2 element bpf map array.");
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1645-        return 1;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1646-    }
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1647-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1648-    // leave a flag that we're done
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1649-    if (createSysFsBpfSubDir("netd_shared/mainline_done")) return 1;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1650-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1651-    // platform bpfloader will only succeed when run as root
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1652-    if (!runningAsRoot) {
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1653-        // unreachable on U QPR3+ which always runs netbpfload as root
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1654-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp:1655:        ALOGI("mainline done, no need to transfer control to platform bpf loader.");
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1656-        return 0;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1657-    }
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1658-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1659-    // unreachable before U QPR3
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1660-    {
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1661-      ALOGI("done, transferring control to uprobestatsbpfload.");
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1662-      const char *args[] = {
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1663-          uprobestatsBpfLoader,
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1664-          NULL,
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1665-      };
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1666-      execve(args[0], (char **)args, envp);
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1667-    }
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1668-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1669-    ALOGI("unable to execute uprobestatsbpfload, transferring control to "
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1670-          "platform bpfloader.");
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1671-    // platform BpfLoader *needs* to run as root
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1672-    const char * args[] = { platformBpfLoader, NULL, };
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1673-    execve(args[0], (char**)args, envp);
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1674-    ALOGE("FATAL: execve('%s'): %d[%s]", platformBpfLoader, errno, strerror(errno));
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1675-    return 1;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1676-}
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1677-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1678-}  // namespace bpf
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1679-}  // namespace android
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/Connectivity/bpf/loader/NetBpfLoad.cpp-1680-
+
+===== RETURN / FAILURE PATHS =====
+252-};
+253-
+254-typedef struct {
+255-    enum bpf_prog_type type;
+256-    enum bpf_attach_type attach_type;
+257-    string name;
+258-    vector<char> data;
+259-    vector<char> rel_data;
+260-    optional<struct bpf_prog_def> prog_def;
+261-
+262-    unique_fd prog_fd; // fd after loading
+263-} codeSection;
+264-
+265-static int readElfHeader(ifstream& elfFile, Elf64_Ehdr* eh) {
+266-    elfFile.seekg(0);
+267:    if (elfFile.fail()) return -1;
+268-
+269:    if (!elfFile.read((char*)eh, sizeof(*eh))) return -1;
+270-
+271-    return 0;
+272-}
+273-
+274-// Reads all section header tables into an Shdr array
+275-static int readSectionHeadersAll(ifstream& elfFile, vector<Elf64_Shdr>& shTable) {
+276-    Elf64_Ehdr eh;
+277-    int ret = 0;
+278-
+279-    ret = readElfHeader(elfFile, &eh);
+280-    if (ret) return ret;
+281-
+282-    elfFile.seekg(eh.e_shoff);
+283:    if (elfFile.fail()) return -1;
+284-
+285-    // Read shdr table entries
+286-    shTable.resize(eh.e_shnum);
+287-
+288-    if (!elfFile.read((char*)shTable.data(), (eh.e_shnum * eh.e_shentsize))) return -ENOMEM;
+289-
+290-    return 0;
+291-}
+292-
+293-// Read a section by its index - for ex to get sec hdr strtab blob
+294-static int readSectionByIdx(ifstream& elfFile, int id, vector<char>& sec) {
+295-    vector<Elf64_Shdr> shTable;
+296-    int ret = readSectionHeadersAll(elfFile, shTable);
+297-    if (ret) return ret;
+298-
+299-    elfFile.seekg(shTable[id].sh_offset);
+300:    if (elfFile.fail()) return -1;
+301-
+302-    sec.resize(shTable[id].sh_size);
+303:    if (!elfFile.read(sec.data(), shTable[id].sh_size)) return -1;
+304-
+305-    return 0;
+306-}
+307-
+308-// Read whole section header string table
+309-static int readSectionHeaderStrtab(ifstream& elfFile, vector<char>& strtab) {
+310-    Elf64_Ehdr eh;
+311-    int ret = readElfHeader(elfFile, &eh);
+312-    if (ret) return ret;
+313-
+314-    ret = readSectionByIdx(elfFile, eh.e_shstrndx, strtab);
+315-    if (ret) return ret;
+316-
+317-    return 0;
+318-}
+319-
+320-// Get name from offset in strtab
+321-static int getSymName(ifstream& elfFile, int nameOff, string& name) {
+322-    int ret;
+323-    vector<char> secStrTab;
+324-
+325-    ret = readSectionHeaderStrtab(elfFile, secStrTab);
+326-    if (ret) return ret;
+327-
+328:    if (nameOff >= (int)secStrTab.size()) return -1;
+329-
+330-    name = string((char*)secStrTab.data() + nameOff);
+331-    return 0;
+332-}
+333-
+334-// Reads a full section by name - example to get the GPL license
+335-static int readSectionByName(const char* name, ifstream& elfFile, vector<char>& data) {
+336-    vector<char> secStrTab;
+337-    vector<Elf64_Shdr> shTable;
+338-    int ret;
+339-
+340-    ret = readSectionHeadersAll(elfFile, shTable);
+341-    if (ret) return ret;
+342-
+343-    ret = readSectionHeaderStrtab(elfFile, secStrTab);
+344-    if (ret) return ret;
+345-
+346-    for (int i = 0; i < (int)shTable.size(); i++) {
+347-        char* secname = secStrTab.data() + shTable[i].sh_name;
+348-        if (!secname) continue;
+349-
+350-        if (!strcmp(secname, name)) {
+351-            vector<char> dataTmp;
+352-            dataTmp.resize(shTable[i].sh_size);
+353-
+354-            elfFile.seekg(shTable[i].sh_offset);
+355:            if (elfFile.fail()) return -1;
+356-
+357:            if (!elfFile.read((char*)dataTmp.data(), shTable[i].sh_size)) return -1;
+358-
+359-            data = dataTmp;
+360-            return 0;
+361-        }
+362-    }
+363-    return -2;
+364-}
+365-
+366-unsigned int readSectionUint(const char* name, ifstream& elfFile) {
+367-    vector<char> theBytes;
+368-    int ret = readSectionByName(name, elfFile, theBytes);
+369-    if (ret) {
+370-        ALOGE("Couldn't find section %s.", name);
+371-        abort();
+372-    } else if (theBytes.size() < sizeof(unsigned int)) {
+--
+388-
+389-static int readSectionByType(ifstream& elfFile, int type, vector<char>& data) {
+390-    int ret;
+391-    vector<Elf64_Shdr> shTable;
+392-
+393-    ret = readSectionHeadersAll(elfFile, shTable);
+394-    if (ret) return ret;
+395-
+396-    for (int i = 0; i < (int)shTable.size(); i++) {
+397-        if ((int)shTable[i].sh_type != type) continue;
+398-
+399-        vector<char> dataTmp;
+400-        dataTmp.resize(shTable[i].sh_size);
+401-
+402-        elfFile.seekg(shTable[i].sh_offset);
+403:        if (elfFile.fail()) return -1;
+404-
+405:        if (!elfFile.read((char*)dataTmp.data(), shTable[i].sh_size)) return -1;
+406-
+407-        data = dataTmp;
+408-        return 0;
+409-    }
+410-    return -2;
+411-}
+412-
+413-static bool symCompare(Elf64_Sym a, Elf64_Sym b) {
+414-    return (a.st_value < b.st_value);
+415-}
+416-
+417-static int readSymTab(ifstream& elfFile, int sort, vector<Elf64_Sym>& data) {
+418-    int ret, numElems;
+419-    Elf64_Sym* buf;
+420-    vector<char> secData;
+--
+433-static enum bpf_prog_type getSectionType(string& name) {
+434-    for (auto& snt : sectionNameTypes)
+435-        if (StartsWith(name, snt.name)) return snt.type;
+436-
+437-    return BPF_PROG_TYPE_UNSPEC;
+438-}
+439-
+440-static int readProgDefs(ifstream& elfFile, vector<struct bpf_prog_def>& pd) {
+441-    vector<char> pdData;
+442-    int ret = readSectionByName("progs", elfFile, pdData);
+443-    if (ret) return ret;
+444-
+445-    if (pdData.size() % sizeof(struct bpf_prog_def)) {
+446-        ALOGE("readProgDefs failed due to improper sized progs section, %zu %% %zu != 0",
+447-              pdData.size(), sizeof(struct bpf_prog_def));
+448:        return -1;
+449-    };
+450-
+451-    pd.resize(pdData.size() / sizeof(struct bpf_prog_def));
+452-
+453-    const char* dataPtr = pdData.data();
+454-    for (auto& p : pd) {
+455-        // Copy the structure from the ELF file and move to the next one.
+456-        memcpy(&p, dataPtr, sizeof(struct bpf_prog_def));
+457-        dataPtr += sizeof(struct bpf_prog_def);
+458-    }
+459-    return 0;
+460-}
+461-
+462-static int getSectionSymNames(ifstream& elfFile, const string& sectionName, vector<string>& names,
+463-                              optional<unsigned> symbolType = std::nullopt) {
+--
+475-
+476-    int sec_idx = -1;
+477-    for (int i = 0; i < (int)shTable.size(); i++) {
+478-        ret = getSymName(elfFile, shTable[i].sh_name, name);
+479-        if (ret) return ret;
+480-
+481-        if (!name.compare(sectionName)) {
+482-            sec_idx = i;
+483-            break;
+484-        }
+485-    }
+486-
+487-    // No section found with matching name
+488-    if (sec_idx == -1) {
+489-        ALOGW("No %s section could be found in elf object", sectionName.c_str());
+490:        return -1;
+491-    }
+492-
+493-    for (int i = 0; i < (int)symtab.size(); i++) {
+494-        if (symbolType.has_value() && ELF_ST_TYPE(symtab[i].st_info) != symbolType) continue;
+495-
+496-        if (symtab[i].st_shndx == sec_idx) {
+497-            string s;
+498-            ret = getSymName(elfFile, symtab[i].st_name, s);
+499-            if (ret) return ret;
+500-            names.push_back(s);
+501-        }
+502-    }
+503-
+504-    return 0;
+505-}
+--
+573-        if (cs_temp.data.size() > 0) {
+574-            cs.push_back(std::move(cs_temp));
+575-            ALOGV("Adding section %d to cs list", i);
+576-        }
+577-    }
+578-    return 0;
+579-}
+580-
+581-static int getSymNameByIdx(ifstream& elfFile, int index, string& name) {
+582-    vector<Elf64_Sym> symtab;
+583-    int ret = 0;
+584-
+585-    ret = readSymTab(elfFile, 0 /* !sort */, symtab);
+586-    if (ret) return ret;
+587-
+588:    if (index >= (int)symtab.size()) return -1;
+589-
+590-    return getSymName(elfFile, symtab[index].st_name, name);
+591-}
+592-
+593-static bool mapMatchesExpectations(const unique_fd& fd, const string& mapName,
+594-                                   const struct bpf_map_def& mapDef, const enum bpf_map_type type) {
+595-    // bpfGetFd... family of functions require at minimum a 4.14 kernel,
+596-    // so on 4.9-T kernels just pretend the map matches our expectations.
+597-    // Additionally we'll get almost equivalent test coverage on newer devices/kernels.
+598-    // This is because the primary failure mode we're trying to detect here
+599-    // is either a source code misconfiguration (which is likely kernel independent)
+600-    // or a newly introduced kernel feature/bug (which is unlikely to get backported to 4.9).
+601-    if (!isAtLeastKernelVersion(4, 14, 0)) return true;
+602-
+603-    // Assuming fd is a valid Bpf Map file descriptor then
+--
+652-static int createMaps(const char* elfPath, ifstream& elfFile, vector<unique_fd>& mapFds,
+653-                      const char* prefix, const unsigned int bpfloader_ver) {
+654-    int ret;
+655-    vector<char> mdData;
+656-    vector<struct bpf_map_def> md;
+657-    vector<string> mapNames;
+658-    string objName = pathToObjName(string(elfPath));
+659-
+660-    ret = readSectionByName("maps", elfFile, mdData);
+661-    if (ret == -2) return 0;  // no maps to read
+662-    if (ret) return ret;
+663-
+664-    if (mdData.size() % sizeof(struct bpf_map_def)) {
+665-        ALOGE("createMaps failed due to improper sized maps section, %zu %% %zu != 0",
+666-              mdData.size(), sizeof(struct bpf_map_def));
+667:        return -1;
+668-    };
+669-
+670-    md.resize(mdData.size() / sizeof(struct bpf_map_def));
+671-
+672-    const char* dataPtr = mdData.data();
+673-    for (auto& m : md) {
+674-        // Copy the structure from the ELF file and move to the next one.
+675-        memcpy(&m, dataPtr, sizeof(struct bpf_map_def));
+676-        dataPtr += sizeof(struct bpf_map_def);
+677-    }
+678-
+679-    ret = getSectionSymNames(elfFile, "maps", mapNames);
+680-    if (ret) return ret;
+681-
+682-    unsigned kvers = kernelVersion();
+--
+1009-            static char log_buf[1 << 20];  // 1 MiB logging buffer
+1010-
+1011-            union bpf_attr req = {
+1012-              .prog_type = cs[i].type,
+1013-              .insn_cnt = static_cast<__u32>(cs[i].data.size() / sizeof(struct bpf_insn)),
+1014-              .insns = ptr_to_u64(cs[i].data.data()),
+1015-              .license = ptr_to_u64(license.c_str()),
+1016-              .log_level = 1,
+1017-              .log_size = sizeof(log_buf),
+1018-              .log_buf = ptr_to_u64(log_buf),
+1019-              .kern_version = kvers,
+1020-              .expected_attach_type = cs[i].attach_type,
+1021-            };
+1022-            if (isAtLeastKernelVersion(4, 15, 0))
+1023-                strlcpy(req.prog_name, cs[i].name.c_str(), sizeof(req.prog_name));
+1024:            fd.reset(bpf(BPF_PROG_LOAD, req));
+1025-
+1026-            // Kernel should have NULL terminated the log buffer, but force it anyway for safety
+1027-            log_buf[sizeof(log_buf) - 1] = 0;
+1028-
+1029-            // Strip out final newline if present
+1030-            int log_chars = strlen(log_buf);
+1031-            if (log_chars && log_buf[log_chars - 1] == '\n') log_buf[--log_chars] = 0;
+1032-
+1033-            bool log_oneline = !strchr(log_buf, '\n');
+1034-
+1035:            ALOGD("BPF_PROG_LOAD call for %s (%s) returned '%s' fd: %d (%s)", elfPath,
+1036-                  cs[i].name.c_str(), log_oneline ? log_buf : "{multiline}",
+1037-                  fd.get(), (!fd.ok() ? std::strerror(errno) : "ok"));
+1038-
+1039-            if (!fd.ok()) {
+1040-                // kernel NULL terminates log_buf, so this checks for non-empty string
+1041-                if (log_buf[0]) {
+1042-                    vector<string> lines = Split(log_buf, "\n");
+1043-
+1044:                    ALOGW("BPF_PROG_LOAD - BEGIN log_buf contents:");
+1045-                    for (const auto& line : lines) ALOGW("%s", line.c_str());
+1046:                    ALOGW("BPF_PROG_LOAD - END log_buf contents.");
+1047-                }
+1048-
+1049-                if (cs[i].prog_def->optional) {
+1050-                    ALOGW("failed program %s is marked optional - continuing...",
+1051-                          cs[i].name.c_str());
+1052-                    continue;
+1053-                }
+1054:                ALOGE("non-optional program %s failed to load.", cs[i].name.c_str());
+1055-            }
+1056-        }
+1057-
+1058-        if (!fd.ok()) return fd.get();
+1059-
+1060-        if (!reuse) {
+1061-            if (specified(selinux_context)) {
+1062-                string createLoc = string(BPF_FS_PATH) + lookupPinSubdir(selinux_context) +
+1063-                                   "tmp_prog_" + objName + '_' + string(name);
+1064-                ret = bpfFdPin(fd, createLoc.c_str());
+1065-                if (ret) {
+1066-                    int err = errno;
+1067-                    ALOGE("create %s -> %d [%d:%s]", createLoc.c_str(), ret, err, strerror(err));
+1068-                    return -err;
+1069-                }
+--
+1104-            ALOGI("prog %s id %d", progPinLoc.c_str(), progId);
+1105-        }
+1106-    }
+1107-
+1108-    return 0;
+1109-}
+1110-
+1111-int loadProg(const char* const elfPath, const unsigned int bpfloader_ver,
+1112-             const char* const prefix) {
+1113-    vector<char> license;
+1114-    vector<codeSection> cs;
+1115-    vector<unique_fd> mapFds;
+1116-    int ret;
+1117-
+1118-    ifstream elfFile(elfPath, ios::in | ios::binary);
+1119:    if (!elfFile.is_open()) return -1;
+1120-
+1121-    ret = readSectionByName("license", elfFile, license);
+1122-    if (ret) {
+1123-        ALOGE("Couldn't find license in %s", elfPath);
+1124-        return ret;
+1125-    } else {
+1126-        ALOGD("Loading ELF object %s with license %s",
+1127-              elfPath, (char*)license.data());
+1128-    }
+1129-
+1130-    unsigned int bpfLoaderMinVer = readSectionUint("bpfloader_min_ver", elfFile);
+1131-    unsigned int bpfLoaderMaxVer = readSectionUint("bpfloader_max_ver", elfFile);
+1132-
+1133-    // inclusive lower bound check
+1134-    if (bpfloader_ver < bpfLoaderMinVer) {
+--
+1285-    }
+1286-    return 0;
+1287-}
+1288-
+1289-#define APEX_MOUNT_POINT "/apex/com.android.tethering"
+1290-const char * const platformBpfLoader = "/system/bin/bpfloader";
+1291-const char *const uprobestatsBpfLoader =
+1292-    "/apex/com.android.uprobestats/bin/uprobestatsbpfload";
+1293-
+1294-static int logTetheringApexVersion(void) {
+1295-    char * found_blockdev = NULL;
+1296-    FILE * f = NULL;
+1297-    char buf[4096];
+1298-
+1299-    f = fopen("/proc/mounts", "re");
+1300:    if (!f) return 1;
+1301-
+1302-    // /proc/mounts format: block_device [space] mount_point [space] other stuff... newline
+1303-    while (fgets(buf, sizeof(buf), f)) {
+1304-        char * blockdev = buf;
+1305-        char * space = strchr(blockdev, ' ');
+1306-        if (!space) continue;
+1307-        *space = '\0';
+1308-        char * mntpath = space + 1;
+1309-        space = strchr(mntpath, ' ');
+1310-        if (!space) continue;
+1311-        *space = '\0';
+1312-        if (strcmp(mntpath, APEX_MOUNT_POINT)) continue;
+1313-        found_blockdev = strdup(blockdev);
+1314-        break;
+1315-    }
+--
+1429-    // Version of Network BpfLoader depends on the Android OS version
+1430-    unsigned int bpfloader_ver = BPFLOADER_MAINLINE_VERSION;  // [42u]
+1431-    if (isAtLeastT) ++bpfloader_ver;     // [43] BPFLOADER_MAINLINE_T_VERSION
+1432-    if (isAtLeastU) ++bpfloader_ver;     // [44] BPFLOADER_MAINLINE_U_VERSION
+1433-    if (runningAsRoot) ++bpfloader_ver;  // [45] BPFLOADER_MAINLINE_U_QPR3_VERSION
+1434-    if (isAtLeastV) ++bpfloader_ver;     // [46] BPFLOADER_MAINLINE_V_VERSION
+1435-    if (isAtLeastW) ++bpfloader_ver;     // [47] BPFLOADER_MAINLINE_W_VERSION
+1436-
+1437-    ALOGI("NetBpfLoad v0.%u (%s) api:%d/%d kver:%07x (%s) uid:%d rc:%d%d",
+1438-          bpfloader_ver, argv[0], android_get_device_api_level(), effective_api_level,
+1439-          kernelVersion(), describeArch(), getuid(),
+1440-          has_platform_bpfloader_rc, has_platform_netbpfload_rc);
+1441-
+1442-    if (!has_platform_bpfloader_rc && !has_platform_netbpfload_rc) {
+1443-        ALOGE("Unable to find platform's bpfloader & netbpfload init scripts.");
+1444:        return 1;
+1445-    }
+1446-
+1447-    if (has_platform_bpfloader_rc && has_platform_netbpfload_rc) {
+1448-        ALOGE("Platform has *both* bpfloader & netbpfload init scripts.");
+1449:        return 1;
+1450-    }
+1451-
+1452-    logTetheringApexVersion();
+1453-
+1454-    if (!isAtLeastT) {
+1455-        ALOGE("Impossible - not reachable on Android <T.");
+1456:        return 1;
+1457-    }
+1458-
+1459-    // both S and T require kernel 4.9 (and eBpf support)
+1460-    if (isAtLeastT && !isAtLeastKernelVersion(4, 9, 0)) {
+1461-        ALOGW("Android T requires kernel 4.9.");
+1462-    }
+1463-
+1464-    // U bumps the kernel requirement up to 4.14
+1465-    if (isAtLeastU && !isAtLeastKernelVersion(4, 14, 0)) {
+1466-        ALOGW("Android U requires kernel 4.14.");
+1467-    }
+1468-
+1469-    // V bumps the kernel requirement up to 4.19
+1470-    // see also: //system/netd/tests/kernel_test.cpp TestKernel419
+1471-    if (isAtLeastV && !isAtLeastKernelVersion(4, 19, 0)) {
+1472-        ALOGW("Android V requires kernel 4.19.");
+1473-    }
+1474-
+1475-    // Technically already required by U, but only enforce on V+
+1476-    // see also: //system/netd/tests/kernel_test.cpp TestKernel64Bit
+1477-    if (isAtLeastV && isKernel32Bit() && isAtLeastKernelVersion(5, 16, 0)) {
+1478-        ALOGE("Android V+ platform with 32 bit kernel version >= 5.16.0 is unsupported");
+1479:        if (!isTV()) return 1;
+1480-    }
+1481-
+1482-    // 6.6 is highest version supported by Android V, so this is effectively W+ (sdk=36+)
+1483-    if (isKernel32Bit() && isAtLeastKernelVersion(6, 7, 0)) {
+1484-        ALOGE("Android platform with 32 bit kernel version >= 6.7.0 is unsupported");
+1485:        return 1;
+1486-    }
+1487-
+1488-    // Various known ABI layout issues, particularly wrt. bpf and ipsec/xfrm.
+1489-    if (isAtLeastV && isKernel32Bit() && isX86()) {
+1490-        ALOGE("Android V requires X86 kernel to be 64-bit.");
+1491:        if (!isTV()) return 1;
+1492-    }
+1493-
+1494-    if (isAtLeastV) {
+1495-        bool bad = false;
+1496-
+1497-        if (!isLtsKernel()) {
+1498-            ALOGW("Android V only supports LTS kernels.");
+1499-            bad = true;
+1500-        }
+1501-
+1502-#define REQUIRE(maj, min, sub) \
+1503-        if (isKernelVersion(maj, min) && !isAtLeastKernelVersion(maj, min, sub)) { \
+1504-            ALOGW("Android V requires %d.%d kernel to be %d.%d.%d+.", maj, min, maj, min, sub); \
+1505-            bad = true; \
+1506-        }
+--
+1543-     * and 32-bit userspace on 64-bit kernel bpf ringbuffer compatibility is broken.
+1544-     * Note, however, that TV and Wear devices will continue to support 32-bit userspace
+1545-     * on ARM64.
+1546-     */
+1547-    if (isUserspace32bit() && isAtLeastKernelVersion(6, 2, 0)) {
+1548-        // Stuff won't work reliably, but...
+1549-        if (isArm() && (isTV() || isWear())) {
+1550-            // exempt Arm TV or Wear devices (arm32 ABI is far less problematic than x86-32)
+1551-            ALOGW("[Arm TV/Wear] 32-bit userspace unsupported on 6.2+ kernels.");
+1552-        } else if (first_api_level <= __ANDROID_API_T__ && isArm()) {
+1553-            // also exempt Arm devices upgrading with major kernel rev from T-
+1554-            // might possibly be better for them to run with a newer kernel...
+1555-            ALOGW("[Arm KernelUpRev] 32-bit userspace unsupported on 6.2+ kernels.");
+1556-        } else if (isArm()) {
+1557-            ALOGE("[Arm] 64-bit userspace required on 6.2+ kernels (%d).", first_api_level);
+1558:            return 1;
+1559-        } else { // x86 since RiscV cannot be 32-bit
+1560-            ALOGE("[x86] 64-bit userspace required on 6.2+ kernels.");
+1561:            return 1;
+1562-        }
+1563-    }
+1564-
+1565-    // On handheld, 6.6 is highest version supported by Android V (sdk=35), so this is for sdk=36+
+1566-    if (!isArm() && isUserspace32bit() && isAtLeastKernelVersion(6, 7, 0)) {
+1567-        ALOGE("64-bit userspace required on 6.7+ kernels.");
+1568:        return 1;
+1569-    }
+1570-
+1571-    // Ensure we can determine the Android build type.
+1572-    if (!isEng() && !isUser() && !isUserdebug()) {
+1573-        ALOGE("Failed to determine the build type: got %s, want 'eng', 'user', or 'userdebug'",
+1574-              getBuildType().c_str());
+1575:        return 1;
+1576-    }
+1577-
+1578-    if (runningAsRoot) {
+1579-        // Note: writing this proc file requires being root (always the case on V+)
+1580-
+1581-        // Linux 5.16-rc1 changed the default to 2 (disabled but changeable),
+1582-        // but we need 0 (enabled)
+1583-        // (this writeFile is known to fail on at least 4.19, but always defaults to 0 on
+1584-        // pre-5.13, on 5.13+ it depends on CONFIG_BPF_UNPRIV_DEFAULT_OFF)
+1585-        if (writeProcSysFile("/proc/sys/kernel/unprivileged_bpf_disabled", "0\n") &&
+1586:            isAtLeastKernelVersion(5, 13, 0)) return 1;
+1587-    }
+1588-
+1589-    if (isAtLeastU) {
+1590-        // Note: writing these proc files requires CAP_NET_ADMIN
+1591-        // and sepolicy which is only present on U+,
+1592-        // on Android T and earlier versions they're written from the 'load_bpf_programs'
+1593-        // trigger (ie. by init itself) instead.
+1594-
+1595-        // Enable the eBPF JIT -- but do note that on 64-bit kernels it is likely
+1596-        // already force enabled by the kernel config option BPF_JIT_ALWAYS_ON.
+1597-        // (Note: this (open) will fail with ENOENT 'No such file or directory' if
+1598-        //  kernel does not have CONFIG_BPF_JIT=y)
+1599-        // BPF_JIT is required by R VINTF (which means 4.14/4.19/5.4 kernels),
+1600-        // but 4.14/4.19 were released with P & Q, and only 5.4 is new in R+.
+1601-        if (writeProcSysFile("/proc/sys/net/core/bpf_jit_enable", "1\n") &&
+1602:            android::bpf::isAtLeastKernelVersion(4, 14, 0)) return 1;
+1603-
+1604-        // Enable JIT kallsyms export for privileged users only
+1605-        // (Note: this (open) will fail with ENOENT 'No such file or directory' if
+1606-        //  kernel does not have CONFIG_HAVE_EBPF_JIT=y)
+1607-        if (writeProcSysFile("/proc/sys/net/core/bpf_jit_kallsyms", "1\n") &&
+1608:            android::bpf::isAtLeastKernelVersion(4, 14, 0)) return 1;
+1609-    }
+1610-
+1611-    // Create all the pin subdirectories
+1612-    // (this must be done first to allow selinux_context and pin_subdir functionality,
+1613-    //  which could otherwise fail with ENOENT during object pinning or renaming,
+1614-    //  due to ordering issues)
+1615-    for (const auto& location : locations) {
+1616:        if (createSysFsBpfSubDir(location.prefix)) return 1;
+1617-    }
+1618-
+1619-    // Note: there's no actual src dir for fs_bpf_loader .o's,
+1620-    // so it is not listed in 'locations[].prefix'.
+1621-    // This is because this is primarily meant for triggering genfscon rules,
+1622-    // and as such this will likely always be the case.
+1623-    // Thus we need to manually create the /sys/fs/bpf/loader subdirectory.
+1624:    if (createSysFsBpfSubDir("loader")) return 1;
+1625-
+1626-    // Load all ELF objects, create programs and maps, and pin them
+1627-    for (const auto& location : locations) {
+1628-        if (loadAllElfObjects(bpfloader_ver, location) != 0) {
+1629-            ALOGE("=== CRITICAL FAILURE LOADING BPF PROGRAMS FROM %s ===", location.dir);
+1630-            ALOGE("If this triggers reliably, you're probably missing kernel options or patches.");
+1631-            ALOGE("If this triggers randomly, you might be hitting some memory allocation "
+1632-                  "problems or startup script race.");
+1633-            ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
+1634-            sleep(20);
+1635-            return 2;
+1636-        }
+1637-    }
+1638-
+1639-    int key = 1;
+1640-    int value = 123;
+1641-    unique_fd map(
+1642-            createMap(BPF_MAP_TYPE_ARRAY, sizeof(key), sizeof(value), 2, 0));
+1643-    if (writeToMapEntry(map, &key, &value, BPF_ANY)) {
+1644-        ALOGE("Critical kernel bug - failure to write into index 1 of 2 element bpf map array.");
+1645:        return 1;
+1646-    }
+1647-
+1648-    // leave a flag that we're done
+1649:    if (createSysFsBpfSubDir("netd_shared/mainline_done")) return 1;
+1650-
+1651-    // platform bpfloader will only succeed when run as root
+1652-    if (!runningAsRoot) {
+1653-        // unreachable on U QPR3+ which always runs netbpfload as root
+1654-
+1655-        ALOGI("mainline done, no need to transfer control to platform bpf loader.");
+1656-        return 0;
+1657-    }
+1658-
+1659-    // unreachable before U QPR3
+1660-    {
+1661-      ALOGI("done, transferring control to uprobestatsbpfload.");
+1662-      const char *args[] = {
+1663-          uprobestatsBpfLoader,
+1664-          NULL,
+1665-      };
+1666-      execve(args[0], (char **)args, envp);
+1667-    }
+1668-
+1669-    ALOGI("unable to execute uprobestatsbpfload, transferring control to "
+1670-          "platform bpfloader.");
+1671-    // platform BpfLoader *needs* to run as root
+1672-    const char * args[] = { platformBpfLoader, NULL, };
+1673-    execve(args[0], (char**)args, envp);
+1674-    ALOGE("FATAL: execve('%s'): %d[%s]", platformBpfLoader, errno, strerror(errno));
+1675:    return 1;
+1676-}
+1677-
+1678-}  // namespace bpf
+1679-}  // namespace android
+1680-
+1681-int main(int argc, char** argv, char * const envp[]) {
+1682-    InitLogging(argv, &KernelLogger);
+1683-
+1684-    if (argc == 2 && !strcmp(argv[1], "done")) {
+1685-        // we're being re-exec'ed from platform bpfloader to 'finalize' things
+1686-        if (!SetProperty("bpf.progs_loaded", "1")) {
+1687-            ALOGE("Failed to set bpf.progs_loaded property to 1.");
+1688-            return 125;
+1689-        }
+1690-        ALOGI("success.");
