@@ -1,0 +1,153 @@
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-76-    void AddSectionParser(const std::string& name, std::unique_ptr<SectionParser> parser);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-77-    void AddSingleLineParser(const std::string& prefix, LineCallback callback);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-78-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-79-    // Host init verifier check file permissions.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-80-    bool ParseConfigFileInsecure(const std::string& path, bool follow_symlinks);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-81-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-82-    size_t parse_error_count() const { return parse_error_count_; }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-83-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-84-  private:
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-85-    void ParseData(const std::string& filename, std::string* data);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h:86:    bool ParseConfigDir(const std::string& path);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-87-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-88-    std::map<std::string, std::unique_ptr<SectionParser>> section_parsers_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-89-    std::vector<std::pair<std::string, LineCallback>> line_callbacks_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-90-    size_t parse_error_count_ = 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-91-};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-92-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-93-}  // namespace init
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-94-}  // namespace android
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-95-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.h-96-#endif
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-475-                               apex_name.c_str(),   "--strict"};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-476-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-477-    if (logwrap_fork_execvp(arraysize(arguments), arguments, nullptr, false, LOG_KLOG, false,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-478-                            nullptr) != 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-479-        return ErrnoError() << "failed to execute linkerconfig";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-480-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-481-    LOG(INFO) << "Generated linker configuration for " << apex_name;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-482-    return {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-483-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-484-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:485:static Result<void> DoLoadApex(const std::string& apex_name) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-486-    if (auto result = ParseRcScriptsFromApex(apex_name); !result.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-487-        return result.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-488-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-489-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-490-    if (auto result = UpdateApexLinkerConfig(apex_name); !result.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-491-        return result.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-492-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-493-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-494-    return {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-495-}
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-513-        {"restart",           DoControlRestart},
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-514-    };
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-515-    // clang-format on
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-516-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-517-    return control_message_functions;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-518-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-519-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-520-static Result<void> HandleApexControlMessage(std::string_view action, const std::string& name,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-521-                                             std::string_view message) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-522-    if (action == "load") {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:523:        return DoLoadApex(name);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-524-    } else if (action == "unload") {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-525-        return DoUnloadApex(name);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-526-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-527-        return Error() << "Unknown control msg '" << message << "'";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-528-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-529-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-530-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-531-static bool HandleControlMessage(std::string_view message, const std::string& name,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-532-                                 pid_t from_pid) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-533-    std::string cmdline_path = StringPrintf("proc/%d/cmdline", from_pid);
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-84-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-85-static bool IsBooting() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-86-    return access("/dev/.booting", F_OK) == 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-87-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-88-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-89-static bool IsApexActivated() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-90-    static bool apex_activated = []() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-91-        // Wait for com.android.runtime.apex activation
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-92-        // Property name and value must be kept in sync with system/apexd/apex/apex_constants.h
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-93-        // 60s is the default firmware sysfs fallback timeout. (/sys/class/firmware/timeout)
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp:94:        if (!WaitForProperty("apexd.status", "activated", 60s)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-95-            LOG(ERROR) << "Apexd activation wait timeout";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-96-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-97-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-98-        return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-99-    }();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-100-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-101-    return apex_activated;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-102-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-103-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-104-static bool NeedsRerunExternalHandler() {
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-35-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-36-namespace android {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-37-namespace init {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-38-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-39-static Result<std::vector<std::string>> CollectRcScriptsFromApex(
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-40-        const std::string& apex_name, const std::set<std::string>& skip_apexes) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-41-    glob_t glob_result;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-42-    // Pattern uses "*rc" instead of ".rc" because APEXes can have versioned RC files
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-43-    // like foo.34rc.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-44-    std::string glob_pattern =
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp:45:            apex_name.empty() ? "/apex/*/etc/*rc" : "/apex/" + apex_name + "/etc/*rc";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-46-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-47-    const int ret = glob(glob_pattern.c_str(), GLOB_MARK, nullptr, &glob_result);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-48-    if (ret != 0 && ret != GLOB_NOMATCH) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-49-        globfree(&glob_result);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-50-        return Error() << "Glob pattern '" << glob_pattern << "' failed";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-51-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-52-    std::vector<std::string> configs;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-53-    for (size_t i = 0; i < glob_result.gl_pathc; i++) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-54-        std::string path = glob_result.gl_pathv[i];
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/apex_init_util.cpp-55-
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-149-        return Error() << "Unable to read config file '" << path
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-150-                       << "': " << config_contents.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-151-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-152-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-153-    ParseData(path, &config_contents.value());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-154-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-155-    LOG(VERBOSE) << "(Parsing " << path << " took " << t << ".)";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-156-    return {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-157-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-158-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp:159:bool Parser::ParseConfigDir(const std::string& path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-160-    LOG(INFO) << "Parsing directory " << path << "...";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-161-    std::unique_ptr<DIR, decltype(&closedir)> config_dir(opendir(path.c_str()), closedir);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-162-    if (!config_dir) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-163-        PLOG(INFO) << "Could not import directory '" << path << "'";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-164-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-165-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-166-    dirent* current_file;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-167-    std::vector<std::string> files;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-168-    while ((current_file = readdir(config_dir.get()))) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-169-        // Ignore directories and only process regular files.
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-178-    for (const auto& file : files) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-179-        if (auto result = ParseConfigFile(file); !result.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-180-            LOG(ERROR) << "could not import file '" << file << "': " << result.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-181-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-182-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-183-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-184-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-185-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-186-bool Parser::ParseConfig(const std::string& path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-187-    if (is_dir(path.c_str())) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp:188:        return ParseConfigDir(path);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-189-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-190-    auto result = ParseConfigFile(path);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-191-    if (!result.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-192-        LOG(INFO) << result.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-193-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-194-    return result.ok();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-195-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-196-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-197-}  // namespace init
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-198-}  // namespace android
