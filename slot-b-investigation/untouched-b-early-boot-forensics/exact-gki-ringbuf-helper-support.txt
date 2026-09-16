@@ -1,0 +1,1277 @@
+===== RINGBUF MAP TYPE =====
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-944-	BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE,
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-945-	BPF_MAP_TYPE_QUEUE,
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-946-	BPF_MAP_TYPE_STACK,
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-947-	BPF_MAP_TYPE_SK_STORAGE,
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-948-	BPF_MAP_TYPE_DEVMAP_HASH,
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-949-	BPF_MAP_TYPE_STRUCT_OPS,
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h:950:	BPF_MAP_TYPE_RINGBUF,
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-951-	BPF_MAP_TYPE_INODE_STORAGE,
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-952-	BPF_MAP_TYPE_TASK_STORAGE,
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-953-	BPF_MAP_TYPE_BLOOM_FILTER,
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-954-	BPF_MAP_TYPE_USER_RINGBUF,
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-955-};
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-956-
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6479-		    func_id != BPF_FUNC_perf_event_output &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6480-		    func_id != BPF_FUNC_skb_output &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6481-		    func_id != BPF_FUNC_perf_event_read_value &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6482-		    func_id != BPF_FUNC_xdp_output)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6483-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6484-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c:6485:	case BPF_MAP_TYPE_RINGBUF:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6486-		if (func_id != BPF_FUNC_ringbuf_output &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6487-		    func_id != BPF_FUNC_ringbuf_reserve &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6488-		    func_id != BPF_FUNC_ringbuf_query &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6489-		    func_id != BPF_FUNC_ringbuf_reserve_dynptr &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6490-		    func_id != BPF_FUNC_ringbuf_submit_dynptr &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6491-		    func_id != BPF_FUNC_ringbuf_discard_dynptr)
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6606-	case BPF_FUNC_ringbuf_output:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6607-	case BPF_FUNC_ringbuf_reserve:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6608-	case BPF_FUNC_ringbuf_query:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6609-	case BPF_FUNC_ringbuf_reserve_dynptr:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6610-	case BPF_FUNC_ringbuf_submit_dynptr:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6611-	case BPF_FUNC_ringbuf_discard_dynptr:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c:6612:		if (map->map_type != BPF_MAP_TYPE_RINGBUF)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6613-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6614-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6615-	case BPF_FUNC_user_ringbuf_drain:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6616-		if (map->map_type != BPF_MAP_TYPE_USER_RINGBUF)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6617-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6618-		break;
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-12978-		case BPF_MAP_TYPE_ARRAY:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-12979-		case BPF_MAP_TYPE_PERCPU_HASH:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-12980-		case BPF_MAP_TYPE_PERCPU_ARRAY:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-12981-		case BPF_MAP_TYPE_LRU_PERCPU_HASH:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-12982-		case BPF_MAP_TYPE_ARRAY_OF_MAPS:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-12983-		case BPF_MAP_TYPE_HASH_OF_MAPS:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c:12984:		case BPF_MAP_TYPE_RINGBUF:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-12985-		case BPF_MAP_TYPE_USER_RINGBUF:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-12986-		case BPF_MAP_TYPE_INODE_STORAGE:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-12987-		case BPF_MAP_TYPE_SK_STORAGE:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-12988-		case BPF_MAP_TYPE_TASK_STORAGE:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-12989-			break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-12990-		default:
+
+===== RINGBUF HELPERS =====
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-386-bpf_ringbuf_restore_from_rec(struct bpf_ringbuf_hdr *hdr)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-387-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-388-	unsigned long addr = (unsigned long)(void *)hdr;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-389-	unsigned long off = (unsigned long)hdr->pg_off << PAGE_SHIFT;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-390-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-391-	return (void*)((addr & PAGE_MASK) - off);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-392-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-393-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:394:static void *__bpf_ringbuf_reserve(struct bpf_ringbuf *rb, u64 size)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-395-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-396-	unsigned long cons_pos, prod_pos, new_prod_pos, pend_pos, flags;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-397-	struct bpf_ringbuf_hdr *hdr;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-398-	u32 len, pg_off, tmp_size, hdr_len;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-399-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-400-	if (unlikely(size > RINGBUF_MAX_RECORD_SZ))
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-401-		return NULL;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-402-
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-448-	/* pairs with consumer's smp_load_acquire() */
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-449-	smp_store_release(&rb->producer_pos, new_prod_pos);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-450-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-451-	raw_spin_unlock_irqrestore(&rb->spinlock, flags);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-452-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-453-	return (void *)hdr + BPF_RINGBUF_HDR_SZ;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-454-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-455-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:456:BPF_CALL_3(bpf_ringbuf_reserve, struct bpf_map *, map, u64, size, u64, flags)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-457-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-458-	struct bpf_ringbuf_map *rb_map;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-459-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-460-	if (unlikely(flags))
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-461-		return 0;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-462-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-463-	rb_map = container_of(map, struct bpf_ringbuf_map, map);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:464:	return (unsigned long)__bpf_ringbuf_reserve(rb_map->rb, size);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-465-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-466-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:467:const struct bpf_func_proto bpf_ringbuf_reserve_proto = {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:468:	.func		= bpf_ringbuf_reserve,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-469-	.ret_type	= RET_PTR_TO_ALLOC_MEM_OR_NULL,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-470-	.arg1_type	= ARG_CONST_MAP_PTR,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-471-	.arg2_type	= ARG_CONST_ALLOC_SIZE_OR_ZERO,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-472-	.arg3_type	= ARG_ANYTHING,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-473-};
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-474-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-475-static void bpf_ringbuf_commit(void *sample, u64 flags, bool discard)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-476-{
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-495-	cons_pos = smp_load_acquire(&rb->consumer_pos) & rb->mask;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-496-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-497-	if (flags & BPF_RB_FORCE_WAKEUP)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-498-		irq_work_queue(&rb->work);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-499-	else if (cons_pos == rec_pos && !(flags & BPF_RB_NO_WAKEUP))
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-500-		irq_work_queue(&rb->work);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-501-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-502-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:503:BPF_CALL_2(bpf_ringbuf_submit, void *, sample, u64, flags)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-504-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-505-	bpf_ringbuf_commit(sample, flags, false /* discard */);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-506-	return 0;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-507-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-508-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:509:const struct bpf_func_proto bpf_ringbuf_submit_proto = {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:510:	.func		= bpf_ringbuf_submit,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-511-	.ret_type	= RET_VOID,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-512-	.arg1_type	= ARG_PTR_TO_ALLOC_MEM | OBJ_RELEASE,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-513-	.arg2_type	= ARG_ANYTHING,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-514-};
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-515-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-516-BPF_CALL_2(bpf_ringbuf_discard, void *, sample, u64, flags)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-517-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-518-	bpf_ringbuf_commit(sample, flags, true /* discard */);
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-531-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-532-	struct bpf_ringbuf_map *rb_map;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-533-	void *rec;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-534-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-535-	if (unlikely(flags & ~(BPF_RB_NO_WAKEUP | BPF_RB_FORCE_WAKEUP)))
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-536-		return -EINVAL;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-537-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-538-	rb_map = container_of(map, struct bpf_ringbuf_map, map);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:539:	rec = __bpf_ringbuf_reserve(rb_map->rb, size);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-540-	if (!rec)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-541-		return -EAGAIN;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-542-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-543-	memcpy(rec, data, size);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-544-	bpf_ringbuf_commit(rec, flags, false /* discard */);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-545-	return 0;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-546-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-547-
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-576-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-577-const struct bpf_func_proto bpf_ringbuf_query_proto = {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-578-	.func		= bpf_ringbuf_query,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-579-	.ret_type	= RET_INTEGER,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-580-	.arg1_type	= ARG_CONST_MAP_PTR,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-581-	.arg2_type	= ARG_ANYTHING,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-582-};
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-583-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:584:BPF_CALL_4(bpf_ringbuf_reserve_dynptr, struct bpf_map *, map, u32, size, u64, flags,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-585-	   struct bpf_dynptr_kern *, ptr)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-586-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-587-	struct bpf_ringbuf_map *rb_map;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-588-	void *sample;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-589-	int err;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-590-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-591-	if (unlikely(flags)) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-592-		bpf_dynptr_set_null(ptr);
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-596-	err = bpf_dynptr_check_size(size);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-597-	if (err) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-598-		bpf_dynptr_set_null(ptr);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-599-		return err;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-600-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-601-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-602-	rb_map = container_of(map, struct bpf_ringbuf_map, map);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-603-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:604:	sample = __bpf_ringbuf_reserve(rb_map->rb, size);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-605-	if (!sample) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-606-		bpf_dynptr_set_null(ptr);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-607-		return -EINVAL;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-608-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-609-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-610-	bpf_dynptr_init(ptr, sample, BPF_DYNPTR_TYPE_RINGBUF, 0, size);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-611-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-612-	return 0;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-613-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-614-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:615:const struct bpf_func_proto bpf_ringbuf_reserve_dynptr_proto = {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:616:	.func		= bpf_ringbuf_reserve_dynptr,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-617-	.ret_type	= RET_INTEGER,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-618-	.arg1_type	= ARG_CONST_MAP_PTR,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-619-	.arg2_type	= ARG_ANYTHING,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-620-	.arg3_type	= ARG_ANYTHING,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-621-	.arg4_type	= ARG_PTR_TO_DYNPTR | DYNPTR_TYPE_RINGBUF | MEM_UNINIT,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-622-};
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-623-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:624:BPF_CALL_2(bpf_ringbuf_submit_dynptr, struct bpf_dynptr_kern *, ptr, u64, flags)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-625-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-626-	if (!ptr->data)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-627-		return 0;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-628-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-629-	bpf_ringbuf_commit(ptr->data, flags, false /* discard */);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-630-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-631-	bpf_dynptr_set_null(ptr);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-632-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-633-	return 0;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-634-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-635-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:636:const struct bpf_func_proto bpf_ringbuf_submit_dynptr_proto = {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c:637:	.func		= bpf_ringbuf_submit_dynptr,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-638-	.ret_type	= RET_VOID,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-639-	.arg1_type	= ARG_PTR_TO_DYNPTR | DYNPTR_TYPE_RINGBUF | OBJ_RELEASE,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-640-	.arg2_type	= ARG_ANYTHING,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-641-};
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-642-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-643-BPF_CALL_2(bpf_ringbuf_discard_dynptr, struct bpf_dynptr_kern *, ptr, u64, flags)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-644-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/ringbuf.c-645-	if (!ptr->data)
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1623-		return &bpf_ktime_get_ns_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1624-	case BPF_FUNC_ktime_get_boot_ns:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1625-		return &bpf_ktime_get_boot_ns_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1626-	case BPF_FUNC_ktime_get_tai_ns:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1627-		return &bpf_ktime_get_tai_ns_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1628-	case BPF_FUNC_ringbuf_output:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1629-		return &bpf_ringbuf_output_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1630-	case BPF_FUNC_ringbuf_reserve:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c:1631:		return &bpf_ringbuf_reserve_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1632-	case BPF_FUNC_ringbuf_submit:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c:1633:		return &bpf_ringbuf_submit_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1634-	case BPF_FUNC_ringbuf_discard:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1635-		return &bpf_ringbuf_discard_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1636-	case BPF_FUNC_ringbuf_query:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1637-		return &bpf_ringbuf_query_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1638-	case BPF_FUNC_strncmp:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1639-		return &bpf_strncmp_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1640-	case BPF_FUNC_strtol:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1641-		return &bpf_strtol_proto;
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1671-		return &bpf_kptr_xchg_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1672-	case BPF_FUNC_for_each_map_elem:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1673-		return &bpf_for_each_map_elem_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1674-	case BPF_FUNC_loop:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1675-		return &bpf_loop_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1676-	case BPF_FUNC_user_ringbuf_drain:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1677-		return &bpf_user_ringbuf_drain_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1678-	case BPF_FUNC_ringbuf_reserve_dynptr:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c:1679:		return &bpf_ringbuf_reserve_dynptr_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1680-	case BPF_FUNC_ringbuf_submit_dynptr:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c:1681:		return &bpf_ringbuf_submit_dynptr_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1682-	case BPF_FUNC_ringbuf_discard_dynptr:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1683-		return &bpf_ringbuf_discard_dynptr_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1684-	case BPF_FUNC_dynptr_from_mem:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1685-		return &bpf_dynptr_from_mem_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1686-	case BPF_FUNC_dynptr_read:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1687-		return &bpf_dynptr_read_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1688-	case BPF_FUNC_dynptr_write:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1689-		return &bpf_dynptr_write_proto;
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4266- *
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4267- * 		An adaptive notification is a notification sent whenever the user-space
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4268- * 		process has caught up and consumed all available payloads. In case the user-space
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4269- * 		process is still processing a previous payload, then no notification is needed
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4270- * 		as it will process the newly added payload automatically.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4271- * 	Return
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4272- * 		0 on success, or a negative error in case of failure.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4273- *
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h:4274: * void *bpf_ringbuf_reserve(void *ringbuf, u64 size, u64 flags)
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4275- * 	Description
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4276- * 		Reserve *size* bytes of payload in a ring buffer *ringbuf*.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4277- * 		*flags* must be 0.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4278- * 	Return
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4279- * 		Valid pointer with *size* bytes of memory available; NULL,
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4280- * 		otherwise.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4281- *
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h:4282: * void bpf_ringbuf_submit(void *data, u64 flags)
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4283- * 	Description
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4284- * 		Submit reserved ring buffer sample, pointed to by *data*.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4285- * 		If **BPF_RB_NO_WAKEUP** is specified in *flags*, no notification
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4286- * 		of new data availability is sent.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4287- * 		If **BPF_RB_FORCE_WAKEUP** is specified in *flags*, notification
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4288- * 		of new data availability is sent unconditionally.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4289- * 		If **0** is specified in *flags*, an adaptive notification
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-4290- * 		of new data availability is sent.
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5291- *
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5292- *		*data* must be a ptr to a map value.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5293- *		The maximum *size* supported is DYNPTR_MAX_SIZE.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5294- *		*flags* is currently unused.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5295- *	Return
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5296- *		0 on success, -E2BIG if the size exceeds DYNPTR_MAX_SIZE,
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5297- *		-EINVAL if flags is not 0.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5298- *
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h:5299: * long bpf_ringbuf_reserve_dynptr(void *ringbuf, u32 size, u64 flags, struct bpf_dynptr *ptr)
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5300- *	Description
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5301- *		Reserve *size* bytes of payload in a ring buffer *ringbuf*
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5302- *		through the dynptr interface. *flags* must be 0.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5303- *
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h:5304: *		Please note that a corresponding bpf_ringbuf_submit_dynptr or
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5305- *		bpf_ringbuf_discard_dynptr must be called on *ptr*, even if the
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5306- *		reservation fails. This is enforced by the verifier.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5307- *	Return
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5308- *		0 on success, or a negative error in case of failure.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5309- *
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h:5310: * void bpf_ringbuf_submit_dynptr(struct bpf_dynptr *ptr, u64 flags)
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5311- *	Description
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5312- *		Submit reserved ring buffer sample, pointed to by *data*,
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5313- *		through the dynptr interface. This is a no-op if the dynptr is
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5314- *		invalid/null.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5315- *
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5316- *		For more information on *flags*, please see
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h:5317: *		'bpf_ringbuf_submit'.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5318- *	Return
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5319- *		Nothing. Always succeeds.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5320- *
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5321- * void bpf_ringbuf_discard_dynptr(struct bpf_dynptr *ptr, u64 flags)
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5322- *	Description
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5323- *		Discard reserved ring buffer sample through the dynptr
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5324- *		interface. This is a no-op if the dynptr is invalid/null.
+/home/armol/kernel-work/gki-12901745-workspace/common/include/uapi/linux/bpf.h-5325- *
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2557-extern const struct bpf_func_proto bpf_get_local_storage_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2558-extern const struct bpf_func_proto bpf_strtol_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2559-extern const struct bpf_func_proto bpf_strtoul_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2560-extern const struct bpf_func_proto bpf_tcp_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2561-extern const struct bpf_func_proto bpf_jiffies64_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2562-extern const struct bpf_func_proto bpf_get_ns_current_pid_tgid_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2563-extern const struct bpf_func_proto bpf_event_output_data_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2564-extern const struct bpf_func_proto bpf_ringbuf_output_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h:2565:extern const struct bpf_func_proto bpf_ringbuf_reserve_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h:2566:extern const struct bpf_func_proto bpf_ringbuf_submit_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2567-extern const struct bpf_func_proto bpf_ringbuf_discard_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2568-extern const struct bpf_func_proto bpf_ringbuf_query_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h:2569:extern const struct bpf_func_proto bpf_ringbuf_reserve_dynptr_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h:2570:extern const struct bpf_func_proto bpf_ringbuf_submit_dynptr_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2571-extern const struct bpf_func_proto bpf_ringbuf_discard_dynptr_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2572-extern const struct bpf_func_proto bpf_skc_to_tcp6_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2573-extern const struct bpf_func_proto bpf_skc_to_tcp_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2574-extern const struct bpf_func_proto bpf_skc_to_tcp_timewait_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2575-extern const struct bpf_func_proto bpf_skc_to_tcp_request_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2576-extern const struct bpf_func_proto bpf_skc_to_udp6_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2577-extern const struct bpf_func_proto bpf_skc_to_unix_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/include/linux/bpf.h-2578-extern const struct bpf_func_proto bpf_skc_to_mptcp_sock_proto;
+
+===== SOCKET FILTER HELPER DISPATCH =====
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7798-}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7799-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7800-const struct bpf_func_proto bpf_event_output_data_proto __weak;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7801-const struct bpf_func_proto bpf_sk_storage_get_cg_sock_proto __weak;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7802-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7803-static const struct bpf_func_proto *
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7804-sock_filter_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7805-{
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7806-	const struct bpf_func_proto *func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7807-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7808-	func_proto = cgroup_common_func_proto(func_id, prog);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7809-	if (func_proto)
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7810-		return func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7811-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7812-	func_proto = cgroup_current_func_proto(func_id, prog);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7813-	if (func_proto)
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7814-		return func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7815-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7816-	switch (func_id) {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7817-	case BPF_FUNC_get_socket_cookie:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7818-		return &bpf_get_socket_cookie_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7819-	case BPF_FUNC_get_netns_cookie:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7820-		return &bpf_get_netns_cookie_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7821-	case BPF_FUNC_perf_event_output:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7822-		return &bpf_event_output_data_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7823-	case BPF_FUNC_sk_storage_get:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7824-		return &bpf_sk_storage_get_cg_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7825-	case BPF_FUNC_ktime_get_coarse_ns:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7826-		return &bpf_ktime_get_coarse_ns_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7827-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c:7828:		return bpf_base_func_proto(func_id);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7829-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7830-}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7831-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7832-static const struct bpf_func_proto *
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7833-sock_addr_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7834-{
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7835-	const struct bpf_func_proto *func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7836-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7837-	func_proto = cgroup_common_func_proto(func_id, prog);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7838-	if (func_proto)
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7839-		return func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7840-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7841-	func_proto = cgroup_current_func_proto(func_id, prog);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7842-	if (func_proto)
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7843-		return func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7844-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7845-	switch (func_id) {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7846-	case BPF_FUNC_bind:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7847-		switch (prog->expected_attach_type) {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7848-		case BPF_CGROUP_INET4_CONNECT:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7849-		case BPF_CGROUP_INET6_CONNECT:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7850-			return &bpf_bind_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7851-		default:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7852-			return NULL;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7853-		}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7854-	case BPF_FUNC_get_socket_cookie:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7855-		return &bpf_get_socket_cookie_sock_addr_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7856-	case BPF_FUNC_get_netns_cookie:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7857-		return &bpf_get_netns_cookie_sock_addr_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7858-	case BPF_FUNC_perf_event_output:
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7886-		case BPF_CGROUP_INET4_GETSOCKNAME:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7887-		case BPF_CGROUP_INET6_GETSOCKNAME:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7888-			return &bpf_sock_addr_setsockopt_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7889-		default:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7890-			return NULL;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7891-		}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7892-	case BPF_FUNC_getsockopt:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7893-		switch (prog->expected_attach_type) {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7894-		case BPF_CGROUP_INET4_BIND:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7895-		case BPF_CGROUP_INET6_BIND:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7896-		case BPF_CGROUP_INET4_CONNECT:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7897-		case BPF_CGROUP_INET6_CONNECT:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7898-		case BPF_CGROUP_UDP4_RECVMSG:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7899-		case BPF_CGROUP_UDP6_RECVMSG:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7900-		case BPF_CGROUP_UDP4_SENDMSG:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7901-		case BPF_CGROUP_UDP6_SENDMSG:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7902-		case BPF_CGROUP_INET4_GETPEERNAME:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7903-		case BPF_CGROUP_INET6_GETPEERNAME:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7904-		case BPF_CGROUP_INET4_GETSOCKNAME:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7905-		case BPF_CGROUP_INET6_GETSOCKNAME:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7906-			return &bpf_sock_addr_getsockopt_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7907-		default:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7908-			return NULL;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7909-		}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7910-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7911-		return bpf_sk_base_func_proto(func_id);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7912-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7913-}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7914-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7915-static const struct bpf_func_proto *
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c:7916:sk_filter_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7917-{
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7918-	switch (func_id) {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7919-	case BPF_FUNC_skb_load_bytes:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7920-		return &bpf_skb_load_bytes_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7921-	case BPF_FUNC_skb_load_bytes_relative:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7922-		return &bpf_skb_load_bytes_relative_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7923-	case BPF_FUNC_get_socket_cookie:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7924-		return &bpf_get_socket_cookie_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7925-	case BPF_FUNC_get_socket_uid:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7926-		return &bpf_get_socket_uid_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7927-	case BPF_FUNC_perf_event_output:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7928-		return &bpf_skb_event_output_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7929-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7930-		return bpf_sk_base_func_proto(func_id);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7931-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7932-}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7933-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7934-const struct bpf_func_proto bpf_sk_storage_get_proto __weak;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7935-const struct bpf_func_proto bpf_sk_storage_delete_proto __weak;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7936-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7937-static const struct bpf_func_proto *
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7938-cg_skb_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7939-{
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7940-	const struct bpf_func_proto *func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7941-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7942-	func_proto = cgroup_common_func_proto(func_id, prog);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7943-	if (func_proto)
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7944-		return func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7945-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7946-	switch (func_id) {
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7952-		return &bpf_sk_storage_delete_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7953-	case BPF_FUNC_perf_event_output:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7954-		return &bpf_skb_event_output_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7955-#ifdef CONFIG_SOCK_CGROUP_DATA
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7956-	case BPF_FUNC_skb_cgroup_id:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7957-		return &bpf_skb_cgroup_id_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7958-	case BPF_FUNC_skb_ancestor_cgroup_id:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7959-		return &bpf_skb_ancestor_cgroup_id_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7960-	case BPF_FUNC_sk_cgroup_id:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7961-		return &bpf_sk_cgroup_id_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7962-	case BPF_FUNC_sk_ancestor_cgroup_id:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7963-		return &bpf_sk_ancestor_cgroup_id_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7964-#endif
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7965-#ifdef CONFIG_INET
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7966-	case BPF_FUNC_sk_lookup_tcp:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7967-		return &bpf_sk_lookup_tcp_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7968-	case BPF_FUNC_sk_lookup_udp:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7969-		return &bpf_sk_lookup_udp_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7970-	case BPF_FUNC_sk_release:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7971-		return &bpf_sk_release_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7972-	case BPF_FUNC_skc_lookup_tcp:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7973-		return &bpf_skc_lookup_tcp_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7974-	case BPF_FUNC_tcp_sock:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7975-		return &bpf_tcp_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7976-	case BPF_FUNC_get_listener_sock:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7977-		return &bpf_get_listener_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7978-	case BPF_FUNC_skb_ecn_set_ce:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7979-		return &bpf_skb_ecn_set_ce_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7980-#endif
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7981-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c:7982:		return sk_filter_func_proto(func_id, prog);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7983-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7984-}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7985-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7986-static const struct bpf_func_proto *
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7987-tc_cls_act_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7988-{
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7989-	switch (func_id) {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7990-	case BPF_FUNC_skb_store_bytes:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7991-		return &bpf_skb_store_bytes_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7992-	case BPF_FUNC_skb_load_bytes:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7993-		return &bpf_skb_load_bytes_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7994-	case BPF_FUNC_skb_load_bytes_relative:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7995-		return &bpf_skb_load_bytes_relative_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7996-	case BPF_FUNC_skb_pull_data:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7997-		return &bpf_skb_pull_data_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7998-	case BPF_FUNC_csum_diff:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-7999-		return &bpf_csum_diff_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-8000-	case BPF_FUNC_csum_update:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-8001-		return &bpf_csum_update_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-8002-	case BPF_FUNC_csum_level:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-8003-		return &bpf_csum_level_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-8004-	case BPF_FUNC_l3_csum_replace:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-8005-		return &bpf_l3_csum_replace_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-8006-	case BPF_FUNC_l4_csum_replace:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-8007-		return &bpf_l4_csum_replace_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-8008-	case BPF_FUNC_clone_redirect:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-8009-		return &bpf_clone_redirect_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-8010-	case BPF_FUNC_get_cgroup_classid:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-8011-		return &bpf_get_cgroup_classid_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-8012-	case BPF_FUNC_skb_vlan_push:
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10810-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10811-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10812-	case offsetof(struct sk_msg_md, local_port):
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10813-		BUILD_BUG_ON(sizeof_field(struct sock_common, skc_num) != 2);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10814-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10815-		*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10816-						struct sk_msg, sk),
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10817-				      si->dst_reg, si->src_reg,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10818-				      offsetof(struct sk_msg, sk));
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10819-		*insn++ = BPF_LDX_MEM(BPF_H, si->dst_reg, si->dst_reg,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10820-				      offsetof(struct sock_common, skc_num));
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10821-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10822-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10823-	case offsetof(struct sk_msg_md, size):
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10824-		*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(struct sk_msg_sg, size),
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10825-				      si->dst_reg, si->src_reg,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10826-				      offsetof(struct sk_msg_sg, size));
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10827-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10828-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10829-	case offsetof(struct sk_msg_md, sk):
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10830-		*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(struct sk_msg, sk),
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10831-				      si->dst_reg, si->src_reg,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10832-				      offsetof(struct sk_msg, sk));
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10833-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10834-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10835-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10836-	return insn - insn_buf;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10837-}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10838-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10839-const struct bpf_verifier_ops sk_filter_verifier_ops = {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c:10840:	.get_func_proto		= sk_filter_func_proto,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10841-	.is_valid_access	= sk_filter_is_valid_access,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10842-	.convert_ctx_access	= bpf_convert_ctx_access,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10843-	.gen_ld_abs		= bpf_gen_ld_abs,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10844-};
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10845-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10846-const struct bpf_prog_ops sk_filter_prog_ops = {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10847-	.test_run		= bpf_prog_test_run_skb,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10848-};
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10849-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10850-const struct bpf_verifier_ops tc_cls_act_verifier_ops = {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10851-	.get_func_proto		= tc_cls_act_func_proto,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10852-	.is_valid_access	= tc_cls_act_is_valid_access,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10853-	.convert_ctx_access	= tc_cls_act_convert_ctx_access,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10854-	.gen_prologue		= tc_cls_act_prologue,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10855-	.gen_ld_abs		= bpf_gen_ld_abs,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10856-	.btf_struct_access	= tc_cls_act_btf_struct_access,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10857-};
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10858-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10859-const struct bpf_prog_ops tc_cls_act_prog_ops = {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10860-	.test_run		= bpf_prog_test_run_skb,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10861-};
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10862-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10863-const struct bpf_verifier_ops xdp_verifier_ops = {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10864-	.get_func_proto		= xdp_func_proto,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10865-	.is_valid_access	= xdp_is_valid_access,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10866-	.convert_ctx_access	= xdp_convert_ctx_access,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10867-	.gen_prologue		= bpf_noop_prologue,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10868-	.btf_struct_access	= xdp_btf_struct_access,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10869-};
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-10870-
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11156-					       len, start_header);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11157-}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11158-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11159-static const struct bpf_func_proto sk_reuseport_load_bytes_relative_proto = {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11160-	.func		= sk_reuseport_load_bytes_relative,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11161-	.gpl_only	= false,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11162-	.ret_type	= RET_INTEGER,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11163-	.arg1_type	= ARG_PTR_TO_CTX,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11164-	.arg2_type	= ARG_ANYTHING,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11165-	.arg3_type	= ARG_PTR_TO_UNINIT_MEM,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11166-	.arg4_type	= ARG_CONST_SIZE,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11167-	.arg5_type	= ARG_ANYTHING,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11168-};
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11169-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11170-static const struct bpf_func_proto *
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11171-sk_reuseport_func_proto(enum bpf_func_id func_id,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11172-			const struct bpf_prog *prog)
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11173-{
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11174-	switch (func_id) {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11175-	case BPF_FUNC_sk_select_reuseport:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11176-		return &sk_select_reuseport_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11177-	case BPF_FUNC_skb_load_bytes:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11178-		return &sk_reuseport_load_bytes_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11179-	case BPF_FUNC_skb_load_bytes_relative:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11180-		return &sk_reuseport_load_bytes_relative_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11181-	case BPF_FUNC_get_socket_cookie:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11182-		return &bpf_get_socket_ptr_cookie_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11183-	case BPF_FUNC_ktime_get_coarse_ns:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11184-		return &bpf_ktime_get_coarse_ns_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11185-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c:11186:		return bpf_base_func_proto(func_id);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11187-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11188-}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11189-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11190-static bool
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11191-sk_reuseport_is_valid_access(int off, int size,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11192-			     enum bpf_access_type type,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11193-			     const struct bpf_prog *prog,
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11194-			     struct bpf_insn_access_aux *info)
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11195-{
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11196-	const u32 size_default = sizeof(__u32);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11197-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11198-	if (off < 0 || off >= sizeof(struct sk_reuseport_md) ||
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11199-	    off % size || type != BPF_READ)
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11200-		return false;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11201-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11202-	switch (off) {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11203-	case offsetof(struct sk_reuseport_md, data):
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11204-		info->reg_type = PTR_TO_PACKET;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11205-		return size == sizeof(__u64);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11206-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11207-	case offsetof(struct sk_reuseport_md, data_end):
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11208-		info->reg_type = PTR_TO_PACKET_END;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11209-		return size == sizeof(__u64);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11210-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11211-	case offsetof(struct sk_reuseport_md, hash):
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11212-		return size == size_default;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11213-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11214-	case offsetof(struct sk_reuseport_md, sk):
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11215-		info->reg_type = PTR_TO_SOCKET;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11216-		return size == sizeof(__u64);
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11701-static const struct bpf_func_proto *
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11702-bpf_sk_base_func_proto(enum bpf_func_id func_id)
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11703-{
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11704-	const struct bpf_func_proto *func;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11705-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11706-	switch (func_id) {
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11707-	case BPF_FUNC_skc_to_tcp6_sock:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11708-		func = &bpf_skc_to_tcp6_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11709-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11710-	case BPF_FUNC_skc_to_tcp_sock:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11711-		func = &bpf_skc_to_tcp_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11712-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11713-	case BPF_FUNC_skc_to_tcp_timewait_sock:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11714-		func = &bpf_skc_to_tcp_timewait_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11715-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11716-	case BPF_FUNC_skc_to_tcp_request_sock:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11717-		func = &bpf_skc_to_tcp_request_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11718-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11719-	case BPF_FUNC_skc_to_udp6_sock:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11720-		func = &bpf_skc_to_udp6_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11721-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11722-	case BPF_FUNC_skc_to_unix_sock:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11723-		func = &bpf_skc_to_unix_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11724-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11725-	case BPF_FUNC_skc_to_mptcp_sock:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11726-		func = &bpf_skc_to_mptcp_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11727-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11728-	case BPF_FUNC_ktime_get_coarse_ns:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11729-		return &bpf_ktime_get_coarse_ns_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11730-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c:11731:		return bpf_base_func_proto(func_id);
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11732-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11733-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11734-	if (!perfmon_capable())
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11735-		return NULL;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11736-
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11737-	return func;
+/home/armol/kernel-work/gki-12901745-workspace/common/net/core/filter.c-11738-}
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1567-		return 0;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1568-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1569-	err = bpf_dynptr_check_off_len(ptr, offset, len);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1570-	if (err)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1571-		return 0;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1572-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1573-	if (bpf_dynptr_is_rdonly(ptr))
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1574-		return 0;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1575-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1576-	return (unsigned long)(ptr->data + ptr->offset + offset);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1577-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1578-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1579-static const struct bpf_func_proto bpf_dynptr_data_proto = {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1580-	.func		= bpf_dynptr_data,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1581-	.gpl_only	= false,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1582-	.ret_type	= RET_PTR_TO_DYNPTR_MEM_OR_NULL,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1583-	.arg1_type	= ARG_PTR_TO_DYNPTR,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1584-	.arg2_type	= ARG_ANYTHING,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1585-	.arg3_type	= ARG_CONST_ALLOC_SIZE_OR_ZERO,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1586-};
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1587-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1588-const struct bpf_func_proto bpf_get_current_task_proto __weak;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1589-const struct bpf_func_proto bpf_get_current_task_btf_proto __weak;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1590-const struct bpf_func_proto bpf_probe_read_user_proto __weak;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1591-const struct bpf_func_proto bpf_probe_read_user_str_proto __weak;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1592-const struct bpf_func_proto bpf_probe_read_kernel_proto __weak;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1593-const struct bpf_func_proto bpf_probe_read_kernel_str_proto __weak;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1594-const struct bpf_func_proto bpf_task_pt_regs_proto __weak;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1595-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1596-const struct bpf_func_proto *
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c:1597:bpf_base_func_proto(enum bpf_func_id func_id)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1598-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1599-	switch (func_id) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1600-	case BPF_FUNC_map_lookup_elem:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1601-		return &bpf_map_lookup_elem_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1602-	case BPF_FUNC_map_update_elem:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1603-		return &bpf_map_update_elem_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1604-	case BPF_FUNC_map_delete_elem:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1605-		return &bpf_map_delete_elem_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1606-	case BPF_FUNC_map_push_elem:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1607-		return &bpf_map_push_elem_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1608-	case BPF_FUNC_map_pop_elem:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1609-		return &bpf_map_pop_elem_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1610-	case BPF_FUNC_map_peek_elem:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1611-		return &bpf_map_peek_elem_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1612-	case BPF_FUNC_map_lookup_percpu_elem:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1613-		return &bpf_map_lookup_percpu_elem_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1614-	case BPF_FUNC_get_prandom_u32:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1615-		return &bpf_get_prandom_u32_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1616-	case BPF_FUNC_get_smp_processor_id:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1617-		return &bpf_get_raw_smp_processor_id_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1618-	case BPF_FUNC_get_numa_node_id:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1619-		return &bpf_get_numa_node_id_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1620-	case BPF_FUNC_tail_call:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1621-		return &bpf_tail_call_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1622-	case BPF_FUNC_ktime_get_ns:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1623-		return &bpf_ktime_get_ns_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1624-	case BPF_FUNC_ktime_get_boot_ns:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1625-		return &bpf_ktime_get_boot_ns_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1626-	case BPF_FUNC_ktime_get_tai_ns:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1627-		return &bpf_ktime_get_tai_ns_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1628-	case BPF_FUNC_ringbuf_output:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1629-		return &bpf_ringbuf_output_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c:1630:	case BPF_FUNC_ringbuf_reserve:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1631-		return &bpf_ringbuf_reserve_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c:1632:	case BPF_FUNC_ringbuf_submit:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1633-		return &bpf_ringbuf_submit_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1634-	case BPF_FUNC_ringbuf_discard:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1635-		return &bpf_ringbuf_discard_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1636-	case BPF_FUNC_ringbuf_query:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1637-		return &bpf_ringbuf_query_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1638-	case BPF_FUNC_strncmp:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1639-		return &bpf_strncmp_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1640-	case BPF_FUNC_strtol:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1641-		return &bpf_strtol_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1642-	case BPF_FUNC_strtoul:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1643-		return &bpf_strtoul_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1644-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1645-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1646-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1647-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1648-	if (!bpf_capable())
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1649-		return NULL;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1650-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1651-	switch (func_id) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1652-	case BPF_FUNC_spin_lock:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1653-		return &bpf_spin_lock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1654-	case BPF_FUNC_spin_unlock:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1655-		return &bpf_spin_unlock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1656-	case BPF_FUNC_jiffies64:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1657-		return &bpf_jiffies64_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1658-	case BPF_FUNC_per_cpu_ptr:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1659-		return &bpf_per_cpu_ptr_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1660-	case BPF_FUNC_this_cpu_ptr:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1661-		return &bpf_this_cpu_ptr_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1662-	case BPF_FUNC_timer_init:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1663-		return &bpf_timer_init_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1664-	case BPF_FUNC_timer_set_callback:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1665-		return &bpf_timer_set_callback_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1666-	case BPF_FUNC_timer_start:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1667-		return &bpf_timer_start_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1668-	case BPF_FUNC_timer_cancel:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1669-		return &bpf_timer_cancel_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1670-	case BPF_FUNC_kptr_xchg:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1671-		return &bpf_kptr_xchg_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1672-	case BPF_FUNC_for_each_map_elem:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1673-		return &bpf_for_each_map_elem_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1674-	case BPF_FUNC_loop:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1675-		return &bpf_loop_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1676-	case BPF_FUNC_user_ringbuf_drain:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1677-		return &bpf_user_ringbuf_drain_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c:1678:	case BPF_FUNC_ringbuf_reserve_dynptr:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1679-		return &bpf_ringbuf_reserve_dynptr_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c:1680:	case BPF_FUNC_ringbuf_submit_dynptr:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1681-		return &bpf_ringbuf_submit_dynptr_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1682-	case BPF_FUNC_ringbuf_discard_dynptr:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1683-		return &bpf_ringbuf_discard_dynptr_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1684-	case BPF_FUNC_dynptr_from_mem:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1685-		return &bpf_dynptr_from_mem_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1686-	case BPF_FUNC_dynptr_read:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1687-		return &bpf_dynptr_read_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1688-	case BPF_FUNC_dynptr_write:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1689-		return &bpf_dynptr_write_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1690-	case BPF_FUNC_dynptr_data:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1691-		return &bpf_dynptr_data_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1692-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1693-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1694-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1695-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1696-	if (!perfmon_capable())
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1697-		return NULL;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1698-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1699-	switch (func_id) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1700-	case BPF_FUNC_trace_printk:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1701-		return bpf_get_trace_printk_proto();
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1702-	case BPF_FUNC_get_current_task:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1703-		return &bpf_get_current_task_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1704-	case BPF_FUNC_get_current_task_btf:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1705-		return &bpf_get_current_task_btf_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1706-	case BPF_FUNC_probe_read_user:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1707-		return &bpf_probe_read_user_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1708-	case BPF_FUNC_probe_read_kernel:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1709-		return security_locked_down(LOCKDOWN_BPF_READ_KERNEL) < 0 ?
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/helpers.c-1710-		       NULL : &bpf_probe_read_kernel_proto;
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1605-		container_of(current->bpf_ctx, struct bpf_cg_run_ctx, run_ctx);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1606-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1607-	ctx->retval = retval;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1608-	return 0;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1609-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1610-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1611-const struct bpf_func_proto bpf_set_retval_proto = {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1612-	.func		= bpf_set_retval,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1613-	.gpl_only	= false,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1614-	.ret_type	= RET_INTEGER,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1615-	.arg1_type	= ARG_ANYTHING,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1616-};
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1617-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1618-static const struct bpf_func_proto *
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1619-cgroup_dev_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1620-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1621-	const struct bpf_func_proto *func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1622-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1623-	func_proto = cgroup_common_func_proto(func_id, prog);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1624-	if (func_proto)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1625-		return func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1626-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1627-	func_proto = cgroup_current_func_proto(func_id, prog);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1628-	if (func_proto)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1629-		return func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1630-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1631-	switch (func_id) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1632-	case BPF_FUNC_perf_event_output:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1633-		return &bpf_event_output_data_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1634-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c:1635:		return bpf_base_func_proto(func_id);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1636-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1637-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1638-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1639-static bool cgroup_dev_is_valid_access(int off, int size,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1640-				       enum bpf_access_type type,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1641-				       const struct bpf_prog *prog,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1642-				       struct bpf_insn_access_aux *info)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1643-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1644-	const int size_default = sizeof(__u32);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1645-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1646-	if (type == BPF_WRITE)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1647-		return false;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1648-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1649-	if (off < 0 || off + size > sizeof(struct bpf_cgroup_dev_ctx))
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1650-		return false;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1651-	/* The verifier guarantees that size > 0. */
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1652-	if (off % size != 0)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1653-		return false;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1654-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1655-	switch (off) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1656-	case bpf_ctx_range(struct bpf_cgroup_dev_ctx, access_type):
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1657-		bpf_ctx_record_field_size(info, size_default);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1658-		if (!bpf_ctx_narrow_access_ok(off, size, size_default))
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1659-			return false;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1660-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1661-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1662-		if (size != size_default)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1663-			return false;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1664-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-1665-
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2163-	.arg3_type	= ARG_CONST_SIZE,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2164-};
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2165-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2166-static const struct bpf_func_proto *
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2167-sysctl_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2168-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2169-	const struct bpf_func_proto *func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2170-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2171-	func_proto = cgroup_common_func_proto(func_id, prog);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2172-	if (func_proto)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2173-		return func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2174-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2175-	func_proto = cgroup_current_func_proto(func_id, prog);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2176-	if (func_proto)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2177-		return func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2178-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2179-	switch (func_id) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2180-	case BPF_FUNC_sysctl_get_name:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2181-		return &bpf_sysctl_get_name_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2182-	case BPF_FUNC_sysctl_get_current_value:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2183-		return &bpf_sysctl_get_current_value_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2184-	case BPF_FUNC_sysctl_get_new_value:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2185-		return &bpf_sysctl_get_new_value_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2186-	case BPF_FUNC_sysctl_set_new_value:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2187-		return &bpf_sysctl_set_new_value_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2188-	case BPF_FUNC_ktime_get_coarse_ns:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2189-		return &bpf_ktime_get_coarse_ns_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2190-	case BPF_FUNC_perf_event_output:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2191-		return &bpf_event_output_data_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2192-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c:2193:		return bpf_base_func_proto(func_id);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2194-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2195-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2196-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2197-static bool sysctl_is_valid_access(int off, int size, enum bpf_access_type type,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2198-				   const struct bpf_prog *prog,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2199-				   struct bpf_insn_access_aux *info)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2200-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2201-	const int size_default = sizeof(__u32);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2202-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2203-	if (off < 0 || off + size > sizeof(struct bpf_sysctl) || off % size)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2204-		return false;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2205-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2206-	switch (off) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2207-	case bpf_ctx_range(struct bpf_sysctl, write):
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2208-		if (type != BPF_READ)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2209-			return false;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2210-		bpf_ctx_record_field_size(info, size_default);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2211-		return bpf_ctx_narrow_access_ok(off, size, size_default);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2212-	case bpf_ctx_range(struct bpf_sysctl, file_pos):
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2213-		if (type == BPF_READ) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2214-			bpf_ctx_record_field_size(info, size_default);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2215-			return bpf_ctx_narrow_access_ok(off, size, size_default);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2216-		} else {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2217-			return size == size_default;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2218-		}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2219-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2220-		return false;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2221-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2222-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2223-
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2318-		return func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2319-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2320-	func_proto = cgroup_current_func_proto(func_id, prog);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2321-	if (func_proto)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2322-		return func_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2323-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2324-	switch (func_id) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2325-#ifdef CONFIG_NET
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2326-	case BPF_FUNC_get_netns_cookie:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2327-		return &bpf_get_netns_cookie_sockopt_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2328-	case BPF_FUNC_sk_storage_get:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2329-		return &bpf_sk_storage_get_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2330-	case BPF_FUNC_sk_storage_delete:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2331-		return &bpf_sk_storage_delete_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2332-	case BPF_FUNC_setsockopt:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2333-		if (prog->expected_attach_type == BPF_CGROUP_SETSOCKOPT)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2334-			return &bpf_sk_setsockopt_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2335-		return NULL;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2336-	case BPF_FUNC_getsockopt:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2337-		if (prog->expected_attach_type == BPF_CGROUP_SETSOCKOPT)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2338-			return &bpf_sk_getsockopt_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2339-		return NULL;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2340-#endif
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2341-#ifdef CONFIG_INET
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2342-	case BPF_FUNC_tcp_sock:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2343-		return &bpf_tcp_sock_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2344-#endif
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2345-	case BPF_FUNC_perf_event_output:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2346-		return &bpf_event_output_data_proto;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2347-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c:2348:		return bpf_base_func_proto(func_id);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2349-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2350-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2351-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2352-static bool cg_sockopt_is_valid_access(int off, int size,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2353-				       enum bpf_access_type type,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2354-				       const struct bpf_prog *prog,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2355-				       struct bpf_insn_access_aux *info)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2356-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2357-	const int size_default = sizeof(__u32);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2358-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2359-	if (off < 0 || off >= sizeof(struct bpf_sockopt))
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2360-		return false;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2361-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2362-	if (off % size != 0)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2363-		return false;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2364-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2365-	if (type == BPF_WRITE) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2366-		switch (off) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2367-		case offsetof(struct bpf_sockopt, retval):
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2368-			if (size != size_default)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2369-				return false;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2370-			return prog->expected_attach_type ==
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2371-				BPF_CGROUP_GETSOCKOPT;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2372-		case offsetof(struct bpf_sockopt, optname):
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2373-			fallthrough;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2374-		case offsetof(struct bpf_sockopt, level):
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2375-			if (size != size_default)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2376-				return false;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2377-			return prog->expected_attach_type ==
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/cgroup.c-2378-				BPF_CGROUP_SETSOCKOPT;
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5172-		if (!__bpf_prog_enter_sleepable_recur(prog, &run_ctx)) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5173-			/* recursion detected */
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5174-			__bpf_prog_exit_sleepable_recur(prog, 0, &run_ctx);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5175-			bpf_prog_put(prog);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5176-			return -EBUSY;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5177-		}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5178-		attr->test.retval = bpf_prog_run(prog, (void *) (long) attr->test.ctx_in);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5179-		__bpf_prog_exit_sleepable_recur(prog, 0 /* bpf_prog_run does runtime stats */,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5180-						&run_ctx);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5181-		bpf_prog_put(prog);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5182-		return 0;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5183-#endif
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5184-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5185-		return ____bpf_sys_bpf(cmd, attr, size);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5186-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5187-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5188-EXPORT_SYMBOL(kern_sys_bpf);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5189-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5190-static const struct bpf_func_proto bpf_sys_bpf_proto = {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5191-	.func		= bpf_sys_bpf,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5192-	.gpl_only	= false,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5193-	.ret_type	= RET_INTEGER,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5194-	.arg1_type	= ARG_ANYTHING,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5195-	.arg2_type	= ARG_PTR_TO_MEM | MEM_RDONLY,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5196-	.arg3_type	= ARG_CONST_SIZE,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5197-};
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5198-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5199-const struct bpf_func_proto * __weak
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5200-tracing_prog_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5201-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c:5202:	return bpf_base_func_proto(func_id);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5203-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5204-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5205-BPF_CALL_1(bpf_sys_close, u32, fd)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5206-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5207-	/* When bpf program calls this helper there should not be
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5208-	 * an fdget() without matching completed fdput().
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5209-	 * This helper is allowed in the following callchain only:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5210-	 * sys_bpf->prog_test_run->bpf_prog->bpf_sys_close
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5211-	 */
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5212-	return close_fd(fd);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5213-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5214-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5215-static const struct bpf_func_proto bpf_sys_close_proto = {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5216-	.func		= bpf_sys_close,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5217-	.gpl_only	= false,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5218-	.ret_type	= RET_INTEGER,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5219-	.arg1_type	= ARG_ANYTHING,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5220-};
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5221-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5222-BPF_CALL_4(bpf_kallsyms_lookup_name, const char *, name, int, name_sz, int, flags, u64 *, res)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5223-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5224-	*res = 0;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5225-	if (flags)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5226-		return -EINVAL;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5227-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5228-	if (name_sz <= 1 || name[name_sz - 1])
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5229-		return -EINVAL;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5230-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5231-	if (!bpf_dump_raw_ok(current_cred()))
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/syscall.c-5232-		return -EPERM;
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-386-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-387-	return reg->type == PTR_TO_MAP_VALUE &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-388-		map_value_has_spin_lock(reg->map_ptr);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-389-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-390-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-391-static bool reg_type_may_be_refcounted_or_null(enum bpf_reg_type type)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-392-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-393-	type = base_type(type);
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-394-	return type == PTR_TO_SOCKET || type == PTR_TO_TCP_SOCK ||
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-395-		type == PTR_TO_MEM || type == PTR_TO_BTF_ID;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-396-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-397-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-398-static bool type_is_rdonly_mem(u32 type)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-399-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-400-	return type & MEM_RDONLY;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-401-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-402-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-403-static bool type_may_be_null(u32 type)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-404-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-405-	return type & PTR_MAYBE_NULL;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-406-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-407-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-408-static bool is_acquire_function(enum bpf_func_id func_id,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-409-				const struct bpf_map *map)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-410-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-411-	enum bpf_map_type map_type = map ? map->map_type : BPF_MAP_TYPE_UNSPEC;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-412-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-413-	if (func_id == BPF_FUNC_sk_lookup_tcp ||
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-414-	    func_id == BPF_FUNC_sk_lookup_udp ||
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-415-	    func_id == BPF_FUNC_skc_lookup_tcp ||
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c:416:	    func_id == BPF_FUNC_ringbuf_reserve ||
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-417-	    func_id == BPF_FUNC_kptr_xchg)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-418-		return true;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-419-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-420-	if (func_id == BPF_FUNC_map_lookup_elem &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-421-	    (map_type == BPF_MAP_TYPE_SOCKMAP ||
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-422-	     map_type == BPF_MAP_TYPE_SOCKHASH))
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-423-		return true;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-424-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-425-	return false;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-426-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-427-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-428-static bool is_ptr_cast_function(enum bpf_func_id func_id)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-429-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-430-	return func_id == BPF_FUNC_tcp_sock ||
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-431-		func_id == BPF_FUNC_sk_fullsock ||
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-432-		func_id == BPF_FUNC_skc_to_tcp_sock ||
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-433-		func_id == BPF_FUNC_skc_to_tcp6_sock ||
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-434-		func_id == BPF_FUNC_skc_to_udp6_sock ||
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-435-		func_id == BPF_FUNC_skc_to_mptcp_sock ||
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-436-		func_id == BPF_FUNC_skc_to_tcp_timewait_sock ||
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-437-		func_id == BPF_FUNC_skc_to_tcp_request_sock;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-438-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-439-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-440-static bool is_dynptr_ref_function(enum bpf_func_id func_id)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-441-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-442-	return func_id == BPF_FUNC_dynptr_data;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-443-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-444-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-445-static bool is_callback_calling_function(enum bpf_func_id func_id)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-446-{
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6457-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6458-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6459-static bool allow_tail_call_in_subprogs(struct bpf_verifier_env *env)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6460-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6461-	return env->prog->jit_requested &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6462-	       bpf_jit_supports_subprog_tailcalls();
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6463-}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6464-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6465-static int check_map_func_compatibility(struct bpf_verifier_env *env,
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6466-					struct bpf_map *map, int func_id)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6467-{
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6468-	if (!map)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6469-		return 0;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6470-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6471-	/* We need a two way check, first is from map perspective ... */
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6472-	switch (map->map_type) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6473-	case BPF_MAP_TYPE_PROG_ARRAY:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6474-		if (func_id != BPF_FUNC_tail_call)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6475-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6476-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6477-	case BPF_MAP_TYPE_PERF_EVENT_ARRAY:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6478-		if (func_id != BPF_FUNC_perf_event_read &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6479-		    func_id != BPF_FUNC_perf_event_output &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6480-		    func_id != BPF_FUNC_skb_output &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6481-		    func_id != BPF_FUNC_perf_event_read_value &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6482-		    func_id != BPF_FUNC_xdp_output)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6483-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6484-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6485-	case BPF_MAP_TYPE_RINGBUF:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6486-		if (func_id != BPF_FUNC_ringbuf_output &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c:6487:		    func_id != BPF_FUNC_ringbuf_reserve &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6488-		    func_id != BPF_FUNC_ringbuf_query &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c:6489:		    func_id != BPF_FUNC_ringbuf_reserve_dynptr &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c:6490:		    func_id != BPF_FUNC_ringbuf_submit_dynptr &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6491-		    func_id != BPF_FUNC_ringbuf_discard_dynptr)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6492-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6493-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6494-	case BPF_MAP_TYPE_USER_RINGBUF:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6495-		if (func_id != BPF_FUNC_user_ringbuf_drain)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6496-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6497-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6498-	case BPF_MAP_TYPE_STACK_TRACE:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6499-		if (func_id != BPF_FUNC_get_stackid)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6500-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6501-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6502-	case BPF_MAP_TYPE_CGROUP_ARRAY:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6503-		if (func_id != BPF_FUNC_skb_under_cgroup &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6504-		    func_id != BPF_FUNC_current_task_under_cgroup)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6505-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6506-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6507-	case BPF_MAP_TYPE_CGROUP_STORAGE:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6508-	case BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6509-		if (func_id != BPF_FUNC_get_local_storage)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6510-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6511-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6512-	case BPF_MAP_TYPE_DEVMAP:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6513-	case BPF_MAP_TYPE_DEVMAP_HASH:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6514-		if (func_id != BPF_FUNC_redirect_map &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6515-		    func_id != BPF_FUNC_map_lookup_elem)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6516-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6517-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6518-	/* Restrict bpf side of cpumap and xskmap, open when use-cases
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6519-	 * appear.
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6520-	 */
+--
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6577-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6578-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6579-	case BPF_MAP_TYPE_BLOOM_FILTER:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6580-		if (func_id != BPF_FUNC_map_peek_elem &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6581-		    func_id != BPF_FUNC_map_push_elem)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6582-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6583-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6584-	default:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6585-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6586-	}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6587-
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6588-	/* ... and second from the function itself. */
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6589-	switch (func_id) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6590-	case BPF_FUNC_tail_call:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6591-		if (map->map_type != BPF_MAP_TYPE_PROG_ARRAY)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6592-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6593-		if (env->subprog_cnt > 1 && !allow_tail_call_in_subprogs(env)) {
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6594-			verbose(env, "tail_calls are not allowed in non-JITed programs with bpf-to-bpf calls\n");
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6595-			return -EINVAL;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6596-		}
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6597-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6598-	case BPF_FUNC_perf_event_read:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6599-	case BPF_FUNC_perf_event_output:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6600-	case BPF_FUNC_perf_event_read_value:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6601-	case BPF_FUNC_skb_output:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6602-	case BPF_FUNC_xdp_output:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6603-		if (map->map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6604-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6605-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6606-	case BPF_FUNC_ringbuf_output:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c:6607:	case BPF_FUNC_ringbuf_reserve:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6608-	case BPF_FUNC_ringbuf_query:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c:6609:	case BPF_FUNC_ringbuf_reserve_dynptr:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c:6610:	case BPF_FUNC_ringbuf_submit_dynptr:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6611-	case BPF_FUNC_ringbuf_discard_dynptr:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6612-		if (map->map_type != BPF_MAP_TYPE_RINGBUF)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6613-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6614-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6615-	case BPF_FUNC_user_ringbuf_drain:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6616-		if (map->map_type != BPF_MAP_TYPE_USER_RINGBUF)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6617-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6618-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6619-	case BPF_FUNC_get_stackid:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6620-		if (map->map_type != BPF_MAP_TYPE_STACK_TRACE)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6621-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6622-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6623-	case BPF_FUNC_current_task_under_cgroup:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6624-	case BPF_FUNC_skb_under_cgroup:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6625-		if (map->map_type != BPF_MAP_TYPE_CGROUP_ARRAY)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6626-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6627-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6628-	case BPF_FUNC_redirect_map:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6629-		if (map->map_type != BPF_MAP_TYPE_DEVMAP &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6630-		    map->map_type != BPF_MAP_TYPE_DEVMAP_HASH &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6631-		    map->map_type != BPF_MAP_TYPE_CPUMAP &&
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6632-		    map->map_type != BPF_MAP_TYPE_XSKMAP)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6633-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6634-		break;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6635-	case BPF_FUNC_sk_redirect_map:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6636-	case BPF_FUNC_msg_redirect_map:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6637-	case BPF_FUNC_sock_map_update:
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6638-		if (map->map_type != BPF_MAP_TYPE_SOCKMAP)
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6639-			goto error;
+/home/armol/kernel-work/gki-12901745-workspace/common/kernel/bpf/verifier.c-6640-		break;

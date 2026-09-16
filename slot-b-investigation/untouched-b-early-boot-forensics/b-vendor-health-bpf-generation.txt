@@ -1,0 +1,24 @@
+===== BASE_VENDOR INSTALL =====
+72-    passwd_vendor \
+73-    selinux_policy_nonsystem \
+74-    selinux_policy_vendor \
+75-    selinux_policy_odm \
+76-    shell_and_utilities_vendor \
+77-    odm-build.prop \
+78-
+79-# libhealthloop BPF filter. This is in base_vendor.mk because libhealthloop must
+80-# be a static library and because the Android build system ignores 'required'
+81-# sections for static libraries.
+82:PRODUCT_PACKAGES += filterPowerSupplyEvents.o
+83-
+84-# Base modules when shipping api level is less than or equal to 34
+85-PRODUCT_PACKAGES_SHIPPING_API_LEVEL_34 += \
+86-     android.hidl.memory@1.0-impl.vendor \
+87-
+88-# OMX not supported for 64bit_only builds
+89-# Only supported when SHIPPING_API_LEVEL is less than or equal to 33
+90-ifneq ($(TARGET_SUPPORTS_OMX_SERVICE),false)
+91-    PRODUCT_PACKAGES_SHIPPING_API_LEVEL_33 += \
+92-        android.hardware.media.omx@1.0-service \
+
+===== B VENDOR BUILD.PROP =====
