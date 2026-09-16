@@ -1,0 +1,261 @@
+===== PRELOAD AVB KEYS =====
+    }
+    if (erase_same_mounts) {
+        current = fstab_.erase(begin, current);
+    }
+    if (end) {
+        *end = current;
+    }
+    return mounted;
+}
+
+void FirstStageMountVBootV2::PreloadAvbKeys() {
+    for (const auto& entry : fstab_) {
+        // No need to cache the key content if it's empty, or is already cached.
+        if (entry.avb_keys.empty() || preload_avb_key_blobs_.count(entry.avb_keys)) {
+            continue;
+        }
+
+        // Determines all key paths first.
+        std::vector<std::string> key_paths;
+        if (is_dir(entry.avb_keys.c_str())) {  // fstab_keys might be a dir, e.g., /avb.
+            const char* avb_key_dir = entry.avb_keys.c_str();
+            std::unique_ptr<DIR, int (*)(DIR*)> dir(opendir(avb_key_dir), closedir);
+            if (!dir) {
+                LOG(ERROR) << "Failed to opendir: " << dir;
+                continue;
+            }
+            // Gets all key pathes under the dir.
+            struct dirent* de;
+            while ((de = readdir(dir.get()))) {
+                if (de->d_type != DT_REG) continue;
+                std::string full_path = StringPrintf("%s/%s", avb_key_dir, de->d_name);
+                key_paths.emplace_back(std::move(full_path));
+            }
+            std::sort(key_paths.begin(), key_paths.end());
+        } else {
+            // avb_keys are key paths separated by ":", if it's not a dir.
+            key_paths = Split(entry.avb_keys, ":");
+        }
+
+        // Reads the key content then cache it.
+        std::vector<std::string> key_blobs;
+        for (const auto& path : key_paths) {
+            std::string key_value;
+            if (!ReadFileToString(path, &key_value)) {
+                continue;
+            }
+            key_blobs.emplace_back(std::move(key_value));
+        }
+
+        // Maps entry.avb_keys to actual key blobs.
+        preload_avb_key_blobs_[entry.avb_keys] = std::move(key_blobs);
+    }
+}
+
+// If system is in the fstab then we're not a system-as-root device, and in
+// this case, we mount system first then pivot to it.  From that point on,
+// we are effectively identical to a system-as-root device.
+bool FirstStageMountVBootV2::TrySwitchSystemAsRoot() {
+    UseDsuIfPresent();
+    // Preloading all AVB keys from the ramdisk before switching root to /system.
+    PreloadAvbKeys();
+
+===== SETUP DM-VERITY =====
+    }
+    return false;
+}
+
+bool FirstStageMountVBootV2::SetUpDmVerity(FstabEntry* fstab_entry) {
+    AvbHashtreeResult hashtree_result;
+
+    // It's possible for a fstab_entry to have both avb_keys and avb flag.
+    // In this case, try avb_keys first, then fallback to avb flag.
+    if (!fstab_entry->avb_keys.empty()) {
+        if (!InitAvbHandle()) return false;
+        // Checks if hashtree should be disabled from the top-level /vbmeta.
+        if (IsHashtreeDisabled(*avb_handle_, fstab_entry->mount_point)) {
+            return true;
+        }
+        auto avb_standalone_handle = AvbHandle::LoadAndVerifyVbmeta(
+                *fstab_entry, preload_avb_key_blobs_[fstab_entry->avb_keys]);
+        if (!avb_standalone_handle) {
+            LOG(ERROR) << "Failed to load offline vbmeta for " << fstab_entry->mount_point;
+            // Fallbacks to built-in hashtree if fs_mgr_flags.avb is set.
+            if (!fstab_entry->fs_mgr_flags.avb) return false;
+            LOG(INFO) << "Fallback to built-in hashtree for " << fstab_entry->mount_point;
+            hashtree_result =
+                    avb_handle_->SetUpAvbHashtree(fstab_entry, false /* wait_for_verity_dev */);
+        } else {
+            // Sets up hashtree via the standalone handle.
+            if (IsStandaloneImageRollback(*avb_handle_, *avb_standalone_handle, *fstab_entry)) {
+                return false;
+            }
+            hashtree_result = avb_standalone_handle->SetUpAvbHashtree(
+                    fstab_entry, false /* wait_for_verity_dev */);
+        }
+    } else if (fstab_entry->fs_mgr_flags.avb) {
+        if (!InitAvbHandle()) return false;
+        hashtree_result =
+                avb_handle_->SetUpAvbHashtree(fstab_entry, false /* wait_for_verity_dev */);
+    } else if (!fstab_entry->avb_hashtree_digest.empty()) {
+        // When fstab_entry has neither avb_keys nor avb flag, try using
+        // avb_hashtree_digest.
+        if (!InitAvbHandle()) return false;
+        // Checks if hashtree should be disabled from the top-level /vbmeta.
+        if (IsHashtreeDisabled(*avb_handle_, fstab_entry->mount_point)) {
+            return true;
+        }
+        auto avb_standalone_handle = AvbHandle::LoadAndVerifyVbmeta(*fstab_entry);
+        if (!avb_standalone_handle) {
+            LOG(ERROR) << "Failed to load vbmeta based on hashtree descriptor root digest for "
+                       << fstab_entry->mount_point;
+            return false;
+        }
+        hashtree_result = avb_standalone_handle->SetUpAvbHashtree(fstab_entry,
+                                                                  false /* wait_for_verity_dev */);
+    } else {
+        return true;  // No need AVB, returns true to mount the partition directly.
+    }
+
+    switch (hashtree_result) {
+        case AvbHashtreeResult::kDisabled:
+            return true;  // Returns true to mount the partition.
+        case AvbHashtreeResult::kSuccess:
+            // The exact block device name (fstab_rec->blk_device) is changed to
+
+===== AVB KEY VALIDATION =====
+            return false;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool IsPublicKeyMatching(const FstabEntry& fstab_entry, const std::string& public_key_data,
+                         const std::vector<std::string>& preload_avb_key_blobs) {
+    // At least one of the following should be provided for public key matching.
+    if (preload_avb_key_blobs.empty() && fstab_entry.avb_keys.empty()) {
+        LERROR << "avb_keys=/path/to/key(s) is missing for " << fstab_entry.mount_point;
+        return false;
+    }
+
+    // Expected key shouldn't be empty.
+    if (public_key_data.empty()) {
+        LERROR << "public key data shouldn't be empty for " << fstab_entry.mount_point;
+        return false;
+    }
+
+    // Performs key matching for preload_avb_key_blobs first, if it is present.
+    if (!preload_avb_key_blobs.empty()) {
+        if (std::find(preload_avb_key_blobs.begin(), preload_avb_key_blobs.end(),
+                      public_key_data) != preload_avb_key_blobs.end()) {
+            return true;
+        }
+    }
+
+    // Performs key matching for fstab_entry.avb_keys if necessary.
+    // Note that it is intentional to match both preload_avb_key_blobs and fstab_entry.avb_keys.
+    // Some keys might only be available before init chroots into /system, e.g., /avb/key1
+    // in the first-stage ramdisk, while other keys might only be available after the chroot,
+    // e.g., /system/etc/avb/key2.
+    // fstab_entry.avb_keys might be either a directory containing multiple keys,
+    // or a string indicating multiple keys separated by ':'.
+    std::vector<std::string> allowed_avb_keys;
+    auto list_avb_keys_in_dir = ListFiles(fstab_entry.avb_keys);
+    if (list_avb_keys_in_dir.ok()) {
+        std::sort(list_avb_keys_in_dir->begin(), list_avb_keys_in_dir->end());
+        allowed_avb_keys = *list_avb_keys_in_dir;
+    } else {
+        allowed_avb_keys = Split(fstab_entry.avb_keys, ":");
+    }
+    return ValidatePublicKeyBlob(public_key_data, allowed_avb_keys);
+}
+
+bool IsHashtreeDescriptorRootDigestMatching(const FstabEntry& fstab_entry,
+                                            const std::vector<VBMetaData>& vbmeta_images,
+                                            const std::string& ab_suffix,
+                                            const std::string& ab_other_suffix) {
+    // Read expected value of hashtree descriptor root digest from fstab_entry.
+    std::string root_digest_expected;
+    if (!ReadFileToString(fstab_entry.avb_hashtree_digest, &root_digest_expected)) {
+        LERROR << "Failed to load expected root digest for " << fstab_entry.mount_point;
+        return false;
+
+===== AVB LOAD / VERIFY =====
+        return false;
+    }
+
+    return true;
+}
+
+AvbUniquePtr AvbHandle::LoadAndVerifyVbmeta(const FstabEntry& fstab_entry,
+                                            const std::vector<std::string>& preload_avb_key_blobs) {
+    // Binds allow_verification_error and rollback_protection to device unlock state.
+    bool allow_verification_error = IsAvbPermissive();
+    bool rollback_protection = !allow_verification_error;
+
+    std::string public_key_data;
+    bool verification_disabled = false;
+    VBMetaVerifyResult verify_result = VBMetaVerifyResult::kError;
+    std::unique_ptr<VBMetaData> vbmeta = LoadAndVerifyVbmetaByPath(
+            fstab_entry.blk_device, "" /* partition_name, no need for a standalone path */,
+            "" /* expected_public_key_blob, */, allow_verification_error, rollback_protection,
+            false /* not is_chained_vbmeta */, &public_key_data, &verification_disabled,
+            &verify_result);
+
+    if (!vbmeta) {
+        LERROR << "Failed to load vbmeta: " << fstab_entry.blk_device;
+        return nullptr;
+    }
+
+    AvbUniquePtr avb_handle(new AvbHandle());
+    if (!avb_handle) {
+        LERROR << "Failed to allocate AvbHandle";
+        return nullptr;
+    }
+    avb_handle->vbmeta_images_.emplace_back(std::move(*vbmeta));
+
+    switch (verify_result) {
+        case VBMetaVerifyResult::kSuccess:
+            avb_handle->status_ = AvbHandleStatus::kSuccess;
+            break;
+        case VBMetaVerifyResult::kErrorVerification:
+            avb_handle->status_ = AvbHandleStatus::kVerificationError;
+            break;
+        default:
+            LERROR << "LoadAndVerifyVbmetaByPath failed, result: " << verify_result;
+            return nullptr;
+    }
+
+    // Verify vbmeta image checking by either public key or hashtree descriptor root digest.
+    if (!preload_avb_key_blobs.empty() || !fstab_entry.avb_keys.empty()) {
+        if (!IsPublicKeyMatching(fstab_entry, public_key_data, preload_avb_key_blobs)) {
+            avb_handle->status_ = AvbHandleStatus::kVerificationError;
+            LWARNING << "Found unknown public key used to sign " << fstab_entry.mount_point;
+            if (!allow_verification_error) {
+                LERROR << "Unknown public key is not allowed";
+                return nullptr;
+            }
+        }
+    } else if (!IsHashtreeDescriptorRootDigestMatching(fstab_entry, avb_handle->vbmeta_images_,
+                                                       avb_handle->slot_suffix_,
+                                                       avb_handle->other_slot_suffix_)) {
+        avb_handle->status_ = AvbHandleStatus::kVerificationError;
+        LWARNING << "Found unknown hashtree descriptor root digest used on "
+                 << fstab_entry.mount_point;
+        if (!allow_verification_error) {
+            LERROR << "Verification based on root digest failed. Vbmeta image is not allowed.";
+            return nullptr;
+        }
+    }
+
+    if (verification_disabled) {
+        LINFO << "AVB verification disabled on: " << fstab_entry.mount_point;
+        avb_handle->status_ = AvbHandleStatus::kVerificationDisabled;
+    }
+
+    LINFO << "Returning avb_handle for '" << fstab_entry.mount_point
+          << "' with status: " << avb_handle->status_;
+    return avb_handle;
+}
