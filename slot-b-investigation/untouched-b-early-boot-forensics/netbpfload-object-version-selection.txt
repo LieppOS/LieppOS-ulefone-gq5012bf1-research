@@ -1,0 +1,651 @@
+===== LOADPROG VERSION FILTER =====
+
+int loadProg(const char* const elfPath, const unsigned int bpfloader_ver,
+             const char* const prefix) {
+    vector<char> license;
+    vector<codeSection> cs;
+    vector<unique_fd> mapFds;
+    int ret;
+
+    ifstream elfFile(elfPath, ios::in | ios::binary);
+    if (!elfFile.is_open()) return -1;
+
+    ret = readSectionByName("license", elfFile, license);
+    if (ret) {
+        ALOGE("Couldn't find license in %s", elfPath);
+        return ret;
+    } else {
+        ALOGD("Loading ELF object %s with license %s",
+              elfPath, (char*)license.data());
+    }
+
+    unsigned int bpfLoaderMinVer = readSectionUint("bpfloader_min_ver", elfFile);
+    unsigned int bpfLoaderMaxVer = readSectionUint("bpfloader_max_ver", elfFile);
+
+    // inclusive lower bound check
+    if (bpfloader_ver < bpfLoaderMinVer) {
+        ALOGD("BpfLoader version 0x%05x ignoring ELF object %s with min ver 0x%05x",
+              bpfloader_ver, elfPath, bpfLoaderMinVer);
+        return 0;
+    }
+
+    // exclusive upper bound check
+    if (bpfloader_ver >= bpfLoaderMaxVer) {
+        ALOGD("BpfLoader version 0x%05x ignoring ELF object %s with max ver 0x%05x",
+              bpfloader_ver, elfPath, bpfLoaderMaxVer);
+        return 0;
+    }
+
+    ALOGD("BpfLoader version 0x%05x processing ELF object %s with ver [0x%05x,0x%05x)",
+          bpfloader_ver, elfPath, bpfLoaderMinVer, bpfLoaderMaxVer);
+
+    ret = createMaps(elfPath, elfFile, mapFds, prefix, bpfloader_ver);
+    if (ret) {
+        ALOGE("Failed to create maps: (ret=%d) in %s", ret, elfPath);
+        return ret;
+    }
+
+    for (int i = 0; i < (int)mapFds.size(); i++)
+        ALOGV("map_fd found at %d is %d in %s", i, mapFds[i].get(), elfPath);
+
+    ret = readCodeSections(elfFile, cs);
+    // BPF .o's with no programs are only supported by mainline netbpfload,
+    // make sure .o's targeting non-mainline (ie. S) bpfloader don't show up.
+    if (ret == -ENOENT && bpfLoaderMinVer >= BPFLOADER_MAINLINE_VERSION)
+        return 0;
+    if (ret) {
+        ALOGE("Couldn't read all code sections in %s", elfPath);
+        return ret;
+    }
+
+    applyMapRelo(elfFile, mapFds, cs);
+
+    ret = loadCodeSections(elfPath, cs, string(license.data()), prefix, bpfloader_ver);
+    if (ret) ALOGE("Failed to load programs, loadCodeSections ret=%d", ret);
+
+    return ret;
+}
+
+static bool exists(const char* const path) {
+    int v = access(path, F_OK);
+    if (!v) return true;
+    if (errno == ENOENT) return false;
+    ALOGE("FATAL: access(%s, F_OK) -> %d [%d:%s]", path, v, errno, strerror(errno));
+    abort();  // can only hit this if permissions (likely selinux) are screwed up
+}
+
+#define APEXROOT "/apex/com.android.tethering"
+#define BPFROOT APEXROOT "/etc/bpf"
+
+const Location locations[] = {
+        // S+ Tethering mainline module (network_stack): tether offload
+        {
+                .dir = BPFROOT "/",
+                .prefix = "tethering/",
+        },
+        // T+ Tethering mainline module (shared with netd & system server)
+        // netutils_wrapper (for iptables xt_bpf) has access to programs
+        {
+                .dir = BPFROOT "/netd_shared/",
+                .prefix = "netd_shared/",
+        },
+        // T+ Tethering mainline module (shared with netd & system server)
+        // netutils_wrapper has no access, netd has read only access
+        {
+                .dir = BPFROOT "/netd_readonly/",
+                .prefix = "netd_readonly/",
+        },
+
+===== LOADALLELFOBJECTS =====
+1138-    }
+1139-
+1140-    // exclusive upper bound check
+1141-    if (bpfloader_ver >= bpfLoaderMaxVer) {
+1142-        ALOGD("BpfLoader version 0x%05x ignoring ELF object %s with max ver 0x%05x",
+1143-              bpfloader_ver, elfPath, bpfLoaderMaxVer);
+1144-        return 0;
+1145-    }
+1146-
+1147-    ALOGD("BpfLoader version 0x%05x processing ELF object %s with ver [0x%05x,0x%05x)",
+1148-          bpfloader_ver, elfPath, bpfLoaderMinVer, bpfLoaderMaxVer);
+1149-
+1150-    ret = createMaps(elfPath, elfFile, mapFds, prefix, bpfloader_ver);
+1151-    if (ret) {
+1152-        ALOGE("Failed to create maps: (ret=%d) in %s", ret, elfPath);
+1153-        return ret;
+1154-    }
+1155-
+1156-    for (int i = 0; i < (int)mapFds.size(); i++)
+1157-        ALOGV("map_fd found at %d is %d in %s", i, mapFds[i].get(), elfPath);
+1158-
+1159-    ret = readCodeSections(elfFile, cs);
+1160-    // BPF .o's with no programs are only supported by mainline netbpfload,
+1161-    // make sure .o's targeting non-mainline (ie. S) bpfloader don't show up.
+1162-    if (ret == -ENOENT && bpfLoaderMinVer >= BPFLOADER_MAINLINE_VERSION)
+1163-        return 0;
+1164-    if (ret) {
+1165-        ALOGE("Couldn't read all code sections in %s", elfPath);
+1166-        return ret;
+1167-    }
+1168-
+1169-    applyMapRelo(elfFile, mapFds, cs);
+1170-
+1171-    ret = loadCodeSections(elfPath, cs, string(license.data()), prefix, bpfloader_ver);
+1172-    if (ret) ALOGE("Failed to load programs, loadCodeSections ret=%d", ret);
+1173-
+1174-    return ret;
+1175-}
+1176-
+1177-static bool exists(const char* const path) {
+1178-    int v = access(path, F_OK);
+1179-    if (!v) return true;
+1180-    if (errno == ENOENT) return false;
+1181-    ALOGE("FATAL: access(%s, F_OK) -> %d [%d:%s]", path, v, errno, strerror(errno));
+1182-    abort();  // can only hit this if permissions (likely selinux) are screwed up
+1183-}
+1184-
+1185-#define APEXROOT "/apex/com.android.tethering"
+1186-#define BPFROOT APEXROOT "/etc/bpf"
+1187-
+1188-const Location locations[] = {
+1189-        // S+ Tethering mainline module (network_stack): tether offload
+1190-        {
+1191-                .dir = BPFROOT "/",
+1192-                .prefix = "tethering/",
+1193-        },
+1194-        // T+ Tethering mainline module (shared with netd & system server)
+1195-        // netutils_wrapper (for iptables xt_bpf) has access to programs
+1196-        {
+1197-                .dir = BPFROOT "/netd_shared/",
+1198-                .prefix = "netd_shared/",
+1199-        },
+1200-        // T+ Tethering mainline module (shared with netd & system server)
+1201-        // netutils_wrapper has no access, netd has read only access
+1202-        {
+1203-                .dir = BPFROOT "/netd_readonly/",
+1204-                .prefix = "netd_readonly/",
+1205-        },
+1206-        // T+ Tethering mainline module (shared with system server)
+1207-        {
+1208-                .dir = BPFROOT "/net_shared/",
+1209-                .prefix = "net_shared/",
+1210-        },
+1211-        // T+ Tethering mainline module (not shared, just network_stack)
+1212-        {
+1213-                .dir = BPFROOT "/net_private/",
+1214-                .prefix = "net_private/",
+1215-        },
+1216-};
+1217-
+1218:static int loadAllElfObjects(const unsigned int bpfloader_ver, const Location& location) {
+1219-    int retVal = 0;
+1220-    DIR* dir;
+1221-    struct dirent* ent;
+1222-
+1223-    if ((dir = opendir(location.dir)) != NULL) {
+1224-        while ((ent = readdir(dir)) != NULL) {
+1225-            string s = ent->d_name;
+1226-            if (!EndsWith(s, ".o")) continue;
+1227-
+1228-            string progPath(location.dir);
+1229-            progPath += s;
+1230-
+1231-            int ret = loadProg(progPath.c_str(), bpfloader_ver, location.prefix);
+1232-            if (ret) {
+1233-                retVal = ret;
+1234-                ALOGE("Failed to load object: %s, ret: %s", progPath.c_str(), std::strerror(-ret));
+1235-            } else {
+1236-                ALOGD("Loaded object: %s", progPath.c_str());
+1237-            }
+1238-        }
+1239-        closedir(dir);
+1240-    }
+1241-    return retVal;
+1242-}
+1243-
+1244-static int createSysFsBpfSubDir(const char* const prefix) {
+1245-    if (*prefix) {
+1246-        mode_t prevUmask = umask(0);
+1247-
+1248-        string s = "/sys/fs/bpf/";
+1249-        s += prefix;
+1250-
+1251-        errno = 0;
+1252-        int ret = mkdir(s.c_str(), S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
+1253-        if (ret && errno != EEXIST) {
+1254-            const int err = errno;
+1255-            ALOGE("Failed to create directory: %s, ret: %s", s.c_str(), std::strerror(err));
+1256-            return -err;
+1257-        }
+1258-
+1259-        umask(prevUmask);
+1260-    }
+1261-    return 0;
+1262-}
+1263-
+1264-// Technically 'value' doesn't need to be newline terminated, but it's best
+1265-// to include a newline to match 'echo "value" > /proc/sys/...foo' behaviour,
+1266-// which is usually how kernel devs test the actual sysctl interfaces.
+1267-static int writeProcSysFile(const char *filename, const char *value) {
+1268-    unique_fd fd(open(filename, O_WRONLY | O_CLOEXEC));
+1269-    if (fd < 0) {
+1270-        const int err = errno;
+1271-        ALOGE("open('%s', O_WRONLY | O_CLOEXEC) -> %s", filename, strerror(err));
+1272-        return -err;
+1273-    }
+1274-    int len = strlen(value);
+1275-    int v = write(fd, value, len);
+1276-    if (v < 0) {
+1277-        const int err = errno;
+1278-        ALOGE("write('%s', '%s', %d) -> %s", filename, value, len, strerror(err));
+1279-        return -err;
+1280-    }
+1281-    if (v != len) {
+1282-        // In practice, due to us only using this for /proc/sys/... files, this can't happen.
+1283-        ALOGE("write('%s', '%s', %d) -> short write [%d]", filename, value, len, v);
+1284-        return -EINVAL;
+1285-    }
+1286-    return 0;
+1287-}
+1288-
+1289-#define APEX_MOUNT_POINT "/apex/com.android.tethering"
+1290-const char * const platformBpfLoader = "/system/bin/bpfloader";
+1291-const char *const uprobestatsBpfLoader =
+1292-    "/apex/com.android.uprobestats/bin/uprobestatsbpfload";
+1293-
+1294-static int logTetheringApexVersion(void) {
+1295-    char * found_blockdev = NULL;
+1296-    FILE * f = NULL;
+1297-    char buf[4096];
+1298-
+--
+1548-        // Stuff won't work reliably, but...
+1549-        if (isArm() && (isTV() || isWear())) {
+1550-            // exempt Arm TV or Wear devices (arm32 ABI is far less problematic than x86-32)
+1551-            ALOGW("[Arm TV/Wear] 32-bit userspace unsupported on 6.2+ kernels.");
+1552-        } else if (first_api_level <= __ANDROID_API_T__ && isArm()) {
+1553-            // also exempt Arm devices upgrading with major kernel rev from T-
+1554-            // might possibly be better for them to run with a newer kernel...
+1555-            ALOGW("[Arm KernelUpRev] 32-bit userspace unsupported on 6.2+ kernels.");
+1556-        } else if (isArm()) {
+1557-            ALOGE("[Arm] 64-bit userspace required on 6.2+ kernels (%d).", first_api_level);
+1558-            return 1;
+1559-        } else { // x86 since RiscV cannot be 32-bit
+1560-            ALOGE("[x86] 64-bit userspace required on 6.2+ kernels.");
+1561-            return 1;
+1562-        }
+1563-    }
+1564-
+1565-    // On handheld, 6.6 is highest version supported by Android V (sdk=35), so this is for sdk=36+
+1566-    if (!isArm() && isUserspace32bit() && isAtLeastKernelVersion(6, 7, 0)) {
+1567-        ALOGE("64-bit userspace required on 6.7+ kernels.");
+1568-        return 1;
+1569-    }
+1570-
+1571-    // Ensure we can determine the Android build type.
+1572-    if (!isEng() && !isUser() && !isUserdebug()) {
+1573-        ALOGE("Failed to determine the build type: got %s, want 'eng', 'user', or 'userdebug'",
+1574-              getBuildType().c_str());
+1575-        return 1;
+1576-    }
+1577-
+1578-    if (runningAsRoot) {
+1579-        // Note: writing this proc file requires being root (always the case on V+)
+1580-
+1581-        // Linux 5.16-rc1 changed the default to 2 (disabled but changeable),
+1582-        // but we need 0 (enabled)
+1583-        // (this writeFile is known to fail on at least 4.19, but always defaults to 0 on
+1584-        // pre-5.13, on 5.13+ it depends on CONFIG_BPF_UNPRIV_DEFAULT_OFF)
+1585-        if (writeProcSysFile("/proc/sys/kernel/unprivileged_bpf_disabled", "0\n") &&
+1586-            isAtLeastKernelVersion(5, 13, 0)) return 1;
+1587-    }
+1588-
+1589-    if (isAtLeastU) {
+1590-        // Note: writing these proc files requires CAP_NET_ADMIN
+1591-        // and sepolicy which is only present on U+,
+1592-        // on Android T and earlier versions they're written from the 'load_bpf_programs'
+1593-        // trigger (ie. by init itself) instead.
+1594-
+1595-        // Enable the eBPF JIT -- but do note that on 64-bit kernels it is likely
+1596-        // already force enabled by the kernel config option BPF_JIT_ALWAYS_ON.
+1597-        // (Note: this (open) will fail with ENOENT 'No such file or directory' if
+1598-        //  kernel does not have CONFIG_BPF_JIT=y)
+1599-        // BPF_JIT is required by R VINTF (which means 4.14/4.19/5.4 kernels),
+1600-        // but 4.14/4.19 were released with P & Q, and only 5.4 is new in R+.
+1601-        if (writeProcSysFile("/proc/sys/net/core/bpf_jit_enable", "1\n") &&
+1602-            android::bpf::isAtLeastKernelVersion(4, 14, 0)) return 1;
+1603-
+1604-        // Enable JIT kallsyms export for privileged users only
+1605-        // (Note: this (open) will fail with ENOENT 'No such file or directory' if
+1606-        //  kernel does not have CONFIG_HAVE_EBPF_JIT=y)
+1607-        if (writeProcSysFile("/proc/sys/net/core/bpf_jit_kallsyms", "1\n") &&
+1608-            android::bpf::isAtLeastKernelVersion(4, 14, 0)) return 1;
+1609-    }
+1610-
+1611-    // Create all the pin subdirectories
+1612-    // (this must be done first to allow selinux_context and pin_subdir functionality,
+1613-    //  which could otherwise fail with ENOENT during object pinning or renaming,
+1614-    //  due to ordering issues)
+1615-    for (const auto& location : locations) {
+1616-        if (createSysFsBpfSubDir(location.prefix)) return 1;
+1617-    }
+1618-
+1619-    // Note: there's no actual src dir for fs_bpf_loader .o's,
+1620-    // so it is not listed in 'locations[].prefix'.
+1621-    // This is because this is primarily meant for triggering genfscon rules,
+1622-    // and as such this will likely always be the case.
+1623-    // Thus we need to manually create the /sys/fs/bpf/loader subdirectory.
+1624-    if (createSysFsBpfSubDir("loader")) return 1;
+1625-
+1626-    // Load all ELF objects, create programs and maps, and pin them
+1627-    for (const auto& location : locations) {
+1628:        if (loadAllElfObjects(bpfloader_ver, location) != 0) {
+1629-            ALOGE("=== CRITICAL FAILURE LOADING BPF PROGRAMS FROM %s ===", location.dir);
+1630-            ALOGE("If this triggers reliably, you're probably missing kernel options or patches.");
+1631-            ALOGE("If this triggers randomly, you might be hitting some memory allocation "
+1632-                  "problems or startup script race.");
+1633-            ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
+1634-            sleep(20);
+1635-            return 2;
+1636-        }
+1637-    }
+1638-
+1639-    int key = 1;
+1640-    int value = 123;
+1641-    unique_fd map(
+1642-            createMap(BPF_MAP_TYPE_ARRAY, sizeof(key), sizeof(value), 2, 0));
+1643-    if (writeToMapEntry(map, &key, &value, BPF_ANY)) {
+1644-        ALOGE("Critical kernel bug - failure to write into index 1 of 2 element bpf map array.");
+1645-        return 1;
+1646-    }
+1647-
+1648-    // leave a flag that we're done
+1649-    if (createSysFsBpfSubDir("netd_shared/mainline_done")) return 1;
+1650-
+1651-    // platform bpfloader will only succeed when run as root
+1652-    if (!runningAsRoot) {
+1653-        // unreachable on U QPR3+ which always runs netbpfload as root
+1654-
+1655-        ALOGI("mainline done, no need to transfer control to platform bpf loader.");
+1656-        return 0;
+1657-    }
+1658-
+1659-    // unreachable before U QPR3
+1660-    {
+1661-      ALOGI("done, transferring control to uprobestatsbpfload.");
+1662-      const char *args[] = {
+1663-          uprobestatsBpfLoader,
+1664-          NULL,
+1665-      };
+1666-      execve(args[0], (char **)args, envp);
+1667-    }
+1668-
+1669-    ALOGI("unable to execute uprobestatsbpfload, transferring control to "
+1670-          "platform bpfloader.");
+1671-    // platform BpfLoader *needs* to run as root
+1672-    const char * args[] = { platformBpfLoader, NULL, };
+1673-    execve(args[0], (char**)args, envp);
+1674-    ALOGE("FATAL: execve('%s'): %d[%s]", platformBpfLoader, errno, strerror(errno));
+1675-    return 1;
+1676-}
+1677-
+1678-}  // namespace bpf
+1679-}  // namespace android
+1680-
+1681-int main(int argc, char** argv, char * const envp[]) {
+1682-    InitLogging(argv, &KernelLogger);
+1683-
+1684-    if (argc == 2 && !strcmp(argv[1], "done")) {
+1685-        // we're being re-exec'ed from platform bpfloader to 'finalize' things
+1686-        if (!SetProperty("bpf.progs_loaded", "1")) {
+1687-            ALOGE("Failed to set bpf.progs_loaded property to 1.");
+1688-            return 125;
+1689-        }
+1690-        ALOGI("success.");
+1691-        return 0;
+1692-    }
+1693-
+1694-    return android::bpf::doLoad(argv, envp);
+1695-}
+
+===== @MAINLINE / FILENAME SELECTION =====
+657-    vector<string> mapNames;
+658-    string objName = pathToObjName(string(elfPath));
+659-
+660-    ret = readSectionByName("maps", elfFile, mdData);
+661-    if (ret == -2) return 0;  // no maps to read
+662-    if (ret) return ret;
+663-
+664-    if (mdData.size() % sizeof(struct bpf_map_def)) {
+665-        ALOGE("createMaps failed due to improper sized maps section, %zu %% %zu != 0",
+666-              mdData.size(), sizeof(struct bpf_map_def));
+667-        return -1;
+668-    };
+669-
+670-    md.resize(mdData.size() / sizeof(struct bpf_map_def));
+671-
+672-    const char* dataPtr = mdData.data();
+673-    for (auto& m : md) {
+674-        // Copy the structure from the ELF file and move to the next one.
+675-        memcpy(&m, dataPtr, sizeof(struct bpf_map_def));
+676-        dataPtr += sizeof(struct bpf_map_def);
+677-    }
+678-
+679-    ret = getSectionSymNames(elfFile, "maps", mapNames);
+680-    if (ret) return ret;
+681-
+682-    unsigned kvers = kernelVersion();
+683-
+684-    for (int i = 0; i < (int)mapNames.size(); i++) {
+685-        if (md[i].zero != 0) abort();
+686-
+687:        if (bpfloader_ver < md[i].bpfloader_min_ver) {
+688-            ALOGD("skipping map %s which requires bpfloader min ver 0x%05x", mapNames[i].c_str(),
+689:                  md[i].bpfloader_min_ver);
+690-            mapFds.push_back(unique_fd());
+691-            continue;
+692-        }
+693-
+694:        if (bpfloader_ver >= md[i].bpfloader_max_ver) {
+695-            ALOGD("skipping map %s which requires bpfloader max ver 0x%05x", mapNames[i].c_str(),
+696:                  md[i].bpfloader_max_ver);
+697-            mapFds.push_back(unique_fd());
+698-            continue;
+699-        }
+700-
+701-        if (kvers < md[i].min_kver) {
+702:            ALOGD("skipping map %s which requires kernel version 0x%x >= 0x%x",
+703-                  mapNames[i].c_str(), kvers, md[i].min_kver);
+704-            mapFds.push_back(unique_fd());
+705-            continue;
+706-        }
+707-
+708-        if (kvers >= md[i].max_kver) {
+709:            ALOGD("skipping map %s which requires kernel version 0x%x < 0x%x",
+710-                  mapNames[i].c_str(), kvers, md[i].max_kver);
+711-            mapFds.push_back(unique_fd());
+712-            continue;
+713-        }
+714-
+715-        if ((md[i].ignore_on_eng && isEng()) || (md[i].ignore_on_user && isUser()) ||
+716-            (md[i].ignore_on_userdebug && isUserdebug())) {
+717-            ALOGD("skipping map %s which is ignored on %s builds", mapNames[i].c_str(),
+718-                  getBuildType().c_str());
+719-            mapFds.push_back(unique_fd());
+720-            continue;
+721-        }
+722-
+723-        if ((isArm() && isKernel32Bit() && md[i].ignore_on_arm32) ||
+724-            (isArm() && isKernel64Bit() && md[i].ignore_on_aarch64) ||
+725-            (isX86() && isKernel32Bit() && md[i].ignore_on_x86_32) ||
+726-            (isX86() && isKernel64Bit() && md[i].ignore_on_x86_64) ||
+727-            (isRiscV() && md[i].ignore_on_riscv64)) {
+728-            ALOGD("skipping map %s which is ignored on %s", mapNames[i].c_str(),
+729-                  describeArch());
+730-            mapFds.push_back(unique_fd());
+731-            continue;
+732-        }
+733-
+734-        enum bpf_map_type type = md[i].type;
+735-        if (type == BPF_MAP_TYPE_DEVMAP && !isAtLeastKernelVersion(4, 14, 0)) {
+736-            // On Linux Kernels older than 4.14 this map type doesn't exist, but it can kind
+737-            // of be approximated: ARRAY has the same userspace api, though it is not usable
+738-            // by the same ebpf programs.  However, that's okay because the bpf_redirect_map()
+739-            // helper doesn't exist on 4.9-T anyway (so the bpf program would fail to load,
+--
+924-}
+925-
+926-static int loadCodeSections(const char* elfPath, vector<codeSection>& cs, const string& license,
+927-                            const char* prefix, const unsigned int bpfloader_ver) {
+928-    unsigned kvers = kernelVersion();
+929-
+930-    if (!kvers) {
+931-        ALOGE("unable to get kernel version");
+932-        return -EINVAL;
+933-    }
+934-
+935-    string objName = pathToObjName(string(elfPath));
+936-
+937-    for (int i = 0; i < (int)cs.size(); i++) {
+938-        unique_fd& fd = cs[i].prog_fd;
+939-        int ret;
+940-        string name = cs[i].name;
+941-
+942-        if (!cs[i].prog_def.has_value()) {
+943-            ALOGE("[%d] '%s' missing program definition! bad bpf.o build?", i, name.c_str());
+944-            return -EINVAL;
+945-        }
+946-
+947-        unsigned min_kver = cs[i].prog_def->min_kver;
+948-        unsigned max_kver = cs[i].prog_def->max_kver;
+949-        ALOGD("cs[%d].name:%s min_kver:%x .max_kver:%x (kvers:%x)", i, name.c_str(), min_kver,
+950-             max_kver, kvers);
+951-        if (kvers < min_kver) continue;
+952-        if (kvers >= max_kver) continue;
+953-
+954:        unsigned bpfMinVer = cs[i].prog_def->bpfloader_min_ver;
+955:        unsigned bpfMaxVer = cs[i].prog_def->bpfloader_max_ver;
+956-        domain selinux_context = getDomainFromSelinuxContext(cs[i].prog_def->selinux_context);
+957-        domain pin_subdir = getDomainFromPinSubdir(cs[i].prog_def->pin_subdir);
+958-
+959-        ALOGD("cs[%d].name:%s requires bpfloader version [0x%05x,0x%05x)", i, name.c_str(),
+960-              bpfMinVer, bpfMaxVer);
+961-        if (bpfloader_ver < bpfMinVer) continue;
+962-        if (bpfloader_ver >= bpfMaxVer) continue;
+963-
+964-        if ((cs[i].prog_def->ignore_on_eng && isEng()) ||
+965-            (cs[i].prog_def->ignore_on_user && isUser()) ||
+966-            (cs[i].prog_def->ignore_on_userdebug && isUserdebug())) {
+967-            ALOGD("cs[%d].name:%s is ignored on %s builds", i, name.c_str(),
+968-                  getBuildType().c_str());
+969-            continue;
+970-        }
+971-
+972-        if ((isArm() && isKernel32Bit() && cs[i].prog_def->ignore_on_arm32) ||
+973-            (isArm() && isKernel64Bit() && cs[i].prog_def->ignore_on_aarch64) ||
+974-            (isX86() && isKernel32Bit() && cs[i].prog_def->ignore_on_x86_32) ||
+975-            (isX86() && isKernel64Bit() && cs[i].prog_def->ignore_on_x86_64) ||
+976-            (isRiscV() && cs[i].prog_def->ignore_on_riscv64)) {
+977-            ALOGD("cs[%d].name:%s is ignored on %s", i, name.c_str(), describeArch());
+978-            continue;
+979-        }
+980-
+981-        if (specified(selinux_context)) {
+982-            ALOGV("prog %s selinux_context [%-32s] -> %d -> '%s' (%s)", name.c_str(),
+983-                  cs[i].prog_def->selinux_context, static_cast<int>(selinux_context),
+984-                  lookupSelinuxContext(selinux_context), lookupPinSubdir(selinux_context));
+985-        }
+--
+1100-        int progId = bpfGetFdProgId(fd);
+1101-        if (progId == -1) {
+1102-            ALOGE("bpfGetFdProgId failed, ret: %d [%d]", progId, errno);
+1103-        } else {
+1104-            ALOGI("prog %s id %d", progPinLoc.c_str(), progId);
+1105-        }
+1106-    }
+1107-
+1108-    return 0;
+1109-}
+1110-
+1111-int loadProg(const char* const elfPath, const unsigned int bpfloader_ver,
+1112-             const char* const prefix) {
+1113-    vector<char> license;
+1114-    vector<codeSection> cs;
+1115-    vector<unique_fd> mapFds;
+1116-    int ret;
+1117-
+1118-    ifstream elfFile(elfPath, ios::in | ios::binary);
+1119-    if (!elfFile.is_open()) return -1;
+1120-
+1121-    ret = readSectionByName("license", elfFile, license);
+1122-    if (ret) {
+1123-        ALOGE("Couldn't find license in %s", elfPath);
+1124-        return ret;
+1125-    } else {
+1126-        ALOGD("Loading ELF object %s with license %s",
+1127-              elfPath, (char*)license.data());
+1128-    }
+1129-
+1130:    unsigned int bpfLoaderMinVer = readSectionUint("bpfloader_min_ver", elfFile);
+1131:    unsigned int bpfLoaderMaxVer = readSectionUint("bpfloader_max_ver", elfFile);
+1132-
+1133-    // inclusive lower bound check
+1134:    if (bpfloader_ver < bpfLoaderMinVer) {
+1135-        ALOGD("BpfLoader version 0x%05x ignoring ELF object %s with min ver 0x%05x",
+1136:              bpfloader_ver, elfPath, bpfLoaderMinVer);
+1137-        return 0;
+1138-    }
+1139-
+1140-    // exclusive upper bound check
+1141:    if (bpfloader_ver >= bpfLoaderMaxVer) {
+1142-        ALOGD("BpfLoader version 0x%05x ignoring ELF object %s with max ver 0x%05x",
+1143:              bpfloader_ver, elfPath, bpfLoaderMaxVer);
+1144-        return 0;
+1145-    }
+1146-
+1147-    ALOGD("BpfLoader version 0x%05x processing ELF object %s with ver [0x%05x,0x%05x)",
+1148:          bpfloader_ver, elfPath, bpfLoaderMinVer, bpfLoaderMaxVer);
+1149-
+1150-    ret = createMaps(elfPath, elfFile, mapFds, prefix, bpfloader_ver);
+1151-    if (ret) {
+1152-        ALOGE("Failed to create maps: (ret=%d) in %s", ret, elfPath);
+1153-        return ret;
+1154-    }
+1155-
+1156-    for (int i = 0; i < (int)mapFds.size(); i++)
+1157-        ALOGV("map_fd found at %d is %d in %s", i, mapFds[i].get(), elfPath);
+1158-
+1159-    ret = readCodeSections(elfFile, cs);
+1160-    // BPF .o's with no programs are only supported by mainline netbpfload,
+1161-    // make sure .o's targeting non-mainline (ie. S) bpfloader don't show up.
+1162:    if (ret == -ENOENT && bpfLoaderMinVer >= BPFLOADER_MAINLINE_VERSION)
+1163-        return 0;
+1164-    if (ret) {
+1165-        ALOGE("Couldn't read all code sections in %s", elfPath);
+1166-        return ret;
+1167-    }
+1168-
+1169-    applyMapRelo(elfFile, mapFds, cs);
+1170-
+1171-    ret = loadCodeSections(elfPath, cs, string(license.data()), prefix, bpfloader_ver);
+1172-    if (ret) ALOGE("Failed to load programs, loadCodeSections ret=%d", ret);
+1173-
+1174-    return ret;
+1175-}
+1176-
+1177-static bool exists(const char* const path) {
+1178-    int v = access(path, F_OK);
+1179-    if (!v) return true;
+1180-    if (errno == ENOENT) return false;
+1181-    ALOGE("FATAL: access(%s, F_OK) -> %d [%d:%s]", path, v, errno, strerror(errno));
+1182-    abort();  // can only hit this if permissions (likely selinux) are screwed up
+1183-}
+1184-
+1185-#define APEXROOT "/apex/com.android.tethering"
+1186-#define BPFROOT APEXROOT "/etc/bpf"
+1187-
+1188-const Location locations[] = {
+1189-        // S+ Tethering mainline module (network_stack): tether offload
+1190-        {
+1191-                .dir = BPFROOT "/",
+1192-                .prefix = "tethering/",
