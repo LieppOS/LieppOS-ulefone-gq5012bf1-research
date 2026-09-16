@@ -1,0 +1,288 @@
+===== LOADPROG COMPLETE VERSION AREA =====
+839:int loadProg(const char* elfPath, bool* isCritical, const Location& location) {
+962:            int ret = loadProg(progPath.c_str(), &critical, location);
+
+===== ALL VERSION-RELATED TOKENS IN LOADER =====
+1-/*
+2- * Copyright (C) 2018 The Android Open Source Project
+3- *
+4: * Licensed under the Apache License, Version 2.0 (the "License");
+5- * you may not use this file except in compliance with the License.
+6- * You may obtain a copy of the License at
+7- *
+8- *      http://www.apache.org/licenses/LICENSE-2.0
+9- *
+10- * Unless required by applicable law or agreed to in writing, software
+11- * distributed under the License is distributed on an "AS IS" BASIS,
+12- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+13- * See the License for the specific language governing permissions and
+14- * limitations under the License.
+15- */
+16-
+--
+67-
+68-namespace android {
+69-namespace bpf {
+70-
+71-static unsigned int page_size = static_cast<unsigned int>(getpagesize());
+72-
+73-static string pathToObjName(const string& path) {
+74-    // extract everything after the final slash, ie. this is the filename 'foo@1.o' or 'bar.o'
+75-    string filename = android::base::Split(path, "/").back();
+76-    // strip off everything from the final period onwards (strip '.o' suffix), ie. 'foo@1' or 'bar'
+77-    string name = filename.substr(0, filename.find_last_of('.'));
+78-    // strip any potential @1 suffix, this will leave us with just 'foo' or 'bar'
+79:    // this can be used to provide duplicate programs (mux based on the bpfloader version)
+80-    return name.substr(0, name.find_last_of('@'));
+81-}
+82-
+83-typedef struct {
+84-    const char* name;
+85-    enum bpf_prog_type type;
+86-} sectionType;
+87-
+88-/*
+89- * Map section name prefixes to program types, the section name will be:
+90- *   SECTION(<prefix>/<name-of-program>)
+91- * For example:
+--
+469-
+470-    return getSymName(elfFile, symtab[index].st_name, name);
+471-}
+472-
+473-static bool mapMatchesExpectations(const unique_fd& fd, const string& mapName,
+474-                                   const struct bpf_map_def& mapDef, const enum bpf_map_type type) {
+475-    // bpfGetFd... family of functions require at minimum a 4.14 kernel,
+476-    // so on 4.9-T kernels just pretend the map matches our expectations.
+477-    // Additionally we'll get almost equivalent test coverage on newer devices/kernels.
+478-    // This is because the primary failure mode we're trying to detect here
+479-    // is either a source code misconfiguration (which is likely kernel independent)
+480-    // or a newly introduced kernel feature/bug (which is unlikely to get backported to 4.9).
+481:    if (!isAtLeastKernelVersion(4, 14, 0)) return true;
+482-
+483-    // Assuming fd is a valid Bpf Map file descriptor then
+484-    // all the following should always succeed on a 4.14+ kernel.
+485-    // If they somehow do fail, they'll return -1 (and set errno),
+486-    // which should then cause (among others) a key_size mismatch.
+487-    int fd_type = bpfGetFdMapType(fd);
+488-    int fd_key_size = bpfGetFdKeySize(fd);
+489-    int fd_value_size = bpfGetFdValueSize(fd);
+490-    int fd_max_entries = bpfGetFdMaxEntries(fd);
+491-    int fd_map_flags = bpfGetFdMapFlags(fd);
+492-
+493-    // DEVMAPs are readonly from the bpf program side's point of view, as such
+--
+497-        desired_map_flags |= BPF_F_RDONLY_PROG;
+498-
+499-    // The .h file enforces that this is a power of two, and page size will
+500-    // also always be a power of two, so this logic is actually enough to
+501-    // force it to be a multiple of the page size, as required by the kernel.
+502-    unsigned int desired_max_entries = mapDef.max_entries;
+503-    if (type == BPF_MAP_TYPE_RINGBUF) {
+504-        if (desired_max_entries < page_size) desired_max_entries = page_size;
+505-    }
+506-
+507-    // The following checks should *never* trigger, if one of them somehow does,
+508-    // it probably means a bpf .o file has been changed/replaced at runtime
+509:    // and bpfloader was manually rerun (normally it should only run *once*
+510-    // early during the boot process).
+511-    // Another possibility is that something is misconfigured in the code:
+512-    // most likely a shared map is declared twice differently.
+513-    // But such a change should never be checked into the source tree...
+514-    if ((fd_type == type) &&
+515-        (fd_key_size == (int)mapDef.key_size) &&
+516-        (fd_value_size == (int)mapDef.value_size) &&
+517-        (fd_max_entries == (int)desired_max_entries) &&
+518-        (fd_map_flags == desired_map_flags)) {
+519-        return true;
+520-    }
+521-
+--
+540-
+541-    if (mdData.size() % sizeof(struct bpf_map_def)) {
+542-        ALOGE("createMaps failed due to improper sized maps section, %zu %% %zu != 0",
+543-              mdData.size(), sizeof(struct bpf_map_def));
+544-        return -1;
+545-    }
+546-    md.resize(mdData.size() / sizeof(struct bpf_map_def));
+547-    memcpy(md.data(), mdData.data(), mdData.size());
+548-
+549-    ret = getSectionSymNames(elfFile, "maps", mapNames);
+550-    if (ret) return ret;
+551-
+552:    unsigned kvers = kernelVersion();
+553-
+554-    for (int i = 0; i < (int)mapNames.size(); i++) {
+555-        if (md[i].zero != 0) abort();
+556-
+557-        if (kvers < md[i].min_kver) {
+558:            ALOGD("skipping map %s which requires kernel version 0x%x >= 0x%x",
+559-                  mapNames[i].c_str(), kvers, md[i].min_kver);
+560-            mapFds.push_back(unique_fd());
+561-            continue;
+562-        }
+563-
+564-        if (kvers >= md[i].max_kver) {
+565:            ALOGD("skipping map %s which requires kernel version 0x%x < 0x%x",
+566-                  mapNames[i].c_str(), kvers, md[i].max_kver);
+567-            mapFds.push_back(unique_fd());
+568-            continue;
+569-        }
+570-
+571-        enum bpf_map_type type = md[i].type;
+572:        if (type == BPF_MAP_TYPE_DEVMAP && !isAtLeastKernelVersion(4, 14, 0)) {
+573-            // On Linux Kernels older than 4.14 this map type doesn't exist, but it can kind
+574-            // of be approximated: ARRAY has the same userspace api, though it is not usable
+575-            // by the same ebpf programs.  However, that's okay because the bpf_redirect_map()
+576-            // helper doesn't exist on 4.9-T anyway (so the bpf program would fail to load,
+577-            // and thus needs to be tagged as 4.14+ either way), so there's nothing useful you
+578-            // could do with a DEVMAP anyway (that isn't already provided by an ARRAY)...
+579-            // Hence using an ARRAY instead of a DEVMAP simply makes life easier for userspace.
+580-            type = BPF_MAP_TYPE_ARRAY;
+581-        }
+582:        if (type == BPF_MAP_TYPE_DEVMAP_HASH && !isAtLeastKernelVersion(5, 4, 0)) {
+583-            // On Linux Kernels older than 5.4 this map type doesn't exist, but it can kind
+584-            // of be approximated: HASH has the same userspace visible api.
+585-            // However it cannot be used by ebpf programs in the same way.
+586-            // Since bpf_redirect_map() only requires 4.14, a program using a DEVMAP_HASH map
+587-            // would fail to load (due to trying to redirect to a HASH instead of DEVMAP_HASH).
+588-            // One must thus tag any BPF_MAP_TYPE_DEVMAP_HASH + bpf_redirect_map() using
+589-            // programs as being 5.4+...
+590-            type = BPF_MAP_TYPE_HASH;
+591-        }
+592-
+593-        // The .h file enforces that this is a power of two, and page size will
+594-        // also always be a power of two, so this logic is actually enough to
+--
+611-            fd.reset(mapRetrieveRO(mapPinLoc.c_str()));
+612-            saved_errno = errno;
+613-            ALOGV("bpf_create_map reusing map %s, ret: %d", mapNames[i].c_str(), fd.get());
+614-            reuse = true;
+615-        } else {
+616-            union bpf_attr req = {
+617-              .map_type = type,
+618-              .key_size = md[i].key_size,
+619-              .value_size = md[i].value_size,
+620-              .max_entries = max_entries,
+621-              .map_flags = md[i].map_flags,
+622-            };
+623:            if (isAtLeastKernelVersion(4, 15, 0))
+624-                strlcpy(req.map_name, mapNames[i].c_str(), sizeof(req.map_name));
+625-            fd.reset(bpf(BPF_MAP_CREATE, req));
+626-            saved_errno = errno;
+627-            ALOGV("bpf_create_map name %s, ret: %d", mapNames[i].c_str(), fd.get());
+628-        }
+629-
+630-        if (!fd.ok()) return -saved_errno;
+631-
+632-        // When reusing a pinned map, we need to check the map type/sizes/etc match, but for
+633-        // safety (since reuse code path is rare) run these checks even if we just created it.
+634-        // We assume failure is due to pinned map mismatch, hence the 'NOT UNIQUE' return code.
+635-        if (!mapMatchesExpectations(fd, mapNames[i], md[i], type)) return -ENOTUNIQ;
+--
+716-            for (int j = 0; j < (int)mapNames.size(); j++) {
+717-                if (!mapNames[j].compare(symName)) {
+718-                    applyRelo(cs[k].data.data(), rel[i].r_offset, mapFds[j]);
+719-                    break;
+720-                }
+721-            }
+722-        }
+723-    }
+724-}
+725-
+726-static int loadCodeSections(const char* elfPath, vector<codeSection>& cs, const string& license,
+727-                            const char* prefix) {
+728:    unsigned kvers = kernelVersion();
+729-
+730-    if (!kvers) {
+731:        ALOGE("unable to get kernel version");
+732-        return -EINVAL;
+733-    }
+734-
+735-    string objName = pathToObjName(string(elfPath));
+736-
+737-    for (int i = 0; i < (int)cs.size(); i++) {
+738-        unique_fd& fd = cs[i].prog_fd;
+739-        int ret;
+740-        string name = cs[i].name;
+741-
+742-        if (!cs[i].prog_def.has_value()) {
+743-            ALOGE("[%d] '%s' missing program definition! bad bpf.o build?", i, name.c_str());
+--
+745-        }
+746-
+747-        unsigned min_kver = cs[i].prog_def->min_kver;
+748-        unsigned max_kver = cs[i].prog_def->max_kver;
+749-        if (kvers < min_kver || kvers >= max_kver) {
+750-            ALOGD("skipping program cs[%d].name:%s min_kver:%x max_kver:%x (kvers:%x)",
+751-                  i, name.c_str(), min_kver, max_kver, kvers);
+752-            continue;
+753-        }
+754-
+755-        // strip any potential $foo suffix
+756-        // this can be used to provide duplicate programs
+757:        // conditionally loaded based on running kernel version
+758-        name = name.substr(0, name.find_last_of('$'));
+759-
+760-        bool reuse = false;
+761-        // Format of pin location is
+762-        // /sys/fs/bpf/<prefix>prog_<objName>_<progName>
+763-        string progPinLoc = string(BPF_FS_PATH) + prefix + "prog_" +
+764-                            objName + '_' + string(name);
+765-        if (access(progPinLoc.c_str(), F_OK) == 0) {
+766-            fd.reset(retrieveProgram(progPinLoc.c_str()));
+767-            ALOGV("New bpf prog load reusing prog %s, ret: %d (%s)", progPinLoc.c_str(), fd.get(),
+768-                  (!fd.ok() ? std::strerror(errno) : "no error"));
+769-            reuse = true;
+770-        } else {
+771-            vector<char> log_buf(BPF_LOAD_LOG_SZ, 0);
+772-
+773-            union bpf_attr req = {
+774-              .prog_type = cs[i].type,
+775:              .kern_version = kvers,
+776-              .license = ptr_to_u64(license.c_str()),
+777-              .insns = ptr_to_u64(cs[i].data.data()),
+778-              .insn_cnt = static_cast<__u32>(cs[i].data.size() / sizeof(struct bpf_insn)),
+779-              .log_level = 1,
+780-              .log_buf = ptr_to_u64(log_buf.data()),
+781-              .log_size = static_cast<__u32>(log_buf.size()),
+782-            };
+783:            if (isAtLeastKernelVersion(4, 15, 0))
+784-                strlcpy(req.prog_name, cs[i].name.c_str(), sizeof(req.prog_name));
+785-            fd.reset(bpf(BPF_PROG_LOAD, req));
+786-
+787-            if (!fd.ok()) {
+788-                ALOGW("BPF_PROG_LOAD call for %s (%s) returned fd: %d (%s)", elfPath,
+789-                      cs[i].name.c_str(), fd.get(), std::strerror(errno));
+790-
+791-                vector<string> lines = android::base::Split(log_buf.data(), "\n");
+792-
+793-                ALOGW("BPF_PROG_LOAD - BEGIN log_buf contents:");
+794-                for (const auto& line : lines) ALOGW("%s", line.c_str());
+795-                ALOGW("BPF_PROG_LOAD - END log_buf contents.");
+--
+992-    return 0;
+993-}
+994-
+995-}  // namespace bpf
+996-}  // namespace android
+997-
+998-// ----- extern C stuff for rust below here -----
+999-
+1000-void initLogging() {
+1001-    // since we only ever get called from mainline NetBpfLoad
+1002-    // (see packages/modules/Connectivity/netbpfload/NetBpfLoad.cpp around line 516)
+1003-    // and there no arguments, so we can just pretend/assume this is the case.
+1004:    const char* argv[] = {"/system/bin/bpfloader", NULL};
+1005-    android::base::InitLogging(const_cast<char**>(argv), &android::base::KernelLogger);
+1006-}
+1007-
+1008-void createBpfFsSubDirectories() {
+1009-    for (const auto& location : android::bpf::locations) {
+1010-        if (android::bpf::createSysFsBpfSubDir(location.prefix)) {
+1011-            exit(120);
+1012-        }
+1013-    }
+1014-}
+1015-
+1016-void legacyBpfLoader() {

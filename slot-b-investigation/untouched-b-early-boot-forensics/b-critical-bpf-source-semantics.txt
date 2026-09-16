@@ -1,0 +1,75 @@
+
+============================================================
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/bpfRingbufProg.c
+============================================================
+9- *
+10- * Unless required by applicable law or agreed to in writing, software
+11- * distributed under the License is distributed on an "AS IS" BASIS,
+12- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+13- * See the License for the specific language governing permissions and
+14- * limitations under the License.
+15- */
+16-
+17:#include "bpf_helpers.h"
+18-
+19-// This can't be easily changed since the program is loaded on boot and may be
+20-// run against tests at a slightly different version.
+21-#define TEST_RINGBUF_MAGIC_NUM 12345
+22-
+23-// This ring buffer is for testing purposes only.
+24:DEFINE_BPF_RINGBUF(test_ringbuf, __u64, 4096, AID_ROOT, AID_ROOT, 0660);
+25-
+26-// This program is for test purposes only - it should never be attached to a
+27:// socket, only executed manually with BPF_PROG_RUN.
+28:DEFINE_BPF_PROG_KVER("skfilter/ringbuf_test", AID_ROOT, AID_ROOT, test_ringbuf_prog, KVER(5, 8, 0))
+29-(void* __unused ctx) {
+30:    __u64* output = bpf_test_ringbuf_reserve();
+31-    if (output == NULL) return 1;
+32-
+33-    (*output) = TEST_RINGBUF_MAGIC_NUM;
+34:    bpf_test_ringbuf_submit(output);
+35-
+36-    return 0;
+37-}
+38-
+39-LICENSE("Apache 2.0");
+40-CRITICAL("BPF Ringbuf test");
+
+============================================================
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/filterPowerSupplyEvents.c
+============================================================
+9- *
+10- * Unless required by applicable law or agreed to in writing, software
+11- * distributed under the License is distributed on an "AS IS" BASIS,
+12- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+13- * See the License for the specific language governing permissions and
+14- * limitations under the License.
+15- */
+16-
+17:#include <bpf_helpers.h>    // load_word()
+18-#include <linux/bpf.h>      // struct __sk_buff
+19-#include <linux/netlink.h>  // struct nlmsghdr
+20-#include <stdint.h>         // uint32_t
+21-
+22-// M4: match 4 bytes. Returns 0 if all bytes match.
+23-static inline uint32_t M4(struct __sk_buff* skb, unsigned int offset, uint8_t c0, uint8_t c1,
+24-                          uint8_t c2, uint8_t c3) {
+25-    return load_word(skb, offset) ^ ((c0 << 24) | (c1 << 16) | (c2 << 8) | c3);
+--
+46-#define MATCH_POWER_SUPPLY_LENGTH 13
+47-static inline uint32_t match_power_supply(struct __sk_buff* skb, unsigned int offset) {
+48-    return M4(skb, offset + 0, 'p', 'o', 'w', 'e') | M4(skb, offset + 4, 'r', '_', 's', 'u') |
+49-           M4(skb, offset + 8, 'p', 'p', 'l', 'y') | M1(skb, offset + 12, '\0');
+50-}
+51-
+52-// The Linux kernel 5.4 BPF verifier rejects this program, probably because of its size. Hence the
+53-// restriction that the kernel version must be at least 5.10.
+54:DEFINE_BPF_PROG_KVER("skfilter/power_supply", AID_ROOT, AID_SYSTEM, filterPowerSupplyEvents,
+55-                     KVER(5, 10, 0))
+56-(struct __sk_buff* skb) {
+57-    uint32_t i;
+58-
+59-    // The first character matched by match_subsystem() is a '\0'. Starting
+60-    // right past the netlink message header is fine since the SUBSYSTEM= text
+61-    // never occurs at the start. See also the kobject_uevent_env() implementation:
+62-    // https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/kobject_uevent.c?#n473

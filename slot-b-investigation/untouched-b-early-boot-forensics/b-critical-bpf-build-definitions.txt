@@ -1,0 +1,22 @@
+===== RINGBUF BUILD REFERENCES =====
+loader/Android.bp:134:                "bpfRingbufProg.o",
+progs/Android.bp:31:    name: "bpfRingbufProg.o",
+progs/Android.bp:32:    srcs: ["bpfRingbufProg.c"],
+progs/bpfRingbufProg.c:40:CRITICAL("BPF Ringbuf test");
+
+===== HEALTH FILTER BUILD REFERENCES =====
+health/utils/libhealthloop/Android.bp:25:    name: "filterPowerSupplyEvents.o_non_vendor",
+health/utils/libhealthloop/Android.bp:26:    srcs: ["filterPowerSupplyEvents.c"],
+health/utils/libhealthloop/Android.bp:31:    name: "filterPowerSupplyEvents.o",
+health/utils/libhealthloop/Android.bp:32:    srcs: ["filterPowerSupplyEvents.c"],
+health/utils/libhealthloop/Android.bp:39:// filterPowerSupplyEvents.o has been added in
+health/utils/libhealthloop/Android.bp:65:    name: "filterPowerSupplyEvents.h",
+health/utils/libhealthloop/Android.bp:66:    out: ["filterPowerSupplyEvents.h"],
+health/utils/libhealthloop/Android.bp:67:    srcs: [":filterPowerSupplyEvents.o_non_vendor"],
+health/utils/libhealthloop/Android.bp:72:    name: "filterPowerSupplyEventsTest",
+health/utils/libhealthloop/Android.bp:75:        "filterPowerSupplyEventsTest.cpp",
+health/utils/libhealthloop/Android.bp:88:        "filterPowerSupplyEvents.h",
+health/utils/libhealthloop/HealthLoop.cpp:169:            "/sys/fs/bpf/vendor/prog_filterPowerSupplyEvents_skfilter_power_supply";
+health/utils/libhealthloop/filterPowerSupplyEvents.c:54:DEFINE_BPF_PROG_KVER("skfilter/power_supply", AID_ROOT, AID_SYSTEM, filterPowerSupplyEvents,
+health/utils/libhealthloop/filterPowerSupplyEventsTest.cpp:44:#include "filterPowerSupplyEvents.h"
+health/utils/libhealthloop/filterPowerSupplyEventsTest.cpp:160:    bpf_program* prog = bpf_object__find_program_by_name(obj, "filterPowerSupplyEvents");

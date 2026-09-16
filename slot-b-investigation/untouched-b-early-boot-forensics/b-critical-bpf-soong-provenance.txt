@@ -1,0 +1,168 @@
+===== SYSTEM BPF ANDROID.BP =====
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-1-//
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-2-// Copyright (C) 2019 The Android Open Source Project
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-3-//
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-4-// Licensed under the Apache License, Version 2.0 (the "License");
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-5-// you may not use this file except in compliance with the License.
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-6-// You may obtain a copy of the License at
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-7-//
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-8-//      http://www.apache.org/licenses/LICENSE-2.0
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-9-//
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-10-// Unless required by applicable law or agreed to in writing, software
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-11-// distributed under the License is distributed on an "AS IS" BASIS,
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-12-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-13-// See the License for the specific language governing permissions and
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-14-// limitations under the License.
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-15-//
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-16-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-17-package {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-18-    // http://go/android-license-faq
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-19-    // A large-scale-change added 'default_applicable_licenses' to import
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-20-    // the below license kinds from "system_bpf_license":
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-21-    //   SPDX-license-identifier-Apache-2.0
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-22-    default_applicable_licenses: ["system_bpf_license"],
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-23-}
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-24-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-25-cc_library_headers {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-26-    name: "bpf_prog_headers",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-27-    export_include_dirs: ["include"],
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-28-}
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-29-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-30-bpf {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp:31:    name: "bpfRingbufProg.o",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp:32:    srcs: ["bpfRingbufProg.c"],
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/progs/Android.bp-33-}
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-99-    data: [
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-100-        ":bpfLoadTpProg.o",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-101-    ],
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-102-    require_root: true,
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-103-}
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-104-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-105-rust_binary {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-106-    name: "bpfloader",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-107-    cfgs: select(release_flag("RELEASE_BPF_ENABLE_LIBBPF"), {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-108-        true: ["enable_libbpf"],
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-109-        default: [],
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-110-    }),
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-111-    srcs: [
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-112-        "bpfloader.rs",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-113-    ],
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-114-    rustlibs: [
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-115-        "libbpf_android_bindgen",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-116-        "libandroid_ids",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-117-        "libandroid_logger",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-118-        "libanyhow",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-119-        "liblog_rust",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-120-        "liblibbpf_rs",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-121-        "liblibc",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-122-    ],
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-123-    required: [] + select(release_flag("RELEASE_BPF_ENABLE_LIBBPF"), {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-124-        true: [
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-125-            "timeInState.bpf",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-126-        ],
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-127-        default: [
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-128-            "timeInState.o",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-129-        ],
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-130-    }),
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-131-    product_variables: {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-132-        debuggable: {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-133-            required: [
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp:134:                "bpfRingbufProg.o",
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-135-            ],
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-136-        },
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-137-    },
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Android.bp-138-}
+
+===== HEALTH BPF ANDROID.BP =====
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-1-// Copyright (C) 2019 The Android Open Source Project
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-2-//
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-3-// Licensed under the Apache License, Version 2.0 (the "License");
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-4-// you may not use this file except in compliance with the License.
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-5-// You may obtain a copy of the License at
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-6-//
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-7-//      http://www.apache.org/licenses/LICENSE-2.0
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-8-//
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-9-// Unless required by applicable law or agreed to in writing, software
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-10-// distributed under the License is distributed on an "AS IS" BASIS,
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-11-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-12-// See the License for the specific language governing permissions and
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-13-// limitations under the License.
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-14-
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-15-package {
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-16-    // See: http://go/android-license-faq
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-17-    // A large-scale-change added 'default_applicable_licenses' to import
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-18-    // all of the 'license_kinds' from "hardware_interfaces_license"
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-19-    // to get the below license kinds:
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-20-    //   SPDX-license-identifier-Apache-2.0
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-21-    default_applicable_licenses: ["hardware_interfaces_license"],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-22-}
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-23-
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-24-bpf {
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp:25:    name: "filterPowerSupplyEvents.o_non_vendor",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp:26:    srcs: ["filterPowerSupplyEvents.c"],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-27-    visibility: ["//visibility:private"],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-28-}
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-29-
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-30-bpf {
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp:31:    name: "filterPowerSupplyEvents.o",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp:32:    srcs: ["filterPowerSupplyEvents.c"],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-33-    // "vendor: true" because all binaries that use this BPF filter are vendor
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-34-    // binaries.
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-35-    vendor: true,
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-36-}
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-37-
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-38-// Since "required" sections are ignored in static library definitions,
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp:39:// filterPowerSupplyEvents.o has been added in
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-40-// build/make/target/product/base_vendor.mk.
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-41-cc_library_static {
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-42-    name: "libhealthloop",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-43-    vendor_available: true,
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-44-    recovery_available: true,
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-45-    srcs: [
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-46-        "HealthLoop.cpp",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-47-        "utils.cpp",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-48-    ],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-49-    shared_libs: [
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-50-        "libbase",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-51-        "libcutils",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-52-    ],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-53-    header_libs: [
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-54-        "bpf_headers",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-55-        "libbatteryservice_headers",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-56-        "libhealthd_headers",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-57-        "libutils_headers",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-58-    ],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-59-    export_include_dirs: [
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-60-        "include",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-61-    ],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-62-}
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-63-
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-64-cc_genrule {
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp:65:    name: "filterPowerSupplyEvents.h",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp:66:    out: ["filterPowerSupplyEvents.h"],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp:67:    srcs: [":filterPowerSupplyEvents.o_non_vendor"],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-68-    cmd: "cat $(in) | od -v -tx1 | cut -c9- | grep -v '^$$' | sed 's/^/0x/;s/ /, 0x/g;s/^, //;s/$$/,/' > $(out)",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-69-}
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-70-
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-71-cc_test_host {
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp:72:    name: "filterPowerSupplyEventsTest",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-73-    team: "trendy_team_pixel_system_sw_storage",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-74-    srcs: [
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp:75:        "filterPowerSupplyEventsTest.cpp",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-76-    ],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-77-    shared_libs: [
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-78-        "libbase",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-79-        "libbpf",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-80-    ],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-81-    static_libs: [
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-82-        "libgmock",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-83-    ],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-84-    generated_headers: [
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-85-        "libbpf_headers",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-86-    ],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-87-    device_first_generated_headers: [
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp:88:        "filterPowerSupplyEvents.h",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-89-    ],
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-90-    compile_multilib: "64",
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/health/utils/libhealthloop/Android.bp-91-}
