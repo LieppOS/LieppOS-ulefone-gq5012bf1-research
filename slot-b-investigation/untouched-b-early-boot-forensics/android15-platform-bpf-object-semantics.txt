@@ -1,0 +1,464 @@
+===== PLATFORM LOCATIONS =====
+837-}
+838-
+839-int loadProg(const char* elfPath, bool* isCritical, const Location& location) {
+840-    vector<char> license;
+841-    vector<char> critical;
+842-    vector<codeSection> cs;
+843-    vector<unique_fd> mapFds;
+844-    int ret;
+845-
+846-    if (!isCritical) return -1;
+847-    *isCritical = false;
+848-
+849-    ifstream elfFile(elfPath, ios::in | ios::binary);
+850-    if (!elfFile.is_open()) return -1;
+851-
+852-    ret = readSectionByName("critical", elfFile, critical);
+853-    *isCritical = !ret;
+854-
+855-    ret = readSectionByName("license", elfFile, license);
+856-    if (ret) {
+857-        ALOGE("Couldn't find license in %s", elfPath);
+858-        return ret;
+859-    }
+860-
+861-    ALOGI("Platform BpfLoader loading %s%s ELF object %s with license %s",
+862-          *isCritical ? "critical for " : "optional", *isCritical ? (char*)critical.data() : "",
+863-          elfPath, (char*)license.data());
+864-
+865-    ret = readCodeSections(elfFile, cs, location.allowedProgTypes, location.allowedProgTypesLength);
+866-    if (ret) {
+867-        ALOGE("Couldn't read all code sections in %s", elfPath);
+868-        return ret;
+869-    }
+870-
+871-    ret = createMaps(elfPath, elfFile, mapFds, location.prefix);
+872-    if (ret) {
+873-        ALOGE("Failed to create maps: (ret=%d) in %s", ret, elfPath);
+874-        return ret;
+875-    }
+876-
+877-    for (int i = 0; i < (int)mapFds.size(); i++)
+878-        ALOGV("map_fd found at %d is %d in %s", i, mapFds[i].get(), elfPath);
+879-
+880-    applyMapRelo(elfFile, mapFds, cs);
+881-
+882-    ret = loadCodeSections(elfPath, cs, string(license.data()), location.prefix);
+883-    if (ret) ALOGE("Failed to load programs, loadCodeSections ret=%d", ret);
+884-
+885-    return ret;
+886-}
+887-
+888-// Networking-related program types are limited to the Tethering Apex
+889-// to prevent things from breaking due to conflicts on mainline updates
+890-// (exception made for socket filters, ie. xt_bpf for potential use in iptables,
+891-// or for attaching to sockets directly)
+892-constexpr bpf_prog_type kPlatformAllowedProgTypes[] = {
+893-        BPF_PROG_TYPE_KPROBE,
+894-        BPF_PROG_TYPE_PERF_EVENT,
+895-        BPF_PROG_TYPE_SOCKET_FILTER,
+896-        BPF_PROG_TYPE_TRACEPOINT,
+897-        BPF_PROG_TYPE_UNSPEC,  // Will be replaced with fuse bpf program type
+898-};
+899-
+900-constexpr bpf_prog_type kMemEventsAllowedProgTypes[] = {
+901-        BPF_PROG_TYPE_TRACEPOINT,
+902-        BPF_PROG_TYPE_SOCKET_FILTER,
+903-};
+904-
+905-constexpr bpf_prog_type kUprobestatsAllowedProgTypes[] = {
+906-        BPF_PROG_TYPE_KPROBE,
+907-};
+908-
+909-// see b/162057235. For arbitrary program types, the concern is that due to the lack of
+910-// SELinux access controls over BPF program attachpoints, we have no way to control the
+911-// attachment of programs to shared resources (or to detect when a shared resource
+912-// has one BPF program replace another that is attached there)
+913-constexpr bpf_prog_type kVendorAllowedProgTypes[] = {
+914-        BPF_PROG_TYPE_SOCKET_FILTER,
+915-};
+916-
+917:const Location locations[] = {
+918-        // Core operating system
+919-        {
+920-                .dir = "/system/etc/bpf/",
+921-                .prefix = "",
+922-                .allowedProgTypes = kPlatformAllowedProgTypes,
+923-                .allowedProgTypesLength = arraysize(kPlatformAllowedProgTypes),
+924-        },
+925-        // memevents
+926-        {
+927-                .dir = "/system/etc/bpf/memevents/",
+928-                .prefix = "memevents/",
+929-                .allowedProgTypes = kMemEventsAllowedProgTypes,
+930-                .allowedProgTypesLength = arraysize(kMemEventsAllowedProgTypes),
+931-        },
+932-        // uprobestats
+933-        {
+934-                .dir = "/system/etc/bpf/uprobestats/",
+935-                .prefix = "uprobestats/",
+936-                .allowedProgTypes = kUprobestatsAllowedProgTypes,
+937-                .allowedProgTypesLength = arraysize(kUprobestatsAllowedProgTypes),
+938-        },
+939-        // Vendor operating system
+940-        {
+941-                .dir = "/vendor/etc/bpf/",
+942-                .prefix = "vendor/",
+943-                .allowedProgTypes = kVendorAllowedProgTypes,
+944-                .allowedProgTypesLength = arraysize(kVendorAllowedProgTypes),
+945-        },
+946-};
+947-
+948-int loadAllElfObjects(const Location& location) {
+949-    int retVal = 0;
+950-    DIR* dir;
+951-    struct dirent* ent;
+952-
+953-    if ((dir = opendir(location.dir)) != NULL) {
+954-        while ((ent = readdir(dir)) != NULL) {
+955-            string s = ent->d_name;
+956-            if (!EndsWith(s, ".o")) continue;
+957-
+958-            string progPath(location.dir);
+959-            progPath += s;
+960-
+961-            bool critical;
+962-            int ret = loadProg(progPath.c_str(), &critical, location);
+963-            if (ret) {
+964-                if (critical) retVal = ret;
+965-                ALOGE("Failed to load object: %s, ret: %s", progPath.c_str(), strerror(-ret));
+966-            } else {
+967-                ALOGV("Loaded object: %s", progPath.c_str());
+968-            }
+969-        }
+970-        closedir(dir);
+971-    }
+972-    return retVal;
+973-}
+974-
+975-int createSysFsBpfSubDir(const char* const prefix) {
+976-    if (*prefix) {
+977-        mode_t prevUmask = umask(0);
+978-
+979-        string s = "/sys/fs/bpf/";
+980-        s += prefix;
+981-
+982-        errno = 0;
+983-        int ret = mkdir(s.c_str(), S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
+984-        if (ret && errno != EEXIST) {
+985-            const int err = errno;
+986-            ALOGE("Failed to create directory: %s, ret: %s", s.c_str(), strerror(err));
+987-            return -err;
+988-        }
+989-
+990-        umask(prevUmask);
+991-    }
+992-    return 0;
+993-}
+994-
+995-}  // namespace bpf
+996-}  // namespace android
+997-
+
+===== PLATFORM LOAD ALL =====
+868-        return ret;
+869-    }
+870-
+871-    ret = createMaps(elfPath, elfFile, mapFds, location.prefix);
+872-    if (ret) {
+873-        ALOGE("Failed to create maps: (ret=%d) in %s", ret, elfPath);
+874-        return ret;
+875-    }
+876-
+877-    for (int i = 0; i < (int)mapFds.size(); i++)
+878-        ALOGV("map_fd found at %d is %d in %s", i, mapFds[i].get(), elfPath);
+879-
+880-    applyMapRelo(elfFile, mapFds, cs);
+881-
+882-    ret = loadCodeSections(elfPath, cs, string(license.data()), location.prefix);
+883-    if (ret) ALOGE("Failed to load programs, loadCodeSections ret=%d", ret);
+884-
+885-    return ret;
+886-}
+887-
+888-// Networking-related program types are limited to the Tethering Apex
+889-// to prevent things from breaking due to conflicts on mainline updates
+890-// (exception made for socket filters, ie. xt_bpf for potential use in iptables,
+891-// or for attaching to sockets directly)
+892-constexpr bpf_prog_type kPlatformAllowedProgTypes[] = {
+893-        BPF_PROG_TYPE_KPROBE,
+894-        BPF_PROG_TYPE_PERF_EVENT,
+895-        BPF_PROG_TYPE_SOCKET_FILTER,
+896-        BPF_PROG_TYPE_TRACEPOINT,
+897-        BPF_PROG_TYPE_UNSPEC,  // Will be replaced with fuse bpf program type
+898-};
+899-
+900-constexpr bpf_prog_type kMemEventsAllowedProgTypes[] = {
+901-        BPF_PROG_TYPE_TRACEPOINT,
+902-        BPF_PROG_TYPE_SOCKET_FILTER,
+903-};
+904-
+905-constexpr bpf_prog_type kUprobestatsAllowedProgTypes[] = {
+906-        BPF_PROG_TYPE_KPROBE,
+907-};
+908-
+909-// see b/162057235. For arbitrary program types, the concern is that due to the lack of
+910-// SELinux access controls over BPF program attachpoints, we have no way to control the
+911-// attachment of programs to shared resources (or to detect when a shared resource
+912-// has one BPF program replace another that is attached there)
+913-constexpr bpf_prog_type kVendorAllowedProgTypes[] = {
+914-        BPF_PROG_TYPE_SOCKET_FILTER,
+915-};
+916-
+917-const Location locations[] = {
+918-        // Core operating system
+919-        {
+920-                .dir = "/system/etc/bpf/",
+921-                .prefix = "",
+922-                .allowedProgTypes = kPlatformAllowedProgTypes,
+923-                .allowedProgTypesLength = arraysize(kPlatformAllowedProgTypes),
+924-        },
+925-        // memevents
+926-        {
+927-                .dir = "/system/etc/bpf/memevents/",
+928-                .prefix = "memevents/",
+929-                .allowedProgTypes = kMemEventsAllowedProgTypes,
+930-                .allowedProgTypesLength = arraysize(kMemEventsAllowedProgTypes),
+931-        },
+932-        // uprobestats
+933-        {
+934-                .dir = "/system/etc/bpf/uprobestats/",
+935-                .prefix = "uprobestats/",
+936-                .allowedProgTypes = kUprobestatsAllowedProgTypes,
+937-                .allowedProgTypesLength = arraysize(kUprobestatsAllowedProgTypes),
+938-        },
+939-        // Vendor operating system
+940-        {
+941-                .dir = "/vendor/etc/bpf/",
+942-                .prefix = "vendor/",
+943-                .allowedProgTypes = kVendorAllowedProgTypes,
+944-                .allowedProgTypesLength = arraysize(kVendorAllowedProgTypes),
+945-        },
+946-};
+947-
+948:int loadAllElfObjects(const Location& location) {
+949-    int retVal = 0;
+950-    DIR* dir;
+951-    struct dirent* ent;
+952-
+953-    if ((dir = opendir(location.dir)) != NULL) {
+954-        while ((ent = readdir(dir)) != NULL) {
+955-            string s = ent->d_name;
+956-            if (!EndsWith(s, ".o")) continue;
+957-
+958-            string progPath(location.dir);
+959-            progPath += s;
+960-
+961-            bool critical;
+962-            int ret = loadProg(progPath.c_str(), &critical, location);
+963-            if (ret) {
+964-                if (critical) retVal = ret;
+965-                ALOGE("Failed to load object: %s, ret: %s", progPath.c_str(), strerror(-ret));
+966-            } else {
+967-                ALOGV("Loaded object: %s", progPath.c_str());
+968-            }
+969-        }
+970-        closedir(dir);
+971-    }
+972-    return retVal;
+973-}
+974-
+975-int createSysFsBpfSubDir(const char* const prefix) {
+976-    if (*prefix) {
+977-        mode_t prevUmask = umask(0);
+978-
+979-        string s = "/sys/fs/bpf/";
+980-        s += prefix;
+981-
+982-        errno = 0;
+983-        int ret = mkdir(s.c_str(), S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
+984-        if (ret && errno != EEXIST) {
+985-            const int err = errno;
+986-            ALOGE("Failed to create directory: %s, ret: %s", s.c_str(), strerror(err));
+987-            return -err;
+988-        }
+989-
+990-        umask(prevUmask);
+991-    }
+992-    return 0;
+993-}
+994-
+995-}  // namespace bpf
+996-}  // namespace android
+997-
+998-// ----- extern C stuff for rust below here -----
+999-
+1000-void initLogging() {
+1001-    // since we only ever get called from mainline NetBpfLoad
+1002-    // (see packages/modules/Connectivity/netbpfload/NetBpfLoad.cpp around line 516)
+1003-    // and there no arguments, so we can just pretend/assume this is the case.
+1004-    const char* argv[] = {"/system/bin/bpfloader", NULL};
+1005-    android::base::InitLogging(const_cast<char**>(argv), &android::base::KernelLogger);
+1006-}
+1007-
+1008-void createBpfFsSubDirectories() {
+1009-    for (const auto& location : android::bpf::locations) {
+1010-        if (android::bpf::createSysFsBpfSubDir(location.prefix)) {
+1011-            exit(120);
+1012-        }
+1013-    }
+1014-}
+1015-
+1016-void legacyBpfLoader() {
+1017-    // Load all ELF objects, create programs and maps, and pin them
+1018-    for (const auto& location : android::bpf::locations) {
+1019:        if (android::bpf::loadAllElfObjects(location)) {
+1020-            ALOGE("=== CRITICAL FAILURE LOADING BPF PROGRAMS FROM %s ===", location.dir);
+1021-            ALOGE("If this triggers reliably, you're probably missing kernel options or patches.");
+1022-            ALOGE("If this triggers randomly, you might be hitting some memory allocation "
+1023-                  "problems or startup script race.");
+1024-            ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
+1025-            sleep(20);
+1026-            exit(121);
+1027-        }
+1028-    }
+1029-}
+1030-
+1031-void execNetBpfLoadDone() {
+1032-    const char* args[] = {"/apex/com.android.tethering/bin/netbpfload", "done", NULL};
+1033-    execve(args[0], (char**)args, environ);
+1034-    ALOGE("FATAL: execve(): %d[%s]", errno, strerror(errno));
+1035-    exit(122);
+1036-}
+
+===== CRITICAL SEMANTICS =====
+814-            if (chmod(progPinLoc.c_str(), 0440)) {
+815-                int err = errno;
+816-                ALOGE("chmod %s 0440 -> [%d:%s]", progPinLoc.c_str(), err, strerror(err));
+817-                return -err;
+818-            }
+819-            if (chown(progPinLoc.c_str(), (uid_t)cs[i].prog_def->uid,
+820-                      (gid_t)cs[i].prog_def->gid)) {
+821-                int err = errno;
+822-                ALOGE("chown %s %d %d -> [%d:%s]", progPinLoc.c_str(), cs[i].prog_def->uid,
+823-                      cs[i].prog_def->gid, err, strerror(err));
+824-                return -err;
+825-            }
+826-        }
+827-
+828-        int progId = bpfGetFdProgId(fd);
+829-        if (progId == -1) {
+830-            ALOGE("bpfGetFdProgId failed, ret: %d [%d]", progId, errno);
+831-        } else {
+832-            ALOGD("prog %s id %d", progPinLoc.c_str(), progId);
+833-        }
+834-    }
+835-
+836-    return 0;
+837-}
+838-
+839:int loadProg(const char* elfPath, bool* isCritical, const Location& location) {
+840-    vector<char> license;
+841:    vector<char> critical;
+842-    vector<codeSection> cs;
+843-    vector<unique_fd> mapFds;
+844-    int ret;
+845-
+846:    if (!isCritical) return -1;
+847:    *isCritical = false;
+848-
+849-    ifstream elfFile(elfPath, ios::in | ios::binary);
+850-    if (!elfFile.is_open()) return -1;
+851-
+852:    ret = readSectionByName("critical", elfFile, critical);
+853:    *isCritical = !ret;
+854-
+855-    ret = readSectionByName("license", elfFile, license);
+856-    if (ret) {
+857-        ALOGE("Couldn't find license in %s", elfPath);
+858-        return ret;
+859-    }
+860-
+861-    ALOGI("Platform BpfLoader loading %s%s ELF object %s with license %s",
+862:          *isCritical ? "critical for " : "optional", *isCritical ? (char*)critical.data() : "",
+863-          elfPath, (char*)license.data());
+864-
+865-    ret = readCodeSections(elfFile, cs, location.allowedProgTypes, location.allowedProgTypesLength);
+866-    if (ret) {
+867-        ALOGE("Couldn't read all code sections in %s", elfPath);
+868-        return ret;
+869-    }
+870-
+871-    ret = createMaps(elfPath, elfFile, mapFds, location.prefix);
+872-    if (ret) {
+873-        ALOGE("Failed to create maps: (ret=%d) in %s", ret, elfPath);
+874-        return ret;
+875-    }
+876-
+877-    for (int i = 0; i < (int)mapFds.size(); i++)
+878-        ALOGV("map_fd found at %d is %d in %s", i, mapFds[i].get(), elfPath);
+879-
+880-    applyMapRelo(elfFile, mapFds, cs);
+881-
+882-    ret = loadCodeSections(elfPath, cs, string(license.data()), location.prefix);
+883-    if (ret) ALOGE("Failed to load programs, loadCodeSections ret=%d", ret);
+884-
+885-    return ret;
+886-}
+887-
+--
+936-                .allowedProgTypes = kUprobestatsAllowedProgTypes,
+937-                .allowedProgTypesLength = arraysize(kUprobestatsAllowedProgTypes),
+938-        },
+939-        // Vendor operating system
+940-        {
+941-                .dir = "/vendor/etc/bpf/",
+942-                .prefix = "vendor/",
+943-                .allowedProgTypes = kVendorAllowedProgTypes,
+944-                .allowedProgTypesLength = arraysize(kVendorAllowedProgTypes),
+945-        },
+946-};
+947-
+948-int loadAllElfObjects(const Location& location) {
+949-    int retVal = 0;
+950-    DIR* dir;
+951-    struct dirent* ent;
+952-
+953-    if ((dir = opendir(location.dir)) != NULL) {
+954-        while ((ent = readdir(dir)) != NULL) {
+955-            string s = ent->d_name;
+956-            if (!EndsWith(s, ".o")) continue;
+957-
+958-            string progPath(location.dir);
+959-            progPath += s;
+960-
+961:            bool critical;
+962:            int ret = loadProg(progPath.c_str(), &critical, location);
+963-            if (ret) {
+964:                if (critical) retVal = ret;
+965-                ALOGE("Failed to load object: %s, ret: %s", progPath.c_str(), strerror(-ret));
+966-            } else {
+967-                ALOGV("Loaded object: %s", progPath.c_str());
+968-            }
+969-        }
+970-        closedir(dir);
+971-    }
+972-    return retVal;
+973-}
+974-
+975-int createSysFsBpfSubDir(const char* const prefix) {
+976-    if (*prefix) {
+977-        mode_t prevUmask = umask(0);
+978-
+979-        string s = "/sys/fs/bpf/";
+980-        s += prefix;
+981-
+982-        errno = 0;
+983-        int ret = mkdir(s.c_str(), S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
+984-        if (ret && errno != EEXIST) {
+985-            const int err = errno;
+986-            ALOGE("Failed to create directory: %s, ret: %s", s.c_str(), strerror(err));
+987-            return -err;
+988-        }
+989-
