@@ -1,0 +1,304 @@
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-40-    return Error() << "Missing required field \"name\" from APEX manifest.";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-41-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-42-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-43-  // version
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-44-  if (apex_manifest.version() == 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-45-    return Error() << "Missing required field \"version\" from APEX manifest.";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-46-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-47-  return apex_manifest;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-48-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-49-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp:50:std::string GetPackageId(const ApexManifest& apex_manifest) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-51-  return apex_manifest.name() + "@" + std::to_string(apex_manifest.version());
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-52-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-53-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-54-Result<ApexManifest> ReadManifest(const std::string& path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-55-  std::string content;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-56-  if (!android::base::ReadFileToString(path, &content)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-57-    return Error() << "Failed to read manifest file: " << path;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-58-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-59-  return ParseManifest(content);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.cpp-60-}
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-22-#include "apex_manifest.pb.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-23-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-24-#include <string>
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-25-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-26-namespace android {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-27-namespace apex {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-28-// Parses and validates APEX manifest.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-29-android::base::Result<::apex::proto::ApexManifest> ParseManifest(
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-30-    const std::string& content);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-31-// Returns package id of an ApexManifest
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h:32:std::string GetPackageId(const ::apex::proto::ApexManifest& apex_manifest);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-33-// Reads and parses APEX manifest from the file on disk.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-34-android::base::Result<::apex::proto::ApexManifest> ReadManifest(
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-35-    const std::string& path);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-36-}  // namespace apex
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-37-}  // namespace android
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-38-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_manifest.h-39-#endif  // ANDROID_APEXD_APEX_MANIFEST_H_
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-558-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-559-  });
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-560-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-561-  // Temp mounts all apexes.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-562-  // This will also read the entire block device for each apex,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-563-  // so we can be sure there is no corruption.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-564-  std::vector<std::string> mount_points;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-565-  for (const auto& apex : apex_files) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-566-    auto mount_point =
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-567-        apexd_private::GetPackageTempMountPoint(apex.GetManifest());
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:568:    auto package_id = GetPackageId(apex.GetManifest());
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-569-    auto device_name = package_id + ".tmp";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-570-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-571-    LOG(DEBUG) << "Temp mounting " << package_id << " to " << mount_point;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-572-    auto data = OR_RETURN(MountPackageImpl(apex, mount_point, device_name,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-573-                                           /*verify_image=*/true,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-574-                                           /*reuse_device=*/false));
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-575-    mount_points.push_back(mount_point);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-576-    mounted_data.push_back(data);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-577-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-578-
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-772-    return Error() << "Backup failed : " << active_packages.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-773-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-774-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-775-  auto cleanup_status = DeleteBackup();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-776-  if (!cleanup_status.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-777-    return Error() << "Backup failed : " << cleanup_status.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-778-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-779-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-780-  auto backup_path_fn = [](const ApexFile& apex_file) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-781-    return StringPrintf("%s/%s%s", kApexBackupDir,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:782:                        GetPackageId(apex_file.GetManifest()).c_str(),
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-783-                        kApexPackageSuffix);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-784-  };
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-785-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-786-  auto deleter = []() {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-787-    auto result = DeleteDirContent(std::string(kApexBackupDir));
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-788-    if (!result.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-789-      LOG(ERROR) << "Failed to cleanup " << kApexBackupDir << " : "
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-790-                 << result.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-791-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-792-  };
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-843-  if (chmod(gConfig->active_apex_data_dir, stat_data.st_mode & ALLPERMS) != 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-844-    return ErrnoError() << "Failed to restore original permissions for "
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-845-                        << gConfig->active_apex_data_dir;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-846-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-847-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-848-  return {};
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-849-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-850-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-851-Result<void> UnmountPackage(const ApexFile& apex, bool allow_latest,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-852-                            bool deferred, bool detach_mount_point) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:853:  LOG(INFO) << "Unmounting " << GetPackageId(apex.GetManifest())
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-854-            << " allow_latest : " << allow_latest << " deferred : " << deferred
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-855-            << " detach_mount_point : " << detach_mount_point;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-856-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-857-  const ApexManifest& manifest = apex.GetManifest();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-858-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-859-  std::optional<MountedApexData> data;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-860-  bool latest = false;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-861-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-862-  auto fn = [&](const MountedApexData& d, bool l) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-863-    if (d.full_path == apex.GetPath()) {
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-936-                                         const MountedApexData& data,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-937-                                         [[maybe_unused]] bool latest) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-938-    if (full_path == data.full_path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-939-      found_mounted = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-940-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-941-  });
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-942-  return found_mounted;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-943-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-944-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-945-std::string GetPackageMountPoint(const ApexManifest& manifest) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:946:  return StringPrintf("%s/%s", kApexRoot, GetPackageId(manifest).c_str());
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-947-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-948-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-949-std::string GetPackageTempMountPoint(const ApexManifest& manifest) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-950-  return StringPrintf("%s.tmp", GetPackageMountPoint(manifest).c_str());
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-951-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-952-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-953-std::string GetActiveMountPoint(const ApexManifest& manifest) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-954-  return StringPrintf("%s/%s", kApexRoot, manifest.name().c_str());
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-955-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-956-
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1173-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1174-// Wrapper around ActivatePackageImpl.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1175-// Do not use, this wrapper is going away.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1176-Result<void> ActivatePackage(const std::string& full_path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1177-  LOG(INFO) << "Trying to activate " << full_path;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1178-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1179-  Result<ApexFile> apex_file = ApexFile::Open(full_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1180-  if (!apex_file.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1181-    return apex_file.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1182-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:1183:  return ActivatePackageImpl(*apex_file, GetPackageId(apex_file->GetManifest()),
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1184-                             /* reuse_device= */ false);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1185-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1186-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1187-Result<void> DeactivatePackage(const std::string& full_path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1188-  LOG(INFO) << "Trying to deactivate " << full_path;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1189-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1190-  Result<ApexFile> apex_file = ApexFile::Open(full_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1191-  if (!apex_file.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1192-    return apex_file.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1193-  }
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1417-      std::lock_guard lock(mutex);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1418-      if (apex_queue.empty()) break;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1419-      apex = apex_queue.front();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1420-      apex_queue.pop();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1421-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1422-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1423-    std::string device_name;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1424-    if (mode == ActivationMode::kBootMode) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1425-      device_name = apex->GetManifest().name();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1426-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:1427:      device_name = GetPackageId(apex->GetManifest());
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1428-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1429-    if (mode == ActivationMode::kOtaChrootMode) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1430-      device_name += ".chroot";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1431-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1432-    bool reuse_device = mode == ActivationMode::kBootMode;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1433-    auto res = ActivatePackageImpl(*apex, device_name, reuse_device);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1434-    if (!res.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1435-      ret.push_back(Error() << "Failed to activate " << apex->GetPath() << "("
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1436-                            << device_name << "): " << res.error());
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1437-    } else {
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1955-    if (!st.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1956-      LOG(ERROR) << "Failed to mark " << session
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1957-                 << " as activated : " << st.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1958-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1959-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1960-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1961-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1962-namespace {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1963-std::string StageDestPath(const ApexFile& apex_file) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1964-  return StringPrintf("%s/%s%s", gConfig->active_apex_data_dir,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:1965:                      GetPackageId(apex_file.GetManifest()).c_str(),
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1966-                      kApexPackageSuffix);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1967-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1968-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1969-}  // namespace
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1970-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1971-Result<void> StagePackagesImpl(const std::vector<std::string>& tmp_paths) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1972-  if (tmp_paths.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1973-    return Errorf("Empty set of inputs");
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1974-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-1975-  LOG(DEBUG) << "StagePackagesImpl() for " << Join(tmp_paths, ',');
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2449-  return std::move(*apex);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2450-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2451-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2452-// Process a single compressed APEX. Returns the decompressed APEX if
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2453-// successful.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2454-Result<ApexFile> ProcessCompressedApex(const ApexFile& capex,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2455-                                       bool is_ota_chroot) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2456-  LOG(INFO) << "Processing compressed APEX " << capex.GetPath();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2457-  const auto decompressed_apex_path =
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2458-      StringPrintf("%s/%s%s", gConfig->decompression_dir,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:2459:                   GetPackageId(capex.GetManifest()).c_str(),
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2460-                   kDecompressedApexPackageSuffix);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2461-  // Check if decompressed APEX already exist
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2462-  auto decompressed_path_exists = PathExists(decompressed_apex_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2463-  if (decompressed_path_exists.ok() && *decompressed_path_exists) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2464-    // Check if existing decompressed APEX is valid
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2465-    auto result =
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2466-        OpenAndValidateDecompressedApex(capex, decompressed_apex_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2467-    if (result.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2468-      LOG(INFO) << "Skipping decompression for " << capex.GetPath();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2469-      return result;
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2472-    if (!is_ota_chroot) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2473-      // Existing decompressed APEX is not valid. We will have to redecompress
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2474-      LOG(WARNING) << "Existing decompressed APEX is invalid: "
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2475-                   << result.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2476-      RemoveFileIfExists(decompressed_apex_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2477-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2478-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2479-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2480-  // We can also reuse existing OTA APEX, depending on situation
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2481-  auto ota_apex_path = StringPrintf("%s/%s%s", gConfig->decompression_dir,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:2482:                                    GetPackageId(capex.GetManifest()).c_str(),
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2483-                                    kOtaApexPackageSuffix);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2484-  auto ota_path_exists = PathExists(ota_apex_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2485-  if (ota_path_exists.ok() && *ota_path_exists) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2486-    if (is_ota_chroot) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2487-      // During ota_chroot, we try to reuse ota APEX as is
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2488-      auto result = OpenAndValidateDecompressedApex(capex, ota_apex_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2489-      if (result.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2490-        LOG(INFO) << "Skipping decompression for " << ota_apex_path;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2491-        return result;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2492-      }
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3462-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3463-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3464-  if (devices > kMaxVerityDevicesPerApexName) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3465-    return Error() << "There are too many (" << devices
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3466-                   << ") dm block devices associated with package "
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3467-                   << apex.GetManifest().name();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3468-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3469-  while (true) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3470-    std::string target_file =
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3471-        StringPrintf("%s/%s_%zu.apex", gConfig->active_apex_data_dir,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:3472:                     GetPackageId(apex.GetManifest()).c_str(), next_minor);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3473-    if (access(target_file.c_str(), F_OK) == 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3474-      next_minor++;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3475-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3476-      break;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3477-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3478-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3479-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3480-  return next_minor;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3481-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3482-
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3559-  // dm-verity block device.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3560-  auto result = OR_RETURN(VerifyPackageNonStagedInstall(*temp_apex, force));
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3561-  event.AddHals(result.apex_hals);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3562-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3563-  // 2. Compute params for mounting new apex.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3564-  auto new_id_minor = ComputePackageIdMinor(*temp_apex);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3565-  if (!new_id_minor.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3566-    return new_id_minor.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3567-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3568-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:3569:  std::string new_id = GetPackageId(temp_apex->GetManifest()) + "_" +
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3570-                       std::to_string(*new_id_minor);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3571-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3572-  // Before unmounting the current apex, unload it from the init process:
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3573-  // terminates services started from the apex and init scripts read from the
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3574-  // apex.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3575-  OR_RETURN(UnloadApexFromInit(module_name));
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3576-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3577-  // And then reload it from the init process whether it succeeds or not.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3578-  auto reload_apex = android::base::make_scope_guard([&]() {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3579-    if (auto status = LoadApexFromInit(module_name); !status.ok()) {
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3593-  // 3. Hard link to final destination.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3594-  std::string target_file =
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3595-      StringPrintf("%s/%s.apex", gConfig->active_apex_data_dir, new_id.c_str());
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3596-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3597-  auto guard = android::base::make_scope_guard([&]() {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3598-    if (unlink(target_file.c_str()) != 0 && errno != ENOENT) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3599-      PLOG(ERROR) << "Failed to unlink " << target_file;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3600-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3601-    // We can't really rely on the fact that dm-verity device backing up
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3602-    // previously active APEX is still around. We need to create a new one.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:3603:    std::string old_new_id = GetPackageId(temp_apex->GetManifest()) + "_" +
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3604-                             std::to_string(*new_id_minor + 1);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3605-    auto res = ActivatePackageImpl(*cur_apex, old_new_id,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3606-                                   /* reuse_device= */ false);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3607-    if (!res.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3608-      // At this point not much we can do... :(
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3609-      LOG(ERROR) << res.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3610-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3611-  });
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3612-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3613-  // At this point it should be safe to hard link |temp_apex| to
