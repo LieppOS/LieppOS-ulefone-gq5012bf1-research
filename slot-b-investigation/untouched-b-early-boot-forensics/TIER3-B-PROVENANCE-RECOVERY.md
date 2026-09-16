@@ -60,3 +60,33 @@ current device state.
 
 No additional B boot, wipe, or partition modification should be performed until
 that evidence is reviewed.
+
+## Superseding TIER3 runtime chronology
+
+The BL2 firmware-chain classification was an intermediate state, not the final
+TIER3 runtime boundary.
+
+TIER3 Phase 5 established this progression:
+
+1. `lk_b` was initially all-zero, producing a preloader/BROM retry loop.
+2. Provisioning `lk_b` advanced the failure to persistent `LK_CRASH(BL2_EXT)`.
+3. Replacing `lk_b` with exact working same-device `lk_a` bytes produced the
+   same `LK_CRASH(BL2_EXT)` signature, disproving LK generation mismatch as the
+   sole cause.
+4. Static BL2 analysis found 17 subordinate `_b` firmware partitions required by
+   the selected-B path were zero-filled.
+5. Those 17 partitions were provisioned from exact working-A same-device
+   captures and read back 17/17 successfully.
+6. A later controlled B attempt then exposed MediaTek USB PID `0e8d:201c`
+   repeatedly, proving progress through Linux kernel entry and Android init USB
+   configuration, but stable ADB and boot completion were never reached.
+
+The latest TIER3 bounded diagnosis is therefore:
+
+`KERNEL_INIT_USB_REACHED_ADB_OFFLINE_RESET_SEQUENCE`
+
+not a remaining pre-kernel BL2 failure.
+
+Before applying that August diagnosis to the current September state, the 17
+subordinate live B firmware partitions must be re-hashed read-only and compared
+to the exact TIER3 provisioned candidates.

@@ -1,0 +1,538 @@
+
+
+################################################################
+# /mnt/SamsungSSD/TIER3/phase5/reports/post-live-lk-diagnostic-result.md
+################################################################
+# Post-live-`lk_b` diagnostic result
+
+## Verdict
+
+```text
+TRANSACTION_STATUS=PASS
+EVIDENCE_STATUS=PASS_WITH_LIMITATION
+PRIMARY_CLASSIFICATION=BOOTLOADER_SLOT_B_BL2_EXT_CRASH
+AEE_EXCEPTION_CLASS=LK_CRASH(BL2_EXT)
+DETERMINISTIC_PREKERNEL_CAUSE_PROVEN=true
+SAME_DEVICE_LK_A_REPLACEMENT_RESULT=NO_CHANGE_TO_CRASH_CLASS
+FACTORY_V15_GENERATION_MISMATCH_AS_SOLE_CAUSE=DISPROVEN
+B_REACHED_ADB=false
+B_KERNEL_ENTRY_PROVEN=false
+BASELINE_RESTORED=true
+LK_B_PRESERVED=true
+FURTHER_B_ATTEMPTS_PROHIBITED=true
+```
+
+Attempt: `phase5/inventory/post-live-lk-attempt/run-20260817T195814Z/`.
+Machine analysis: `post-live-lk-analysis.{json,status.txt}` and
+`post-live-lk-usb-timeline.tsv`.
+
+## Controlled transaction
+
+The separately approved transaction completed normally:
+
+```text
+diagnostic writes: 2  (vendor_boot_b, vbmeta_b)
+set_active b:       1
+selected-B reboot: 1
+recovery A setter: 0
+diagnostic restore writes: 2
+mark-successful:    0
+lk_b/A/preloader/logical/super writes: 0
+```
+
+B automatically returned A. The root-aware fallback helper succeeded before
+restoration, temporary images were restored exactly, and final A/`lk_b`/super
+integrity checks passed.
+
+## Persistent result
+
+The newest rotated AEE record is `db.fatal.02.KE`:
+
+```text
+LK_CRASH(BL2_EXT), Mon Aug 17 23:04:57 EEST 2026
+```
+
+This is the same proprietary exception class produced by the earlier factory
+V15 `lk_b` candidate. The authoritative factory AEE binary contains the exact
+classifier label.
+
+Pstore is empty. The failed-B PL/LK bytes do not survive automatic fallback;
+the captured `/proc/pl_lk` contains final A only.
+
+## USB chronology
+
+The selected-B window produced:
+
+```text
+duration to returned A:       116.980 s
+preloader add events:         10
+BROM add events:               0
+generic 0e8d:201c add events:  1
+B ADB:                         none
+```
+
+The previous factory V15 candidate produced `119.871 s / 10 / 0 / 1` and the
+same AEE class. The two byte-different LK main/AEE generations therefore have
+materially identical failure signatures.
+
+## Refined classification
+
+Replacing factory V15 `lk_b` with exact same-device working `lk_a` did **not**
+change the crash class or USB pattern. This disproves a factory-V15-versus-live
+main-LK generation mismatch as the sole cause.
+
+The strongest remaining boundary is:
+
+```text
+BOOTLOADER_SLOT_B_BL2_EXT_CRASH
+```
+
+Evidence supports, but does not yet prove, a slot-B-specific BL2 extension or
+selector-contract failure. Possible proprietary inputs include:
+
+- Preloader_b/LK_B boot-source state;
+- slot-B parameter handoff into the shared BL2 extension;
+- UFS boot-LUN/partition identity assumptions;
+- slot-specific certificate/DICE/RPMB state;
+- an OEM design where `lk_b=NONE` is intentional and Android B was not meant to
+  select a secondary LK path.
+
+Both candidates use the same `bl2_ext`, main LK DTB, and LK DTBO payloads. The
+current experiment also controls for main `lk`/`aee` generation. Ordinary
+Android boot, AVB descriptor, kernel, first-stage init, and userspace debugging
+remain downstream and unobservable.
+
+## Boot-control proof
+
+CRC-valid records show:
+
+- preflight: A successful/bootable, B priority/tries `0/0`;
+- automatic fallback: A priority restored high, B `0/0`;
+- final record equals the pristine fallback record.
+
+No A setter was used, so the fallback record is not contaminated by recovery
+metadata changes.
+
+## Preservation
+
+Final executor checks prove:
+
+- current `lk_b` remains
+  `ee0303f531e204f639a9e2f4f058ffd1ae159b02804c402282a9def15d250461`;
+- both preloader LUs and `lk_a` unchanged;
+- baseline `vendor_boot_b` and `vbmeta_b` restored;
+- all seven A hashes unchanged;
+- both super views unchanged;
+- A bootable/successful and merge `none`.
+
+## Next boundary
+
+No further B attempt or device write is authorized. Repeating with more LK
+image variants is not justified: two coherent generations produced the same
+stage/class/pattern.
+
+The next work is offline bootloader selector analysis only. It must determine
+whether armol can boot Android slot B while retaining the known-good A
+preloader/LK path, or whether OEM secondary-bootloader support is absent. Do not
+modify raw misc, UFS boot LUs, preloader, or LK code without a separately proven
+contract and recovery design.
+
+
+################################################################
+# /mnt/SamsungSSD/TIER3/phase5/reports/bl2-slot-firmware-audit.md
+################################################################
+# BL2 slot-firmware chain audit
+
+## Final result
+
+```text
+STATUS=PASS_WITH_LIMITATION
+PRIMARY_CLASSIFICATION=BOOTLOADER_SLOT_B_FIRMWARE_CHAIN_MISSING
+DETERMINISTIC_PREKERNEL_CAUSE_PROVEN=true
+SHARED_BL2_EXT=true
+SUFFIX_CONSTRUCTION_PROVEN=true
+WORKING_A_UNIQUE_PARTITION_LOADS=19
+CURRENT_PROVISIONED_B_BASES=dtbo,lk
+UNPROVISIONED_B_FIRMWARE_COUNT=17
+FIRST_UNPROVISIONED_WORKING_LOAD=logo
+FIRST_LIKELY_REQUIRED_UNPROVISIONED_LOAD=gz
+LIVE_B_HASH_AUDIT_COMPLETE=true
+MISSING_LIVE_B_COUNT=17
+FIRST_LIKELY_MANDATORY_LOAD=gz
+```
+
+Offline evidence: `phase5/inventory/bl2-slot-firmware-audit/run-20260817T202052Z/`.
+Approved live hash evidence:
+`phase5/inventory/live-bl2-b-firmware-hashes/run-20260817T202351Z/`.
+
+## Why this is stronger than an LK-image hypothesis
+
+Both factory V15 and exact working-A LK containers use the same `bl2_ext` and
+produce the same slot-B `LK_CRASH(BL2_EXT)`/USB pattern. Static ARM64 analysis
+shows the shared BL2 extension:
+
+- reads standard `boot_control` metadata;
+- returns `_a` or `_b` from `get_suffix`;
+- validates both suffixes;
+- constructs partition names with `%s%s`;
+- contains `preloader_a` and `preloader_b` paths.
+
+Working A then loads these suffixed partitions in order:
+
+```text
+lk, logo, gz, tee, sspm, pi_img, mcupm, dtbo, scp, ccu,
+spmfw, apusys, dpm, modem, gpueb, vcp,
+connsys_bt, connsys_gnss, connsys_wifi
+```
+
+Factory scatter assigns an A image to every one but marks every corresponding B
+entry `NONE`/not-downloadable. Current work has populated only `lk_b` and
+`dtbo_b` from this BL2 chain. Seventeen subordinate B firmware partitions were
+never provisioned.
+
+`logo_b` is the first unprovisioned load but may be nonfatal. `gz_b` is the
+first likely mandatory image; BL2 strings include fatal/explicit geniezone load
+failure paths. `tee_b`, SSPM/SCP and later co-processor images also follow.
+
+This can explain why two coherent LK generations both enter BL2_EXT and fail in
+the same way.
+
+## Approved live hash result
+
+The separately approved helper hashed all 17 A/B pairs from healthy A without
+retaining raw bytes. Every B partition hash equals the independently generated
+all-zero hash for its exact capacity; every A hash is nonzero and differs from
+B.
+
+```text
+B_ALL_ZERO_COUNT=17/17
+fastboot commands=0
+reboots=0
+setters=0
+writes=0
+```
+
+This converts the suspect into a deterministic cause: BL2_EXT constructs `_b`
+partition names, but every subordinate B firmware image it needs is absent.
+The first unprovisioned working-A load is optional-looking `logo`; the first
+likely mandatory load is `gz`.
+
+## Source-provenance result
+
+A second separately approved read-only helper hashed the exact factory-image
+length prefix from every working A partition. Result:
+
+```text
+FACTORY_V15_PREFIX_MATCHES=0/17
+SOURCE_DECISION=SAME_DEVICE_WORKING_A_PRIVATE_CAPTURE_REQUIRED
+```
+
+Thus the mismatch is not only partition-tail padding: all 17 installed image
+prefixes differ from factory V15. The installed older preloader/LK/subordinate
+firmware set is the only selector generation proven to boot on this phone.
+
+No provisioning is authorized. The next possible step is a separately reviewed
+private capture of the 17 exact working-A partitions for format/active-length,
+certificate, and B-capacity analysis. A future complete B firmware set would
+require exact candidate derivation, one separately approved provisioning gate,
+returned-A readback, and no B boot in the same transaction.
+
+
+################################################################
+# /mnt/SamsungSSD/TIER3/phase5/reports/deferred-mtk-evidence-result.md
+################################################################
+# Deferred MediaTek evidence result
+
+## Verdict
+
+```text
+STATUS=PASS_WITH_LIMITATION
+PHASE5_COMPLETE=true
+PASS_CRITERIA_MET=1/3
+PASS_ROUTE=DETERMINISTIC_PRE_KERNEL_CAUSE
+PHASE5_CLASSIFICATION=BOOTLOADER_SLOT_CONTROL_FAILURE
+ROOT_CAUSE=LK_B_ALL_ZERO
+SECONDARY_CLASSIFICATION=SEVEN_RETRY_PRELOADER_BROM_RESET_LOOP
+B_REACHED_ADB=false
+B_KERNEL_ENTRY_PROVEN=false
+A_PRESERVED=true
+FURTHER_B_ATTEMPTS_PROHIBITED=true
+REPAIR_AUTHORIZED=false
+```
+
+Evidence root: `phase5/inventory/deferred-mtk-evidence/run-20260813T023111Z/`.
+Private captures remain under the matching `phase5/private/` path.
+
+The deferred read-only capture closes the Phase 5 localization gap. Slot B was
+selected, but its MediaTek selector chain had no LK payload to enter: the full
+16 MiB `lk_b` partition is exactly zero-filled. The observed reset loop is a
+preloader-stage consequence of an incomplete B bootloader chain, not evidence
+of a Lineage userspace, HAL, first-stage mount, kernel, or AVB descriptor
+failure.
+
+## Safety and scope
+
+The deferred transaction and selector-stage audit were read-only:
+
+```text
+current slot:        _a
+reboots:             0
+setters:             0
+fastboot commands:   0
+partition writes:    0
+raw expdb reads:     0
+```
+
+The helper captured `/proc/pl_lk` first, then bounded AEE metadata. Subsequent
+selector-stage checks retained one private `lk_a` readback and only hashes for
+`lk_b` and the two UFS preloader LUs. Nothing was written to the phone.
+
+## Convergent proof
+
+### 1. Factory selector layout
+
+Factory V15 scatter declares:
+
+| Stage | A | B |
+|---|---|---|
+| UFS preloader | `preloader_k6878v1_64.bin`, download `true` | same image, download `true` |
+| LK | `lk.img`, download `true` | `NONE`, download `false` |
+
+The two live 4 MiB UFS preloader LUs are byte-identical:
+
+```text
+sda = ebbb4691a570b2dcd6ba8d6f66de5007fc148e802c764aebc16183bfee7ec63c
+sdb = ebbb4691a570b2dcd6ba8d6f66de5007fc148e802c764aebc16183bfee7ec63c
+```
+
+Therefore the B preloader implementation itself is present and paired with A.
+The missing stage is the next B bootloader partition.
+
+### 2. Live LK partitions
+
+Read-only full-partition hashes are:
+
+```text
+lk_a bytes  = 16777216
+lk_a sha256 = ee0303f531e204f639a9e2f4f058ffd1ae159b02804c402282a9def15d250461
+
+lk_b bytes  = 16777216
+lk_b sha256 = 080acf35a507ac9849cfcba47dc2ad83e01b75663a516279c8b9d243b719643e
+```
+
+`080acf...` is independently recomputed as SHA-256 of exactly 16,777,216 zero
+bytes. Thus `lk_b` is not merely invalid or stale: it contains no LK image at
+all. `lk_a` is populated and is the stage used by working A.
+
+### 3. Surviving PL/LK buffer proves the successful A path
+
+The 174,993-byte `/proc/pl_lk` buffer contains the final returned-A boot only.
+Its relevant sequence is:
+
+```text
+[AB] Current boot: Preloader_a
+[AB] ab_suffix: _a, ab_retry: 1
+[PART] partition name = lk_a
+[PART] load "lk_a" ... [SUCCESS]
+Load 'lk_a' partition ... (899056 bytes ...)
+lk finished --> jump to linux kernel 64Bit
+```
+
+Factory preloader strings contain symmetric `Preloader_a` and `Preloader_b`
+paths, suffix/retry handling, and boot-control persistence. The successful A
+trace demonstrates the selector relationship: selected preloader suffix `_a`
+loads `lk_a`; the symmetric B path has only a zero-filled `lk_b` available.
+
+The failed B PL/LK bytes did not survive in `/proc/pl_lk`; the final A boot
+replaced that volatile buffer. This prevents quoting the exact failed-B
+preloader error line, but does not restore a plausible later Android boundary.
+
+### 4. Timestamp-matched AEE classification
+
+`db.fatal.03.KE/ZZ_INTERNAL` states:
+
+```text
+PL_CRASH, Wed Aug 12 12:49:29 EEST 2026
+```
+
+That is `2026-08-12T09:49:29Z`, 119.300 seconds after the one approved B reboot
+and 20.925 seconds before returned A was observed. `db_history` records the same
+class and timestamp. Earlier B-selector episodes also created `.01` and `.02`
+records classified `PL_CRASH`.
+
+The authoritative factory `aee_aedv64_v2` binary has separate labels for
+`Exception Type: PL_CRASH` and `Exception Type: AEE_LK_CRASH`. Therefore the
+`.03` label is preloader evidence; the `db.fatal.*.KE` directory name does not
+prove Linux kernel entry.
+
+The 2,458,919-byte `.dbg` payload was preserved privately and hash-verified but
+is encrypted/high-entropy. It was not decrypted, and raw `expdb` was not read.
+
+### 5. Retry chronology
+
+The diagnostic attempt independently proved:
+
+```text
+B tries:              7 -> 0
+BROM enumerations:    7
+preloader enumerations: 9
+mean retry period:    10.480 s
+A fallback:           proven after retry exhaustion
+```
+
+A zero-filled `lk_b` explains the complete sequence without invoking any
+Android image: each B selection reaches preloader, cannot establish the B LK
+stage, resets through BROM, decrements the normal retry count, and eventually
+returns to the populated A selector chain.
+
+## Classification decision
+
+The Phase 5 completion route is now:
+
+```text
+A. deterministic pre-kernel/bootloader cause proven offline
+```
+
+Primary classification is `BOOTLOADER_SLOT_CONTROL_FAILURE`; machine root
+cause is `LK_B_ALL_ZERO`. `BOOT_IMAGE_PARSE_FAILURE` is not used because the
+failure occurs before LK can parse Android `boot_b`, `vendor_boot_b`, or their
+AVB metadata.
+
+The earlier `UNKNOWN_PRE_ADB` result remains historically correct for the
+immediate diagnostic capture. It is superseded by the deferred evidence, not
+rewritten in the immutable attempt artifacts.
+
+## Remaining limitation
+
+The exact failed-B preloader printf/return code is unavailable because:
+
+- `/proc/pl_lk` retained only the final A boot; and
+- the AEE `.dbg` payload is encrypted and no raw `expdb` read was authorized.
+
+This warrants `PASS_WITH_LIMITATION`, not `INCOMPLETE_SAFE`. Independent
+factory layout, full live hashes, `PL_CRASH`, selector symmetry, and retry
+chronology all converge on the missing `lk_b` stage.
+
+## Repair boundary
+
+No repair is authorized by this result. In particular, do not select B, reboot,
+or flash `lk_b` yet.
+
+Source selection needs a separate review because the working same-device
+`lk_a` is not byte-identical to factory V15:
+
+```text
+factory V15 lk.img
+  bytes:  2880176
+  sha256: 6f30eaf3aca184b69841dfbe17df4c793c496919d36d073aec371ca374d2df70
+  markers: 251022230551Z, e70752d4_202510221503
+
+live working lk_a
+  full bytes:  16777216
+  full sha256: ee0303f531e204f639a9e2f4f058ffd1ae159b02804c402282a9def15d250461
+  first 2880176 sha256: d1592b28fa2575c7546e3723cac6939a65c4de0bdb36efe8a49bcd6eb91ff905
+  markers: 251016021946Z, 251016021947Z, e70752d4_202510151817
+  remaining partition tail: all zero
+```
+
+Factory V15 remains the firmware authority, while the live `lk_a` is the only
+same-device LK already proven with the currently installed, identical A/B
+preloaders. A repair gate must compare these candidates, choose one explicitly,
+validate its MediaTek container/certificates and partition size, and generate a
+B-only `lk_b` plan. It may not touch A, either preloader LU, super, logical
+partitions, or any other physical image.
+
+Machine evidence:
+
+- `selector-stage-partitions.tsv`
+- `selector-stage-analysis.tsv`
+- `selector-stage-analysis.json`
+- `selector-stage-analysis.status.txt`
+- private `pl-lk.stdout`
+- private `aee/db.fatal.03.KE/ZZ_INTERNAL`
+- private `aee/db_history`
+- private `selector-stage/lk_a.full.bin`
+
+
+################################################################
+# /mnt/SamsungSSD/TIER3/phase5/reports/bl2-b-firmware-provisioning-execution.md
+################################################################
+# BL2 subordinate B firmware provisioning execution
+
+## Result
+
+```text
+STATUS=PASS_WITH_LIMITATION
+BL2_B_FIRMWARE_PROVISIONED=true
+WRITE_COUNT=17
+READBACK_PASS=17/17
+FAILED_TARGET=none
+A_PRESERVED=true
+SELECTOR_PRESERVED=true
+SUPER_METADATA_UNCHANGED=true
+SET_ACTIVE_STEPS=0
+B_SELECTED=false
+B_BOOT_ATTEMPTED=false
+CURRENT_SLOT=a
+```
+
+Execution:
+`phase5/inventory/bl2-b-firmware-provisioning/run-20260817T211216Z/`.
+Independent validation:
+`phase5/inventory/bl2-b-firmware-provisioning-validation/run-20260817T211516Z/`
+(22/22 checks passed).
+
+## Executed transaction
+
+After renewed explicit approval, the superseding executor:
+
+1. reverified healthy, successful A and merge `none`;
+2. reverified all 17 subordinate B targets as exact all-zero partitions;
+3. entered unlocked non-userspace fastboot while current slot remained A;
+4. queried all 17 OEM partition-size getvars;
+5. recorded all 17 getvars as unavailable and applied the reviewed fallback to
+   the fresh Android full-partition zero hash and GPT size;
+6. flashed each direct suffixed B target exactly once;
+7. rebooted A without a slot setter;
+8. read and hashed every full B target;
+9. reverified A, both preloader LUs, `lk_a`, current `lk_b`, and both super
+   metadata views.
+
+All 17 fastboot flash commands exited zero. All 17 full readback hashes exactly
+match the private same-device candidate hashes.
+
+## Installed subordinate chain
+
+```text
+logo_b, gz_b, tee_b, sspm_b, pi_img_b, mcupm_b, scp_b,
+ccu_b, spmfw_b, apusys_b, dpm_b, modem_b, gpueb_b, vcp_b,
+connsys_bt_b, connsys_gnss_b, connsys_wifi_b
+```
+
+The source generation is the exact working-A generation captured from this
+phone. Fifteen targets are exact full copies, `logo_b` differs only by trimming
+a proven zero tail to fit B, and `tee_b` differs only by zero padding to fill B.
+No active container byte was altered.
+
+## Preservation
+
+- Seven A Android boot-chain hashes equal the Phase 4 baseline before and after.
+- Both preloader boot LUs, `lk_a`, and current same-generation `lk_b` are
+  unchanged.
+- Both super metadata views are byte-identical before and after.
+- A remains `_a`, bootable, successful, and boot-completed; merge is `none`.
+- No logical partition, super, scratch, preloader, LK, A, or Android boot image
+  was targeted.
+- No active-slot setter was issued and B was not booted.
+
+## Remaining limitation
+
+OEM fastboot exposes no parseable partition-size value for any of these 17
+physical targets. Capacity was therefore authorized by the exact pre-write
+Android full-partition zero hash and GPT block size. This limitation does not
+weaken the post-write result: all 17 complete partitions were read back under
+Android A and match the intended candidate hashes exactly.
+
+B remains boot-control unbootable/unsuccessful because this transaction
+intentionally issued no setter. A later B attempt requires a separately
+reviewed single-boot plan and new explicit approval.

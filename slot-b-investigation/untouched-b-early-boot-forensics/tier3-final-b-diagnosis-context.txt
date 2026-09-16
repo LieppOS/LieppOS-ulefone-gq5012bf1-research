@@ -1,0 +1,717 @@
+===== PHASE5 VALIDATION =====
+# Phase 5 validation
+
+## Verdict
+
+```text
+STATUS=PASS_WITH_LIMITATION
+OFFLINE_CHECKPOINT=PASS
+PHASE5_COMPLETE=true
+PASS_CRITERIA_MET=1/3
+PASS_ROUTE=DETERMINISTIC_PRE_KERNEL_CAUSE
+CHECKS=39
+PASS=39
+FAIL=0
+LIMITATIONS=1
+PHASE5_CLASSIFICATION=BOOTLOADER_SLOT_CONTROL_FAILURE
+ROOT_CAUSE=LK_B_ALL_ZERO
+DETERMINISTIC_PREKERNEL_CAUSE_PROVEN=true
+SECONDARY_CLASSIFICATION=SEVEN_RETRY_PRELOADER_BROM_RESET_LOOP
+B_REACHED_ADB=false
+B_KERNEL_ENTRY_PROVEN=false
+B_TRIES_CONSUMED=7/7
+A_AUTO_FALLBACK_PROVEN=true
+BASELINE_RESTORED=true
+A_PRESERVED=true
+SUPER_METADATA_UNCHANGED=true
+FURTHER_B_ATTEMPTS_PROHIBITED=true
+REPAIR_AUTHORIZED=false
+REPAIR_SOURCE_SELECTION=UNRESOLVED_REQUIRES_SEPARATE_REVIEW
+```
+
+Evidence: `phase5/inventory/validation/run-20260817T182708Z/`.
+
+> **Post-exit repair:** A later separately approved one-write transaction
+> provisioned exact factory V15 bytes into `lk_b` and verified the full 16 MiB
+> readback. It did not select or boot B and did not change A, either preloader
+> LU, `lk_a`, logical partitions, or super metadata. See
+> `lk-b-repair-execution.md`. This removed the proven blocker but does not alter
+> the Phase 5 historical completion classification.
+>
+> **Latest boundary:** The later post-repair diagnostic reached persistent
+> `LK_CRASH(BL2_EXT)` with no BROM events, but no B kernel/ADB. Read-only salvage
+> and 35/35 validation checks passed; A and all restored state are intact. See
+> `post-lkb-diagnostic-result.md`.
+>
+> **Selector-generation control:** Replacing `lk_b` with exact working `lk_a`
+> and repeating one approved diagnostic produced the same
+> `LK_CRASH(BL2_EXT)`/USB signature. The transaction and fallback capture passed,
+> restoration/integrity passed, and 32/32 result checks passed. Current refined
+> classification is `BOOTLOADER_SLOT_B_BL2_EXT_CRASH`; see
+> `post-live-lk-diagnostic-result.md`.
+>
+> **Deterministic underlying cause:** Shared BL2_EXT code constructs suffixed
+> partition names and working A loads 19 firmware partitions. Beyond populated
+> `lk_b`/`dtbo_b`, an approved read-only audit proved all 17 corresponding live
+> B firmware partitions are exactly zero-filled. Refined classification is
+> `BOOTLOADER_SLOT_B_FIRMWARE_CHAIN_MISSING`; first likely mandatory missing
+> image is `gz_b`. See `bl2-slot-firmware-audit.md`.
+
+## Completion route
+
+Phase 5 now meets route A:
+
+```text
+A deterministic pre-kernel/bootloader cause is proven offline.
+```
+
+The deferred read-only MediaTek capture and selector-stage hash audit established:
+
+- the two 4 MiB UFS preloader LUs are byte-identical;
+- factory V15 scatter provisions the same preloader into A and B;
+- factory scatter provisions `lk_a=lk.img` but declares `lk_b=NONE` and
+  `is_download=false`;
+- live `lk_a` is populated;
+- the complete 16 MiB live `lk_b` hash equals SHA-256 of 16 MiB of zero bytes;
+- returned-A `/proc/pl_lk` proves the successful selector sequence
+  `Preloader_a -> _a -> lk_a -> Linux`;
+- timestamp-matched `db.fatal.03.KE` is classified `PL_CRASH`;
+- the factory AEE classifier distinguishes `PL_CRASH` from `AEE_LK_CRASH`;
+- the diagnostic attempt independently consumed all seven B retries through a
+  regular preloader/BROM reset loop before A fallback.
+
+The B selector chain therefore had no LK payload to enter. Android `boot_b`,
+AVB child metadata, the kernel, first-stage init, dynamic partitions, and
+Lineage userspace were not reached during this attempt.
+
+## Passed scope
+
+Phase 5:
+
+- froze and validated Phase 4 state;
+- ruled out structural minimum-libavb, descriptor-name, rollback-location,
+  algorithm, flag, and capacity defects;
+- documented reference libavb and proprietary MediaTek limitations;
+- built and validated a minimal two-image kernel-entry diagnostic;
+- executed exactly one approved B selection/reboot;
+- proved seven retries and automatic A fallback;
+- restored the exact Phase 4 diagnostic images;
+- preserved A, super metadata, logical images, scratch, and merge state;
+- captured `/proc/pl_lk` and bounded AEE evidence read-only;
+- performed a full read-only hash audit of both preloader LUs and both LK
+  partitions;
+- proved `lk_b` is entirely zero-filled and classified the first blocker.
+
+The final validator passed 39/39 checks with no failures.
+
+## Limitation
+
+The failed-B PL/LK payload did not survive in `/proc/pl_lk`; that buffer contains
+the final A boot. The AEE `.dbg` payload is encrypted, and raw `expdb` was not
+read. Consequently the exact final failed-B preloader printf or return code is
+unavailable.
+
+This does not leave the boundary unknown. The independent zero-filled `lk_b`,
+`PL_CRASH` classification, symmetric preloader implementation, successful A
+`lk_a` path, and seven-cycle retry chronology converge on the selector-stage
+cause. The proprietary missing error string is why the status is
+`PASS_WITH_LIMITATION` rather than unqualified `PASS`.
+
+## Historical correction
+
+`UNKNOWN_PRE_ADB` remains correct for the immediate diagnostic capture in
+`run-20260812T094157Z`; that artifact is preserved unchanged. It is superseded
+at the Phase 5 level by the later persistent evidence:
+
+```text
+PHASE5_CLASSIFICATION=BOOTLOADER_SLOT_CONTROL_FAILURE
+ROOT_CAUSE=LK_B_ALL_ZERO
+```
+
+## Exit and next gate
+
+Phase 5 is complete, but no repair or B retry is authorized.
+
+A separate offline repair-source review is required because the populated live
+same-device `lk_a` differs from factory V15 `lk.img`. The next gate must compare
+those two exact candidates, select one explicitly, validate its MediaTek
+container and capacity, and produce a B-only `lk_b` plan. It may not touch A,
+either preloader LU, super, logical partitions, or any other physical image.
+
+See:
+
+- `phase5/reports/deferred-mtk-evidence-result.md`
+- `phase5/inventory/deferred-mtk-evidence/run-20260813T023111Z/selector-stage-analysis.json`
+- `phase5/inventory/validation/latest/status.txt`
+
+===== PHASE5 MAIN REPORT 1-390 =====
+# Ulefone Armor 29 Pro (`armol`) — Tier-3 ROM Port, Phase 5 Codex Handoff
+
+> **BL2 firmware-chain addendum:** Offline shared-BL2 analysis proved dynamic
+> `_a/_b` partition construction and 19 working-A firmware loads. With `lk_b`
+> and `dtbo_b` already populated, 17 subordinate B firmware partitions remained.
+> An approved read-only full hash audit proved all 17 are exactly zero-filled;
+> first likely mandatory missing load is `gz_b`. Current deterministic
+> classification is `BOOTLOADER_SLOT_B_FIRMWARE_CHAIN_MISSING`, explaining the
+> repeated `LK_CRASH(BL2_EXT)` result across both LK generations. An approved
+> exact-prefix audit found `0/17` matches against factory V15, proving a coherent
+> candidate must come from private same-device working-A captures. No
+> provisioning/B attempt/private capture is authorized. See
+> `phase5/reports/bl2-slot-firmware-audit.md`.
+>
+> **Final selector-stage addendum:** The separately approved diagnostic with
+> current same-device `lk_b` completed cleanly and again produced persistent
+> `LK_CRASH(BL2_EXT)`, ten preloader adds, zero BROM adds, one generic Android
+> USB add, and A fallback. The byte-different V15 and working-A LK generations
+> therefore have the same failure signature; generation mismatch alone is
+> disproven. Current classification is `BOOTLOADER_SLOT_B_BL2_EXT_CRASH`.
+> Temporary images were restored and all integrity checks passed. No further B
+> attempt/write is authorized; next work is offline selector-contract analysis.
+> See `phase5/reports/post-live-lk-diagnostic-result.md`.
+>
+> **Current selector candidate addendum:** Direct `LK_CRASH(BL2_EXT)` evidence
+> justified replacing only `lk_b` with exact private same-device working
+> `lk_a`. The separately approved one-write transaction passed; current `lk_b`
+> SHA-256 is `ee0303f531e204f639a9e2f4f058ffd1ae159b02804c402282a9def15d250461`.
+> Factory V15 `fa6557...` is privately preserved for rollback. A, both
+> preloaders, `lk_a`, and super remain intact; no setter or B boot occurred.
+> The current candidate is untested, and no B attempt is authorized. See
+> `phase5/reports/live-lk-a-replacement-execution.md`.
+>
+> **Post-repair diagnostic addendum:** A separately approved diagnostic after
+> `lk_b` provisioning eliminated the old BROM loop but still returned A. The
+> timestamp-matched persistent AEE record is `LK_CRASH(BL2_EXT)`; the B window
+> had ten preloader adds, zero BROM adds, and one brief generic Android USB add.
+> Primary current blocker is `BOOTLOADER_LK_BL2_EXT_CRASH`; B kernel entry and B
+> ADB remain unproven. The fallback helper failed on bootconfig permissions,
+> but read-only salvage and 35/35 validation checks passed. Temporary diagnostic
+> images were restored, and A, both preloaders, `lk_a`, provisioned `lk_b`, and
+> super are intact. No further B attempt/write is authorized. See
+> `phase5/reports/post-lkb-diagnostic-result.md`.
+>
+> **Post-exit repair addendum:** After Phase 5 proved `LK_B_ALL_ZERO`, an offline
+> source review selected exact factory V15 `lk.img` zero-padded to the 16 MiB
+> `lk_b` capacity. The plan passed 25/25 checks and three mocked paths. A
+> separately approved transaction then wrote only `lk_b` once and read back
+> SHA-256 `fa6557fa4b9cdd04fd21884281d655df5e76afbddf94ac179a73326ec9027c5e`.
+> A, both preloader LUs, `lk_a`, logical partitions, and super metadata remained
+> unchanged. No setter or B boot occurred. See
+> `phase5/reports/lk-b-repair-execution.md`. A corrected B boot remains a new,
+> separately reviewed approval gate.
+>
+> **Deferred-evidence exit addendum:** The separately approved read-only capture
+> completed in `run-20260813T023111Z`. It preserved `/proc/pl_lk`, the
+> timestamp-matched AEE `.03` record, and selector-stage hashes without any
+> reboot, setter, fastboot command, write, or raw `expdb` read. The full 16 MiB
+> `lk_b` is exactly zero-filled while both UFS preloader LUs are identical and
+> working A loads populated `lk_a`. AEE classifies the diagnostic return as
+> `PL_CRASH`. Phase 5 therefore exits `PASS_WITH_LIMITATION`, classification
+> `BOOTLOADER_SLOT_CONTROL_FAILURE`, root cause `LK_B_ALL_ZERO`, via the
+> deterministic pre-kernel PASS route. No repair or further B attempt is yet
+> authorized; live `lk_a` differs from factory V15 and requires an offline
+> source-selection gate. See `phase5/reports/deferred-mtk-evidence-result.md`.
+>
+> **Historical execution addendum (2026-08-12):** The Phase 4 runtime
+> classification quoted below was superseded: Phase 4's planned B reboot was
+> never entered, and its emergency reboot target was ambiguous. Phase 5 later
+> executed one separately approved diagnostic B attempt. It proved seven B
+> retries and automatic A fallback, but no B ADB or persistent kernel marker.
+> Its immediate classification was correctly `UNKNOWN_PRE_ADB`; diagnostic B
+> bytes were restored and A/super remained intact. The deferred evidence above
+> now supersedes that checkpoint at the phase level.
+
+## Phase title
+
+**Pre-ADB Boot Failure Localization**
+
+## Status entering Phase 5
+
+Phase 4 completed:
+
+```text
+STATUS=PASS_WITH_LIMITATION
+CHECKS=29
+PASS=29
+FAIL=0
+LIMITATIONS=1
+B_RUNTIME_RESULT=PRE_ADB_FAILURE_AUTO_FALLBACK
+A_PRESERVED=true
+SECOND_B_ATTEMPT_PROHIBITED=true
+```
+
+The limitation is diagnostic, not provisioning.
+
+Slot B is now fully provisioned and hash-verified, but its first controlled boot did not reach ADB and the bootloader automatically returned to A.
+
+Phase 5 must localize that pre-ADB failure before another ordinary B boot is permitted.
+
+---
+
+# Role
+
+Act as the implementation engineer for a full device port.
+
+The user is a senior Linux/DevOps engineer. Be terse, technical, command-first, and explicit about assumptions.
+
+Work one bounded step at a time:
+
+1. Give one command block or create one small script.
+2. Ask the user to run it and return the output.
+3. Analyze that output.
+4. Continue only to the next necessary step.
+
+Do not consume another B retry merely to “see what happens”.
+
+---
+
+# Device baseline
+
+```text
+Device:                  Ulefone Armor 29 Pro
+Codename:                armol
+SoC:                     MT6878 / MT6878T
+Layout:                  A/B + Virtual A/B
+Factory firmware:        Android 15 V15
+Factory build:           GQ5012BF1_EEA_V15_user_20251022
+ROM branch:              LineageOS 22.2 / Android 15
+ROM source:              /mnt/SamsungSSD/android/lineage-22.2
+Evidence project:        /mnt/SamsungSSD/TIER3
+Known-good slot:         A
+Provisioned test slot:   B
+```
+
+Known bootloader/runtime truth:
+
+```text
+bootloader unlocked:       yes
+verified boot state:       orange
+managed verity:            disabled
+snapshot merge state:      none
+```
+
+`getprop` lock/verity values on the working A userspace are spoofed by the installed root modules. Use `/proc/bootconfig` and bootloader output as authority.
+
+---
+
+# Phase 4 accepted provisioning result
+
+The complete B set was provisioned without touching A.
+
+Final provisioning result:
+
+```text
+B_PROVISIONED=true
+B_SELECTED=false at end of provisioning
+A_HASHES_UNCHANGED=7/7
+B_LOGICAL_READBACK=7/7
+B_PHYSICAL_READBACK=7/7
+SUPER_METADATA_UNCHANGED=true after completed transaction
+A_WRITE_TARGETS=0
+SUPER_FLASH_TARGETS=0
+```
+
+Provisioning performed:
+
+```text
+scratch delete/create/flash:   3 writes
+B logical resizes:             7 writes
+B logical image flashes:       7 writes
+B physical boot-chain flashes: 7 writes
+total:                         24 writes
+```
+
+No physical `super` flash occurred.
+
+Scratch final state:
+
+```text
+size:       1,563,426,816 bytes
+filesystem: F2FS
+mounted:    no at validation
+snapshot:   none
+```
+
+Final allocatable free space:
+
+```text
+67,600,384 bytes
+```
+
+Do not resize `super`, scratch, A, or B again in Phase 5 unless a newly proven root cause specifically requires it.
+
+---
+
+# Provisioned B image set
+
+Physical:
+
+```text
+boot_b
+  factory V15 exact
+  sha256 8648d0c9f071603ff601b49a656e1f52b5a6bae762772a4fd2cd8d73feb44927
+
+init_boot_b
+  LineageOS 22.2 generic ramdisk
+  sha256 c730a891bb93d48c41467ad00e749a9a7ae5d04695829082375974ea22b2b446
+
+vendor_boot_b
+  factory V15 exact
+  sha256 c8953d16b7a47976362aa23b53d0a08dde451f25cab4c552fa70c43e56ee0756
+
+dtbo_b
+  factory V15 exact
+  sha256 9092967872d1362c45a18d62a83360b742eed58aafa4b0c15043ef159ae042d3
+```
+
+Logical:
+
+```text
+system_b
+  sha256 4a0bb9f615e1d2de9c05a2ebb770beda2c9b4e1dc9466dfd6ed6c3a6dd94a8d5
+
+system_ext_b
+  sha256 a63bd6e22cc8a451a7ffb0d8c9f026957c9ea03f89f032fd408134805865af4a
+
+product_b
+  sha256 10c17f4eea7ba7d79b22d85f88672a3e0694113777ab6a49dd225f67f463e1a1
+
+vendor_b
+  sha256 9f3dfe3fe5ef025b667b8181bddfedaf6b08dace4b7cd6c4e05a4fde0d16aa98
+
+vendor_dlkm_b
+  factory V15 exact
+  sha256 fce7acfb64956126a03929f085050ab1b300272333e84abf27b9e708aaa40297
+
+system_dlkm_b
+  factory V15 exact
+  sha256 300f24c5550be110d0161583fa56d3c36ae61b8b2da4b44c128350c6e22b9f2a
+
+odm_dlkm_b
+  factory V15 exact
+  sha256 74a34a9dd8cd7854f2efba584e75e949160b81d6c390ff2ef87744f3e3a58e9a
+```
+
+AVB:
+
+```text
+vbmeta_b
+  sha256 bb2c7cb52dd15ee636cdb27b60f3fa5ed8fd6f774fe4acfc0a77301cbb4b17fb
+
+vbmeta_system_b
+  sha256 eb65267939a602680a897249212b7da3daaebd8214b759e90827e837884306f2
+
+vbmeta_vendor_b
+  sha256 cedd477ccca28a7358bfd4f20b744658cb706ab2037d1489d64b72a189191ddc
+```
+
+The full 14-image AVB chain verifies offline.
+
+Current bring-up AVB policy:
+
+```text
+algorithm:                    SHA256_RSA2048
+root flags:                   0
+verification disabled flag:   no
+hashtree disabled flag:       no
+root rollback index:          0
+root rollback location:       0
+boot chain location:          3
+vbmeta_system location:       2
+vbmeta_vendor location:       4
+```
+
+Three dedicated bring-up keys sign root/system/vendor vbmeta. `boot_b` retains the factory V15 boot key.
+
+Do not regenerate these casually.
+
+---
+
+# First controlled B boot result
+
+Exactly one controlled attempt was consumed.
+
+Pre-state:
+
+```text
+current-slot=a
+A successful=yes
+A unbootable=no
+
+B successful=no
+B unbootable=yes
+B retry-count=0
+```
+
+The executor issued:
+
+```text
+fastboot set_active b
+fastboot reboot
+```
+
+exactly once.
+
+No partition write occurred during the boot gate.
+
+Result:
+
+```text
+B_REACHED_ADB=false
+B_BOOT_COMPLETED=false
+AUTO_FALLBACK_TO_A=true
+
+current slot after fallback: A
+A boot completed:            true
+A bootable:                  true
+A successful:                true
+
+A physical hashes:           unchanged 7/7
+B physical hashes:           unchanged 7/7
+super metadata:              unchanged
+snapshot merge status:       none
+
+B bootable after fallback:   false
+B successful after fallback: false
+
+pstore files:                0
+```
+
+No second B attempt occurred.
+
+---
+
+# Critical Phase 5 inference
+
+Treat this as a hypothesis to prove, not as final truth:
+
+```text
+The immediate B -> unbootable -> A fallback is more consistent with
+bootloader/AVB rejection than with an ordinary runtime crash that merely
+consumes one retry.
+```
+
+Reason:
+
+The pinned AOSP/Lineage `external/avb` reference A/B flow should be inspected directly.
+
+In the reference flow:
+
+```text
+verification rejection can mark a slot unbootable
+
+an ordinary selected-but-not-yet-successful bootable slot normally
+has tries_remaining decremented
+```
+
+An unlocked device is normally expected to allow certain verification errors:
+
+```text
+public-key rejected
+verification error
+rollback-index error
+```
+
+But errors such as these are different:
+
+```text
+invalid metadata
+unsupported libavb version
+I/O error
+invalid arguments
+```
+
+and may still prevent selection/boot.
+
+The OEM MediaTek bootloader may not exactly implement the reference flow.
+
+Therefore Phase 5 must prove actual armol behavior.
+
+---
+
+# Phase 5 objective
+
+Localize the failure into one of these boundaries:
+
+```text
+BOOTLOADER_SLOT_CONTROL
+AVB_METADATA
+
+===== CURRENT STATUS 130-220 =====
+logical images, LK, and subordinate firmware were unchanged.
+
+### Visual evidence
+
+Direct user observation:
+
+> The phone remained at the static Ulefone logo and showed no further visible
+> progress during the B attempt.
+
+```text
+BOOT_ANIMATION_OBSERVED=false
+ANDROID_UI_OBSERVED=false
+STABLE_ADB_OBSERVED=false
+```
+
+Evidence:
+`phase5/inventory/post-firmware-attempt/run-20260817T212808Z/user-display-observation.txt`
+
+The static logo alone does not prove kernel entry. Independent USB/configuration
+evidence below does.
+
+---
+
+## 3. Host USB timeline and localization
+
+### B reboot authority
+
+```text
+set_active_b completed: 2026-08-17T21:34:47.425638Z
+B reboot completed:     2026-08-17T21:34:47.844618Z
+```
+
+### MediaTek USB events after the B reboot
+
+Public derived timeline:
+`phase5/inventory/post-firmware-attempt/run-20260817T212808Z/host-analysis/usb-timeline.tsv`
+
+| Approx. seconds after B reboot | USB ID | Meaning |
+|---:|---|---|
+| +5.048 | `0e8d:2000` | MediaTek preloader |
+| +10.240 | `0e8d:201c` | Android ADB gadget configured |
+| +15.863 | `0e8d:2000` | reset to preloader |
+| +78.675 | `0e8d:201c` | Android ADB gadget configured again |
+| +137.000 | `0e8d:2000` | reset to preloader |
+| +142.198 | `0e8d:201c` | Android ADB gadget configured again |
+| +146.454 | `0e8d:2000` | reset to preloader |
+
+Totals:
+
+```text
+PRELOADER_PARENT_ADDS=4
+ANDROID_ADB_GADGET_ADDS=3
+STABLE_ADB_REACHED=false
+STABLE_FASTBOOT_REACHED=false
+```
+
+The ADB tracker saw the original A device, followed by offline serial variants;
+it never observed a stable B `device` state.
+
+### Why `0e8d:201c` proves kernel and Android init progress
+
+Factory authority:
+
+`phase1/extracted/mounts/run-20260718T120318Z/vendor/etc/init/hw/init.mt6878.usb.rc`
+
+That factory file assigns product ID `0x201C` to ADB/`kpoc_adb` only after the
+Android USB gadget, FunctionFS ADB, and `sys.usb.ffs.ready=1` path is active. It
+also uses `0x201C` for ordinary ADB-only configuration.
+
+Therefore the three `0e8d:201c` enumerations establish:
+
+1. selector and LK execution succeeded;
+2. the Linux kernel entered;
+3. Android init processed the USB configuration;
+4. FunctionFS ADB became ready far enough to bind the USB gadget;
+5. stable ADB transport and boot completion were not reached.
+
+This supersedes the prior pre-kernel classifications. It does **not** establish
+whether the failing path was ordinary ADB-only or charger/`kpoc_adb`; both use
+`0x201C` in the factory configuration.
+
+### Current bounded diagnosis
+
+```text
+PRIMARY_CLASSIFICATION=KERNEL_INIT_USB_REACHED_ADB_OFFLINE_RESET_SEQUENCE
+SECONDARY_OBSERVATION=STATIC_ULEFONE_LOGO_NO_PROGRESS
+LIKELY_STAGE=KERNEL_OR_VERY_EARLY_ANDROID_USERSPACE
+BOOT_COMPLETION_PROVEN=false
+EXACT_FAILURE_COMPONENT=UNKNOWN
+```
+
+
+===== CURRENT STATUS 730-830 =====
+- all 17 subordinate B firmware hashes;
+- seven A boot-chain hashes;
+- both super metadata views;
+- CRC-valid boot-control metadata.
+
+### Step 3 — if approved, perform only that read-only verification
+
+Do not combine verification with a setter, reboot, restore, or B attempt. If any
+hash differs, stop and preserve evidence.
+
+### Step 4 — analyze early userspace offline
+
+Priority questions:
+
+1. Why did B expose `201c` with offline ADB but never become a stable device?
+2. Was B entering charger/KPOC mode unexpectedly?
+3. Did first-stage mount, dm-verity/AVB, init, or a watchdog cause the reset?
+4. Can factory init/USB/service dependencies explain the static-logo state?
+5. Are host timing intervals consistent with kernel watchdog, init fatal reboot,
+   or charger-mode transitions?
+6. Can any new bounded AEE metadata be identified without raw `expdb` access?
+
+### Step 5 — no B retry until a new plan is justified
+
+A future B attempt requires a new reviewed plan, new explicit approval, and a
+specific hypothesis with instrumentation capable of distinguishing the likely
+early-userspace causes. A blind retry is prohibited.
+
+---
+
+## 13. Non-negotiable safety constraints
+
+- Preserve known-good slot A absolutely.
+- Never resize or flash A.
+- Never flash physical `super`, `super_a`, or `super_b`.
+- Never automatically restore super metadata.
+- No ordinary B retry “to see what happens.”
+- No DTBO edits, AVB disablement, global ELF bypass, sibling firmware, or
+  unevidenced kernel work.
+- Factory V15 remains authoritative; Android 16 and sibling-device artifacts are
+  not authoritative.
+- Use `/proc/bootconfig`, CRC-valid boot-control metadata, and bootloader evidence
+  as authority; rooted Android properties can be spoofed.
+- Keep private captures private.
+- No raw `expdb` access without a new privacy and safety review.
+- Any future write, setter, reboot, diagnostic, or B attempt needs separately
+  reviewed explicit approval.
+
+---
+
+## 14. Repository state
+
+```text
+TIER3 project root: not a Git repository
+Device tree revision: 0ae3a1bc0a6cede08ccb0ae7f8752e3871064873
+Vendor tree revision: 00bcaac21aa77c5e022785746c8333840f9e5577
+```
+
+Current major source locations:
+
+```text
+Project:     /mnt/SamsungSSD/TIER3
+ROM source:  /mnt/SamsungSSD/android/lineage-22.2
+Device tree: /mnt/SamsungSSD/android/lineage-22.2/device/ulefone/armol
+Vendor tree: /mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol
+```
+
+---
+
+## 15. Final pause statement
+
+At pause:
+
+- slot A is running, boot-completed, bootable, successful, and merge `none`;
+- A has higher priority than B;
+- B remains unselected and unsuccessful with two tries;
+- the selector/LK/subordinate firmware chain is populated from the proven
+  same-device generation;
+- one post-firmware B attempt reached kernel and Android init USB setup but hung
+  visually at the Ulefone logo, exposed only offline ADB gadget states, reset,
+  and never boot-completed;
+- the two temporary Android diagnostic images were restored by successful
+  fastboot commands;
+- final read-only restoration/preservation hash verification remains pending;
+- **no further B attempt is authorized.**
