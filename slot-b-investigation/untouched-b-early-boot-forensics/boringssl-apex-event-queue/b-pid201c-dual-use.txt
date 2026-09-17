@@ -1,0 +1,81 @@
+108-    symlink /config/usb_gadget/g1/configs/b.1 /config/usb_gadget/g1/os_desc/b.1
+109-    mount functionfs adb /dev/usb-ffs/adb rmode=0770,fmode=0660,uid=2000,gid=2000,no_disconnect=1
+110-    setprop sys.usb.configfs 1
+111-    setprop sys.usb.controller "11201000.usb0"
+112-    setprop vendor.usb.controller "11201000.usb0"
+113-
+114-# midi for kpoc
+115-on property:ro.bootmode=charger && property:ro.debuggable=0
+116-    setprop sys.usb.config kpoc_midi
+117-
+118:on property:ro.bootmode=charger && property:ro.debuggable=1 && property:ro.vendor.usb.kpoc_adb=0
+119-    setprop sys.usb.config kpoc_midi
+120-
+121-on property:sys.usb.config=kpoc_midi && property:sys.usb.configfs=1
+122-    write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "kpoc_midi"
+123-    write /config/usb_gadget/g1/idProduct 0x2046
+124-    symlink /config/usb_gadget/g1/functions/midi.gs5 /config/usb_gadget/g1/configs/b.1/f1
+125-    write /config/usb_gadget/g1/UDC ${vendor.usb.controller}
+126-
+127-# adb for kpoc
+128:on property:ro.bootmode=charger && property:ro.debuggable=1 && property:ro.vendor.usb.kpoc_adb=1
+129:    setprop sys.usb.config kpoc_adb
+130-
+131:on property:sys.usb.config=kpoc_adb && property:sys.usb.configfs=1
+132:    start kpoc_adbd
+133-
+134:on property:sys.usb.ffs.ready=1 && property:sys.usb.config=kpoc_adb && property:sys.usb.configfs=1
+135:    write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "kpoc_adb"
+136:    write /config/usb_gadget/g1/idProduct 0x201C
+137-    symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1
+138-    write /config/usb_gadget/g1/UDC ${vendor.usb.controller}
+139-
+140-### more command at init.usb.configfs.rc ###
+141-on property:sys.usb.config=none && property:sys.usb.configfs=1
+142-    write /config/usb_gadget/g1/idVendor ${vendor.usb.vid}
+143-    rm /config/usb_gadget/g1/configs/b.1/f1
+144-    rm /config/usb_gadget/g1/configs/b.1/f2
+145-    rm /config/usb_gadget/g1/configs/b.1/f3
+146-    rm /config/usb_gadget/g1/configs/b.1/f4
+147-    rm /config/usb_gadget/g1/configs/b.1/f5
+148-    rmdir /config/usb_gadget/g1/functions/mtk_rndis.gs4
+149-    rmdir /config/usb_gadget/g1/functions/ncm.gs6
+150-    write /sys/class/udc/${vendor.usb.controller}/device/saving 0
+151-    write /sys/class/udc/${vendor.usb.controller}/device/u3_lpm 1
+152-
+153-### main function : adb ###
+154-### start adbd at init.usb.configfs.rc ###
+155:on property:sys.usb.config=adb && property:vendor.usb.acm_cnt=0 && \
+156-property:sys.usb.configfs=1
+157:    setprop vendor.usb.pid 0x201C
+158:on property:sys.usb.config=adb && property:vendor.usb.acm_cnt=1 && \
+159-property:sys.usb.configfs=1
+160-    setprop vendor.usb.pid 0x2006
+161-    setprop vendor.usb.acm_port1 ""
+162:on property:sys.usb.config=adb && property:vendor.usb.acm_cnt=2 && \
+163-property:sys.usb.configfs=1
+164-    setprop vendor.usb.pid 0x2029
+165-
+166:on property:sys.usb.ffs.ready=1 && property:sys.usb.config=adb && \
+167-property:vendor.usb.acm_enable=1 && property:sys.usb.configfs=1
+168-    write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "adb_acm"
+169-    write /config/usb_gadget/g1/idProduct ${vendor.usb.pid}
+170-    write /sys/class/udc/${vendor.usb.controller}/device/saving 1
+171-    symlink /config/usb_gadget/g1/functions/mass_storage.usb0 /config/usb_gadget/g1/configs/b.1/f1
+172-    symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f2
+173-    symlink /config/usb_gadget/g1/functions/acm.gs${vendor.usb.acm_port0} /config/usb_gadget/g1/configs/b.1/f3
+174-    symlink /config/usb_gadget/g1/functions/acm.gs${vendor.usb.acm_port1} /config/usb_gadget/g1/configs/b.1/f4
+175-    write /config/usb_gadget/g1/UDC ${vendor.usb.controller}
+176-    setprop sys.usb.state ${sys.usb.config}
+177-
+178:on property:sys.usb.ffs.ready=1 && property:sys.usb.config=adb && \
+179-property:vendor.usb.acm_enable=0 && property:sys.usb.configfs=1
+180-    write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "adb"
+181-    write /config/usb_gadget/g1/idProduct ${vendor.usb.pid}
+182-    symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1
+183-    write /config/usb_gadget/g1/UDC ${vendor.usb.controller}
+184-    setprop sys.usb.state ${sys.usb.config}
+185-
+186-### main function : mtp ###
+187-on property:sys.usb.config=mtp && property:vendor.usb.acm_cnt=0 && \
+188-property:sys.usb.configfs=1

@@ -1,0 +1,581 @@
+
+================================================================
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:552-585
+on late-init
+================================================================
+  552: on late-init
+  553:     trigger early-fs
+  554: 
+  555:     # Mount fstab in init.{$device}.rc by mount_all command. Optional parameter
+  556:     # '--early' can be specified to skip entries with 'latemount'.
+  557:     # /system and /vendor must be mounted by the end of the fs stage,
+  558:     # while /data is optional.
+  559:     trigger fs
+  560:     trigger post-fs
+  561: 
+  562:     # Mount fstab in init.{$device}.rc by mount_all with '--late' parameter
+  563:     # to only mount entries with 'latemount'. This is needed if '--early' is
+  564:     # specified in the previous mount_all command on the fs stage.
+  565:     # With /system mounted and properties form /system + /factory available,
+  566:     # some services can be started.
+  567:     trigger late-fs
+  568: 
+  569:     # Now we can mount /data. File encryption requires keymaster to decrypt
+  570:     # /data, which in turn can only be loaded when system properties are present.
+  571:     trigger post-fs-data
+  572: 
+  573:     # Should be before netd, but after apex, properties and logging is available.
+  574:     trigger load-bpf-programs
+  575:     trigger bpf-progs-loaded
+  576: 
+  577:     # Now we can start zygote.
+  578:     trigger zygote-start
+  579: 
+  580:     # Remove a file to wake up anything waiting for firmware.
+  581:     trigger firmware_mounts_complete
+  582: 
+  583:     trigger early-boot
+  584:     trigger boot
+  585: 
+
+================================================================
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:696-1114
+on post-fs-data
+================================================================
+  696: on post-fs-data
+  697: 
+  698:     # Start checkpoint before we touch data
+  699:     exec - system system -- /system/bin/vdc checkpoint prepareCheckpoint
+  700: 
+  701:     # We chown/chmod /data again so because mount is run as root + defaults
+  702:     chown system system /data
+  703:     chmod 0771 /data
+  704:     # We restorecon /data in case the userdata partition has been reset.
+  705:     restorecon /data
+  706: 
+  707:     # Make sure we have the device encryption key.
+  708:     installkey /data
+  709: 
+  710:     # Start bootcharting as soon as possible after the data partition is
+  711:     # mounted to collect more data.
+  712:     mkdir /data/bootchart 0755 shell shell encryption=Require
+  713:     bootchart start
+  714: 
+  715:     # Avoid predictable entropy pool. Carry over entropy from previous boot.
+  716:     copy /data/system/entropy.dat /dev/urandom
+  717: 
+  718:     mkdir /data/vendor 0771 root root encryption=Require
+  719:     mkdir /data/vendor/hardware 0771 root root
+  720: 
+  721:     # Start tombstoned early to be able to store tombstones.
+  722:     mkdir /data/anr 0775 system system encryption=Require
+  723:     mkdir /data/tombstones 0775 system system encryption=Require
+  724:     mkdir /data/vendor/tombstones 0771 root root
+  725:     mkdir /data/vendor/tombstones/wifi 0771 wifi wifi
+  726:     start tombstoned
+  727: 
+  728:     # Make sure that apexd is started in the default namespace
+  729:     enter_default_mount_ns
+  730: 
+  731:     # set up keystore directory structure first so that we can end early boot
+  732:     # and start apexd
+  733:     mkdir /data/misc 01771 system misc encryption=Require
+  734:     mkdir /data/misc/keystore 0700 keystore keystore
+  735:     # work around b/183668221
+  736:     restorecon /data/misc /data/misc/keystore
+  737: 
+  738:     # Boot level 30
+  739:     # odsign signing keys have MAX_BOOT_LEVEL=30
+  740:     # This is currently the earliest boot level, but we start at 30
+  741:     # to leave room for earlier levels.
+  742:     setprop keystore.boot_level 30
+  743: 
+  744:     # Now that /data is mounted and we have created /data/misc/keystore,
+  745:     # we can tell keystore to stop allowing use of early-boot keys,
+  746:     # and access its database for the first time to support creation and
+  747:     # use of MAX_BOOT_LEVEL keys.
+  748:     exec - system system -- /system/bin/vdc keymaster earlyBootEnded
+  749: 
+  750:     # Multi-installed APEXes are selected using persist props.
+  751:     # Load persist properties and override properties (if enabled) from /data,
+  752:     # before starting apexd.
+  753:     # /data/property should be created before `load_persist_props`
+  754:     mkdir /data/property 0700 root root encryption=Require
+  755:     load_persist_props
+  756: 
+  757:     start logd
+  758:     start logd-reinit
+  759: 
+  760:     # Some existing vendor rc files use 'on load_persist_props_action' to know
+  761:     # when persist props are ready. These are difficult to change due to GRF,
+  762:     # so continue triggering this action here even though props are already loaded
+  763:     # by the 'load_persist_props' call above.
+  764:     trigger load_persist_props_action
+  765: 
+  766:     # /data/apex is now available. Start apexd to scan and activate APEXes.
+  767:     #
+  768:     # To handle userspace reboots, make sure that apexd is started cleanly here
+  769:     # (set apexd.status="") and that it is restarted if it's already running.
+  770:     #
+  771:     # /data/apex uses encryption=None because direct I/O support is needed on
+  772:     # APEX files, but some devices don't support direct I/O on encrypted files.
+  773:     # Also, APEXes are public information, similar to the system image.
+  774:     # /data/apex/decompressed and /data/apex/ota_reserved override this setting;
+  775:     # they are encrypted so that files in them can be hard-linked into
+  776:     # /data/rollback which is encrypted.
+  777:     mkdir /data/apex 0755 root system encryption=None
+  778:     mkdir /data/apex/active 0755 root system
+  779:     mkdir /data/apex/backup 0700 root system
+  780:     mkdir /data/apex/decompressed 0755 root system encryption=Require
+  781:     mkdir /data/apex/sessions 0700 root system
+  782:     mkdir /data/app-staging 0751 system system encryption=DeleteIfNecessary
+  783:     mkdir /data/apex/ota_reserved 0700 root system encryption=Require
+  784:     setprop apexd.status ""
+  785:     restart apexd
+  786: 
+  787:     # create rest of basic filesystem structure
+  788:     mkdir /data/misc/recovery 0770 system log
+  789:     copy /data/misc/recovery/ro.build.fingerprint /data/misc/recovery/ro.build.fingerprint.1
+  790:     chmod 0440 /data/misc/recovery/ro.build.fingerprint.1
+  791:     chown system log /data/misc/recovery/ro.build.fingerprint.1
+  792:     write /data/misc/recovery/ro.build.fingerprint ${ro.build.fingerprint}
+  793:     chmod 0440 /data/misc/recovery/ro.build.fingerprint
+  794:     chown system log /data/misc/recovery/ro.build.fingerprint
+  795:     mkdir /data/misc/recovery/proc 0770 system log
+  796:     copy /data/misc/recovery/proc/version /data/misc/recovery/proc/version.1
+  797:     chmod 0440 /data/misc/recovery/proc/version.1
+  798:     chown system log /data/misc/recovery/proc/version.1
+  799:     copy /proc/version /data/misc/recovery/proc/version
+  800:     chmod 0440 /data/misc/recovery/proc/version
+  801:     chown system log /data/misc/recovery/proc/version
+  802:     mkdir /data/misc/bluedroid 02770 bluetooth bluetooth
+  803:     # Fix the access permissions and group ownership for 'bt_config.conf'
+  804:     chmod 0660 /data/misc/bluedroid/bt_config.conf
+  805:     chown bluetooth bluetooth /data/misc/bluedroid/bt_config.conf
+  806:     mkdir /data/misc/bluetooth 0770 bluetooth bluetooth
+  807:     mkdir /data/misc/bluetooth/logs 0770 bluetooth bluetooth
+  808:     mkdir /data/misc/nfc 0770 nfc nfc
+  809:     mkdir /data/misc/nfc/logs 0770 nfc nfc
+  810:     mkdir /data/misc/credstore 0700 credstore credstore
+  811:     mkdir /data/misc/gatekeeper 0700 system system
+  812:     mkdir /data/misc/keychain 0771 system system
+  813:     mkdir /data/misc/net 0750 root shell
+  814:     mkdir /data/misc/radio 0770 system radio
+  815:     mkdir /data/misc/sms 0770 system radio
+  816:     mkdir /data/misc/carrierid 0770 system radio
+  817:     mkdir /data/misc/apns 0770 system radio
+  818:     mkdir /data/misc/emergencynumberdb 0770 system radio
+  819:     mkdir /data/misc/network_watchlist 0774 system system
+  820:     mkdir /data/misc/telephonyconfig 0770 system radio
+  821:     mkdir /data/misc/textclassifier 0771 system system
+  822:     mkdir /data/misc/vpn 0770 system vpn
+  823:     mkdir /data/misc/shared_relro 0771 shared_relro shared_relro
+  824:     mkdir /data/misc/systemkeys 0700 system system
+  825:     mkdir /data/misc/wifi 0770 wifi wifi
+  826:     mkdir /data/misc/wifi/mainline_supplicant 0770 wifi wifi
+  827:     mkdir /data/misc/wifi/mainline_supplicant/sockets 0770 wifi wifi
+  828:     mkdir /data/misc/wifi/sockets 0770 wifi wifi
+  829:     mkdir /data/misc/wifi/wpa_supplicant 0770 wifi wifi
+  830:     mkdir /data/misc/ethernet 0770 system system
+  831:     mkdir /data/misc/dhcp 0770 dhcp dhcp
+  832:     mkdir /data/misc/user 0771 root root
+  833:     # give system access to wpa_supplicant.conf for backup and restore
+  834:     chmod 0660 /data/misc/wifi/wpa_supplicant.conf
+  835:     mkdir /data/local 0751 root root encryption=Require
+  836:     mkdir /data/misc/media 0700 media media
+  837:     mkdir /data/misc/audioserver 0700 audioserver audioserver
+  838:     mkdir /data/misc/cameraserver 0700 cameraserver cameraserver
+  839:     mkdir /data/misc/vold 0700 root root
+  840:     mkdir /data/misc/boottrace 0771 system shell
+  841:     mkdir /data/misc/update_engine 0700 root root
+  842:     mkdir /data/misc/update_engine_log 02750 root log
+  843:     mkdir /data/misc/trace 0700 root root
+  844:     # create location to store surface and window trace files
+  845:     mkdir /data/misc/wmtrace 0700 system system
+  846:     # create location to store accessibility trace files
+  847:     mkdir /data/misc/a11ytrace 0700 system system
+  848:     # profile file layout
+  849:     mkdir /data/misc/profiles 0771 system system
+  850:     mkdir /data/misc/profiles/cur 0771 system system
+  851:     mkdir /data/misc/profiles/ref 0771 system system
+  852:     mkdir /data/misc/profman 0770 system shell
+  853:     mkdir /data/misc/gcov 0770 root root
+  854:     mkdir /data/misc/installd 0700 root root
+  855:     mkdir /data/misc/apexdata 0711 root root
+  856:     mkdir /data/misc/apexrollback 0700 root root
+  857:     mkdir /data/misc/appcompat/ 0700 system system
+  858:     mkdir /data/misc/uprobestats-configs/ 0777 uprobestats uprobestats
+  859:     mkdir /data/misc/snapshotctl_log 0755 root root
+  860:     # create location to store pre-reboot information
+  861:     mkdir /data/misc/prereboot 0700 system system
+  862:     # directory used for on-device refresh metrics file.
+  863:     mkdir /data/misc/odrefresh 0777 system system
+  864:     # directory used for on-device signing key blob
+  865:     mkdir /data/misc/odsign 0710 root system
+  866:     # directory used for odsign metrics
+  867:     mkdir /data/misc/odsign/metrics 0770 root system
+  868:     # directory used for connectivity blob store.
+  869:     mkdir /data/misc/connectivityblobdb 0770 system system
+  870: 
+  871:     # Directory for VirtualizationService temporary image files.
+  872:     # Delete any stale files owned by the old virtualizationservice uid (b/230056726).
+  873:     chmod 0770 /data/misc/virtualizationservice
+  874:     exec - virtualizationservice system -- /bin/rm -rf /data/misc/virtualizationservice
+  875:     mkdir /data/misc/virtualizationservice 0771 system system
+  876: 
+  877:     # /data/preloads uses encryption=None because it only contains preloaded
+  878:     # files that are public information, similar to the system image.
+  879:     mkdir /data/preloads 0775 system system encryption=None
+  880: 
+  881:     # For security reasons, /data/local/tmp should always be empty.
+  882:     # Do not place files or directories in /data/local/tmp
+  883:     mkdir /data/local/tmp 0771 shell shell
+  884:     mkdir /data/local/traces 0777 shell shell
+  885:     mkdir /data/app-private 0771 system system encryption=Require
+  886:     mkdir /data/app-ephemeral 0771 system system encryption=Require
+  887:     mkdir /data/app-asec 0700 root root encryption=Require
+  888:     mkdir /data/app-lib 0771 system system encryption=Require
+  889:     mkdir /data/app 0771 system system encryption=Require
+  890: 
+  891:     # Create directory for app metadata files
+  892:     mkdir /data/app-metadata 0700 system system encryption=Require
+  893: 
+  894:     # create directory for updated font files.
+  895:     mkdir /data/fonts/ 0771 root root encryption=Require
+  896:     mkdir /data/fonts/files 0771 system system
+  897:     mkdir /data/fonts/config 0770 system system
+  898: 
+  899:     # Create directories to push tests to for each linker namespace.
+  900:     # Create the subdirectories in case the first test is run as root
+  901:     # so it doesn't end up owned by root.
+  902:     # Set directories to be executable by any process so that debuggerd,
+  903:     # aka crash_dump, can read any executables/shared libraries.
+  904:     mkdir /data/local/tests 0701 shell shell
+  905:     mkdir /data/local/tests/product 0701 shell shell
+  906:     mkdir /data/local/tests/system 0701 shell shell
+  907:     mkdir /data/local/tests/unrestricted 0701 shell shell
+  908:     mkdir /data/local/tests/vendor 0701 shell shell
+  909: 
+  910:     # create dalvik-cache, so as to enforce our permissions
+  911:     mkdir /data/dalvik-cache 0771 root root encryption=Require
+  912:     # create the A/B OTA directory, so as to enforce our permissions
+  913:     mkdir /data/ota 0771 root root encryption=Require
+  914: 
+  915:     # create the OTA package directory. It will be accessed by GmsCore (cache
+  916:     # group), update_engine and update_verifier.
+  917:     mkdir /data/ota_package 0770 system cache encryption=Require
+  918: 
+  919:     # create resource-cache and double-check the perms
+  920:     mkdir /data/resource-cache 0771 system system encryption=Require
+  921:     chown system system /data/resource-cache
+  922:     chmod 0771 /data/resource-cache
+  923: 
+  924:     # Ensure that lost+found exists and has the correct permissions.  Linux
+  925:     # filesystems expect this directory to exist; it's where the fsck tool puts
+  926:     # any recovered files that weren't present in any directory.  It must be
+  927:     # unencrypted, as fsck must be able to write to it.
+  928:     mkdir /data/lost+found 0770 root root encryption=None
+  929: 
+  930:     # create directory for DRM plug-ins - give drm the read/write access to
+  931:     # the following directory.
+  932:     mkdir /data/drm 0770 drm drm encryption=Require
+  933: 
+  934:     # create directory for MediaDrm plug-ins - give drm the read/write access to
+  935:     # the following directory.
+  936:     mkdir /data/mediadrm 0770 mediadrm mediadrm encryption=Require
+  937: 
+  938:     # NFC: create data/nfc for nv storage
+  939:     mkdir /data/nfc 0770 nfc nfc encryption=Require
+  940:     mkdir /data/nfc/param 0770 nfc nfc
+  941: 
+  942:     # Create all remaining /data root dirs so that they are made through init
+  943:     # and get proper encryption policy installed
+  944:     mkdir /data/backup 0700 system system encryption=Require
+  945:     mkdir /data/ss 0700 system system encryption=Require
+  946: 
+  947:     mkdir /data/system 0775 system system encryption=Require
+  948:     mkdir /data/system/environ 0700 system system
+  949:     # b/183861600 attempt to fix selinux label before running derive_classpath service
+  950:     restorecon /data/system/environ
+  951:     mkdir /data/system/dropbox 0700 system system
+  952:     mkdir /data/system/heapdump 0700 system system
+  953:     mkdir /data/system/users 0775 system system
+  954:     # Mkdir and set SELinux security contexts for shutdown-checkpoints.
+  955:     # TODO(b/270286197): remove these after couple releases.
+  956:     mkdir /data/system/shutdown-checkpoints 0700 system system
+  957:     restorecon_recursive /data/system/shutdown-checkpoints
+  958: 
+  959:     # Create the parent directories of the user CE and DE storage directories.
+  960:     # These parent directories must use encryption=None, since each of their
+  961:     # subdirectories uses a different encryption policy (a per-user one), and
+  962:     # encryption policies apply recursively.  These directories should never
+  963:     # contain any subdirectories other than the per-user ones.  /data/media/obb
+  964:     # is an exception that exists for legacy reasons.
+  965:     #
+  966:     # Don't use any write mode bits (0222) for any of these directories, since
+  967:     # the only process that should write to them directly is vold (since it
+  968:     # needs to set up file-based encryption on the subdirectories), which runs
+  969:     # as root with CAP_DAC_OVERRIDE.  This is also fully enforced via the
+  970:     # SELinux policy.  But we also set the DAC file modes accordingly, to try to
+  971:     # minimize differences in behavior if SELinux is set to permissive mode.
+  972:     mkdir /data/media 0550 media_rw media_rw encryption=None
+  973:     mkdir /data/misc_ce 0551 system misc encryption=None
+  974:     mkdir /data/misc_de 0551 system misc encryption=None
+  975:     mkdir /data/system_ce 0550 system system encryption=None
+  976:     mkdir /data/system_de 0550 system system encryption=None
+  977:     mkdir /data/user 0511 system system encryption=None
+  978:     mkdir /data/user_de 0511 system system encryption=None
+  979:     mkdir /data/vendor_ce 0551 root root encryption=None
+  980:     mkdir /data/vendor_de 0551 root root encryption=None
+  981: 
+  982:     # Similar to the top-level CE and DE directories, /data/storage_area must
+  983:     # itself be unencrypted, since it contains encrypted directories.
+  984:     mkdir /data/storage_area 0551 root root encryption=None
+  985: 
+  986:     # Set the casefold flag on /data/media.  For upgrades, a restorecon can be
+  987:     # needed first to relabel the directory from media_rw_data_file.
+  988:     restorecon /data/media
+  989:     exec - media_rw media_rw -- /system/bin/chattr +F /data/media
+  990: 
+  991:     # A tmpfs directory, which will contain all apps and sdk sandbox CE and DE
+  992:     # data directory that bind mount from the original source.
+  993:     mount tmpfs tmpfs /data_mirror nodev noexec nosuid mode=0700,uid=0,gid=1000
+  994:     restorecon /data_mirror
+  995:     mkdir /data_mirror/data_ce 0700 root root
+  996:     mkdir /data_mirror/data_de 0700 root root
+  997:     mkdir /data_mirror/misc_ce 0700 root root
+  998:     mkdir /data_mirror/misc_de 0700 root root
+  999:     mkdir /data_mirror/storage_area 0700 root root
+ 1000: 
+ 1001:     # Create CE and DE data directory for default volume
+ 1002:     # Not needed for storage_area directory, since this is
+ 1003:     # not supported for non-default volumes and the path
+ 1004:     # does not include the volume ID
+ 1005:     mkdir /data_mirror/data_ce/null 0700 root root
+ 1006:     mkdir /data_mirror/data_de/null 0700 root root
+ 1007:     mkdir /data_mirror/misc_ce/null 0700 root root
+ 1008:     mkdir /data_mirror/misc_de/null 0700 root root
+ 1009: 
+ 1010:     # Bind mount CE and DE data directory to mirror's default volume directory.
+ 1011:     # Note that because the /data mount has the "shared" propagation type, the
+ 1012:     # later bind mount of /data/data onto /data/user/0 will automatically
+ 1013:     # propagate to /data_mirror/data_ce/null/0 as well.
+ 1014:     mount none /data/user /data_mirror/data_ce/null bind rec
+ 1015:     mount none /data/user_de /data_mirror/data_de/null bind rec
+ 1016:     mount none /data/misc_ce /data_mirror/misc_ce/null bind rec
+ 1017:     mount none /data/misc_de /data_mirror/misc_de/null bind rec
+ 1018: 
+ 1019:     # Also bind mount for the storage area directory (minus the volume ID)
+ 1020:     mount none /data/storage_area /data_mirror/storage_area bind rec
+ 1021: 
+ 1022:     # Create mirror directory for jit profiles
+ 1023:     mkdir /data_mirror/cur_profiles 0700 root root
+ 1024:     mount none /data/misc/profiles/cur /data_mirror/cur_profiles bind rec
+ 1025:     mkdir /data_mirror/ref_profiles 0700 root root
+ 1026:     mount none /data/misc/profiles/ref /data_mirror/ref_profiles bind rec
+ 1027: 
+ 1028:     mkdir /data/cache 0770 system cache encryption=Require
+ 1029:     mkdir /data/cache/recovery 0770 system cache
+ 1030:     mkdir /data/cache/backup_stage 0700 system system
+ 1031:     mkdir /data/cache/backup 0700 system system
+ 1032: 
+ 1033:     # Delete these if need be, per b/139193659
+ 1034:     mkdir /data/rollback 0700 system system encryption=DeleteIfNecessary
+ 1035:     mkdir /data/rollback-observer 0700 system system encryption=DeleteIfNecessary
+ 1036:     mkdir /data/rollback-history 0700 system system encryption=DeleteIfNecessary
+ 1037: 
+ 1038:     # Create root dir for Incremental Service
+ 1039:     mkdir /data/incremental 0771 system system encryption=Require
+ 1040: 
+ 1041:     # Create directories for statsd
+ 1042:     mkdir /data/misc/stats-active-metric/ 0770 statsd system
+ 1043:     mkdir /data/misc/stats-data/ 0770 statsd system
+ 1044:     mkdir /data/misc/stats-data/restricted-data 0770 statsd system
+ 1045:     mkdir /data/misc/stats-metadata/ 0770 statsd system
+ 1046:     mkdir /data/misc/stats-service/ 0770 statsd system
+ 1047:     mkdir /data/misc/train-info/ 0770 statsd system
+ 1048: 
+ 1049:     # Wait for apexd to finish activating APEXes before starting more processes.
+ 1050:     wait_for_prop apexd.status activated
+ 1051:     perform_apex_config
+ 1052: 
+ 1053:     exec_start system_aconfigd_mainline_init
+ 1054:     start system_aconfigd_socket_service
+ 1055: 
+ 1056:     # start mainline aconfigd init, after transition, the above system_aconfigd_mainline_init
+ 1057:     # will be deprecated
+ 1058:     exec_start mainline_aconfigd_init
+ 1059:     start mainline_aconfigd_socket_service
+ 1060: 
+ 1061:     # Create directories for boot animation.
+ 1062:     mkdir /data/misc/bootanim 0755 system system
+ 1063: 
+ 1064:     exec_start derive_sdk
+ 1065: 
+ 1066:     init_user0
+ 1067: 
+ 1068:     # Set SELinux security contexts on upgrade or policy update.
+ 1069:     restorecon --recursive --skip-ce /data
+ 1070: 
+ 1071:     # Define and export *CLASSPATH variables
+ 1072:     # Must start before 'odsign', as odsign depends on *CLASSPATH variables
+ 1073:     exec_start derive_classpath
+ 1074:     load_exports /data/system/environ/classpath
+ 1075: 
+ 1076:     # Start ART's oneshot boot service to propagate boot experiment flags to
+ 1077:     # dalvik.vm.*. This needs to be done before odsign since odrefresh uses and
+ 1078:     # validates those properties against the signed cache-info.xml.
+ 1079:     exec_start art_boot
+ 1080: 
+ 1081:     # Start the on-device signing daemon, and wait for it to finish, to ensure
+ 1082:     # ART artifacts are generated if needed.
+ 1083:     # Must start after 'derive_classpath' to have *CLASSPATH variables set.
+ 1084:     start odsign
+ 1085: 
+ 1086:     # Wait for odsign to be done with the key.
+ 1087:     wait_for_prop odsign.key.done 1
+ 1088: 
+ 1089:     # Bump the boot level to 1000000000; this prevents further on-device signing.
+ 1090:     # This is a special value that shuts down the thread which listens for
+ 1091:     # further updates.
+ 1092:     setprop keystore.boot_level 1000000000
+ 1093: 
+ 1094:     # Allow apexd to snapshot and restore device encrypted apex data in the case
+ 1095:     # of a rollback. This should be done immediately after DE_user data keys
+ 1096:     # are loaded. APEXes should not access this data until this has been
+ 1097:     # completed and apexd.status becomes "ready".
+ 1098:     exec_start apexd-snapshotde
+ 1099: 
+ 1100:     # sys.memfd_use set to false by default, which keeps it disabled
+ 1101:     # until it is confirmed that apps and vendor processes don't make
+ 1102:     # IOCTLs on ashmem fds any more.
+ 1103:     setprop sys.use_memfd false
+ 1104: 
+ 1105:     # Set fscklog permission
+ 1106:     chown root system /dev/fscklogs/log
+ 1107:     chmod 0770 /dev/fscklogs/log
+ 1108: 
+ 1109:     # Enable FUSE by default
+ 1110:     setprop persist.sys.fuse true
+ 1111: 
+ 1112:     # Update dm-verity state and set partition.*.verified properties.
+ 1113:     verity_update_state
+ 1114: 
+
+================================================================
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:1152-1264
+on boot
+================================================================
+ 1152: on boot
+ 1153:     # basic network init
+ 1154:     ifup lo
+ 1155:     hostname localhost
+ 1156:     domainname localdomain
+ 1157: 
+ 1158:     # IPsec SA default expiration length
+ 1159:     write /proc/sys/net/core/xfrm_acq_expires 3600
+ 1160: 
+ 1161:     # Memory management.  Basic kernel parameters, and allow the high
+ 1162:     # level system server to be able to adjust the kernel OOM driver
+ 1163:     # parameters to match how it is managing things.
+ 1164:     write /proc/sys/vm/overcommit_memory 1
+ 1165:     write /proc/sys/vm/min_free_order_shift 4
+ 1166: 
+ 1167:     # System server manages zram writeback
+ 1168:     chown root system /sys/block/zram0/idle
+ 1169:     chmod 0220 /sys/block/zram0/idle
+ 1170:     chown root system /sys/block/zram0/writeback
+ 1171:     chmod 0220 /sys/block/zram0/writeback
+ 1172: 
+ 1173:     # to access F2FS sysfs on dm-<num> directly
+ 1174:     mkdir /dev/sys/fs/by-name 0755 system system
+ 1175:     symlink /sys/fs/f2fs/${dev.mnt.dev.data} /dev/sys/fs/by-name/userdata
+ 1176: 
+ 1177:     # dev.mnt.dev.data=dm-N, dev.mnt.blk.data=sdaN/mmcblk0pN, dev.mnt.rootdisk.data=sda/mmcblk0, or
+ 1178:     # dev.mnt.dev.data=sdaN/mmcblk0pN, dev.mnt.blk.data=sdaN/mmcblk0pN, dev.mnt.rootdisk.data=sda/mmcblk0
+ 1179:     mkdir /dev/sys/block/by-name 0755 system system
+ 1180:     symlink /sys/class/block/${dev.mnt.dev.data} /dev/sys/block/by-name/userdata
+ 1181:     symlink /sys/class/block/${dev.mnt.rootdisk.data} /dev/sys/block/by-name/rootdisk
+ 1182: 
+ 1183:     # F2FS tuning. Set cp_interval larger than dirty_expire_centisecs, 30 secs,
+ 1184:     # to avoid power consumption when system becomes mostly idle. Be careful
+ 1185:     # to make it too large, since it may bring userdata loss, if they
+ 1186:     # are not aware of using fsync()/sync() to prepare sudden power-cut.
+ 1187:     write /dev/sys/fs/by-name/userdata/cp_interval 200
+ 1188:     write /dev/sys/fs/by-name/userdata/gc_urgent_sleep_time 50
+ 1189:     write /dev/sys/fs/by-name/userdata/iostat_period_ms 1000
+ 1190:     write /dev/sys/fs/by-name/userdata/iostat_enable 1
+ 1191: 
+ 1192:     # set readahead multiplier for POSIX_FADV_SEQUENTIAL files
+ 1193:     write /dev/sys/fs/by-name/userdata/seq_file_ra_mul 128
+ 1194: 
+ 1195:     # limit discard size to 128MB in order to avoid long IO latency
+ 1196:     # for filesystem tuning first (dm or sda)
+ 1197:     # this requires enabling selinux entry for sda/mmcblk0 in vendor side
+ 1198:     write /dev/sys/block/by-name/userdata/queue/discard_max_bytes 134217728
+ 1199:     write /dev/sys/block/by-name/rootdisk/queue/discard_max_bytes 134217728
+ 1200: 
+ 1201:     # Permissions for System Server and daemons.
+ 1202:     chown system system /sys/power/autosleep
+ 1203: 
+ 1204:     chown system system /sys/devices/system/cpu/cpufreq/interactive/timer_rate
+ 1205:     chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/timer_rate
+ 1206:     chown system system /sys/devices/system/cpu/cpufreq/interactive/timer_slack
+ 1207:     chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/timer_slack
+ 1208:     chown system system /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
+ 1209:     chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/min_sample_time
+ 1210:     chown system system /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
+ 1211:     chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
+ 1212:     chown system system /sys/devices/system/cpu/cpufreq/interactive/target_loads
+ 1213:     chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/target_loads
+ 1214:     chown system system /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
+ 1215:     chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
+ 1216:     chown system system /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
+ 1217:     chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay
+ 1218:     chown system system /sys/devices/system/cpu/cpufreq/interactive/boost
+ 1219:     chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/boost
+ 1220:     chown system system /sys/devices/system/cpu/cpufreq/interactive/boostpulse
+ 1221:     chown system system /sys/devices/system/cpu/cpufreq/interactive/input_boost
+ 1222:     chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/input_boost
+ 1223:     chown system system /sys/devices/system/cpu/cpufreq/interactive/boostpulse_duration
+ 1224:     chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/boostpulse_duration
+ 1225:     chown system system /sys/devices/system/cpu/cpufreq/interactive/io_is_busy
+ 1226:     chmod 0660 /sys/devices/system/cpu/cpufreq/interactive/io_is_busy
+ 1227: 
+ 1228:     chown system system /sys/class/leds/vibrator/trigger
+ 1229:     chown system system /sys/class/leds/vibrator/activate
+ 1230:     chown system system /sys/class/leds/vibrator/brightness
+ 1231:     chown system system /sys/class/leds/vibrator/duration
+ 1232:     chown system system /sys/class/leds/vibrator/state
+ 1233:     chown system system /sys/class/timed_output/vibrator/enable
+ 1234:     chown system system /sys/class/leds/keyboard-backlight/brightness
+ 1235:     chown system system /sys/class/leds/lcd-backlight/brightness
+ 1236:     chown system system /sys/class/leds/button-backlight/brightness
+ 1237:     chown system system /sys/class/leds/jogball-backlight/brightness
+ 1238:     chown system system /sys/class/leds/red/brightness
+ 1239:     chown system system /sys/class/leds/green/brightness
+ 1240:     chown system system /sys/class/leds/blue/brightness
+ 1241:     chown system system /sys/class/leds/red/device/grpfreq
+ 1242:     chown system system /sys/class/leds/red/device/grppwm
+ 1243:     chown system system /sys/class/leds/red/device/blink
+ 1244:     chown system system /sys/module/sco/parameters/disable_esco
+ 1245:     chown system system /sys/kernel/ipv4/tcp_wmem_min
+ 1246:     chown system system /sys/kernel/ipv4/tcp_wmem_def
+ 1247:     chown system system /sys/kernel/ipv4/tcp_wmem_max
+ 1248:     chown system system /sys/kernel/ipv4/tcp_rmem_min
+ 1249:     chown system system /sys/kernel/ipv4/tcp_rmem_def
+ 1250:     chown system system /sys/kernel/ipv4/tcp_rmem_max
+ 1251:     chown system system /sys/firmware/acpi/tables
+ 1252:     chown system system /sys/firmware/acpi/tables/BERT
+ 1253:     chown system system /sys/firmware/acpi/tables/data/BERT
+ 1254:     chown root radio /proc/cmdline
+ 1255:     chown root system /proc/bootconfig
+ 1256: 
+ 1257:     # Define default initial receive window size in segments.
+ 1258:     setprop net.tcp_def_init_rwnd 60
+ 1259: 
+ 1260:     # Start standard binderized HAL daemons
+ 1261:     class_start hal
+ 1262: 
+ 1263:     class_start core
+ 1264: 

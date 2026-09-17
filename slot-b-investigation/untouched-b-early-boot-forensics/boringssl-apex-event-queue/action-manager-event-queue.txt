@@ -1,0 +1,173 @@
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-15- */
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-16-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-17-#pragma once
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-18-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-19-#include <mutex>
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-20-#include <string>
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-21-#include <vector>
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-22-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-23-#include <android-base/thread_annotations.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-24-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-25-#include "action.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-26-#include "builtins.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-27-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-28-namespace android {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-29-namespace init {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-30-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-31-class ActionManager {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-32-  public:
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-33-    static ActionManager& GetInstance();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-34-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-35-    // Exposed for testing
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-36-    ActionManager();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-37-    size_t CheckAllCommands();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-38-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-39-    void AddAction(std::unique_ptr<Action> action);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-40-    template <class UnaryPredicate>
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-41-    void RemoveActionIf(UnaryPredicate predicate) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-42-        actions_.erase(std::remove_if(actions_.begin(), actions_.end(), predicate), actions_.end());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-43-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-44-    void QueueEventTrigger(const std::string& trigger);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h:45:    void QueuePropertyChange(const std::string& name, const std::string& value);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-46-    void QueueAllPropertyActions();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-47-    void QueueBuiltinAction(BuiltinFunction func, const std::string& name);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-48-    void ExecuteOneCommand();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-49-    bool HasMoreCommands() const;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-50-    void DumpState() const;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-51-    void ClearQueue();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-52-    auto size() const { return actions_.size(); }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-53-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-54-  private:
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-55-    ActionManager(ActionManager const&) = delete;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-56-    void operator=(ActionManager const&) = delete;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-57-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-58-    std::vector<std::unique_ptr<Action>> actions_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h:59:    std::queue<std::variant<EventTrigger, PropertyChange, BuiltinAction>> event_queue_
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h:60:            GUARDED_BY(event_queue_lock_);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h:61:    mutable std::mutex event_queue_lock_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-62-    std::queue<const Action*> current_executing_actions_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-63-    std::size_t current_command_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-64-};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-65-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-66-}  // namespace init
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-67-}  // namespace android
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-13- * See the License for the specific language governing permissions and
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-14- * limitations under the License.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-15- */
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-16-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-17-#include "action_manager.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-18-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-19-#include <android-base/logging.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-20-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-21-namespace android {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-22-namespace init {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-23-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-24-ActionManager::ActionManager() : current_command_(0) {}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-25-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-26-size_t ActionManager::CheckAllCommands() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-27-    size_t failures = 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-28-    for (const auto& action : actions_) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-29-        failures += action->CheckAllCommands();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-30-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-31-    return failures;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-32-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-33-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-34-ActionManager& ActionManager::GetInstance() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-35-    static ActionManager instance;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-36-    return instance;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-37-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-38-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-39-void ActionManager::AddAction(std::unique_ptr<Action> action) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-40-    actions_.emplace_back(std::move(action));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-41-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-42-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:43:void ActionManager::QueueEventTrigger(const std::string& trigger) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:44:    auto lock = std::lock_guard{event_queue_lock_};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:45:    event_queue_.emplace(trigger);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-46-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-47-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:48:void ActionManager::QueuePropertyChange(const std::string& name, const std::string& value) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:49:    auto lock = std::lock_guard{event_queue_lock_};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:50:    event_queue_.emplace(std::make_pair(name, value));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-51-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-52-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-53-void ActionManager::QueueAllPropertyActions() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:54:    QueuePropertyChange("", "");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-55-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-56-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-57-void ActionManager::QueueBuiltinAction(BuiltinFunction func, const std::string& name) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:58:    auto lock = std::lock_guard{event_queue_lock_};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-59-    auto action = std::make_unique<Action>(true, nullptr, "<Builtin Action>", 0, name,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-60-                                           std::map<std::string, std::string>{});
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-61-    action->AddCommand(std::move(func), {name}, 0);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-62-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:63:    event_queue_.emplace(action.get());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-64-    actions_.emplace_back(std::move(action));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-65-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-66-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:67:void ActionManager::ExecuteOneCommand() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-68-    {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:69:        auto lock = std::lock_guard{event_queue_lock_};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-70-        // Loop through the event queue until we have an action to execute
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:71:        while (current_executing_actions_.empty() && !event_queue_.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-72-            for (const auto& action : actions_) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-73-                if (std::visit([&action](const auto& event) { return action->CheckEvent(event); },
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:74:                               event_queue_.front())) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-75-                    current_executing_actions_.emplace(action.get());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-76-                }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-77-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:78:            event_queue_.pop();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-79-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-80-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-81-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-82-    if (current_executing_actions_.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-83-        return;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-84-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-85-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-86-    auto action = current_executing_actions_.front();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-87-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-88-    if (current_command_ == 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-89-        std::string trigger_name = action->BuildTriggersString();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-90-        LOG(INFO) << "processing action (" << trigger_name << ") from (" << action->filename()
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-91-                  << ":" << action->line() << ")";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-92-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-93-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-94-    action->ExecuteOneCommand(current_command_);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-95-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-96-    // If this was the last command in the current action, then remove
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-97-    // the action from the executing list.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-98-    // If this action was oneshot, then also remove it from actions_.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-99-    ++current_command_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-100-    if (current_command_ == action->NumCommands()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-101-        current_executing_actions_.pop();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-102-        current_command_ = 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-103-        if (action->oneshot()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-104-            auto eraser = [&action](std::unique_ptr<Action>& a) { return a.get() == action; };
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-105-            actions_.erase(std::remove_if(actions_.begin(), actions_.end(), eraser),
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-106-                           actions_.end());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-107-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-108-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-109-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-110-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-111-bool ActionManager::HasMoreCommands() const {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:112:    auto lock = std::lock_guard{event_queue_lock_};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:113:    return !current_executing_actions_.empty() || !event_queue_.empty();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-114-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-115-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-116-void ActionManager::DumpState() const {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-117-    for (const auto& a : actions_) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-118-        a->DumpState();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-119-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-120-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-121-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-122-void ActionManager::ClearQueue() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:123:    auto lock = std::lock_guard{event_queue_lock_};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-124-    // We are shutting down so don't claim the oneshot builtin actions back
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-125-    current_executing_actions_ = {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:126:    event_queue_ = {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-127-    current_command_ = 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-128-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-129-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-130-}  // namespace init
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-131-}  // namespace android
