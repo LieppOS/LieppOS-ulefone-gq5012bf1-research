@@ -1,0 +1,61 @@
+===== SERVICES =====
+[init.svc.boringssl_self_test64]: [stopped]
+[init.svc.boringssl_self_test64_vendor]: [stopped]
+[init.svc.boringssl_self_test_apex64]: [stopped]
+[init.svc_debug_pid.boringssl_self_test64]: []
+[init.svc_debug_pid.boringssl_self_test64_vendor]: []
+[init.svc_debug_pid.boringssl_self_test_apex64]: []
+[ro.boottime.boringssl_self_test64]: [4295018769]
+[ro.boottime.boringssl_self_test64_vendor]: [4177967923]
+[ro.boottime.boringssl_self_test_apex64]: [13468796846]
+
+===== BINARIES =====
+/system/bin/boringssl_self_test32
+/system/bin/boringssl_self_test64
+/system/etc/init/hw/init.boringssl.zygote64.rc
+/system/etc/init/hw/init.boringssl.zygote64_32.rc
+/vendor/bin/boringssl_self_test64
+/vendor/etc/boringssl_self_test.zygote64.rc
+/vendor/etc/boringssl_self_test.zygote64_32.rc
+/vendor/etc/init/boringssl_self_test.rc
+
+===== INIT RULES =====
+/system/etc/init/hw/init.boringssl.no_zygote.rc:2:    exec_start boringssl_self_test32
+/system/etc/init/hw/init.boringssl.no_zygote.rc:4:    exec_start boringssl_self_test64
+/system/etc/init/hw/init.boringssl.no_zygote.rc:6:    exec_start boringssl_self_test_apex32
+/system/etc/init/hw/init.boringssl.no_zygote.rc:8:    exec_start boringssl_self_test_apex64
+/system/etc/init/hw/init.boringssl.zygote32.rc:2:    exec_start boringssl_self_test32
+/system/etc/init/hw/init.boringssl.zygote32.rc:4:    exec_start boringssl_self_test64
+/system/etc/init/hw/init.boringssl.zygote32.rc:6:    exec_start boringssl_self_test_apex32
+/system/etc/init/hw/init.boringssl.zygote32.rc:8:    exec_start boringssl_self_test_apex64
+/system/etc/init/hw/init.boringssl.zygote64.rc:2:    exec_start boringssl_self_test64
+/system/etc/init/hw/init.boringssl.zygote64.rc:4:    exec_start boringssl_self_test_apex64
+/system/etc/init/hw/init.boringssl.zygote64_32.rc:2:    exec_start boringssl_self_test32
+/system/etc/init/hw/init.boringssl.zygote64_32.rc:4:    exec_start boringssl_self_test64
+/system/etc/init/hw/init.boringssl.zygote64_32.rc:6:    exec_start boringssl_self_test_apex32
+/system/etc/init/hw/init.boringssl.zygote64_32.rc:8:    exec_start boringssl_self_test_apex64
+/system/etc/init/hw/init.rc:87:    # These must already exist by the time boringssl_self_test32 / boringssl_self_test64 run.
+/system/etc/init/hw/init.rc:88:    mkdir /dev/boringssl 0755 root root
+/system/etc/init/hw/init.rc:89:    mkdir /dev/boringssl/selftest 0755 root root
+/system/etc/init/hw/init.rc:515:# Run boringssl self test for each ABI.  Any failures trigger reboot to firmware.
+/system/etc/init/hw/init.rc:516:import /system/etc/init/hw/init.boringssl.${ro.zygote}.rc
+/system/etc/init/hw/init.rc:518:service boringssl_self_test32 /system/bin/boringssl_self_test32
+/system/etc/init/hw/init.rc:519:    reboot_on_failure reboot,boringssl-self-check-failed
+/system/etc/init/hw/init.rc:521:    # Explicitly specify that boringssl_self_test32 doesn't require any capabilities
+/system/etc/init/hw/init.rc:525:service boringssl_self_test64 /system/bin/boringssl_self_test64
+/system/etc/init/hw/init.rc:526:    reboot_on_failure reboot,boringssl-self-check-failed
+/system/etc/init/hw/init.rc:528:    # Explicitly specify that boringssl_self_test64 doesn't require any capabilities
+/system/etc/init/hw/init.rc:532:service boringssl_self_test_apex32 /apex/com.android.conscrypt/bin/boringssl_self_test32
+/system/etc/init/hw/init.rc:533:    reboot_on_failure reboot,boringssl-self-check-failed
+/system/etc/init/hw/init.rc:535:    # Explicitly specify that boringssl_self_test_apex32 doesn't require any capabilities
+/system/etc/init/hw/init.rc:539:service boringssl_self_test_apex64 /apex/com.android.conscrypt/bin/boringssl_self_test64
+/system/etc/init/hw/init.rc:540:    reboot_on_failure reboot,boringssl-self-check-failed
+/system/etc/init/hw/init.rc:542:    # Explicitly specify that boringssl_self_test_apex64 doesn't require any capabilities
+/vendor/etc/init/boringssl_self_test.rc:1:# Run boringssl self test for each ABI so that later processes can skip it. http://b/139348610
+/vendor/etc/init/boringssl_self_test.rc:2:import /vendor/etc/boringssl_self_test.${ro.zygote}.rc
+/vendor/etc/init/boringssl_self_test.rc:4:service boringssl_self_test32_vendor /vendor/bin/boringssl_self_test32
+/vendor/etc/init/boringssl_self_test.rc:5:    setenv BORINGSSL_SELF_TEST_CREATE_FLAG true # Any nonempty value counts as true
+/vendor/etc/init/boringssl_self_test.rc:6:    reboot_on_failure reboot,boringssl-self-check-failed
+/vendor/etc/init/boringssl_self_test.rc:10:service boringssl_self_test64_vendor /vendor/bin/boringssl_self_test64
+/vendor/etc/init/boringssl_self_test.rc:11:    setenv BORINGSSL_SELF_TEST_CREATE_FLAG true # Any nonempty value counts as true
+/vendor/etc/init/boringssl_self_test.rc:12:    reboot_on_failure reboot,boringssl-self-check-failed
