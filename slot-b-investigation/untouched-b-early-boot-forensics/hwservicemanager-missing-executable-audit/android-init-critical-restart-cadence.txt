@@ -1,0 +1,1058 @@
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:143-187 =====
+143: bool Service::is_exec_service_running_ = false;
+144: 
+145: Service::Service(const std::string& name, Subcontext* subcontext_for_restart_commands,
+146:                  const std::string& filename, const std::vector<std::string>& args)
+147:     : Service(name, 0, std::nullopt, 0, {}, 0, "", subcontext_for_restart_commands, filename,
+148:               args) {}
+149: 
+150: Service::Service(const std::string& name, unsigned flags, std::optional<uid_t> uid, gid_t gid,
+151:                  const std::vector<gid_t>& supp_gids, int namespace_flags,
+152:                  const std::string& seclabel, Subcontext* subcontext_for_restart_commands,
+153:                  const std::string& filename, const std::vector<std::string>& args)
+154:     : name_(name),
+155:       classnames_({"default"}),
+156:       flags_(flags),
+157:       pid_(0),
+158:       crash_count_(0),
+159:       proc_attr_{.ioprio_class = IoSchedClass_NONE,
+160:                  .ioprio_pri = 0,
+161:                  .parsed_uid = uid,
+162:                  .gid = gid,
+163:                  .supp_gids = supp_gids,
+164:                  .priority = 0},
+165:       namespaces_{.flags = namespace_flags},
+166:       seclabel_(seclabel),
+167:       subcontext_(subcontext_for_restart_commands),
+168:       onrestart_(false, subcontext_for_restart_commands, "<Service '" + name + "' onrestart>", 0,
+169:                  "onrestart", {}),
+170:       oom_score_adjust_(DEFAULT_OOM_SCORE_ADJUST),
+171:       start_order_(0),
+172:       args_(args),
+173:       filename_(filename) {}
+174: 
+175: void Service::NotifyStateChange(const std::string& new_state) const {
+176:     if ((flags_ & SVC_TEMPORARY) != 0) {
+177:         // Services created by 'exec' are temporary and don't have properties tracking their state.
+178:         return;
+179:     }
+180: 
+181:     std::string prop_name = "init.svc." + name_;
+182:     SetProperty(prop_name, new_state);
+183: 
+184:     if (new_state == "running") {
+185:         uint64_t start_ns = time_started_.time_since_epoch().count();
+186:         std::string boottime_property = "ro.boottime." + name_;
+187:         if (GetProperty(boottime_property, "").empty()) {
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:343-387 =====
+343:         constexpr int kDefaultUpgradeSecs = 60;
+344:         int secs = GetIntProperty("persist.device_config.memory_safety_native.upgrade_secs.default",
+345:                                   kDefaultUpgradeSecs);
+346:         secs = GetIntProperty(
+347:                 "persist.device_config.memory_safety_native.upgrade_secs.service." + name_, secs);
+348:         if (secs > 0) {
+349:             LOG(INFO) << "Upgrading service " << name_ << " to sync MTE for " << secs << " seconds";
+350:             once_environment_vars_.emplace_back("BIONIC_MEMTAG_UPGRADE_SECS", std::to_string(secs));
+351:             upgraded_mte_ = true;
+352:         } else {
+353:             LOG(INFO) << "Not upgrading service " << name_ << " to sync MTE due to device config";
+354:         }
+355:     }
+356: #endif
+357: 
+358:     // If we crash > 4 times in 'fatal_crash_window_' minutes or before boot_completed,
+359:     // reboot into bootloader or set crashing property
+360:     boot_clock::time_point now = boot_clock::now();
+361:     constexpr const char native_watchdog_reboot_time[] = "persist.init.svc.last_fatal_reboot_epoch";
+362:     uint64_t throttle_window =
+363:             std::chrono::duration_cast<std::chrono::seconds>(std::chrono::hours(24)).count();
+364:     if (((flags_ & SVC_CRITICAL) || is_process_updatable) && !(flags_ & SVC_RESTART) &&
+365:         !was_last_exit_ok_) {
+366:         bool boot_completed = GetBoolProperty("sys.boot_completed", false);
+367:         if (now < time_crashed_ + fatal_crash_window_ || !boot_completed) {
+368:             if (++crash_count_ > 4) {
+369:                 auto exit_reason =
+370:                         boot_completed
+371:                                 ? "in " + std::to_string(fatal_crash_window_.count()) + " minutes"
+372:                                 : "before boot completed";
+373:                 if (flags_ & SVC_CRITICAL) {
+374:                     if (!GetBoolProperty("init.svc_debug.no_fatal." + name_, false)) {
+375:                         uint64_t epoch_time =
+376:                                 std::chrono::duration_cast<std::chrono::seconds>(
+377:                                         std::chrono::system_clock::now().time_since_epoch())
+378:                                         .count();
+379:                         // Do not reboot again If it was already initiated in the last 24hrs
+380:                         if (epoch_time - GetIntProperty(native_watchdog_reboot_time, 0) >
+381:                             throttle_window) {
+382:                             SetProperty(native_watchdog_reboot_time, std::to_string(epoch_time));
+383:                             // Aborts into `fatal_reboot_target_'.
+384:                             SetFatalRebootTarget(fatal_reboot_target_);
+385:                             LOG(FATAL) << "critical process '" << name_ << "' exited 4 times "
+386:                                        << exit_reason;
+387:                         } else {
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:353-397 =====
+353:             LOG(INFO) << "Not upgrading service " << name_ << " to sync MTE due to device config";
+354:         }
+355:     }
+356: #endif
+357: 
+358:     // If we crash > 4 times in 'fatal_crash_window_' minutes or before boot_completed,
+359:     // reboot into bootloader or set crashing property
+360:     boot_clock::time_point now = boot_clock::now();
+361:     constexpr const char native_watchdog_reboot_time[] = "persist.init.svc.last_fatal_reboot_epoch";
+362:     uint64_t throttle_window =
+363:             std::chrono::duration_cast<std::chrono::seconds>(std::chrono::hours(24)).count();
+364:     if (((flags_ & SVC_CRITICAL) || is_process_updatable) && !(flags_ & SVC_RESTART) &&
+365:         !was_last_exit_ok_) {
+366:         bool boot_completed = GetBoolProperty("sys.boot_completed", false);
+367:         if (now < time_crashed_ + fatal_crash_window_ || !boot_completed) {
+368:             if (++crash_count_ > 4) {
+369:                 auto exit_reason =
+370:                         boot_completed
+371:                                 ? "in " + std::to_string(fatal_crash_window_.count()) + " minutes"
+372:                                 : "before boot completed";
+373:                 if (flags_ & SVC_CRITICAL) {
+374:                     if (!GetBoolProperty("init.svc_debug.no_fatal." + name_, false)) {
+375:                         uint64_t epoch_time =
+376:                                 std::chrono::duration_cast<std::chrono::seconds>(
+377:                                         std::chrono::system_clock::now().time_since_epoch())
+378:                                         .count();
+379:                         // Do not reboot again If it was already initiated in the last 24hrs
+380:                         if (epoch_time - GetIntProperty(native_watchdog_reboot_time, 0) >
+381:                             throttle_window) {
+382:                             SetProperty(native_watchdog_reboot_time, std::to_string(epoch_time));
+383:                             // Aborts into `fatal_reboot_target_'.
+384:                             SetFatalRebootTarget(fatal_reboot_target_);
+385:                             LOG(FATAL) << "critical process '" << name_ << "' exited 4 times "
+386:                                        << exit_reason;
+387:                         } else {
+388:                             LOG(INFO) << "Reboot already performed in last 24hrs because of crash.";
+389:                         }
+390:                     }
+391:                 } else {
+392:                     LOG(ERROR) << "process with updatable components '" << name_
+393:                                << "' exited 4 times " << exit_reason;
+394:                     // Notifies update_verifier and apexd
+395:                     SetProperty("sys.init.updatable_crashing_process_name", name_);
+396:                     SetProperty("sys.init.updatable_crashing", "1");
+397:                 }
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:386-430 =====
+386:                                        << exit_reason;
+387:                         } else {
+388:                             LOG(INFO) << "Reboot already performed in last 24hrs because of crash.";
+389:                         }
+390:                     }
+391:                 } else {
+392:                     LOG(ERROR) << "process with updatable components '" << name_
+393:                                << "' exited 4 times " << exit_reason;
+394:                     // Notifies update_verifier and apexd
+395:                     SetProperty("sys.init.updatable_crashing_process_name", name_);
+396:                     SetProperty("sys.init.updatable_crashing", "1");
+397:                 }
+398:             }
+399:         } else {
+400:             time_crashed_ = now;
+401:             crash_count_ = 1;
+402:         }
+403:     }
+404: 
+405:     flags_ &= (~SVC_RESTART);
+406:     flags_ |= SVC_RESTARTING;
+407: 
+408:     // Execute all onrestart commands for this service.
+409:     onrestart_.ExecuteAllCommands();
+410: 
+411:     NotifyStateChange("restarting");
+412:     return;
+413: }
+414: 
+415: void Service::DumpState() const {
+416:     LOG(INFO) << "service " << name_;
+417:     LOG(INFO) << "  class '" << Join(classnames_, " ") << "'";
+418:     LOG(INFO) << "  exec " << Join(args_, " ");
+419:     for (const auto& socket : sockets_) {
+420:         LOG(INFO) << "  socket " << socket.name;
+421:     }
+422:     for (const auto& file : files_) {
+423:         LOG(INFO) << "  file " << file.name;
+424:     }
+425: }
+426: 
+427: 
+428: Result<void> Service::ExecStart() {
+429:     auto reboot_on_failure = make_scope_guard([this] {
+430:         if (on_failure_reboot_target_) {
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:391-435 =====
+391:                 } else {
+392:                     LOG(ERROR) << "process with updatable components '" << name_
+393:                                << "' exited 4 times " << exit_reason;
+394:                     // Notifies update_verifier and apexd
+395:                     SetProperty("sys.init.updatable_crashing_process_name", name_);
+396:                     SetProperty("sys.init.updatable_crashing", "1");
+397:                 }
+398:             }
+399:         } else {
+400:             time_crashed_ = now;
+401:             crash_count_ = 1;
+402:         }
+403:     }
+404: 
+405:     flags_ &= (~SVC_RESTART);
+406:     flags_ |= SVC_RESTARTING;
+407: 
+408:     // Execute all onrestart commands for this service.
+409:     onrestart_.ExecuteAllCommands();
+410: 
+411:     NotifyStateChange("restarting");
+412:     return;
+413: }
+414: 
+415: void Service::DumpState() const {
+416:     LOG(INFO) << "service " << name_;
+417:     LOG(INFO) << "  class '" << Join(classnames_, " ") << "'";
+418:     LOG(INFO) << "  exec " << Join(args_, " ");
+419:     for (const auto& socket : sockets_) {
+420:         LOG(INFO) << "  socket " << socket.name;
+421:     }
+422:     for (const auto& file : files_) {
+423:         LOG(INFO) << "  file " << file.name;
+424:     }
+425: }
+426: 
+427: 
+428: Result<void> Service::ExecStart() {
+429:     auto reboot_on_failure = make_scope_guard([this] {
+430:         if (on_failure_reboot_target_) {
+431:             trigger_shutdown(*on_failure_reboot_target_);
+432:         }
+433:     });
+434: 
+435:     if (is_updatable() && !IsDefaultMountNamespaceReady()) {
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:840-884 =====
+840: 
+841: void Service::SetStartedInFirstStage(pid_t pid) {
+842:     LOG(INFO) << "adding first-stage service '" << name_ << "'...";
+843: 
+844:     time_started_ = boot_clock::now();  // not accurate, but doesn't matter here
+845:     pid_ = pid;
+846:     flags_ |= SVC_RUNNING;
+847:     start_order_ = next_start_order_++;
+848: 
+849:     NotifyStateChange("running");
+850: }
+851: 
+852: void Service::ResetFlagsForStart() {
+853:     // Starting a service removes it from the disabled or reset state and
+854:     // immediately takes it out of the restarting state if it was in there.
+855:     flags_ &= ~(SVC_DISABLED | SVC_RESTARTING | SVC_RESET | SVC_RESTART | SVC_DISABLED_START);
+856: }
+857: 
+858: Result<void> Service::StartIfNotDisabled() {
+859:     if (!(flags_ & SVC_DISABLED)) {
+860:         return Start();
+861:     } else {
+862:         flags_ |= SVC_DISABLED_START;
+863:     }
+864:     return {};
+865: }
+866: 
+867: Result<void> Service::Enable() {
+868:     flags_ &= ~(SVC_DISABLED | SVC_RC_DISABLED);
+869:     if (flags_ & SVC_DISABLED_START) {
+870:         return Start();
+871:     }
+872:     return {};
+873: }
+874: 
+875: void Service::Reset() {
+876:     StopOrReset(SVC_RESET);
+877: }
+878: 
+879: void Service::Stop() {
+880:     StopOrReset(SVC_DISABLED);
+881: }
+882: 
+883: void Service::Terminate() {
+884:     flags_ &= ~(SVC_RESTARTING | SVC_DISABLED_START);
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:869-913 =====
+869:     if (flags_ & SVC_DISABLED_START) {
+870:         return Start();
+871:     }
+872:     return {};
+873: }
+874: 
+875: void Service::Reset() {
+876:     StopOrReset(SVC_RESET);
+877: }
+878: 
+879: void Service::Stop() {
+880:     StopOrReset(SVC_DISABLED);
+881: }
+882: 
+883: void Service::Terminate() {
+884:     flags_ &= ~(SVC_RESTARTING | SVC_DISABLED_START);
+885:     flags_ |= SVC_DISABLED;
+886:     if (pid_) {
+887:         KillProcessGroup(SIGTERM);
+888:         NotifyStateChange("stopping");
+889:     }
+890: }
+891: 
+892: void Service::Timeout() {
+893:     // All process state flags will be taken care of in Reap(), we really just want to kill the
+894:     // process here when it times out.  Oneshot processes will transition to be disabled, and
+895:     // all other processes will transition to be restarting.
+896:     LOG(INFO) << "Service '" << name_ << "' expired its timeout of " << timeout_period_->count()
+897:               << " seconds and will now be killed";
+898:     if (pid_) {
+899:         KillProcessGroup(SIGKILL);
+900:         NotifyStateChange("stopping");
+901:     }
+902: }
+903: 
+904: void Service::Restart() {
+905:     if (flags_ & SVC_RUNNING) {
+906:         /* Stop, wait, then start the service. */
+907:         StopOrReset(SVC_RESTART);
+908:     } else if (!(flags_ & SVC_RESTARTING)) {
+909:         /* Just start the service since it's not running. */
+910:         if (auto result = Start(); !result.ok()) {
+911:             LOG(ERROR) << "Could not restart '" << name_ << "': " << result.error();
+912:         }
+913:     } /* else: Service is restarting anyways. */
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:893-937 =====
+893:     // All process state flags will be taken care of in Reap(), we really just want to kill the
+894:     // process here when it times out.  Oneshot processes will transition to be disabled, and
+895:     // all other processes will transition to be restarting.
+896:     LOG(INFO) << "Service '" << name_ << "' expired its timeout of " << timeout_period_->count()
+897:               << " seconds and will now be killed";
+898:     if (pid_) {
+899:         KillProcessGroup(SIGKILL);
+900:         NotifyStateChange("stopping");
+901:     }
+902: }
+903: 
+904: void Service::Restart() {
+905:     if (flags_ & SVC_RUNNING) {
+906:         /* Stop, wait, then start the service. */
+907:         StopOrReset(SVC_RESTART);
+908:     } else if (!(flags_ & SVC_RESTARTING)) {
+909:         /* Just start the service since it's not running. */
+910:         if (auto result = Start(); !result.ok()) {
+911:             LOG(ERROR) << "Could not restart '" << name_ << "': " << result.error();
+912:         }
+913:     } /* else: Service is restarting anyways. */
+914: }
+915: 
+916: // The how field should be either SVC_DISABLED, SVC_RESET, or SVC_RESTART.
+917: void Service::StopOrReset(int how) {
+918:     // The service is still SVC_RUNNING until its process exits, but if it has
+919:     // already exited it shoudn't attempt a restart yet.
+920:     flags_ &= ~(SVC_RESTARTING | SVC_DISABLED_START);
+921: 
+922:     if ((how != SVC_DISABLED) && (how != SVC_RESET) && (how != SVC_RESTART)) {
+923:         // An illegal flag: default to SVC_DISABLED.
+924:         LOG(ERROR) << "service '" << name_ << "' requested unknown flag " << how
+925:                    << ", defaulting to disabling it.";
+926:         how = SVC_DISABLED;
+927:     }
+928: 
+929:     // If the service has not yet started, prevent it from auto-starting with its class.
+930:     if (how == SVC_RESET) {
+931:         flags_ |= (flags_ & SVC_RC_DISABLED) ? SVC_DISABLED : SVC_RESET;
+932:     } else {
+933:         flags_ |= how;
+934:     }
+935:     // Make sure it's in right status when a restart immediately follow a
+936:     // stop/reset or vice versa.
+937:     if (how == SVC_RESTART) {
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:905-949 =====
+905:     if (flags_ & SVC_RUNNING) {
+906:         /* Stop, wait, then start the service. */
+907:         StopOrReset(SVC_RESTART);
+908:     } else if (!(flags_ & SVC_RESTARTING)) {
+909:         /* Just start the service since it's not running. */
+910:         if (auto result = Start(); !result.ok()) {
+911:             LOG(ERROR) << "Could not restart '" << name_ << "': " << result.error();
+912:         }
+913:     } /* else: Service is restarting anyways. */
+914: }
+915: 
+916: // The how field should be either SVC_DISABLED, SVC_RESET, or SVC_RESTART.
+917: void Service::StopOrReset(int how) {
+918:     // The service is still SVC_RUNNING until its process exits, but if it has
+919:     // already exited it shoudn't attempt a restart yet.
+920:     flags_ &= ~(SVC_RESTARTING | SVC_DISABLED_START);
+921: 
+922:     if ((how != SVC_DISABLED) && (how != SVC_RESET) && (how != SVC_RESTART)) {
+923:         // An illegal flag: default to SVC_DISABLED.
+924:         LOG(ERROR) << "service '" << name_ << "' requested unknown flag " << how
+925:                    << ", defaulting to disabling it.";
+926:         how = SVC_DISABLED;
+927:     }
+928: 
+929:     // If the service has not yet started, prevent it from auto-starting with its class.
+930:     if (how == SVC_RESET) {
+931:         flags_ |= (flags_ & SVC_RC_DISABLED) ? SVC_DISABLED : SVC_RESET;
+932:     } else {
+933:         flags_ |= how;
+934:     }
+935:     // Make sure it's in right status when a restart immediately follow a
+936:     // stop/reset or vice versa.
+937:     if (how == SVC_RESTART) {
+938:         flags_ &= (~(SVC_DISABLED | SVC_RESET));
+939:     } else {
+940:         flags_ &= (~SVC_RESTART);
+941:     }
+942: 
+943:     if (pid_) {
+944:         if (flags_ & SVC_GENTLE_KILL) {
+945:             KillProcessGroup(SIGTERM);
+946:             if (!process_cgroup_empty()) std::this_thread::sleep_for(200ms);
+947:         }
+948:         KillProcessGroup(SIGKILL);
+949:         NotifyStateChange("stopping");
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:951-995 =====
+951:         NotifyStateChange("stopped");
+952:     }
+953: }
+954: 
+955: Result<std::unique_ptr<Service>> Service::MakeTemporaryOneshotService(
+956:         const std::vector<std::string>& args) {
+957:     // Parse the arguments: exec [SECLABEL [UID [GID]*] --] COMMAND ARGS...
+958:     // SECLABEL can be a - to denote default
+959:     std::size_t command_arg = 1;
+960:     for (std::size_t i = 1; i < args.size(); ++i) {
+961:         if (args[i] == "--") {
+962:             command_arg = i + 1;
+963:             break;
+964:         }
+965:     }
+966:     if (command_arg > 4 + NR_SVC_SUPP_GIDS) {
+967:         return Error() << "exec called with too many supplementary group ids";
+968:     }
+969: 
+970:     if (command_arg >= args.size()) {
+971:         return Error() << "exec called without command";
+972:     }
+973:     std::vector<std::string> str_args(args.begin() + command_arg, args.end());
+974: 
+975:     static size_t exec_count = 0;
+976:     exec_count++;
+977:     std::string name = "exec " + std::to_string(exec_count) + " (" + Join(str_args, " ") + ")";
+978: 
+979:     unsigned flags = SVC_ONESHOT | SVC_TEMPORARY;
+980:     unsigned namespace_flags = 0;
+981: 
+982:     std::string seclabel = "";
+983:     if (command_arg > 2 && args[1] != "-") {
+984:         seclabel = args[1];
+985:     }
+986:     Result<uid_t> uid = 0;
+987:     if (command_arg > 3) {
+988:         uid = DecodeUid(args[2]);
+989:         if (!uid.ok()) {
+990:             return Error() << "Unable to decode UID for '" << args[2] << "': " << uid.error();
+991:         }
+992:     }
+993:     Result<gid_t> gid = 0;
+994:     std::vector<gid_t> supp_gids;
+995:     if (command_arg > 4) {
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:980-1024 =====
+980:     unsigned namespace_flags = 0;
+981: 
+982:     std::string seclabel = "";
+983:     if (command_arg > 2 && args[1] != "-") {
+984:         seclabel = args[1];
+985:     }
+986:     Result<uid_t> uid = 0;
+987:     if (command_arg > 3) {
+988:         uid = DecodeUid(args[2]);
+989:         if (!uid.ok()) {
+990:             return Error() << "Unable to decode UID for '" << args[2] << "': " << uid.error();
+991:         }
+992:     }
+993:     Result<gid_t> gid = 0;
+994:     std::vector<gid_t> supp_gids;
+995:     if (command_arg > 4) {
+996:         gid = DecodeUid(args[3]);
+997:         if (!gid.ok()) {
+998:             return Error() << "Unable to decode GID for '" << args[3] << "': " << gid.error();
+999:         }
+1000:         std::size_t nr_supp_gids = command_arg - 1 /* -- */ - 4 /* exec SECLABEL UID GID */;
+1001:         for (size_t i = 0; i < nr_supp_gids; ++i) {
+1002:             auto supp_gid = DecodeUid(args[4 + i]);
+1003:             if (!supp_gid.ok()) {
+1004:                 return Error() << "Unable to decode GID for '" << args[4 + i]
+1005:                                << "': " << supp_gid.error();
+1006:             }
+1007:             supp_gids.push_back(*supp_gid);
+1008:         }
+1009:     }
+1010: 
+1011:     return std::make_unique<Service>(name, flags, *uid, *gid, supp_gids, namespace_flags, seclabel,
+1012:                                      nullptr, /*filename=*/"", str_args);
+1013: }
+1014: 
+1015: // This is used for snapuserd_proxy, which hands off a socket to snapuserd. It's
+1016: // a special case to support the daemon launched in first-stage init. The persist
+1017: // feature is not part of the init language and is only used here.
+1018: bool Service::MarkSocketPersistent(const std::string& socket_name) {
+1019:     for (auto& socket : sockets_) {
+1020:         if (socket.name == socket_name) {
+1021:             socket.persist = true;
+1022:             return true;
+1023:         }
+1024:     }
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.h:30-74 =====
+30: #include <android-base/chrono_utils.h>
+31: #include <cutils/iosched_policy.h>
+32: 
+33: #include "action.h"
+34: #include "capabilities.h"
+35: #include "interprocess_fifo.h"
+36: #include "keyword_map.h"
+37: #include "mount_namespace.h"
+38: #include "parser.h"
+39: #include "service_utils.h"
+40: #include "subcontext.h"
+41: 
+42: #define SVC_DISABLED 0x001        // do not autostart with class
+43: #define SVC_ONESHOT 0x002         // do not restart on exit
+44: #define SVC_RUNNING 0x004         // currently active
+45: #define SVC_RESTARTING 0x008      // waiting to restart
+46: #define SVC_CONSOLE 0x010         // requires console
+47: #define SVC_CRITICAL 0x020        // will reboot into bootloader if keeps crashing
+48: #define SVC_RESET 0x040           // Use when stopping a process,
+49:                                   // but not disabling so it can be restarted with its class.
+50: #define SVC_RC_DISABLED 0x080     // Remember if the disabled flag was set in the rc script.
+51: #define SVC_RESTART 0x100         // Use to safely restart (stop, wait, start) a service.
+52: #define SVC_DISABLED_START 0x200  // A start was requested but it was disabled at the time.
+53: #define SVC_EXEC 0x400  // This service was started by either 'exec' or 'exec_start' and stops
+54:                         // init from processing more commands until it completes
+55: 
+56: #define SVC_SHUTDOWN_CRITICAL 0x800  // This service is critical for shutdown and
+57:                                      // should not be killed during shutdown
+58: #define SVC_TEMPORARY 0x1000  // This service was started by 'exec' and should be removed from the
+59:                               // service list once it is reaped.
+60: #define SVC_GENTLE_KILL 0x2000  // This service should be stopped with SIGTERM instead of SIGKILL
+61:                                 // Will still be SIGKILLed after timeout period of 200 ms
+62: 
+63: #define NR_SVC_SUPP_GIDS 32    // thirty two supplementary groups
+64: 
+65: namespace android {
+66: namespace init {
+67: 
+68: class Service {
+69:     friend class ServiceParser;
+70: 
+71:   public:
+72:     Service(const std::string& name, Subcontext* subcontext_for_restart_commands,
+73:             const std::string& filename, const std::vector<std::string>& args);
+74: 
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.h:103-147 =====
+103:     }
+104:     void AddReapCallback(std::function<void(const siginfo_t& siginfo)> callback) {
+105:         reap_callbacks_.emplace_back(std::move(callback));
+106:     }
+107:     void SetStartedInFirstStage(pid_t pid);
+108:     bool MarkSocketPersistent(const std::string& socket_name);
+109:     size_t CheckAllCommands() const { return onrestart_.CheckAllCommands(); }
+110: 
+111:     static bool is_exec_service_running() { return is_exec_service_running_; }
+112: 
+113:     const std::string& name() const { return name_; }
+114:     const std::set<std::string>& classnames() const { return classnames_; }
+115:     unsigned flags() const { return flags_; }
+116:     pid_t pid() const { return pid_; }
+117:     android::base::boot_clock::time_point time_started() const { return time_started_; }
+118:     int crash_count() const { return crash_count_; }
+119:     int was_last_exit_ok() const { return was_last_exit_ok_; }
+120:     uid_t uid() const { return proc_attr_.uid(); }
+121:     gid_t gid() const { return proc_attr_.gid; }
+122:     int namespace_flags() const { return namespaces_.flags; }
+123:     const std::vector<gid_t>& supp_gids() const { return proc_attr_.supp_gids; }
+124:     const std::string& seclabel() const { return seclabel_; }
+125:     const std::vector<int>& keycodes() const { return keycodes_; }
+126:     IoSchedClass ioprio_class() const { return proc_attr_.ioprio_class; }
+127:     int ioprio_pri() const { return proc_attr_.ioprio_pri; }
+128:     const std::set<std::string>& interfaces() const { return interfaces_; }
+129:     int priority() const { return proc_attr_.priority; }
+130:     int oom_score_adjust() const { return oom_score_adjust_; }
+131:     bool is_override() const { return override_; }
+132:     bool process_cgroup_empty() const { return process_cgroup_empty_; }
+133:     unsigned long start_order() const { return start_order_; }
+134:     void set_sigstop(bool value) { sigstop_ = value; }
+135:     std::chrono::seconds restart_period() const {
+136:         // If the service exited abnormally or due to timeout, late limit the restart even if
+137:         // restart_period is set to a very short value.
+138:         // If not, i.e. restart after a deliberate and successful exit, respect the period.
+139:         if (!was_last_exit_ok_) {
+140:             return std::max(restart_period_, default_restart_period_);
+141:         }
+142:         return restart_period_;
+143:     }
+144:     std::optional<std::chrono::seconds> timeout_period() const { return timeout_period_; }
+145:     const std::vector<std::string>& args() const { return args_; }
+146:     bool is_updatable() const { return updatable_; }
+147:     void set_oneshot(bool value) {
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.h:120-164 =====
+120:     uid_t uid() const { return proc_attr_.uid(); }
+121:     gid_t gid() const { return proc_attr_.gid; }
+122:     int namespace_flags() const { return namespaces_.flags; }
+123:     const std::vector<gid_t>& supp_gids() const { return proc_attr_.supp_gids; }
+124:     const std::string& seclabel() const { return seclabel_; }
+125:     const std::vector<int>& keycodes() const { return keycodes_; }
+126:     IoSchedClass ioprio_class() const { return proc_attr_.ioprio_class; }
+127:     int ioprio_pri() const { return proc_attr_.ioprio_pri; }
+128:     const std::set<std::string>& interfaces() const { return interfaces_; }
+129:     int priority() const { return proc_attr_.priority; }
+130:     int oom_score_adjust() const { return oom_score_adjust_; }
+131:     bool is_override() const { return override_; }
+132:     bool process_cgroup_empty() const { return process_cgroup_empty_; }
+133:     unsigned long start_order() const { return start_order_; }
+134:     void set_sigstop(bool value) { sigstop_ = value; }
+135:     std::chrono::seconds restart_period() const {
+136:         // If the service exited abnormally or due to timeout, late limit the restart even if
+137:         // restart_period is set to a very short value.
+138:         // If not, i.e. restart after a deliberate and successful exit, respect the period.
+139:         if (!was_last_exit_ok_) {
+140:             return std::max(restart_period_, default_restart_period_);
+141:         }
+142:         return restart_period_;
+143:     }
+144:     std::optional<std::chrono::seconds> timeout_period() const { return timeout_period_; }
+145:     const std::vector<std::string>& args() const { return args_; }
+146:     bool is_updatable() const { return updatable_; }
+147:     void set_oneshot(bool value) {
+148:         if (value) {
+149:             flags_ |= SVC_ONESHOT;
+150:         } else {
+151:             flags_ &= ~SVC_ONESHOT;
+152:         }
+153:     }
+154:     const Subcontext* subcontext() const { return subcontext_; }
+155:     const std::string& filename() const { return filename_; }
+156:     void set_filename(const std::string& name) { filename_ = name; }
+157:     static int GetSigchldFd() {
+158:         static int sigchld_fd = CreateSigchldFd().release();
+159:         return sigchld_fd;
+160:     }
+161: 
+162:   private:
+163:     void NotifyStateChange(const std::string& new_state) const;
+164:     void StopOrReset(int how);
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.h:125-169 =====
+125:     const std::vector<int>& keycodes() const { return keycodes_; }
+126:     IoSchedClass ioprio_class() const { return proc_attr_.ioprio_class; }
+127:     int ioprio_pri() const { return proc_attr_.ioprio_pri; }
+128:     const std::set<std::string>& interfaces() const { return interfaces_; }
+129:     int priority() const { return proc_attr_.priority; }
+130:     int oom_score_adjust() const { return oom_score_adjust_; }
+131:     bool is_override() const { return override_; }
+132:     bool process_cgroup_empty() const { return process_cgroup_empty_; }
+133:     unsigned long start_order() const { return start_order_; }
+134:     void set_sigstop(bool value) { sigstop_ = value; }
+135:     std::chrono::seconds restart_period() const {
+136:         // If the service exited abnormally or due to timeout, late limit the restart even if
+137:         // restart_period is set to a very short value.
+138:         // If not, i.e. restart after a deliberate and successful exit, respect the period.
+139:         if (!was_last_exit_ok_) {
+140:             return std::max(restart_period_, default_restart_period_);
+141:         }
+142:         return restart_period_;
+143:     }
+144:     std::optional<std::chrono::seconds> timeout_period() const { return timeout_period_; }
+145:     const std::vector<std::string>& args() const { return args_; }
+146:     bool is_updatable() const { return updatable_; }
+147:     void set_oneshot(bool value) {
+148:         if (value) {
+149:             flags_ |= SVC_ONESHOT;
+150:         } else {
+151:             flags_ &= ~SVC_ONESHOT;
+152:         }
+153:     }
+154:     const Subcontext* subcontext() const { return subcontext_; }
+155:     const std::string& filename() const { return filename_; }
+156:     void set_filename(const std::string& name) { filename_ = name; }
+157:     static int GetSigchldFd() {
+158:         static int sigchld_fd = CreateSigchldFd().release();
+159:         return sigchld_fd;
+160:     }
+161: 
+162:   private:
+163:     void NotifyStateChange(const std::string& new_state) const;
+164:     void StopOrReset(int how);
+165:     void KillProcessGroup(int signal);
+166:     void SetProcessAttributesAndCaps(InterprocessFifo setsid_finished);
+167:     void ResetFlagsForStart();
+168:     Result<void> CheckConsole();
+169:     void ConfigureMemcg();
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.h:170-214 =====
+170:     void RunService(const std::vector<Descriptor>& descriptors, InterprocessFifo cgroups_activated,
+171:                     InterprocessFifo setsid_finished);
+172:     void SetMountNamespace();
+173:     static ::android::base::unique_fd CreateSigchldFd();
+174: 
+175:     static unsigned long next_start_order_;
+176:     static bool is_exec_service_running_;
+177: 
+178:     const std::string name_;
+179:     std::set<std::string> classnames_;
+180: 
+181:     unsigned flags_;
+182:     pid_t pid_;
+183:     android::base::boot_clock::time_point time_started_;  // time of last start
+184:     android::base::boot_clock::time_point time_crashed_;  // first crash within inspection window
+185:     int crash_count_;                     // number of times crashed within window
+186:     bool upgraded_mte_ = false;           // whether we upgraded async MTE -> sync MTE before
+187:     std::chrono::minutes fatal_crash_window_ = 4min;  // fatal() when more than 4 crashes in it
+188:     std::optional<std::string> fatal_reboot_target_;  // reboot target of fatal handler
+189:     bool was_last_exit_ok_ =
+190:             true;  // true if the service never exited, or exited with status code 0
+191: 
+192:     std::optional<CapSet> capabilities_;
+193:     ProcessAttributes proc_attr_;
+194:     NamespaceInfo namespaces_;
+195: 
+196:     std::string seclabel_;
+197: 
+198:     std::vector<SocketDescriptor> sockets_;
+199:     std::vector<FileDescriptor> files_;
+200:     std::vector<std::pair<std::string, std::string>> environment_vars_;
+201:     // Environment variables that only get applied to the next run.
+202:     std::vector<std::pair<std::string, std::string>> once_environment_vars_;
+203: 
+204:     const Subcontext* const subcontext_;
+205:     Action onrestart_;  // Commands to execute on restart.
+206: 
+207:     std::vector<std::string> writepid_files_;
+208: 
+209:     std::vector<std::string> task_profiles_;
+210: 
+211:     std::set<std::string> interfaces_;  // e.g. some.package.foo@1.0::IBaz/instance-name
+212: 
+213:     // keycodes for triggering this service via /dev/input/input*
+214:     std::vector<int> keycodes_;
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.h:218-251 =====
+218:     int swappiness_ = -1;
+219:     int soft_limit_in_bytes_ = -1;
+220: 
+221:     int limit_in_bytes_ = -1;
+222:     int limit_percent_ = -1;
+223:     std::string limit_property_;
+224: 
+225:     bool process_cgroup_empty_ = false;
+226: 
+227:     bool override_ = false;
+228: 
+229:     unsigned long start_order_;
+230: 
+231:     bool sigstop_ = false;
+232: 
+233:     const std::chrono::seconds default_restart_period_ = 5s;
+234:     std::chrono::seconds restart_period_ = default_restart_period_;
+235:     std::optional<std::chrono::seconds> timeout_period_;
+236: 
+237:     bool updatable_ = false;
+238: 
+239:     const std::vector<std::string> args_;
+240: 
+241:     std::vector<std::function<void(const siginfo_t& siginfo)>> reap_callbacks_;
+242: 
+243:     std::optional<MountNamespace> mount_namespace_;
+244: 
+245:     std::optional<std::string> on_failure_reboot_target_;
+246: 
+247:     std::string filename_;
+248: };
+249: 
+250: }  // namespace init
+251: }  // namespace android
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.h:219-251 =====
+219:     int soft_limit_in_bytes_ = -1;
+220: 
+221:     int limit_in_bytes_ = -1;
+222:     int limit_percent_ = -1;
+223:     std::string limit_property_;
+224: 
+225:     bool process_cgroup_empty_ = false;
+226: 
+227:     bool override_ = false;
+228: 
+229:     unsigned long start_order_;
+230: 
+231:     bool sigstop_ = false;
+232: 
+233:     const std::chrono::seconds default_restart_period_ = 5s;
+234:     std::chrono::seconds restart_period_ = default_restart_period_;
+235:     std::optional<std::chrono::seconds> timeout_period_;
+236: 
+237:     bool updatable_ = false;
+238: 
+239:     const std::vector<std::string> args_;
+240: 
+241:     std::vector<std::function<void(const siginfo_t& siginfo)>> reap_callbacks_;
+242: 
+243:     std::optional<MountNamespace> mount_namespace_;
+244: 
+245:     std::optional<std::string> on_failure_reboot_target_;
+246: 
+247:     std::string filename_;
+248: };
+249: 
+250: }  // namespace init
+251: }  // namespace android
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:377-421 =====
+377: 
+378: static std::optional<boot_clock::time_point> HandleProcessActions() {
+379:     std::optional<boot_clock::time_point> next_process_action_time;
+380:     for (const auto& s : ServiceList::GetInstance()) {
+381:         if ((s->flags() & SVC_RUNNING) && s->timeout_period()) {
+382:             auto timeout_time = s->time_started() + *s->timeout_period();
+383:             if (boot_clock::now() > timeout_time) {
+384:                 s->Timeout();
+385:             } else {
+386:                 if (!next_process_action_time || timeout_time < *next_process_action_time) {
+387:                     next_process_action_time = timeout_time;
+388:                 }
+389:             }
+390:         }
+391: 
+392:         if (!(s->flags() & SVC_RESTARTING)) continue;
+393: 
+394:         auto restart_time = s->time_started() + s->restart_period();
+395:         if (boot_clock::now() > restart_time) {
+396:             if (auto result = s->Start(); !result.ok()) {
+397:                 LOG(ERROR) << "Could not restart process '" << s->name() << "': " << result.error();
+398:             }
+399:         } else {
+400:             if (!next_process_action_time || restart_time < *next_process_action_time) {
+401:                 next_process_action_time = restart_time;
+402:             }
+403:         }
+404:     }
+405:     return next_process_action_time;
+406: }
+407: 
+408: static Result<void> DoControlStart(Service* service) {
+409:     return service->Start();
+410: }
+411: 
+412: static Result<void> DoControlStop(Service* service) {
+413:     service->Stop();
+414:     return {};
+415: }
+416: 
+417: static Result<void> DoControlRestart(Service* service) {
+418:     service->Restart();
+419:     return {};
+420: }
+421: 
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:379-423 =====
+379:     std::optional<boot_clock::time_point> next_process_action_time;
+380:     for (const auto& s : ServiceList::GetInstance()) {
+381:         if ((s->flags() & SVC_RUNNING) && s->timeout_period()) {
+382:             auto timeout_time = s->time_started() + *s->timeout_period();
+383:             if (boot_clock::now() > timeout_time) {
+384:                 s->Timeout();
+385:             } else {
+386:                 if (!next_process_action_time || timeout_time < *next_process_action_time) {
+387:                     next_process_action_time = timeout_time;
+388:                 }
+389:             }
+390:         }
+391: 
+392:         if (!(s->flags() & SVC_RESTARTING)) continue;
+393: 
+394:         auto restart_time = s->time_started() + s->restart_period();
+395:         if (boot_clock::now() > restart_time) {
+396:             if (auto result = s->Start(); !result.ok()) {
+397:                 LOG(ERROR) << "Could not restart process '" << s->name() << "': " << result.error();
+398:             }
+399:         } else {
+400:             if (!next_process_action_time || restart_time < *next_process_action_time) {
+401:                 next_process_action_time = restart_time;
+402:             }
+403:         }
+404:     }
+405:     return next_process_action_time;
+406: }
+407: 
+408: static Result<void> DoControlStart(Service* service) {
+409:     return service->Start();
+410: }
+411: 
+412: static Result<void> DoControlStop(Service* service) {
+413:     service->Stop();
+414:     return {};
+415: }
+416: 
+417: static Result<void> DoControlRestart(Service* service) {
+418:     service->Restart();
+419:     return {};
+420: }
+421: 
+422: int StopServicesFromApex(const std::string& apex_name) {
+423:     auto services = ServiceList::GetInstance().FindServicesByApexName(apex_name);
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:380-424 =====
+380:     for (const auto& s : ServiceList::GetInstance()) {
+381:         if ((s->flags() & SVC_RUNNING) && s->timeout_period()) {
+382:             auto timeout_time = s->time_started() + *s->timeout_period();
+383:             if (boot_clock::now() > timeout_time) {
+384:                 s->Timeout();
+385:             } else {
+386:                 if (!next_process_action_time || timeout_time < *next_process_action_time) {
+387:                     next_process_action_time = timeout_time;
+388:                 }
+389:             }
+390:         }
+391: 
+392:         if (!(s->flags() & SVC_RESTARTING)) continue;
+393: 
+394:         auto restart_time = s->time_started() + s->restart_period();
+395:         if (boot_clock::now() > restart_time) {
+396:             if (auto result = s->Start(); !result.ok()) {
+397:                 LOG(ERROR) << "Could not restart process '" << s->name() << "': " << result.error();
+398:             }
+399:         } else {
+400:             if (!next_process_action_time || restart_time < *next_process_action_time) {
+401:                 next_process_action_time = restart_time;
+402:             }
+403:         }
+404:     }
+405:     return next_process_action_time;
+406: }
+407: 
+408: static Result<void> DoControlStart(Service* service) {
+409:     return service->Start();
+410: }
+411: 
+412: static Result<void> DoControlStop(Service* service) {
+413:     service->Stop();
+414:     return {};
+415: }
+416: 
+417: static Result<void> DoControlRestart(Service* service) {
+418:     service->Restart();
+419:     return {};
+420: }
+421: 
+422: int StopServicesFromApex(const std::string& apex_name) {
+423:     auto services = ServiceList::GetInstance().FindServicesByApexName(apex_name);
+424:     if (services.empty()) {
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:385-429 =====
+385:             } else {
+386:                 if (!next_process_action_time || timeout_time < *next_process_action_time) {
+387:                     next_process_action_time = timeout_time;
+388:                 }
+389:             }
+390:         }
+391: 
+392:         if (!(s->flags() & SVC_RESTARTING)) continue;
+393: 
+394:         auto restart_time = s->time_started() + s->restart_period();
+395:         if (boot_clock::now() > restart_time) {
+396:             if (auto result = s->Start(); !result.ok()) {
+397:                 LOG(ERROR) << "Could not restart process '" << s->name() << "': " << result.error();
+398:             }
+399:         } else {
+400:             if (!next_process_action_time || restart_time < *next_process_action_time) {
+401:                 next_process_action_time = restart_time;
+402:             }
+403:         }
+404:     }
+405:     return next_process_action_time;
+406: }
+407: 
+408: static Result<void> DoControlStart(Service* service) {
+409:     return service->Start();
+410: }
+411: 
+412: static Result<void> DoControlStop(Service* service) {
+413:     service->Stop();
+414:     return {};
+415: }
+416: 
+417: static Result<void> DoControlRestart(Service* service) {
+418:     service->Restart();
+419:     return {};
+420: }
+421: 
+422: int StopServicesFromApex(const std::string& apex_name) {
+423:     auto services = ServiceList::GetInstance().FindServicesByApexName(apex_name);
+424:     if (services.empty()) {
+425:         LOG(INFO) << "No service found for APEX: " << apex_name;
+426:         return 0;
+427:     }
+428:     std::set<std::string> service_names;
+429:     for (const auto& service : services) {
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:386-430 =====
+386:                 if (!next_process_action_time || timeout_time < *next_process_action_time) {
+387:                     next_process_action_time = timeout_time;
+388:                 }
+389:             }
+390:         }
+391: 
+392:         if (!(s->flags() & SVC_RESTARTING)) continue;
+393: 
+394:         auto restart_time = s->time_started() + s->restart_period();
+395:         if (boot_clock::now() > restart_time) {
+396:             if (auto result = s->Start(); !result.ok()) {
+397:                 LOG(ERROR) << "Could not restart process '" << s->name() << "': " << result.error();
+398:             }
+399:         } else {
+400:             if (!next_process_action_time || restart_time < *next_process_action_time) {
+401:                 next_process_action_time = restart_time;
+402:             }
+403:         }
+404:     }
+405:     return next_process_action_time;
+406: }
+407: 
+408: static Result<void> DoControlStart(Service* service) {
+409:     return service->Start();
+410: }
+411: 
+412: static Result<void> DoControlStop(Service* service) {
+413:     service->Stop();
+414:     return {};
+415: }
+416: 
+417: static Result<void> DoControlRestart(Service* service) {
+418:     service->Restart();
+419:     return {};
+420: }
+421: 
+422: int StopServicesFromApex(const std::string& apex_name) {
+423:     auto services = ServiceList::GetInstance().FindServicesByApexName(apex_name);
+424:     if (services.empty()) {
+425:         LOG(INFO) << "No service found for APEX: " << apex_name;
+426:         return 0;
+427:     }
+428:     std::set<std::string> service_names;
+429:     for (const auto& service : services) {
+430:         service_names.emplace(service->name());
