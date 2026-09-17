@@ -1,0 +1,306 @@
+
+================================================================
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/builtins.cpp
+================================================================
+223-}
+224-
+225-static Result<void> do_domainname(const BuiltinArguments& args) {
+226-    if (auto result = WriteFile("/proc/sys/kernel/domainname", args[1]); !result.ok()) {
+227-        return Error() << "Unable to write to /proc/sys/kernel/domainname: " << result.error();
+228-    }
+229-    return {};
+230-}
+231-
+232-static Result<void> do_enable(const BuiltinArguments& args) {
+233-    Service* svc = ServiceList::GetInstance().FindService(args[1]);
+234-    if (!svc) return Error() << "Could not find service";
+235-
+236-    if (auto result = svc->Enable(); !result.ok()) {
+237-        return Error() << "Could not enable service: " << result.error();
+238-    }
+239-
+240-    return {};
+241-}
+242-
+243-static Result<void> do_exec(const BuiltinArguments& args) {
+244-    auto service = Service::MakeTemporaryOneshotService(args.args);
+245-    if (!service.ok()) {
+246-        return Error() << "Could not create exec service: " << service.error();
+247-    }
+248:    if (auto result = (*service)->ExecStart(); !result.ok()) {
+249-        return Error() << "Could not start exec service: " << result.error();
+250-    }
+251-
+252-    ServiceList::GetInstance().AddService(std::move(*service));
+253-    return {};
+254-}
+255-
+256-static Result<void> do_exec_background(const BuiltinArguments& args) {
+257-    auto service = Service::MakeTemporaryOneshotService(args.args);
+258-    if (!service.ok()) {
+259-        return Error() << "Could not create exec background service: " << service.error();
+260-    }
+261-    if (auto result = (*service)->Start(); !result.ok()) {
+262-        return Error() << "Could not start exec background service: " << result.error();
+263-    }
+264-
+265-    ServiceList::GetInstance().AddService(std::move(*service));
+266-    return {};
+267-}
+268-
+269:static Result<void> do_exec_start(const BuiltinArguments& args) {
+270-    Service* service = ServiceList::GetInstance().FindService(args[1]);
+271-    if (!service) {
+272-        return Error() << "Service not found";
+273-    }
+274-
+275:    if (auto result = service->ExecStart(); !result.ok()) {
+276-        return Error() << "Could not start exec service: " << result.error();
+277-    }
+278-
+279-    return {};
+280-}
+281-
+282-static Result<void> do_export(const BuiltinArguments& args) {
+283-    if (setenv(args[1].c_str(), args[2].c_str(), 1) == -1) {
+284-        return ErrnoError() << "setenv() failed";
+285-    }
+286-    return {};
+287-}
+288-
+289-static Result<void> do_load_exports(const BuiltinArguments& args) {
+290-    auto file_contents = ReadFile(args[1]);
+291-    if (!file_contents.ok()) {
+292-        return Error() << "Could not read input file '" << args[1]
+293-                       << "': " << file_contents.error();
+294-    }
+295-
+296-    auto lines = Split(*file_contents, "\n");
+297-    for (const auto& line : lines) {
+298-        if (line.empty()) {
+299-            continue;
+300-        }
+--
+1111-    }
+1112-    if (value_len >= PROP_VALUE_MAX) {
+1113-        return Error() << "value too long";
+1114-    }
+1115-    if (!start_waiting_for_property(name, value)) {
+1116-        return Error() << "already waiting for a property";
+1117-    }
+1118-    return {};
+1119-}
+1120-
+1121-static bool is_file_crypto() {
+1122-    return android::base::GetProperty("ro.crypto.type", "") == "file";
+1123-}
+1124-
+1125-static Result<void> ExecWithFunctionOnFailure(const std::vector<std::string>& args,
+1126-                                              std::function<void(const std::string&)> function) {
+1127-    auto service = Service::MakeTemporaryOneshotService(args);
+1128-    if (!service.ok()) {
+1129-        function("MakeTemporaryOneshotService failed: " + service.error().message());
+1130-    }
+1131-    (*service)->AddReapCallback([function](const siginfo_t& siginfo) {
+1132-        if (siginfo.si_code != CLD_EXITED || siginfo.si_status != 0) {
+1133-            function(StringPrintf("Exec service failed, status %d", siginfo.si_status));
+1134-        }
+1135-    });
+1136:    if (auto result = (*service)->ExecStart(); !result.ok()) {
+1137:        function("ExecStart failed: " + result.error().message());
+1138-    }
+1139-    ServiceList::GetInstance().AddService(std::move(*service));
+1140-    return {};
+1141-}
+1142-
+1143-static Result<void> ExecVdcRebootOnFailure(const std::string& vdc_arg) {
+1144-    auto reboot_reason = vdc_arg + "_failed";
+1145-
+1146-    auto reboot = [reboot_reason](const std::string& message) {
+1147-        // TODO (b/122850122): support this in gsi
+1148-        if (IsFbeEnabled() && !android::gsi::IsGsiRunning()) {
+1149-            LOG(ERROR) << message << ": Rebooting into recovery, reason: " << reboot_reason;
+1150-            if (auto result = reboot_into_recovery(
+1151-                        {"--prompt_and_wipe_data", "--reason="s + reboot_reason});
+1152-                !result.ok()) {
+1153-                LOG(FATAL) << "Could not reboot into recovery: " << result.error();
+1154-            }
+1155-        } else {
+1156-            LOG(ERROR) << "Failure (reboot suppressed): " << reboot_reason;
+1157-        }
+1158-    };
+1159-
+1160-    std::vector<std::string> args = {"exec", "/system/bin/vdc", "--wait", "cryptfs", vdc_arg};
+1161-    return ExecWithFunctionOnFailure(args, reboot);
+1162-}
+--
+1278-static Result<void> do_swapoff(const BuiltinArguments& args) {
+1279-    if (!swapoff(args[1].c_str())) {
+1280-        return ErrnoError() << "swapoff() failed";
+1281-    }
+1282-    return {};
+1283-}
+1284-
+1285-// Builtin-function-map start
+1286-const BuiltinFunctionMap& GetBuiltinFunctionMap() {
+1287-    constexpr std::size_t kMax = std::numeric_limits<std::size_t>::max();
+1288-    // clang-format off
+1289-    static const BuiltinFunctionMap builtin_functions = {
+1290-        {"bootchart",               {1,     1,    {false,  do_bootchart}}},
+1291-        {"chmod",                   {2,     2,    {true,   do_chmod}}},
+1292-        {"chown",                   {2,     3,    {true,   do_chown}}},
+1293-        {"class_reset",             {1,     1,    {false,  do_class_reset}}},
+1294-        {"class_restart",           {1,     2,    {false,  do_class_restart}}},
+1295-        {"class_start",             {1,     1,    {false,  do_class_start}}},
+1296-        {"class_stop",              {1,     1,    {false,  do_class_stop}}},
+1297-        {"copy",                    {2,     2,    {true,   do_copy}}},
+1298-        {"copy_per_line",           {2,     2,    {true,   do_copy_per_line}}},
+1299-        {"domainname",              {1,     1,    {true,   do_domainname}}},
+1300-        {"enable",                  {1,     1,    {false,  do_enable}}},
+1301-        {"exec",                    {1,     kMax, {false,  do_exec}}},
+1302-        {"exec_background",         {1,     kMax, {false,  do_exec_background}}},
+1303:        {"exec_start",              {1,     1,    {false,  do_exec_start}}},
+1304-        {"export",                  {2,     2,    {false,  do_export}}},
+1305-        {"hostname",                {1,     1,    {true,   do_hostname}}},
+1306-        {"ifup",                    {1,     1,    {true,   do_ifup}}},
+1307-        {"init_user0",              {0,     0,    {false,  do_init_user0}}},
+1308-        {"insmod",                  {1,     kMax, {true,   do_insmod}}},
+1309-        {"installkey",              {1,     1,    {false,  do_installkey}}},
+1310-        {"interface_restart",       {1,     1,    {false,  do_interface_restart}}},
+1311-        {"interface_start",         {1,     1,    {false,  do_interface_start}}},
+1312-        {"interface_stop",          {1,     1,    {false,  do_interface_stop}}},
+1313-        {"load_exports",            {1,     1,    {false,  do_load_exports}}},
+1314-        {"load_persist_props",      {0,     0,    {false,  do_load_persist_props}}},
+1315-        {"load_system_props",       {0,     0,    {false,  do_load_system_props}}},
+1316-        {"loglevel",                {1,     1,    {false,  do_loglevel}}},
+1317-        {"mark_post_data",          {0,     0,    {false,  do_mark_post_data}}},
+1318-        {"mkdir",                   {1,     6,    {true,   do_mkdir}}},
+1319-        // TODO: Do mount operations in vendor_init.
+1320-        // mount_all is currently too complex to run in vendor_init as it queues action triggers,
+1321-        // imports rc scripts, etc.  It should be simplified and run in vendor_init context.
+1322-        // mount and umount are run in the same context as mount_all for symmetry.
+1323-        {"mount_all",               {0,     kMax, {false,  do_mount_all}}},
+1324-        {"mount",                   {3,     kMax, {false,  do_mount}}},
+1325-        {"perform_apex_config",     {0,     1,    {false,  do_perform_apex_config}}},
+1326-        {"umount",                  {1,     1,    {false,  do_umount}}},
+1327-        {"umount_all",              {0,     1,    {false,  do_umount_all}}},
+1328-        {"update_linker_config",    {0,     0,    {false,  do_update_linker_config}}},
+
+================================================================
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp
+================================================================
+238-        }
+239-    }
+240-
+241-    if (auto result = SetProcessAttributes(proc_attr_, std::move(setsid_finished)); !result.ok()) {
+242-        LOG(FATAL) << "cannot set attribute for " << name_ << ": " << result.error();
+243-    }
+244-
+245-    if (!seclabel_.empty()) {
+246-        if (setexeccon(seclabel_.c_str()) < 0) {
+247-            PLOG(FATAL) << "cannot setexeccon('" << seclabel_ << "') for " << name_;
+248-        }
+249-    }
+250-
+251-    if (capabilities_) {
+252-        if (!SetCapsForExec(*capabilities_)) {
+253-            LOG(FATAL) << "cannot set capabilities for " << name_;
+254-        }
+255-    } else if (uid()) {
+256-        // Inheritable caps can be non-zero when running in a container.
+257-        if (!DropInheritableCaps()) {
+258-            LOG(FATAL) << "cannot drop inheritable caps for " << name_;
+259-        }
+260-    }
+261-}
+262-
+263:void Service::Reap(const siginfo_t& siginfo) {
+264-    if (!(flags_ & SVC_ONESHOT) || (flags_ & SVC_RESTART)) {
+265-        KillProcessGroup(SIGKILL);
+266-    } else {
+267-        // Legacy behavior from ~2007 until Android R: this else branch did not exist and we did not
+268-        // kill the process group in this case.
+269-        if (SelinuxGetVendorAndroidVersion() >= __ANDROID_API_R__) {
+270-            // The new behavior in Android R is to kill these process groups in all cases.  The
+271-            // 'true' parameter instructions KillProcessGroup() to report a warning message where it
+272-            // detects a difference in behavior has occurred.
+273-            KillProcessGroup(SIGKILL);
+274-        }
+275-    }
+276-
+277-    // Remove any socket resources we may have created.
+278-    for (const auto& socket : sockets_) {
+279-        if (socket.persist) {
+280-            continue;
+281-        }
+282-        auto path = ANDROID_SOCKET_DIR "/" + socket.name;
+283-        unlink(path.c_str());
+284-    }
+285-
+286-    for (const auto& f : reap_callbacks_) {
+287-        f(siginfo);
+288-    }
+--
+403-    }
+404-
+405-    flags_ &= (~SVC_RESTART);
+406-    flags_ |= SVC_RESTARTING;
+407-
+408-    // Execute all onrestart commands for this service.
+409-    onrestart_.ExecuteAllCommands();
+410-
+411-    NotifyStateChange("restarting");
+412-    return;
+413-}
+414-
+415-void Service::DumpState() const {
+416-    LOG(INFO) << "service " << name_;
+417-    LOG(INFO) << "  class '" << Join(classnames_, " ") << "'";
+418-    LOG(INFO) << "  exec " << Join(args_, " ");
+419-    for (const auto& socket : sockets_) {
+420-        LOG(INFO) << "  socket " << socket.name;
+421-    }
+422-    for (const auto& file : files_) {
+423-        LOG(INFO) << "  file " << file.name;
+424-    }
+425-}
+426-
+427-
+428:Result<void> Service::ExecStart() {
+429-    auto reboot_on_failure = make_scope_guard([this] {
+430-        if (on_failure_reboot_target_) {
+431-            trigger_shutdown(*on_failure_reboot_target_);
+432-        }
+433-    });
+434-
+435-    if (is_updatable() && !IsDefaultMountNamespaceReady()) {
+436:        // Don't delay the service for ExecStart() as the semantic is that
+437-        // the caller might depend on the side effect of the execution.
+438-        return Error() << "Cannot start an updatable service '" << name_
+439-                       << "' before configs from APEXes are all loaded";
+440-    }
+441-
+442-    flags_ |= SVC_ONESHOT;
+443-
+444-    if (auto result = Start(); !result.ok()) {
+445-        return result;
+446-    }
+447-
+448-    flags_ |= SVC_EXEC;
+449-    is_exec_service_running_ = true;
+450-
+451-    LOG(INFO) << "SVC_EXEC service '" << name_ << "' pid " << pid_ << " (uid " << uid() << " gid "
+452-              << proc_attr_.gid << "+" << proc_attr_.supp_gids.size() << " context "
+453-              << (!seclabel_.empty() ? seclabel_ : "default") << ") started; waiting...";
+454-
+455-    reboot_on_failure.Disable();
+456-    return {};
+457-}
+458-
+459-Result<void> Service::CheckConsole() {
+460-    if (!(flags_ & SVC_CONSOLE)) {
+461-        return {};
+
+================================================================
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp
+================================================================
