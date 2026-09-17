@@ -1,0 +1,164 @@
+===== SECTIONS =====
+There are 16 section headers, starting at offset 0x1218:
+
+Section Headers:
+  [Nr] Name              Type            Address          Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            0000000000000000 000000 000000 00      0   0  0
+  [ 1] .strtab           STRTAB          0000000000000000 001102 000111 00      0   0  1
+  [ 2] .text             PROGBITS        0000000000000000 000040 000000 00  AX  0   0  4
+  [ 3] skfilter/power_supply PROGBITS        0000000000000000 000040 000210 00  AX  0   0  8
+  [ 4] progs             PROGBITS        0000000000000000 000250 00005c 00   A  0   0  4
+  [ 5] bpfloader_min_ver PROGBITS        0000000000000000 0002ac 000004 00  WA  0   0  4
+  [ 6] bpfloader_max_ver PROGBITS        0000000000000000 0002b0 000004 00  WA  0   0  4
+  [ 7] size_of_bpf_map_def PROGBITS        0000000000000000 0002b8 000008 00  WA  0   0  8
+  [ 8] size_of_bpf_prog_def PROGBITS        0000000000000000 0002c0 000008 00  WA  0   0  8
+  [ 9] btf_min_bpfloader_ver PROGBITS        0000000000000000 0002c8 000004 00  WA  0   0  4
+  [10] btf_user_min_bpfloader_ver PROGBITS        0000000000000000 0002cc 000004 00  WA  0   0  4
+  [11] license           PROGBITS        0000000000000000 0002d0 00000b 00  WA  0   0  1
+  [12] critical          PROGBITS        0000000000000000 0002db 000008 00  WA  0   0  1
+  [13] .BTF              PROGBITS        0000000000000000 0002e4 000cf2 00      0   0  4
+  [14] .llvm_addrsig     LLVM_ADDRSIG    0000000000000000 0010f8 00000a 00   E  0   0  1
+  [15] .symtab           SYMTAB          0000000000000000 000fd8 000120 18      1   2  8
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
+  L (link order), O (extra OS processing required), G (group), T (TLS),
+  C (compressed), x (unknown), o (OS specific), E (exclude),
+  D (mbind), p (processor specific)
+
+===== SYMBOLS =====
+
+Symbol table '.symtab' contains 12 entries:
+   Num:    Value          Size Type    Bind   Vis      Ndx Name
+     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 0000000000000000     0 SECTION LOCAL  DEFAULT    3 skfilter/power_supply
+     2: 0000000000000000   528 FUNC    GLOBAL DEFAULT    3 filterPowerSupplyEvents
+     3: 0000000000000000    92 OBJECT  GLOBAL DEFAULT    4 filterPowerSupplyEvents_def
+     4: 0000000000000000     4 OBJECT  GLOBAL DEFAULT    5 _bpfloader_min_ver
+     5: 0000000000000000     4 OBJECT  GLOBAL DEFAULT    6 _bpfloader_max_ver
+     6: 0000000000000000     8 OBJECT  GLOBAL DEFAULT    7 _size_of_bpf_map_def
+     7: 0000000000000000     8 OBJECT  GLOBAL DEFAULT    8 _size_of_bpf_prog_def
+     8: 0000000000000000     4 OBJECT  GLOBAL DEFAULT    9 _btf_min_bpfloader_ver
+     9: 0000000000000000     4 OBJECT  GLOBAL DEFAULT   10 _btf_user_min_bpfloader_ver
+    10: 0000000000000000    11 OBJECT  GLOBAL DEFAULT   11 _license
+    11: 0000000000000000     8 OBJECT  GLOBAL DEFAULT   12 _critical
+
+===== RELOCATIONS =====
+
+There are no relocations in this file.
+
+===== PROGRAM / MAP METADATA =====
+
+--- critical ---
+
+Hex dump of section 'critical':
+  0x00000000 6865616c 74686400                   healthd.
+
+
+--- license ---
+
+Hex dump of section 'license':
+  0x00000000 41706163 68652032 2e3000            Apache 2.0.
+
+
+--- maps ---
+
+--- progs ---
+
+Hex dump of section 'progs':
+  0x00000000 00000000 e8030000 00000a05 ffffffff ................
+  0x00000010 00000000 29000000 00000100 00000000 ....)...........
+  0x00000020 00000000 00000000 00000000 00000000 ................
+  0x00000030 00000000 00000000 00000000 00000000 ................
+  0x00000040 00000000 00000000 00000000 00000000 ................
+  0x00000050 00000000 00000000 00000000          ............
+
+
+--- bpfloader_min_ver ---
+
+Hex dump of section 'bpfloader_min_ver':
+  0x00000000 29000000                            )...
+
+
+--- bpfloader_max_ver ---
+
+Hex dump of section 'bpfloader_max_ver':
+  0x00000000 00000100                            ....
+
+
+===== OBJDUMP =====
+
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/bpf/filterPowerSupplyEvents.o:	file format elf64-bpf
+
+Disassembly of section skfilter/power_supply:
+
+0000000000000000 <filterPowerSupplyEvents>:
+       0:	bf 16 00 00 00 00 00 00	r6 = r1
+       1:	b7 07 00 00 27 00 00 00	r7 = 0x27
+       2:	61 62 00 00 00 00 00 00	w2 = *(u32 *)(r6 + 0x0)
+       3:	7b 2a e8 ff 00 00 00 00	*(u64 *)(r10 - 0x18) = r2
+<L0>:
+       4:	bf 71 00 00 00 00 00 00	r1 = r7
+       5:	07 01 00 00 f4 ff ff ff	r1 += -0xc
+       6:	bf 20 00 00 00 00 00 00	r0 = r2
+       7:	2d 21 1a 00 00 00 00 00	if r1 > r2 goto +0x1a <L2>
+       8:	bf 78 00 00 00 00 00 00	r8 = r7
+       9:	07 08 00 00 e9 ff ff ff	r8 += -0x17
+      10:	bf 71 00 00 00 00 00 00	r1 = r7
+      11:	07 01 00 00 f3 ff ff ff	r1 += -0xd
+      12:	50 10 00 00 00 00 00 00	r0 = *(u8 *)skb[r1]
+      13:	7b 0a f0 ff 00 00 00 00	*(u64 *)(r10 - 0x10) = r0
+      14:	bf 71 00 00 00 00 00 00	r1 = r7
+      15:	07 01 00 00 f1 ff ff ff	r1 += -0xf
+      16:	48 10 00 00 00 00 00 00	r0 = *(u16 *)skb[r1]
+      17:	7b 0a f8 ff 00 00 00 00	*(u64 *)(r10 - 0x8) = r0
+      18:	bf 71 00 00 00 00 00 00	r1 = r7
+      19:	07 01 00 00 ed ff ff ff	r1 += -0x13
+      20:	40 10 00 00 00 00 00 00	r0 = *(u32 *)skb[r1]
+      21:	bf 09 00 00 00 00 00 00	r9 = r0
+      22:	40 80 00 00 00 00 00 00	r0 = *(u32 *)skb[r8]
+      23:	55 00 05 00 42 55 53 00	if r0 != 0x535542 goto +0x5 <L1>
+      24:	55 09 04 00 54 53 59 53	if r9 != 0x53595354 goto +0x4 <L1>
+      25:	79 a1 f8 ff 00 00 00 00	r1 = *(u64 *)(r10 - 0x8)
+      26:	55 01 02 00 4d 45 00 00	if r1 != 0x454d goto +0x2 <L1>
+      27:	79 a1 f0 ff 00 00 00 00	r1 = *(u64 *)(r10 - 0x10)
+      28:	15 01 06 00 3d 00 00 00	if r1 == 0x3d goto +0x6 <L3>
+<L1>:
+      29:	07 07 00 00 01 00 00 00	r7 += 0x1
+      30:	79 a2 e8 ff 00 00 00 00	r2 = *(u64 *)(r10 - 0x18)
+      31:	bf 20 00 00 00 00 00 00	r0 = r2
+      32:	15 07 01 00 17 01 00 00	if r7 == 0x117 goto +0x1 <L2>
+      33:	05 00 e2 ff 00 00 00 00	goto -0x1e <L0>
+<L2>:
+      34:	95 00 00 00 00 00 00 00	exit
+<L3>:
+      35:	b7 00 00 00 00 00 00 00	r0 = 0x0
+      36:	bf 71 00 00 00 00 00 00	r1 = r7
+      37:	07 01 00 00 01 00 00 00	r1 += 0x1
+      38:	67 01 00 00 20 00 00 00	r1 <<= 0x20
+      39:	77 01 00 00 20 00 00 00	r1 >>= 0x20
+      40:	79 a9 e8 ff 00 00 00 00	r9 = *(u64 *)(r10 - 0x18)
+      41:	2d 91 f8 ff 00 00 00 00	if r1 > r9 goto -0x8 <L2>
+      42:	bf 71 00 00 00 00 00 00	r1 = r7
+      43:	07 01 00 00 f8 ff ff ff	r1 += -0x8
+      44:	40 10 00 00 00 00 00 00	r0 = *(u32 *)skb[r1]
+      45:	bf 08 00 00 00 00 00 00	r8 = r0
+      46:	bf 71 00 00 00 00 00 00	r1 = r7
+      47:	07 01 00 00 f4 ff ff ff	r1 += -0xc
+      48:	40 10 00 00 00 00 00 00	r0 = *(u32 *)skb[r1]
+      49:	a7 00 00 00 65 77 6f 70	r0 ^= 0x706f7765
+      50:	a7 08 00 00 75 73 5f 72	r8 ^= 0x725f7375
+      51:	4f 08 00 00 00 00 00 00	r8 |= r0
+      52:	bf 71 00 00 00 00 00 00	r1 = r7
+      53:	07 01 00 00 fc ff ff ff	r1 += -0x4
+      54:	40 10 00 00 00 00 00 00	r0 = *(u32 *)skb[r1]
+      55:	a7 00 00 00 79 6c 70 70	r0 ^= 0x70706c79
+      56:	4f 08 00 00 00 00 00 00	r8 |= r0
+      57:	50 70 00 00 00 00 00 00	r0 = *(u8 *)skb[r7]
+      58:	bf 01 00 00 00 00 00 00	r1 = r0
+      59:	b7 00 00 00 00 00 00 00	r0 = 0x0
+      60:	4f 18 00 00 00 00 00 00	r8 |= r1
+      61:	67 08 00 00 20 00 00 00	r8 <<= 0x20
+      62:	77 08 00 00 20 00 00 00	r8 >>= 0x20
+      63:	55 08 e2 ff 00 00 00 00	if r8 != 0x0 goto -0x1e <L2>
+      64:	bf 90 00 00 00 00 00 00	r0 = r9
+      65:	05 00 e0 ff 00 00 00 00	goto -0x20 <L2>
