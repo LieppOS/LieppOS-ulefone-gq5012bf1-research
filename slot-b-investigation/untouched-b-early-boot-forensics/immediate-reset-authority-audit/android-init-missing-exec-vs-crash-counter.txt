@@ -1,0 +1,120 @@
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:251-288 =====
+251:     if (capabilities_) {
+252:         if (!SetCapsForExec(*capabilities_)) {
+253:             LOG(FATAL) << "cannot set capabilities for " << name_;
+254:         }
+255:     } else if (uid()) {
+256:         // Inheritable caps can be non-zero when running in a container.
+257:         if (!DropInheritableCaps()) {
+258:             LOG(FATAL) << "cannot drop inheritable caps for " << name_;
+259:         }
+260:     }
+261: }
+262: 
+263: void Service::Reap(const siginfo_t& siginfo) {
+264:     if (!(flags_ & SVC_ONESHOT) || (flags_ & SVC_RESTART)) {
+265:         KillProcessGroup(SIGKILL);
+266:     } else {
+267:         // Legacy behavior from ~2007 until Android R: this else branch did not exist and we did not
+268:         // kill the process group in this case.
+269:         if (SelinuxGetVendorAndroidVersion() >= __ANDROID_API_R__) {
+270:             // The new behavior in Android R is to kill these process groups in all cases.  The
+271:             // 'true' parameter instructions KillProcessGroup() to report a warning message where it
+272:             // detects a difference in behavior has occurred.
+273:             KillProcessGroup(SIGKILL);
+274:         }
+275:     }
+276: 
+277:     // Remove any socket resources we may have created.
+278:     for (const auto& socket : sockets_) {
+279:         if (socket.persist) {
+280:             continue;
+281:         }
+282:         auto path = ANDROID_SOCKET_DIR "/" + socket.name;
+283:         unlink(path.c_str());
+284:     }
+285: 
+286:     for (const auto& f : reap_callbacks_) {
+287:         f(siginfo);
+288:     }
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:356-393 =====
+356: #endif
+357: 
+358:     // If we crash > 4 times in 'fatal_crash_window_' minutes or before boot_completed,
+359:     // reboot into bootloader or set crashing property
+360:     boot_clock::time_point now = boot_clock::now();
+361:     constexpr const char native_watchdog_reboot_time[] = "persist.init.svc.last_fatal_reboot_epoch";
+362:     uint64_t throttle_window =
+363:             std::chrono::duration_cast<std::chrono::seconds>(std::chrono::hours(24)).count();
+364:     if (((flags_ & SVC_CRITICAL) || is_process_updatable) && !(flags_ & SVC_RESTART) &&
+365:         !was_last_exit_ok_) {
+366:         bool boot_completed = GetBoolProperty("sys.boot_completed", false);
+367:         if (now < time_crashed_ + fatal_crash_window_ || !boot_completed) {
+368:             if (++crash_count_ > 4) {
+369:                 auto exit_reason =
+370:                         boot_completed
+371:                                 ? "in " + std::to_string(fatal_crash_window_.count()) + " minutes"
+372:                                 : "before boot completed";
+373:                 if (flags_ & SVC_CRITICAL) {
+374:                     if (!GetBoolProperty("init.svc_debug.no_fatal." + name_, false)) {
+375:                         uint64_t epoch_time =
+376:                                 std::chrono::duration_cast<std::chrono::seconds>(
+377:                                         std::chrono::system_clock::now().time_since_epoch())
+378:                                         .count();
+379:                         // Do not reboot again If it was already initiated in the last 24hrs
+380:                         if (epoch_time - GetIntProperty(native_watchdog_reboot_time, 0) >
+381:                             throttle_window) {
+382:                             SetProperty(native_watchdog_reboot_time, std::to_string(epoch_time));
+383:                             // Aborts into `fatal_reboot_target_'.
+384:                             SetFatalRebootTarget(fatal_reboot_target_);
+385:                             LOG(FATAL) << "critical process '" << name_ << "' exited 4 times "
+386:                                        << exit_reason;
+387:                         } else {
+388:                             LOG(INFO) << "Reboot already performed in last 24hrs because of crash.";
+389:                         }
+390:                     }
+391:                 } else {
+392:                     LOG(ERROR) << "process with updatable components '" << name_
+393:                                << "' exited 4 times " << exit_reason;
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:626-663 =====
+626:     // the parent process. These two communication channels are separate because
+627:     // combining these into a single communication channel would introduce a
+628:     // race between the Write() calls by the parent and by the child.
+629:     InterprocessFifo cgroups_activated, setsid_finished;
+630:     OR_RETURN(cgroups_activated.Initialize());
+631:     OR_RETURN(setsid_finished.Initialize());
+632: 
+633:     if (Result<void> result = CheckConsole(); !result.ok()) {
+634:         return result;
+635:     }
+636: 
+637:     struct stat sb;
+638:     if (stat(args_[0].c_str(), &sb) == -1) {
+639:         flags_ |= SVC_DISABLED;
+640:         return ErrnoError() << "Cannot find '" << args_[0] << "'";
+641:     }
+642: 
+643:     std::string scon;
+644:     if (!seclabel_.empty()) {
+645:         scon = seclabel_;
+646:     } else {
+647:         auto result = ComputeContextFromExecutable(args_[0]);
+648:         if (!result.ok()) {
+649:             return result.error();
+650:         }
+651:         scon = *result;
+652:     }
+653: 
+654:     if (!mount_namespace_.has_value()) {
+655:         // remember from which mount namespace the service should start
+656:         SetMountNamespace();
+657:     }
+658: 
+659:     LOG(INFO) << "starting service '" << name_ << "'...";
+660: 
+661:     std::vector<Descriptor> descriptors;
+662:     for (const auto& socket : sockets_) {
+663:         if (auto result = socket.Create(scon); result.ok()) {
