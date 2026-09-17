@@ -1,0 +1,84 @@
+
+===== /mnt/SamsungSSD/TIER3/phase5/current_status.md =====
+57-
+58-### Current Phase 5 classification
+59-
+60-```text
+61:KERNEL_INIT_USB_REACHED_ADB_OFFLINE_RESET_SEQUENCE
+62-USER_DISPLAY_OBSERVATION=STATIC_ULEFONE_LOGO_NO_PROGRESS
+63-STABLE_B_ADB_REACHED=false
+64-B_BOOT_COMPLETED=false
+65-B_RETRY_ALLOWED=false
+--
+166-
+167-| Approx. seconds after B reboot | USB ID | Meaning |
+168-|---:|---|---|
+169-| +5.048 | `0e8d:2000` | MediaTek preloader |
+170:| +10.240 | `0e8d:201c` | Android ADB gadget configured |
+171-| +15.863 | `0e8d:2000` | reset to preloader |
+172:| +78.675 | `0e8d:201c` | Android ADB gadget configured again |
+173-| +137.000 | `0e8d:2000` | reset to preloader |
+174:| +142.198 | `0e8d:201c` | Android ADB gadget configured again |
+175-| +146.454 | `0e8d:2000` | reset to preloader |
+176-
+177-Totals:
+178-
+--
+185-
+186-The ADB tracker saw the original A device, followed by offline serial variants;
+187-it never observed a stable B `device` state.
+188-
+189:### Why `0e8d:201c` proves kernel and Android init progress
+190-
+191-Factory authority:
+192-
+193-`phase1/extracted/mounts/run-20260718T120318Z/vendor/etc/init/hw/init.mt6878.usb.rc`
+--
+195-That factory file assigns product ID `0x201C` to ADB/`kpoc_adb` only after the
+196-Android USB gadget, FunctionFS ADB, and `sys.usb.ffs.ready=1` path is active. It
+197-also uses `0x201C` for ordinary ADB-only configuration.
+198-
+199:Therefore the three `0e8d:201c` enumerations establish:
+200-
+201-1. selector and LK execution succeeded;
+202-2. the Linux kernel entered;
+203-3. Android init processed the USB configuration;
+--
+210-
+211-### Current bounded diagnosis
+212-
+213-```text
+214:PRIMARY_CLASSIFICATION=KERNEL_INIT_USB_REACHED_ADB_OFFLINE_RESET_SEQUENCE
+215-SECONDARY_OBSERVATION=STATIC_ULEFONE_LOGO_NO_PROGRESS
+216-LIKELY_STAGE=KERNEL_OR_VERY_EARLY_ANDROID_USERSPACE
+217-BOOT_COMPLETION_PROVEN=false
+218-EXACT_FAILURE_COMPONENT=UNKNOWN
+
+===== /mnt/SamsungSSD/TIER3/phase5/reports/post-lkb-diagnostic-result.md =====
+81-```text
+82-duration to returned A:       119.871 s
+83-preloader add events:         10
+84-BROM add events:               0
+85:generic 0e8d:201c add events:  1
+86-B ADB:                         none
+87-```
+88-
+89-Before `lk_b` provisioning, the diagnostic loop produced seven BROM and nine
+90-preloader enumerations. After provisioning, no BROM enumeration occurred.
+91-Instead, the host saw repeated preloader appearances and one brief generic
+92:`0e8d:201c` Android USB appearance before A fallback.
+93-
+94-That generic USB ID also appears during normal A boot between preloader and the
+95-final `Armor_29_Pro` gadget, so it is evidence of farther bootloader progress,
+96-not proof of Android kernel entry.
+
+===== /mnt/SamsungSSD/TIER3/phase5/reports/post-live-lk-diagnostic-result.md =====
+61-```text
+62-duration to returned A:       116.980 s
+63-preloader add events:         10
+64-BROM add events:               0
+65:generic 0e8d:201c add events:  1
+66-B ADB:                         none
+67-```
+68-
+69-The previous factory V15 candidate produced `119.871 s / 10 / 0 / 1` and the

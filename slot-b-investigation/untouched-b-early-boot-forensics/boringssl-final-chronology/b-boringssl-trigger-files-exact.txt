@@ -1,0 +1,52 @@
+
+================================================================
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/boringssl_self_test.zygote64.rc
+================================================================
+     1	on early-init && property:ro.product.cpu.abilist64=*
+     2	    exec_start boringssl_self_test64_vendor
+
+================================================================
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/boringssl_self_test.zygote64_32.rc
+================================================================
+     1	on early-init && property:ro.product.cpu.abilist32=*
+     2	    exec_start boringssl_self_test32_vendor
+     3	on early-init && property:ro.product.cpu.abilist64=*
+     4	    exec_start boringssl_self_test64_vendor
+
+================================================================
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.boringssl.zygote64.rc
+================================================================
+     1	on init && property:ro.product.cpu.abilist64=*
+     2	    exec_start boringssl_self_test64
+     3	on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+     4	    exec_start boringssl_self_test_apex64
+
+================================================================
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.boringssl.zygote64_32.rc
+================================================================
+     1	on init && property:ro.product.cpu.abilist32=*
+     2	    exec_start boringssl_self_test32
+     3	on init && property:ro.product.cpu.abilist64=*
+     4	    exec_start boringssl_self_test64
+     5	on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+     6	    exec_start boringssl_self_test_apex32
+     7	on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+     8	    exec_start boringssl_self_test_apex64
+
+================================================================
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/boringssl_self_test.rc
+================================================================
+     1	# Run boringssl self test for each ABI so that later processes can skip it. http://b/139348610
+     2	import /vendor/etc/boringssl_self_test.${ro.zygote}.rc
+     3	
+     4	service boringssl_self_test32_vendor /vendor/bin/boringssl_self_test32
+     5	    setenv BORINGSSL_SELF_TEST_CREATE_FLAG true # Any nonempty value counts as true
+     6	    reboot_on_failure reboot,boringssl-self-check-failed
+     7	    stdio_to_kmsg
+     8	    user root
+     9	
+    10	service boringssl_self_test64_vendor /vendor/bin/boringssl_self_test64
+    11	    setenv BORINGSSL_SELF_TEST_CREATE_FLAG true # Any nonempty value counts as true
+    12	    reboot_on_failure reboot,boringssl-self-check-failed
+    13	    stdio_to_kmsg
+    14	    user root

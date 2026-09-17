@@ -1,0 +1,153 @@
+===== ALL QUEUED EVENT TRIGGERS =====
+655-static Result<void> property_enable_triggers_action(const BuiltinArguments& args) {
+656-    /* Enable property triggers. */
+657-    property_triggers_enabled = 1;
+658-    return {};
+659-}
+660-
+661:static Result<void> queue_property_triggers_action(const BuiltinArguments& args) {
+662:    ActionManager::GetInstance().QueueBuiltinAction(property_enable_triggers_action, "enable_property_trigger");
+663-    ActionManager::GetInstance().QueueAllPropertyActions();
+664-    return {};
+665-}
+666-
+667-// Set the UDC controller for the ConfigFS USB Gadgets.
+668-// Read the UDC controller in use from "/sys/class/udc".
+--
+1058-        std::string dsu_slot;
+1059-        if (android::gsi::GetActiveDsu(&dsu_slot)) {
+1060-            SetProperty(gsi::kDsuSlotProp, dsu_slot);
+1061-        }
+1062-    }
+1063-
+1064:    am.QueueBuiltinAction(SetupCgroupsAction, "SetupCgroups");
+1065:    am.QueueBuiltinAction(SetKptrRestrictAction, "SetKptrRestrict");
+1066:    am.QueueBuiltinAction(TestPerfEventSelinuxAction, "TestPerfEventSelinux");
+1067:    am.QueueEventTrigger("early-init");
+1068:    am.QueueBuiltinAction(ConnectEarlyStageSnapuserdAction, "ConnectEarlyStageSnapuserd");
+1069-
+1070-    // Queue an action that waits for coldboot done so we know ueventd has set up all of /dev...
+1071:    am.QueueBuiltinAction(wait_for_coldboot_done_action, "wait_for_coldboot_done");
+1072-    // ... so that we can start queuing up actions that require stuff from /dev.
+1073:    am.QueueBuiltinAction(SetMmapRndBitsAction, "SetMmapRndBits");
+1074-    Keychords keychords;
+1075:    am.QueueBuiltinAction(
+1076-            [&epoll, &keychords](const BuiltinArguments& args) -> Result<void> {
+1077-                for (const auto& svc : ServiceList::GetInstance()) {
+1078-                    keychords.Register(svc->keycodes());
+1079-                }
+1080-                keychords.Start(&epoll, HandleKeychord);
+1081-                return {};
+1082-            },
+1083-            "KeychordInit");
+1084-
+1085-    // Trigger all the boot actions to get us started.
+1086:    am.QueueEventTrigger("init");
+1087-
+1088-    // Don't mount filesystems or start core system services in charger mode.
+1089-    std::string bootmode = GetProperty("ro.bootmode", "");
+1090-    if (bootmode == "charger") {
+1091:        am.QueueEventTrigger("charger");
+1092-    } else {
+1093:        am.QueueEventTrigger("late-init");
+1094-    }
+1095-
+1096-    // Run all property triggers based on current state of the properties.
+1097:    am.QueueBuiltinAction(queue_property_triggers_action, "queue_property_triggers");
+1098-
+1099-    // Restore prio before main loop
+1100-    setpriority(PRIO_PROCESS, 0, 0);
+1101-    while (true) {
+1102-        // By default, sleep until something happens. Do not convert far_future into
+1103-        // std::chrono::milliseconds because that would trigger an overflow. The unit of boot_clock
+
+===== EARLY-INIT / INIT / PROPERTY TRIGGERS / LATE-INIT =====
+647-    if (!android::base::GetBoolProperty("ro.oem_unlock_supported", false)) {
+648-        return;
+649-    }
+650-    SetProperty(
+651-            "ro.boot.flash.locked",
+652-            android::base::GetProperty("ro.boot.verifiedbootstate", "") == "orange" ? "0" : "1");
+653-}
+654-
+655-static Result<void> property_enable_triggers_action(const BuiltinArguments& args) {
+656-    /* Enable property triggers. */
+657-    property_triggers_enabled = 1;
+658-    return {};
+659-}
+660-
+661:static Result<void> queue_property_triggers_action(const BuiltinArguments& args) {
+662-    ActionManager::GetInstance().QueueBuiltinAction(property_enable_triggers_action, "enable_property_trigger");
+663-    ActionManager::GetInstance().QueueAllPropertyActions();
+664-    return {};
+665-}
+666-
+667-// Set the UDC controller for the ConfigFS USB Gadgets.
+668-// Read the UDC controller in use from "/sys/class/udc".
+669-// In case of multiple UDC controllers select the first one.
+670-static void SetUsbController() {
+671-    static auto controller_set = false;
+672-    if (controller_set) return;
+673-    std::unique_ptr<DIR, decltype(&closedir)>dir(opendir("/sys/class/udc"), closedir);
+674-    if (!dir) return;
+675-
+--
+1053-    auto is_running = android::gsi::IsGsiRunning() ? "1" : "0";
+1054-    SetProperty(gsi::kGsiBootedProp, is_running);
+1055-    auto is_installed = android::gsi::IsGsiInstalled() ? "1" : "0";
+1056-    SetProperty(gsi::kGsiInstalledProp, is_installed);
+1057-    if (android::gsi::IsGsiRunning()) {
+1058-        std::string dsu_slot;
+1059-        if (android::gsi::GetActiveDsu(&dsu_slot)) {
+1060-            SetProperty(gsi::kDsuSlotProp, dsu_slot);
+1061-        }
+1062-    }
+1063-
+1064-    am.QueueBuiltinAction(SetupCgroupsAction, "SetupCgroups");
+1065-    am.QueueBuiltinAction(SetKptrRestrictAction, "SetKptrRestrict");
+1066-    am.QueueBuiltinAction(TestPerfEventSelinuxAction, "TestPerfEventSelinux");
+1067:    am.QueueEventTrigger("early-init");
+1068-    am.QueueBuiltinAction(ConnectEarlyStageSnapuserdAction, "ConnectEarlyStageSnapuserd");
+1069-
+1070-    // Queue an action that waits for coldboot done so we know ueventd has set up all of /dev...
+1071-    am.QueueBuiltinAction(wait_for_coldboot_done_action, "wait_for_coldboot_done");
+1072-    // ... so that we can start queuing up actions that require stuff from /dev.
+1073-    am.QueueBuiltinAction(SetMmapRndBitsAction, "SetMmapRndBits");
+1074-    Keychords keychords;
+1075-    am.QueueBuiltinAction(
+1076-            [&epoll, &keychords](const BuiltinArguments& args) -> Result<void> {
+1077-                for (const auto& svc : ServiceList::GetInstance()) {
+1078-                    keychords.Register(svc->keycodes());
+1079-                }
+1080-                keychords.Start(&epoll, HandleKeychord);
+1081-                return {};
+1082-            },
+1083-            "KeychordInit");
+1084-
+1085-    // Trigger all the boot actions to get us started.
+1086:    am.QueueEventTrigger("init");
+1087-
+1088-    // Don't mount filesystems or start core system services in charger mode.
+1089-    std::string bootmode = GetProperty("ro.bootmode", "");
+1090-    if (bootmode == "charger") {
+1091-        am.QueueEventTrigger("charger");
+1092-    } else {
+1093:        am.QueueEventTrigger("late-init");
+1094-    }
+1095-
+1096-    // Run all property triggers based on current state of the properties.
+1097:    am.QueueBuiltinAction(queue_property_triggers_action, "queue_property_triggers");
+1098-
+1099-    // Restore prio before main loop
+1100-    setpriority(PRIO_PROCESS, 0, 0);
+1101-    while (true) {
+1102-        // By default, sleep until something happens. Do not convert far_future into
+1103-        // std::chrono::milliseconds because that would trigger an overflow. The unit of boot_clock
+1104-        // is 1ns.
+1105-        const boot_clock::time_point far_future = boot_clock::time_point::max();
+1106-        boot_clock::time_point next_action_time = far_future;
+1107-
+1108-        auto shutdown_command = shutdown_state.CheckShutdown();
+1109-        if (shutdown_command) {
+1110-            LOG(INFO) << "Got shutdown_command '" << *shutdown_command
+1111-                      << "' Calling HandlePowerctlMessage()";

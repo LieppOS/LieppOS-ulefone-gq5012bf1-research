@@ -1,0 +1,257 @@
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2748-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2749-void OnAllPackagesReady() {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2750-  // Set a system property to let other components know that APEXs are
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2751-  // correctly mounted and ready to be used. Before using any file from APEXs,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2752-  // they can query this system property to ensure that they are okay to
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2753-  // access. Or they may have a on-property trigger to delay a task until
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2754-  // APEXs become ready.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2755-  LOG(INFO) << "Marking APEXd as ready";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2756-  if (!SetProperty(gConfig->apex_status_sysprop, kApexStatusReady)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2757-    PLOG(ERROR) << "Failed to set " << gConfig->apex_status_sysprop << " to "
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2758-                << kApexStatusReady;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2759-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:2760:  // Since apexd.status property is a system property, we expose yet another
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2761-  // property as system_restricted_prop so that, for example, vendor can rely on
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:2762:  // the "ready" event.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2763-  if (!SetProperty(kApexAllReadyProp, "true")) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2764-    PLOG(ERROR) << "Failed to set " << kApexAllReadyProp << " to true";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2765-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2766-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2767-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2768-Result<std::vector<ApexFile>> SubmitStagedSession(
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2769-    const int session_id, const std::vector<int>& child_session_ids,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2770-    const bool has_rollback_enabled, const bool is_rollback,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2771-    const int rollback_id) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2772-  auto event = InstallRequestedEvent(InstallType::Staged, is_rollback);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2773-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-2774-  if (session_id == 0) {
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3177-  } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3178-    LOG(INFO) << "No block apex metadata partition found, not adding block "
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3179-              << "apexes";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3180-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3181-  return 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3182-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3183-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3184-// When running in the VM mode, we follow the minimal start-up operations.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3185-// - CreateSharedLibsApexDir
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3186-// - AddPreInstalledApex: note that CAPEXes are not supported in the VM mode
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3187-// - AddBlockApex
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3188-// - ActivateApexPackages
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:3189:// - setprop apexd.status: activated/ready
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3190-int OnStartInVmMode() {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3191-  Result<void> loop_ready = WaitForFile("/dev/loop-control", 20s);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3192-  if (!loop_ready.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3193-    LOG(ERROR) << loop_ready.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3194-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3195-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3196-  // Create directories for APEX shared libraries.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3197-  if (auto status = CreateSharedLibsApexDir(); !status.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3198-    LOG(ERROR) << "Failed to create /apex/sharedlibs : " << status.ok();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3199-    return 1;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3200-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3201-
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3219-    LOG(ERROR) << "Failed to activate apex packages : " << status.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3220-    return 1;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3221-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3222-  if (auto status = ActivateApexPackages(instance.GetDataApexFiles(),
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3223-                                         ActivationMode::kVmMode);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3224-      !status.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3225-    LOG(ERROR) << "Failed to activate apex packages : " << status.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3226-    return 1;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3227-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3228-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3229-  OnAllPackagesActivated(false);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3230-  // In VM mode, we don't run a separate --snapshotde mode.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp:3231:  // Instead, we mark apexd.status "ready" right now.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3232-  OnAllPackagesReady();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3233-  return 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3234-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3235-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3236-int OnOtaChrootBootstrap(bool also_include_staged_apexes) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3237-  auto& instance = ApexFileRepository::GetInstance();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3238-  if (auto status = instance.AddPreInstalledApex(gConfig->builtin_dirs);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3239-      !status.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3240-    LOG(ERROR) << "Failed to scan pre-installed apexes from "
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3241-               << std::format("{}", gConfig->builtin_dirs | std::views::values);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3242-    return 1;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.cpp-3243-  }
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-133-  }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-134-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-135-  void SetSupportsCheckpoint(bool value) { supports_fs_checkpoint_ = value; }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-136-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-137-  void SetNeedsCheckpoint(bool value) { needs_checkpoint_ = value; }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-138-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-139-  void SetNeedsRollback(bool value) { needs_rollback_ = value; }
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-140-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-141- private:
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-142-  bool supports_fs_checkpoint_, needs_checkpoint_, needs_rollback_;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-143-};
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-144-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp:145:static constexpr const char* kTestApexdStatusSysprop = "apexd.status.test";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-146-static constexpr const char* kTestVmPayloadMetadataPartitionProp =
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-147-    "apexd.vm.payload_metadata_partition.test";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-148-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-149-static constexpr const char* kTestActiveApexSelinuxCtx =
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-150-    "u:object_r:shell_data_file:s0";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-151-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-152-// A test fixture that provides frequently required temp directories for tests
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-153-class ApexdUnitTest : public ::testing::Test {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-154- public:
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-155-  ApexdUnitTest() {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-156-    built_in_dir_ = StringPrintf("%s/pre-installed-apex", td_.path);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-157-    partition_ = ApexPartition::System;
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4113-  UnmountOnTearDown(path1);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4114-  UnmountOnTearDown(path2);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4115-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4116-  auto apex_mounts = GetApexMounts();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4117-  ASSERT_THAT(apex_mounts,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4118-              UnorderedElementsAre("/apex/com.android.apex.test_package",
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4119-                                   "/apex/com.android.apex.test_package@1",
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4120-                                   "/apex/com.android.apex.test_package_2",
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4121-                                   "/apex/com.android.apex.test_package_2@1",
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4122-                                   // Emits apex-info-list as well
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4123-                                   "/apex/apex-info-list.xml"));
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4124-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp:4125:  ASSERT_EQ(GetProperty(kTestApexdStatusSysprop, ""), "ready");
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4126-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4127-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4128-TEST_F(ApexdMountTest, OnStartInVmModeFailsWithCapex) {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4129-  MockCheckpointInterface checkpoint_interface;
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4130-  // Need to call InitializeVold before calling OnStart
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4131-  InitializeVold(&checkpoint_interface);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4132-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4133-  AddPreInstalledApex("com.android.apex.compressed.v2.capex");
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4134-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4135-  ASSERT_EQ(1, OnStartInVmMode());
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4136-}
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd_test.cpp-4137-
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-63-static constexpr const char* kApexPackageSuffix = ".apex";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-64-static constexpr const char* kCompressedApexPackageSuffix = ".capex";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-65-static constexpr const char* kDecompressedApexPackageSuffix =
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-66-    ".decompressed.apex";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-67-static constexpr const char* kOtaApexPackageSuffix = ".ota.apex";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-68-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-69-static constexpr const char* kManifestFilenameJson = "apex_manifest.json";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-70-static constexpr const char* kManifestFilenamePb = "apex_manifest.pb";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-71-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-72-static constexpr const char* kApexInfoList = "apex-info-list.xml";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-73-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-74-// These should be in-sync with system/sepolicy/private/property_contexts
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h:75:static constexpr const char* kApexStatusSysprop = "apexd.status";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-76-static constexpr const char* kApexStatusStarting = "starting";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-77-static constexpr const char* kApexStatusActivated = "activated";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h:78:static constexpr const char* kApexStatusReady = "ready";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-79-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-80-static constexpr const char* kMultiApexSelectPersistPrefix =
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-81-    "persist.vendor.apex.";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-82-static constexpr const char* kMultiApexSelectBootconfigPrefix =
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-83-    "ro.boot.vendor.apex.";
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-84-static const std::vector<std::string> kMultiApexSelectPrefix = {
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-85-    // Check persist props first, to allow users to override bootconfig.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-86-    kMultiApexSelectPersistPrefix,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-87-    kMultiApexSelectBootconfigPrefix,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-88-};
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-89-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apex_constants.h-90-static constexpr const char* kVmPayloadMetadataPartitionProp =
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-136-int OnBootstrap();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-137-// Sets the values of gVoldService and gInFsCheckpointMode.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-138-void InitializeVold(CheckpointInterface* checkpoint_service);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-139-// Sets the value of gSessionManager.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-140-void InitializeSessionManager(ApexSessionManager* session_manager);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-141-// Initializes in-memory state (e.g. pre-installed data, activated apexes).
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-142-// Must be called first before calling any other boot sequence related function.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-143-void Initialize(CheckpointInterface* checkpoint_service);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-144-// Initializes data apex as in-memory state. Should be called only if we are
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-145-// not booting, since initialization timing is different when booting
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-146-void InitializeDataApex();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-147-// Apex activation logic. Scans staged apex sessions and activates apexes.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h:148:// Must only be called during boot (i.e apexd.status is not "ready" or
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-149-// "activated").
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-150-void OnStart();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-151-// For every package X, there can be at most two APEX, pre-installed vs
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-152-// installed on data. We decide which ones should be activated and return them
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-153-// as a list
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-154-std::vector<ApexFileRef> SelectApexForActivation(
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-155-    const std::unordered_map<std::string, std::vector<ApexFileRef>>& all_apex,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-156-    const ApexFileRepository& instance);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-157-std::vector<ApexFile> ProcessCompressedApex(
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-158-    const std::vector<ApexFileRef>& compressed_apex, bool is_ota_chroot);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-159-// Validate |apex| is same as |capex|
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-160-android::base::Result<void> ValidateDecompressedApex(const ApexFile& capex,
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-161-                                                     const ApexFile& apex);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h:162:// Notifies system that apexes are activated by setting apexd.status property to
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-163-// "activated".
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h:164:// Must only be called during boot (i.e. apexd.status is not "ready" or
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-165-// "activated").
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-166-void OnAllPackagesActivated(bool is_bootstrap);
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h:167:// Notifies system that apexes are ready by setting apexd.status property to
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h:168:// "ready".
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h:169:// Must only be called during boot (i.e. apexd.status is not "ready" or
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-170-// "activated").
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-171-void OnAllPackagesReady();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-172-void OnBootCompleted();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-173-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-174-// Removes inactivate apexes on /data after activation.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-175-// This can happen when prebuilt APEXes are newer than /data apexes with OTA.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-176-// Exposed for testing.
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-177-void RemoveInactiveDataApex();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-178-
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-179-void BootCompletedCleanup();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-180-int SnapshotOrRestoreDeUserData();
+/mnt/SamsungSSD/android/lineage-22.2/system/apex/apexd/apexd.h-181-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-893-        */
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-894-        SendOkay(s->peer->fd);
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-895-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-896-        s->peer->ready = local_socket_ready;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-897-        s->peer->shutdown = nullptr;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-898-        s->peer->close = local_socket_close;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-899-        s->peer->peer = s2;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-900-        s2->peer = s->peer;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-901-        s->peer = nullptr;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-902-        D("SS(%d): okay", s->id);
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-903-        s->close(s);
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-904-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp:905:        /* initial state is "ready" */
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-906-        s2->ready(s2);
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-907-        return 0;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-908-    }
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-909-
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-910-    if (!s->transport) {
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-911-        SendFail(s->peer->fd, "device offline (no transport)");
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-912-        goto fail;
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-913-    } else if (!ConnectionStateIsOnline(s->transport->GetConnectionState())) {
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-914-        /* if there's no remote we fail the connection
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-915-         ** right here and terminate it
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-916-         */
+/mnt/SamsungSSD/android/lineage-22.2/packages/modules/adb/sockets.cpp-917-        SendFail(s->peer->fd, "device offline (transport offline)");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-82-    WriteFully(loading_fd, response, strlen(response));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-83-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-84-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-85-static bool IsBooting() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-86-    return access("/dev/.booting", F_OK) == 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-87-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-88-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-89-static bool IsApexActivated() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-90-    static bool apex_activated = []() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-91-        // Wait for com.android.runtime.apex activation
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-92-        // Property name and value must be kept in sync with system/apexd/apex/apex_constants.h
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-93-        // 60s is the default firmware sysfs fallback timeout. (/sys/class/firmware/timeout)
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp:94:        if (!WaitForProperty("apexd.status", "activated", 60s)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-95-            LOG(ERROR) << "Apexd activation wait timeout";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-96-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-97-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-98-        return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-99-    }();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-100-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-101-    return apex_activated;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-102-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-103-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-104-static bool NeedsRerunExternalHandler() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-105-    static bool first = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/firmware_handler.cpp-106-

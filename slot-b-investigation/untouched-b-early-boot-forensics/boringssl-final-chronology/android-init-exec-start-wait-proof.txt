@@ -1,0 +1,279 @@
+===== Service::ExecStart =====
+}
+
+void Service::DumpState() const {
+    LOG(INFO) << "service " << name_;
+    LOG(INFO) << "  class '" << Join(classnames_, " ") << "'";
+    LOG(INFO) << "  exec " << Join(args_, " ");
+    for (const auto& socket : sockets_) {
+        LOG(INFO) << "  socket " << socket.name;
+    }
+    for (const auto& file : files_) {
+        LOG(INFO) << "  file " << file.name;
+    }
+}
+
+
+Result<void> Service::ExecStart() {
+    auto reboot_on_failure = make_scope_guard([this] {
+        if (on_failure_reboot_target_) {
+            trigger_shutdown(*on_failure_reboot_target_);
+        }
+    });
+
+    if (is_updatable() && !IsDefaultMountNamespaceReady()) {
+        // Don't delay the service for ExecStart() as the semantic is that
+        // the caller might depend on the side effect of the execution.
+        return Error() << "Cannot start an updatable service '" << name_
+                       << "' before configs from APEXes are all loaded";
+    }
+
+    flags_ |= SVC_ONESHOT;
+
+    if (auto result = Start(); !result.ok()) {
+        return result;
+    }
+
+    flags_ |= SVC_EXEC;
+    is_exec_service_running_ = true;
+
+    LOG(INFO) << "SVC_EXEC service '" << name_ << "' pid " << pid_ << " (uid " << uid() << " gid "
+              << proc_attr_.gid << "+" << proc_attr_.supp_gids.size() << " context "
+              << (!seclabel_.empty() ? seclabel_ : "default") << ") started; waiting...";
+
+    reboot_on_failure.Disable();
+    return {};
+}
+
+Result<void> Service::CheckConsole() {
+    if (!(flags_ & SVC_CONSOLE)) {
+        return {};
+    }
+
+    // On newer kernels, /dev/console will always exist because
+    // "console=ttynull" is hard-coded in CONFIG_CMDLINE. This new boot
+    // property should be set via "androidboot.serialconsole=0" to explicitly
+    // disable services requiring the console. For older kernels and boot
+    // images, not setting this at all will fall back to the old behavior
+    if (GetProperty("ro.boot.serialconsole", "") == "0") {
+        flags_ |= SVC_DISABLED;
+        return {};
+    }
+
+    if (proc_attr_.console.empty()) {
+        proc_attr_.console = "/dev/" + GetProperty("ro.boot.console", "console");
+    }
+
+    // Make sure that open call succeeds to ensure a console driver is
+
+===== SVC_EXEC REAP / WAIT RELEASE =====
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-337-    if (bootscript.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-338-        parser.ParseConfig("/system/etc/init/hw/init.rc");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-339-        if (!parser.ParseConfig("/system/etc/init")) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-340-            late_import_paths.emplace_back("/system/etc/init");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-341-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-342-        // late_import is available only in Q and earlier release. As we don't
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-343-        // have system_ext in those versions, skip late_import for system_ext.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-344-        parser.ParseConfig("/system_ext/etc/init");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-345-        if (!parser.ParseConfig("/vendor/etc/init")) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-346-            late_import_paths.emplace_back("/vendor/etc/init");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-347-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-348-        if (!parser.ParseConfig("/odm/etc/init")) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-349-            late_import_paths.emplace_back("/odm/etc/init");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-350-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-351-        if (!parser.ParseConfig("/product/etc/init")) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-352-            late_import_paths.emplace_back("/product/etc/init");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-353-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-354-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-355-        parser.ParseConfig(bootscript);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-356-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-357-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-358-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-359-void PropertyChanged(const std::string& name, const std::string& value) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-360-    // If the property is sys.powerctl, we bypass the event queue and immediately handle it.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-361-    // This is to ensure that init will always and immediately shutdown/reboot, regardless of
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:362:    // if there are other pending events to process or if init is waiting on an exec service or
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-363-    // waiting on a property.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-364-    // In non-thermal-shutdown case, 'shutdown' trigger will be fired to let device specific
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-365-    // commands to be executed.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-366-    if (name == "sys.powerctl") {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-367-        trigger_shutdown(value);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-368-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-369-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-370-    if (property_triggers_enabled) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-371-        ActionManager::GetInstance().QueuePropertyChange(name, value);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-372-        WakeMainInitThread();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-373-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-374-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-375-    prop_waiter_state.CheckAndResetWait(name, value);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-376-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-377-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-378-static std::optional<boot_clock::time_point> HandleProcessActions() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-379-    std::optional<boot_clock::time_point> next_process_action_time;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-380-    for (const auto& s : ServiceList::GetInstance()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-381-        if ((s->flags() & SVC_RUNNING) && s->timeout_period()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-382-            auto timeout_time = s->time_started() + *s->timeout_period();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-383-            if (boot_clock::now() > timeout_time) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-384-                s->Timeout();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-385-            } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-386-                if (!next_process_action_time || timeout_time < *next_process_action_time) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-387-                    next_process_action_time = timeout_time;
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-118-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-119-static bool ExpandArgsAndExecv(const std::vector<std::string>& args, bool sigstop) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-120-    std::vector<std::string> expanded_args;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-121-    std::vector<char*> c_strings;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-122-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-123-    expanded_args.resize(args.size());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-124-    c_strings.push_back(const_cast<char*>(args[0].data()));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-125-    for (std::size_t i = 1; i < args.size(); ++i) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-126-        auto expanded_arg = ExpandProps(args[i]);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-127-        if (!expanded_arg.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-128-            LOG(FATAL) << args[0] << ": cannot expand arguments': " << expanded_arg.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-129-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-130-        expanded_args[i] = *expanded_arg;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-131-        c_strings.push_back(expanded_args[i].data());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-132-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-133-    c_strings.push_back(nullptr);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-134-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-135-    if (sigstop) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-136-        kill(getpid(), SIGSTOP);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-137-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-138-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-139-    return execv(c_strings[0], c_strings.data()) == 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-140-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-141-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-142-unsigned long Service::next_start_order_ = 1;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:143:bool Service::is_exec_service_running_ = false;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-144-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-145-Service::Service(const std::string& name, Subcontext* subcontext_for_restart_commands,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-146-                 const std::string& filename, const std::vector<std::string>& args)
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-147-    : Service(name, 0, std::nullopt, 0, {}, 0, "", subcontext_for_restart_commands, filename,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-148-              args) {}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-149-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-150-Service::Service(const std::string& name, unsigned flags, std::optional<uid_t> uid, gid_t gid,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-151-                 const std::vector<gid_t>& supp_gids, int namespace_flags,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-152-                 const std::string& seclabel, Subcontext* subcontext_for_restart_commands,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-153-                 const std::string& filename, const std::vector<std::string>& args)
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-154-    : name_(name),
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-155-      classnames_({"default"}),
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-156-      flags_(flags),
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-157-      pid_(0),
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-158-      crash_count_(0),
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-159-      proc_attr_{.ioprio_class = IoSchedClass_NONE,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-160-                 .ioprio_pri = 0,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-161-                 .parsed_uid = uid,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-162-                 .gid = gid,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-163-                 .supp_gids = supp_gids,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-164-                 .priority = 0},
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-165-      namespaces_{.flags = namespace_flags},
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-166-      seclabel_(seclabel),
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-167-      subcontext_(subcontext_for_restart_commands),
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-168-      onrestart_(false, subcontext_for_restart_commands, "<Service '" + name + "' onrestart>", 0,
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-271-            // 'true' parameter instructions KillProcessGroup() to report a warning message where it
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-272-            // detects a difference in behavior has occurred.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-273-            KillProcessGroup(SIGKILL);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-274-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-275-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-276-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-277-    // Remove any socket resources we may have created.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-278-    for (const auto& socket : sockets_) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-279-        if (socket.persist) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-280-            continue;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-281-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-282-        auto path = ANDROID_SOCKET_DIR "/" + socket.name;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-283-        unlink(path.c_str());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-284-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-285-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-286-    for (const auto& f : reap_callbacks_) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-287-        f(siginfo);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-288-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-289-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-290-    if ((siginfo.si_code != CLD_EXITED || siginfo.si_status != 0) && on_failure_reboot_target_) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-291-        LOG(ERROR) << "Service " << name_
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-292-                   << " has 'reboot_on_failure' option and failed, shutting down system.";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-293-        trigger_shutdown(*on_failure_reboot_target_);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-294-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-295-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:296:    if (flags_ & SVC_EXEC) UnSetExec();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-297-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-298-    if (name_ == "zygote" || name_ == "zygote64") {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-299-        removeAllEmptyProcessGroups();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-300-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-301-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-302-    if (flags_ & SVC_TEMPORARY) return;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-303-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-304-    pid_ = 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-305-    flags_ &= (~SVC_RUNNING);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-306-    start_order_ = 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-307-    was_last_exit_ok_ = siginfo.si_code == CLD_EXITED && siginfo.si_status == 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-308-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-309-    // Oneshot processes go into the disabled state on exit,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-310-    // except when manually restarted.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-311-    if ((flags_ & SVC_ONESHOT) && !(flags_ & SVC_RESTART) && !(flags_ & SVC_RESET)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-312-        flags_ |= SVC_DISABLED;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-313-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-314-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-315-    // Disabled and reset processes do not get restarted automatically.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-316-    if (flags_ & (SVC_DISABLED | SVC_RESET))  {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-317-        NotifyStateChange("stopped");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-318-        return;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-319-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-320-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-321-#if INIT_FULL_SOURCES
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-423-        LOG(INFO) << "  file " << file.name;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-424-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-425-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-426-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-427-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-428-Result<void> Service::ExecStart() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-429-    auto reboot_on_failure = make_scope_guard([this] {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-430-        if (on_failure_reboot_target_) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-431-            trigger_shutdown(*on_failure_reboot_target_);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-432-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-433-    });
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-434-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-435-    if (is_updatable() && !IsDefaultMountNamespaceReady()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-436-        // Don't delay the service for ExecStart() as the semantic is that
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-437-        // the caller might depend on the side effect of the execution.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-438-        return Error() << "Cannot start an updatable service '" << name_
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-439-                       << "' before configs from APEXes are all loaded";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-440-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-441-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-442-    flags_ |= SVC_ONESHOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-443-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-444-    if (auto result = Start(); !result.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-445-        return result;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-446-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-447-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:448:    flags_ |= SVC_EXEC;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:449:    is_exec_service_running_ = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-450-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:451:    LOG(INFO) << "SVC_EXEC service '" << name_ << "' pid " << pid_ << " (uid " << uid() << " gid "
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-452-              << proc_attr_.gid << "+" << proc_attr_.supp_gids.size() << " context "
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-453-              << (!seclabel_.empty() ? seclabel_ : "default") << ") started; waiting...";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-454-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-455-    reboot_on_failure.Disable();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-456-    return {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-457-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-458-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-459-Result<void> Service::CheckConsole() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-460-    if (!(flags_ & SVC_CONSOLE)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-461-        return {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-462-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-463-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-464-    // On newer kernels, /dev/console will always exist because
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-465-    // "console=ttynull" is hard-coded in CONFIG_CMDLINE. This new boot
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-466-    // property should be set via "androidboot.serialconsole=0" to explicitly
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-467-    // disable services requiring the console. For older kernels and boot
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-468-    // images, not setting this at all will fall back to the old behavior
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-469-    if (GetProperty("ro.boot.serialconsole", "") == "0") {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-470-        flags_ |= SVC_DISABLED;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-471-        return {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-472-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-473-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-474-    if (proc_attr_.console.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-475-        proc_attr_.console = "/dev/" + GetProperty("ro.boot.console", "console");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp-476-    }
