@@ -1,0 +1,469 @@
+===== translateBool DEFINITION =====
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-54-constexpr auto kIncFsReadNoTimeoutMs = 100;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-55-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-56-static binder::Status error(const std::string& msg) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-57-    PLOG(ERROR) << msg;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-58-    return binder::Status::fromServiceSpecificError(errno, String8(msg.c_str()));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-59-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-60-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-61-static binder::Status translate(int status) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-62-    if (status == 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-63-        return binder::Status::ok();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-64-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-65-        return binder::Status::fromServiceSpecificError(status);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-66-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-67-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-68-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:69:static binder::Status translateBool(bool status) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-70-    if (status) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-71-        return binder::Status::ok();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-72-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-73-        return binder::Status::fromServiceSpecificError(status);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-74-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-75-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-76-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-77-#define ENFORCE_SYSTEM_OR_ROOT                              \
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-78-    {                                                       \
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-79-        binder::Status status = CheckUidOrRoot(AID_SYSTEM); \
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-80-        if (!status.isOk()) {                               \
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-81-            return status;                                  \
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-82-        }                                                   \
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-83-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-84-
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-256-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-257-    CHECK_ARGUMENT_HEX(partGuid);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-258-    CHECK_ARGUMENT_HEX(fsUuid);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-259-    bool success = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-260-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-261-    {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-262-        ACQUIRE_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-263-        success &= VolumeManager::Instance()->forgetPartition(partGuid, fsUuid);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-264-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-265-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-266-    {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-267-        ACQUIRE_CRYPT_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-268-        success &= fscrypt_destroy_volume_keys(fsUuid);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-269-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-270-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:271:    return translateBool(success);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-272-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-273-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-274-binder::Status VoldNativeService::mount(
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-275-        const std::string& volId, int32_t mountFlags, int32_t mountUserId,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-276-        const android::sp<android::os::IVoldMountCallback>& callback) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-277-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-278-    CHECK_ARGUMENT_ID(volId);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-279-    ACQUIRE_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-280-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-281-    auto vol = VolumeManager::Instance()->findVolume(volId);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-282-    if (vol == nullptr) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-283-        return error("Failed to find volume " + volId);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-284-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-285-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-286-    vol->setMountFlags(mountFlags);
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-565-    int fd = VolumeManager::Instance()->openAppFuseFile(uid, mountId, fileId, flags);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-566-    if (fd == -1) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-567-        return error("Failed to open AppFuse file for uid: " + std::to_string(uid) +
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-568-                     " mountId: " + std::to_string(mountId) + " fileId: " + std::to_string(fileId) +
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-569-                     " flags: " + std::to_string(flags));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-570-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-571-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-572-    *_aidl_return = android::base::unique_fd(fd);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-573-    return Ok();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-574-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-575-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-576-binder::Status VoldNativeService::fbeEnable() {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-577-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-578-    ACQUIRE_CRYPT_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-579-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:580:    return translateBool(fscrypt_initialize_systemwide_keys());
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-581-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-582-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-583-binder::Status VoldNativeService::initUser0() {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-584-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-585-    ACQUIRE_CRYPT_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-586-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:587:    return translateBool(fscrypt_init_user0());
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-588-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-589-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-590-binder::Status VoldNativeService::mountFstab(const std::string& blkDevice,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-591-                                             const std::string& mountPoint, bool isZoned,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-592-                                             const std::vector<std::string>& userDevices) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-593-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-594-    ACQUIRE_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-595-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:596:    return translateBool(fscrypt_mount_metadata_encrypted(blkDevice, mountPoint, false, false,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-597-                                                          "null", isZoned, userDevices, {}, 0));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-598-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-599-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-600-binder::Status VoldNativeService::encryptFstab(const std::string& blkDevice,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-601-                                               const std::string& mountPoint, bool shouldFormat,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-602-                                               const std::string& fsType, bool isZoned,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-603-                                               const std::vector<std::string>& userDevices,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-604-                                               const std::vector<bool>& deviceAliased,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-605-                                               int64_t length) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-606-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-607-    ACQUIRE_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-608-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:609:    return translateBool(fscrypt_mount_metadata_encrypted(blkDevice, mountPoint, true, shouldFormat,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-610-                                                          fsType, isZoned, userDevices,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-611-                                                          deviceAliased, length));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-612-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-613-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-614-binder::Status VoldNativeService::setStorageBindingSeed(const std::vector<uint8_t>& seed) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-615-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-616-    ACQUIRE_CRYPT_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-617-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:618:    return translateBool(setKeyStorageBindingSeed(seed));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-619-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-620-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-621-binder::Status VoldNativeService::createUserStorageKeys(int32_t userId, bool ephemeral) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-622-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-623-    ACQUIRE_CRYPT_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-624-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:625:    return translateBool(fscrypt_create_user_keys(userId, ephemeral));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-626-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-627-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-628-binder::Status VoldNativeService::destroyUserStorageKeys(int32_t userId) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-629-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-630-    ACQUIRE_CRYPT_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-631-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:632:    return translateBool(fscrypt_destroy_user_keys(userId));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-633-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-634-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-635-binder::Status VoldNativeService::setCeStorageProtection(int32_t userId,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-636-                                                         const std::vector<uint8_t>& secret) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-637-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-638-    ACQUIRE_CRYPT_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-639-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:640:    return translateBool(fscrypt_set_ce_key_protection(userId, secret));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-641-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-642-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-643-binder::Status VoldNativeService::getUnlockedUsers(std::vector<int>* _aidl_return) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-644-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-645-    ACQUIRE_CRYPT_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-646-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-647-    *_aidl_return = fscrypt_get_unlocked_users();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-648-    return Ok();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-649-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-650-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-651-binder::Status VoldNativeService::unlockCeStorage(int32_t userId,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-652-                                                  const std::vector<uint8_t>& secret) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-653-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-654-    ACQUIRE_CRYPT_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-655-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:656:    return translateBool(fscrypt_unlock_ce_storage(userId, secret));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-657-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-658-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-659-binder::Status VoldNativeService::lockCeStorage(int32_t userId) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-660-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-661-    ACQUIRE_CRYPT_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-662-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:663:    return translateBool(fscrypt_lock_ce_storage(userId));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-664-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-665-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-666-binder::Status VoldNativeService::prepareUserStorage(const std::optional<std::string>& uuid,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-667-                                                     int32_t userId, int32_t flags) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-668-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-669-    std::string empty_string = "";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-670-    auto uuid_ = uuid ? *uuid : empty_string;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-671-    CHECK_ARGUMENT_HEX(uuid_);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-672-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-673-    ACQUIRE_CRYPT_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:674:    return translateBool(fscrypt_prepare_user_storage(uuid_, userId, flags));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-675-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-676-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-677-binder::Status VoldNativeService::destroyUserStorage(const std::optional<std::string>& uuid,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-678-                                                     int32_t userId, int32_t flags) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-679-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-680-    std::string empty_string = "";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-681-    auto uuid_ = uuid ? *uuid : empty_string;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-682-    CHECK_ARGUMENT_HEX(uuid_);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-683-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-684-    ACQUIRE_CRYPT_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:685:    return translateBool(fscrypt_destroy_user_storage(uuid_, userId, flags));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-686-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-687-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-688-binder::Status VoldNativeService::prepareSandboxForApp(const std::string& packageName,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-689-                                                       int32_t appId, const std::string& sandboxId,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-690-                                                       int32_t userId) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-691-    return Ok();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-692-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-693-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-694-binder::Status VoldNativeService::destroySandboxForApp(const std::string& packageName,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-695-                                                       const std::string& sandboxId,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-696-                                                       int32_t userId) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-697-    return Ok();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-698-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-699-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-700-binder::Status VoldNativeService::startCheckpoint(int32_t retry) {
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-935-    auto [sourceFd, sourceSymlink] = OpenDirInProcfs(sourceDir);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-936-    if (!sourceFd.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-937-        return translate(-errno);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-938-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-939-    auto [targetFd, targetSymlink] = OpenDirInProcfs(targetDir);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-940-    if (!targetFd.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-941-        return translate(-errno);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-942-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-943-    return translate(incfs::bindMount(sourceSymlink, targetSymlink));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-944-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-945-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-946-binder::Status VoldNativeService::destroyDsuMetadataKey(const std::string& dsuSlot) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-947-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-948-    ACQUIRE_LOCK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-949-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp:950:    return translateBool(destroy_dsu_metadata_key(dsuSlot));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-951-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-952-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-953-binder::Status VoldNativeService::getStorageSize(int64_t* storageSize) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-954-    ENFORCE_SYSTEM_OR_ROOT;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-955-    return translate(GetStorageSize(storageSize));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-956-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-957-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-958-}  // namespace vold
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VoldNativeService.cpp-959-}  // namespace android
+
+===== FBE BINDER ENTRY POINTS =====
+572-    *_aidl_return = android::base::unique_fd(fd);
+573-    return Ok();
+574-}
+575-
+576-binder::Status VoldNativeService::fbeEnable() {
+577-    ENFORCE_SYSTEM_OR_ROOT;
+578-    ACQUIRE_CRYPT_LOCK;
+579-
+580-    return translateBool(fscrypt_initialize_systemwide_keys());
+581-}
+582-
+583-binder::Status VoldNativeService::initUser0() {
+584-    ENFORCE_SYSTEM_OR_ROOT;
+585-    ACQUIRE_CRYPT_LOCK;
+586-
+587:    return translateBool(fscrypt_init_user0());
+588-}
+589-
+590-binder::Status VoldNativeService::mountFstab(const std::string& blkDevice,
+591-                                             const std::string& mountPoint, bool isZoned,
+592-                                             const std::vector<std::string>& userDevices) {
+593-    ENFORCE_SYSTEM_OR_ROOT;
+594-    ACQUIRE_LOCK;
+595-
+596:    return translateBool(fscrypt_mount_metadata_encrypted(blkDevice, mountPoint, false, false,
+597-                                                          "null", isZoned, userDevices, {}, 0));
+598-}
+599-
+600-binder::Status VoldNativeService::encryptFstab(const std::string& blkDevice,
+601-                                               const std::string& mountPoint, bool shouldFormat,
+602-                                               const std::string& fsType, bool isZoned,
+603-                                               const std::vector<std::string>& userDevices,
+604-                                               const std::vector<bool>& deviceAliased,
+605-                                               int64_t length) {
+606-    ENFORCE_SYSTEM_OR_ROOT;
+607-    ACQUIRE_LOCK;
+608-
+609:    return translateBool(fscrypt_mount_metadata_encrypted(blkDevice, mountPoint, true, shouldFormat,
+610-                                                          fsType, isZoned, userDevices,
+611-                                                          deviceAliased, length));
+612-}
+613-
+614-binder::Status VoldNativeService::setStorageBindingSeed(const std::vector<uint8_t>& seed) {
+615-    ENFORCE_SYSTEM_OR_ROOT;
+616-    ACQUIRE_CRYPT_LOCK;
+617-
+618-    return translateBool(setKeyStorageBindingSeed(seed));
+619-}
+620-
+621-binder::Status VoldNativeService::createUserStorageKeys(int32_t userId, bool ephemeral) {
+622-    ENFORCE_SYSTEM_OR_ROOT;
+623-    ACQUIRE_CRYPT_LOCK;
+624-
+
+===== VOLD PROCESS EXIT POINTS =====
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-179-    // Always start from a clean slate by unmounting everything in
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-180-    // directories that we own, in case we crashed.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-181-    unmountAll();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-182-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-183-    Loop::destroyAll();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-184-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-185-    // Assume that we always have an emulated volume on internal
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-186-    // storage; the framework will decide if it should be mounted.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp:187:    CHECK(mInternalEmulatedVolumes.empty());
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-188-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-189-    auto vol = std::shared_ptr<android::vold::VolumeBase>(
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-190-            new android::vold::EmulatedVolume("/data/media", 0));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-191-    vol->setMountUserId(0);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-192-    vol->create();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-193-    mInternalEmulatedVolumes.push_back(vol);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-194-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-195-    // Consider creating a virtual disk
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-600-    LOG(DEBUG) << "Remounting " << uid << " as " << storageSource;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-601-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-602-    // Fork a child to mount user-specific symlink helper into place
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-603-    userSource = StringPrintf("/mnt/user/%d", multiuser_get_user_id(uid));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-604-    if (!(child = fork())) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-605-        if (childProcess(storageSource.c_str(), userSource.c_str(), nsFd, name)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-606-            _exit(0);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-607-        } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp:608:            _exit(1);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-609-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-610-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-611-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-612-    if (child == -1) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-613-        PLOG(ERROR) << "Failed to fork";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-614-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-615-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-616-        TEMP_FAILURE_RETRY(waitpid(child, nullptr, 0));
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-868-    // Fork a child to mount Android/obb android Android/data dirs, as we don't want it to affect
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-869-    // original vold process mount namespace.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-870-    if (!(child = fork())) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-871-        if (doUnmount) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-872-            if (umountStorageDirs(nsFd, android_data_dir, android_obb_dir, uid,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-873-                    targets_cstr, size)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-874-                _exit(0);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-875-            } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp:876:                _exit(1);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-877-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-878-        } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-879-            if (remountStorageDirs(nsFd, android_data_dir, android_obb_dir, uid,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-880-                    sources_cstr, targets_cstr, size)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-881-                _exit(0);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-882-            } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp:883:                _exit(1);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-884-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-885-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-886-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-887-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-888-    if (child == -1) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-889-        PLOG(ERROR) << "Failed to fork";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-890-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-891-    } else {
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1230-    disk->initializePartition(vol);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1231-    handleDiskAdded(disk);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1232-    *outVolId = vol->getId();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1233-    return android::OK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1234-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1235-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1236-int VolumeManager::destroyStubVolume(const std::string& volId) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1237-    auto tokens = android::base::Split(volId, ":");
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp:1238:    CHECK(tokens.size() == 2);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1239-    dev_t stubId;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp:1240:    CHECK(android::base::ParseUint(tokens[1], &stubId));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1241-    handleDiskRemoved(stubId);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1242-    return android::OK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1243-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1244-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1245-int VolumeManager::mountAppFuse(uid_t uid, int mountId, unique_fd* device_fd) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1246-    return android::vold::MountAppFuse(uid, mountId, device_fd);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1247-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1248-
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-83-    VolumeManager* vm;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-84-    NetlinkManager* nm;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-85-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-86-    parse_args(argc, argv);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-87-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-88-    sehandle = selinux_android_file_context_handle();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-89-    if (!sehandle) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-90-        LOG(ERROR) << "Failed to get SELinux file contexts handle";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:91:        exit(1);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-92-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-93-    selinux_android_set_sehandle(sehandle);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-94-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-95-    mkdir("/dev/block/vold", 0755);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-96-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-97-    /* For when cryptfs checks and mounts an encrypted filesystem */
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-98-    klog_set_level(6);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-99-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-100-    /* Create our singleton managers */
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-101-    if (!(vm = VolumeManager::Instance())) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-102-        LOG(ERROR) << "Unable to create VolumeManager";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:103:        exit(1);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-104-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-105-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-106-    if (!(nm = NetlinkManager::Instance())) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-107-        LOG(ERROR) << "Unable to create NetlinkManager";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:108:        exit(1);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-109-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-110-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-111-    if (android::base::GetBoolProperty("vold.debug", false)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-112-        vm->setDebug(true);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-113-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-114-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-115-    if (vm->start()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-116-        PLOG(ERROR) << "Unable to start VolumeManager";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:117:        exit(1);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-118-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-119-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-120-    VoldConfigs configs = {};
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-121-    if (process_config(vm, &configs)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-122-        PLOG(ERROR) << "Error reading configuration... continuing anyways";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-123-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-124-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-125-    android::hardware::configureRpcThreadpool(1, false /* callerWillJoin */);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-126-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-127-    ATRACE_BEGIN("VoldNativeService::start");
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-128-    if (android::vold::VoldNativeService::start() != android::OK) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-129-        LOG(ERROR) << "Unable to start VoldNativeService";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:130:        exit(1);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-131-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-132-    ATRACE_END();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-133-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-134-    LOG(DEBUG) << "VoldNativeService::start() completed OK";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-135-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-136-    ATRACE_BEGIN("NetlinkManager::start");
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-137-    if (nm->start()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-138-        PLOG(ERROR) << "Unable to start NetlinkManager";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:139:        exit(1);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-140-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-141-    ATRACE_END();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-142-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-143-    // This call should go after listeners are started to avoid
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-144-    // a deadlock between vold and init (see b/34278978 for details)
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-145-    android::base::SetProperty("vold.has_adoptable", configs.has_adoptable ? "1" : "0");
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-146-    android::base::SetProperty("vold.has_quota", configs.has_quota ? "1" : "0");
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-147-    android::base::SetProperty("vold.has_reserved", configs.has_reserved ? "1" : "0");
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-176-        case 'b': android::vold::sBlkidContext = optarg; break;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-177-        case 'B': android::vold::sBlkidUntrustedContext = optarg; break;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-178-        case 'f': android::vold::sFsckContext = optarg; break;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-179-        case 'F': android::vold::sFsckUntrustedContext = optarg; break;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-180-                // clang-format on
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-181-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-182-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-183-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:184:    CHECK(android::vold::sBlkidContext != nullptr);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:185:    CHECK(android::vold::sBlkidUntrustedContext != nullptr);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:186:    CHECK(android::vold::sFsckContext != nullptr);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:187:    CHECK(android::vold::sFsckUntrustedContext != nullptr);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-188-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-189-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-190-static void do_coldboot(DIR* d, int lvl) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-191-    struct dirent* de;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-192-    int dfd, fd;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-193-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-194-    dfd = dirfd(d);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-195-
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-250-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-251-        if (entry.fs_mgr_flags.fs_compress) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-252-            configs->has_compress = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-253-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-254-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-255-        /* Make sure logical partitions have an updated blk_device. */
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-256-        if (entry.fs_mgr_flags.logical && !fs_mgr_update_logical_partition(&entry) &&
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-257-            !entry.fs_mgr_flags.no_fail) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:258:            PLOG(FATAL) << "could not find logical partition " << entry.blk_device;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-259-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-260-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-261-        if (entry.mount_point == "/data" && !entry.metadata_key_dir.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-262-            // Pre-populate userdata dm-devices since the uevents are asynchronous (b/198405417).
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-263-            android::vold::defaultkey_precreate_dm_device();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-264-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-265-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-266-        if (entry.fs_mgr_flags.vold_managed) {
