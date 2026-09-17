@@ -1,0 +1,132 @@
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:315-389 =====
+315:         const auto apex_info_list = com::android::apex::readApexInfoList(apex_info_list_file);
+316:         if (apex_info_list.has_value()) {
+317:             std::vector<std::string> subcontext_apexes;
+318:             for (const auto& info : apex_info_list->getApexInfo()) {
+319:                 if (subcontext->PartitionMatchesSubcontext(info.getPartition())) {
+320:                     subcontext_apexes.push_back(info.getModuleName());
+321:                 }
+322:             }
+323:             subcontext->SetApexList(std::move(subcontext_apexes));
+324:         }
+325:     }
+326: #endif  // RECOVERY
+327:     parser.AddSectionParser("service", std::make_unique<ServiceParser>(&service_list, subcontext));
+328:     parser.AddSectionParser("on", std::make_unique<ActionParser>(&action_manager, subcontext));
+329: 
+330:     return parser;
+331: }
+332: 
+333: static void LoadBootScripts(ActionManager& action_manager, ServiceList& service_list) {
+334:     Parser parser = CreateParser(action_manager, service_list);
+335: 
+336:     std::string bootscript = GetProperty("ro.boot.init_rc", "");
+337:     if (bootscript.empty()) {
+338:         parser.ParseConfig("/system/etc/init/hw/init.rc");
+339:         if (!parser.ParseConfig("/system/etc/init")) {
+340:             late_import_paths.emplace_back("/system/etc/init");
+341:         }
+342:         // late_import is available only in Q and earlier release. As we don't
+343:         // have system_ext in those versions, skip late_import for system_ext.
+344:         parser.ParseConfig("/system_ext/etc/init");
+345:         if (!parser.ParseConfig("/vendor/etc/init")) {
+346:             late_import_paths.emplace_back("/vendor/etc/init");
+347:         }
+348:         if (!parser.ParseConfig("/odm/etc/init")) {
+349:             late_import_paths.emplace_back("/odm/etc/init");
+350:         }
+351:         if (!parser.ParseConfig("/product/etc/init")) {
+352:             late_import_paths.emplace_back("/product/etc/init");
+353:         }
+354:     } else {
+355:         parser.ParseConfig(bootscript);
+356:     }
+357: }
+358: 
+359: void PropertyChanged(const std::string& name, const std::string& value) {
+360:     // If the property is sys.powerctl, we bypass the event queue and immediately handle it.
+361:     // This is to ensure that init will always and immediately shutdown/reboot, regardless of
+362:     // if there are other pending events to process or if init is waiting on an exec service or
+363:     // waiting on a property.
+364:     // In non-thermal-shutdown case, 'shutdown' trigger will be fired to let device specific
+365:     // commands to be executed.
+366:     if (name == "sys.powerctl") {
+367:         trigger_shutdown(value);
+368:     }
+369: 
+370:     if (property_triggers_enabled) {
+371:         ActionManager::GetInstance().QueuePropertyChange(name, value);
+372:         WakeMainInitThread();
+373:     }
+374: 
+375:     prop_waiter_state.CheckAndResetWait(name, value);
+376: }
+377: 
+378: static std::optional<boot_clock::time_point> HandleProcessActions() {
+379:     std::optional<boot_clock::time_point> next_process_action_time;
+380:     for (const auto& s : ServiceList::GetInstance()) {
+381:         if ((s->flags() & SVC_RUNNING) && s->timeout_period()) {
+382:             auto timeout_time = s->time_started() + *s->timeout_period();
+383:             if (boot_clock::now() > timeout_time) {
+384:                 s->Timeout();
+385:             } else {
+386:                 if (!next_process_action_time || timeout_time < *next_process_action_time) {
+387:                     next_process_action_time = timeout_time;
+388:                 }
+389:             }
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:1028-1080 =====
+1028:     fs_mgr_vendor_overlay_mount_all();
+1029:     export_oem_lock_status();
+1030:     MountHandler mount_handler(&epoll);
+1031:     SetUsbController();
+1032:     SetKernelVersion();
+1033: 
+1034:     const BuiltinFunctionMap& function_map = GetBuiltinFunctionMap();
+1035:     Action::set_function_map(&function_map);
+1036: 
+1037:     if (!SetupMountNamespaces()) {
+1038:         PLOG(FATAL) << "SetupMountNamespaces failed";
+1039:     }
+1040: 
+1041:     InitializeSubcontext();
+1042: 
+1043:     ActionManager& am = ActionManager::GetInstance();
+1044:     ServiceList& sm = ServiceList::GetInstance();
+1045: 
+1046:     LoadBootScripts(am, sm);
+1047: 
+1048:     // Turning this on and letting the INFO logging be discarded adds 0.2s to
+1049:     // Nexus 9 boot time, so it's disabled by default.
+1050:     if (false) DumpState();
+1051: 
+1052:     // Make the GSI status available before scripts start running.
+1053:     auto is_running = android::gsi::IsGsiRunning() ? "1" : "0";
+1054:     SetProperty(gsi::kGsiBootedProp, is_running);
+1055:     auto is_installed = android::gsi::IsGsiInstalled() ? "1" : "0";
+1056:     SetProperty(gsi::kGsiInstalledProp, is_installed);
+1057:     if (android::gsi::IsGsiRunning()) {
+1058:         std::string dsu_slot;
+1059:         if (android::gsi::GetActiveDsu(&dsu_slot)) {
+1060:             SetProperty(gsi::kDsuSlotProp, dsu_slot);
+1061:         }
+1062:     }
+1063: 
+1064:     am.QueueBuiltinAction(SetupCgroupsAction, "SetupCgroups");
+1065:     am.QueueBuiltinAction(SetKptrRestrictAction, "SetKptrRestrict");
+1066:     am.QueueBuiltinAction(TestPerfEventSelinuxAction, "TestPerfEventSelinux");
+1067:     am.QueueEventTrigger("early-init");
+1068:     am.QueueBuiltinAction(ConnectEarlyStageSnapuserdAction, "ConnectEarlyStageSnapuserd");
+1069: 
+1070:     // Queue an action that waits for coldboot done so we know ueventd has set up all of /dev...
+1071:     am.QueueBuiltinAction(wait_for_coldboot_done_action, "wait_for_coldboot_done");
+1072:     // ... so that we can start queuing up actions that require stuff from /dev.
+1073:     am.QueueBuiltinAction(SetMmapRndBitsAction, "SetMmapRndBits");
+1074:     Keychords keychords;
+1075:     am.QueueBuiltinAction(
+1076:             [&epoll, &keychords](const BuiltinArguments& args) -> Result<void> {
+1077:                 for (const auto& svc : ServiceList::GetInstance()) {
+1078:                     keychords.Register(svc->keycodes());
+1079:                 }
+1080:                 keychords.Start(&epoll, HandleKeychord);

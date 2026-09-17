@@ -1,0 +1,663 @@
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:495 =====
+488:     start logd
+489:     # Start lmkd before any other services run so that it can register them
+490:     write /proc/sys/vm/watermark_boost_factor 0
+491:     chown root system /sys/module/lowmemorykiller/parameters/adj
+492:     chmod 0664 /sys/module/lowmemorykiller/parameters/adj
+493:     chown root system /sys/module/lowmemorykiller/parameters/minfree
+494:     chmod 0664 /sys/module/lowmemorykiller/parameters/minfree
+495:     start lmkd
+496: 
+497:     # Start essential services.
+498:     start servicemanager
+499:     start hwservicemanager
+500:     start vndservicemanager
+501: 
+502:     # Mount /mnt/vm ASAP to allow early VMs to run.
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:498 =====
+491:     chown root system /sys/module/lowmemorykiller/parameters/adj
+492:     chmod 0664 /sys/module/lowmemorykiller/parameters/adj
+493:     chown root system /sys/module/lowmemorykiller/parameters/minfree
+494:     chmod 0664 /sys/module/lowmemorykiller/parameters/minfree
+495:     start lmkd
+496: 
+497:     # Start essential services.
+498:     start servicemanager
+499:     start hwservicemanager
+500:     start vndservicemanager
+501: 
+502:     # Mount /mnt/vm ASAP to allow early VMs to run.
+503:     mkdir /mnt/vm 0755 root root
+504:     mount tmpfs tmpfs /mnt/vm nosuid nodev noexec rw
+505:     restorecon /mnt/vm
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:499 =====
+492:     chmod 0664 /sys/module/lowmemorykiller/parameters/adj
+493:     chown root system /sys/module/lowmemorykiller/parameters/minfree
+494:     chmod 0664 /sys/module/lowmemorykiller/parameters/minfree
+495:     start lmkd
+496: 
+497:     # Start essential services.
+498:     start servicemanager
+499:     start hwservicemanager
+500:     start vndservicemanager
+501: 
+502:     # Mount /mnt/vm ASAP to allow early VMs to run.
+503:     mkdir /mnt/vm 0755 root root
+504:     mount tmpfs tmpfs /mnt/vm nosuid nodev noexec rw
+505:     restorecon /mnt/vm
+506:     chown system system /mnt/vm
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:577 =====
+570:     # /data, which in turn can only be loaded when system properties are present.
+571:     trigger post-fs-data
+572: 
+573:     # Should be before netd, but after apex, properties and logging is available.
+574:     trigger load-bpf-programs
+575:     trigger bpf-progs-loaded
+576: 
+577:     # Now we can start zygote.
+578:     trigger zygote-start
+579: 
+580:     # Remove a file to wake up anything waiting for firmware.
+581:     trigger firmware_mounts_complete
+582: 
+583:     trigger early-boot
+584:     trigger boot
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:578 =====
+571:     trigger post-fs-data
+572: 
+573:     # Should be before netd, but after apex, properties and logging is available.
+574:     trigger load-bpf-programs
+575:     trigger bpf-progs-loaded
+576: 
+577:     # Now we can start zygote.
+578:     trigger zygote-start
+579: 
+580:     # Remove a file to wake up anything waiting for firmware.
+581:     trigger firmware_mounts_complete
+582: 
+583:     trigger early-boot
+584:     trigger boot
+585: 
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:583 =====
+576: 
+577:     # Now we can start zygote.
+578:     trigger zygote-start
+579: 
+580:     # Remove a file to wake up anything waiting for firmware.
+581:     trigger firmware_mounts_complete
+582: 
+583:     trigger early-boot
+584:     trigger boot
+585: 
+586: on early-fs
+587:     # Once metadata has been mounted, we'll need vold to deal with userdata checkpointing
+588:     start vold
+589: 
+590: on post-fs
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:584 =====
+577:     # Now we can start zygote.
+578:     trigger zygote-start
+579: 
+580:     # Remove a file to wake up anything waiting for firmware.
+581:     trigger firmware_mounts_complete
+582: 
+583:     trigger early-boot
+584:     trigger boot
+585: 
+586: on early-fs
+587:     # Once metadata has been mounted, we'll need vold to deal with userdata checkpointing
+588:     start vold
+589: 
+590: on post-fs
+591:     exec - system system -- /system/bin/vdc checkpoint markBootAttempt
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:1141 =====
+1134: # It is recommended to put unnecessary data/ initialization from post-fs-data
+1135: # to start-zygote in device's init.rc to unblock zygote start.
+1136: on zygote-start
+1137:     wait_for_prop odsign.verification.done 1
+1138:     # A/B update verifier that marks a successful boot.
+1139:     exec_start update_verifier
+1140:     start statsd
+1141:     start zygote
+1142:     start zygote_secondary
+1143: 
+1144: on boot && property:ro.config.low_ram=true
+1145:     # Tweak background writeout
+1146:     write /proc/sys/vm/dirty_expire_centisecs 200
+1147:     write /proc/sys/vm/dirty_background_ratio  5
+1148: 
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:1263 =====
+1256: 
+1257:     # Define default initial receive window size in segments.
+1258:     setprop net.tcp_def_init_rwnd 60
+1259: 
+1260:     # Start standard binderized HAL daemons
+1261:     class_start hal
+1262: 
+1263:     class_start core
+1264: 
+1265: on nonencrypted
+1266:     class_start main
+1267:     class_start late_start
+1268: 
+1269: on property:sys.init_log_level=*
+1270:     loglevel ${sys.init_log_level}
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:1266 =====
+1259: 
+1260:     # Start standard binderized HAL daemons
+1261:     class_start hal
+1262: 
+1263:     class_start core
+1264: 
+1265: on nonencrypted
+1266:     class_start main
+1267:     class_start late_start
+1268: 
+1269: on property:sys.init_log_level=*
+1270:     loglevel ${sys.init_log_level}
+1271: 
+1272: on charger
+1273:     class_start charger
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:1267 =====
+1260:     # Start standard binderized HAL daemons
+1261:     class_start hal
+1262: 
+1263:     class_start core
+1264: 
+1265: on nonencrypted
+1266:     class_start main
+1267:     class_start late_start
+1268: 
+1269: on property:sys.init_log_level=*
+1270:     loglevel ${sys.init_log_level}
+1271: 
+1272: on charger
+1273:     class_start charger
+1274: 
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hw/meta_init.system.rc:216 =====
+209:     # Linux's execveat() syscall may construct paths containing /dev/fd
+210:     # expecting it to point to /proc/self/fd
+211:     symlink /proc/self/fd /dev/fd
+212:     # set RLIMIT_NICE to allow priorities from 19 to -20
+213:     setrlimit nice 40 40
+214: 
+215:     start logd
+216:     start servicemanager
+217:     start hwservicemanager
+218: 
+219: # Healthd can trigger a full boot from charger mode by signaling this
+220: # property when the power button is held.
+221: on property:sys.boot_from_charger_mode=1
+222:     class_stop charger
+223:     trigger late-init
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hw/meta_init.system.rc:217 =====
+210:     # expecting it to point to /proc/self/fd
+211:     symlink /proc/self/fd /dev/fd
+212:     # set RLIMIT_NICE to allow priorities from 19 to -20
+213:     setrlimit nice 40 40
+214: 
+215:     start logd
+216:     start servicemanager
+217:     start hwservicemanager
+218: 
+219: # Healthd can trigger a full boot from charger mode by signaling this
+220: # property when the power button is held.
+221: on property:sys.boot_from_charger_mode=1
+222:     class_stop charger
+223:     trigger late-init
+224: 
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hw/meta_init.system.rc:269 =====
+262: 
+263:     # Load persist properties and override properties (if enabled) from /data.
+264:     trigger load_persist_props_action
+265: 
+266:     # Remove a file to wake up anything waiting for firmware.
+267:     trigger firmware_mounts_complete
+268: 
+269:     trigger early-boot
+270:     trigger boot
+271: 
+272:  on early-fs
+273:     # Once metadata has been mounted, we'll need vold to deal with userdata checkpointing
+274:    start vold
+275: 
+276: on post-fs
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hw/meta_init.system.rc:270 =====
+263:     # Load persist properties and override properties (if enabled) from /data.
+264:     trigger load_persist_props_action
+265: 
+266:     # Remove a file to wake up anything waiting for firmware.
+267:     trigger firmware_mounts_complete
+268: 
+269:     trigger early-boot
+270:     trigger boot
+271: 
+272:  on early-fs
+273:     # Once metadata has been mounted, we'll need vold to deal with userdata checkpointing
+274:    start vold
+275: 
+276: on post-fs
+277:     start system_suspend
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hw/meta_init.system.rc:319 =====
+312: 
+313: # It is recommended to put unnecessary data/ initialization from post-fs-data
+314: # to start-zygote in device's init.rc to unblock zygote start.
+315: on zygote-start && property:ro.crypto.state=unencrypted
+316:     # A/B update verifier that marks a successful boot.
+317:     exec_start update_verifier_nonencrypted
+318:     start netd
+319:     start zygote
+320:     start zygote_secondary
+321: 
+322: on zygote-start && property:ro.crypto.state=unsupported
+323:     # A/B update verifier that marks a successful boot.
+324:     exec_start update_verifier_nonencrypted
+325:     start netd
+326:     start zygote
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hw/meta_init.system.rc:326 =====
+319:     start zygote
+320:     start zygote_secondary
+321: 
+322: on zygote-start && property:ro.crypto.state=unsupported
+323:     # A/B update verifier that marks a successful boot.
+324:     exec_start update_verifier_nonencrypted
+325:     start netd
+326:     start zygote
+327:     start zygote_secondary
+328: 
+329: on zygote-start && property:ro.crypto.state=encrypted && property:ro.crypto.type=file
+330:     # A/B update verifier that marks a successful boot.
+331:     exec_start update_verifier_nonencrypted
+332:     start netd
+333:     start zygote
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hw/meta_init.system.rc:333 =====
+326:     start zygote
+327:     start zygote_secondary
+328: 
+329: on zygote-start && property:ro.crypto.state=encrypted && property:ro.crypto.type=file
+330:     # A/B update verifier that marks a successful boot.
+331:     exec_start update_verifier_nonencrypted
+332:     start netd
+333:     start zygote
+334:     start zygote_secondary
+335: 
+336: on boot
+337: 
+338: # basic network init
+339:     ifup lo
+340:     hostname localhost
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hw/meta_init.system.rc:346 =====
+339:     ifup lo
+340:     hostname localhost
+341:     domainname localdomain
+342: 
+343:     # Start standard binderized HAL daemons
+344:     class_start hal
+345: 
+346:     class_start core
+347: 
+348: 
+349: on nonencrypted
+350:     class_start main
+351:     class_start late_start
+352: 
+353: # One shot invocation to deal with encrypted volume.
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hw/meta_init.system.rc:350 =====
+343:     # Start standard binderized HAL daemons
+344:     class_start hal
+345: 
+346:     class_start core
+347: 
+348: 
+349: on nonencrypted
+350:     class_start main
+351:     class_start late_start
+352: 
+353: # One shot invocation to deal with encrypted volume.
+354: on defaultcrypto
+355:     exec - root -- /system/bin/vdc --wait cryptfs mountdefaultencrypted
+356:     # vold will set vold.decrypt to trigger_restart_framework (default
+357:     # encryption) or trigger_restart_min_framework (other encryption)
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hw/meta_init.system.rc:351 =====
+344:     class_start hal
+345: 
+346:     class_start core
+347: 
+348: 
+349: on nonencrypted
+350:     class_start main
+351:     class_start late_start
+352: 
+353: # One shot invocation to deal with encrypted volume.
+354: on defaultcrypto
+355:     exec - root -- /system/bin/vdc --wait cryptfs mountdefaultencrypted
+356:     # vold will set vold.decrypt to trigger_restart_framework (default
+357:     # encryption) or trigger_restart_min_framework (other encryption)
+358: 
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:257 =====
+250:     write /proc/sys/abi/swp 1
+251:     # Linux's execveat() syscall may construct paths containing /dev/fd
+252:     # expecting it to point to /proc/self/fd
+253:     symlink /proc/self/fd /dev/fd
+254:     # set RLIMIT_NICE to allow priorities from 19 to -20
+255:     setrlimit nice 40 40
+256: 
+257:     start servicemanager
+258:     start hwservicemanager
+259:     start hidl_memory
+260: 
+261:     # Healthd can trigger a full boot from charger mode by signaling this
+262:     # property when the power button is held.
+263:     on property:sys.boot_from_charger_mode=1
+264:     class_stop charger
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:258 =====
+251:     # Linux's execveat() syscall may construct paths containing /dev/fd
+252:     # expecting it to point to /proc/self/fd
+253:     symlink /proc/self/fd /dev/fd
+254:     # set RLIMIT_NICE to allow priorities from 19 to -20
+255:     setrlimit nice 40 40
+256: 
+257:     start servicemanager
+258:     start hwservicemanager
+259:     start hidl_memory
+260: 
+261:     # Healthd can trigger a full boot from charger mode by signaling this
+262:     # property when the power button is held.
+263:     on property:sys.boot_from_charger_mode=1
+264:     class_stop charger
+265:     trigger late-init
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:313 =====
+306:    
+307:     # Load persist properties and override properties (if enabled) from /data.
+308:     trigger load_persist_props_action
+309: 
+310:     # Remove a file to wake up anything waiting for firmware.
+311:     trigger firmware_mounts_complete
+312: 
+313:     trigger early-boot
+314:     trigger boot
+315: 
+316:  on early-fs
+317:     # Once metadata has been mounted, we'll need vold to deal with userdata checkpointing
+318:     start vold
+319: 
+320: # mount different fs start
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:314 =====
+307:     # Load persist properties and override properties (if enabled) from /data.
+308:     trigger load_persist_props_action
+309: 
+310:     # Remove a file to wake up anything waiting for firmware.
+311:     trigger firmware_mounts_complete
+312: 
+313:     trigger early-boot
+314:     trigger boot
+315: 
+316:  on early-fs
+317:     # Once metadata has been mounted, we'll need vold to deal with userdata checkpointing
+318:     start vold
+319: 
+320: # mount different fs start
+321: on fs
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:544 =====
+537: 
+538: # It is recommended to put unnecessary data/ initialization from post-fs-data
+539: # to start-zygote in device's init.rc to unblock zygote start.
+540: on zygote-start && property:ro.crypto.state=unencrypted
+541:     # A/B update verifier that marks a successful boot.
+542:     exec_start update_verifier_nonencrypted
+543:     start netd
+544:     start zygote
+545:     start zygote_secondary
+546: 
+547: on zygote-start && property:ro.crypto.state=unsupported
+548:     # A/B update verifier that marks a successful boot.
+549:     exec_start update_verifier_nonencrypted
+550:     start netd
+551:     start zygote
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:551 =====
+544:     start zygote
+545:     start zygote_secondary
+546: 
+547: on zygote-start && property:ro.crypto.state=unsupported
+548:     # A/B update verifier that marks a successful boot.
+549:     exec_start update_verifier_nonencrypted
+550:     start netd
+551:     start zygote
+552:     start zygote_secondary
+553: 
+554: on zygote-start && property:ro.crypto.state=encrypted && property:ro.crypto.type=file
+555:     # A/B update verifier that marks a successful boot.
+556:     exec_start update_verifier_nonencrypted
+557:     start netd
+558:     start zygote
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:558 =====
+551:     start zygote
+552:     start zygote_secondary
+553: 
+554: on zygote-start && property:ro.crypto.state=encrypted && property:ro.crypto.type=file
+555:     # A/B update verifier that marks a successful boot.
+556:     exec_start update_verifier_nonencrypted
+557:     start netd
+558:     start zygote
+559:     start zygote_secondary
+560: 
+561: on boot
+562:     setprop sys.usb.configfs 1
+563:     setprop sys.usb.controller "11201000.usb0"
+564:     setprop vendor.usb.clear boot
+565: 
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:604 =====
+597:     # Start default class, this line is very important!!
+598:     class_start default
+599:     #INTERNAL_END
+600: 
+601:     # Start standard binderized HAL daemons
+602:     class_start hal
+603: 
+604:     class_start core
+605: 
+606: on nonencrypted
+607:     class_start main
+608:     class_start late_start
+609: 
+610: on property:vold.decrypt=trigger_default_encryption
+611:     start defaultcrypto
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:607 =====
+600: 
+601:     # Start standard binderized HAL daemons
+602:     class_start hal
+603: 
+604:     class_start core
+605: 
+606: on nonencrypted
+607:     class_start main
+608:     class_start late_start
+609: 
+610: on property:vold.decrypt=trigger_default_encryption
+611:     start defaultcrypto
+612: 
+613: on property:vold.decrypt=trigger_encryption
+614:     start surfaceflinger
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:608 =====
+601:     # Start standard binderized HAL daemons
+602:     class_start hal
+603: 
+604:     class_start core
+605: 
+606: on nonencrypted
+607:     class_start main
+608:     class_start late_start
+609: 
+610: on property:vold.decrypt=trigger_default_encryption
+611:     start defaultcrypto
+612: 
+613: on property:vold.decrypt=trigger_encryption
+614:     start surfaceflinger
+615:     start encrypt
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:627 =====
+620: on property:vold.decrypt=trigger_load_persist_props
+621:     load_persist_props
+622:     start logd
+623:     start logd-reinit
+624: 
+625: on property:vold.decrypt=trigger_post_fs_data
+626:     trigger post-fs-data
+627:     trigger zygote-start
+628: 
+629: on property:vold.decrypt=trigger_restart_min_framework
+630:     # A/B update verifier that marks a successful boot.
+631:     exec_start update_verifier
+632:     class_start main
+633: 
+634: on property:vold.decrypt=trigger_restart_framework
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:632 =====
+625: on property:vold.decrypt=trigger_post_fs_data
+626:     trigger post-fs-data
+627:     trigger zygote-start
+628: 
+629: on property:vold.decrypt=trigger_restart_min_framework
+630:     # A/B update verifier that marks a successful boot.
+631:     exec_start update_verifier
+632:     class_start main
+633: 
+634: on property:vold.decrypt=trigger_restart_framework
+635:     stop surfaceflinger
+636:     start surfaceflinger
+637:     # A/B update verifier that marks a successful boot.
+638:     exec_start update_verifier
+639:     class_start main
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:639 =====
+632:     class_start main
+633: 
+634: on property:vold.decrypt=trigger_restart_framework
+635:     stop surfaceflinger
+636:     start surfaceflinger
+637:     # A/B update verifier that marks a successful boot.
+638:     exec_start update_verifier
+639:     class_start main
+640:     class_start late_start
+641: 
+642: on property:vold.decrypt=trigger_shutdown_framework
+643:     class_reset late_start
+644:     class_reset main
+645: 
+646: # One shot invocation to deal with encrypted volume.
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:640 =====
+633: 
+634: on property:vold.decrypt=trigger_restart_framework
+635:     stop surfaceflinger
+636:     start surfaceflinger
+637:     # A/B update verifier that marks a successful boot.
+638:     exec_start update_verifier
+639:     class_start main
+640:     class_start late_start
+641: 
+642: on property:vold.decrypt=trigger_shutdown_framework
+643:     class_reset late_start
+644:     class_reset main
+645: 
+646: # One shot invocation to deal with encrypted volume.
+647: on defaultcrypto
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:666 =====
+659:     setprop vold.post_fs_data_done 0
+660:     trigger post-fs-data
+661: on property:vendor.crypto.fake_encrypt=1 && property:vold.post_fs_data_done=1
+662:     trigger load_persist_props_action
+663:     # setprop ro.crypto.state unencrypted
+664:     setprop vendor.soter.teei.crypto.state unencrypted
+665:     exec_start update_verifier
+666:     class_start main
+667:     class_start late_start
+668:     start mount_all_storages
+669: 
+670: service ueventd /system/bin/ueventd
+671:     class core
+672:     critical
+673:     seclabel u:r:ueventd:s0
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/factory_init.rc:667 =====
+660:     trigger post-fs-data
+661: on property:vendor.crypto.fake_encrypt=1 && property:vold.post_fs_data_done=1
+662:     trigger load_persist_props_action
+663:     # setprop ro.crypto.state unencrypted
+664:     setprop vendor.soter.teei.crypto.state unencrypted
+665:     exec_start update_verifier
+666:     class_start main
+667:     class_start late_start
+668:     start mount_all_storages
+669: 
+670: service ueventd /system/bin/ueventd
+671:     class core
+672:     critical
+673:     seclabel u:r:ueventd:s0
+674: 
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/meta_init.rc:275 =====
+268:     setprop vold.post_fs_data_done 0
+269:     trigger post-fs-data
+270: on property:vendor.crypto.fake_encrypt=1 && property:vold.post_fs_data_done=1
+271:     trigger load_persist_props_action
+272:     # setprop ro.crypto.state unencrypted
+273:     setprop vendor.soter.teei.crypto.state unencrypted
+274:     exec_start update_verifier
+275:     class_start main
+276:     class_start late_start
+277:     start mount_all_storages
+278: 
+279: 
+280: #Log too much setting
+281: on property:ro.vendor.mtklog_internal=1
+282:     setprop vendor.logmuch.value 10000
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/meta_init.rc:276 =====
+269:     trigger post-fs-data
+270: on property:vendor.crypto.fake_encrypt=1 && property:vold.post_fs_data_done=1
+271:     trigger load_persist_props_action
+272:     # setprop ro.crypto.state unencrypted
+273:     setprop vendor.soter.teei.crypto.state unencrypted
+274:     exec_start update_verifier
+275:     class_start main
+276:     class_start late_start
+277:     start mount_all_storages
+278: 
+279: 
+280: #Log too much setting
+281: on property:ro.vendor.mtklog_internal=1
+282:     setprop vendor.logmuch.value 10000
+283: 

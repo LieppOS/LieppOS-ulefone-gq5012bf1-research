@@ -1,0 +1,85 @@
+1: # HBT binfmt_misc for 64-bit only devices
+2: on late-fs && property:ro.vendor.mtk.app32_boost_support=* && property:ro.vendor.mtk.hbt_binfmt_misc_support=1
+3:     mount binfmt_misc none /proc/sys/fs/binfmt_misc
+4:     write /proc/sys/fs/binfmt_misc/register ":hbt:M::\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00:\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\xfe\xff\xff\xff:/system_ext/bin/hbt_translator:POC"
+5: 
+6: # cerate empty 32b webview relro and dalvik-cache
+7: on property:sys.boot_completed=1 && property:ro.vendor.mtk.app32_boost_support=* && property:ro.vendor.mtk.hbt_binfmt_misc_support=1
+8:     write /data/misc/shared_relro/libwebviewchromium32.relro ""
+9:     chown shared_relro shared_relro /data/misc/shared_relro/libwebviewchromium32.relro
+10:     chmod 444 /data/misc/shared_relro/libwebviewchromium32.relro
+11:     mkdir /data/dalvik-cache/arm
+12: 
+13: # HBT binfmt_misc for 64-bit only devices with 32bit cpu
+14: on boot && property:ro.vendor.mtk.app32_boost_support=* && property:ro.vendor.mtk.hbt_binfmt_misc_support=1 && property:ro.vendor.mtk.hbt_allow32=1
+15:     write /proc/sys/fs/binfmt_misc/hbt "0"
+16: 
+17: service surfaceflinger /system/bin/surfaceflinger
+18:     override
+19:     class core animation
+20:     user system
+21:     group graphics drmrpc readproc
+22:     capabilities SYS_NICE
+23:     onrestart restart --only-if-running zygote_HBT
+24:     onrestart restart --only-if-running zygote
+25:     task_profiles HighPerformance
+26:     socket pdx/system/vr/display/client     stream 0666 system graphics u:object_r:pdx_display_client_endpoint_socket:s0
+27:     socket pdx/system/vr/display/manager    stream 0666 system graphics u:object_r:pdx_display_manager_endpoint_socket:s0
+28:     socket pdx/system/vr/display/vsync      stream 0666 system graphics u:object_r:pdx_display_vsync_endpoint_socket:s0
+29: 
+30: service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-system-server --socket-name=zygote
+31:     override
+32:     class main
+33:     priority -20
+34:     user root
+35:     group root readproc reserved_disk
+36:     socket zygote stream 660 root system
+37:     socket usap_pool_primary stream 660 root system
+38:     onrestart exec_background - system system -- /system/bin/vdc volume abort_fuse
+39:     onrestart write /sys/power/state on
+40:     # NOTE: If the wakelock name here is changed, then also
+41:     # update it in SystemSuspend.cpp
+42:     onrestart write /sys/power/wake_lock zygote_kwl
+43:     onrestart restart --only-if-running zygote_HBT
+44:     onrestart restart audioserver
+45:     onrestart restart cameraserver
+46:     onrestart restart media
+47:     onrestart restart media.tuner
+48:     onrestart restart netd
+49:     onrestart restart wificond
+50:     task_profiles ProcessCapacityHigh MaxPerformance
+51:     critical window=${zygote.critical_window.minute:-off} target=zygote-fatal
+52: 
+53: # HBT zygote for 64/32-bit mixed devices
+54: on zygote-start && property:ro.vendor.mtk.app32_boost_support=* && property:persist.device_config.vendor_system_native.zygote_HBT=1
+55:     write /proc/bootprof "HBT:zygote_HBT-start"
+56:     start zygote_HBT
+57: 
+58: # HBT zygote always on policy
+59: on zygote-start && property:ro.vendor.mtk.app32_boost_support=* && property:ro.vendor.mtk.hbt_dyn_type=3
+60:     write /proc/bootprof "HBT:zygote_HBT-start"
+61:     start zygote_HBT
+62: 
+63: on zygote-start && property:ro.vendor.mtk.app32_boost_support=* && property:persist.vendor.mtk.hbt_dyn_type=3
+64:     write /proc/bootprof "HBT:zygote_HBT-start"
+65:     start zygote_HBT
+66: 
+67: service zygote_HBT /system_ext/bin/hbt_translator /system/bin/app_process32 -Xzygote /system/bin --zygote --socket-name=zygote_tertiary
+68:     class main
+69:     priority -20
+70:     user root
+71:     group root readproc reserved_disk
+72:     socket zygote_tertiary stream 660 root system
+73:     socket usap_pool_tertiary stream 660 root system
+74:     oneshot
+75:     task_profiles ProcessCapacityHigh MaxPerformance
+76:     disabled
+77: 
+78: on property:sys.boot_completed=1 && property:ro.vendor.mtk.app32_boost_support=* && property:persist.device_config.vendor_system_native.zygote_HBT=0
+79:     stop zygote_HBT
+80: 
+81: on property:sys.boot_completed=1 && property:sys.system_server.start_count=1 && property:ro.vendor.mtk.app32_boost_support=* && property:persist.device_config.vendor_system_native.zygote_HBT=1
+82:     start zygote_HBT
+83: 
+84: on property:sys.boot_completed=1 && property:ro.vendor.mtk.app32_boost_support=* && property:persist.device_config.vendor_system_native.zygote_HBT_dyn=1
+85:     start zygote_HBT

@@ -1,0 +1,75 @@
+108: Result<void> ServiceParser::ParseCritical(std::vector<std::string>&& args) {
+109:     std::optional<std::string> fatal_reboot_target;
+110:     std::optional<std::chrono::minutes> fatal_crash_window;
+111: 
+112:     for (auto it = args.begin() + 1; it != args.end(); ++it) {
+113:         auto arg = android::base::Split(*it, "=");
+114:         if (arg.size() != 2) {
+115:             return Error() << "critical: Argument '" << *it << "' is not supported";
+116:         } else if (arg[0] == "target") {
+117:             fatal_reboot_target = arg[1];
+118:         } else if (arg[0] == "window") {
+119:             int minutes;
+120:             auto window = ExpandProps(arg[1]);
+121:             if (!window.ok()) {
+122:                 return Error() << "critical: Could not expand argument ': " << arg[1];
+123:             }
+124:             if (*window == "off") {
+125:                 return {};
+126:             }
+127:             if (!ParseInt(*window, &minutes, 0)) {
+128:                 return Error() << "critical: 'fatal_crash_window' must be an integer > 0";
+129:             }
+130:             fatal_crash_window = std::chrono::minutes(minutes);
+131:         } else {
+132:             return Error() << "critical: Argument '" << *it << "' is not supported";
+133:         }
+134:     }
+135: 
+136:     if (fatal_reboot_target) {
+137:         service_->fatal_reboot_target_ = *fatal_reboot_target;
+138:     }
+139:     if (fatal_crash_window) {
+140:         service_->fatal_crash_window_ = *fatal_crash_window;
+141:     }
+142:     service_->flags_ |= SVC_CRITICAL;
+143:     return {};
+144: }
+145: 
+146: Result<void> ServiceParser::ParseDisabled(std::vector<std::string>&& args) {
+147:     service_->flags_ |= SVC_DISABLED;
+148:     service_->flags_ |= SVC_RC_DISABLED;
+149:     return {};
+150: }
+151: 
+152: Result<void> ServiceParser::ParseEnterNamespace(std::vector<std::string>&& args) {
+153:     if (args[1] != "net") {
+154:         return Error() << "Init only supports entering network namespaces";
+155:     }
+156:     if (!service_->namespaces_.namespaces_to_enter.empty()) {
+157:         return Error() << "Only one network namespace may be entered";
+158:     }
+159:     // Network namespaces require that /sys is remounted, otherwise the old adapters will still be
+160:     // present. Therefore, they also require mount namespaces.
+161:     service_->namespaces_.flags |= CLONE_NEWNS;
+162:     service_->namespaces_.namespaces_to_enter.emplace_back(CLONE_NEWNET, std::move(args[2]));
+163:     return {};
+164: }
+165: 
+166: Result<void> ServiceParser::ParseGentleKill(std::vector<std::string>&& args) {
+167:     service_->flags_ |= SVC_GENTLE_KILL;
+168:     return {};
+169: }
+170: 
+171: Result<void> ServiceParser::ParseGroup(std::vector<std::string>&& args) {
+172:     auto gid = DecodeUid(args[1]);
+173:     if (!gid.ok()) {
+174:         return Error() << "Unable to decode GID for '" << args[1] << "': " << gid.error();
+175:     }
+176:     service_->proc_attr_.gid = *gid;
+177: 
+178:     for (std::size_t n = 2; n < args.size(); n++) {
+179:         gid = DecodeUid(args[n]);
+180:         if (!gid.ok()) {
+181:             return Error() << "Unable to decode GID for '" << args[n] << "': " << gid.error();
+182:         }
