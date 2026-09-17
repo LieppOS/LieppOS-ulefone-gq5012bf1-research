@@ -1,0 +1,218 @@
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.boringssl.no_zygote.rc:6 =====
+1: on init && property:ro.product.cpu.abilist32=*
+2:     exec_start boringssl_self_test32
+3: on init && property:ro.product.cpu.abilist64=*
+4:     exec_start boringssl_self_test64
+5: on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+6:     exec_start boringssl_self_test_apex32
+7: on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+8:     exec_start boringssl_self_test_apex64
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.boringssl.no_zygote.rc:8 =====
+1: on init && property:ro.product.cpu.abilist32=*
+2:     exec_start boringssl_self_test32
+3: on init && property:ro.product.cpu.abilist64=*
+4:     exec_start boringssl_self_test64
+5: on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+6:     exec_start boringssl_self_test_apex32
+7: on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+8:     exec_start boringssl_self_test_apex64
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.boringssl.zygote32.rc:6 =====
+1: on init && property:ro.product.cpu.abilist32=*
+2:     exec_start boringssl_self_test32
+3: on init && property:ro.product.cpu.abilist64=*
+4:     exec_start boringssl_self_test64
+5: on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+6:     exec_start boringssl_self_test_apex32
+7: on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+8:     exec_start boringssl_self_test_apex64
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.boringssl.zygote32.rc:8 =====
+1: on init && property:ro.product.cpu.abilist32=*
+2:     exec_start boringssl_self_test32
+3: on init && property:ro.product.cpu.abilist64=*
+4:     exec_start boringssl_self_test64
+5: on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+6:     exec_start boringssl_self_test_apex32
+7: on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+8:     exec_start boringssl_self_test_apex64
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.boringssl.zygote64.rc:4 =====
+1: on init && property:ro.product.cpu.abilist64=*
+2:     exec_start boringssl_self_test64
+3: on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+4:     exec_start boringssl_self_test_apex64
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.boringssl.zygote64_32.rc:6 =====
+1: on init && property:ro.product.cpu.abilist32=*
+2:     exec_start boringssl_self_test32
+3: on init && property:ro.product.cpu.abilist64=*
+4:     exec_start boringssl_self_test64
+5: on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+6:     exec_start boringssl_self_test_apex32
+7: on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+8:     exec_start boringssl_self_test_apex64
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.boringssl.zygote64_32.rc:8 =====
+1: on init && property:ro.product.cpu.abilist32=*
+2:     exec_start boringssl_self_test32
+3: on init && property:ro.product.cpu.abilist64=*
+4:     exec_start boringssl_self_test64
+5: on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+6:     exec_start boringssl_self_test_apex32
+7: on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+8:     exec_start boringssl_self_test_apex64
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:514 =====
+506:     chown system system /mnt/vm
+507:     chmod 0770 /mnt/vm
+508:     mkdir /mnt/vm/early 0770 system system
+509: 
+510: # Run boringssl self test for each ABI.  Any failures trigger reboot to firmware.
+511: import /system/etc/init/hw/init.boringssl.${ro.zygote}.rc
+512: 
+513: service boringssl_self_test32 /system/bin/boringssl_self_test32
+514:     reboot_on_failure reboot,boringssl-self-check-failed
+515:     stdio_to_kmsg
+516:     # Explicitly specify that boringssl_self_test32 doesn't require any capabilities
+517:     capabilities
+518:     user nobody
+519: 
+520: service boringssl_self_test64 /system/bin/boringssl_self_test64
+521:     reboot_on_failure reboot,boringssl-self-check-failed
+522:     stdio_to_kmsg
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:521 =====
+513: service boringssl_self_test32 /system/bin/boringssl_self_test32
+514:     reboot_on_failure reboot,boringssl-self-check-failed
+515:     stdio_to_kmsg
+516:     # Explicitly specify that boringssl_self_test32 doesn't require any capabilities
+517:     capabilities
+518:     user nobody
+519: 
+520: service boringssl_self_test64 /system/bin/boringssl_self_test64
+521:     reboot_on_failure reboot,boringssl-self-check-failed
+522:     stdio_to_kmsg
+523:     # Explicitly specify that boringssl_self_test64 doesn't require any capabilities
+524:     capabilities
+525:     user nobody
+526: 
+527: service boringssl_self_test_apex32 /apex/com.android.conscrypt/bin/boringssl_self_test32
+528:     reboot_on_failure reboot,boringssl-self-check-failed
+529:     stdio_to_kmsg
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:527 =====
+519: 
+520: service boringssl_self_test64 /system/bin/boringssl_self_test64
+521:     reboot_on_failure reboot,boringssl-self-check-failed
+522:     stdio_to_kmsg
+523:     # Explicitly specify that boringssl_self_test64 doesn't require any capabilities
+524:     capabilities
+525:     user nobody
+526: 
+527: service boringssl_self_test_apex32 /apex/com.android.conscrypt/bin/boringssl_self_test32
+528:     reboot_on_failure reboot,boringssl-self-check-failed
+529:     stdio_to_kmsg
+530:     # Explicitly specify that boringssl_self_test_apex32 doesn't require any capabilities
+531:     capabilities
+532:     user nobody
+533: 
+534: service boringssl_self_test_apex64 /apex/com.android.conscrypt/bin/boringssl_self_test64
+535:     reboot_on_failure reboot,boringssl-self-check-failed
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:528 =====
+520: service boringssl_self_test64 /system/bin/boringssl_self_test64
+521:     reboot_on_failure reboot,boringssl-self-check-failed
+522:     stdio_to_kmsg
+523:     # Explicitly specify that boringssl_self_test64 doesn't require any capabilities
+524:     capabilities
+525:     user nobody
+526: 
+527: service boringssl_self_test_apex32 /apex/com.android.conscrypt/bin/boringssl_self_test32
+528:     reboot_on_failure reboot,boringssl-self-check-failed
+529:     stdio_to_kmsg
+530:     # Explicitly specify that boringssl_self_test_apex32 doesn't require any capabilities
+531:     capabilities
+532:     user nobody
+533: 
+534: service boringssl_self_test_apex64 /apex/com.android.conscrypt/bin/boringssl_self_test64
+535:     reboot_on_failure reboot,boringssl-self-check-failed
+536:     stdio_to_kmsg
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:530 =====
+522:     stdio_to_kmsg
+523:     # Explicitly specify that boringssl_self_test64 doesn't require any capabilities
+524:     capabilities
+525:     user nobody
+526: 
+527: service boringssl_self_test_apex32 /apex/com.android.conscrypt/bin/boringssl_self_test32
+528:     reboot_on_failure reboot,boringssl-self-check-failed
+529:     stdio_to_kmsg
+530:     # Explicitly specify that boringssl_self_test_apex32 doesn't require any capabilities
+531:     capabilities
+532:     user nobody
+533: 
+534: service boringssl_self_test_apex64 /apex/com.android.conscrypt/bin/boringssl_self_test64
+535:     reboot_on_failure reboot,boringssl-self-check-failed
+536:     stdio_to_kmsg
+537:     # Explicitly specify that boringssl_self_test_apex64 doesn't require any capabilities
+538:     capabilities
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:534 =====
+526: 
+527: service boringssl_self_test_apex32 /apex/com.android.conscrypt/bin/boringssl_self_test32
+528:     reboot_on_failure reboot,boringssl-self-check-failed
+529:     stdio_to_kmsg
+530:     # Explicitly specify that boringssl_self_test_apex32 doesn't require any capabilities
+531:     capabilities
+532:     user nobody
+533: 
+534: service boringssl_self_test_apex64 /apex/com.android.conscrypt/bin/boringssl_self_test64
+535:     reboot_on_failure reboot,boringssl-self-check-failed
+536:     stdio_to_kmsg
+537:     # Explicitly specify that boringssl_self_test_apex64 doesn't require any capabilities
+538:     capabilities
+539:     user nobody
+540: 
+541: # Healthd can trigger a full boot from charger mode by signaling this
+542: # property when the power button is held.
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:535 =====
+527: service boringssl_self_test_apex32 /apex/com.android.conscrypt/bin/boringssl_self_test32
+528:     reboot_on_failure reboot,boringssl-self-check-failed
+529:     stdio_to_kmsg
+530:     # Explicitly specify that boringssl_self_test_apex32 doesn't require any capabilities
+531:     capabilities
+532:     user nobody
+533: 
+534: service boringssl_self_test_apex64 /apex/com.android.conscrypt/bin/boringssl_self_test64
+535:     reboot_on_failure reboot,boringssl-self-check-failed
+536:     stdio_to_kmsg
+537:     # Explicitly specify that boringssl_self_test_apex64 doesn't require any capabilities
+538:     capabilities
+539:     user nobody
+540: 
+541: # Healthd can trigger a full boot from charger mode by signaling this
+542: # property when the power button is held.
+543: on property:sys.boot_from_charger_mode=1
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/hw/init.rc:537 =====
+529:     stdio_to_kmsg
+530:     # Explicitly specify that boringssl_self_test_apex32 doesn't require any capabilities
+531:     capabilities
+532:     user nobody
+533: 
+534: service boringssl_self_test_apex64 /apex/com.android.conscrypt/bin/boringssl_self_test64
+535:     reboot_on_failure reboot,boringssl-self-check-failed
+536:     stdio_to_kmsg
+537:     # Explicitly specify that boringssl_self_test_apex64 doesn't require any capabilities
+538:     capabilities
+539:     user nobody
+540: 
+541: # Healthd can trigger a full boot from charger mode by signaling this
+542: # property when the power button is held.
+543: on property:sys.boot_from_charger_mode=1
+544:     class_stop charger
+545:     trigger late-init
