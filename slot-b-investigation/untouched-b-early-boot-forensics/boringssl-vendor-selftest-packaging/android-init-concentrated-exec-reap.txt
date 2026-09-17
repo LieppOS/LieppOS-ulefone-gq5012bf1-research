@@ -1,0 +1,151 @@
+===== FUNCTION LOCATIONS =====
+119:static bool ExpandArgsAndExecv(const std::vector<std::string>& args, bool sigstop) {
+263:void Service::Reap(const siginfo_t& siginfo) {
+583:    if (!ExpandArgsAndExecv(args_, sigstop_)) {
+589:Result<void> Service::Start() {
+858:Result<void> Service::StartIfNotDisabled() {
+
+===== REBOOT ON FAILURE AREA =====
+
+===== EXEC AREA =====
+using android::base::SetProperty;
+using android::base::StartsWith;
+using android::base::StringPrintf;
+using android::base::unique_fd;
+using android::base::WriteStringToFile;
+
+namespace android {
+namespace init {
+
+static Result<std::string> ComputeContextFromExecutable(const std::string& service_path) {
+    std::string computed_context;
+
+    char* raw_con = nullptr;
+    char* raw_filecon = nullptr;
+
+    if (getcon(&raw_con) == -1) {
+        return Error() << "Could not get security context";
+    }
+    std::unique_ptr<char, decltype(&freecon)> mycon(raw_con, freecon);
+
+    if (getfilecon(service_path.c_str(), &raw_filecon) == -1) {
+        return Error() << "Could not get file context";
+    }
+    std::unique_ptr<char, decltype(&freecon)> filecon(raw_filecon, freecon);
+
+    char* new_con = nullptr;
+    int rc = security_compute_create(mycon.get(), filecon.get(),
+                                     string_to_security_class("process"), &new_con);
+    if (rc == 0) {
+        computed_context = new_con;
+        free(new_con);
+    }
+    if (rc == 0 && computed_context == mycon.get()) {
+        std::string error = StringPrintf(
+                "File %s (labeled \"%s\") has incorrect label or no domain transition from %s to "
+                "another SELinux domain defined. Have you configured your "
+                "service correctly? https://source.android.com/security/selinux/"
+                "device-policy#label_new_services_and_address_denials",
+                service_path.c_str(), filecon.get(), mycon.get());
+        if (security_getenforce() != 0) {
+            return Error() << error;
+        }
+        LOG(ERROR) << error;
+    }
+    if (rc < 0) {
+        return Error() << "Could not get process context";
+    }
+    return computed_context;
+}
+
+static bool ExpandArgsAndExecv(const std::vector<std::string>& args, bool sigstop) {
+    std::vector<std::string> expanded_args;
+    std::vector<char*> c_strings;
+
+    expanded_args.resize(args.size());
+    c_strings.push_back(const_cast<char*>(args[0].data()));
+    for (std::size_t i = 1; i < args.size(); ++i) {
+        auto expanded_arg = ExpandProps(args[i]);
+        if (!expanded_arg.ok()) {
+            LOG(FATAL) << args[0] << ": cannot expand arguments': " << expanded_arg.error();
+        }
+        expanded_args[i] = *expanded_arg;
+        c_strings.push_back(expanded_args[i].data());
+    }
+    c_strings.push_back(nullptr);
+
+    if (sigstop) {
+        kill(getpid(), SIGSTOP);
+    }
+
+    return execv(c_strings[0], c_strings.data()) == 0;
+}
+
+unsigned long Service::next_start_order_ = 1;
+bool Service::is_exec_service_running_ = false;
+
+Service::Service(const std::string& name, Subcontext* subcontext_for_restart_commands,
+                 const std::string& filename, const std::vector<std::string>& args)
+    : Service(name, 0, std::nullopt, 0, {}, 0, "", subcontext_for_restart_commands, filename,
+              args) {}
+
+Service::Service(const std::string& name, unsigned flags, std::optional<uid_t> uid, gid_t gid,
+                 const std::vector<gid_t>& supp_gids, int namespace_flags,
+                 const std::string& seclabel, Subcontext* subcontext_for_restart_commands,
+                 const std::string& filename, const std::vector<std::string>& args)
+    : name_(name),
+      classnames_({"default"}),
+      flags_(flags),
+      pid_(0),
+      crash_count_(0),
+      proc_attr_{.ioprio_class = IoSchedClass_NONE,
+                 .ioprio_pri = 0,
+                 .parsed_uid = uid,
+                 .gid = gid,
+                 .supp_gids = supp_gids,
+                 .priority = 0},
+      namespaces_{.flags = namespace_flags},
+      seclabel_(seclabel),
+      subcontext_(subcontext_for_restart_commands),
+      onrestart_(false, subcontext_for_restart_commands, "<Service '" + name + "' onrestart>", 0,
+                 "onrestart", {}),
+      oom_score_adjust_(DEFAULT_OOM_SCORE_ADJUST),
+      start_order_(0),
+      args_(args),
+      filename_(filename) {}
+
+void Service::NotifyStateChange(const std::string& new_state) const {
+    if ((flags_ & SVC_TEMPORARY) != 0) {
+        // Services created by 'exec' are temporary and don't have properties tracking their state.
+        return;
+    }
+
+    std::string prop_name = "init.svc." + name_;
+    SetProperty(prop_name, new_state);
+
+    if (new_state == "running") {
+        uint64_t start_ns = time_started_.time_since_epoch().count();
+        std::string boottime_property = "ro.boottime." + name_;
+        if (GetProperty(boottime_property, "").empty()) {
+            SetProperty(boottime_property, std::to_string(start_ns));
+        }
+    }
+
+    // init.svc_debug_pid.* properties are only for tests, and should not be used
+    // on device for security checks.
+    std::string pid_property = "init.svc_debug_pid." + name_;
+    if (new_state == "running") {
+        SetProperty(pid_property, std::to_string(pid_));
+    } else if (new_state == "stopped") {
+        SetProperty(pid_property, "");
+    }
+}
+
+void Service::KillProcessGroup(int signal) {
+    // Always attempt the process kill if process is still running.
+    // Cgroup clean up routines are idempotent. It's safe to call
+    // killProcessGroup repeatedly. During shutdown, `init` will
+    // call this function to send SIGTERM/SIGKILL to all processes.
+    // These signals must be sent for a successful shutdown.
+    if (!process_cgroup_empty_ || IsRunning()) {
+        LOG(INFO) << "Sending signal " << signal << " to service '" << name_ << "' (pid " << pid_

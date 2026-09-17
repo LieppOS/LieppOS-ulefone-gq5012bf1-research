@@ -1,0 +1,191 @@
+===== EXTERNAL BORINGSSL SELFTEST BUILD FILES =====
+
+================================================================
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp
+================================================================
+//
+// Copyright (C) 2019 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "external_boringssl_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["external_boringssl_license"],
+}
+
+cc_defaults {
+    name: "boringssl_self_test_defaults",
+    compile_multilib: "both",
+    multilib: {
+        lib32: {
+            suffix: "32",
+        },
+        lib64: {
+            suffix: "64",
+        },
+    },
+    shared_libs: [
+        "libcrypto",
+    ],
+    srcs: [
+        "boringssl_self_test.cpp",
+    ],
+}
+
+cc_binary {
+    name: "boringssl_self_test",
+    visibility: [
+        "//art/build/sdk",
+        "//external/conscrypt",
+        "//external/conscrypt/apex",
+        "//external/conscrypt/apex/testing",
+        "//visibility:any_system_partition",
+    ],
+    defaults: ["boringssl_self_test_defaults"],
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.conscrypt",
+    ],
+    min_sdk_version: "29",
+}
+
+cc_binary {
+    name: "boringssl_self_test_vendor",
+    defaults: ["boringssl_self_test_defaults"],
+    stem: "boringssl_self_test",
+    vendor: true,
+    init_rc: ["boringssl_self_test.rc"],
+    required: [
+        "boringssl_self_test.zygote64.rc",
+        "boringssl_self_test.zygote64_32.rc",
+    ],
+    visibility: ["//visibility:any_system_partition"],
+}
+
+prebuilt_etc {
+    name: "boringssl_self_test.zygote64_32.rc",
+    src: "boringssl_self_test.zygote64_32.rc",
+    vendor: true,
+    symlinks: [
+        "boringssl_self_test.zygote32.rc",
+        "boringssl_self_test.no_zygote.rc",
+    ],
+}
+
+prebuilt_etc {
+    name: "boringssl_self_test.zygote64.rc",
+    src: "boringssl_self_test.zygote64.rc",
+    vendor: true,
+}
+
+================================================================
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc
+================================================================
+# Run boringssl self test for each ABI so that later processes can skip it. http://b/139348610
+import /vendor/etc/boringssl_self_test.${ro.zygote}.rc
+
+service boringssl_self_test32_vendor /vendor/bin/boringssl_self_test32
+    setenv BORINGSSL_SELF_TEST_CREATE_FLAG true # Any nonempty value counts as true
+    reboot_on_failure reboot,boringssl-self-check-failed
+    stdio_to_kmsg
+    user root
+
+service boringssl_self_test64_vendor /vendor/bin/boringssl_self_test64
+    setenv BORINGSSL_SELF_TEST_CREATE_FLAG true # Any nonempty value counts as true
+    reboot_on_failure reboot,boringssl-self-check-failed
+    stdio_to_kmsg
+    user root
+
+================================================================
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.zygote64_32.rc
+================================================================
+on early-init && property:ro.product.cpu.abilist32=*
+    exec_start boringssl_self_test32_vendor
+on early-init && property:ro.product.cpu.abilist64=*
+    exec_start boringssl_self_test64_vendor
+
+================================================================
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.zygote64.rc
+================================================================
+on early-init && property:ro.product.cpu.abilist64=*
+    exec_start boringssl_self_test64_vendor
+
+===== MODULE REFERENCES =====
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.zygote64.rc-1-on early-init && property:ro.product.cpu.abilist64=*
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.zygote64.rc:2:    exec_start boringssl_self_test64_vendor
+--
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-46-    visibility: [
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-47-        "//art/build/sdk",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-48-        "//external/conscrypt",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-49-        "//external/conscrypt/apex",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-50-        "//external/conscrypt/apex/testing",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-51-        "//visibility:any_system_partition",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-52-    ],
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-53-    defaults: ["boringssl_self_test_defaults"],
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-54-    apex_available: [
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-55-        "//apex_available:platform",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-56-        "com.android.conscrypt",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-57-    ],
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-58-    min_sdk_version: "29",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-59-}
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-60-
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-61-cc_binary {
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-62-    name: "boringssl_self_test_vendor",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-63-    defaults: ["boringssl_self_test_defaults"],
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-64-    stem: "boringssl_self_test",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-65-    vendor: true,
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp:66:    init_rc: ["boringssl_self_test.rc"],
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-67-    required: [
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-68-        "boringssl_self_test.zygote64.rc",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-69-        "boringssl_self_test.zygote64_32.rc",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-70-    ],
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-71-    visibility: ["//visibility:any_system_partition"],
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-72-}
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-73-
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-74-prebuilt_etc {
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-75-    name: "boringssl_self_test.zygote64_32.rc",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-76-    src: "boringssl_self_test.zygote64_32.rc",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-77-    vendor: true,
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-78-    symlinks: [
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-79-        "boringssl_self_test.zygote32.rc",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-80-        "boringssl_self_test.no_zygote.rc",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-81-    ],
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-82-}
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-83-
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-84-prebuilt_etc {
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-85-    name: "boringssl_self_test.zygote64.rc",
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/Android.bp-86-    src: "boringssl_self_test.zygote64.rc",
+--
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc-1-# Run boringssl self test for each ABI so that later processes can skip it. http://b/139348610
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc-2-import /vendor/etc/boringssl_self_test.${ro.zygote}.rc
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc-3-
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc:4:service boringssl_self_test32_vendor /vendor/bin/boringssl_self_test32
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc-5-    setenv BORINGSSL_SELF_TEST_CREATE_FLAG true # Any nonempty value counts as true
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc-6-    reboot_on_failure reboot,boringssl-self-check-failed
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc-7-    stdio_to_kmsg
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc-8-    user root
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc-9-
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc:10:service boringssl_self_test64_vendor /vendor/bin/boringssl_self_test64
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc-11-    setenv BORINGSSL_SELF_TEST_CREATE_FLAG true # Any nonempty value counts as true
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc-12-    reboot_on_failure reboot,boringssl-self-check-failed
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc-13-    stdio_to_kmsg
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.rc-14-    user root
+--
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.zygote64_32.rc-1-on early-init && property:ro.product.cpu.abilist32=*
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.zygote64_32.rc:2:    exec_start boringssl_self_test32_vendor
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.zygote64_32.rc-3-on early-init && property:ro.product.cpu.abilist64=*
+/mnt/SamsungSSD/android/lineage-22.2/external/boringssl/selftest/boringssl_self_test.zygote64_32.rc:4:    exec_start boringssl_self_test64_vendor
