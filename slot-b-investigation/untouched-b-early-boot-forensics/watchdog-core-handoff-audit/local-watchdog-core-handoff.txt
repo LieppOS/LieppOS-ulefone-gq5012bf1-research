@@ -1,0 +1,481 @@
+
+===== /home/armol/kernel-work/gki-12901745-workspace/common/drivers/watchdog/watchdog_dev.c:47-160 =====
+47: #include "watchdog_core.h"
+48: #include "watchdog_pretimeout.h"
+49: 
+50: #include <trace/events/watchdog.h>
+51: 
+52: /* the dev_t structure to store the dynamically allocated watchdog devices */
+53: static dev_t watchdog_devt;
+54: /* Reference to watchdog device behind /dev/watchdog */
+55: static struct watchdog_core_data *old_wd_data;
+56: 
+57: static struct kthread_worker *watchdog_kworker;
+58: 
+59: static bool handle_boot_enabled =
+60: 	IS_ENABLED(CONFIG_WATCHDOG_HANDLE_BOOT_ENABLED);
+61: 
+62: static unsigned open_timeout = CONFIG_WATCHDOG_OPEN_TIMEOUT;
+63: 
+64: static bool watchdog_past_open_deadline(struct watchdog_core_data *data)
+65: {
+66: 	return ktime_after(ktime_get(), data->open_deadline);
+67: }
+68: 
+69: static void watchdog_set_open_deadline(struct watchdog_core_data *data)
+70: {
+71: 	data->open_deadline = open_timeout ?
+72: 		ktime_get() + ktime_set(open_timeout, 0) : KTIME_MAX;
+73: }
+74: 
+75: static inline bool watchdog_need_worker(struct watchdog_device *wdd)
+76: {
+77: 	/* All variables in milli-seconds */
+78: 	unsigned int hm = wdd->max_hw_heartbeat_ms;
+79: 	unsigned int t = wdd->timeout * 1000;
+80: 
+81: 	/*
+82: 	 * A worker to generate heartbeat requests is needed if all of the
+83: 	 * following conditions are true.
+84: 	 * - Userspace activated the watchdog.
+85: 	 * - The driver provided a value for the maximum hardware timeout, and
+86: 	 *   thus is aware that the framework supports generating heartbeat
+87: 	 *   requests.
+88: 	 * - Userspace requests a longer timeout than the hardware can handle.
+89: 	 *
+90: 	 * Alternatively, if userspace has not opened the watchdog
+91: 	 * device, we take care of feeding the watchdog if it is
+92: 	 * running.
+93: 	 */
+94: 	return (hm && watchdog_active(wdd) && t > hm) ||
+95: 		(t && !watchdog_active(wdd) && watchdog_hw_running(wdd));
+96: }
+97: 
+98: static ktime_t watchdog_next_keepalive(struct watchdog_device *wdd)
+99: {
+100: 	struct watchdog_core_data *wd_data = wdd->wd_data;
+101: 	unsigned int timeout_ms = wdd->timeout * 1000;
+102: 	ktime_t keepalive_interval;
+103: 	ktime_t last_heartbeat, latest_heartbeat;
+104: 	ktime_t virt_timeout;
+105: 	unsigned int hw_heartbeat_ms;
+106: 
+107: 	if (watchdog_active(wdd))
+108: 		virt_timeout = ktime_add(wd_data->last_keepalive,
+109: 					 ms_to_ktime(timeout_ms));
+110: 	else
+111: 		virt_timeout = wd_data->open_deadline;
+112: 
+113: 	hw_heartbeat_ms = min_not_zero(timeout_ms, wdd->max_hw_heartbeat_ms);
+114: 	keepalive_interval = ms_to_ktime(hw_heartbeat_ms / 2);
+115: 
+116: 	/*
+117: 	 * To ensure that the watchdog times out wdd->timeout seconds
+118: 	 * after the most recent ping from userspace, the last
+119: 	 * worker ping has to come in hw_heartbeat_ms before this timeout.
+120: 	 */
+121: 	last_heartbeat = ktime_sub(virt_timeout, ms_to_ktime(hw_heartbeat_ms));
+122: 	latest_heartbeat = ktime_sub(last_heartbeat, ktime_get());
+123: 	if (ktime_before(latest_heartbeat, keepalive_interval))
+124: 		return latest_heartbeat;
+125: 	return keepalive_interval;
+126: }
+127: 
+128: static inline void watchdog_update_worker(struct watchdog_device *wdd)
+129: {
+130: 	struct watchdog_core_data *wd_data = wdd->wd_data;
+131: 
+132: 	if (watchdog_need_worker(wdd)) {
+133: 		ktime_t t = watchdog_next_keepalive(wdd);
+134: 
+135: 		if (t > 0)
+136: 			hrtimer_start(&wd_data->timer, t,
+137: 				      HRTIMER_MODE_REL_HARD);
+138: 	} else {
+139: 		hrtimer_cancel(&wd_data->timer);
+140: 	}
+141: }
+142: 
+143: static int __watchdog_ping(struct watchdog_device *wdd)
+144: {
+145: 	struct watchdog_core_data *wd_data = wdd->wd_data;
+146: 	ktime_t earliest_keepalive, now;
+147: 	int err;
+148: 
+149: 	earliest_keepalive = ktime_add(wd_data->last_hw_keepalive,
+150: 				       ms_to_ktime(wdd->min_hw_heartbeat_ms));
+151: 	now = ktime_get();
+152: 
+153: 	if (ktime_after(earliest_keepalive, now)) {
+154: 		hrtimer_start(&wd_data->timer,
+155: 			      ktime_sub(earliest_keepalive, now),
+156: 			      HRTIMER_MODE_REL_HARD);
+157: 		return 0;
+158: 	}
+159: 
+160: 	wd_data->last_hw_keepalive = now;
+
+===== /home/armol/kernel-work/gki-12901745-workspace/common/drivers/watchdog/watchdog_dev.c:182-287 =====
+182:  * If the watchdog has no own ping operation then it needs to be
+183:  * restarted via the start operation. This wrapper function does
+184:  * exactly that.
+185:  * We only ping when the watchdog device is running.
+186:  * The caller must hold wd_data->lock.
+187:  *
+188:  * Return: 0 on success, error otherwise.
+189:  */
+190: static int watchdog_ping(struct watchdog_device *wdd)
+191: {
+192: 	struct watchdog_core_data *wd_data = wdd->wd_data;
+193: 
+194: 	if (!watchdog_active(wdd) && !watchdog_hw_running(wdd))
+195: 		return 0;
+196: 
+197: 	set_bit(_WDOG_KEEPALIVE, &wd_data->status);
+198: 
+199: 	wd_data->last_keepalive = ktime_get();
+200: 	return __watchdog_ping(wdd);
+201: }
+202: 
+203: static bool watchdog_worker_should_ping(struct watchdog_core_data *wd_data)
+204: {
+205: 	struct watchdog_device *wdd = wd_data->wdd;
+206: 
+207: 	if (!wdd)
+208: 		return false;
+209: 
+210: 	if (watchdog_active(wdd))
+211: 		return true;
+212: 
+213: 	return watchdog_hw_running(wdd) && !watchdog_past_open_deadline(wd_data);
+214: }
+215: 
+216: static void watchdog_ping_work(struct kthread_work *work)
+217: {
+218: 	struct watchdog_core_data *wd_data;
+219: 
+220: 	wd_data = container_of(work, struct watchdog_core_data, work);
+221: 
+222: 	mutex_lock(&wd_data->lock);
+223: 	if (watchdog_worker_should_ping(wd_data))
+224: 		__watchdog_ping(wd_data->wdd);
+225: 	mutex_unlock(&wd_data->lock);
+226: }
+227: 
+228: static enum hrtimer_restart watchdog_timer_expired(struct hrtimer *timer)
+229: {
+230: 	struct watchdog_core_data *wd_data;
+231: 
+232: 	wd_data = container_of(timer, struct watchdog_core_data, timer);
+233: 
+234: 	kthread_queue_work(watchdog_kworker, &wd_data->work);
+235: 	return HRTIMER_NORESTART;
+236: }
+237: 
+238: /*
+239:  * watchdog_start - wrapper to start the watchdog
+240:  * @wdd: The watchdog device to start
+241:  *
+242:  * Start the watchdog if it is not active and mark it active.
+243:  * The caller must hold wd_data->lock.
+244:  *
+245:  * Return: 0 on success or a negative errno code for failure.
+246:  */
+247: static int watchdog_start(struct watchdog_device *wdd)
+248: {
+249: 	struct watchdog_core_data *wd_data = wdd->wd_data;
+250: 	ktime_t started_at;
+251: 	int err;
+252: 
+253: 	if (watchdog_active(wdd))
+254: 		return 0;
+255: 
+256: 	set_bit(_WDOG_KEEPALIVE, &wd_data->status);
+257: 
+258: 	started_at = ktime_get();
+259: 	if (watchdog_hw_running(wdd) && wdd->ops->ping) {
+260: 		err = __watchdog_ping(wdd);
+261: 		if (err == 0) {
+262: 			set_bit(WDOG_ACTIVE, &wdd->status);
+263: 			watchdog_hrtimer_pretimeout_start(wdd);
+264: 		}
+265: 	} else {
+266: 		err = wdd->ops->start(wdd);
+267: 		trace_watchdog_start(wdd, err);
+268: 		if (err == 0) {
+269: 			set_bit(WDOG_ACTIVE, &wdd->status);
+270: 			wd_data->last_keepalive = started_at;
+271: 			wd_data->last_hw_keepalive = started_at;
+272: 			watchdog_update_worker(wdd);
+273: 			watchdog_hrtimer_pretimeout_start(wdd);
+274: 		}
+275: 	}
+276: 
+277: 	return err;
+278: }
+279: 
+280: /*
+281:  * watchdog_stop - wrapper to stop the watchdog
+282:  * @wdd: The watchdog device to stop
+283:  *
+284:  * Stop the watchdog if it is still active and unmark it active.
+285:  * If the 'nowayout' feature was set, the watchdog cannot be stopped.
+286:  * The caller must hold wd_data->lock.
+287:  *
+
+===== /home/armol/kernel-work/gki-12901745-workspace/common/drivers/watchdog/watchdog_dev.c:854-910 =====
+854: 				       cdev);
+855: 
+856: 	/* the watchdog is single open! */
+857: 	if (test_and_set_bit(_WDOG_DEV_OPEN, &wd_data->status))
+858: 		return -EBUSY;
+859: 
+860: 	wdd = wd_data->wdd;
+861: 
+862: 	/*
+863: 	 * If the /dev/watchdog device is open, we don't want the module
+864: 	 * to be unloaded.
+865: 	 */
+866: 	hw_running = watchdog_hw_running(wdd);
+867: 	if (!hw_running && !try_module_get(wdd->ops->owner)) {
+868: 		err = -EBUSY;
+869: 		goto out_clear;
+870: 	}
+871: 
+872: 	err = watchdog_start(wdd);
+873: 	if (err < 0)
+874: 		goto out_mod;
+875: 
+876: 	file->private_data = wd_data;
+877: 
+878: 	if (!hw_running)
+879: 		get_device(&wd_data->dev);
+880: 
+881: 	/*
+882: 	 * open_timeout only applies for the first open from
+883: 	 * userspace. Set open_deadline to infinity so that the kernel
+884: 	 * will take care of an always-running hardware watchdog in
+885: 	 * case the device gets magic-closed or WDIOS_DISABLECARD is
+886: 	 * applied.
+887: 	 */
+888: 	wd_data->open_deadline = KTIME_MAX;
+889: 
+890: 	/* dev/watchdog is a virtual (and thus non-seekable) filesystem */
+891: 	return stream_open(inode, file);
+892: 
+893: out_mod:
+894: 	module_put(wd_data->wdd->ops->owner);
+895: out_clear:
+896: 	clear_bit(_WDOG_DEV_OPEN, &wd_data->status);
+897: 	return err;
+898: }
+899: 
+900: static void watchdog_core_data_release(struct device *dev)
+901: {
+902: 	struct watchdog_core_data *wd_data;
+903: 
+904: 	wd_data = container_of(dev, struct watchdog_core_data, dev);
+905: 
+906: 	kfree(wd_data);
+907: }
+908: 
+909: /*
+910:  * watchdog_release - release the watchdog device
+
+===== /home/armol/kernel-work/gki-12901745-workspace/common/drivers/watchdog/watchdog_dev.c:944-984 =====
+944: 	/* If the watchdog was not stopped, send a keepalive ping */
+945: 	if (err < 0) {
+946: 		pr_crit("watchdog%d: watchdog did not stop!\n", wdd->id);
+947: 		watchdog_ping(wdd);
+948: 	}
+949: 
+950: 	watchdog_update_worker(wdd);
+951: 
+952: 	/* make sure that /dev/watchdog can be re-opened */
+953: 	clear_bit(_WDOG_DEV_OPEN, &wd_data->status);
+954: 
+955: done:
+956: 	running = wdd && watchdog_hw_running(wdd);
+957: 	mutex_unlock(&wd_data->lock);
+958: 	/*
+959: 	 * Allow the owner module to be unloaded again unless the watchdog
+960: 	 * is still running. If the watchdog is still running, it can not
+961: 	 * be stopped, and its driver must not be unloaded.
+962: 	 */
+963: 	if (!running) {
+964: 		module_put(wd_data->cdev.owner);
+965: 		put_device(&wd_data->dev);
+966: 	}
+967: 	return 0;
+968: }
+969: 
+970: static const struct file_operations watchdog_fops = {
+971: 	.owner		= THIS_MODULE,
+972: 	.write		= watchdog_write,
+973: 	.unlocked_ioctl	= watchdog_ioctl,
+974: 	.compat_ioctl	= compat_ptr_ioctl,
+975: 	.open		= watchdog_open,
+976: 	.release	= watchdog_release,
+977: };
+978: 
+979: static struct miscdevice watchdog_miscdev = {
+980: 	.minor		= WATCHDOG_MINOR,
+981: 	.name		= "watchdog",
+982: 	.fops		= &watchdog_fops,
+983: };
+984: 
+
+===== /home/armol/kernel-work/gki-12901745-workspace/common/drivers/watchdog/watchdog_dev.c:1060-1109 =====
+1060: 		pr_err("watchdog%d unable to add device %d:%d\n",
+1061: 			wdd->id,  MAJOR(watchdog_devt), wdd->id);
+1062: 		if (wdd->id == 0) {
+1063: 			misc_deregister(&watchdog_miscdev);
+1064: 			old_wd_data = NULL;
+1065: 		}
+1066: 		put_device(&wd_data->dev);
+1067: 		return err;
+1068: 	}
+1069: 
+1070: 	/* Record time of most recent heartbeat as 'just before now'. */
+1071: 	wd_data->last_hw_keepalive = ktime_sub(ktime_get(), 1);
+1072: 	watchdog_set_open_deadline(wd_data);
+1073: 
+1074: 	/*
+1075: 	 * If the watchdog is running, prevent its driver from being unloaded,
+1076: 	 * and schedule an immediate ping.
+1077: 	 */
+1078: 	if (watchdog_hw_running(wdd)) {
+1079: 		__module_get(wdd->ops->owner);
+1080: 		get_device(&wd_data->dev);
+1081: 		if (handle_boot_enabled)
+1082: 			hrtimer_start(&wd_data->timer, 0,
+1083: 				      HRTIMER_MODE_REL_HARD);
+1084: 		else
+1085: 			pr_info("watchdog%d running and kernel based pre-userspace handler disabled\n",
+1086: 				wdd->id);
+1087: 	}
+1088: 
+1089: 	return 0;
+1090: }
+1091: 
+1092: /*
+1093:  * watchdog_cdev_unregister - unregister watchdog character device
+1094:  * @wdd: Watchdog device
+1095:  *
+1096:  * Unregister watchdog character device and if needed the legacy
+1097:  * /dev/watchdog device.
+1098:  */
+1099: static void watchdog_cdev_unregister(struct watchdog_device *wdd)
+1100: {
+1101: 	struct watchdog_core_data *wd_data = wdd->wd_data;
+1102: 
+1103: 	cdev_device_del(&wd_data->cdev, &wd_data->dev);
+1104: 	if (wdd->id == 0) {
+1105: 		misc_deregister(&watchdog_miscdev);
+1106: 		old_wd_data = NULL;
+1107: 	}
+1108: 
+1109: 	if (watchdog_active(wdd) &&
+
+===== /home/armol/kernel-work/gki-12901745-workspace/common/drivers/watchdog/watchdog_dev.c:1181-1221 =====
+1181: 	struct watchdog_core_data *wd_data;
+1182: 	ktime_t now;
+1183: 
+1184: 	if (!wdd)
+1185: 		return -EINVAL;
+1186: 
+1187: 	wd_data = wdd->wd_data;
+1188: 
+1189: 	now = ktime_get();
+1190: 
+1191: 	wd_data->last_hw_keepalive = ktime_sub(now, ms_to_ktime(last_ping_ms));
+1192: 
+1193: 	if (watchdog_hw_running(wdd) && handle_boot_enabled)
+1194: 		return __watchdog_ping(wdd);
+1195: 
+1196: 	return 0;
+1197: }
+1198: EXPORT_SYMBOL_GPL(watchdog_set_last_hw_keepalive);
+1199: 
+1200: /**
+1201:  * watchdog_dev_init - init dev part of watchdog core
+1202:  *
+1203:  * Allocate a range of chardev nodes to use for watchdog devices.
+1204:  *
+1205:  * Return: 0 if successful, error otherwise.
+1206:  */
+1207: int __init watchdog_dev_init(void)
+1208: {
+1209: 	int err;
+1210: 
+1211: 	watchdog_kworker = kthread_create_worker(0, "watchdogd");
+1212: 	if (IS_ERR(watchdog_kworker)) {
+1213: 		pr_err("Failed to create watchdog kworker\n");
+1214: 		return PTR_ERR(watchdog_kworker);
+1215: 	}
+1216: 	sched_set_fifo(watchdog_kworker->task);
+1217: 
+1218: 	err = class_register(&watchdog_class);
+1219: 	if (err < 0) {
+1220: 		pr_err("couldn't register class\n");
+1221: 		goto err_register;
+
+===== /home/armol/kernel-work/gki-12901745-workspace/common/drivers/watchdog/watchdog_dev.c:1249-1306 =====
+1249: }
+1250: 
+1251: int watchdog_dev_suspend(struct watchdog_device *wdd)
+1252: {
+1253: 	struct watchdog_core_data *wd_data = wdd->wd_data;
+1254: 	int ret = 0;
+1255: 
+1256: 	if (!wdd->wd_data)
+1257: 		return -ENODEV;
+1258: 
+1259: 	/* ping for the last time before suspend */
+1260: 	mutex_lock(&wd_data->lock);
+1261: 	if (watchdog_worker_should_ping(wd_data))
+1262: 		ret = __watchdog_ping(wd_data->wdd);
+1263: 	mutex_unlock(&wd_data->lock);
+1264: 
+1265: 	if (ret)
+1266: 		return ret;
+1267: 
+1268: 	/*
+1269: 	 * make sure that watchdog worker will not kick in when the wdog is
+1270: 	 * suspended
+1271: 	 */
+1272: 	hrtimer_cancel(&wd_data->timer);
+1273: 	kthread_cancel_work_sync(&wd_data->work);
+1274: 
+1275: 	return 0;
+1276: }
+1277: 
+1278: int watchdog_dev_resume(struct watchdog_device *wdd)
+1279: {
+1280: 	struct watchdog_core_data *wd_data = wdd->wd_data;
+1281: 	int ret = 0;
+1282: 
+1283: 	if (!wdd->wd_data)
+1284: 		return -ENODEV;
+1285: 
+1286: 	/*
+1287: 	 * __watchdog_ping will also retrigger hrtimer and therefore restore the
+1288: 	 * ping worker if needed.
+1289: 	 */
+1290: 	mutex_lock(&wd_data->lock);
+1291: 	if (watchdog_worker_should_ping(wd_data))
+1292: 		ret = __watchdog_ping(wd_data->wdd);
+1293: 	mutex_unlock(&wd_data->lock);
+1294: 
+1295: 	return ret;
+1296: }
+1297: 
+1298: module_param(handle_boot_enabled, bool, 0444);
+1299: MODULE_PARM_DESC(handle_boot_enabled,
+1300: 	"Watchdog core auto-updates boot enabled watchdogs before userspace takes over (default="
+1301: 	__MODULE_STRING(IS_ENABLED(CONFIG_WATCHDOG_HANDLE_BOOT_ENABLED)) ")");
+1302: 
+1303: module_param(open_timeout, uint, 0644);
+1304: MODULE_PARM_DESC(open_timeout,
+1305: 	"Maximum time (in seconds, 0 means infinity) for userspace to take over a running watchdog (default="
+1306: 	__MODULE_STRING(CONFIG_WATCHDOG_OPEN_TIMEOUT) ")");

@@ -1,0 +1,27 @@
+===== PROCESSES =====
+   73     2 [watchdogd]                 [watchdogd]
+  146     2 [wdtk-0]                    [wdtk-0]
+  147     2 [wdtk-1]                    [wdtk-1]
+  148     2 [wdtk-2]                    [wdtk-2]
+  149     2 [wdtk-3]                    [wdtk-3]
+  150     2 [wdtk-4]                    [wdtk-4]
+  151     2 [wdtk-5]                    [wdtk-5]
+  152     2 [wdtk-6]                    [wdtk-6]
+  153     2 [wdtk-7]                    [wdtk-7]
+ 1256     1 watchdogd                   watchdogd 10 20
+29144  3073 sh                          sh -c su -c '?echo ===== PROCESSES =====??ps -A -o PID,PPID,NAME,ARGS 2>/dev/null |?grep -Ei '"'"'watchdog|wdtk|hangdet'"'"' || true??echo?echo ===== KERNEL THREAD COMM SEARCH =====??for p in /proc/[0-9]*?do?    [ -r "$p/comm" ] || continue??    c=$(cat "$p/comm" 2>/dev/null)??    case "$c" in?        *watchdog*|*wdog*|*wdt*)?            echo "$(basename "$p") $c"?            ;;?    esac?done?'
+29146 29144 sh                          sh -c ?echo ===== PROCESSES =====??ps -A -o PID,PPID,NAME,ARGS 2>/dev/null |?grep -Ei 'watchdog|wdtk|hangdet' || true??echo?echo ===== KERNEL THREAD COMM SEARCH =====??for p in /proc/[0-9]*?do?    [ -r "$p/comm" ] || continue??    c=$(cat "$p/comm" 2>/dev/null)??    case "$c" in?        *watchdog*|*wdog*|*wdt*)?            echo "$(basename "$p") $c"?            ;;?    esac?done
+29148 29146 grep                        grep -Ei watchdog|wdtk|hangdet
+
+===== KERNEL THREAD COMM SEARCH =====
+1256 watchdogd
+146 wdtk-0
+147 wdtk-1
+148 wdtk-2
+149 wdtk-3
+150 wdtk-4
+151 wdtk-5
+152 wdtk-6
+153 wdtk-7
+612 irq/435-apusys_wdt
+73 watchdogd

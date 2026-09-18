@@ -1,0 +1,237 @@
+
+===== /home/armol/kernel-work/gki-12901745-workspace/common/drivers/watchdog/mtk_wdt.c:18-82 =====
+18: #include <linux/delay.h>
+19: #include <linux/err.h>
+20: #include <linux/init.h>
+21: #include <linux/io.h>
+22: #include <linux/kernel.h>
+23: #include <linux/module.h>
+24: #include <linux/moduleparam.h>
+25: #include <linux/of.h>
+26: #include <linux/of_device.h>
+27: #include <linux/platform_device.h>
+28: #include <linux/reset-controller.h>
+29: #include <linux/types.h>
+30: #include <linux/watchdog.h>
+31: #include <linux/interrupt.h>
+32: 
+33: #define WDT_MAX_TIMEOUT		31
+34: #define WDT_MIN_TIMEOUT		2
+35: #define WDT_LENGTH_TIMEOUT(n)	((n) << 5)
+36: 
+37: #define WDT_LENGTH		0x04
+38: #define WDT_LENGTH_KEY		0x8
+39: 
+40: #define WDT_RST			0x08
+41: #define WDT_RST_RELOAD		0x1971
+42: 
+43: #define WDT_MODE		0x00
+44: #define WDT_MODE_EN		(1 << 0)
+45: #define WDT_MODE_EXT_POL_LOW	(0 << 1)
+46: #define WDT_MODE_EXT_POL_HIGH	(1 << 1)
+47: #define WDT_MODE_EXRST_EN	(1 << 2)
+48: #define WDT_MODE_IRQ_EN		(1 << 3)
+49: #define WDT_MODE_AUTO_START	(1 << 4)
+50: #define WDT_MODE_DUAL_EN	(1 << 6)
+51: #define WDT_MODE_KEY		0x22000000
+52: 
+53: #define WDT_SWRST		0x14
+54: #define WDT_SWRST_KEY		0x1209
+55: 
+56: #define WDT_SWSYSRST		0x18U
+57: #define WDT_SWSYS_RST_KEY	0x88000000
+58: 
+59: #define DRV_NAME		"mtk-wdt"
+60: #define DRV_VERSION		"1.0"
+61: 
+62: static bool nowayout = WATCHDOG_NOWAYOUT;
+63: static unsigned int timeout;
+64: 
+65: struct mtk_wdt_dev {
+66: 	struct watchdog_device wdt_dev;
+67: 	void __iomem *wdt_base;
+68: 	spinlock_t lock; /* protects WDT_SWSYSRST reg */
+69: 	struct reset_controller_dev rcdev;
+70: 	bool disable_wdt_extrst;
+71: };
+72: 
+73: struct mtk_wdt_data {
+74: 	int toprgu_sw_rst_num;
+75: };
+76: 
+77: static const struct mtk_wdt_data mt2712_data = {
+78: 	.toprgu_sw_rst_num = MT2712_TOPRGU_SW_RST_NUM,
+79: };
+80: 
+81: static const struct mtk_wdt_data mt7986_data = {
+82: 	.toprgu_sw_rst_num = MT7986_TOPRGU_SW_RST_NUM,
+
+===== /home/armol/kernel-work/gki-12901745-workspace/common/drivers/watchdog/mtk_wdt.c:212-310 =====
+212: 		wdt_dev->pretimeout = timeout / 2;
+213: 
+214: 	/*
+215: 	 * One bit is the value of 512 ticks
+216: 	 * The clock has 32 KHz
+217: 	 */
+218: 	reg = WDT_LENGTH_TIMEOUT((timeout - wdt_dev->pretimeout) << 6)
+219: 			| WDT_LENGTH_KEY;
+220: 	iowrite32(reg, wdt_base + WDT_LENGTH);
+221: 
+222: 	mtk_wdt_ping(wdt_dev);
+223: 
+224: 	return 0;
+225: }
+226: 
+227: static void mtk_wdt_init(struct watchdog_device *wdt_dev)
+228: {
+229: 	struct mtk_wdt_dev *mtk_wdt = watchdog_get_drvdata(wdt_dev);
+230: 	void __iomem *wdt_base;
+231: 
+232: 	wdt_base = mtk_wdt->wdt_base;
+233: 
+234: 	if (readl(wdt_base + WDT_MODE) & WDT_MODE_EN) {
+235: 		set_bit(WDOG_HW_RUNNING, &wdt_dev->status);
+236: 		mtk_wdt_set_timeout(wdt_dev, wdt_dev->timeout);
+237: 	}
+238: }
+239: 
+240: static int mtk_wdt_stop(struct watchdog_device *wdt_dev)
+241: {
+242: 	struct mtk_wdt_dev *mtk_wdt = watchdog_get_drvdata(wdt_dev);
+243: 	void __iomem *wdt_base = mtk_wdt->wdt_base;
+244: 	u32 reg;
+245: 
+246: 	reg = readl(wdt_base + WDT_MODE);
+247: 	reg &= ~WDT_MODE_EN;
+248: 	reg |= WDT_MODE_KEY;
+249: 	iowrite32(reg, wdt_base + WDT_MODE);
+250: 
+251: 	return 0;
+252: }
+253: 
+254: static int mtk_wdt_start(struct watchdog_device *wdt_dev)
+255: {
+256: 	u32 reg;
+257: 	struct mtk_wdt_dev *mtk_wdt = watchdog_get_drvdata(wdt_dev);
+258: 	void __iomem *wdt_base = mtk_wdt->wdt_base;
+259: 	int ret;
+260: 
+261: 	ret = mtk_wdt_set_timeout(wdt_dev, wdt_dev->timeout);
+262: 	if (ret < 0)
+263: 		return ret;
+264: 
+265: 	reg = ioread32(wdt_base + WDT_MODE);
+266: 	if (wdt_dev->pretimeout)
+267: 		reg |= (WDT_MODE_IRQ_EN | WDT_MODE_DUAL_EN);
+268: 	else
+269: 		reg &= ~(WDT_MODE_IRQ_EN | WDT_MODE_DUAL_EN);
+270: 	if (mtk_wdt->disable_wdt_extrst)
+271: 		reg &= ~WDT_MODE_EXRST_EN;
+272: 	reg |= (WDT_MODE_EN | WDT_MODE_KEY);
+273: 	iowrite32(reg, wdt_base + WDT_MODE);
+274: 
+275: 	return 0;
+276: }
+277: 
+278: static int mtk_wdt_set_pretimeout(struct watchdog_device *wdd,
+279: 				  unsigned int timeout)
+280: {
+281: 	struct mtk_wdt_dev *mtk_wdt = watchdog_get_drvdata(wdd);
+282: 	void __iomem *wdt_base = mtk_wdt->wdt_base;
+283: 	u32 reg = ioread32(wdt_base + WDT_MODE);
+284: 
+285: 	if (timeout && !wdd->pretimeout) {
+286: 		wdd->pretimeout = wdd->timeout / 2;
+287: 		reg |= (WDT_MODE_IRQ_EN | WDT_MODE_DUAL_EN);
+288: 	} else if (!timeout && wdd->pretimeout) {
+289: 		wdd->pretimeout = 0;
+290: 		reg &= ~(WDT_MODE_IRQ_EN | WDT_MODE_DUAL_EN);
+291: 	} else {
+292: 		return 0;
+293: 	}
+294: 
+295: 	reg |= WDT_MODE_KEY;
+296: 	iowrite32(reg, wdt_base + WDT_MODE);
+297: 
+298: 	return mtk_wdt_set_timeout(wdd, wdd->timeout);
+299: }
+300: 
+301: static irqreturn_t mtk_wdt_isr(int irq, void *arg)
+302: {
+303: 	struct watchdog_device *wdd = arg;
+304: 
+305: 	watchdog_notify_pretimeout(wdd);
+306: 
+307: 	return IRQ_HANDLED;
+308: }
+309: 
+310: static const struct watchdog_info mtk_wdt_info = {
+
+===== /home/armol/kernel-work/gki-12901745-workspace/common/drivers/watchdog/mtk_wdt.c:359-425 =====
+359: 		mtk_wdt->wdt_dev.info = &mtk_wdt_pt_info;
+360: 		mtk_wdt->wdt_dev.pretimeout = WDT_MAX_TIMEOUT / 2;
+361: 	} else {
+362: 		if (irq == -EPROBE_DEFER)
+363: 			return -EPROBE_DEFER;
+364: 
+365: 		mtk_wdt->wdt_dev.info = &mtk_wdt_info;
+366: 	}
+367: 
+368: 	mtk_wdt->wdt_dev.ops = &mtk_wdt_ops;
+369: 	mtk_wdt->wdt_dev.timeout = WDT_MAX_TIMEOUT;
+370: 	mtk_wdt->wdt_dev.max_hw_heartbeat_ms = WDT_MAX_TIMEOUT * 1000;
+371: 	mtk_wdt->wdt_dev.min_timeout = WDT_MIN_TIMEOUT;
+372: 	mtk_wdt->wdt_dev.parent = dev;
+373: 
+374: 	watchdog_init_timeout(&mtk_wdt->wdt_dev, timeout, dev);
+375: 	watchdog_set_nowayout(&mtk_wdt->wdt_dev, nowayout);
+376: 	watchdog_set_restart_priority(&mtk_wdt->wdt_dev, 128);
+377: 
+378: 	watchdog_set_drvdata(&mtk_wdt->wdt_dev, mtk_wdt);
+379: 
+380: 	mtk_wdt_init(&mtk_wdt->wdt_dev);
+381: 
+382: 	watchdog_stop_on_reboot(&mtk_wdt->wdt_dev);
+383: 	err = devm_watchdog_register_device(dev, &mtk_wdt->wdt_dev);
+384: 	if (unlikely(err))
+385: 		return err;
+386: 
+387: 	dev_info(dev, "Watchdog enabled (timeout=%d sec, nowayout=%d)\n",
+388: 		 mtk_wdt->wdt_dev.timeout, nowayout);
+389: 
+390: 	wdt_data = of_device_get_match_data(dev);
+391: 	if (wdt_data) {
+392: 		err = toprgu_register_reset_controller(pdev,
+393: 						       wdt_data->toprgu_sw_rst_num);
+394: 		if (err)
+395: 			return err;
+396: 	}
+397: 
+398: 	mtk_wdt->disable_wdt_extrst =
+399: 		of_property_read_bool(dev->of_node, "mediatek,disable-extrst");
+400: 
+401: 	return 0;
+402: }
+403: 
+404: static int mtk_wdt_suspend(struct device *dev)
+405: {
+406: 	struct mtk_wdt_dev *mtk_wdt = dev_get_drvdata(dev);
+407: 
+408: 	if (watchdog_active(&mtk_wdt->wdt_dev))
+409: 		mtk_wdt_stop(&mtk_wdt->wdt_dev);
+410: 
+411: 	return 0;
+412: }
+413: 
+414: static int mtk_wdt_resume(struct device *dev)
+415: {
+416: 	struct mtk_wdt_dev *mtk_wdt = dev_get_drvdata(dev);
+417: 
+418: 	if (watchdog_active(&mtk_wdt->wdt_dev)) {
+419: 		mtk_wdt_start(&mtk_wdt->wdt_dev);
+420: 		mtk_wdt_ping(&mtk_wdt->wdt_dev);
+421: 	}
+422: 
+423: 	return 0;
+424: }
+425: 

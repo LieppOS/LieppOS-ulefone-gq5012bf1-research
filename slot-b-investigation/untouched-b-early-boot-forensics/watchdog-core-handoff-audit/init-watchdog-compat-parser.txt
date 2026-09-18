@@ -1,0 +1,89 @@
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service_parser.cpp:627-713 =====
+627:     if (args.size() < 3) {
+628:         return Error() << "services must have a name and a program";
+629:     }
+630: 
+631:     const std::string& name = args[1];
+632:     if (!IsValidName(name)) {
+633:         return Error() << "invalid service name '" << name << "'";
+634:     }
+635: 
+636:     filename_ = filename;
+637: 
+638:     Subcontext* restart_action_subcontext = nullptr;
+639:     if (subcontext_ && subcontext_->PathMatchesSubcontext(filename)) {
+640:         restart_action_subcontext = subcontext_;
+641:     }
+642: 
+643:     std::vector<std::string> str_args(args.begin() + 2, args.end());
+644: 
+645:     if (SelinuxGetVendorAndroidVersion() <= __ANDROID_API_P__) {
+646:         if (str_args[0] == "/sbin/watchdogd") {
+647:             str_args[0] = "/system/bin/watchdogd";
+648:         }
+649:     }
+650:     if (SelinuxGetVendorAndroidVersion() <= __ANDROID_API_Q__) {
+651:         if (str_args[0] == "/charger") {
+652:             str_args[0] = "/system/bin/charger";
+653:         }
+654:     }
+655: 
+656:     service_ = std::make_unique<Service>(name, restart_action_subcontext, filename, str_args);
+657:     return {};
+658: }
+659: 
+660: Result<void> ServiceParser::ParseLineSection(std::vector<std::string>&& args, int line) {
+661:     if (!service_) {
+662:         return {};
+663:     }
+664: 
+665:     auto parser = GetParserMap().Find(args);
+666: 
+667:     if (!parser.ok()) return parser.error();
+668: 
+669:     return std::invoke(*parser, this, std::move(args));
+670: }
+671: 
+672: Result<void> ServiceParser::EndSection() {
+673:     if (!service_) {
+674:         return {};
+675:     }
+676: 
+677:     if (service_->proc_attr_.parsed_uid == std::nullopt) {
+678:         if (kAlwaysErrorUserRoot ||
+679:             android::base::GetIntProperty("ro.vendor.api_level", 0) > 202404) {
+680:             return Error() << "No user specified for service '" << service_->name()
+681:                            << "', so it would have been root.";
+682:         } else {
+683:             LOG(WARNING) << "No user specified for service '" << service_->name()
+684:                          << "', so it is root.";
+685:         }
+686:     }
+687: 
+688:     if (SelinuxGetVendorAndroidVersion() >= __ANDROID_API_R__) {
+689:         if ((service_->flags() & SVC_CRITICAL) != 0 && (service_->flags() & SVC_ONESHOT) != 0) {
+690:             return Error() << "service '" << service_->name()
+691:                            << "' can't be both critical and oneshot";
+692:         }
+693:     }
+694: 
+695:     Service* old_service = service_list_->FindService(service_->name());
+696:     if (old_service) {
+697:         if (!service_->is_override()) {
+698:             LOG(WARNING) << "ignored duplicate definition of service '" << service_->name()
+699:                          << "'";
+700:             return {};
+701:         }
+702: 
+703:         if (StartsWith(filename_, "/apex/") && !old_service->is_updatable()) {
+704:             return Error() << "cannot update a non-updatable service '" << service_->name()
+705:                            << "' with a config in APEX";
+706:         }
+707: 
+708:         std::string context = service_->subcontext() ? service_->subcontext()->context() : "";
+709:         std::string old_context =
+710:                 old_service->subcontext() ? old_service->subcontext()->context() : "";
+711:         if (context != old_context) {
+712:             return Error() << "service '" << service_->name() << "' overrides another service "
+713:                            << "across the treble boundary.";
