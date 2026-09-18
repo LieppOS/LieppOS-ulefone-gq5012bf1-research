@@ -1,0 +1,160 @@
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/first_stage_mount.cpp:513 =====
+505:            }
+506:            // Gets all key pathes under the dir.
+507:            struct dirent* de;
+508:            while ((de = readdir(dir.get()))) {
+509:                if (de->d_type != DT_REG) continue;
+510:                std::string full_path = StringPrintf("%s/%s", avb_key_dir, de->d_name);
+511:                key_paths.emplace_back(std::move(full_path));
+512:            }
+513:            std::sort(key_paths.begin(), key_paths.end());
+514:        } else {
+515:            // avb_keys are key paths separated by ":", if it's not a dir.
+516:            key_paths = Split(entry.avb_keys, ":");
+517:        }
+518:
+519:        // Reads the key content then cache it.
+520:        std::vector<std::string> key_blobs;
+521:        for (const auto& path : key_paths) {
+522:            std::string key_value;
+523:            if (!ReadFileToString(path, &key_value)) {
+524:                continue;
+525:            }
+526:            key_blobs.emplace_back(std::move(key_value));
+527:        }
+528:
+529:        // Maps entry.avb_keys to actual key blobs.
+530:        preload_avb_key_blobs_[entry.avb_keys] = std::move(key_blobs);
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/first_stage_init.cpp:267 =====
+259:    }
+260:
+261:    // Sort the directories so they are iterated over during module loading
+262:    // in a consistent order. Alphabetical sorting is fine here because the
+263:    // kernel version at the beginning of the directory name must match the
+264:    // current kernel version, so the sort only applies to a label that
+265:    // follows the kernel version, for example /lib/modules/5.4 vs.
+266:    // /lib/modules/5.4-gki.
+267:    std::sort(module_dirs.begin(), module_dirs.end());
+268:
+269:    for (const auto& module_dir : module_dirs) {
+270:        std::string dir_path = MODULE_BASE_DIR "/";
+271:        dir_path.append(module_dir);
+272:        Modprobe m({dir_path}, GetModuleLoadList(boot_mode, dir_path));
+273:        bool retval = m.LoadListedModules(!want_console);
+274:        modules_loaded = m.GetModuleCount();
+275:        if (modules_loaded > 0) {
+276:            LOG(INFO) << "Loaded " << modules_loaded << " modules from " << dir_path;
+277:            return retval;
+278:        }
+279:    }
+280:
+281:    Modprobe m({MODULE_BASE_DIR}, GetModuleLoadList(boot_mode, MODULE_BASE_DIR));
+282:    bool retval = (want_parallel) ? m.LoadModulesParallel(std::thread::hardware_concurrency())
+283:                                  : m.LoadListedModules(!want_console);
+284:    modules_loaded = m.GetModuleCount();
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp:159 =====
+151:    }
+152:
+153:    ParseData(path, &config_contents.value());
+154:
+155:    LOG(VERBOSE) << "(Parsing " << path << " took " << t << ".)";
+156:    return {};
+157:}
+158:
+159:bool Parser::ParseConfigDir(const std::string& path) {
+160:    LOG(INFO) << "Parsing directory " << path << "...";
+161:    std::unique_ptr<DIR, decltype(&closedir)> config_dir(opendir(path.c_str()), closedir);
+162:    if (!config_dir) {
+163:        PLOG(INFO) << "Could not import directory '" << path << "'";
+164:        return false;
+165:    }
+166:    dirent* current_file;
+167:    std::vector<std::string> files;
+168:    while ((current_file = readdir(config_dir.get()))) {
+169:        // Ignore directories and only process regular files.
+170:        if (current_file->d_type == DT_REG) {
+171:            std::string current_path =
+172:                android::base::StringPrintf("%s/%s", path.c_str(), current_file->d_name);
+173:            files.emplace_back(current_path);
+174:        }
+175:    }
+176:    // Sort first so we load files in a consistent order (bug 31996208)
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp:177 =====
+169:        // Ignore directories and only process regular files.
+170:        if (current_file->d_type == DT_REG) {
+171:            std::string current_path =
+172:                android::base::StringPrintf("%s/%s", path.c_str(), current_file->d_name);
+173:            files.emplace_back(current_path);
+174:        }
+175:    }
+176:    // Sort first so we load files in a consistent order (bug 31996208)
+177:    std::sort(files.begin(), files.end());
+178:    for (const auto& file : files) {
+179:        if (auto result = ParseConfigFile(file); !result.ok()) {
+180:            LOG(ERROR) << "could not import file '" << file << "': " << result.error();
+181:        }
+182:    }
+183:    return true;
+184:}
+185:
+186:bool Parser::ParseConfig(const std::string& path) {
+187:    if (is_dir(path.c_str())) {
+188:        return ParseConfigDir(path);
+189:    }
+190:    auto result = ParseConfigFile(path);
+191:    if (!result.ok()) {
+192:        LOG(INFO) << result.error();
+193:    }
+194:    return result.ok();
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp:188 =====
+180:            LOG(ERROR) << "could not import file '" << file << "': " << result.error();
+181:        }
+182:    }
+183:    return true;
+184:}
+185:
+186:bool Parser::ParseConfig(const std::string& path) {
+187:    if (is_dir(path.c_str())) {
+188:        return ParseConfigDir(path);
+189:    }
+190:    auto result = ParseConfigFile(path);
+191:    if (!result.ok()) {
+192:        LOG(INFO) << result.error();
+193:    }
+194:    return result.ok();
+195:}
+196:
+197:}  // namespace init
+198:}  // namespace android
+
+===== /mnt/SamsungSSD/android/lineage-22.2/system/core/init/service_list.cpp:49 =====
+41:}
+42:
+43:// Shutdown services in the opposite order that they were started.
+44:const std::vector<Service*> ServiceList::services_in_shutdown_order() const {
+45:    std::vector<Service*> shutdown_services;
+46:    for (const auto& service : services_) {
+47:        if (service->start_order() > 0) shutdown_services.emplace_back(service.get());
+48:    }
+49:    std::sort(shutdown_services.begin(), shutdown_services.end(),
+50:              [](const auto& a, const auto& b) { return a->start_order() > b->start_order(); });
+51:    return shutdown_services;
+52:}
+53:
+54:void ServiceList::RemoveService(const Service& svc) {
+55:    auto svc_it = std::find_if(
+56:            services_.begin(), services_.end(),
+57:            [&svc](const std::unique_ptr<Service>& s) { return svc.name() == s->name(); });
+58:    if (svc_it == services_.end()) {
+59:        return;
+60:    }
+61:
+62:    services_.erase(svc_it);
+63:}
+64:
+65:void ServiceList::DumpState() const {
+66:    for (const auto& s : services_) {

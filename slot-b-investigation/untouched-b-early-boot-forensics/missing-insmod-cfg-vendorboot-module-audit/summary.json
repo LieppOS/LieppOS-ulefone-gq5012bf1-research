@@ -1,0 +1,107 @@
+{
+  "b_cfg_exists": false,
+  "b_cfg_absent": true,
+  "mt6878_fallback_set_ready_1": true,
+  "mtkgki_set_ready_0": true,
+  "mt6878_wait_ready_1": true,
+  "four_watchdog_modules_a_b_identical": true,
+  "watchdog_load_order_a_b_identical": true,
+  "module_compare": {
+    "mtk_wdt.ko": {
+      "a": [
+        {
+          "path": "lib/modules/mtk_wdt.ko",
+          "sha256": "3e63fdd0af1a61bde3ed23045d62921ba48aa128bc3f97c86be0d09e13b831da",
+          "size": 24992
+        }
+      ],
+      "b": [
+        {
+          "path": "lib/modules/mtk_wdt.ko",
+          "sha256": "3e63fdd0af1a61bde3ed23045d62921ba48aa128bc3f97c86be0d09e13b831da",
+          "size": 24992
+        }
+      ],
+      "identical": true
+    },
+    "mrdump.ko": {
+      "a": [
+        {
+          "path": "lib/modules/mrdump.ko",
+          "sha256": "a3c294ecfa816346abcea4d3c0f1b662eb52643acbd1a3f9a7f0a2c0211f0bbb",
+          "size": 137632
+        }
+      ],
+      "b": [
+        {
+          "path": "lib/modules/mrdump.ko",
+          "sha256": "a3c294ecfa816346abcea4d3c0f1b662eb52643acbd1a3f9a7f0a2c0211f0bbb",
+          "size": 137632
+        }
+      ],
+      "identical": true
+    },
+    "aee_hangdet.ko": {
+      "a": [
+        {
+          "path": "lib/modules/aee_hangdet.ko",
+          "sha256": "e4506346dc3c21048936c3123cc0c85b80882242d1f5a19f280db808e2650d95",
+          "size": 84880
+        }
+      ],
+      "b": [
+        {
+          "path": "lib/modules/aee_hangdet.ko",
+          "sha256": "e4506346dc3c21048936c3123cc0c85b80882242d1f5a19f280db808e2650d95",
+          "size": 84880
+        }
+      ],
+      "identical": true
+    },
+    "monitor_hang.ko": {
+      "a": [
+        {
+          "path": "lib/modules/monitor_hang.ko",
+          "sha256": "3259f9dd2cd03fa1ec73c97934c415ca51fa695f505421a8b7d6166473c7113d",
+          "size": 79232
+        }
+      ],
+      "b": [
+        {
+          "path": "lib/modules/monitor_hang.ko",
+          "sha256": "3259f9dd2cd03fa1ec73c97934c415ca51fa695f505421a8b7d6166473c7113d",
+          "size": 79232
+        }
+      ],
+      "identical": true
+    }
+  },
+  "load_lists": {
+    "a": [
+      {
+        "path": "lib/modules/modules.load",
+        "sha256": "4d8279d5cc3d5118509251f577508180fc25dca8b7239081c07d3ba2bd42cd9e",
+        "targets": [
+          "mrdump.ko",
+          "aee_hangdet.ko",
+          "monitor_hang.ko",
+          "mtk_wdt.ko"
+        ]
+      }
+    ],
+    "b": [
+      {
+        "path": "lib/modules/modules.load",
+        "sha256": "4d8279d5cc3d5118509251f577508180fc25dca8b7239081c07d3ba2bd42cd9e",
+        "targets": [
+          "mrdump.ko",
+          "aee_hangdet.ko",
+          "monitor_hang.ko",
+          "mtk_wdt.ko"
+        ]
+      }
+    ]
+  },
+  "cfg_class": "B_MISSING_INSMOD_CFG_IS_BOOT_CRITICAL: B early-init explicitly sets vendor.all.modules.ready=0, insmod_sh exits 2 because its cfg is absent, and init.mt6878.rc later waits for vendor.all.modules.ready=1. Exact action ordering determines whether the earlier fallback setprop=1 survives or is overwritten by the GKI setprop=0.",
+  "watchdog_class": "VENDORBOOT_WATCHDOG_PATH_A_B_STATIC_EQUIVALENT: all four first-stage watchdog/AEE module binaries and their relevant modules.load ordering are identical across A/B. The prior second-stage MTK_WDT_LOADER_HIT classification was based on database/search evidence and is corrected here."
+}
