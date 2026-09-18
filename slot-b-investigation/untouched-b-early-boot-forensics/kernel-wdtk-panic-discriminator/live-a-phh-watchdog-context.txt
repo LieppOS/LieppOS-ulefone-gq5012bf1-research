@@ -1,0 +1,71 @@
+===== PHH MARKERS =====
+5:    setprop ro.vndk.version ${persist.sys.vndk}
+7:    start watchdogd-gsi
+10:    exec - root -- /system/bin/phh-on-data.sh
+13:    exec - root -- /system/bin/phh-on-data.sh
+15:service phh_on_boot /system/bin/phh-on-boot.sh
+19:service power_mode_monitor /system/bin/power-mode-monitor.sh
+22:    seclabel u:r:phhsu_daemon:s0
+24:    start phh_on_boot
+25:    start power_mode_monitor
+29:on property:persist.sys.phh.mainkeys=*
+30:    setprop qemu.hw.mainkeys ${persist.sys.phh.mainkeys}
+39:#   2. persist.sys.phh.include_all_cameras=true -- the phh/TrebleDroid camera
+45:# phh-on-boot.sh (boot_completed is too late, and a camerahalserver restart
+46:# re-reads the "nothing" default). Run as phhsu_daemon, which is permitted to
+50:    exec u:r:phhsu_daemon:s0 root -- /system/bin/setprop camera.aux.packagelist org.lineageos.aperture,net.sourceforge.opencamera,com.android.camera2
+51:    exec u:r:phhsu_daemon:s0 root -- /system/bin/setprop vendor.camera.aux.packagelist org.lineageos.aperture,net.sourceforge.opencamera,com.android.camera2
+52:    exec u:r:phhsu_daemon:s0 root -- /system/bin/setprop persist.sys.phh.include_all_cameras true
+56:# registers it when persist.sys.phh.virtual_sensors_are_real=0; at 1 (the phh
+60:# both fail), so force it from phhsu_daemon here, early enough that AuthService
+63:    exec u:r:phhsu_daemon:s0 root -- /system/bin/setprop persist.sys.phh.virtual_sensors_are_real 0
+66:# phh-on-boot.sh, not here. It is class late_start (the GSI never runs
+72:# did NOT fire on device, so the start is issued from phh-on-boot.sh instead.
+74:on property:persist.sys.phh.asus.dt2w=*
+75:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.asus.dt2w"
+77:on property:persist.sys.phh.asus.usb.port=*
+78:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.asus.usb.port"
+80:on property:persist.sys.phh.oppo.dt2w=*
+81:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.dt2w"
+83:on property:persist.sys.phh.oppo.gaming_mode=*
+84:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.gaming_mode"
+86:on property:sys.phh.oplus.fppress=*
+87:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "sys.phh.oplus.fppress"
+89:on property:persist.sys.phh.securize=*
+90:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.securize"
+92:on property:persist.sys.phh.oppo.usbotg=*
+93:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.usbotg"
+95:on property:persist.sys.phh.transsion.usbotg=*
+96:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.transsion.usbotg"
+98:on property:persist.sys.phh.transsion.dt2w=*
+99:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.transsion.dt2w"
+101:on property:persist.sys.phh.xiaomi.dt2w=*
+102:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.xiaomi.dt2w"
+104:on property:persist.sys.phh.allow_binder_thread_on_incoming_calls=*
+105:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.allow_binder_thread_on_incoming_calls"
+107:on property:persist.sys.phh.disable_audio_effects=*
+108:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.disable_audio_effects"
+110:on property:persist.sys.phh.caf.audio_policy=*
+111:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.caf.audio_policy"
+113:on property:persist.sys.phh.vsmart.dt2w=*
+114:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.vsmart.dt2w"
+116:on property:persist.sys.phh.backlight.scale=*
+117:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.backlight.scale"
+119:on property:persist.sys.phh.disable_soundvolume_effect=*
+120:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.disable_soundvolume_effect"
+139:    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.bluetooth.system_audio_hal.enabled"
+141:on property:init.svc.ril-proxy=stopped && property:persist.sys.phh.restart_ril=true
+144:on property:init.svc.vendor.ril-daemon-mtk=stopped && property:persist.sys.phh.restart_ril=true
+147:on property:persist.sys.phh.restart_ril=true
+156:on property:sys.phh.uninstall-ota=true
+157:    exec u:r:phhsu_daemon:s0 root -- /system/bin/rm /metadata/phh/img
+162:on property:persist.sys.phh.force_display_5g=1
+163:    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh ro.telephony.default_network 33,33
+165:on property:persist.sys.phh.ims.floss=true
+166:    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh ro.telephony.iwlan_operation_mode AP-assisted
+168:on property:persist.sys.phh.enable_sf_gl_backpressure=*
+169:    setprop debug.sf.enable_gl_backpressure ${persist.sys.phh.enable_sf_gl_backpressure}
+171:on property:persist.sys.phh.dynamic_fps=*
+172:    setprop ro.surface_flinger.use_content_detection_for_refresh_rate ${persist.sys.phh.dynamic_fps}
+175:service watchdogd-gsi /system/bin/watchdogd 10 20
+183:    exec u:r:phhsu_daemon:s0 root root -- /system/bin/resetprop_phh -n sys.oem_unlock_allowed 0
