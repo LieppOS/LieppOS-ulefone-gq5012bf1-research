@@ -1,0 +1,128 @@
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/init.mt6878.rc =====
+on early-init
+    write /proc/bootprof "INIT:early-init"
+
+    # initialize vendor.all.modules.ready to 1 here to prevent NOT GKI project blocked
+    setprop vendor.all.modules.ready 1
+
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/init.mt6878.rc =====
+on post-fs-data
+    write /proc/bootprof "INIT:post-fs-data"
+    wait_for_prop vendor.all.modules.ready 1
+    write /proc/bootprof "modprobe: Load_Module_DONE"
+
+    # Disable watermark boost
+    write /proc/sys/vm/watermark_boost_factor 0
+
+    # multi-gen LRU
+    write /sys/kernel/mm/lru_gen/enabled y
+
+    # zram
+    write /sys/block/zram0/comp_algorithm lz4
+    write /proc/sys/vm/page-cluster 0
+    write /proc/sys/vm/swappiness 100
+    write /sys/kernel/mm/swap/vma_ra_enabled false
+
+    # boot time fs tune
+    write /sys/block/mmcblk0/queue/iostats 0
+    write /sys/block/mmcblk0/queue/read_ahead_kb 2048
+    write /sys/block/mmcblk0/queue/nr_requests 256
+    write /sys/block/sdc/queue/iostats 0
+    write /sys/block/sdc/queue/read_ahead_kb 2048
+    write /sys/block/sdc/queue/nr_requests 256
+    write /sys/block/dm-0/queue/read_ahead_kb 2048
+    write /sys/block/dm-1/queue/read_ahead_kb 2048
+    write /sys/block/dm-2/queue/read_ahead_kb 2048
+    write /sys/block/dm-3/queue/read_ahead_kb 2048
+    write /sys/block/dm-4/queue/read_ahead_kb 2048
+    write /sys/block/dm-5/queue/read_ahead_kb 2048
+
+    chown system system /mnt/vendor/nvcfg
+    chmod 0771 /mnt/vendor/nvcfg
+    restorecon_recursive /mnt/vendor/nvcfg
+    chown system system /mnt/vendor/nvcfg/fg
+    chown system system /mnt/vendor/nvcfg/fg/old_fg_data
+    chown system system /mnt/vendor/nvcfg/fg/car_tune_value
+
+    # create basic filesystem structure
+    # We chown/chmod /mnt/vendor/nvdata again so because mount is run as root + defaults
+    chown root system /mnt/vendor/nvdata
+    chmod 0771 /mnt/vendor/nvdata
+    mkdir /mnt/vendor/nvdata/media 0771 media audio
+
+    #Create cct mount point
+    mkdir /mnt/vendor/cct
+    chown root system /mnt/vendor/cct
+    chmod 0771 /mnt/vendor/cct
+
+    #Create flash folder
+    mkdir /data/vendor/flash
+    chown root system /data/vendor/flash
+    chmod 0771 /data/vendor/flash
+
+    #Create shading mount point
+    mkdir /data/vendor/shading
+    chown root system /data/vendor/shading
+    chmod 0771 /data/vendor/shading
+
+    #Create shading_otp mount point
+    mkdir /data/vendor/shading_otp
+    chown root system /data/vendor/shading_otp
+    chmod 0771 /data/vendor/shading_otp
+
+    #Create NDD mount point
+    mkdir /data/vendor/camera_dump
+    chown root system /data/vendor/camera_dump
+    chmod 0771 /data/vendor/camera_dump
+
+    #Create imgsys mount point
+    mkdir /data/vendor/imgsys_dump
+    chown root system /data/vendor/imgsys_dump
+    chmod 0771 /data/vendor/imgsys_dump
+
+    #Create ulog file mode
+    mkdir /data/vendor/cam_ulog
+    chown root system /data/vendor/cam_ulog
+    chmod 0771 /data/vendor/cam_ulog
+
+    #Create Camera Dip Debug Folder
+    mkdir /data/vendor/dipdebug
+    chown root system /data/vendor/dipdebug
+    chmod 0771 /data/vendor/dipdebug
+
+    #Create flicker mount point
+    mkdir /data/vendor/flicker
+    chown root system /data/vendor/flicker
+    chmod 0771 /data/vendor/flicker
+
+    # Set SELinux security contexts on upgrade or policy update.
+    restorecon_recursive /mnt/vendor/nvdata
+
+    #give system access to rfkill device node
+    chmod 0660 /dev/rfkill
+
+    # create for muxd pts device node , to operate without root
+    mkdir /dev/radio 0770 radio radio
+
+    # create mdota to mount mcf_ota
+    mkdir /mnt/vendor/mdota
+
+    chmod 0660 /dev/spm
+    chown system system /dev/spm
+
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/init.mtkgki.rc =====
+service insmod_sh /vendor/bin/init.insmod.sh /vendor/etc/init.insmod.${ro.hardware}.cfg
+    class main
+    user root
+    group root system
+    disabled
+    oneshot
+
+
+===== /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/etc/init/hw/init.mtkgki.rc =====
+on early-init
+    setprop vendor.all.modules.ready 0
+    write /proc/bootprof "modprobe: Load_Module_START"
+    start insmod_sh

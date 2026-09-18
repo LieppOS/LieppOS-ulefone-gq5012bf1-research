@@ -1,0 +1,50 @@
+1:#!/vendor/bin/sh
+2:
+3:########################################################
+4:### init.insmod.cfg format:                          ###
+5:### -----------------------------------------------  ###
+6:### [insmod|setprop|enable/moprobe] [path|prop name] ###
+7:### ...                                              ###
+8:########################################################
+9:
+10:if [ $# -eq 1 ]; then
+11:  cfg_file=$1
+12:else
+13:  exit 1
+14:fi
+15:
+16:if [ -f $cfg_file ]; then
+17:  while IFS="|" read -r action arg
+18:  do
+19:    case $action in
+20:      "insmod") insmod $arg ;;
+21:      "setprop")
+22:        times=1
+23:        setprop $arg 1
+24:        while [ "$?" -ne 0 ]
+25:        do
+26:          if [ $times -gt 128 ]; then
+27:            break
+28:          fi
+29:          let times++
+30:          setprop $arg 1
+31:        done ;;
+32:      "enable") echo 1 > $arg ;;
+33:      "modprobe")
+34:        insmod_arg=${arg}
+35:        for partition in system_dlkm vendor
+36:        do
+37:          case ${insmod_arg} in
+38:            "-b *" | "-b")
+39:              arg="-b $(cat /${partition}/lib/modules/modules.load)" ;;
+40:            "*" | "")
+41:              arg="$(cat /${partition}/lib/modules/modules.load)" ;;
+42:          esac
+43:          modprobe -a -d /${partition}/lib/modules $arg
+44:        done
+45:    esac
+46:  done < $cfg_file
+47:else
+48:  exit 2
+49:fi
+50:
