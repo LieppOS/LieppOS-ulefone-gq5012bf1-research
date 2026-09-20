@@ -1,0 +1,776 @@
+===== ALL INSTALLED POST-FS ACTIONS =====
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/aconfigd.rc -----
+on post-fs
+    mkdir /metadata/aconfig 0775 root system
+    mkdir /metadata/aconfig/flags 0770 root system
+    mkdir /metadata/aconfig/maps 0775 root system
+    mkdir /metadata/aconfig/boot 0775 root system
+    exec_start system_aconfigd_platform_init
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/atrace_userdebug.rc -----
+on post-fs
+    # On userdebug allow to enable any event via the generic
+    # set_event interface:
+    # echo sched/foo > set_event == echo 1 > events/sched/foo/enable.
+    chmod 0666 /sys/kernel/tracing/set_event
+    chmod 0666 /sys/kernel/debug/tracing/set_event
+
+    chmod 0666 /sys/kernel/tracing/events/workqueue/enable
+    chmod 0666 /sys/kernel/debug/tracing/events/workqueue/enable
+    chmod 0666 /sys/kernel/tracing/events/regulator/enable
+    chmod 0666 /sys/kernel/debug/tracing/events/regulator/enable
+    chmod 0666 /sys/kernel/tracing/events/filemap/enable
+    chmod 0666 /sys/kernel/debug/tracing/events/filemap/enable
+
+    # Allow traced_probes to use the raw_syscall filters to trace only a subset
+    # of syscalls.
+    chmod 0666 /sys/kernel/tracing/events/raw_syscalls/sys_enter/filter
+    chmod 0666 /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/filter
+    chmod 0666 /sys/kernel/tracing/events/raw_syscalls/sys_exit/filter
+    chmod 0666 /sys/kernel/debug/tracing/events/raw_syscalls/sys_exit/filter
+
+    # Allow traced_probes to use the kprobe interface
+    chmod 0666 /sys/kernel/debug/tracing/kprobe_events
+    chmod 0666 /sys/kernel/tracing/kprobe_events
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/gsid.rc -----
+on post-fs
+    mkdir /metadata/gsi 0771 root system
+    mkdir /metadata/gsi/dsu 0771 root system
+    mkdir /metadata/gsi/ota 0771 root system
+    mkdir /metadata/gsi/remount 0771 root system
+    chmod 0664 /metadata/gsi/dsu/active
+    chmod 0664 /metadata/gsi/dsu/booted
+    chmod 0664 /metadata/gsi/dsu/lp_names
+
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc -----
+on post-fs
+    exec - system system -- /system/bin/vdc checkpoint markBootAttempt
+
+    # Once everything is setup, no need to modify /.
+    # The bind+remount combination allows this to work in containers.
+    mount rootfs rootfs / remount bind ro nodev
+
+    # Mount default storage into root namespace
+    mount none /mnt/user/0 /storage bind rec
+    mount none none /storage slave rec
+
+    # Make sure /sys/kernel/debug (if present) is labeled properly
+    # Note that tracefs may be mounted under debug, so we need to cross filesystems
+    restorecon --recursive --cross-filesystems /sys/kernel/debug
+
+    # We chown/chmod /cache again so because mount is run as root + defaults
+    chown system cache /cache
+    chmod 0770 /cache
+    # We restorecon /cache in case the cache partition has been reset.
+    restorecon_recursive /cache
+
+    # Create /cache/recovery in case it's not there. It'll also fix the odd
+    # permissions if created by the recovery system.
+    mkdir /cache/recovery 0770 system cache
+
+    # Backup/restore mechanism uses the cache partition
+    mkdir /cache/backup_stage 0700 system system
+    mkdir /cache/backup 0700 system system
+
+    #change permissions on vmallocinfo so we can grab it from bugreports
+    chown root log /proc/vmallocinfo
+    chmod 0440 /proc/vmallocinfo
+
+    chown root log /proc/slabinfo
+    chmod 0440 /proc/slabinfo
+
+    chown root log /proc/pagetypeinfo
+    chmod 0440 /proc/pagetypeinfo
+
+    #change permissions on kmsg & sysrq-trigger so bugreports can grab kthread stacks
+    chown root system /proc/kmsg
+    chmod 0440 /proc/kmsg
+    chown root system /proc/sysrq-trigger
+    chmod 0220 /proc/sysrq-trigger
+    chown system log /proc/last_kmsg
+    chmod 0440 /proc/last_kmsg
+
+    # make the selinux kernel policy world-readable
+    chmod 0444 /sys/fs/selinux/policy
+
+    # create the lost+found directories, so as to enforce our permissions
+    mkdir /cache/lost+found 0770 root root
+
+    restorecon_recursive /metadata
+    mkdir /metadata/vold
+    chmod 0700 /metadata/vold
+    mkdir /metadata/password_slots 0771 root system
+    mkdir /metadata/bootstat 0750 system log
+    mkdir /metadata/ota 0750 root system
+    mkdir /metadata/ota/snapshots 0750 root system
+    mkdir /metadata/watchdog 0770 root system
+    mkdir /metadata/tradeinmode 0770 root system
+    mkdir /metadata/prefetch 0770 root system
+
+    mkdir /metadata/apex 0700 root system
+    mkdir /metadata/apex/sessions 0700 root system
+    # On some devices we see a weird behaviour in which /metadata/apex doesn't
+    # have a correct label. To workaround this bug, explicitly call restorecon
+    # on /metadata/apex. For most of the boot sequences /metadata/apex will
+    # already have a correct selinux label, meaning that this call will be a
+    # no-op.
+    restorecon_recursive /metadata/apex
+
+    mkdir /metadata/staged-install 0770 root system
+
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/recovery-refresh.rc -----
+on post-fs
+    exec_background - system log -- /system/bin/recovery-refresh
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/meta_init.system.rc -----
+on post-fs
+    start system_suspend
+    # Once everything is setup, no need to modify /.
+    # The bind+ro combination avoids modifying any other mount flags.
+    # mount rootfs rootfs / remount bind ro
+    # Mount shared so changes propagate into child namespaces
+    mount rootfs rootfs / shared rec
+    # Mount default storage into root namespace
+    mount none /mnt/runtime/default /storage bind rec
+    mount none none /storage slave rec
+
+    # Make sure /sys/kernel/debug (if present) is labeled properly
+    # Note that tracefs may be mounted under debug, so we need to cross filesystems
+    restorecon --recursive --cross-filesystems /sys/kernel/debug
+    chmod 0755 /sys/kernel/debug/tracing
+
+    # We chown/chmod /cache again so because mount is run as root + defaults
+    chown system cache /cache
+    chmod 0770 /cache
+    # We restorecon /cache in case the cache partition has been reset.
+    restorecon_recursive /cache
+
+    #change permissions on kmsg & sysrq-trigger so bugreports can grab kthread stacks
+    chown root system /proc/kmsg
+    chmod 0440 /proc/kmsg
+    chown root system /proc/sysrq-trigger
+    chmod 0220 /proc/sysrq-trigger
+    chown system log /proc/last_kmsg
+    chmod 0440 /proc/last_kmsg
+
+    # make the selinux kernel policy world-readable
+    chmod 0444 /sys/fs/selinux/policy
+
+    # create the lost+found directories, so as to enforce our permissions
+    mkdir /cache/lost+found 0770 root root
+
+
+# It is recommended to put unnecessary data/ initialization from post-fs-data
+# to start-zygote in device's init.rc to unblock zygote start.
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/vendor_init_as_system.rc -----
+on post-fs
+    restorecon_recursive /metadata
+    mkdir /metadata/vold
+    chmod 0700 /metadata/vold
+    mkdir /metadata/password_slots 0771 root system
+    mkdir /metadata/bootstat 0750 system log
+    mkdir /metadata/ota 0700 root system
+    mkdir /metadata/ota/snapshots 0700 root system
+
+    mkdir /metadata/apex 0700 root system
+    mkdir /metadata/apex/sessions 0700 root system
+
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.project.rc -----
+on post-fs
+    # disable HPS
+    write /proc/hps/enabled 0
+
+
+    chmod 0660 /dev/spm
+    chown system system /dev/spm
+
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc -----
+on post-fs
+    start logd
+    start light-default
+    start system_suspend
+    start merged_hal_service
+    start capi-2-0
+    start vendor.health-default
+    # Once everything is setup, no need to modify /.
+    # The bind+ro combination avoids modifying any other mount flags.
+    # mount rootfs rootfs / remount bind ro
+    # Mount shared so changes propagate into child namespaces
+    mount rootfs rootfs / shared rec
+    # Mount default storage into root namespace
+    mount none /mnt/runtime/default /storage bind rec
+    mount none none /storage slave rec
+
+    # Make sure /sys/kernel/debug (if present) is labeled properly
+    # Note that tracefs may be mounted under debug, so we need to cross filesystems
+    restorecon --recursive --cross-filesystems /sys/kernel/debug
+
+    # Support legacy paths
+    symlink /sdcard /storage/sdcard0
+
+    chown system system /system/data
+    mkdir /system/cache 0770 system cache
+    # We restorecon /cache in case the cache partition has been reset.
+    restorecon_recursive /cache
+
+    # Same reason as /data above
+    chown system cache /cache
+    chmod 0770 /cache
+
+    # This may have been created by the recovery system with odd permissions
+    chown system cache /cache/recovery
+    chmod 0770 /cache/recovery
+
+    #change permissions on vmallocinfo so we can grab it from bugreports
+    chown root log /proc/vmallocinfo
+    chmod 0440 /proc/vmallocinfo
+
+    #change permissions on kmsg & sysrq-trigger so bugreports can grab kthread stacks
+    chown root system /proc/kmsg
+    chmod 0440 /proc/kmsg
+    chown root system /proc/sysrq-trigger
+    chmod 0220 /proc/sysrq-trigger
+    chown system log /proc/last_kmsg
+    chmod 0440 /proc/last_kmsg
+
+    # make the selinux kernel policy world-readable
+    chmod 0444 /sys/fs/selinux/policy
+
+    # create the lost+found directories, so as to enforce our permissions
+    mkdir /cache/lost+found 0770 root root
+
+#INTERNAL_START
+    mkdir /cache/recovery 0770 system system
+    chown system system /mnt/vendor/protect_f
+    chmod 0770 /mnt/vendor/protect_f
+
+    chown system system /mnt/vendor/protect_s
+    chmod 0770 /mnt/vendor/protect_s
+
+    chown system system /mnt/vendor/nvcfg
+    chmod 0771 /mnt/vendor/nvcfg
+    restorecon_recursive /mnt/vendor/nvcfg
+
+    chown root system /mnt/vendor/nvdata
+    chmod 0771 /mnt/vendor/nvdata
+    mkdir /mnt/vendor/nvdata/media 0771 media audio
+    restorecon_recursive /mnt/vendor/nvdata
+
+#INTERNAL_END
+
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc -----
+on post-fs
+    write /proc/bootprof "INIT:post-fs"
+
+    # Support legacy paths
+    symlink /sdcard /storage/sdcard0
+
+    #change permissions for mediaserver
+    chown root media /proc/clkmgr/mipi_test
+
+    #change permission for engineer mode
+    chown radio system /proc/clkmgr/pll_test
+    chown radio system /proc/clkmgr/pll_fsel
+    chmod 0664 /proc/clkmgr/pll_test
+    chmod 0664 /proc/clkmgr/pll_fsel
+    #change permission for engineer mode
+    chown radio system /proc/freqhopping/dramc
+    chown radio system /proc/freqhopping/dumpregs
+    chown radio system /proc/freqhopping/freqhopping_debug
+    chown radio system /proc/freqhopping/status
+    chown radio system /proc/freqhopping/userdef
+
+# change owner
+    chown system system /proc/bootprof
+    chmod 0664 /proc/bootprof
+    chown root system /proc/mtprof/cputime
+    chown root system /proc/mtprof/reboot_pid
+
+    chown system system /mnt/vendor/protect_f
+    chmod 0770 /mnt/vendor/protect_f
+
+    chown system system /mnt/vendor/protect_s
+    chmod 0770 /mnt/vendor/protect_s
+
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.usb.rc -----
+on post-fs
+    setprop vendor.usb.vid "0x0E8D"
+    mkdir /dev/usb-ffs 0775 shell shell
+    mkdir /dev/usb-ffs/adb 0770 shell shell
+    mkdir /config/usb_gadget/g1 0770 shell shell
+    write /config/usb_gadget/g1/idVendor ${vendor.usb.vid}
+    write /config/usb_gadget/g1/bcdDevice 0x0223
+    write /config/usb_gadget/g1/bcdUSB 0x0200
+    write /config/usb_gadget/g1/os_desc/use 1
+    mkdir /config/usb_gadget/g1/strings/0x409 0770
+    write /config/usb_gadget/g1/strings/0x409/serialnumber ${ro.serialno}
+    write /config/usb_gadget/g1/strings/0x409/manufacturer ${ro.product.manufacturer}
+    write /config/usb_gadget/g1/strings/0x409/product ${ro.product.model}
+    mkdir /config/usb_gadget/g1/functions/accessory.gs2
+    mkdir /config/usb_gadget/g1/functions/audio_source.gs3
+    mkdir /config/usb_gadget/g1/functions/ffs.adb
+    mkdir /config/usb_gadget/g1/functions/ffs.mtp
+    write /config/usb_gadget/g1/functions/ffs.mtp/os_desc/interface.MTP/compatible_id "MTP"
+    mkdir /config/usb_gadget/g1/functions/ffs.ptp
+    mkdir /config/usb_gadget/g1/functions/mtk_rndis.gs4
+    mkdir /config/usb_gadget/g1/functions/midi.gs5
+    mkdir /config/usb_gadget/g1/functions/ncm.gs6
+    mkdir /config/usb_gadget/g1/functions/acm.gs0
+    mkdir /config/usb_gadget/g1/functions/acm.gs1
+    mkdir /config/usb_gadget/g1/functions/acm.gs2
+    mkdir /config/usb_gadget/g1/functions/acm.gs3
+    mkdir /config/usb_gadget/g1/functions/mass_storage.usb0
+    mkdir /config/usb_gadget/g1/functions/hid.gs0
+    mkdir /config/usb_gadget/g1/configs/b.1 0770 shell shell
+    mkdir /config/usb_gadget/g1/configs/b.1/strings/0x409 0770 shell shell
+    write /config/usb_gadget/g1/os_desc/b_vendor_code 0x1
+    write /config/usb_gadget/g1/os_desc/qw_sign "MSFT100"
+    write /config/usb_gadget/g1/configs/b.1/MaxPower 500
+    symlink /config/usb_gadget/g1/configs/b.1 /config/usb_gadget/g1/os_desc/b.1
+    mount functionfs adb /dev/usb-ffs/adb rmode=0770,fmode=0660,uid=2000,gid=2000
+    mkdir /dev/usb-ffs/mtp 0770 mtp mtp
+    mkdir /dev/usb-ffs/ptp 0770 mtp mtp
+    mount functionfs mtp /dev/usb-ffs/mtp rmode=0770,fmode=0660,uid=1024,gid=1024
+    mount functionfs ptp /dev/usb-ffs/ptp rmode=0770,fmode=0660,uid=1024,gid=1024
+
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.project.rc -----
+on post-fs
+
+    chmod 0660 /dev/spm
+    chown system system /dev/spm
+
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc -----
+on post-fs
+    write /proc/bootprof "INIT:post-fs"
+    # start keyinstall-1-0
+    start vendor.light-default
+    start merged_hal_service
+    start vendor.health-default
+
+    # Support legacy paths
+    symlink /sdcard /storage/sdcard0
+
+
+#INTERNAL_START
+    chown system system /mnt/vendor/protect_f
+    chmod 0770 /mnt/vendor/protect_f
+
+    chown system system /mnt/vendor/protect_s
+    chmod 0770 /mnt/vendor/protect_s
+
+    chown system system /mnt/vendor/nvcfg
+    chmod 0771 /mnt/vendor/nvcfg
+    restorecon_recursive /mnt/vendor/nvcfg
+
+    chown root system /mnt/vendor/nvdata
+    chmod 0771 /mnt/vendor/nvdata
+    mkdir /mnt/vendor/nvdata/media 0771 media audio
+    restorecon_recursive /mnt/vendor/nvdata
+
+    chown system system /proc/bootprof
+
+#INTERNAL_END
+
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/init.lieppos.slotb-checkpoints.rc -----
+on post-fs
+    write /metadata/lieppos-slotb/30-post-fs 1
+
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/trustkernel.rc -----
+on post-fs
+	write /proc/bootprof "tkcore: prepare system ta path"
+
+	restorecon /mnt/vendor/persist
+	mkdir /mnt/vendor/persist/t6
+	chown system system /mnt/vendor/persist/t6
+	restorecon /mnt/vendor/persist/t6
+
+	restorecon /mnt/vendor/protect_f
+	mkdir /mnt/vendor/protect_f/tee
+	chown system system /mnt/vendor/protect_f/tee
+	restorecon /mnt/vendor/protect_f/tee
+
+	start teed
+
+
+===== POST-FS SYNCHRONOUS-CANDIDATE COMMANDS =====
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:83:    exec_start apexd-bootstrap
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:262:    restorecon_recursive /mnt
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:591:    exec - system system -- /system/bin/vdc checkpoint markBootAttempt
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:609:    restorecon_recursive /cache
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:643:    restorecon_recursive /metadata
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:661:    restorecon_recursive /metadata/apex
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:672:    class_start early_hal
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:675:    exec -- /system/bin/fsverity_init --load-verified-keys
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:691:    restorecon_recursive /sys/kernel/tracing/instances/bootreceiver
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:699:    exec - system system -- /system/bin/vdc checkpoint prepareCheckpoint
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:748:    exec - system system -- /system/bin/vdc keymaster earlyBootEnded
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:874:    exec - virtualizationservice system -- /bin/rm -rf /data/misc/virtualizationservice
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:957:    restorecon_recursive /data/system/shutdown-checkpoints
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:989:    exec - media_rw media_rw -- /system/bin/chattr +F /data/media
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1050:    wait_for_prop apexd.status activated
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1053:    exec_start system_aconfigd_mainline_init
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1058:    exec_start mainline_aconfigd_init
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1064:    exec_start derive_sdk
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1073:    exec_start derive_classpath
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1079:    exec_start art_boot
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1087:    wait_for_prop odsign.key.done 1
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1098:    exec_start apexd-snapshotde
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1129:    exec_start bpfloader
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1137:    wait_for_prop odsign.verification.done 1
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1139:    exec_start update_verifier
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1261:    class_start hal
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1263:    class_start core
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1266:    class_start main
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1267:    class_start late_start
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1273:    class_start charger
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1278:    exec - system system -- /bin/rm -rf /data/per_boot
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1285:    exec -- /system/bin/extra_free_kbytes.sh ${sys.sysctl.extra_free_kbytes}
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1387:    exec - root root system -- /system/bin/snapshotctl map
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1391:    exec - root root system -- /system/bin/snapshotctl unmap
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/cppreopts.rc:27:    mount_all /system/etc/fstab.postinstall
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/cppreopts.rc:30:    exec - system system -- /system/bin/preloads_copy.sh /postinstall
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/cppreopts.rc:35:    mount_all /product/etc/fstab.postinstall
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/cppreopts.rc:38:    exec - system system -- /system/bin/preloads_copy.sh /postinstall
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.yft.rc:15:    restorecon_recursive /mnt/vendor/nvcfg/FLIR
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.yft.rc:21:    restorecon_recursive /mnt/vendor/nvcfg/infiray
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.yft.rc:309:    restorecon_recursive /mnt/vendor/nvcfg/battery
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:149:    mount_all --early
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:173:    restorecon_recursive /mnt/vendor/nvcfg
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:178:    restorecon_recursive /mnt/vendor/nvdata
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:186:    wait_for_prop hwservicemanager.ready "true"
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:201:    exec_start wait_for_keymaster
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:202:    mount_all --late
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:206:    wait_for_prop vendor.all.modules.ready 1
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:229:    exec /vendor/etc/partition_permission.sh
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:246:    class_start default
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:274:    exec_start update_verifier
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:275:    class_start main
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:276:    class_start late_start
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:56:    exec -- /system/bin/bootstrap/linkerconfig --target /linkerconfig/bootstrap
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:71:    exec_start apexd-bootstrap
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:155:    restorecon_recursive /mnt
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:350:    mount_all --early
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:381:    restorecon_recursive /cache
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:419:    restorecon_recursive /mnt/vendor/nvcfg
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:424:    restorecon_recursive /mnt/vendor/nvdata
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:431:    class_start early_hal
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:432:    wait_for_prop hwservicemanager.ready "true"
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:442:    exec_start wait_for_keymaster
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:443:    mount_all --late
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:447:    wait_for_prop vendor.all.modules.ready 1
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:486:    exec /vendor/etc/partition_permission.sh
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:491:    restorecon_recursive /mnt/vendor/protect_f
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:492:    restorecon_recursive /mnt/vendor/protect_s
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:542:    exec_start update_verifier_nonencrypted
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:549:    exec_start update_verifier_nonencrypted
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:556:    exec_start update_verifier_nonencrypted
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:598:    class_start default
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:602:    class_start hal
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:604:    class_start core
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:607:    class_start main
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:608:    class_start late_start
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:631:    exec_start update_verifier
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:632:    class_start main
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:638:    exec_start update_verifier
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:639:    class_start main
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:640:    class_start late_start
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:648:    exec - root -- /system/bin/vdc --wait cryptfs mountdefaultencrypted
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:665:    exec_start update_verifier
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:666:    class_start main
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:667:    class_start late_start
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.modem.rc:25:    restorecon_recursive /mnt/vendor/protect_f
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.modem.rc:26:    restorecon_recursive /mnt/vendor/protect_s
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:74:    exec /system/bin/e2fsck -f -p /dev/block/by-name/cache
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:85:    restorecon_recursive /mnt/vendor/nvcfg
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:126:    mount_all --early
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:127:    exec /system/bin/tune2fs -O has_journal -u 10010 -r 4096 /dev/block/by-name/userdata
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:140:    wait_for_prop hwservicemanager.ready "true"
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:146:    mount_all --late
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:188:    wait_for_prop vendor.all.modules.ready 1
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:219:    restorecon_recursive /mnt/vendor/nvcfg
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:276:    restorecon_recursive /mnt/vendor/nvdata
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:1022:    swapon_all /vendor/etc/fstab.enableswap
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:1125:    insmod /vendor/lib/modules/msync2_dms.ko
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:1127:    insmod /vendor/lib/modules/msync2_frd.ko
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/init.cccimdinit.rc:26:    restorecon_recursive /mnt/vendor/protect_f
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/init.cccimdinit.rc:27:    restorecon_recursive /mnt/vendor/protect_s
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/chipinfo_init.rc:5:    wait_for_prop ro.vendor.soc.model_ready 1
+
+===== MT6878 POST-FS ACTION WITH LINE NUMBERS =====
+   153  on post-fs
+   154      write /proc/bootprof "INIT:post-fs"
+   155  
+   156      # Support legacy paths
+   157      symlink /sdcard /storage/sdcard0
+   158  
+   159      #change permissions for mediaserver
+   160      chown root media /proc/clkmgr/mipi_test
+   161  
+   162      #change permission for engineer mode
+   163      chown radio system /proc/clkmgr/pll_test
+   164      chown radio system /proc/clkmgr/pll_fsel
+   165      chmod 0664 /proc/clkmgr/pll_test
+   166      chmod 0664 /proc/clkmgr/pll_fsel
+   167      #change permission for engineer mode
+   168      chown radio system /proc/freqhopping/dramc
+   169      chown radio system /proc/freqhopping/dumpregs
+   170      chown radio system /proc/freqhopping/freqhopping_debug
+   171      chown radio system /proc/freqhopping/status
+   172      chown radio system /proc/freqhopping/userdef
+   173  
+   174  # change owner
+   175      chown system system /proc/bootprof
+   176      chmod 0664 /proc/bootprof
+   177      chown root system /proc/mtprof/cputime
+   178      chown root system /proc/mtprof/reboot_pid
+   179  
+   180      chown system system /mnt/vendor/protect_f
+   181      chmod 0770 /mnt/vendor/protect_f
+   182  
+   183      chown system system /mnt/vendor/protect_s
+   184      chmod 0770 /mnt/vendor/protect_s
+   185  
+
+===== SYSTEM INIT POST-FS / NEXT EVENTS =====
+575-    trigger bpf-progs-loaded
+576-
+577-    # Now we can start zygote.
+578-    trigger zygote-start
+579-
+580-    # Remove a file to wake up anything waiting for firmware.
+581-    trigger firmware_mounts_complete
+582-
+583-    trigger early-boot
+584-    trigger boot
+585-
+586-on early-fs
+587-    # Once metadata has been mounted, we'll need vold to deal with userdata checkpointing
+588-    start vold
+589-
+590:on post-fs
+591-    exec - system system -- /system/bin/vdc checkpoint markBootAttempt
+592-
+593-    # Once everything is setup, no need to modify /.
+594-    # The bind+remount combination allows this to work in containers.
+595-    mount rootfs rootfs / remount bind ro nodev
+596-
+597-    # Mount default storage into root namespace
+598-    mount none /mnt/user/0 /storage bind rec
+599-    mount none none /storage slave rec
+600-
+601-    # Make sure /sys/kernel/debug (if present) is labeled properly
+602-    # Note that tracefs may be mounted under debug, so we need to cross filesystems
+603-    restorecon --recursive --cross-filesystems /sys/kernel/debug
+604-
+605-    # We chown/chmod /cache again so because mount is run as root + defaults
+606-    chown system cache /cache
+607-    chmod 0770 /cache
+608-    # We restorecon /cache in case the cache partition has been reset.
+609-    restorecon_recursive /cache
+610-
+611-    # Create /cache/recovery in case it's not there. It'll also fix the odd
+612-    # permissions if created by the recovery system.
+613-    mkdir /cache/recovery 0770 system cache
+614-
+615-    # Backup/restore mechanism uses the cache partition
+616-    mkdir /cache/backup_stage 0700 system system
+617-    mkdir /cache/backup 0700 system system
+618-
+619-    #change permissions on vmallocinfo so we can grab it from bugreports
+620-    chown root log /proc/vmallocinfo
+621-    chmod 0440 /proc/vmallocinfo
+622-
+623-    chown root log /proc/slabinfo
+624-    chmod 0440 /proc/slabinfo
+625-
+626-    chown root log /proc/pagetypeinfo
+627-    chmod 0440 /proc/pagetypeinfo
+628-
+629-    #change permissions on kmsg & sysrq-trigger so bugreports can grab kthread stacks
+630-    chown root system /proc/kmsg
+631-    chmod 0440 /proc/kmsg
+632-    chown root system /proc/sysrq-trigger
+633-    chmod 0220 /proc/sysrq-trigger
+634-    chown system log /proc/last_kmsg
+635-    chmod 0440 /proc/last_kmsg
+636-
+637-    # make the selinux kernel policy world-readable
+638-    chmod 0444 /sys/fs/selinux/policy
+639-
+640-    # create the lost+found directories, so as to enforce our permissions
+641-    mkdir /cache/lost+found 0770 root root
+642-
+643-    restorecon_recursive /metadata
+644-    mkdir /metadata/vold
+645-    chmod 0700 /metadata/vold
+646-    mkdir /metadata/password_slots 0771 root system
+647-    mkdir /metadata/bootstat 0750 system log
+648-    mkdir /metadata/ota 0750 root system
+649-    mkdir /metadata/ota/snapshots 0750 root system
+650-    mkdir /metadata/watchdog 0770 root system
+651-    mkdir /metadata/tradeinmode 0770 root system
+652-    mkdir /metadata/prefetch 0770 root system
+653-
+654-    mkdir /metadata/apex 0700 root system
+655-    mkdir /metadata/apex/sessions 0700 root system
+656-    # On some devices we see a weird behaviour in which /metadata/apex doesn't
+657-    # have a correct label. To workaround this bug, explicitly call restorecon
+658-    # on /metadata/apex. For most of the boot sequences /metadata/apex will
+659-    # already have a correct selinux label, meaning that this call will be a
+660-    # no-op.
+661-    restorecon_recursive /metadata/apex
+662-
+663-    mkdir /metadata/staged-install 0770 root system
+664-
+665-on late-fs
+666-    # Ensure that tracefs has the correct permissions.
+667-    # This does not work correctly if it is called in post-fs.
+668-    chmod 0755 /sys/kernel/tracing
+669-    chmod 0755 /sys/kernel/debug/tracing
+670-
+671-    # HALs required before storage encryption can get unlocked (FBE)
+672-    class_start early_hal
+673-
+674-    # Load trusted keys from dm-verity protected partitions
+675-    exec -- /system/bin/fsverity_init --load-verified-keys
+676-
+677-# Only enable the bootreceiver tracing instance for kernels 5.10 and above.
+678-on late-fs && property:ro.kernel.version=4.19
+679-    setprop bootreceiver.enable 0
+680-on late-fs && property:ro.kernel.version=5.4
+
+===== POST-FS-DATA REFERENCES / PRODUCERS =====
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/recovery-persist.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.usb.rc:6:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:571:    trigger post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:696:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1116:    trigger post-fs-data-checkpointed
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:1134:# It is recommended to put unnecessary data/ initialization from post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/logtagd.rc:4:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/clean_scratch_files.rc:1:on post-fs-data && property:ro.debuggable=1 && property:ro.boot.dynamic_partitions=true
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/gsid.rc:17:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/logcatd.rc:5:# post-fs-data state because otherwise behavior is undefined. The exceptions
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/profcollectd.rc:9:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/bootstat.rc:9:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/perfetto.rc:76:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/wifi.rc:18:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/incidentd.rc:21:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/mobile_log_d.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/init.lineage-updater.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/init.aee.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/meta_init.system.rc:261:    trigger post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/meta_init.system.rc:313:# It is recommended to put unnecessary data/ initialization from post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/meta_init.system.rc:315:on zygote-start && property:ro.crypto.state=unencrypted
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/meta_init.system.rc:322:on zygote-start && property:ro.crypto.state=unsupported
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/meta_init.system.rc:329:on zygote-start && property:ro.crypto.state=encrypted && property:ro.crypto.type=file
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/meta_init.system.rc:354:on defaultcrypto
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/meta_init.system.rc:356:    # vold will set vold.decrypt to trigger_restart_framework (default
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/vendor_init_as_system.rc:16:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/vendor_init_as_system.rc:275:    # If there is no post-fs-data action in the init.<device>.rc file, you
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/vendor_init_as_system.rc:279:    setprop vold.post_fs_data_done 1
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/vendor_init_as_system.rc:291:    # post-fs-data for mtk modification
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/emdlogger.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/emdlogger.rc:11:on property:vold.decrypt=trigger_restart_framework
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/netdiag.rc:24:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/mdlogger.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/adb_root.rc:6:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/consyslogger.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/init.lieppos.slotb-checkpoints.rc:26:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/init.lieppos.slotb-checkpoints.rc:27:    write /metadata/lieppos-slotb/50-post-fs-data 1
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/trustkernel.rc:34:on property:ro.crypto.state=unencrypted
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/trustkernel.rc:39:on property:ro.crypto.state=unsupported
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/trustkernel.rc:44:on property:vold.decrypt=trigger_restart_framework
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/trustkernel.rc:49:on property:ro.crypto.type=file && property:ro.crypto.state=encrypted
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/md_monitor.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hostapd.android.rc:9:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/eara-io-service.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/android.hardware.neuralnetworks-shim-service-mtk.rc:9:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/android.hardware.neuralnetworks-shim-service-mtk.rc:12:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.connectivity.rc:5:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.yft.rc:10:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.modem.rc:35:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.modem.rc:37:    write /proc/bootprof "post-fs-data: on modem start"
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.modem.rc:40:    setprop vold.post_fs_data_done 1
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init_conninfra.rc:3:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:204:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:205:    write /proc/bootprof "INIT:post-fs-data"
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:267:    setprop vendor.crypto.fake_encrypt 1
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:268:    setprop vold.post_fs_data_done 0
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:269:    trigger post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:270:on property:vendor.crypto.fake_encrypt=1 && property:vold.post_fs_data_done=1
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:272:    # setprop ro.crypto.state unencrypted
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:273:    setprop vendor.soter.teei.crypto.state unencrypted
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.fingerprint.rc:52:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:305:    trigger post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:445:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:446:    write /proc/bootprof "INIT:post-fs-data"
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:538:# It is recommended to put unnecessary data/ initialization from post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:540:on zygote-start && property:ro.crypto.state=unencrypted
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:547:on zygote-start && property:ro.crypto.state=unsupported
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:554:on zygote-start && property:ro.crypto.state=encrypted && property:ro.crypto.type=file
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:610:on property:vold.decrypt=trigger_default_encryption
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:611:    start defaultcrypto
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:613:on property:vold.decrypt=trigger_encryption
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:617:on property:vold.decrypt=trigger_reset_main
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:620:on property:vold.decrypt=trigger_load_persist_props
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:625:on property:vold.decrypt=trigger_post_fs_data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:626:    trigger post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:629:on property:vold.decrypt=trigger_restart_min_framework
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:634:on property:vold.decrypt=trigger_restart_framework
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:642:on property:vold.decrypt=trigger_shutdown_framework
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:647:on defaultcrypto
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:649:    # vold will set vold.decrypt to trigger_restart_framework (default
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:658:    setprop vendor.crypto.fake_encrypt 1
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:659:    setprop vold.post_fs_data_done 0
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:660:    trigger post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:661:on property:vendor.crypto.fake_encrypt=1 && property:vold.post_fs_data_done=1
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:663:    # setprop ro.crypto.state unencrypted
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:664:    setprop vendor.soter.teei.crypto.state unencrypted
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.sensor_2_0.rc:2:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.connectivity.common.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.cgroup.rc:12:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.project.rc:10:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.usb.rc:45:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.modem.rc:7:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.modem.rc:9:    write /proc/bootprof "post-fs-data: on meta modem start"
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.modem.rc:29:    setprop vold.post_fs_data_done 1
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.connectivity.common.rc:2:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.aee.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:17:# init.modem.rc must be the LAST rc file because vold.post_fs_data_done is set in it
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:186:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:187:    write /proc/bootprof "INIT:post-fs-data"
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:974:on property:vold.decrypt=trigger_reset_main
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:975:    write /proc/bootprof "INIT:vold.decrypt=trigger_reset_main"
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:979:on property:vold.decrypt=trigger_post_fs_data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:980:    write /proc/bootprof "INIT:vold.decrypt=trigger_post_fs_data"
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:982:on property:vold.decrypt=trigger_restart_min_framework
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:983:    write /proc/bootprof "INIT:vold.decrypt=trigger_restart_min_framework"
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:987:on property:vold.decrypt=trigger_restart_framework
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:988:    write /proc/bootprof "INIT:vold.decrypt=trigger_restart_framework"
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:992:on property:vold.decrypt=trigger_shutdown_framework
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:993:    write /proc/bootprof "INIT:vold.decrypt=trigger_shutdown_framework"
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.connectivity.common.rc:3:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/bootperf.rc:47:on post-fs-data && property:ro.boot.boot_trace=1
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/touch_boost.rc:9:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/mtkrild.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/mtkrild.rc:26:on property:vold.decrypt=trigger_restart_framework
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/init.cccimdinit.rc:4:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/vendor.mediatek.hardware.pq_aidl-service.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/vendor.mediatek.hardware.mtkpower@1.0-init.rc:4:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/chipinfo_init.rc:4:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/mtk_agpsd_p.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/android.hardware.audio.service.mediatek.rc:1:on post-fs-data
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/camerahalserver.rc:1:on post-fs-data
