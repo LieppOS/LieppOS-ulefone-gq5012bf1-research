@@ -21,3 +21,17 @@ next-slot selection on this device.
 Current failure class:
 
 `FIXED_VENDOR_B_LOGO_HANG_NO_ADB_NO_PSTORE`
+
+## USB clarification
+
+During the fixed-vendor Slot-B logo hang, the host observed an Android/MediaTek
+USB gadget (VID:PID 0e8d:201c), but the user directly verified that no usable
+ADB transport existed.
+
+The B system remained at the logo until manual recovery. Therefore the
+subsequent USB disconnect / preloader sequence must not be classified as a
+spontaneous B reset.
+
+Updated failure class:
+
+`FIXED_VENDOR_B_STABLE_LOGO_HANG_ANDROID_USB_NO_ADB`
