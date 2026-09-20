@@ -1,0 +1,572 @@
+===== LIVE A IDENTITY =====
+slot=_a
+hardware=mt6878
+boot.hardware=mt6878
+
+===== LIVE A FSTAB FILES =====
+/vendor/etc/fstab.emmc
+/vendor/etc/fstab.enableswap
+/vendor/etc/fstab.mt6878
+/system/etc/fstab.postinstall
+
+===== LIKELY LIVE FSTAB CONTENT =====
+# 1 "vendor/mediatek/proprietary/hardware/fstab/mt6878/fstab.in.mt6878"
+# 1 "<built-in>" 1
+# 1 "<built-in>" 3
+# 374 "<built-in>" 3
+# 1 "<command line>" 1
+# 1 "<built-in>" 2
+# 1 "vendor/mediatek/proprietary/hardware/fstab/mt6878/fstab.in.mt6878" 2
+# 130 "vendor/mediatek/proprietary/hardware/fstab/mt6878/fstab.in.mt6878"
+system /system erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system /system ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system_ext /system_ext erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system_ext /system_ext ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+
+vendor /vendor erofs ro wait,slotselect,avb,logical,first_stage_mount
+vendor /vendor ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+product /product erofs ro wait,slotselect,avb,logical,first_stage_mount
+product /product ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+
+
+
+
+vendor_dlkm /vendor_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+vendor_dlkm /vendor_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+odm_dlkm /odm_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+odm_dlkm /odm_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+system_dlkm /system_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+system_dlkm /system_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+/dev/block/by-name/metadata /metadata f2fs noatime,nosuid,nodev,discard wait,check,formattable,first_stage_mount
+
+/dev/block/by-name/userdata /data f2fs noatime,nosuid,nodev,discard,noflush_merge,fsync_mode=nobarrier,reserve_root=134217,resgid=1065,inlinecrypt wait,check,formattable,quota,latemount,resize,reservedsize=128m,checkpoint=fs,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption,fsverity
+
+
+
+/dev/block/by-name/protect1 /mnt/vendor/protect_f ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/protect2 /mnt/vendor/protect_s ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/nvdata /mnt/vendor/nvdata ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/nvcfg /mnt/vendor/nvcfg ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+
+
+/dev/block/by-name/persist /mnt/vendor/persist ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+
+
+
+
+
+/devices/platform/soc/11240000.mmc* auto auto defaults voldmanaged=sdcard1:auto,encryptable=userdata
+
+/devices/platform/usb_xhci* auto vfat defaults voldmanaged=usbotg:auto
+/devices/platform/soc/11201000.usb0/11200000.xhci* auto vfat defaults voldmanaged=usbotg:auto
+/devices/platform/soc/11211000.usb1/11210000.xhci* auto vfat defaults voldmanaged=usbotg:auto
+
+/dev/block/by-name/frp /persistent emmc defaults defaults
+
+/dev/block/by-name/nvram /nvram emmc defaults defaults
+/dev/block/by-name/proinfo /proinfo emmc defaults defaults
+/dev/block/by-name/lk1 /lk1 emmc defaults defaults
+/dev/block/by-name/bootloader2 /bootloader2 emmc defaults defaults
+/dev/block/by-name/para /para emmc defaults defaults
+/dev/block/by-name/misc /misc emmc defaults defaults
+/dev/block/by-name/init_boot /init_boot emmc defaults defaults
+
+
+
+
+/dev/block/by-name/boot /boot emmc defaults first_stage_mount,nofail,slotselect
+
+
+
+
+
+/dev/block/by-name/vbmeta_vendor /vbmeta_vendor emmc defaults first_stage_mount,nofail,slotselect
+/dev/block/by-name/vbmeta_system /vbmeta_system emmc defaults first_stage_mount,nofail,slotselect,avb=vbmeta
+
+/dev/block/by-name/logo /logo emmc defaults defaults
+/dev/block/by-name/expdb /expdb emmc defaults defaults
+/dev/block/by-name/seccfg /seccfg emmc defaults defaults
+
+/dev/block/by-name/tee1 /tee1 emmc defaults defaults
+/dev/block/by-name/tee2 /tee2 emmc defaults defaults
+
+
+/dev/block/by-name/scp1 /scp1 emmc defaults defaults
+/dev/block/by-name/scp2 /scp2 emmc defaults defaults
+
+
+/dev/block/by-name/sspm1 /sspm1 emmc defaults defaults
+/dev/block/by-name/sspm2 /sspm2 emmc defaults defaults
+
+
+/dev/block/by-name/dpm1 /dpm1 emmc defaults defaults
+/dev/block/by-name/dpm2 /dpm2 emmc defaults defaults
+
+/dev/block/by-name/mcupm1 /mcupm1 emmc defaults defaults
+/dev/block/by-name/mcupm2 /mcupm2 emmc defaults defaults
+
+
+
+/dev/block/by-name/modem /modem emmc defaults defaults
+/dev/block/by-name/md1dsp /md1dsp emmc defaults defaults
+/dev/block/by-name/md1arm7 /md1arm7 emmc defaults defaults
+/dev/block/by-name/md3img /md3img emmc defaults defaults
+
+
+
+
+
+/dev/block/by-name/gz1 /gz1 emmc defaults defaults
+/dev/block/by-name/gz2 /gz2 emmc defaults defaults
+/dev/block/by-name/ccu /ccu emmc defaults defaults
+/dev/block/by-name/vcp /vcp emmc defaults defaults
+/dev/block/by-name/gpueb /gpueb emmc defaults defaults
+/dev/block/by-name/mcf_ota /mcf_ota emmc defaults defaults
+/dev/block/by-name/vendor_boot /vendor_boot emmc defaults defaults
+/dev/block/by-name/mvpu_algo1 /mvpu_algo1 emmc defaults defaults
+/dev/block/by-name/mvpu_algo2 /mvpu_algo2 emmc defaults defaults
+/dev/block/by-name/apusys1 /apusys1 emmc defaults defaults
+/dev/block/by-name/apusys2 /apusys2 emmc defaults defaults
+
+/dev/block/by-name/spmfw /spmfw emmc defaults defaults
+
+
+
+
+
+
+
+/dev/block/by-name/pi_img /pi_img emmc defaults defaults
+/dev/block/by-name/boot_para /boot_para emmc defaults defaults
+/dev/block/by-name/odmdtbo /odmdtbo emmc defaults defaults
+/dev/block/by-name/dtbo /dtbo emmc defaults defaults
+/dev/block/by-name/connsys_wifi /connsys_wifi emmc defaults defaults
+/dev/block/by-name/connsys_bt /connsys_bt emmc defaults defaults
+
+/dev/block/by-name/otp /otp emmc defaults defaults
+
+
+/dev/block/by-name/vbmeta /vbmeta emmc defaults defaults
+
+===== LIVE A IMPORTANT MOUNTS =====
+/dev/block/by-name/metadata /metadata f2fs rw,lazytime,seclabel,nosuid,nodev,noatime,background_gc=on,nogc_merge,discard,discard_unit=block,user_xattr,inline_xattr,acl,inline_data,inline_dentry,flush_merge,barrier,extent_cache,mode=adaptive,active_logs=6,alloc_mode=reuse,checkpoint_merge,fsync_mode=posix,memory=normal 0 0
+/dev/block/sdc7 /mnt/vendor/nvdata ext4 rw,seclabel,nosuid,nodev,noatime,nodelalloc,noauto_da_alloc,commit=1 0 0
+/dev/block/sdc6 /mnt/vendor/nvcfg ext4 rw,seclabel,nosuid,nodev,noatime,nodelalloc,noauto_da_alloc,commit=1 0 0
+/dev/block/dm-57 /data f2fs rw,lazytime,seclabel,nosuid,nodev,noatime,background_gc=on,nogc_merge,discard,discard_unit=block,user_xattr,inline_xattr,acl,inline_data,inline_dentry,noflush_merge,barrier,extent_cache,mode=adaptive,active_logs=6,reserve_root=134217,resuid=0,resgid=1065,inlinecrypt,alloc_mode=default,checkpoint_merge,fsync_mode=nobarrier,memory=normal 0 0
+
+===== READDEFAULTFSTAB LOOKUP =====
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-89-        bool is_zoned : 1;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-90-        bool wrapped_key : 1;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-91-    } fs_mgr_flags = {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-92-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-93-    bool is_encryptable() const { return fs_mgr_flags.crypt; }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-94-};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-95-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-96-// An Fstab is a collection of FstabEntry structs.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-97-// The entries must be kept in the same order as they were seen in the fstab.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-98-// Unless explicitly requested, a lookup on mount point should always return the 1st one.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-99-using Fstab = std::vector<FstabEntry>;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-100-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-101-bool ReadFstabFromFile(const std::string& path, Fstab* fstab);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-102-bool ReadFstabFromProcMounts(Fstab* fstab);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-103-bool ReadFstabFromDt(Fstab* fstab, bool verbose = true);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h:104:bool ReadDefaultFstab(Fstab* fstab);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-105-bool SkipMountingPartitions(Fstab* fstab, bool verbose = false);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-106-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-107-// The Fstab can contain multiple entries for the same mount point with different configurations.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-108-std::vector<FstabEntry*> GetEntriesForMountPoint(Fstab* fstab, const std::string& path);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-109-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-110-// Like GetEntriesForMountPoint() but return only the first entry or nullptr if no entry is found.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-111-FstabEntry* GetEntryForMountPoint(Fstab* fstab, const std::string& path);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-112-const FstabEntry* GetEntryForMountPoint(const Fstab* fstab, const std::string& path);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-113-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-114-FstabEntry* GetEntryForMountPoint(Fstab* fstab, const std::string_view path,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-115-                                  const std::string_view fstype);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-116-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-117-// This method builds DSU fstab entries and transfer the fstab.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-118-//
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-119-// fstab points to the unmodified fstab.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-120-//
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-121-// dsu_partitions contains partition names, e.g.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-122-//     dsu_partitions[0] = "system_gsi"
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-123-//     dsu_partitions[1] = "userdata_gsi"
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-124-//     dsu_partitions[2] = ...
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-125-void TransformFstabForDsu(Fstab* fstab, const std::string& dsu_slot,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-126-                          const std::vector<std::string>& dsu_partitions);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-127-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-128-std::set<std::string> GetBootDevices();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-129-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-130-// Get the Partition UUID the kernel loaded from if the bootloader passed it.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-131-//
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-132-// If the kernel's Partition UUID is provided then we can use this to help
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-133-// identify which block device contains the filesystems we care about.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-134-//
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-135-// NOTE: Nothing secures a UUID other than the convention that two disks
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-136-// aren't supposed to both have the same UUID. We still need other mechanisms
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-137-// to ensure we've got the right disk.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-138-std::string GetBootPartUuid();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-139-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-140-// Return the name of the dm-verity device for the given fstab entry. This does
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-141-// not check whether the device is valid or exists; it merely returns the
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-142-// expected name.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-143-std::string GetVerityDeviceName(const FstabEntry& entry);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-144-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-145-// Returns the Android Device Tree directory as specified in the kernel bootconfig or cmdline.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-146-// If the platform does not configure a custom DT path, returns the standard one (based in procfs).
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-147-const std::string& GetAndroidDtDir();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-148-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-149-// Import the kernel bootconfig by calling the callback |fn| with each key-value pair.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-150-void ImportBootconfig(const std::function<void(std::string, std::string)>& fn);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-151-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-152-// Get the kernel bootconfig value for |key|.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-153-// Returns true if |key| is found in bootconfig.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-154-// Otherwise returns false and |*out| is not modified.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-155-bool GetBootconfig(const std::string& key, std::string* out);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-156-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-157-// Import the kernel cmdline by calling the callback |fn| with each key-value pair.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-158-void ImportKernelCmdline(const std::function<void(std::string, std::string)>& fn);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-159-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-160-// Get the kernel cmdline value for |key|.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-161-// Returns true if |key| is found in the kernel cmdline.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-162-// Otherwise returns false and |*out| is not modified.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-163-bool GetKernelCmdline(const std::string& key, std::string* out);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-164-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-165-// Return the "other" slot for the given slot suffix.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-166-std::string OtherSlotSuffix(const std::string& suffix);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-167-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-168-bool GetBootconfigFromString(const std::string& bootconfig, const std::string& key,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-169-                             std::string* out);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-170-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-171-}  // namespace fs_mgr
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h-172-}  // namespace android
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-852-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-853-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-854-        return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-855-    };
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-856-    auto remove_from = std::stable_partition(fstab->begin(), fstab->end(), glob_pattern_mismatch);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-857-    if (verbose) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-858-        for (auto it = remove_from; it != fstab->end(); ++it) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-859-            LINFO << "Skip mounting mountpoint: " << it->mount_point;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-860-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-861-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-862-    fstab->erase(remove_from, fstab->end());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-863-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-864-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-865-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-866-// Loads the fstab file and combines with fstab entries passed in from device tree.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp:867:bool ReadDefaultFstab(Fstab* fstab) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-868-    fstab->clear();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-869-    ReadFstabFromDt(fstab, false /* verbose */);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-870-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-871-    Fstab default_fstab;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-872-    const std::string default_fstab_path = GetFstabPath();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-873-    if (!default_fstab_path.empty() && ReadFstabFromFile(default_fstab_path, &default_fstab)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-874-        fstab->insert(fstab->end(), std::make_move_iterator(default_fstab.begin()),
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-875-                      std::make_move_iterator(default_fstab.end()));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-876-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-877-        LINFO << __FUNCTION__ << "(): failed to find device default fstab";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-878-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-879-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-880-    return !fstab->empty();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-881-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-882-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-883-std::vector<FstabEntry*> GetEntriesForMountPoint(Fstab* fstab, const std::string& path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-884-    return GetEntriesByPred(fstab,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-885-                            [&path](const FstabEntry& entry) { return entry.mount_point == path; });
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-886-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-887-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-888-FstabEntry* GetEntryForMountPoint(Fstab* fstab, const std::string_view path,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-889-                                  const std::string_view fstype) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-890-    auto&& vec = GetEntriesByPred(fstab, [&path, fstype](const FstabEntry& entry) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-891-        return entry.mount_point == path && entry.fs_type == fstype;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-892-    });
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-893-    return vec.empty() ? nullptr : vec.front();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-894-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-895-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-896-std::vector<const FstabEntry*> GetEntriesForMountPoint(const Fstab* fstab,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-897-                                                       const std::string& path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-898-    return GetEntriesByPred(fstab,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-899-                            [&path](const FstabEntry& entry) { return entry.mount_point == path; });
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-900-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-901-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-902-FstabEntry* GetEntryForMountPoint(Fstab* fstab, const std::string& path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-903-    std::vector<FstabEntry*> entries = GetEntriesForMountPoint(fstab, path);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-904-    return entries.empty() ? nullptr : entries.front();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-905-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-906-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-907-const FstabEntry* GetEntryForMountPoint(const Fstab* fstab, const std::string& path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-908-    std::vector<const FstabEntry*> entries = GetEntriesForMountPoint(fstab, path);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-909-    return entries.empty() ? nullptr : entries.front();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-910-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-911-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-912-std::set<std::string> GetBootDevices() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-913-    std::set<std::string> boot_devices;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-914-    // First check bootconfig, then kernel commandline, then the device tree
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-915-    std::string value;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-916-    if (GetBootconfig("androidboot.boot_devices", &value) ||
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-917-        GetBootconfig("androidboot.boot_device", &value)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-918-        // split by spaces and trim the trailing comma.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-919-        for (std::string_view device : android::base::Split(value, " ")) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-920-            base::ConsumeSuffix(&device, ",");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-921-            boot_devices.emplace(device);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-922-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-923-        return boot_devices;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-924-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-925-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-926-    const std::string dt_file_name = GetAndroidDtDir() + "boot_devices";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-927-    if (GetKernelCmdline("androidboot.boot_devices", &value) || ReadDtFile(dt_file_name, &value)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-928-        auto boot_devices_list = Split(value, ",");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-929-        return {std::make_move_iterator(boot_devices_list.begin()),
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-930-                std::make_move_iterator(boot_devices_list.end())};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-931-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-932-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-933-    ImportKernelCmdline([&](std::string key, std::string value) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-934-        if (key == "androidboot.boot_device") {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-935-            boot_devices.emplace(std::move(value));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-936-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-937-    });
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-938-    if (!boot_devices.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-939-        return boot_devices;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-940-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-941-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-942-    // Fallback to extract boot devices from fstab.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-943-    Fstab fstab;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp:944:    if (!ReadDefaultFstab(&fstab)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-945-        return {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-946-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-947-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-948-    return ExtraBootDevices(fstab);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-949-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-950-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-951-std::string GetBootPartUuid() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-952-    std::string boot_part_uuid;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-953-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-954-    if (GetBootconfig("androidboot.boot_part_uuid", &boot_part_uuid)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-955-        return boot_part_uuid;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-956-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-957-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-958-    ImportKernelCmdline([&](std::string key, std::string value) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-959-        if (key == "androidboot.boot_part_uuid") {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-960-            boot_part_uuid = value;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-961-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-962-    });
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-963-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-964-    return boot_part_uuid;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-965-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-966-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-967-std::string GetVerityDeviceName(const FstabEntry& entry) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-968-    std::string base_device;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-969-    if (entry.mount_point == "/") {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-970-        // When using system-as-root, the device name is fixed as "vroot".
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-971-        if (entry.fs_mgr_flags.avb) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-972-            return "vroot";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-973-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-974-        base_device = "system";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-975-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-976-        base_device = android::base::Basename(entry.mount_point);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-977-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-978-    return base_device + "-verity";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-979-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-980-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-981-bool InRecovery() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-982-    // Check the existence of recovery binary instead of using the compile time
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-983-    // __ANDROID_RECOVERY__ macro.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-984-    // If BOARD_USES_RECOVERY_AS_BOOT is true, both normal and recovery boot
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-985-    // mode would use the same init binary, which would mean during normal boot
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp-986-    // the '/init' binary is actually a symlink pointing to
+
+===== SOURCE / OUTPUT FSTAB REFERENCES =====
+/mnt/SamsungSSD/android/lineage-22.2/device/ulefone/armol/device.mk:40:    $(DEVICE_PATH)/rootdir/etc/fstab.mt6878:$(TARGET_COPY_OUT_VENDOR_RAMDISK)/first_stage_ramdisk/fstab.mt6878
+
+===== INIT IMPORTS RELEVANT TO MTK / META / FACTORY =====
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:9:import /init.${ro.hardware}.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:10:import /vendor/etc/init/hw/init.${ro.hardware}.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/meta_init.system.rc:37:import /vendor/etc/init/hw/meta_init.vendor.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.connectivity.rc:1:import /vendor/etc/init/hw/meta_init.connectivity.common.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:9:import ${ro.vendor.rc}meta_init.connectivity.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:10:import /vendor/etc/init/hw/meta_init.project.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:59:import ${ro.vendor.rc}meta_init.modem.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:7:import ${ro.vendor.rc}factory_init.connectivity.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:8:import ${ro.vendor.rc}factory_init.thp.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:30:import /vendor/etc/init/hw/factory_init.project.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.vendor.rc:13:import /vendor/etc/init/hw/meta_init.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.connectivity.rc:1:import /vendor/etc/init/hw/factory_init.connectivity.common.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:5:import ${ro.vendor.rc}init.mt6878.usb.rc
+
+===== MT6878 FILE HEAD =====
+# MTK platform .rc configure
+
+import ${ro.vendor.rc}init.cgroup.rc
+import ${ro.vendor.rc}init.connectivity.rc
+import ${ro.vendor.rc}init.mt6878.usb.rc
+import /vendor/etc/init/hw/init.project.rc
+import /system_ext/etc/init/hw/init.aee.rc
+import /FWUpgradeInit.rc
+import /vendor/etc/init/hw/init.aee.rc
+import ${ro.vendor.rc}init.volte.rc
+import ${ro.vendor.rc}init.mal.rc
+import ${ro.vendor.rc}${ro.vendor.init.sensor.rc}
+
+#add by yft
+import ${ro.vendor.rc}init.yft.rc
+
+# init.modem.rc must be the LAST rc file because vold.post_fs_data_done is set in it
+import ${ro.vendor.rc}init.modem.rc
+# *** DO NOT import the new rc file after this line ***
+
+on early-init
+    write /proc/bootprof "INIT:early-init"
+
+    # initialize vendor.all.modules.ready to 1 here to prevent NOT GKI project blocked
+    setprop vendor.all.modules.ready 1
+
+# Keep debugfs mounted in non-user builds
+on early-init && property:ro.build.type=eng
+    mount debugfs debugfs /sys/kernel/debug
+    chmod 0755 /sys/kernel/debug
+    write /sys/power/pm_print_times 0
+    setprop persist.dbg.keep_debugfs_mounted true
+
+on early-init && property:ro.build.type=userdebug
+    mount debugfs debugfs /sys/kernel/debug
+    chmod 0755 /sys/kernel/debug
+    setprop persist.dbg.keep_debugfs_mounted true
+
+on init
+    write /proc/bootprof "INIT:init"
+
+    # Support legacy paths
+    symlink /sdcard /mnt/sdcard
+
+    # if primary storage is physical, set ro.vold.primary_physical to 1
+    # setprop ro.vold.primary_physical 1
+
+    mkdir /mnt/cd-rom 0000 system system
+
+# change lk_env permission
+    chown root system /proc/lk_env
+    chmod 0660 /proc/lk_env
+
+# increase sysctl_rmem_max and sysctl_wmem_max values to 2M
+    write /proc/sys/net/core/wmem_max 8388608
+    write /proc/sys/net/core/rmem_max 8388608
+
+# update cpus for cpuset cgroup
+    write /dev/cpuset/foreground/cpus 0-7
+    write /dev/cpuset/foreground/boost/cpus 0-7
+    write /dev/cpuset/background/cpus 0-3
+    write /dev/cpuset/system-background/cpus 0-3
+    write /dev/cpuset/top-app/cpus 0-7
+
+on late-init
+    write /proc/bootprof "INIT:late-init"
+# enable rcu_expedited
+    write /sys/kernel/rcu_expedited 1
+
+# mount different fs start
+
+on charger
+
+    exec /system/bin/e2fsck -f -p /dev/block/by-name/cache
+    mount ext4 /dev/block/by-name/cache /cache rw wait
+    chmod 0660 /dev/spm
+    chown system system /dev/spm
+    start spm_script
+    chmod 0666 /dev/kmsg
+    chmod 0775 /mnt/vendor
+    mkdir /mnt/vendor/nvcfg
+    mount ext4 /dev/block/by-name/nvcfg /mnt/vendor/nvcfg rw wait
+    chown system system /mnt/vendor/nvcfg
+    chmod 0771 /mnt/vendor/nvcfg
+    restorecon_recursive /mnt/vendor/nvcfg
+    write /sys/devices/platform/battery_meter/FG_daemon_log_level 7
+    write /sys/bus/platform/devices/battery/FG_daemon_log_level 7
+    # Permissions for System Server and daemons.
+    chown system system /sys/power/autosleep
+    chown system system /sys/power/state
+    chown system system /sys/power/wakeup_count
+    chown radio wakelock /sys/power/wake_lock
+    chown radio wakelock /sys/power/wake_unlock
+    chmod 0660 /sys/power/state
+    chmod 0660 /sys/power/wake_lock
+    chmod 0660 /sys/power/wake_unlock
+    chmod 0660 /sys/power/wakeup_count
+    write /sys/power/pm_freeze_timeout 2000
+
+    # gauge symbolic
+    symlink /sys/devices/platform/soc/11280000.i2c/i2c-5/5-0034/11280000.i2c:mt6375@34:mtk-gauge /dev/gauge
+
+    start fuelgauged
+    start fuelgauged_nvram
+
+    chown system system /sys/class/leds/lcd-backlight/brightness
+    chown system system /sys/class/leds/lcd-backlight1/brightness
+    chown system system /sys/class/leds/red/brightness
+    chown system system /sys/class/leds/green/brightness
+    chown system system /sys/class/leds/blue/brightness
+
+    start vendor.light-default
+    start vendor.health-default
+
+    # Stop bootprof
+    write /proc/bootprof "0"
+
+on early-fs
+    write /proc/bootprof "INIT:early-fs"
+on fs
+    write /proc/bootprof "INIT:fs"
+
+    # mount fstab
+    write /proc/bootprof "INIT:Mount_START"
+    write /sys/kernel/tracing/trace_marker "B|1|Mount"
+    mount_all --early
+    exec /system/bin/tune2fs -O has_journal -u 10010 -r 4096 /dev/block/by-name/userdata
+    write /sys/kernel/tracing/trace_marker "E"
+    write /proc/bootprof "INIT:Mount_END"
+
+on fs
+
+   mount iso9660 loop@/vendor/etc/iAmCdRom.iso /mnt/cd-rom ro
+
+on late-fs
+    write /proc/bootprof "INIT:late-fs"
+    wait_for_prop hwservicemanager.ready "true"
+
+    write /proc/bootprof "INIT:Mount_START --late"
+    write /sys/kernel/tracing/trace_marker "B|1|Mount late"
+    mount_all --late
+    write /sys/kernel/tracing/trace_marker "E"
+    write /proc/bootprof "INIT:Mount_END --late"
+
+on post-fs
+    write /proc/bootprof "INIT:post-fs"
+
+    # Support legacy paths
+    symlink /sdcard /storage/sdcard0
+
+    #change permissions for mediaserver
+    chown root media /proc/clkmgr/mipi_test
+
+    #change permission for engineer mode
+    chown radio system /proc/clkmgr/pll_test
+    chown radio system /proc/clkmgr/pll_fsel
+    chmod 0664 /proc/clkmgr/pll_test
+    chmod 0664 /proc/clkmgr/pll_fsel
+    #change permission for engineer mode
+    chown radio system /proc/freqhopping/dramc
+    chown radio system /proc/freqhopping/dumpregs
+    chown radio system /proc/freqhopping/freqhopping_debug
+    chown radio system /proc/freqhopping/status
+    chown radio system /proc/freqhopping/userdef
+
