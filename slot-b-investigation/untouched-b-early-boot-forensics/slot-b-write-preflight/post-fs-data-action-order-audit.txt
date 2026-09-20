@@ -1,0 +1,1227 @@
+===== SYSTEM INIT IMPORT HEAD =====
+# Copyright (C) 2012 The Android Open Source Project
+#
+# IMPORTANT: Do not create world writable files or directories.
+# This is a common source of Android security bugs.
+#
+
+import /init.environ.rc
+import /system/etc/init/hw/init.usb.rc
+import /init.${ro.hardware}.rc
+import /vendor/etc/init/hw/init.${ro.hardware}.rc
+import /system/etc/init/hw/init.usb.configfs.rc
+import /system/etc/init/hw/init.${ro.zygote}.rc
+
+# Cgroups are mounted right before early-init using list from /etc/cgroups.json
+on early-init
+    # Disable sysrq from keyboard
+    write /proc/sys/kernel/sysrq 0
+
+    # Android doesn't need kernel module autoloading, and it causes SELinux
+    # denials.  So disable it by setting modprobe to the empty string.  Note: to
+    # explicitly set a sysctl to an empty string, a trailing newline is needed.
+    write /proc/sys/kernel/modprobe \n
+
+    # Set the security context of /adb_keys if present.
+
+===== LATE-INIT EVENT ORDER =====
+   552  on late-init
+   553      trigger early-fs
+   554  
+   555      # Mount fstab in init.{$device}.rc by mount_all command. Optional parameter
+   556      # '--early' can be specified to skip entries with 'latemount'.
+   557      # /system and /vendor must be mounted by the end of the fs stage,
+   558      # while /data is optional.
+   559      trigger fs
+   560      trigger post-fs
+   561  
+   562      # Mount fstab in init.{$device}.rc by mount_all with '--late' parameter
+   563      # to only mount entries with 'latemount'. This is needed if '--early' is
+   564      # specified in the previous mount_all command on the fs stage.
+   565      # With /system mounted and properties form /system + /factory available,
+   566      # some services can be started.
+   567      trigger late-fs
+   568  
+   569      # Now we can mount /data. File encryption requires keymaster to decrypt
+   570      # /data, which in turn can only be loaded when system properties are present.
+   571      trigger post-fs-data
+   572  
+   573      # Should be before netd, but after apex, properties and logging is available.
+   574      trigger load-bpf-programs
+   575      trigger bpf-progs-loaded
+   576  
+   577      # Now we can start zygote.
+   578      trigger zygote-start
+   579  
+   580      # Remove a file to wake up anything waiting for firmware.
+   581      trigger firmware_mounts_complete
+   582  
+   583      trigger early-boot
+   584      trigger boot
+   585  
+
+===== MTK POST-FS-DATA ACTION =====
+   186  on post-fs-data
+   187      write /proc/bootprof "INIT:post-fs-data"
+   188      wait_for_prop vendor.all.modules.ready 1
+   189      write /proc/bootprof "modprobe: Load_Module_DONE"
+   190  
+   191      # Disable watermark boost
+   192      write /proc/sys/vm/watermark_boost_factor 0
+   193  
+   194      # multi-gen LRU
+   195      write /sys/kernel/mm/lru_gen/enabled y
+   196  
+   197      # zram
+   198      write /sys/block/zram0/comp_algorithm lz4
+   199      write /proc/sys/vm/page-cluster 0
+   200      write /proc/sys/vm/swappiness 100
+   201      write /sys/kernel/mm/swap/vma_ra_enabled false
+   202  
+   203      # boot time fs tune
+   204      write /sys/block/mmcblk0/queue/iostats 0
+   205      write /sys/block/mmcblk0/queue/read_ahead_kb 2048
+   206      write /sys/block/mmcblk0/queue/nr_requests 256
+   207      write /sys/block/sdc/queue/iostats 0
+   208      write /sys/block/sdc/queue/read_ahead_kb 2048
+   209      write /sys/block/sdc/queue/nr_requests 256
+   210      write /sys/block/dm-0/queue/read_ahead_kb 2048
+   211      write /sys/block/dm-1/queue/read_ahead_kb 2048
+   212      write /sys/block/dm-2/queue/read_ahead_kb 2048
+   213      write /sys/block/dm-3/queue/read_ahead_kb 2048
+   214      write /sys/block/dm-4/queue/read_ahead_kb 2048
+   215      write /sys/block/dm-5/queue/read_ahead_kb 2048
+   216  
+   217      chown system system /mnt/vendor/nvcfg
+   218      chmod 0771 /mnt/vendor/nvcfg
+   219      restorecon_recursive /mnt/vendor/nvcfg
+   220      chown system system /mnt/vendor/nvcfg/fg
+   221      chown system system /mnt/vendor/nvcfg/fg/old_fg_data
+   222      chown system system /mnt/vendor/nvcfg/fg/car_tune_value
+   223  
+   224      # create basic filesystem structure
+   225      # We chown/chmod /mnt/vendor/nvdata again so because mount is run as root + defaults
+   226      chown root system /mnt/vendor/nvdata
+   227      chmod 0771 /mnt/vendor/nvdata
+   228      mkdir /mnt/vendor/nvdata/media 0771 media audio
+   229  
+   230      #Create cct mount point
+   231      mkdir /mnt/vendor/cct
+   232      chown root system /mnt/vendor/cct
+   233      chmod 0771 /mnt/vendor/cct
+   234  
+   235      #Create flash folder
+   236      mkdir /data/vendor/flash
+   237      chown root system /data/vendor/flash
+   238      chmod 0771 /data/vendor/flash
+   239  
+   240      #Create shading mount point
+   241      mkdir /data/vendor/shading
+   242      chown root system /data/vendor/shading
+   243      chmod 0771 /data/vendor/shading
+   244  
+   245      #Create shading_otp mount point
+   246      mkdir /data/vendor/shading_otp
+   247      chown root system /data/vendor/shading_otp
+   248      chmod 0771 /data/vendor/shading_otp
+   249  
+   250      #Create NDD mount point
+   251      mkdir /data/vendor/camera_dump
+   252      chown root system /data/vendor/camera_dump
+   253      chmod 0771 /data/vendor/camera_dump
+   254  
+   255      #Create imgsys mount point
+   256      mkdir /data/vendor/imgsys_dump
+   257      chown root system /data/vendor/imgsys_dump
+   258      chmod 0771 /data/vendor/imgsys_dump
+   259  
+   260      #Create ulog file mode
+   261      mkdir /data/vendor/cam_ulog
+   262      chown root system /data/vendor/cam_ulog
+   263      chmod 0771 /data/vendor/cam_ulog
+   264  
+   265      #Create Camera Dip Debug Folder
+   266      mkdir /data/vendor/dipdebug
+   267      chown root system /data/vendor/dipdebug
+   268      chmod 0771 /data/vendor/dipdebug
+   269  
+   270      #Create flicker mount point
+   271      mkdir /data/vendor/flicker
+   272      chown root system /data/vendor/flicker
+   273      chmod 0771 /data/vendor/flicker
+   274  
+   275      # Set SELinux security contexts on upgrade or policy update.
+   276      restorecon_recursive /mnt/vendor/nvdata
+   277  
+   278      #give system access to rfkill device node
+   279      chmod 0660 /dev/rfkill
+   280  
+   281      # create for muxd pts device node , to operate without root
+   282      mkdir /dev/radio 0770 radio radio
+   283  
+   284      # create mdota to mount mcf_ota
+   285      mkdir /mnt/vendor/mdota
+   286  
+   287      chmod 0660 /dev/spm
+   288      chown system system /dev/spm
+   289  
+   290  # GPS
+   291      chmod 0775 /vendor/xbin/MPED
+   292      chmod 0666 /dev/gps_emi
+   293  
+   294  # -----------------------
+   295  # Add by MTK
+   296      # SCP log
+   297      chmod 0660 /sys/class/misc/scp/scp_mobile_log
+   298      chown root system /sys/class/misc/scp/scp_mobile_log
+   299      chmod 0220 /sys/class/misc/scp/scp_log_flush
+   300      chown root system /sys/class/misc/scp/scp_log_flush
+   301      chmod 0440 /dev/scp
+   302      chown root system /dev/scp
+   303      chmod 0664 /sys/class/misc/scp/scp_ee_force_ke
+   304      chown root system /sys/class/misc/scp/scp_ee_force_ke
+   305  
+   306      # ADSP log
+   307      chmod 0660 /sys/class/misc/adsp_0/log_enable
+   308      chown root system /sys/class/misc/adsp_0/log_enable
+   309      chmod 0660 /sys/class/misc/adsp_1/log_enable
+   310      chown root system /sys/class/misc/adsp_1/log_enable
+   311      chmod 0660 /dev/adsp
+   312      chown root media /dev/adsp
+   313      chmod 0440 /dev/adsp_0
+   314      chown system media /dev/adsp_0
+   315      chmod 0440 /dev/adsp_1
+   316      chown system media /dev/adsp_1
+   317  
+   318      chmod 0660 /dev/adsp_in_scp
+   319      chown root media /dev/adsp_in_scp
+   320  
+   321      # SSPM log
+   322      chmod 0620 /sys/class/misc/sspm/sspm_mobile_log
+   323      chown root system /sys/class/misc/sspm/sspm_mobile_log
+   324      chmod 0440 /dev/sspm
+   325      chown root system /dev/sspm
+   326  
+   327      # VCP log
+   328      chmod 0660 /sys/class/misc/vcp/vcp_mobile_log
+   329      chown root system /sys/class/misc/vcp/vcp_mobile_log
+   330      chmod 0220 /sys/class/misc/vcp/vcp_log_flush
+   331      chown root system /sys/class/misc/vcp/vcp_log_flush
+   332      chmod 0440 /dev/vcp
+   333      chown root system /dev/vcp
+   334      chmod 0664 /sys/class/misc/vcp/vcp_ee_force_ke
+   335      chown root system /sys/class/misc/vcp/vcp_ee_force_ke
+   336  
+   337      # radvd
+   338      chmod 444 /etc/radvd/radvd.conf
+   339  
+   340      # Mali 3D GPU driver
+   341      #insmod /vendor/lib/modules/mali.ko
+   342      #chmod 666 /dev/mali0
+   343      #chown system graphics /dev/mali
+   344  
+   345  
+   346  
+   347      # Touch Panel
+   348      # chmod 0664 /dev/touch
+   349      chown root diag /sys/module/tpd_setting/parameters/tpd_calmat
+   350      chown root diag /sys/module/tpd_setting/parameters/tpd_em_debounce_time
+   351      chown root diag /sys/module/tpd_setting/parameters/tpd_mode
+   352      chown root diag /sys/module/tpd_setting/parameters/tpd_em_debounce_time0
+   353      chown root diag /sys/module/tpd_setting/parameters/tpd_em_debounce_time1
+   354      chown root diag /sys/module/tpd_setting/parameters/tpd_em_spl_num
+   355      chown root diag /sys/module/tpd_setting/parameters/tpd_em_pressure_threshold
+   356      chown root diag /sys/module/tpd_setting/parameters/tpd_em_auto_time_interval
+   357      chown root diag /sys/module/tpd_setting/parameters/tpd_em_sample_cnt
+   358      chown root diag /sys/module/tpd_setting/parameters/tpd_em_asamp
+   359      chown root diag /sys/module/tpd_debug/parameters/tpd_em_log
+   360      chown root diag /sys/module/tpd_debug/parameters/tpd_em_log_to_fs
+   361  
+   362      chmod 0666 /dev/pmem_multimedia
+   363  
+   364      # set ptmx group to non-root
+   365      chown root radio /dev/ptmx
+   366  
+   367      # RTC
+   368      chmod 660 /dev/alarm
+   369      chown root system /dev/alarm
+   370  
+   371      # CMDQ
+   372      chmod 0640 /dev/mtk_mdp
+   373      chown system system /dev/mtk_mdp
+   374  
+   375      # MDP SYNC
+   376      chmod 0640 /dev/mdp_sync
+   377      chown system system /dev/mdp_sync
+   378  
+   379      # MML PQ
+   380      chmod 0640 /dev/mml_pq
+   381      chown system system /dev/mml_pq
+   382  
+   383      #OFFLOAD SERVICE
+   384      chmod 0640 /dev/offloadservice
+   385      chown media media /dev/offloadservice
+   386  
+   387      #OPEN DSP
+   388      chmod 0640 /dev/audio_ipi
+   389      chown media media /dev/audio_ipi
+   390  
+   391      #SmartPA
+   392      chmod 0640 /dev/audio_scp
+   393      chown media media /dev/audio_scp
+   394      chown audioserver audio /sys/bus/platform/devices/rt5509_param.0/prop_param
+   395      chown audioserver audio /sys/bus/platform/devices/rt5509_param.1/prop_param
+   396  
+   397      #Accdet
+   398      chown root radio /sys/devices/platform/Accdet_Driver/driver/accdet_call_state
+   399  
+   400      #Fingerprint
+   401      chown system system /dev/goodix_fp
+   402      chmod 0660 /dev/goodix_fp
+   403  
+   404      #v4l2 codec
+   405      chmod 0660 /dev/vcu
+   406      chown media system /dev/vcu
+   407      chmod 0660 /dev/video0
+   408      chown media system /dev/video0
+   409      chmod 0660 /dev/video1
+   410      chown media system /dev/video1
+   411      mkdir /data/vendor/vcodec 0777 media system
+   412      mkdir /data/vendor/vcodec/log 0770 media system
+   413      mkdir /data/vendor/vcodec/in 0770 media system
+   414      mkdir /data/vendor/vcodec/out 0770 media system
+   415  
+   416      #MJC
+   417      #insmod /vendor/lib/modules/mjc_kernel_driver.ko
+   418      chmod 0660 /dev/MJC
+   419      chown media system /dev/MJC
+   420  
+   421      #kpd
+   422      chown radio radio /sys/devices/platform/mtk-kpd/driver/kpd_call_state
+   423  
+   424      #Charging Battery
+   425      chown radio radio /sys/devices/platform/battery/Charging_CallState
+   426  
+   427      # PMIC property
+   428      chown radio system /sys/devices/platform/mt-pmic/low_battery_protect_stop
+   429      chown radio system /sys/devices/platform/mt-pmic/low_battery_protect_ut
+   430  
+   431      #MDDB
+   432      mkdir /data/vendor_de/meta 0770 system system
+   433      mkdir /data/vendor_de/meta/mddb 0770 system system
+   434  
+   435      chown system /sys/devices/platform/msensor/driver/cpsopmode
+   436      chown system /sys/devices/platform/msensor/driver/cpsreptxy
+   437      chown system /sys/devices/platform/msensor/driver/cpsreptz
+   438      chown system /sys/devices/platform/gsensor/driver/cpsopmode
+   439      chown system /sys/devices/platform/gsensor/driver/cpsrange
+   440  
+   441      chown system /sys/class/input/input1/enable
+   442      chown system /sys/class/input/input1/delay
+   443      chown system /sys/class/input/input1/wake
+   444      chown system /sys/class/input/input1/offsets
+   445      chown system /sys/class/input/input2/enable
+   446      chown system /sys/class/input/input2/delay
+   447      chown system /sys/class/input/input2/wake
+   448      chown system /sys/class/input/input2/offsets
+   449      chown system /sys/class/input/input3/enable
+   450      chown system /sys/class/input/input3/delay
+   451      chown system /sys/class/input/input3/wake
+   452      chown system /sys/class/input/input3/offsets
+   453      chown system /sys/class/input/input4/enable
+   454      chown system /sys/class/input/input4/delay
+   455      chown system /sys/class/input/input4/wake
+   456      chown system /sys/class/input/input4/offsets
+   457      chown system /sys/class/input/input5/enable
+   458      chown system /sys/class/input/input5/delay
+   459      chown system /sys/class/input/input5/wake
+   460      chown system /sys/class/input/input5/offsets
+   461      chown system /sys/class/input/input6/enable
+   462      chown system /sys/class/input/input6/delay
+   463      chown system /sys/class/input/input6/wake
+   464      chown system /sys/class/input/input6/offsets
+   465      chown system /sys/class/input/input7/enable
+   466      chown system /sys/class/input/input7/delay
+   467      chown system /sys/class/input/input7/wake
+   468      chown system /sys/class/input/input7/offsets
+   469      chown system /sys/class/input/input8/enable
+   470      chown system /sys/class/input/input8/delay
+   471      chown system /sys/class/input/input8/wake
+   472      chown system /sys/class/input/input8/offsets
+   473      chown system /sys/class/input/input9/enable
+   474      chown system /sys/class/input/input9/delay
+   475      chown system /sys/class/input/input9/wake
+   476      chown system /sys/class/input/input9/offsets
+   477      chown system /sys/class/input/input10/enable
+   478      chown system /sys/class/input/input10/delay
+   479      chown system /sys/class/input/input10/wake
+   480      chown system /sys/class/input/input10/offsets
+   481  
+   482      #EM eint
+   483      chown root diag /sys/bus/platform/drivers/eint/current_eint
+   484  
+   485      # Display
+   486      chmod 0660 /dev/graphics/fb0
+   487      chown system graphics /dev/graphics/fb0
+   488  
+   489      chmod 0660 /dev/mtk_disp_mgr
+   490      chown system graphics /dev/mtk_disp_mgr
+   491  
+   492      chmod 0660 /dev/mtkfb_vsync
+   493      chown system graphics /dev/mtkfb_vsync
+   494  
+   495      chmod 0660 /dev/sw_sync
+   496      chown system graphics /dev/sw_sync
+   497  
+   498      # EM baseband file
+   499      chown root diag /vendor/bin/baseband_regdump
+   500      chmod 4750 /vendor/bin/baseband_regdump
+   501  
+   502      #pmu
+   503      chown root radio /sys/devices/platform/mt-pmic/pmic_access_bank0
+   504      chown root radio /sys/devices/platform/mt-pmic/pmic_access_bank1
+   505      chown root radio /sys/devices/platform/mt6311-user/mt6311_access
+   506      chown root radio /sys/devices/platform/mt-pmic/pmic_access
+   507      chmod 0664 /sys/devices/platform/mt-pmic/pmic_access_bank0
+   508      chmod 0664 /sys/devices/platform/mt-pmic/pmic_access_bank1
+   509      chmod 0664 /sys/devices/platform/mt6311-user/mt6311_access
+   510      chmod 0664 /sys/devices/platform/mt-pmic/pmic_access
+   511  
+   512      # EM CPU Speed Stress
+   513      chown root radio /proc/cpu_ss/cpu_ss_debug_mode
+   514      chown root radio /proc/cpu_ss/cpu_ss_mode
+   515      chown root radio /proc/cpu_ss/cpu_ss_period
+   516      chown root radio /proc/cpu_ss/cpu_ss_period_mode
+   517      chmod 0664 /proc/cpu_ss/cpu_ss_debug_mode
+   518      chmod 0664 /proc/cpu_ss/cpu_ss_mode
+   519      chmod 0664 /proc/cpu_ss/cpu_ss_period
+   520      chmod 0664 /proc/cpu_ss/cpu_ss_period_mode
+   521  
+   522      #EM eint
+   523      chown root diag /sys/bus/platform/drivers/eint/current_eint
+   524  
+   525      # Android SEC related device nodes
+   526      chmod 0660 /dev/sec
+   527      chown root system /dev/sec
+   528  
+   529      # FM Radio device node
+   530      chmod 0660 /dev/fm
+   531      chown media media /dev/fm
+   532  
+   533      # device apc settings
+   534  
+   535      # device info /proc interface
+   536      chmod 0440 /dev/devmap
+   537      chown root system /dev/devmap
+   538  
+   539      # bluetooth
+   540      chown bluetooth bluetooth /dev/hid-keyboard
+   541      chmod 0660 /dev/hid-keyboard
+   542      #Use uinput's default permission
+   543      chown system net_bt_admin /dev/uinput
+   544  
+   545      # UIBC
+   546      chown system media /dev/uibc
+   547      chmod 0660 /dev/uibc
+   548  
+   549      #TV-out
+   550      chmod 0664 /dev/TV-out
+   551  
+   552      #HDMI
+   553      chown media system /dev/hdmitx
+   554      chmod 0664 /dev/hdmitx
+   555  
+   556  
+   557      # JPEG
+   558      chmod 0666 /proc/mtk_jpeg
+   559  
+   560      # almk
+   561      chmod 0440 /dev/mtk_almk
+   562  
+   563      # DISP
+   564      chmod 0444 /dev/mtk_disp
+   565  
+   566      #ANC SERVICE
+   567      chmod 0640 /dev/ancservice
+   568      chown media media /dev/ancservice
+   569  
+   570      # gz device
+   571      chmod 0660 /dev/gz_kree
+   572      chown system system /dev/gz_kree
+   573  
+   574      # gz ffa device
+   575      chmod 0660 /dev/gz_ffa_dev
+   576      chown system system /dev/gz_ffa_dev
+   577  
+   578      #Camera
+   579      chmod 0660 /dev/camera-sysram
+   580      chmod 0660 /dev/camera-isp
+   581      chmod 0660 /dev/camera-mem
+   582      chmod 0660 /dev/camera-dip
+   583      chmod 0660 /dev/camera-tsf
+   584      chmod 0660 /dev/camera-dpe
+   585      chmod 0660 /dev/camera-mfb
+   586      chmod 0660 /dev/camera-rsc
+   587      chmod 0660 /dev/camera-owe
+   588      chmod 0660 /dev/camera-fdvt
+   589      chmod 0660 /dev/camera-pda
+   590      chmod 0660 /dev/camera-wpe
+   591      chmod 0660 /dev/camera-pipemgr
+   592      chmod 0660 /dev/kd_camera_hw
+   593      chmod 0660 /dev/seninf
+   594      chmod 0660 /dev/flashlight
+   595      chmod 0660 /dev/kd_camera_hw_bus2
+   596      chmod 0660 /dev/FM50AF
+   597      chmod 0660 /dev/CAM_CAL_DRV
+   598      chmod 0660 /dev/MAINAF
+   599      chmod 0660 /dev/MAIN2AF
+   600      chmod 0660 /dev/MAIN3AF
+   601      chmod 0660 /dev/SUBAF
+   602      chmod 0660 /dev/apusys
+   603      chmod 0660 /dev/mtk_ccd
+   604      write /sys/module/mtk_imgsys_cmdq/parameters/imgsys_fine_grain_dvfs_en 1
+   605  
+   606      chown system camera /dev/camera-sysram
+   607      chown system camera /dev/camera-isp
+   608      chown system camera /dev/camera-mem
+   609      chown system camera /dev/camera-dip
+   610      chown system camera /dev/camera-dpe
+   611      chown system camera /dev/camera-mfb
+   612      chown system camera /dev/camera-rsc
+   613      chown system camera /dev/camera-owe
+   614      chown system camera /dev/camera-tsf
+   615      chown system camera /dev/camera-fdvt
+   616      chown system camera /dev/camera-pda
+   617      chown system camera /dev/camera-wpe
+   618      chown system camera /dev/camera-pipemgr
+   619      chown system camera /dev/kd_camera_hw
+   620      chown system camera /dev/seninf
+   621      chown system camera /dev/flashlight
+   622      chown system camera /dev/kd_camera_hw_bus2
+   623      chown system camera /dev/FM50AF
+   624      chown system camera /dev/CAM_CAL_DRV
+   625      chown system camera /dev/MAINAF
+   626      chown system camera /dev/MAIN2AF
+   627      chown system camera /dev/MAIN3AF
+   628      chown system camera /dev/SUBAF
+   629      chown system camera /dev/apusys
+   630      chown system camera /dev/mtk_ccd
+   631      chown system camera /sys/kernel/debug/mtk_cam_dbg/0/ctrl
+   632      chown system camera /sys/kernel/debug/mtk_cam_dbg/1/ctrl
+   633      chown system camera /sys/kernel/debug/mtk_cam_dbg/2/ctrl
+   634      chown system camera /proc/c2ps/c2ps_ioctl
+   635  
+   636      #APU
+   637      chmod 0644 /dev/apuext
+   638  
+   639      #CCU
+   640      chmod 0660 /dev/ccu
+   641      chown system camera /dev/ccu
+   642  
+   643      #VOW
+   644      chmod 0640 /dev/vow
+   645      chown media media /dev/vow
+   646  
+   647      #MATV
+   648      chmod 0660 /dev/MATV
+   649      chown system media /dev/MATV
+   650  
+   651      # otg_test
+   652      chown root radio /dev/mt_otg_test
+   653      chmod 0660 /dev/mt_otg_test
+   654  
+   655      # MDP
+   656      chmod 0660 /dev/mt-mdp
+   657      chown system media /dev/mt-mdp
+   658  
+   659      # SMI
+   660      chmod 0660 /dev/MTK_SMI
+   661      chown media media /dev/MTK_SMI
+   662  
+   663      # MMQoS
+   664      chmod 0660 /sys/devices/platform/interconnect/mmqos_hrt/camera_max_bw
+   665      chown media media /sys/devices/platform/interconnect/mmqos_hrt/camera_max_bw
+   666      chmod 0660 /sys/devices/platform/interconnect/mmqos_hrt/mtk_mmqos_scen
+   667      chown media media /sys/devices/platform/interconnect/mmqos_hrt/mtk_mmqos_scen
+   668  
+   669      # RRC
+   670      chmod 0660 /dev/mtk_rrc
+   671      chown media system /dev/mtk_rrc
+   672  
+   673      # DFRC
+   674      chmod 0660 /dev/mtk_dfrc
+   675      chown system graphics /dev/mtk_dfrc
+   676  
+   677  
+   678     #change partition permission
+   679  
+   680      chmod 0640 /mtd@sec_ro
+   681      chown root system /mtd@sec_ro
+   682  
+   683      chmod 0640 /mtd@preloader
+   684      chown root system /mtd@preloader
+   685  
+   686      chmod 0660 /mtd@pro_info
+   687      chown root system /mtd@pro_info
+   688  
+   689      chmod 0640 /mtd@bootimg
+   690      chown root system /mtd@bootimg
+   691  
+   692      chmod 0640 /mtd@recovery
+   693      chown root system /mtd@recovery
+   694  
+   695      chmod 0660 /mtd@nvram
+   696      chown root system /mtd@nvram
+   697  
+   698      chmod 0660 /mtd@seccfg
+   699      chown root system /mtd@seccfg
+   700  
+   701      chmod 0660 /mtd@misc
+   702      chown root system /mtd@misc
+   703  
+   704      chmod 0664 /sys/bus/platform/drivers/emi_ctrl/concurrency_scenario
+   705      chown media media /sys/bus/platform/drivers/emi_ctrl/concurrency_scenario
+   706  
+   707      #mtk_sched
+   708      chmod 0660 /dev/mtk_sched
+   709      chown system media /dev/mtk_sched
+   710  
+   711      #BT SCO CVSD, for MT6572 and MT6582 CVSD codec on AP
+   712      chmod 0660 /dev/ebc
+   713      chown media media /dev/ebc
+   714  
+   715      #usip
+   716      chmod 0660 /dev/usip
+   717      chown media media /dev/usip
+   718  
+   719      chmod 0666 /dev/uio0
+   720  
+   721      #otp
+   722      chmod 0660 /proc/driver/otp
+   723      chown root system /proc/driver/otp
+   724  
+   725      # secure memory
+   726      chown system system /proc/secmem0
+   727  
+   728      chmod 0666 /dev/exm0
+   729  
+   730  
+   731  	#Thermal
+   732  	mkdir /data/vendor/.tp/ 0775 system system
+   733  	mkdir /data/vendor/thermal/ 0775 system system
+   734  
+   735      #MCUPM log
+   736      chmod 0620 /sys/class/misc/mcupm/mcupm_mobile_log
+   737      chown root system /sys/class/misc/mcupm/mcupm_mobile_log
+   738      chmod 0440 /dev/mcupm
+   739      chown root system /dev/mcupm
+   740  
+   741      #EM of MT6360
+   742      chmod 0664 sys/kernel/debug/rt-regmap/mt6360_pmu.5-0034/data
+   743      chmod 0664 sys/kernel/debug/rt-regmap/mt6360_pmic.5-001a/data
+   744      chmod 0664 sys/kernel/debug/rt-regmap/mt6360_ldo.5-0064/data
+   745      chmod 0664 sys/kernel/debug/rt-regmap/mt6360-4e/data
+   746      chmod 0664 sys/kernel/debug/rt-regmap/mt6360_pmu.5-0034/reg_addr
+   747      chmod 0664 sys/kernel/debug/rt-regmap/mt6360_pmic.5-001a/reg_addr
+   748      chmod 0664 sys/kernel/debug/rt-regmap/mt6360_ldo.5-0064/reg_addr
+   749      chmod 0664 sys/kernel/debug/rt-regmap/mt6360-4e/reg_addr
+   750  
+   751      #widevine driver node
+   752      chmod 0660 /dev/drm_wv
+   753      chown media system /dev/drm_wv
+   754  
+   755      #blocktag driver node
+   756      chown system system /proc/blocktag/eara_io_boost
+   757  
+   758  # End of adding by MTK drivers
+   759  # -----------------------
+
+===== SYSTEM POST-FS-DATA ACTION =====
+   696  on post-fs-data
+   697  
+   698      # Start checkpoint before we touch data
+   699      exec - system system -- /system/bin/vdc checkpoint prepareCheckpoint
+   700  
+   701      # We chown/chmod /data again so because mount is run as root + defaults
+   702      chown system system /data
+   703      chmod 0771 /data
+   704      # We restorecon /data in case the userdata partition has been reset.
+   705      restorecon /data
+   706  
+   707      # Make sure we have the device encryption key.
+   708      installkey /data
+   709  
+   710      # Start bootcharting as soon as possible after the data partition is
+   711      # mounted to collect more data.
+   712      mkdir /data/bootchart 0755 shell shell encryption=Require
+   713      bootchart start
+   714  
+   715      # Avoid predictable entropy pool. Carry over entropy from previous boot.
+   716      copy /data/system/entropy.dat /dev/urandom
+   717  
+   718      mkdir /data/vendor 0771 root root encryption=Require
+   719      mkdir /data/vendor/hardware 0771 root root
+   720  
+   721      # Start tombstoned early to be able to store tombstones.
+   722      mkdir /data/anr 0775 system system encryption=Require
+   723      mkdir /data/tombstones 0775 system system encryption=Require
+   724      mkdir /data/vendor/tombstones 0771 root root
+   725      mkdir /data/vendor/tombstones/wifi 0771 wifi wifi
+   726      start tombstoned
+   727  
+   728      # Make sure that apexd is started in the default namespace
+   729      enter_default_mount_ns
+   730  
+   731      # set up keystore directory structure first so that we can end early boot
+   732      # and start apexd
+   733      mkdir /data/misc 01771 system misc encryption=Require
+   734      mkdir /data/misc/keystore 0700 keystore keystore
+   735      # work around b/183668221
+   736      restorecon /data/misc /data/misc/keystore
+   737  
+   738      # Boot level 30
+   739      # odsign signing keys have MAX_BOOT_LEVEL=30
+   740      # This is currently the earliest boot level, but we start at 30
+   741      # to leave room for earlier levels.
+   742      setprop keystore.boot_level 30
+   743  
+   744      # Now that /data is mounted and we have created /data/misc/keystore,
+   745      # we can tell keystore to stop allowing use of early-boot keys,
+   746      # and access its database for the first time to support creation and
+   747      # use of MAX_BOOT_LEVEL keys.
+   748      exec - system system -- /system/bin/vdc keymaster earlyBootEnded
+   749  
+   750      # Multi-installed APEXes are selected using persist props.
+   751      # Load persist properties and override properties (if enabled) from /data,
+   752      # before starting apexd.
+   753      # /data/property should be created before `load_persist_props`
+   754      mkdir /data/property 0700 root root encryption=Require
+   755      load_persist_props
+   756  
+   757      start logd
+   758      start logd-reinit
+   759  
+   760      # Some existing vendor rc files use 'on load_persist_props_action' to know
+   761      # when persist props are ready. These are difficult to change due to GRF,
+   762      # so continue triggering this action here even though props are already loaded
+   763      # by the 'load_persist_props' call above.
+   764      trigger load_persist_props_action
+   765  
+   766      # /data/apex is now available. Start apexd to scan and activate APEXes.
+   767      #
+   768      # To handle userspace reboots, make sure that apexd is started cleanly here
+   769      # (set apexd.status="") and that it is restarted if it's already running.
+   770      #
+   771      # /data/apex uses encryption=None because direct I/O support is needed on
+   772      # APEX files, but some devices don't support direct I/O on encrypted files.
+   773      # Also, APEXes are public information, similar to the system image.
+   774      # /data/apex/decompressed and /data/apex/ota_reserved override this setting;
+   775      # they are encrypted so that files in them can be hard-linked into
+   776      # /data/rollback which is encrypted.
+   777      mkdir /data/apex 0755 root system encryption=None
+   778      mkdir /data/apex/active 0755 root system
+   779      mkdir /data/apex/backup 0700 root system
+   780      mkdir /data/apex/decompressed 0755 root system encryption=Require
+   781      mkdir /data/apex/sessions 0700 root system
+   782      mkdir /data/app-staging 0751 system system encryption=DeleteIfNecessary
+   783      mkdir /data/apex/ota_reserved 0700 root system encryption=Require
+   784      setprop apexd.status ""
+   785      restart apexd
+   786  
+   787      # create rest of basic filesystem structure
+   788      mkdir /data/misc/recovery 0770 system log
+   789      copy /data/misc/recovery/ro.build.fingerprint /data/misc/recovery/ro.build.fingerprint.1
+   790      chmod 0440 /data/misc/recovery/ro.build.fingerprint.1
+   791      chown system log /data/misc/recovery/ro.build.fingerprint.1
+   792      write /data/misc/recovery/ro.build.fingerprint ${ro.build.fingerprint}
+   793      chmod 0440 /data/misc/recovery/ro.build.fingerprint
+   794      chown system log /data/misc/recovery/ro.build.fingerprint
+   795      mkdir /data/misc/recovery/proc 0770 system log
+   796      copy /data/misc/recovery/proc/version /data/misc/recovery/proc/version.1
+   797      chmod 0440 /data/misc/recovery/proc/version.1
+   798      chown system log /data/misc/recovery/proc/version.1
+   799      copy /proc/version /data/misc/recovery/proc/version
+   800      chmod 0440 /data/misc/recovery/proc/version
+   801      chown system log /data/misc/recovery/proc/version
+   802      mkdir /data/misc/bluedroid 02770 bluetooth bluetooth
+   803      # Fix the access permissions and group ownership for 'bt_config.conf'
+   804      chmod 0660 /data/misc/bluedroid/bt_config.conf
+   805      chown bluetooth bluetooth /data/misc/bluedroid/bt_config.conf
+   806      mkdir /data/misc/bluetooth 0770 bluetooth bluetooth
+   807      mkdir /data/misc/bluetooth/logs 0770 bluetooth bluetooth
+   808      mkdir /data/misc/nfc 0770 nfc nfc
+   809      mkdir /data/misc/nfc/logs 0770 nfc nfc
+   810      mkdir /data/misc/credstore 0700 credstore credstore
+   811      mkdir /data/misc/gatekeeper 0700 system system
+   812      mkdir /data/misc/keychain 0771 system system
+   813      mkdir /data/misc/net 0750 root shell
+   814      mkdir /data/misc/radio 0770 system radio
+   815      mkdir /data/misc/sms 0770 system radio
+   816      mkdir /data/misc/carrierid 0770 system radio
+   817      mkdir /data/misc/apns 0770 system radio
+   818      mkdir /data/misc/emergencynumberdb 0770 system radio
+   819      mkdir /data/misc/network_watchlist 0774 system system
+   820      mkdir /data/misc/telephonyconfig 0770 system radio
+   821      mkdir /data/misc/textclassifier 0771 system system
+   822      mkdir /data/misc/vpn 0770 system vpn
+   823      mkdir /data/misc/shared_relro 0771 shared_relro shared_relro
+   824      mkdir /data/misc/systemkeys 0700 system system
+   825      mkdir /data/misc/wifi 0770 wifi wifi
+   826      mkdir /data/misc/wifi/mainline_supplicant 0770 wifi wifi
+   827      mkdir /data/misc/wifi/mainline_supplicant/sockets 0770 wifi wifi
+   828      mkdir /data/misc/wifi/sockets 0770 wifi wifi
+   829      mkdir /data/misc/wifi/wpa_supplicant 0770 wifi wifi
+   830      mkdir /data/misc/ethernet 0770 system system
+   831      mkdir /data/misc/dhcp 0770 dhcp dhcp
+   832      mkdir /data/misc/user 0771 root root
+   833      # give system access to wpa_supplicant.conf for backup and restore
+   834      chmod 0660 /data/misc/wifi/wpa_supplicant.conf
+   835      mkdir /data/local 0751 root root encryption=Require
+   836      mkdir /data/misc/media 0700 media media
+   837      mkdir /data/misc/audioserver 0700 audioserver audioserver
+   838      mkdir /data/misc/cameraserver 0700 cameraserver cameraserver
+   839      mkdir /data/misc/vold 0700 root root
+   840      mkdir /data/misc/boottrace 0771 system shell
+   841      mkdir /data/misc/update_engine 0700 root root
+   842      mkdir /data/misc/update_engine_log 02750 root log
+   843      mkdir /data/misc/trace 0700 root root
+   844      # create location to store surface and window trace files
+   845      mkdir /data/misc/wmtrace 0700 system system
+   846      # create location to store accessibility trace files
+   847      mkdir /data/misc/a11ytrace 0700 system system
+   848      # profile file layout
+   849      mkdir /data/misc/profiles 0771 system system
+   850      mkdir /data/misc/profiles/cur 0771 system system
+   851      mkdir /data/misc/profiles/ref 0771 system system
+   852      mkdir /data/misc/profman 0770 system shell
+   853      mkdir /data/misc/gcov 0770 root root
+   854      mkdir /data/misc/installd 0700 root root
+   855      mkdir /data/misc/apexdata 0711 root root
+   856      mkdir /data/misc/apexrollback 0700 root root
+   857      mkdir /data/misc/appcompat/ 0700 system system
+   858      mkdir /data/misc/uprobestats-configs/ 0777 uprobestats uprobestats
+   859      mkdir /data/misc/snapshotctl_log 0755 root root
+   860      # create location to store pre-reboot information
+   861      mkdir /data/misc/prereboot 0700 system system
+   862      # directory used for on-device refresh metrics file.
+   863      mkdir /data/misc/odrefresh 0777 system system
+   864      # directory used for on-device signing key blob
+   865      mkdir /data/misc/odsign 0710 root system
+   866      # directory used for odsign metrics
+   867      mkdir /data/misc/odsign/metrics 0770 root system
+   868      # directory used for connectivity blob store.
+   869      mkdir /data/misc/connectivityblobdb 0770 system system
+   870  
+   871      # Directory for VirtualizationService temporary image files.
+   872      # Delete any stale files owned by the old virtualizationservice uid (b/230056726).
+   873      chmod 0770 /data/misc/virtualizationservice
+   874      exec - virtualizationservice system -- /bin/rm -rf /data/misc/virtualizationservice
+   875      mkdir /data/misc/virtualizationservice 0771 system system
+   876  
+   877      # /data/preloads uses encryption=None because it only contains preloaded
+   878      # files that are public information, similar to the system image.
+   879      mkdir /data/preloads 0775 system system encryption=None
+   880  
+   881      # For security reasons, /data/local/tmp should always be empty.
+   882      # Do not place files or directories in /data/local/tmp
+   883      mkdir /data/local/tmp 0771 shell shell
+   884      mkdir /data/local/traces 0777 shell shell
+   885      mkdir /data/app-private 0771 system system encryption=Require
+   886      mkdir /data/app-ephemeral 0771 system system encryption=Require
+   887      mkdir /data/app-asec 0700 root root encryption=Require
+   888      mkdir /data/app-lib 0771 system system encryption=Require
+   889      mkdir /data/app 0771 system system encryption=Require
+   890  
+   891      # Create directory for app metadata files
+   892      mkdir /data/app-metadata 0700 system system encryption=Require
+   893  
+   894      # create directory for updated font files.
+   895      mkdir /data/fonts/ 0771 root root encryption=Require
+   896      mkdir /data/fonts/files 0771 system system
+   897      mkdir /data/fonts/config 0770 system system
+   898  
+   899      # Create directories to push tests to for each linker namespace.
+   900      # Create the subdirectories in case the first test is run as root
+   901      # so it doesn't end up owned by root.
+   902      # Set directories to be executable by any process so that debuggerd,
+   903      # aka crash_dump, can read any executables/shared libraries.
+   904      mkdir /data/local/tests 0701 shell shell
+   905      mkdir /data/local/tests/product 0701 shell shell
+   906      mkdir /data/local/tests/system 0701 shell shell
+   907      mkdir /data/local/tests/unrestricted 0701 shell shell
+   908      mkdir /data/local/tests/vendor 0701 shell shell
+   909  
+   910      # create dalvik-cache, so as to enforce our permissions
+   911      mkdir /data/dalvik-cache 0771 root root encryption=Require
+   912      # create the A/B OTA directory, so as to enforce our permissions
+   913      mkdir /data/ota 0771 root root encryption=Require
+   914  
+   915      # create the OTA package directory. It will be accessed by GmsCore (cache
+   916      # group), update_engine and update_verifier.
+   917      mkdir /data/ota_package 0770 system cache encryption=Require
+   918  
+   919      # create resource-cache and double-check the perms
+   920      mkdir /data/resource-cache 0771 system system encryption=Require
+   921      chown system system /data/resource-cache
+   922      chmod 0771 /data/resource-cache
+   923  
+   924      # Ensure that lost+found exists and has the correct permissions.  Linux
+   925      # filesystems expect this directory to exist; it's where the fsck tool puts
+   926      # any recovered files that weren't present in any directory.  It must be
+   927      # unencrypted, as fsck must be able to write to it.
+   928      mkdir /data/lost+found 0770 root root encryption=None
+   929  
+   930      # create directory for DRM plug-ins - give drm the read/write access to
+   931      # the following directory.
+   932      mkdir /data/drm 0770 drm drm encryption=Require
+   933  
+   934      # create directory for MediaDrm plug-ins - give drm the read/write access to
+   935      # the following directory.
+   936      mkdir /data/mediadrm 0770 mediadrm mediadrm encryption=Require
+   937  
+   938      # NFC: create data/nfc for nv storage
+   939      mkdir /data/nfc 0770 nfc nfc encryption=Require
+   940      mkdir /data/nfc/param 0770 nfc nfc
+   941  
+   942      # Create all remaining /data root dirs so that they are made through init
+   943      # and get proper encryption policy installed
+   944      mkdir /data/backup 0700 system system encryption=Require
+   945      mkdir /data/ss 0700 system system encryption=Require
+   946  
+   947      mkdir /data/system 0775 system system encryption=Require
+   948      mkdir /data/system/environ 0700 system system
+   949      # b/183861600 attempt to fix selinux label before running derive_classpath service
+   950      restorecon /data/system/environ
+   951      mkdir /data/system/dropbox 0700 system system
+   952      mkdir /data/system/heapdump 0700 system system
+   953      mkdir /data/system/users 0775 system system
+   954      # Mkdir and set SELinux security contexts for shutdown-checkpoints.
+   955      # TODO(b/270286197): remove these after couple releases.
+   956      mkdir /data/system/shutdown-checkpoints 0700 system system
+   957      restorecon_recursive /data/system/shutdown-checkpoints
+   958  
+   959      # Create the parent directories of the user CE and DE storage directories.
+   960      # These parent directories must use encryption=None, since each of their
+   961      # subdirectories uses a different encryption policy (a per-user one), and
+   962      # encryption policies apply recursively.  These directories should never
+   963      # contain any subdirectories other than the per-user ones.  /data/media/obb
+   964      # is an exception that exists for legacy reasons.
+   965      #
+   966      # Don't use any write mode bits (0222) for any of these directories, since
+   967      # the only process that should write to them directly is vold (since it
+   968      # needs to set up file-based encryption on the subdirectories), which runs
+   969      # as root with CAP_DAC_OVERRIDE.  This is also fully enforced via the
+   970      # SELinux policy.  But we also set the DAC file modes accordingly, to try to
+   971      # minimize differences in behavior if SELinux is set to permissive mode.
+   972      mkdir /data/media 0550 media_rw media_rw encryption=None
+   973      mkdir /data/misc_ce 0551 system misc encryption=None
+   974      mkdir /data/misc_de 0551 system misc encryption=None
+   975      mkdir /data/system_ce 0550 system system encryption=None
+   976      mkdir /data/system_de 0550 system system encryption=None
+   977      mkdir /data/user 0511 system system encryption=None
+   978      mkdir /data/user_de 0511 system system encryption=None
+   979      mkdir /data/vendor_ce 0551 root root encryption=None
+   980      mkdir /data/vendor_de 0551 root root encryption=None
+   981  
+   982      # Similar to the top-level CE and DE directories, /data/storage_area must
+   983      # itself be unencrypted, since it contains encrypted directories.
+   984      mkdir /data/storage_area 0551 root root encryption=None
+   985  
+   986      # Set the casefold flag on /data/media.  For upgrades, a restorecon can be
+   987      # needed first to relabel the directory from media_rw_data_file.
+   988      restorecon /data/media
+   989      exec - media_rw media_rw -- /system/bin/chattr +F /data/media
+   990  
+   991      # A tmpfs directory, which will contain all apps and sdk sandbox CE and DE
+   992      # data directory that bind mount from the original source.
+   993      mount tmpfs tmpfs /data_mirror nodev noexec nosuid mode=0700,uid=0,gid=1000
+   994      restorecon /data_mirror
+   995      mkdir /data_mirror/data_ce 0700 root root
+   996      mkdir /data_mirror/data_de 0700 root root
+   997      mkdir /data_mirror/misc_ce 0700 root root
+   998      mkdir /data_mirror/misc_de 0700 root root
+   999      mkdir /data_mirror/storage_area 0700 root root
+  1000  
+  1001      # Create CE and DE data directory for default volume
+  1002      # Not needed for storage_area directory, since this is
+  1003      # not supported for non-default volumes and the path
+  1004      # does not include the volume ID
+  1005      mkdir /data_mirror/data_ce/null 0700 root root
+  1006      mkdir /data_mirror/data_de/null 0700 root root
+  1007      mkdir /data_mirror/misc_ce/null 0700 root root
+  1008      mkdir /data_mirror/misc_de/null 0700 root root
+  1009  
+  1010      # Bind mount CE and DE data directory to mirror's default volume directory.
+  1011      # Note that because the /data mount has the "shared" propagation type, the
+  1012      # later bind mount of /data/data onto /data/user/0 will automatically
+  1013      # propagate to /data_mirror/data_ce/null/0 as well.
+  1014      mount none /data/user /data_mirror/data_ce/null bind rec
+  1015      mount none /data/user_de /data_mirror/data_de/null bind rec
+  1016      mount none /data/misc_ce /data_mirror/misc_ce/null bind rec
+  1017      mount none /data/misc_de /data_mirror/misc_de/null bind rec
+  1018  
+  1019      # Also bind mount for the storage area directory (minus the volume ID)
+  1020      mount none /data/storage_area /data_mirror/storage_area bind rec
+  1021  
+  1022      # Create mirror directory for jit profiles
+  1023      mkdir /data_mirror/cur_profiles 0700 root root
+  1024      mount none /data/misc/profiles/cur /data_mirror/cur_profiles bind rec
+  1025      mkdir /data_mirror/ref_profiles 0700 root root
+  1026      mount none /data/misc/profiles/ref /data_mirror/ref_profiles bind rec
+  1027  
+  1028      mkdir /data/cache 0770 system cache encryption=Require
+  1029      mkdir /data/cache/recovery 0770 system cache
+  1030      mkdir /data/cache/backup_stage 0700 system system
+  1031      mkdir /data/cache/backup 0700 system system
+  1032  
+  1033      # Delete these if need be, per b/139193659
+  1034      mkdir /data/rollback 0700 system system encryption=DeleteIfNecessary
+  1035      mkdir /data/rollback-observer 0700 system system encryption=DeleteIfNecessary
+  1036      mkdir /data/rollback-history 0700 system system encryption=DeleteIfNecessary
+  1037  
+  1038      # Create root dir for Incremental Service
+  1039      mkdir /data/incremental 0771 system system encryption=Require
+  1040  
+  1041      # Create directories for statsd
+  1042      mkdir /data/misc/stats-active-metric/ 0770 statsd system
+  1043      mkdir /data/misc/stats-data/ 0770 statsd system
+  1044      mkdir /data/misc/stats-data/restricted-data 0770 statsd system
+  1045      mkdir /data/misc/stats-metadata/ 0770 statsd system
+  1046      mkdir /data/misc/stats-service/ 0770 statsd system
+  1047      mkdir /data/misc/train-info/ 0770 statsd system
+  1048  
+  1049      # Wait for apexd to finish activating APEXes before starting more processes.
+  1050      wait_for_prop apexd.status activated
+  1051      perform_apex_config
+  1052  
+  1053      exec_start system_aconfigd_mainline_init
+  1054      start system_aconfigd_socket_service
+  1055  
+  1056      # start mainline aconfigd init, after transition, the above system_aconfigd_mainline_init
+  1057      # will be deprecated
+  1058      exec_start mainline_aconfigd_init
+  1059      start mainline_aconfigd_socket_service
+  1060  
+  1061      # Create directories for boot animation.
+  1062      mkdir /data/misc/bootanim 0755 system system
+  1063  
+  1064      exec_start derive_sdk
+  1065  
+  1066      init_user0
+  1067  
+  1068      # Set SELinux security contexts on upgrade or policy update.
+  1069      restorecon --recursive --skip-ce /data
+  1070  
+  1071      # Define and export *CLASSPATH variables
+  1072      # Must start before 'odsign', as odsign depends on *CLASSPATH variables
+  1073      exec_start derive_classpath
+  1074      load_exports /data/system/environ/classpath
+  1075  
+  1076      # Start ART's oneshot boot service to propagate boot experiment flags to
+  1077      # dalvik.vm.*. This needs to be done before odsign since odrefresh uses and
+  1078      # validates those properties against the signed cache-info.xml.
+  1079      exec_start art_boot
+  1080  
+  1081      # Start the on-device signing daemon, and wait for it to finish, to ensure
+  1082      # ART artifacts are generated if needed.
+  1083      # Must start after 'derive_classpath' to have *CLASSPATH variables set.
+  1084      start odsign
+  1085  
+  1086      # Wait for odsign to be done with the key.
+  1087      wait_for_prop odsign.key.done 1
+  1088  
+  1089      # Bump the boot level to 1000000000; this prevents further on-device signing.
+  1090      # This is a special value that shuts down the thread which listens for
+  1091      # further updates.
+  1092      setprop keystore.boot_level 1000000000
+  1093  
+  1094      # Allow apexd to snapshot and restore device encrypted apex data in the case
+  1095      # of a rollback. This should be done immediately after DE_user data keys
+  1096      # are loaded. APEXes should not access this data until this has been
+  1097      # completed and apexd.status becomes "ready".
+  1098      exec_start apexd-snapshotde
+  1099  
+  1100      # sys.memfd_use set to false by default, which keeps it disabled
+  1101      # until it is confirmed that apps and vendor processes don't make
+  1102      # IOCTLs on ashmem fds any more.
+  1103      setprop sys.use_memfd false
+  1104  
+  1105      # Set fscklog permission
+  1106      chown root system /dev/fscklogs/log
+  1107      chmod 0770 /dev/fscklogs/log
+  1108  
+  1109      # Enable FUSE by default
+  1110      setprop persist.sys.fuse true
+  1111  
+  1112      # Update dm-verity state and set partition.*.verified properties.
+  1113      verity_update_state
+  1114  
+
+===== LIEPPOS POST-FS-DATA ACTION =====
+    26  on post-fs-data
+    27      write /metadata/lieppos-slotb/50-post-fs-data 1
+    28  
+
+===== INIT CONFIG LOAD ORDER =====
+    return parser;
+}
+
+static void LoadBootScripts(ActionManager& action_manager, ServiceList& service_list) {
+    Parser parser = CreateParser(action_manager, service_list);
+
+    std::string bootscript = GetProperty("ro.boot.init_rc", "");
+    if (bootscript.empty()) {
+        parser.ParseConfig("/system/etc/init/hw/init.rc");
+        if (!parser.ParseConfig("/system/etc/init")) {
+            late_import_paths.emplace_back("/system/etc/init");
+        }
+        // late_import is available only in Q and earlier release. As we don't
+        // have system_ext in those versions, skip late_import for system_ext.
+        parser.ParseConfig("/system_ext/etc/init");
+        if (!parser.ParseConfig("/vendor/etc/init")) {
+            late_import_paths.emplace_back("/vendor/etc/init");
+        }
+        if (!parser.ParseConfig("/odm/etc/init")) {
+            late_import_paths.emplace_back("/odm/etc/init");
+        }
+        if (!parser.ParseConfig("/product/etc/init")) {
+            late_import_paths.emplace_back("/product/etc/init");
+        }
+    } else {
+        parser.ParseConfig(bootscript);
+
+===== ACTION EVENT QUEUE SEMANTICS =====
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-33-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-34-ActionManager& ActionManager::GetInstance() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-35-    static ActionManager instance;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-36-    return instance;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-37-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-38-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-39-void ActionManager::AddAction(std::unique_ptr<Action> action) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-40-    actions_.emplace_back(std::move(action));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-41-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-42-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp:43:void ActionManager::QueueEventTrigger(const std::string& trigger) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-44-    auto lock = std::lock_guard{event_queue_lock_};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-45-    event_queue_.emplace(trigger);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-46-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-47-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-48-void ActionManager::QueuePropertyChange(const std::string& name, const std::string& value) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-49-    auto lock = std::lock_guard{event_queue_lock_};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-50-    event_queue_.emplace(std::make_pair(name, value));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-51-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-52-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-53-void ActionManager::QueueAllPropertyActions() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-54-    QueuePropertyChange("", "");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-55-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-56-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-57-void ActionManager::QueueBuiltinAction(BuiltinFunction func, const std::string& name) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-58-    auto lock = std::lock_guard{event_queue_lock_};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-59-    auto action = std::make_unique<Action>(true, nullptr, "<Builtin Action>", 0, name,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-60-                                           std::map<std::string, std::string>{});
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-61-    action->AddCommand(std::move(func), {name}, 0);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-62-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-63-    event_queue_.emplace(action.get());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-64-    actions_.emplace_back(std::move(action));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-65-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-66-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-67-void ActionManager::ExecuteOneCommand() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-68-    {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-69-        auto lock = std::lock_guard{event_queue_lock_};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-70-        // Loop through the event queue until we have an action to execute
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-71-        while (current_executing_actions_.empty() && !event_queue_.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-72-            for (const auto& action : actions_) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-73-                if (std::visit([&action](const auto& event) { return action->CheckEvent(event); },
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-74-                               event_queue_.front())) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-75-                    current_executing_actions_.emplace(action.get());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-76-                }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-77-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-78-            event_queue_.pop();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-79-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-80-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-81-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-82-    if (current_executing_actions_.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-83-        return;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-84-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-85-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-86-    auto action = current_executing_actions_.front();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-87-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-88-    if (current_command_ == 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-89-        std::string trigger_name = action->BuildTriggersString();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-90-        LOG(INFO) << "processing action (" << trigger_name << ") from (" << action->filename()
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-91-                  << ":" << action->line() << ")";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-92-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-93-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-94-    action->ExecuteOneCommand(current_command_);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-95-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-96-    // If this was the last command in the current action, then remove
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-97-    // the action from the executing list.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-98-    // If this action was oneshot, then also remove it from actions_.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-99-    ++current_command_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-100-    if (current_command_ == action->NumCommands()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-101-        current_executing_actions_.pop();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-102-        current_command_ = 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-103-        if (action->oneshot()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-104-            auto eraser = [&action](std::unique_ptr<Action>& a) { return a.get() == action; };
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-105-            actions_.erase(std::remove_if(actions_.begin(), actions_.end(), eraser),
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-106-                           actions_.end());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-107-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-108-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-109-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-110-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-111-bool ActionManager::HasMoreCommands() const {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-112-    auto lock = std::lock_guard{event_queue_lock_};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-113-    return !current_executing_actions_.empty() || !event_queue_.empty();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-114-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-115-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-116-void ActionManager::DumpState() const {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-117-    for (const auto& a : actions_) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-118-        a->DumpState();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-119-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-120-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-121-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-122-void ActionManager::ClearQueue() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-123-    auto lock = std::lock_guard{event_queue_lock_};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-124-    // We are shutting down so don't claim the oneshot builtin actions back
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-125-    current_executing_actions_ = {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-126-    event_queue_ = {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-127-    current_command_ = 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-128-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-129-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-130-}  // namespace init
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.cpp-131-}  // namespace android
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-34-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-35-    // Exposed for testing
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-36-    ActionManager();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-37-    size_t CheckAllCommands();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-38-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-39-    void AddAction(std::unique_ptr<Action> action);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-40-    template <class UnaryPredicate>
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-41-    void RemoveActionIf(UnaryPredicate predicate) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-42-        actions_.erase(std::remove_if(actions_.begin(), actions_.end(), predicate), actions_.end());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-43-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h:44:    void QueueEventTrigger(const std::string& trigger);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-45-    void QueuePropertyChange(const std::string& name, const std::string& value);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-46-    void QueueAllPropertyActions();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-47-    void QueueBuiltinAction(BuiltinFunction func, const std::string& name);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-48-    void ExecuteOneCommand();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-49-    bool HasMoreCommands() const;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-50-    void DumpState() const;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-51-    void ClearQueue();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-52-    auto size() const { return actions_.size(); }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-53-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-54-  private:
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-55-    ActionManager(ActionManager const&) = delete;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-56-    void operator=(ActionManager const&) = delete;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-57-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-58-    std::vector<std::unique_ptr<Action>> actions_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-59-    std::queue<std::variant<EventTrigger, PropertyChange, BuiltinAction>> event_queue_
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-60-            GUARDED_BY(event_queue_lock_);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-61-    mutable std::mutex event_queue_lock_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-62-    std::queue<const Action*> current_executing_actions_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-63-    std::size_t current_command_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-64-};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-65-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-66-}  // namespace init
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_manager.h-67-}  // namespace android
