@@ -1,0 +1,60 @@
+===== FULL MT6878 LATE-FS ACTION =====
+   135  on late-fs
+   136      write /proc/bootprof "INIT:late-fs"
+   137      wait_for_prop hwservicemanager.ready "true"
+   138  
+   139      write /proc/bootprof "INIT:Mount_START --late"
+   140      write /sys/kernel/tracing/trace_marker "B|1|Mount late"
+   141      mount_all --late
+   142      write /sys/kernel/tracing/trace_marker "E"
+   143      write /proc/bootprof "INIT:Mount_END --late"
+   144  
+   145  on post-fs
+
+===== WAITS / MOUNTS / EXEC / STARTS =====
+25:    setprop vendor.all.modules.ready 1
+29:    mount debugfs debugfs /sys/kernel/debug
+32:    setprop persist.dbg.keep_debugfs_mounted true
+35:    mount debugfs debugfs /sys/kernel/debug
+37:    setprop persist.dbg.keep_debugfs_mounted true
+46:    # setprop ro.vold.primary_physical 1
+70:# mount different fs start
+74:    exec /system/bin/e2fsck -f -p /dev/block/by-name/cache
+75:    mount ext4 /dev/block/by-name/cache /cache rw wait
+78:    start spm_script
+82:    mount ext4 /dev/block/by-name/nvcfg /mnt/vendor/nvcfg rw wait
+103:    start fuelgauged
+104:    start fuelgauged_nvram
+112:    start vendor.light-default
+113:    start vendor.health-default
+123:    # mount fstab
+126:    mount_all --early
+127:    exec /system/bin/tune2fs -O has_journal -u 10010 -r 4096 /dev/block/by-name/userdata
+133:   mount iso9660 loop@/vendor/etc/iAmCdRom.iso /mnt/cd-rom ro
+137:    wait_for_prop hwservicemanager.ready "true"
+141:    mount_all --late
+180:    wait_for_prop vendor.all.modules.ready 1
+217:    # We chown/chmod /mnt/vendor/nvdata again so because mount is run as root + defaults
+222:    #Create cct mount point
+232:    #Create shading mount point
+237:    #Create shading_otp mount point
+242:    #Create NDD mount point
+247:    #Create imgsys mount point
+262:    #Create flicker mount point
+276:    # create mdota to mount mcf_ota
+968:    setprop sys.boot_completed 0
+969:    setprop dev.bootcomplete 0
+976:    start msensord
+977:    start permission_check
+981:    start msensord
+982:    start permission_check
+986:    setprop sys.boot_completed 0
+987:    setprop dev.bootcomplete 0
+1013:    setprop persist.sys.zram_enabled 1
+1058:    mount ext4 /dev/block/by-name/mcf_ota_a /mnt/vendor/mdota ro wait noatime
+1062:    mount ext4 /dev/block/by-name/mcf_ota_b /mnt/vendor/mdota ro wait noatime
+1096:# start meta_tst for ATM
+1098:    start meta_tst
+1099:    start loghidlvendorservice
+1100:    start loghidlsysservice
+1104:    setprop persist.vendor.atm.mdmode normal
