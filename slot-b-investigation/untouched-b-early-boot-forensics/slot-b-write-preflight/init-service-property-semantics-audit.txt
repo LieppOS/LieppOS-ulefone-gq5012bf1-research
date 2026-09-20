@@ -1,0 +1,326 @@
+===== EXACT ESSENTIAL-SERVICE TRIGGER CONTEXT =====
+   450	    chmod 0550 /sys/fs/pstore
+   451	    chown system log /sys/fs/pstore/console-ramoops
+   452	    chmod 0440 /sys/fs/pstore/console-ramoops
+   453	    chown system log /sys/fs/pstore/console-ramoops-0
+   454	    chmod 0440 /sys/fs/pstore/console-ramoops-0
+   455	    chown system log /sys/fs/pstore/pmsg-ramoops-0
+   456	    chmod 0440 /sys/fs/pstore/pmsg-ramoops-0
+   457	
+   458	    # enable armv8_deprecated instruction hooks
+   459	    write /proc/sys/abi/swp 1
+   460	
+   461	    # Linux's execveat() syscall may construct paths containing /dev/fd
+   462	    # expecting it to point to /proc/self/fd
+   463	    symlink /proc/self/fd /dev/fd
+   464	
+   465	    export DOWNLOAD_CACHE /data/cache
+   466	
+   467	    # This allows the ledtrig-transient properties to be created here so
+   468	    # that they can be chown'd to system:system later on boot
+   469	    write /sys/class/leds/vibrator/trigger "transient"
+   470	
+   471	    # This is used by Bionic to select optimized routines.
+   472	    write /dev/cpu_variant:${ro.bionic.arch} ${ro.bionic.cpu_variant}
+   473	    chmod 0444 /dev/cpu_variant:${ro.bionic.arch}
+   474	    write /dev/cpu_variant:${ro.bionic.2nd_arch} ${ro.bionic.2nd_cpu_variant}
+   475	    chmod 0444 /dev/cpu_variant:${ro.bionic.2nd_arch}
+   476	
+   477	    # Allow system processes to read / write power state.
+   478	    chown system system /sys/power/state
+   479	    chown system system /sys/power/wakeup_count
+   480	    chmod 0660 /sys/power/state
+   481	
+   482	    chown radio wakelock /sys/power/wake_lock
+   483	    chown radio wakelock /sys/power/wake_unlock
+   484	    chmod 0660 /sys/power/wake_lock
+   485	    chmod 0660 /sys/power/wake_unlock
+   486	
+   487	    # Start logd before any other services run to ensure we capture all of their logs.
+   488	    start logd
+   489	    # Start lmkd before any other services run so that it can register them
+   490	    write /proc/sys/vm/watermark_boost_factor 0
+   491	    chown root system /sys/module/lowmemorykiller/parameters/adj
+   492	    chmod 0664 /sys/module/lowmemorykiller/parameters/adj
+   493	    chown root system /sys/module/lowmemorykiller/parameters/minfree
+   494	    chmod 0664 /sys/module/lowmemorykiller/parameters/minfree
+   495	    start lmkd
+   496	
+   497	    # Start essential services.
+   498	    start servicemanager
+   499	    start hwservicemanager
+   500	    start vndservicemanager
+   501	
+   502	    # Mount /mnt/vm ASAP to allow early VMs to run.
+   503	    mkdir /mnt/vm 0755 root root
+   504	    mount tmpfs tmpfs /mnt/vm nosuid nodev noexec rw
+   505	    restorecon /mnt/vm
+   506	    chown system system /mnt/vm
+   507	    chmod 0770 /mnt/vm
+   508	    mkdir /mnt/vm/early 0770 system system
+   509	
+   510	# Run boringssl self test for each ABI.  Any failures trigger reboot to firmware.
+   511	import /system/etc/init/hw/init.boringssl.${ro.zygote}.rc
+   512	
+   513	service boringssl_self_test32 /system/bin/boringssl_self_test32
+   514	    reboot_on_failure reboot,boringssl-self-check-failed
+   515	    stdio_to_kmsg
+   516	    # Explicitly specify that boringssl_self_test32 doesn't require any capabilities
+   517	    capabilities
+   518	    user nobody
+   519	
+   520	service boringssl_self_test64 /system/bin/boringssl_self_test64
+   521	    reboot_on_failure reboot,boringssl-self-check-failed
+   522	    stdio_to_kmsg
+   523	    # Explicitly specify that boringssl_self_test64 doesn't require any capabilities
+   524	    capabilities
+   525	    user nobody
+
+===== B SERVICE DEFINITIONS =====
+
+--- /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/servicemanager.rc
+service servicemanager /system/bin/servicemanager
+    class core animation
+    user system
+    group system readproc
+    critical
+    file /dev/kmsg w
+    onrestart setprop servicemanager.ready false
+    onrestart restart --only-if-running apexd
+    onrestart restart audioserver
+    onrestart restart gatekeeperd
+    onrestart class_restart --only-enabled main
+    onrestart class_restart --only-enabled hal
+    onrestart class_restart --only-enabled early_hal
+    task_profiles ProcessCapacityHigh
+    shutdown critical
+
+--- /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/etc/init/vndservicemanager.rc
+
+--- /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc
+service hwservicemanager /system/system_ext/bin/hwservicemanager
+    user system
+    disabled
+    group system readproc
+    critical
+    onrestart setprop hwservicemanager.ready false
+    onrestart class_restart --only-enabled main
+    onrestart class_restart --only-enabled hal
+    onrestart class_restart --only-enabled early_hal
+    task_profiles ServiceCapacityLow HighPerformance
+    class animation
+    shutdown critical
+
+on property:hwservicemanager.disabled=true
+    stop hwservicemanager
+
+===== B EXECUTABLE PATHS =====
+ls: cannot access '/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/bin/vndservicemanager': No such file or directory
+-rwxr-xr-x 1 root 2000 103696 Jul 19 20:05 /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/bin/hwservicemanager
+-rwxr-xr-x 1 root 2000 120496 Jul 19 19:44 /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system/system/bin/servicemanager
+
+===== INIT.SVC STATE IMPLEMENTATION =====
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:175:void Service::NotifyStateChange(const std::string& new_state) const {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:181:    std::string prop_name = "init.svc." + name_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:317:        NotifyStateChange("stopped");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:361:    constexpr const char native_watchdog_reboot_time[] = "persist.init.svc.last_fatal_reboot_epoch";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:411:    NotifyStateChange("restarting");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:777:    NotifyStateChange("running");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:849:    NotifyStateChange("running");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:888:        NotifyStateChange("stopping");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:900:        NotifyStateChange("stopping");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:949:        NotifyStateChange("stopping");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.cpp:951:        NotifyStateChange("stopped");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/service.h:163:    void NotifyStateChange(const std::string& new_state) const;
+
+===== PROPERTY TRIGGER ENABLE ORDER =====
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:116:static int property_triggers_enabled = 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:370:    if (property_triggers_enabled) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:657:    property_triggers_enabled = 1;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:661:static Result<void> queue_property_triggers_action(const BuiltinArguments& args) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:1093:        am.QueueEventTrigger("late-init");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:1097:    am.QueueBuiltinAction(queue_property_triggers_action, "queue_property_triggers");
+
+===== PROPERTY TRIGGER PARSER =====
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action.cpp:183:bool Action::CheckPropertyTriggers(const std::string& name, const std::string& value) const {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action.cpp:212:    return event_trigger == event_trigger_ && CheckPropertyTriggers();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action.cpp:217:    return event_trigger_.empty() && CheckPropertyTriggers(name, value);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_parser.cpp:61:Result<void> ParsePropertyTrigger(const std::string& trigger, Subcontext* subcontext,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/action_parser.cpp:112:            if (auto result = ParsePropertyTrigger(args[i], subcontext, property_triggers);
+
+===== WILDCARD PROPERTY-TRIGGER TESTS =====
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init_test.cpp:141:on boot && property:ro.hardware=*
+
+===== SERVICE START IMPLEMENTATION =====
+589:Result<void> Service::Start() {
+858:Result<void> Service::StartIfNotDisabled() {
+589:Result<void> Service::Start() {
+590-    auto reboot_on_failure = make_scope_guard([this] {
+591-        if (on_failure_reboot_target_) {
+592-            trigger_shutdown(*on_failure_reboot_target_);
+593-        }
+594-    });
+595-
+596-    if (is_updatable() && !IsDefaultMountNamespaceReady()) {
+597-        ServiceList::GetInstance().DelayService(*this);
+598-        return Error() << "Cannot start an updatable service '" << name_
+599-                       << "' before configs from APEXes are all loaded. "
+600-                       << "Queued for execution.";
+601-    }
+602-
+603-    bool disabled = (flags_ & (SVC_DISABLED | SVC_RESET));
+604-    ResetFlagsForStart();
+605-
+606-    // Running processes require no additional work --- if they're in the
+607-    // process of exiting, we've ensured that they will immediately restart
+608-    // on exit, unless they are ONESHOT. For ONESHOT service, if it's in
+609-    // stopping status, we just set SVC_RESTART flag so it will get restarted
+610-    // in Reap().
+611-    if (flags_ & SVC_RUNNING) {
+612-        if ((flags_ & SVC_ONESHOT) && disabled) {
+613-            flags_ |= SVC_RESTART;
+614-        }
+615-
+616-        LOG(INFO) << "service '" << name_
+617-                  << "' requested start, but it is already running (flags: " << flags_ << ")";
+618-
+619-        // It is not an error to try to start a service that is already running.
+620-        reboot_on_failure.Disable();
+621-        return {};
+622-    }
+623-
+624-    // cgroups_activated is used for communication from the parent to the child
+625-    // while setsid_finished is used for communication from the child process to
+626-    // the parent process. These two communication channels are separate because
+627-    // combining these into a single communication channel would introduce a
+628-    // race between the Write() calls by the parent and by the child.
+629-    InterprocessFifo cgroups_activated, setsid_finished;
+630-    OR_RETURN(cgroups_activated.Initialize());
+631-    OR_RETURN(setsid_finished.Initialize());
+632-
+633-    if (Result<void> result = CheckConsole(); !result.ok()) {
+634-        return result;
+635-    }
+636-
+637-    struct stat sb;
+638-    if (stat(args_[0].c_str(), &sb) == -1) {
+639-        flags_ |= SVC_DISABLED;
+640-        return ErrnoError() << "Cannot find '" << args_[0] << "'";
+641-    }
+642-
+643-    std::string scon;
+644-    if (!seclabel_.empty()) {
+645-        scon = seclabel_;
+646-    } else {
+647-        auto result = ComputeContextFromExecutable(args_[0]);
+648-        if (!result.ok()) {
+649-            return result.error();
+650-        }
+651-        scon = *result;
+652-    }
+653-
+654-    if (!mount_namespace_.has_value()) {
+655-        // remember from which mount namespace the service should start
+656-        SetMountNamespace();
+657-    }
+658-
+659-    LOG(INFO) << "starting service '" << name_ << "'...";
+660-
+661-    std::vector<Descriptor> descriptors;
+662-    for (const auto& socket : sockets_) {
+663-        if (auto result = socket.Create(scon); result.ok()) {
+664-            descriptors.emplace_back(std::move(*result));
+665-        } else {
+666-            LOG(INFO) << "Could not create socket '" << socket.name << "': " << result.error();
+667-        }
+668-    }
+669-
+670-    for (const auto& file : files_) {
+671-        if (auto result = file.Create(); result.ok()) {
+672-            descriptors.emplace_back(std::move(*result));
+673-        } else {
+674-            LOG(INFO) << "Could not open file '" << file.name << "': " << result.error();
+675-        }
+676-    }
+677-
+678-    pid_t pid = -1;
+679-    if (namespaces_.flags) {
+680-        pid = clone(nullptr, nullptr, namespaces_.flags | SIGCHLD, nullptr);
+681-    } else {
+682-        pid = fork();
+683-    }
+684-
+685-    if (pid == 0) {
+686-        umask(077);
+687-        cgroups_activated.CloseWriteFd();
+688-        setsid_finished.CloseReadFd();
+689-        RunService(descriptors, std::move(cgroups_activated), std::move(setsid_finished));
+690-        _exit(127);
+691-    } else {
+692-        cgroups_activated.CloseReadFd();
+693-        setsid_finished.CloseWriteFd();
+694-    }
+695-
+696-    if (pid < 0) {
+697-        pid_ = 0;
+698-        return ErrnoError() << "Failed to fork";
+699-    }
+700-
+701-    once_environment_vars_.clear();
+702-
+703-    if (oom_score_adjust_ != DEFAULT_OOM_SCORE_ADJUST) {
+704-        std::string oom_str = std::to_string(oom_score_adjust_);
+705-        std::string oom_file = StringPrintf("/proc/%d/oom_score_adj", pid);
+706-        if (!WriteStringToFile(oom_str, oom_file)) {
+707-            PLOG(ERROR) << "couldn't write oom_score_adj";
+708-        }
+709-    }
+710-
+711-    time_started_ = boot_clock::now();
+712-    pid_ = pid;
+713-    flags_ |= SVC_RUNNING;
+714-    start_order_ = next_start_order_++;
+715-    process_cgroup_empty_ = false;
+716-
+717-    if (CgroupsAvailable()) {
+718-        bool use_memcg = swappiness_ != -1 || soft_limit_in_bytes_ != -1 || limit_in_bytes_ != -1 ||
+719-                         limit_percent_ != -1 || !limit_property_.empty();
+720-        errno = -createProcessGroup(uid(), pid_, use_memcg);
+721-        if (errno != 0) {
+722-            Result<void> result = cgroups_activated.Write(kActivatingCgroupsFailed);
+723-            if (!result.ok()) {
+724-                return Error() << "Sending notification failed: " << result.error();
+725-            }
+726-            return Error() << "createProcessGroup(" << uid() << ", " << pid_ << ", " << use_memcg
+727-                           << ") failed for service '" << name_ << "': " << strerror(errno);
+728-        }
+729-
+--
+858:Result<void> Service::StartIfNotDisabled() {
+859-    if (!(flags_ & SVC_DISABLED)) {
+860-        return Start();
+861-    } else {
+862-        flags_ |= SVC_DISABLED_START;
+863-    }
+864-    return {};
+865-}
+866-
+867-Result<void> Service::Enable() {
+868-    flags_ &= ~(SVC_DISABLED | SVC_RC_DISABLED);
+869-    if (flags_ & SVC_DISABLED_START) {
+870-        return Start();
+871-    }
+872-    return {};
+873-}
+874-
+875-void Service::Reset() {
+876-    StopOrReset(SVC_RESET);
+877-}
+878-
+879-void Service::Stop() {
+880-    StopOrReset(SVC_DISABLED);
+881-}
+882-
+883-void Service::Terminate() {
+884-    flags_ &= ~(SVC_RESTARTING | SVC_DISABLED_START);
+885-    flags_ |= SVC_DISABLED;
