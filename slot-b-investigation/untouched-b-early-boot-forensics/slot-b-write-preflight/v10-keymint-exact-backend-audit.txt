@@ -1,0 +1,512 @@
+===== EARLY_BOOT_ENDED BODY =====
+                }
+            }
+            curr_result
+        })
+    }
+
+    fn early_boot_ended() -> Result<()> {
+        check_keystore_permission(KeystorePerm::EarlyBootEnded)
+            .context(ks_err!("Checking permission"))?;
+        log::info!("In early_boot_ended.");
+
+        if let Err(e) =
+            DB.with(|db| SuperKeyManager::set_up_boot_level_cache(&SUPER_KEY, &mut db.borrow_mut()))
+        {
+            log::error!("SUPER_KEY.set_up_boot_level_cache failed:\n{:?}\n:(", e);
+        }
+
+        Maintenance::call_on_all_security_levels("earlyBootEnded", |dev| dev.earlyBootEnded(), None)
+    }
+
+    fn migrate_key_namespace(source: &KeyDescriptor, destination: &KeyDescriptor) -> Result<()> {
+        let calling_uid = ThreadState::get_calling_uid();
+
+===== ALL SECURITY LEVEL ITERATION =====
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-184-            KeystoreDB::new(
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-185-                &DB_PATH.read().expect("Could not determine database path for GC"),
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-186-                None,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-187-            )
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-188-            .expect("Failed to open database"),
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-189-            SUPER_KEY.clone(),
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-190-        )
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-191-    }))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-192-});
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-193-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-194-/// Determine the service name for a KeyMint device of the given security level
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-195-/// gotten by binder service from the device and determining what services
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-196-/// are available.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-197-fn keymint_service_name(security_level: &SecurityLevel) -> Result<Option<String>> {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-198-    let keymint_descriptor: &str = <BpKeyMintDevice as IKeyMintDevice>::get_descriptor();
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-199-    let keymint_instances = get_declared_instances(keymint_descriptor).unwrap();
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-200-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-201-    let service_name = match *security_level {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs:202:        SecurityLevel::TRUSTED_ENVIRONMENT => {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-203-            if keymint_instances.iter().any(|instance| *instance == "default") {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-204-                Some(format!("{}/default", keymint_descriptor))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-205-            } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-206-                None
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-207-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-208-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs:209:        SecurityLevel::STRONGBOX => {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-210-            if keymint_instances.iter().any(|instance| *instance == "strongbox") {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-211-                Some(format!("{}/strongbox", keymint_descriptor))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-212-            } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-213-                None
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-214-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-215-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-216-        _ => {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-217-            return Err(Error::Km(ErrorCode::HARDWARE_TYPE_UNAVAILABLE)).context(ks_err!(
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-218-                "Trying to find keymint for security level: {:?}",
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-219-                security_level
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-220-            ));
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-221-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-222-    };
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-223-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-224-    Ok(service_name)
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-225-}
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-226-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-227-/// Make a new connection to a KeyMint device of the given security level.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-228-/// If no native KeyMint device can be found this function also brings
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-229-/// up the compatibility service and attempts to connect to the legacy wrapper.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-230-fn connect_keymint(
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-231-    security_level: &SecurityLevel,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-232-) -> Result<(Strong<dyn IKeyMintDevice>, KeyMintHardwareInfo)> {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-233-    // Show the keymint interface that is registered in the binder
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-234-    // service and use the security level to get the service name.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-235-    let service_name = keymint_service_name(security_level)
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-236-        .context(ks_err!("Get service name from binder service"))?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-237-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-238-    let (keymint, hal_version) = if let Some(service_name) = service_name {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-239-        let km: Strong<dyn IKeyMintDevice> =
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs:240:            if SecurityLevel::TRUSTED_ENVIRONMENT == *security_level {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-241-                map_binder_status_code(retry_get_interface(&service_name))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-242-            } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-243-                map_binder_status_code(binder::get_interface(&service_name))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-244-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-245-            .context(ks_err!("Trying to connect to genuine KeyMint service."))?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-246-        // Map the HAL version code for KeyMint to be <AIDL version> * 100, so
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-247-        // - V1 is 100
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-248-        // - V2 is 200
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-249-        // - V3 is 300
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-250-        // etc.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-251-        let km_version = km.getInterfaceVersion()?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-252-        (km, Some(km_version * 100))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-253-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-254-        // This is a no-op if it was called before.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-255-        keystore2_km_compat::add_keymint_device_service();
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-256-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-257-        let keystore_compat_service: Strong<dyn IKeystoreCompatService> =
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-258-            map_binder_status_code(binder::get_interface("android.security.compat"))
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-326-    //
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-327-    // For KeyMint the returned versionNumber is implementation defined and thus completely
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-328-    // meaningless to Keystore 2.0.  So set the versionNumber field that is returned to
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-329-    // the rest of the code to be the <AIDL version> * 100, so KeyMint V1 is 100, KeyMint V2 is 200
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-330-    // and so on.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-331-    //
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-332-    // This ensures that versionNumber value across KeyMaster and KeyMint is monotonically
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-333-    // increasing (and so comparisons like `versionNumber >= KEY_MINT_1` are valid).
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-334-    if let Some(hal_version) = hal_version {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-335-        hw_info.versionNumber = hal_version;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-336-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-337-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-338-    Ok((keymint, hw_info))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-339-}
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-340-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-341-/// Get a keymint device for the given security level either from our cache or
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-342-/// by making a new connection. Returns the device, the hardware info and the uuid.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-343-/// TODO the latter can be removed when the uuid is part of the hardware info.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs:344:pub fn get_keymint_device(
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-345-    security_level: &SecurityLevel,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-346-) -> Result<(Strong<dyn IKeyMintDevice>, KeyMintHardwareInfo, Uuid)> {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-347-    let mut devices_map = KEY_MINT_DEVICES.lock().unwrap();
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-348-    if let Some((dev, hw_info, uuid)) = devices_map.dev_by_sec_level(security_level) {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-349-        Ok((dev, hw_info, uuid))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-350-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-351-        let (dev, hw_info) =
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-352-            connect_keymint(security_level).context(ks_err!("Cannot connect to Keymint"))?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-353-        devices_map.insert(*security_level, dev, hw_info);
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-354-        // Unwrap must succeed because we just inserted it.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-355-        Ok(devices_map.dev_by_sec_level(security_level).unwrap())
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-356-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-357-}
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-358-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-359-/// Get a keymint device for the given uuid. This will only access the cache, but will not
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-360-/// attempt to establish a new connection. It is assumed that the cache is already populated
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-361-/// when this is called. This is a fair assumption, because service.rs iterates through all
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-362-/// security levels when it gets instantiated.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-363-pub fn get_keymint_dev_by_uuid(
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-364-    uuid: &Uuid,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-365-) -> Result<(Strong<dyn IKeyMintDevice>, KeyMintHardwareInfo)> {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-366-    let devices_map = KEY_MINT_DEVICES.lock().unwrap();
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-367-    if let Some((dev, hw_info, _)) = devices_map.dev_by_uuid(uuid) {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-368-        Ok((dev, hw_info))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-369-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-370-        Err(Error::sys()).context(ks_err!("No KeyMint instance found."))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-371-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-372-}
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-373-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-374-/// Return all known keymint devices.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs:375:pub fn get_keymint_devices() -> Vec<Strong<dyn IKeyMintDevice>> {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-376-    KEY_MINT_DEVICES.lock().unwrap().devices()
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-377-}
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-378-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-379-/// Make a new connection to a secure clock service.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-380-/// If no native SecureClock device can be found brings up the compatibility service and attempts
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-381-/// to connect to the legacy wrapper.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-382-fn connect_secureclock() -> Result<Strong<dyn ISecureClock>> {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-383-    let secure_clock_descriptor: &str = <BpSecureClock as ISecureClock>::get_descriptor();
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-384-    let secureclock_instances = get_declared_instances(secure_clock_descriptor).unwrap();
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-385-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-386-    let secure_clock_available =
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-387-        secureclock_instances.iter().any(|instance| *instance == "default");
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-388-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-389-    let default_time_stamp_service_name = format!("{}/default", secure_clock_descriptor);
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-390-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-391-    let secureclock = if secure_clock_available {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-392-        map_binder_status_code(binder::get_interface(&default_time_stamp_service_name))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-393-            .context(ks_err!("Trying to connect to genuine secure clock service."))
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-417-/// different clocks.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-418-pub fn get_timestamp_service() -> Result<Strong<dyn ISecureClock>> {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-419-    let mut ts_device = TIME_STAMP_DEVICE.lock().unwrap();
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-420-    if let Some(dev) = &*ts_device {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-421-        Ok(dev.clone())
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-422-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-423-        let dev = connect_secureclock().context(ks_err!())?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-424-        *ts_device = Some(dev.clone());
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-425-        Ok(dev)
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-426-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-427-}
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-428-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-429-/// Get the service name of a remotely provisioned component corresponding to given security level.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-430-pub fn get_remotely_provisioned_component_name(security_level: &SecurityLevel) -> Result<String> {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-431-    let remote_prov_descriptor: &str =
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-432-        <BpRemotelyProvisionedComponent as IRemotelyProvisionedComponent>::get_descriptor();
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-433-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-434-    match *security_level {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs:435:        SecurityLevel::TRUSTED_ENVIRONMENT => {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-436-            let instance = format!("{}/default", remote_prov_descriptor);
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-437-            if is_declared(&instance)? {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-438-                Some(instance)
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-439-            } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-440-                None
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-441-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-442-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs:443:        SecurityLevel::STRONGBOX => {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-444-            let instance = format!("{}/strongbox", remote_prov_descriptor);
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-445-            if is_declared(&instance)? {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-446-                Some(instance)
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-447-            } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-448-                None
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-449-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-450-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-451-        _ => None,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-452-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-453-    .ok_or(Error::Km(ErrorCode::HARDWARE_TYPE_UNAVAILABLE))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-454-    .context(ks_err!("Failed to get rpc for sec level {:?}", *security_level))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-455-}
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-456-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-457-/// Whether boot is complete.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-458-static BOOT_COMPLETED: AtomicBool = AtomicBool::new(false);
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-459-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-460-/// Indicate whether boot is complete.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/globals.rs-461-///
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-3-// Licensed under the Apache License, Version 2.0 (the "License");
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-4-// you may not use this file except in compliance with the License.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-5-// You may obtain a copy of the License at
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-6-//
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-7-//     http://www.apache.org/licenses/LICENSE-2.0
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-8-//
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-9-// Unless required by applicable law or agreed to in writing, software
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-10-// distributed under the License is distributed on an "AS IS" BASIS,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-11-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-12-// See the License for the specific language governing permissions and
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-13-// limitations under the License.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-14-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-15-//! This module implements IKeystoreMaintenance AIDL interface.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-16-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-17-use crate::database::{KeyEntryLoadBits, KeyType};
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-18-use crate::error::into_logged_binder;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-19-use crate::error::map_km_error;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-20-use crate::error::Error;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs:21:use crate::globals::get_keymint_device;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-22-use crate::globals::{DB, LEGACY_IMPORTER, SUPER_KEY, ENCODED_MODULE_INFO};
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-23-use crate::ks_err;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-24-use crate::permission::{KeyPerm, KeystorePerm};
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-25-use crate::super_key::SuperKeyManager;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-26-use crate::utils::{
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-27-    check_dump_permission, check_get_app_uids_affected_by_sid_permissions, check_key_permission,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-28-    check_keystore_permission, uid_to_android_user, watchdog as wd,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-29-};
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-30-use android_hardware_security_keymint::aidl::android::hardware::security::keymint::{
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-31-    ErrorCode::ErrorCode, IKeyMintDevice::IKeyMintDevice, KeyParameter::KeyParameter, KeyParameterValue::KeyParameterValue, SecurityLevel::SecurityLevel, Tag::Tag,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-32-};
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-33-use android_security_maintenance::aidl::android::security::maintenance::IKeystoreMaintenance::{
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-34-    BnKeystoreMaintenance, IKeystoreMaintenance,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-35-};
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-36-use android_security_maintenance::binder::{
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-37-    BinderFeatures, Interface, Result as BinderResult, Strong, ThreadState,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-38-};
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-39-use android_security_metrics::aidl::android::security::metrics::{
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-159-            .context(ks_err!("Trying to delete legacy keys."))?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-160-        DB.with(|db| db.borrow_mut().unbind_keys_for_namespace(domain, nspace))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-161-            .context(ks_err!("Trying to delete keys from db."))?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-162-        self.delete_listener
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-163-            .delete_namespace(domain, nspace)
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-164-            .context(ks_err!("While invoking the delete listener."))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-165-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-166-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-167-    fn call_with_watchdog<F>(
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-168-        sec_level: SecurityLevel,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-169-        name: &'static str,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-170-        op: &F,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-171-        min_version: Option<i32>,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-172-    ) -> Result<()>
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-173-    where
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-174-        F: Fn(Strong<dyn IKeyMintDevice>) -> binder::Result<()>,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-175-    {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-176-        let (km_dev, hw_info, _) =
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs:177:            get_keymint_device(&sec_level).context(ks_err!("getting keymint device"))?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-178-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-179-        if let Some(min_version) = min_version {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-180-            if hw_info.versionNumber < min_version {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-181-                log::info!("skipping {name} for {sec_level:?} since its keymint version {} is less than the minimum required version {min_version}", hw_info.versionNumber);
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-182-                return Ok(());
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-183-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-184-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-185-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-186-        let _wp = wd::watch_millis_with("Maintenance::call_with_watchdog", 500, (sec_level, name));
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-187-        map_km_error(op(km_dev)).with_context(|| ks_err!("calling {}", name))?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-188-        Ok(())
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-189-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-190-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs:191:    fn call_on_all_security_levels<F>(
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-192-        name: &'static str,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-193-        op: F,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-194-        min_version: Option<i32>,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-195-    ) -> Result<()>
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-196-    where
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-197-        F: Fn(Strong<dyn IKeyMintDevice>) -> binder::Result<()>,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-198-    {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-199-        let sec_levels = [
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs:200:            (SecurityLevel::TRUSTED_ENVIRONMENT, "TRUSTED_ENVIRONMENT"),
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs:201:            (SecurityLevel::STRONGBOX, "STRONGBOX"),
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-202-        ];
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-203-        sec_levels.iter().try_fold((), |_result, (sec_level, sec_level_string)| {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-204-            let curr_result = Maintenance::call_with_watchdog(*sec_level, name, &op, min_version);
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-205-            match curr_result {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-206-                Ok(()) => log::info!(
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-207-                    "Call to {} succeeded for security level {}.",
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-208-                    name,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-209-                    &sec_level_string
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-210-                ),
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-211-                Err(ref e) => {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs:212:                    if *sec_level == SecurityLevel::STRONGBOX
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-213-                        && e.downcast_ref::<Error>()
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-214-                            == Some(&Error::Km(ErrorCode::HARDWARE_TYPE_UNAVAILABLE))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-215-                    {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-216-                        log::info!("Call to {} failed for StrongBox as it is not available", name,)
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-217-                    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-218-                        log::error!(
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-219-                            "Call to {} failed for security level {}: {}.",
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-220-                            name,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-221-                            &sec_level_string,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-222-                            e
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-223-                        )
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-224-                    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-225-                }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-226-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-227-            curr_result
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-228-        })
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-229-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-230-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-231-    fn early_boot_ended() -> Result<()> {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-232-        check_keystore_permission(KeystorePerm::EarlyBootEnded)
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-233-            .context(ks_err!("Checking permission"))?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-234-        log::info!("In early_boot_ended.");
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-235-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-236-        if let Err(e) =
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-237-            DB.with(|db| SuperKeyManager::set_up_boot_level_cache(&SUPER_KEY, &mut db.borrow_mut()))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-238-        {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-239-            log::error!("SUPER_KEY.set_up_boot_level_cache failed:\n{:?}\n:(", e);
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-240-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-241-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs:242:        Maintenance::call_on_all_security_levels("earlyBootEnded", |dev| dev.earlyBootEnded(), None)
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-243-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-244-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-245-    fn migrate_key_namespace(source: &KeyDescriptor, destination: &KeyDescriptor) -> Result<()> {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-246-        let calling_uid = ThreadState::get_calling_uid();
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-247-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-248-        match source.domain {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-249-            Domain::SELINUX | Domain::KEY_ID | Domain::APP => (),
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-250-            _ => {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-251-                return Err(Error::Rc(ResponseCode::INVALID_ARGUMENT))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-252-                    .context(ks_err!("Source domain must be one of APP, SELINUX, or KEY_ID."));
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-253-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-254-        };
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-255-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-256-        match destination.domain {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-257-            Domain::SELINUX | Domain::APP => (),
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-258-            _ => {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-259-                return Err(Error::Rc(ResponseCode::INVALID_ARGUMENT))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-260-                    .context(ks_err!("Destination domain must be one of APP or SELINUX."));
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-280-                        },
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-281-                    )
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-282-                })
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-283-                .context(ks_err!("Failed to load key blob."))?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-284-            {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-285-                db.borrow_mut().migrate_key_namespace(key_id_guard, destination, calling_uid, |k| {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-286-                    check_key_permission(KeyPerm::Rebind, k, &None)
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-287-                })
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-288-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-289-        })
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-290-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-291-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-292-    fn delete_all_keys() -> Result<()> {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-293-        // Security critical permission check. This statement must return on fail.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-294-        check_keystore_permission(KeystorePerm::DeleteAllKeys)
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-295-            .context(ks_err!("Checking permission"))?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-296-        log::info!("In delete_all_keys.");
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-297-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs:298:        Maintenance::call_on_all_security_levels("deleteAllKeys", |dev| dev.deleteAllKeys(), None)
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-299-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-300-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-301-    fn get_app_uids_affected_by_sid(
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-302-        user_id: i32,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-303-        secure_user_id: i64,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-304-    ) -> Result<std::vec::Vec<i64>> {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-305-        // This method is intended to be called by Settings and discloses a list of apps
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-306-        // associated with a user, so it requires the "android.permission.MANAGE_USERS"
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-307-        // permission (to avoid leaking list of apps to unauthorized callers).
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-308-        check_get_app_uids_affected_by_sid_permissions().context(ks_err!())?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-309-        DB.with(|db| db.borrow_mut().get_app_uids_affected_by_sid(user_id, secure_user_id))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-310-            .context(ks_err!("Failed to get app UIDs affected by SID"))
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-311-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-312-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-313-    fn dump_state(&self, f: &mut dyn std::io::Write) -> std::io::Result<()> {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-314-        writeln!(f, "keystore2 running")?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-315-        writeln!(f)?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-316-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-317-        // Display underlying device information
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs:318:        for sec_level in &[SecurityLevel::TRUSTED_ENVIRONMENT, SecurityLevel::STRONGBOX] {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs:319:            let Ok((_dev, hw_info, uuid)) = get_keymint_device(sec_level) else { continue };
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-320-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-321-            writeln!(f, "Device info for {sec_level:?} with {uuid:?}")?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-322-            writeln!(f, "  HAL version:              {}", hw_info.versionNumber)?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-323-            writeln!(f, "  Implementation name:      {}", hw_info.keyMintName)?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-324-            writeln!(f, "  Implementation author:    {}", hw_info.keyMintAuthorName)?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-325-            writeln!(f, "  Timestamp token required: {}", hw_info.timestampTokenRequired)?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-326-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-327-        writeln!(f)?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-328-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-329-        // Display database size information.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-330-        match crate::metrics_store::pull_storage_stats() {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-331-            Ok(atoms) => {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-332-                writeln!(f, "Database size information (in bytes):")?;
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-333-                for atom in atoms {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-334-                    if let StorageStats(stats) = &atom.payload {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-335-                        let stype = format!("{:?}", stats.storage_type);
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-336-                        if stats.unused_size == 0 {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-337-                            writeln!(f, "  {:<40}: {:>12}", stype, stats.size)?;
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-374-            let mut saved = ENCODED_MODULE_INFO.write().unwrap();
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-375-            if let Some(saved_encoding) = &*saved {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-376-                if *saved_encoding == encoding {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-377-                    log::warn!(
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-378-                        "Module info already set, ignoring repeated attempt to set same info."
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-379-                    );
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-380-                    return Ok(());
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-381-                }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-382-                return Err(Error::Rc(ResponseCode::INVALID_ARGUMENT)).context(ks_err!(
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-383-                    "Failed to set module info as it is already set to a different value."
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-384-                ));
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-385-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-386-            *saved = Some(encoding);
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-387-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-388-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-389-        let kps =
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-390-            vec![KeyParameter { tag: Tag::MODULE_HASH, value: KeyParameterValue::Blob(hash) }];
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-391-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs:392:        Maintenance::call_on_all_security_levels(
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-393-            "setAdditionalAttestationInfo",
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-394-            |dev| dev.setAdditionalAttestationInfo(&kps),
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-395-            Some(KEYMINT_V4),
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-396-        )
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-397-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-398-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-399-    #[allow(dead_code)]
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-400-    fn encode_module_info(module_info: Vec<ModuleInfo>) -> Result<Vec<u8>, der::Error> {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-401-        SetOfVec::<ModuleInfo>::from_iter(module_info.into_iter())?.to_der()
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-402-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-403-}
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-404-
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-405-impl Interface for Maintenance {
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-406-    fn dump(
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-407-        &self,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-408-        f: &mut dyn std::io::Write,
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-409-        _args: &[&std::ffi::CStr],
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs-410-    ) -> Result<(), binder::StatusCode> {
+
+===== BUILT TRUSTKERNEL RC =====
+service vendor.keymint-3-0-trustkernel /vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustkernel
+    class early_hal
+    user system
+    group system
+
+===== RUNNING-A TRUSTKERNEL RC =====
+service vendor.keymint-3-0-trustkernel /vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustkernel
+    class early_hal
+    user system
+    group system
+
+===== BUILT TRUSTKERNEL VINTF =====
+<manifest version="1.0" type="device">
+    <hal format="aidl">
+        <name>android.hardware.security.keymint</name>
+        <version>3</version>
+        <fqname>IKeyMintDevice/default</fqname>
+    </hal>
+    <hal format="aidl">
+        <name>android.hardware.security.keymint</name>
+        <version>3</version>
+        <fqname>IRemotelyProvisionedComponent/default</fqname>
+    </hal>
+</manifest>
+
+===== A KEYMINT PROCESS =====
+PID=1264
+/vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustkernel
+u:r:hal_keymint_default:s0 
+===== A SYSTEM BINARIES =====
+416862dce4df0ffdf7a4c40e8c45c6ca9803608c7330e0937408bd27686e246e  /system/bin/vdc
+a525a98d85bed7d05c4ec681eeca0ac4c7b81c13c4c4eb2406c37235a21e5d1d  /system/bin/vold
+a1ba655592231420ddb2c639de140f3f6e76cffc66e7775444f932a94e25f7ec  /system/bin/keystore2
+
+===== B BUILT SYSTEM BINARIES =====
+6e952d64e3846f5548b83d5c1de420017490a38a8abd008e9cd2215ded0469a9  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/bin/vdc
+34f452c3890b1633fb1cc51112b821fc43e88bc865368d4162dfe43f96bb6251  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/bin/vold
+bc932aa949727c60b9821999c32636052326a124c1af305b26fc0fc8ce7b5c0e  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/bin/keystore2
+
+===== A TRUSTKERNEL BINARY =====
+EXE=/vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustkernel
+6d1f3b2138cc13f060ab7fd5eff23d3374385d3145bd8c1f8205044d0da17439  /vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustkernel
+
+===== B BUILT TRUSTKERNEL BINARY =====
+6d1f3b2138cc13f060ab7fd5eff23d3374385d3145bd8c1f8205044d0da17439  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/bin/hw/android.hardware.security.keymint@3.0-service.trustkernel
+
+===== A/B RC + VINTF HASHES =====
+498ddc61a5bb7c92f0ace1958c7ba44ff0ca8a9b7079f3e85ac7e8f98ce140b0  /vendor/etc/init/android.hardware.security.keymint@3.0-service.trustkernel.rc
+24ec918774ede35aa77a983650f37397abb2392df765336fe31053a2ded19732  /vendor/etc/vintf/manifest/android.hardware.security.keymint@3.0-service.trustkernel.xml
+498ddc61a5bb7c92f0ace1958c7ba44ff0ca8a9b7079f3e85ac7e8f98ce140b0  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/android.hardware.security.keymint@3.0-service.trustkernel.rc
+24ec918774ede35aa77a983650f37397abb2392df765336fe31053a2ded19732  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/vintf/manifest/android.hardware.security.keymint@3.0-service.trustkernel.xml
+
+===== WORKING-A SERVICES =====
+running
+running
+Service android.security.maintenance: found
+Service android.hardware.security.keymint.IKeyMintDevice/default: found
