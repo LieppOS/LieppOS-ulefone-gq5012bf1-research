@@ -1,0 +1,93 @@
+===== CHIPINFO SCRIPT =====
+     1	#!/vendor/bin/sh
+     2	
+     3	default_fact_prop=$(getprop ro.soc.manufacturer)
+     4	
+     5	if [ "$default_fact_prop" == "" ]; then
+     6		fact_val=$(cat /sys/devices/soc0/family)
+     7		/vendor/bin/setprop ro.vendor.soc.manufacturer ${fact_val}
+     8	fi
+     9	
+    10	default_soc_prop=$(getprop ro.soc.model)
+    11	
+    12	if [ "$default_soc_prop" == "" ]; then
+    13		soc_val=$(cat /sys/devices/soc0/soc_id)
+    14		/vendor/bin/setprop ro.vendor.soc.model ${soc_val}
+    15	else
+    16		soc_val="$default_soc_prop"
+    17	fi
+    18	
+    19	soc_ext_val=$(cat /proc/device-tree/model-external-name 2>/dev/null)
+    20	if [ -z "$soc_ext_val" ]; then
+    21		soc_ext_val=${soc_val}
+    22	fi
+    23	/vendor/bin/setprop ro.vendor.soc.model.external_name ${soc_ext_val}
+    24	
+    25	soc_part_val=$(cat /proc/device-tree/model-part-name 2>/dev/null)
+    26	if [ -z "$soc_part_val" ]; then
+    27	    soc_part_val=${soc_val}
+    28	fi
+    29	/vendor/bin/setprop ro.vendor.soc.model.part_name ${soc_part_val}
+    30	
+    31	/vendor/bin/setprop ro.vendor.soc.model_ready 1
+
+===== CHIPINFO PREREQUISITES =====
+-rwxr-xr-x 1 root 2000 318472 Jul 19 19:44 /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/bin/sh
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/bin/sh: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /system/bin/linker64, for Android 35, BuildID[md5/uuid]=430a44c934e7d9c8e80e9cd4c0cf9894, stripped
+lrwxr-xr-x 1 root 2000 7 Jul 19 19:44 /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/bin/setprop -> toolbox
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/bin/setprop: symbolic link to toolbox
+lrwxr-xr-x 1 root 2000 7 Jul 19 19:44 /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/bin/getprop -> toolbox
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/vendor/bin/getprop: symbolic link to toolbox
+
+===== HWSERVICEMANAGER RC =====
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc:1:service hwservicemanager /system/system_ext/bin/hwservicemanager
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc-2-    user system
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc-3-    disabled
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc-4-    group system readproc
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc-5-    critical
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc-6-    onrestart setprop hwservicemanager.ready false
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc-7-    onrestart class_restart --only-enabled main
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc-8-    onrestart class_restart --only-enabled hal
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc-9-    onrestart class_restart --only-enabled early_hal
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc-10-    task_profiles ServiceCapacityLow HighPerformance
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc-11-    class animation
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc-12-    shutdown critical
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc-13-
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc-14-on property:hwservicemanager.disabled=true
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/b-mounts/system_ext/etc/init/hwservicemanager.rc-15-    stop hwservicemanager
+
+===== HWSERVICEMANAGER BINARY =====
+HWBIN=
+
+===== CLASS START ORDER =====
+567:    trigger late-fs
+571:    trigger post-fs-data
+583:    trigger early-boot
+584:    trigger boot
+1116:    trigger post-fs-data-checkpointed
+1261:    class_start hal
+1263:    class_start core
+1266:    class_start main
+
+===== MT6878 LATE-FS WAIT =====
+    write /sys/kernel/tracing/trace_marker "E"
+    write /proc/bootprof "INIT:Mount_END"
+
+on fs
+
+   mount iso9660 loop@/vendor/etc/iAmCdRom.iso /mnt/cd-rom ro
+
+on late-fs
+    write /proc/bootprof "INIT:late-fs"
+    wait_for_prop hwservicemanager.ready "true"
+
+    write /proc/bootprof "INIT:Mount_START --late"
+    write /sys/kernel/tracing/trace_marker "B|1|Mount late"
+    mount_all --late
+    write /sys/kernel/tracing/trace_marker "E"
+    write /proc/bootprof "INIT:Mount_END --late"
+
+on post-fs
+    write /proc/bootprof "INIT:post-fs"
+
+    # Support legacy paths
