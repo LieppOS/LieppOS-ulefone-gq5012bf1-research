@@ -1,0 +1,155 @@
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/task_test.cpp:34:        fp->slot_override = "b";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/task_test.cpp:111:        ASSERT_EQ(task->GetPartition(), expected_values[i][0]);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/task_test.cpp:112:        ASSERT_EQ(task->GetPartitionAndSlot(), expected_values[i][1]);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/task.cpp:39:    return should_flash_in_userspace(*metadata.get(), task->GetPartitionAndSlot());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/task.cpp:56:    do_for_partitions(pname_, slot_, flash, true);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/task.cpp:67:std::string FlashTask::GetPartitionAndSlot() const {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/task.cpp:131:    flash_partition_files(super_name_, files);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/task.cpp:173:    if (fp->slot_override == "all") {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/task.cpp:213:            auto partition = flash_task->GetPartitionAndSlot();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/task.cpp:226:            return helper->WillFlash(flash_task->GetPartitionAndSlot());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/task.cpp:280:    do_for_partitions(pname_, slot_, resize_partition, false);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/util.cpp:85:        auto candidate = android::fs_mgr::GetPartitionName(partition);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/task.h:58:    std::string GetPartition() const { return pname_; }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/task.h:61:    std::string GetPartitionAndSlot() const;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:911:    if (fb->GetVar("has-slot:" + partition_name, &has_slot) != fastboot::SUCCESS ||
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1257:void flash_partition_files(const std::string& partition, const std::vector<SparsePtr>& files) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1286:            flash_partition_files(partition, buf->files);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1378:static void do_for_partition(const std::string& part, const std::string& slot,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1385:    if (fb->GetVar("has-slot:" + part_tokens[0], &has_slot) != fastboot::SUCCESS) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1386:        /* If has-slot is not supported, the answer is no. */
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1409:/* This function will find the real partition name given a base name, and a slot. If slot is NULL or
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1411: * partition names. If force_slot is true, it will fail if a slot is specified, and the given
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1412: * partition does not support slots.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1414:void do_for_partitions(const std::string& part, const std::string& slot,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1417:    // |part| can be vendor_boot:default. Query has-slot on the first token only.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1421:        if (fb->GetVar("has-slot:" + part_tokens[0], &has_slot) != fastboot::SUCCESS) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1422:            die("Could not check if partition %s has slot %s", part_tokens[0].c_str(),
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1427:                do_for_partition(part, std::string(1, (char)(i + 'a')), func, force_slot);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1430:            do_for_partition(part, "", func, force_slot);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1433:        do_for_partition(part, slot, func, force_slot);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1462:static void do_fetch(const std::string& partition, const std::string& slot_override,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1467:    do_for_partitions(partition, slot_override, fetch, false /* force slot */);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1552:// Sets slot_override as the active slot. If slot_override is blank,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1554:static void set_active(const std::string& slot_override) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1557:    if (slot_override != "") {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1558:        fb->SetActive(slot_override);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1603:std::string GetPartitionName(const ImageEntry& entry, const std::string& current_slot) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1620:    std::string slot = fp->slot_override;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1713:                        fp, flash_task->GetPartition(), "0", fp->slot_override));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1810:    if (fp_->slot_override == "all") {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1813:        set_active(fp_->slot_override);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1840:                                               flash_task->GetPartitionAndSlot())) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1861:    if (fp_->slot_override.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1864:        fp_->current_slot = fp_->slot_override;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1870:    if (fp_->slot_override != "" && fp_->slot_override != "all") {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1871:        fp_->secondary_slot = get_other_slot(fp_->slot_override);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:1885:        std::string slot = fp_->slot_override;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2185:        do_for_partitions(partition, slot, flash, force_slot);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2192:static void do_wipe_super(const std::string& image, const std::string& slot_override,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2202:    auto slot = slot_override;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2322:                fp->slot_override = optarg;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2414:    if (fp->slot_override != "") fp->slot_override = verify_slot(fp->slot_override);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2419:            if (fp->slot_override == "") {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2428:                next_active = verify_slot(fp->slot_override, false);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2453:            do_for_partitions(partition, fp->slot_override, erase, true);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2474:            do_for_partitions(partition, fp->slot_override, format, true);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2519:            FlashTask task(fp->slot_override, pname, fname, is_vbmeta_partition(pname), fp.get());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2533:            do_for_partitions(partition, fp->slot_override, flashraw, true);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2535:            if (fp->slot_override == "all") {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2546:            bool slot_all = (fp->slot_override == "all");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2596:                    std::make_unique<ResizeTask>(fp.get(), partition, size, fp->slot_override);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2612:            do_wipe_super(image, fp->slot_override, fp.get());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.cpp:2625:            do_fetch(partition, fp->slot_override, outfile, fp->fb);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/constants.h:59:#define FB_VAR_HAS_SLOT "has-slot"
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/variables.h:49:bool GetPartitionSize(FastbootDevice* device, const std::vector<std::string>& args,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/variables.h:51:bool GetPartitionType(FastbootDevice* device, const std::vector<std::string>& args,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/variables.h:53:bool GetPartitionIsLogical(FastbootDevice* device, const std::vector<std::string>& args,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.h:105:    std::string slot_override;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.h:157:void do_for_partitions(const std::string& part, const std::string& slot,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.h:186:std::string GetPartitionName(const ImageEntry& entry, const std::string& current_slot_);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fastboot.h:187:void flash_partition_files(const std::string& partition, const std::vector<SparsePtr>& files);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/README.md:80:| slots     | "yes" or "no"  | Is this partition is slotted                                                                | "no"     |
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/README.md:103:which lists the name of this pseudo partition, and a `slots` attribute,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/README.md:104:which can be yes or no if this pseudo partition is slotted.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:53:    std::string slot_suffix = GetSuperSlotSuffix(device, partition_name);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:54:    uint32_t slot_number = SlotNumberForSlotSuffix(slot_suffix);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:55:    auto path = FindPhysicalPartition(fs_mgr_get_super_partition_name(slot_number));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:110:        if (GetPartitionName(partition) == name) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:118:    std::string slot_suffix = GetSuperSlotSuffix(device, name);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:119:    uint32_t slot_number = SlotNumberForSlotSuffix(slot_suffix);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:120:    auto path = FindPhysicalPartition(fs_mgr_get_super_partition_name(slot_number));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:172:    std::string super_name = fs_mgr_get_super_partition_name(current_slot);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:178:    std::string other_super = fs_mgr_get_super_partition_name(other_slot);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:187:            std::string partition_name = GetPartitionName(partition);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:217:    // If the super partition does not have a slot suffix, this is not a
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:219:    std::string current_slot_suffix = device->GetCurrentSlot();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:220:    uint32_t current_slot_number = SlotNumberForSlotSuffix(current_slot_suffix);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:221:    std::string super_partition = fs_mgr_get_super_partition_name(current_slot_number);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:222:    if (GetPartitionSlotSuffix(super_partition).empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:223:        return current_slot_suffix;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:227:    std::string slot_suffix = GetPartitionSlotSuffix(partition_name);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:228:    if (!slot_suffix.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:229:        return slot_suffix;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.cpp:231:    return current_slot_suffix;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/variables.cpp:298:    std::string slot_suffix = device->GetCurrentSlot();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/variables.cpp:299:    if (slot_suffix.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/variables.cpp:303:    std::string partition_name = args[0] + slot_suffix;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/variables.cpp:312:bool GetPartitionSize(FastbootDevice* device, const std::vector<std::string>& args,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/variables.cpp:336:bool GetPartitionType(FastbootDevice* device, const std::vector<std::string>& args,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/variables.cpp:380:bool GetPartitionIsLogical(FastbootDevice* device, const std::vector<std::string>& args,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/variables.cpp:426:    std::string slot_suffix = device->GetCurrentSlot();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/variables.cpp:427:    if (!slot_suffix.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/variables.cpp:434:            if (std::find(partitions.begin(), partitions.end(), slotless_name) ==
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/variables.cpp:436:                partitions.emplace_back(slotless_name);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/variables.cpp:460:    *message = fs_mgr_get_super_partition_name(slot_number);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/utility.h:111:// devices, the name must be derived from the partition name or current slot.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/commands.cpp:130:        {FB_VAR_PARTITION_SIZE, {GetPartitionSize, GetAllPartitionArgsWithSlot}},
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/commands.cpp:131:        {FB_VAR_PARTITION_TYPE, {GetPartitionType, GetAllPartitionArgsWithSlot}},
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/commands.cpp:132:        {FB_VAR_IS_LOGICAL, {GetPartitionIsLogical, GetAllPartitionArgsWithSlot}},
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/commands.cpp:333:        return device->WriteStatus(FastbootResult::FAIL, "Bad slot suffix");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/commands.cpp:373:        // Save as slot suffix to match the suffix format as returned from
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/commands.cpp:471:    std::string slot_suffix = GetSuperSlotSuffix(device, partition_name);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/commands.cpp:472:    slot_number_ = android::fs_mgr::SlotNumberForSlotSuffix(slot_suffix);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/commands.cpp:473:    auto super_device = FindPhysicalPartition(fs_mgr_get_super_partition_name(slot_number_));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:205:    EXPECT_EQ(fb->GetVar("has-slot:system", &has_slot), SUCCESS) << "getvar has-slot:system failed";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:213:        std::string slot_suffix = "_" + current_slot;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:214:        is_logical_cmd_system += slot_suffix;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:215:        is_logical_cmd_vendor += slot_suffix;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:216:        is_logical_cmd_boot += slot_suffix;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:244:    // Add suffix to test_partition_name if device is slotted.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:251:        std::string slot_suffix = "_" + current_slot;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:252:        test_partition_name += slot_suffix;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:468:            if (std::regex_match(part, sm, reg)) {  // This partition has slots
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:471:                EXPECT_EQ(fb->GetVar("has-slot:" + part_base, &var), SUCCESS)
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:472:                        << "'getvar:has-slot:" << part_base << "' failed";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:473:                EXPECT_EQ(var, "yes") << "'getvar:has-slot:" << part_base << "' was not 'yes'";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:475:                        << "'" << slot.front() << "' is an invalid slot-suffix for " << part_base;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:480:                EXPECT_EQ(fb->GetVar("has-slot:" + part, &var), SUCCESS)
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:481:                        << "'getvar:has-slot:" << part << "' failed";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:482:                EXPECT_EQ(var, "no") << "'getvar:has-slot:" << part << "' should be no";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:485:        // Ensure each partition has the correct slot suffix
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:494:                    << "There should only be slot suffixes from a to " << 'a' + num_slots - 1
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:497:                EXPECT_GE(c, 'a') << "Encountered invalid slot suffix of '" << c << "'";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:498:                EXPECT_LT(c, 'a' + num_slots) << "Encountered invalid slot suffix of '" << c << "'";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:741:        if (std::regex_match(part, sm, reg)) {  // This partition has slots
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:1485:            EXPECT_FALSE(config.partitions[part].slots)
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:1486:                    << "A partition can not have slots if the packed image does not";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:1498:            const std::string suffix = part_info.slots ? packed_suffix : "";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:1518:            const std::string suffix = config.partitions[part].slots ? packed_suffix : "";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:1529:                const std::string suffix = part_info.slots ? packed_suffix : "";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:1564:            EXPECT_FALSE(config.partitions[part].slots)
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:1565:                    << "A partition can not have slots if the packed image does not";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:1577:            const std::string suffix = part_info.slots ? packed_suffix : "";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/fuzzy_fastboot/main.cpp:1606:                const std::string suffix = part_info.slots ? packed_suffix : "";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/flashing.cpp:227:    std::string slot_suffix = device->GetCurrentSlot();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/flashing.cpp:228:    uint32_t slot_number = SlotNumberForSlotSuffix(slot_suffix);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/flashing.cpp:230:    std::string other_slot_suffix;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/flashing.cpp:231:    if (!slot_suffix.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/flashing.cpp:232:        other_slot_suffix = (slot_suffix == "_a") ? "_b" : "_a";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/flashing.cpp:251:        // Preserve partitions in the other slot, but not the current slot.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/flashing.cpp:252:        std::string partition_name = GetPartitionName(partition);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/flashing.cpp:253:        if (!slot_suffix.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/flashing.cpp:254:            auto part_suffix = GetPartitionSlotSuffix(partition_name);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/flashing.cpp:255:            if (part_suffix == slot_suffix || (part_suffix == other_slot_suffix && virtual_ab)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fastboot/device/flashing.cpp:259:        std::string group_name = GetPartitionGroupName(old_metadata->groups[partition.group_index]);
