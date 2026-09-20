@@ -1,0 +1,292 @@
+===== BUILT FSTABS =====
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/ETC/fstab.postinstall_intermediates/fstab.postinstall
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/METAETC/fstab.postinstall_intermediates/fstab.postinstall.meta_lic
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/fstab.postinstall
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/usr/share/vim/syntax/fstab.vim
+
+===== LATE / DATA / METADATA FSTAB ENTRIES =====
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/usr/share/vim/syntax/fstab.vim:220:syn match fsOptionsKeywords contained /\<\%(prjjquota\|test_dummy_encryption\|checkpoint\|compress_algorithm\|compress_extension\|nocompress_extension\)=/ nextgroup=fsOptionsString
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/usr/share/vim/syntax/fstab.vim:221:syn keyword fsOptionsKeyWords contained gc_merge nogc_merge disable_roll_forward no_heap disable_ext_identify inline_xattr noinline_xattr inline_data noinline_data inline_dentry noinline_dentry flush_merge fastboot extent_cache noextent_cache data_flush offusrjquota offgrpjquota offprjjquota test_dummy_encryption checkpoint_merge nocheckpoint_merge compress_chksum compress_cache inlinecrypt atgc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/fstab.postinstall:20:system                    /postinstall ext4   ro,nosuid,nodev,noexec  slotselect_other,logical
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/fstab.postinstall:21:system                    /postinstall erofs  ro,nosuid,nodev,noexec  slotselect_other,logical
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/fstab.postinstall:22:/dev/block/by-name/system /postinstall ext4   ro,nosuid,nodev,noexec  slotselect_other
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/fstab.postinstall:23:/dev/block/by-name/system /postinstall erofs  ro,nosuid,nodev,noexec  slotselect_other
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/fstab.postinstall:24:/dev/block/mapper/system /postinstall ext4   ro,nosuid,nodev,noexec  slotselect_other
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/fstab.postinstall:25:/dev/block/mapper/system /postinstall erofs  ro,nosuid,nodev,noexec  slotselect_other
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/ETC/fstab.postinstall_intermediates/fstab.postinstall:20:system                    /postinstall ext4   ro,nosuid,nodev,noexec  slotselect_other,logical
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/ETC/fstab.postinstall_intermediates/fstab.postinstall:21:system                    /postinstall erofs  ro,nosuid,nodev,noexec  slotselect_other,logical
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/ETC/fstab.postinstall_intermediates/fstab.postinstall:22:/dev/block/by-name/system /postinstall ext4   ro,nosuid,nodev,noexec  slotselect_other
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/ETC/fstab.postinstall_intermediates/fstab.postinstall:23:/dev/block/by-name/system /postinstall erofs  ro,nosuid,nodev,noexec  slotselect_other
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/ETC/fstab.postinstall_intermediates/fstab.postinstall:24:/dev/block/mapper/system /postinstall ext4   ro,nosuid,nodev,noexec  slotselect_other
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/ETC/fstab.postinstall_intermediates/fstab.postinstall:25:/dev/block/mapper/system /postinstall erofs  ro,nosuid,nodev,noexec  slotselect_other
+
+===== ALL mount_all --late OCCURRENCES =====
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc:202:    mount_all --late
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:296:    # Mount fstab in init.{$device}.rc by mount_all with '--late' parameter
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc:443:    mount_all --late
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc:141:    mount_all --late
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc:562:    # Mount fstab in init.{$device}.rc by mount_all with '--late' parameter
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/hw/meta_init.system.rc:252:    # Mount fstab in init.{$device}.rc by mount_all with '--late' parameter
+
+===== ALL LATE-FS ACTIONS =====
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc -----
+on late-fs
+    # Ensure that tracefs has the correct permissions.
+    # This does not work correctly if it is called in post-fs.
+    chmod 0755 /sys/kernel/tracing
+    chmod 0755 /sys/kernel/debug/tracing
+
+    # HALs required before storage encryption can get unlocked (FBE)
+    class_start early_hal
+
+    # Load trusted keys from dm-verity protected partitions
+    exec -- /system/bin/fsverity_init --load-verified-keys
+
+# Only enable the bootreceiver tracing instance for kernels 5.10 and above.
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/init/init.hbt.rc -----
+on late-fs && property:ro.vendor.mtk.app32_boost_support=* && property:ro.vendor.mtk.hbt_binfmt_misc_support=1
+    mount binfmt_misc none /proc/sys/fs/binfmt_misc
+    write /proc/sys/fs/binfmt_misc/register ":hbt:M::\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00:\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\xfe\xff\xff\xff:/system_ext/bin/hbt_translator:POC"
+
+# cerate empty 32b webview relro and dalvik-cache
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/bootperf.rc -----
+on late-fs && property:ro.boot.boot_trace=1
+   write /sys/devices/system/cpu/perf/enable 1
+   write /sys/devices/system/cpu/perf/mcupm_freq_enable 1
+   write /sys/devices/system/cpu/cpuqos/cpuqos_trace_enable 1
+
+   write /sys/kernel/tracing/events/perf_tracker/enable 1
+   write /sys/kernel/tracing/events/scheduler/sched_frequency_limits/enable 1
+   write /sys/kernel/tracing/events/cpuqos_v3/cpuqos_debug_info/enable 1
+
+# enable mtk events
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/factory_init.rc -----
+on late-fs
+
+    # HALs required before storage encryption can get unlocked (FBE/FDE)
+    class_start early_hal
+    wait_for_prop hwservicemanager.ready "true"
+    start vendor.keymaster-3-0
+    start vendor.keymaster-3-0-trustonic
+    start vendor.keymaster-4-0
+    start vendor.keymaster-4-0-trustonic
+    start vendor.keymaster-4-0-beanpod
+    start vendor.keymaster-4-1-beanpod
+    start vendor.keymint-default
+    start vendor.keymint-3-0-trustkernel
+    start keymaster_attestation-1-1
+    exec_start wait_for_keymaster
+    mount_all --late
+
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc -----
+on late-fs
+    write /proc/bootprof "INIT:late-fs"
+    wait_for_prop hwservicemanager.ready "true"
+
+    write /proc/bootprof "INIT:Mount_START --late"
+    write /sys/kernel/tracing/trace_marker "B|1|Mount late"
+    mount_all --late
+    write /sys/kernel/tracing/trace_marker "E"
+    write /proc/bootprof "INIT:Mount_END --late"
+
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.rc -----
+on late-fs
+    write /proc/bootprof "INIT:late-fs"
+    wait_for_prop hwservicemanager.ready "true"
+    start keystore2
+    start vendor.keymaster-3-0
+    start vendor.keymaster-3-0-trustonic
+    start vendor.keymaster-4-0
+    start vendor.keymaster-4-0-trustonic
+    start vendor.keymaster-4-0-beanpod
+    start vendor.keymaster-4-1
+    start vendor.keymaster-4-1-trustonic
+    start vendor.keymaster-4-1-beanpod
+    start vendor.keymint-default
+    start vendor.keymint-trustonic
+    start vendor.keymint-beanpod
+    start vendor.keymint-3-0-trustkernel
+    start keymaster_attestation-1-1
+    exec_start wait_for_keymaster
+    mount_all --late
+
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/meta_init.vendor.rc -----
+on late-fs
+    class_start early_hal
+
+----- /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/init.lieppos.slotb-checkpoints.rc -----
+on late-fs
+    write /metadata/lieppos-slotb/25-late-fs-trigger 1
+
+
+===== mount_all IMPLEMENTATION =====
+599-        SetProperty("ro.crypto.state", "encrypted");
+600-
+601-        // Although encrypted, vold has already set the device up, so we do not need to
+602-        // do anything different from the nonencrypted case.
+603-        ActionManager::GetInstance().QueueEventTrigger("nonencrypted");
+604-        return {};
+605-    } else if (code > 0) {
+606-        Error() << "fs_mgr_mount_all() returned unexpected error " << code;
+607-    }
+608-    /* else ... < 0: error */
+609-
+610-    return Error() << "Invalid code: " << code;
+611-}
+612-
+613-/* <= Q: mount_all <fstab> [ <path> ]* [--<options>]*
+614- * >= R: mount_all [ <fstab> ] [--<options>]*
+615- *
+616- * This function might request a reboot, in which case it will
+617- * not return.
+618- */
+619:static Result<void> do_mount_all(const BuiltinArguments& args) {
+620-    auto mount_all = ParseMountAll(args.args);
+621-    if (!mount_all.ok()) return mount_all.error();
+622-
+623-    const char* prop_post_fix = "default";
+624-    bool queue_event = true;
+625-    if (mount_all->mode == MOUNT_MODE_EARLY) {
+626-        prop_post_fix = "early";
+627-        queue_event = false;
+628-    } else if (mount_all->mode == MOUNT_MODE_LATE) {
+629-        prop_post_fix = "late";
+630-    }
+631-
+632-    std::string prop_name = "ro.boottime.init.mount_all."s + prop_post_fix;
+633-    android::base::Timer t;
+634-
+635-    Fstab fstab;
+636-    if (mount_all->fstab_path.empty()) {
+637-        if (!ReadDefaultFstab(&fstab)) {
+638-            return Error() << "Could not read default fstab";
+639-        }
+640-    } else {
+641-        if (!ReadFstabFromFile(mount_all->fstab_path, &fstab)) {
+642-            return Error() << "Could not read fstab";
+643-        }
+644-    }
+645-
+646-    auto mount_fstab_result = fs_mgr_mount_all(&fstab, mount_all->mode);
+647-    SetProperty(prop_name, std::to_string(t.duration().count()));
+648-
+649-    if (mount_all->import_rc) {
+650-        import_late(mount_all->rc_paths);
+651-    }
+652-
+653-    if (queue_event) {
+654-        /* queue_fs_event will queue event based on mount_fstab return code
+655-         * and return processed return code*/
+656-        auto queue_fs_result = queue_fs_event(mount_fstab_result);
+657-        if (!queue_fs_result.ok()) {
+658-            return Error() << "queue_fs_event() failed: " << queue_fs_result.error();
+659-        }
+660-    }
+661-
+662-    return {};
+663-}
+664-
+665-/* umount_all [ <fstab> ] */
+666-static Result<void> do_umount_all(const BuiltinArguments& args) {
+667-    auto umount_all = ParseUmountAll(args.args);
+668-    if (!umount_all.ok()) return umount_all.error();
+669-
+670-    Fstab fstab;
+671-    if (umount_all->empty()) {
+672-        if (!ReadDefaultFstab(&fstab)) {
+673-            return Error() << "Could not read default fstab";
+674-        }
+675-    } else {
+676-        if (!ReadFstabFromFile(*umount_all, &fstab)) {
+677-            return Error() << "Could not read fstab";
+678-        }
+679-    }
+680-
+681-    if (auto result = fs_mgr_umount_all(&fstab); result != 0) {
+682-        return Error() << "umount_fstab() failed " << result;
+683-    }
+684-    return {};
+685-}
+686-
+687-/* swapon_all [ <fstab> ] */
+688-static Result<void> do_swapon_all(const BuiltinArguments& args) {
+689-    auto swapon_all = ParseSwaponAll(args.args);
+690-    if (!swapon_all.ok()) return swapon_all.error();
+691-
+692-    Fstab fstab;
+693-    if (swapon_all->empty()) {
+694-        if (!ReadDefaultFstab(&fstab)) {
+695-            return Error() << "Could not read default fstab";
+696-        }
+697-    } else {
+698-        if (!ReadFstabFromFile(*swapon_all, &fstab)) {
+699-            return Error() << "Could not read fstab '" << *swapon_all << "'";
+700-        }
+701-    }
+702-
+703-    if (!fs_mgr_swapon_all(fstab)) {
+704-        return Error() << "fs_mgr_swapon_all() failed";
+705-    }
+706-
+707-    return {};
+708-}
+709-
+710-static Result<void> do_setprop(const BuiltinArguments& args) {
+711-    if (StartsWith(args[1], "ctl.")) {
+712-        return Error()
+713-               << "Cannot set ctl. properties from init; call the Service functions directly";
+714-    }
+715-    if (args[1] == kRestoreconProperty) {
+716-        return Error() << "Cannot set '" << kRestoreconProperty
+717-                       << "' from init; use the restorecon builtin directly";
+718-    }
+719-
+720-    SetProperty(args[1], args[2]);
+721-    return {};
+722-}
+723-
+724-static Result<void> do_setrlimit(const BuiltinArguments& args) {
+725-    auto rlimit = ParseRlimit(args.args);
+726-    if (!rlimit.ok()) return rlimit.error();
+727-
+728-    if (setrlimit(rlimit->first, &rlimit->second) == -1) {
+729-        return ErrnoError() << "setrlimit failed";
+730-    }
+731-    return {};
+732-}
+733-
+734-static Result<void> do_start(const BuiltinArguments& args) {
+735-    Service* svc = ServiceList::GetInstance().FindService(args[1]);
+736-    if (!svc) return Error() << "service " << args[1] << " not found";
+737-    errno = 0;
+738-    if (auto result = svc->Start(); !result.ok()) {
+739-        return ErrorIgnoreEnoent() << "Could not start service: " << result.error();
+
+===== FS_MGR LATE-MOUNT REFERENCES =====
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fuzz/fstab.dict:34:"latemount"
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/include/fstab/fstab.h:76:        bool late_mount : 1;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/libfstab/fstab.cpp:199:        CheckFlag("latemount", late_mount);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/include/fs_mgr.h:50:    MOUNT_MODE_LATE = 2,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/tests/fs_mgr_test.cpp:212:           lhs.late_mount == rhs.late_mount &&
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/tests/fs_mgr_test.cpp:358:source /data        f2fs    noatime,nosuid,nodev,discard,reserve_root=32768,resgid=1065,fsync_mode=nobarrier    latemount,wait,check,fileencryption=ice,keydirectory=/metadata/vold/metadata_encryption,quota,formattable,sysfs_path=/sys/devices/platform/soc/1d84000.ufshc,reservedsize=128M
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/tests/fs_mgr_test.cpp:443:source none2       swap   defaults      first_stage_mount,latemount,quota,logical
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/tests/fs_mgr_test.cpp:482:        flags.late_mount = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/tests/fs_mgr_test.cpp:1133:data   /data        f2fs    noatime     wait,latemount
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/tests/fs_mgr_test.cpp:1176:data   /data        f2fs    noatime     wait,latemount
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/tests/fs_mgr_test.cpp:1211:data   /data        f2fs    noatime     wait,latemount
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/fs_mgr.cpp:1503:            ((mount_mode == MOUNT_MODE_LATE) && !current_entry.fs_mgr_flags.late_mount) ||
+/mnt/SamsungSSD/android/lineage-22.2/system/core/fs_mgr/fs_mgr.cpp:1504:            ((mount_mode == MOUNT_MODE_EARLY) && current_entry.fs_mgr_flags.late_mount)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/util.cpp:543:            mode = MOUNT_MODE_LATE;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/README.md:497:   2. `fs` - Vold is up. Mount partitions not marked as first-stage or latemounted.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/README.md:499:   4. `late-fs` - Mount partitions marked as latemounted.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/README.md:667:  "latemount" flag and triggering fs encryption state event. With "--late" set,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/README.md:668:  init executable will only mount entries with "latemount" flag. By default,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/util.h:40:    MOUNT_MODE_LATE = 2,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/builtins.cpp:628:    } else if (mount_all->mode == MOUNT_MODE_LATE) {
