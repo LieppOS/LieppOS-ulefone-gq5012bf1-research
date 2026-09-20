@@ -1,0 +1,261 @@
+===== V4 RUNTIME FACTS =====
+v4-sm-ready=STATE=true
+v4-hwsm-ready=STATE=ABSENT
+v4-hwsm-disabled=STATE=ABSENT
+v4-sm-service=STATE=ABSENT
+v4-hwsm-service=STATE=ABSENT
+v4-complete=1
+
+===== LIVE A CONTROL =====
+servicemanager.ready=true
+
+hwservicemanager.ready=true
+
+hwservicemanager.disabled=
+
+init.svc.servicemanager=running
+
+init.svc.hwservicemanager=running
+
+u:r:servicemanager:s0          system         478     1   10916220   7616 0                   0 S servicemanager
+u:r:hwservicemanager:s0        system         480     1   10936316   7644 0                   0 S hwservicemanager
+
+===== BUILTIN SUBCONTEXT FLAGS =====
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/builtins.cpp:1347:        {"wait_for_prop",           {2,     2,    {false,  do_wait_for_prop}}},
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/builtins.cpp:1348:        {"write",                   {2,     2,    {true,   do_write}}},
+
+===== ACTION SUBCONTEXT EXECUTION =====
+
+using android::base::Join;
+
+namespace android {
+namespace init {
+
+Result<void> RunBuiltinFunction(const BuiltinFunction& function,
+                                const std::vector<std::string>& args, const std::string& context) {
+    BuiltinArguments builtin_arguments{.context = context};
+
+    builtin_arguments.args.resize(args.size());
+    builtin_arguments.args[0] = args[0];
+    for (std::size_t i = 1; i < args.size(); ++i) {
+        auto expanded_arg = ExpandProps(args[i]);
+        if (!expanded_arg.ok()) {
+            return expanded_arg.error();
+        }
+        builtin_arguments.args[i] = std::move(*expanded_arg);
+    }
+
+    return function(builtin_arguments);
+}
+
+Command::Command(BuiltinFunction f, bool execute_in_subcontext, std::vector<std::string>&& args,
+                 int line)
+    : func_(std::move(f)),
+      execute_in_subcontext_(execute_in_subcontext),
+      args_(std::move(args)),
+      line_(line) {}
+
+Result<void> Command::InvokeFunc(Subcontext* subcontext) const {
+    if (subcontext) {
+        if (execute_in_subcontext_) {
+            return subcontext->Execute(args_);
+        }
+
+        auto expanded_args = subcontext->ExpandArgs(args_);
+        if (!expanded_args.ok()) {
+            return expanded_args.error();
+        }
+        return RunBuiltinFunction(func_, *expanded_args, subcontext->context());
+    }
+
+    return RunBuiltinFunction(func_, args_, kInitContext);
+}
+
+Result<void> Command::CheckCommand() const {
+    BuiltinArguments builtin_arguments{.context = "host_init_verifier"};
+
+    builtin_arguments.args.resize(args_.size());
+    builtin_arguments.args[0] = args_[0];
+
+===== SUBCONTEXT PATH RULES =====
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-245-    if (pid_) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-246-        kill(pid_, SIGKILL);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-247-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-248-    pid_ = 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-249-    socket_.reset();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-250-    Fork();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-251-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-252-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp:253:bool Subcontext::PathMatchesSubcontext(const std::string& path) const {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-254-    auto apex_name = GetApexNameFromFileName(path);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-255-    if (!apex_name.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-256-        return std::find(apex_list_.begin(), apex_list_.end(), apex_name) != apex_list_.end();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-257-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-258-    for (const auto& prefix : path_prefixes_) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-259-        if (StartsWith(path, prefix)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-260-            return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-261-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-262-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-263-    return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-264-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-265-
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-351-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-352-void InitializeSubcontext() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-353-    if (IsMicrodroid()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-354-        LOG(INFO) << "Not using subcontext for microdroid";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-355-        return;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-356-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-357-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-358-    if (SelinuxGetVendorAndroidVersion() >= __ANDROID_API_P__) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp:359:        subcontext.reset(new Subcontext(std::vector<std::string>{"/vendor", "/odm"},
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-360-                                        std::vector<std::string>{"VENDOR", "ODM"}, kVendorContext));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-361-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-362-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-363-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-364-void InitializeHostSubcontext(std::vector<std::string> vendor_prefixes) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-365-    subcontext.reset(new Subcontext(vendor_prefixes, {}, kVendorContext, /*host=*/true));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-366-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-367-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-368-Subcontext* GetSubcontext() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-369-    return subcontext.get();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-370-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.cpp-371-
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-45-        if (!host) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-46-            Fork();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-47-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-48-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-49-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-50-    Result<void> Execute(const std::vector<std::string>& args);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-51-    Result<std::vector<std::string>> ExpandArgs(const std::vector<std::string>& args);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-52-    void Restart();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h:53:    bool PathMatchesSubcontext(const std::string& path) const;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-54-    bool PartitionMatchesSubcontext(const std::string& partition) const;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-55-    void SetApexList(std::vector<std::string>&& apex_list);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-56-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-57-    const std::string& context() const { return context_; }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-58-    pid_t pid() const { return pid_; }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-59-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-60-  private:
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-61-    void Fork();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-62-    Result<SubcontextReply> TransmitMessage(const SubcontextCommand& subcontext_command);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-63-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-64-    std::vector<std::string> path_prefixes_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/subcontext.h-65-    std::vector<std::string> partitions_;
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-337-    if (bootscript.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-338-        parser.ParseConfig("/system/etc/init/hw/init.rc");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-339-        if (!parser.ParseConfig("/system/etc/init")) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-340-            late_import_paths.emplace_back("/system/etc/init");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-341-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-342-        // late_import is available only in Q and earlier release. As we don't
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-343-        // have system_ext in those versions, skip late_import for system_ext.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-344-        parser.ParseConfig("/system_ext/etc/init");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:345:        if (!parser.ParseConfig("/vendor/etc/init")) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:346:            late_import_paths.emplace_back("/vendor/etc/init");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-347-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-348-        if (!parser.ParseConfig("/odm/etc/init")) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-349-            late_import_paths.emplace_back("/odm/etc/init");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-350-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-351-        if (!parser.ParseConfig("/product/etc/init")) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-352-            late_import_paths.emplace_back("/product/etc/init");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-353-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-354-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-355-        parser.ParseConfig(bootscript);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-356-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-357-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-358-
+
+===== PROPERTY TYPES =====
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/public/property.te:93:system_restricted_prop(servicemanager_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/public/property.te:246:system_public_prop(hwservicemanager_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/property.te:29:system_internal_prop(init_service_status_private_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/property.te:647:  init_service_status_private_prop
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/property_contexts:253:servicemanager.ready    u:object_r:servicemanager_prop:s0 exact bool
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/property_contexts:256:hwservicemanager.       u:object_r:hwservicemanager_prop:s0
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/property_contexts:954:init.svc. u:object_r:init_service_status_private_prop:s0 prefix string
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/property_contexts:969:persist.init.svc.last_fatal_reboot_epoch u:object_r:init_service_status_private_prop:s0 exact int
+
+===== VENDOR_INIT SOURCE RULES =====
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:13:get_prop(vendor_init, device_config_virtualization_framework_native_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:16:get_prop(vendor_init, apex_ready_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:20:get_prop(vendor_init, fstype_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:315:get_prop(vendor_init, boot_status_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:316:get_prop(vendor_init, exported3_system_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:317:get_prop(vendor_init, ota_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:318:get_prop(vendor_init, power_debug_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:319:get_prop(vendor_init, provisioned_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:320:get_prop(vendor_init, retaildemo_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:321:get_prop(vendor_init, surfaceflinger_display_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:322:get_prop(vendor_init, test_harness_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:323:get_prop(vendor_init, theme_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:327:get_prop(vendor_init, device_config_vendor_system_native_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:328:get_prop(vendor_init, device_config_vendor_system_native_boot_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/private/vendor_init.te:331:get_prop(vendor_init, profcollectd_etr_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/34.0/public/vendor_init.te:275:get_prop(vendor_init, boot_status_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/34.0/public/vendor_init.te:276:get_prop(vendor_init, exported3_system_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/34.0/public/vendor_init.te:277:get_prop(vendor_init, ota_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/34.0/public/vendor_init.te:278:get_prop(vendor_init, power_debug_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/34.0/public/vendor_init.te:279:get_prop(vendor_init, provisioned_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/34.0/public/vendor_init.te:280:get_prop(vendor_init, retaildemo_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/34.0/public/vendor_init.te:281:get_prop(vendor_init, surfaceflinger_display_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/34.0/public/vendor_init.te:282:get_prop(vendor_init, test_harness_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/34.0/public/vendor_init.te:283:get_prop(vendor_init, theme_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/34.0/public/vendor_init.te:287:get_prop(vendor_init, device_config_vendor_system_native_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/34.0/public/vendor_init.te:288:get_prop(vendor_init, device_config_vendor_system_native_boot_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/34.0/private/vendor_init.te:13:get_prop(vendor_init, device_config_virtualization_framework_native_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/34.0/private/vendor_init.te:16:get_prop(vendor_init, apex_ready_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/30.0/public/vendor_init.te:247:get_prop(vendor_init, exported2_radio_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/30.0/public/vendor_init.te:248:get_prop(vendor_init, exported3_system_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/30.0/public/vendor_init.te:249:get_prop(vendor_init, surfaceflinger_display_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/30.0/public/vendor_init.te:250:get_prop(vendor_init, theme_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/30.0/public/vendor_init.te:252:get_prop(vendor_init, ota_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/31.0/public/vendor_init.te:257:get_prop(vendor_init, boot_status_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/31.0/public/vendor_init.te:258:get_prop(vendor_init, exported3_system_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/31.0/public/vendor_init.te:259:get_prop(vendor_init, ota_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/31.0/public/vendor_init.te:260:get_prop(vendor_init, power_debug_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/31.0/public/vendor_init.te:261:get_prop(vendor_init, provisioned_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/31.0/public/vendor_init.te:262:get_prop(vendor_init, retaildemo_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/31.0/public/vendor_init.te:263:get_prop(vendor_init, surfaceflinger_display_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/31.0/public/vendor_init.te:264:get_prop(vendor_init, test_harness_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/31.0/public/vendor_init.te:265:get_prop(vendor_init, theme_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/32.0/public/vendor_init.te:257:get_prop(vendor_init, boot_status_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/32.0/public/vendor_init.te:258:get_prop(vendor_init, exported3_system_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/32.0/public/vendor_init.te:259:get_prop(vendor_init, ota_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/32.0/public/vendor_init.te:260:get_prop(vendor_init, power_debug_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/32.0/public/vendor_init.te:261:get_prop(vendor_init, provisioned_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/32.0/public/vendor_init.te:262:get_prop(vendor_init, retaildemo_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/32.0/public/vendor_init.te:263:get_prop(vendor_init, surfaceflinger_display_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/32.0/public/vendor_init.te:264:get_prop(vendor_init, test_harness_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/32.0/public/vendor_init.te:265:get_prop(vendor_init, theme_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/33.0/public/vendor_init.te:264:get_prop(vendor_init, boot_status_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/33.0/public/vendor_init.te:265:get_prop(vendor_init, exported3_system_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/33.0/public/vendor_init.te:266:get_prop(vendor_init, ota_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/33.0/public/vendor_init.te:267:get_prop(vendor_init, power_debug_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/33.0/public/vendor_init.te:268:get_prop(vendor_init, provisioned_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/33.0/public/vendor_init.te:269:get_prop(vendor_init, retaildemo_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/33.0/public/vendor_init.te:270:get_prop(vendor_init, surfaceflinger_display_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/33.0/public/vendor_init.te:271:get_prop(vendor_init, test_harness_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/33.0/public/vendor_init.te:272:get_prop(vendor_init, theme_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/33.0/public/vendor_init.te:276:get_prop(vendor_init, device_config_vendor_system_native_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/33.0/public/vendor_init.te:277:get_prop(vendor_init, device_config_vendor_system_native_boot_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/33.0/private/vendor_init.te:13:get_prop(vendor_init, device_config_virtualization_framework_native_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/29.0/public/vendor_init.te:248:get_prop(vendor_init, exported2_radio_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/29.0/public/vendor_init.te:249:get_prop(vendor_init, exported3_system_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/29.0/public/vendor_init.te:250:get_prop(vendor_init, theme_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/202404/public/vendor_init.te:285:get_prop(vendor_init, boot_status_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/202404/public/vendor_init.te:286:get_prop(vendor_init, exported3_system_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/202404/public/vendor_init.te:287:get_prop(vendor_init, ota_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/202404/public/vendor_init.te:288:get_prop(vendor_init, power_debug_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/202404/public/vendor_init.te:289:get_prop(vendor_init, provisioned_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/202404/public/vendor_init.te:290:get_prop(vendor_init, retaildemo_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/202404/public/vendor_init.te:291:get_prop(vendor_init, surfaceflinger_display_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/202404/public/vendor_init.te:292:get_prop(vendor_init, test_harness_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/202404/public/vendor_init.te:293:get_prop(vendor_init, theme_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/202404/public/vendor_init.te:297:get_prop(vendor_init, device_config_vendor_system_native_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/202404/public/vendor_init.te:298:get_prop(vendor_init, device_config_vendor_system_native_boot_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/202404/private/vendor_init.te:13:get_prop(vendor_init, device_config_virtualization_framework_native_prop)
+/mnt/SamsungSSD/android/lineage-22.2/system/sepolicy/prebuilts/api/202404/private/vendor_init.te:16:get_prop(vendor_init, apex_ready_prop)
+
+===== GENERATED POLICY DIRECT ALLOWS =====
