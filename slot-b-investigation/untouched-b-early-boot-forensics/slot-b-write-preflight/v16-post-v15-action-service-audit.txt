@@ -1,0 +1,1290 @@
+===== V16 READ-ONLY AUDIT AFTER V15 =====
+2026-09-21T02:25:04,283367035+03:00
+
+===== CURRENT A SAFETY STATE =====
+_a
+1
+CURRENT=0
+ACTIVE=0
+
+===== WORKING A: INSMOD SERVICE RUNTIME =====
+init.svc.insmod_sh=stopped
+vendor.all.modules.ready=1
+
+--- executable ---
+-rwxr-xr-x 1 root shell u:object_r:init_insmod_sh_exec:s0  1244 2009-01-01 02:00 /vendor/bin/init.insmod.sh
+
+--- cfg ---
+-rw-r--r-- 1 root root u:object_r:vendor_configs_file:s0  345 2009-01-01 02:00 /vendor/etc/init.insmod.mt6878.cfg
+
+--- mtkgki rc ---
+-rw-r--r-- 1 root root u:object_r:vendor_configs_file:s0  293 2009-01-01 02:00 /vendor/etc/init/hw/init.mtkgki.rc
+
+--- process search ---
+
+===== EXACT V15 SERVICE DEFINITION =====
+service insmod_sh /vendor/bin/init.insmod.sh /vendor/etc/init.insmod.${ro.hardware}.cfg
+    class main
+    user root
+    group root system
+    disabled
+    oneshot
+
+on early-init
+    # LieppOS V15: instrument modules-ready producer lifecycle.
+    write /metadata/lieppos-slotb/v15-mtkgki-early-init 1
+    setprop vendor.all.modules.ready 0
+    write /metadata/lieppos-slotb/v15-after-ready-zero 1
+    write /proc/bootprof "modprobe: Load_Module_START"
+    start insmod_sh
+    write /metadata/lieppos-slotb/v15-after-insmod-start 1
+
+on property:init.svc.insmod_sh=running
+    write /metadata/lieppos-slotb/v15-insmod-running 1
+
+on property:init.svc.insmod_sh=stopped
+    write /metadata/lieppos-slotb/v15-insmod-stopped 1
+
+on post-fs-data && property:vendor.all.modules.ready=0
+    write /metadata/lieppos-slotb/v15-ready-zero-at-postfsdata 1
+
+on post-fs-data && property:vendor.all.modules.ready=1
+    write /metadata/lieppos-slotb/v15-ready-one-at-postfsdata 1
+
+===== V15 SCRIPT =====
+#!/vendor/bin/sh
+
+########################################################
+### init.insmod.cfg format:                          ###
+### -----------------------------------------------  ###
+### [insmod|setprop|enable/moprobe] [path|prop name] ###
+### ...                                              ###
+########################################################
+
+if [ $# -eq 1 ]; then
+  cfg_file=$1
+else
+  exit 1
+fi
+
+if [ -f $cfg_file ]; then
+  while IFS="|" read -r action arg
+  do
+    case $action in
+      "insmod") insmod $arg ;;
+      "setprop")
+        times=1
+        setprop $arg 1
+        while [ "$?" -ne 0 ]
+        do
+          if [ $times -gt 128 ]; then
+            break
+          fi
+          let times++
+          setprop $arg 1
+        done ;;
+      "enable") echo 1 > $arg ;;
+      "modprobe")
+        insmod_arg=${arg}
+        for partition in system_dlkm       
+        do
+          case ${insmod_arg} in
+            "-b *" | "-b")
+              arg="-b $(cat /${partition}/lib/modules/modules.load)" ;;
+            "*" | "")
+              arg="$(cat /${partition}/lib/modules/modules.load)" ;;
+          esac
+          modprobe -a -d /${partition}/lib/modules $arg
+        done
+    esac
+  done < $cfg_file
+else
+  exit 2
+fi
+
+
+===== V15 CFG =====
+
+===== FULL MT6878 POST-FS-DATA ACTION =====
+  186: on post-fs-data
+  187:     # LieppOS exact MTK post-fs-data bracket v8
+  188:     write /metadata/lieppos-slotb/v8-mtk-pfsd-start 1
+  189: 
+  190:     write /proc/bootprof "INIT:post-fs-data"
+  191: 
+  192:     # LieppOS V15 diagnostic: force modules-ready from init after recording
+  193:     # the producer lifecycle separately.
+  194:     write /metadata/lieppos-slotb/v15-before-force-ready 1
+  195:     setprop vendor.all.modules.ready 1
+  196:     write /metadata/lieppos-slotb/v15-after-force-ready 1
+  197: 
+  198:     wait_for_prop vendor.all.modules.ready 1
+  199:     write /metadata/lieppos-slotb/v8-modules-ready-passed 1
+  200: 
+  201:     write /proc/bootprof "modprobe: Load_Module_DONE"
+  202: 
+  203:     # Disable watermark boost
+  204:     write /proc/sys/vm/watermark_boost_factor 0
+  205: 
+  206:     # multi-gen LRU
+  207:     write /sys/kernel/mm/lru_gen/enabled y
+  208: 
+  209:     # zram
+  210:     write /sys/block/zram0/comp_algorithm lz4
+  211:     write /proc/sys/vm/page-cluster 0
+  212:     write /proc/sys/vm/swappiness 100
+  213:     write /sys/kernel/mm/swap/vma_ra_enabled false
+  214: 
+  215:     # boot time fs tune
+  216:     write /sys/block/mmcblk0/queue/iostats 0
+  217:     write /sys/block/mmcblk0/queue/read_ahead_kb 2048
+  218:     write /sys/block/mmcblk0/queue/nr_requests 256
+  219:     write /sys/block/sdc/queue/iostats 0
+  220:     write /sys/block/sdc/queue/read_ahead_kb 2048
+  221:     write /sys/block/sdc/queue/nr_requests 256
+  222:     write /sys/block/dm-0/queue/read_ahead_kb 2048
+  223:     write /sys/block/dm-1/queue/read_ahead_kb 2048
+  224:     write /sys/block/dm-2/queue/read_ahead_kb 2048
+  225:     write /sys/block/dm-3/queue/read_ahead_kb 2048
+  226:     write /sys/block/dm-4/queue/read_ahead_kb 2048
+  227:     write /sys/block/dm-5/queue/read_ahead_kb 2048
+  228: 
+  229:     chown system system /mnt/vendor/nvcfg
+  230:     chmod 0771 /mnt/vendor/nvcfg
+  231:     restorecon_recursive /mnt/vendor/nvcfg
+  232:     chown system system /mnt/vendor/nvcfg/fg
+  233:     chown system system /mnt/vendor/nvcfg/fg/old_fg_data
+  234:     chown system system /mnt/vendor/nvcfg/fg/car_tune_value
+  235: 
+  236:     # create basic filesystem structure
+  237:     # We chown/chmod /mnt/vendor/nvdata again so because mount is run as root + defaults
+  238:     chown root system /mnt/vendor/nvdata
+  239:     chmod 0771 /mnt/vendor/nvdata
+  240:     mkdir /mnt/vendor/nvdata/media 0771 media audio
+  241: 
+  242:     #Create cct mount point
+  243:     mkdir /mnt/vendor/cct
+  244:     chown root system /mnt/vendor/cct
+  245:     chmod 0771 /mnt/vendor/cct
+  246: 
+  247:     #Create flash folder
+  248:     mkdir /data/vendor/flash
+  249:     chown root system /data/vendor/flash
+  250:     chmod 0771 /data/vendor/flash
+  251: 
+  252:     #Create shading mount point
+  253:     mkdir /data/vendor/shading
+  254:     chown root system /data/vendor/shading
+  255:     chmod 0771 /data/vendor/shading
+  256: 
+  257:     #Create shading_otp mount point
+  258:     mkdir /data/vendor/shading_otp
+  259:     chown root system /data/vendor/shading_otp
+  260:     chmod 0771 /data/vendor/shading_otp
+  261: 
+  262:     #Create NDD mount point
+  263:     mkdir /data/vendor/camera_dump
+  264:     chown root system /data/vendor/camera_dump
+  265:     chmod 0771 /data/vendor/camera_dump
+  266: 
+  267:     #Create imgsys mount point
+  268:     mkdir /data/vendor/imgsys_dump
+  269:     chown root system /data/vendor/imgsys_dump
+  270:     chmod 0771 /data/vendor/imgsys_dump
+  271: 
+  272:     #Create ulog file mode
+  273:     mkdir /data/vendor/cam_ulog
+  274:     chown root system /data/vendor/cam_ulog
+  275:     chmod 0771 /data/vendor/cam_ulog
+  276: 
+  277:     #Create Camera Dip Debug Folder
+  278:     mkdir /data/vendor/dipdebug
+  279:     chown root system /data/vendor/dipdebug
+  280:     chmod 0771 /data/vendor/dipdebug
+  281: 
+  282:     #Create flicker mount point
+  283:     mkdir /data/vendor/flicker
+  284:     chown root system /data/vendor/flicker
+  285:     chmod 0771 /data/vendor/flicker
+  286: 
+  287:     # Set SELinux security contexts on upgrade or policy update.
+  288:     restorecon_recursive /mnt/vendor/nvdata
+  289: 
+  290:     #give system access to rfkill device node
+  291:     chmod 0660 /dev/rfkill
+  292: 
+  293:     # create for muxd pts device node , to operate without root
+  294:     mkdir /dev/radio 0770 radio radio
+  295: 
+  296:     # create mdota to mount mcf_ota
+  297:     mkdir /mnt/vendor/mdota
+  298: 
+  299:     chmod 0660 /dev/spm
+  300:     chown system system /dev/spm
+  301: 
+
+===== MARKER/TRIGGER BLOCK LOCATIONS =====
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/system/core/rootdir/init.rc:1152-1155
+==============================================================================
+ 1152: on load-bpf-programs
+ 1153:     exec_start bpfloader
+ 1154:     write /metadata/lieppos-slotb/v9-bpfloader-passed 1
+ 1155: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/system/core/rootdir/init.rc:1161-1171
+==============================================================================
+ 1161: on zygote-start
+ 1162:     write /metadata/lieppos-slotb/v9-before-odsign-verify 1
+ 1163:     wait_for_prop odsign.verification.done 1
+ 1164:     write /metadata/lieppos-slotb/v9-odsign-verify-done 1
+ 1165:     # A/B update verifier that marks a successful boot.
+ 1166:     exec_start update_verifier
+ 1167:     write /metadata/lieppos-slotb/v9-update-verifier-passed 1
+ 1168:     start statsd
+ 1169:     start zygote
+ 1170:     start zygote_secondary
+ 1171: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/device/ulefone/armol/configs/vendor/init.lieppos.slotb-checkpoints.rc:23-25
+==============================================================================
+   23: on property:vendor.all.modules.ready=1
+   24:     write /metadata/lieppos-slotb/40-vendor-modules-ready 1
+   25: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/device/ulefone/armol/configs/vendor/init.lieppos.slotb-checkpoints.rc:26-28
+==============================================================================
+   26: on post-fs-data
+   27:     write /metadata/lieppos-slotb/50-post-fs-data 1
+   28: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/device/ulefone/armol/configs/vendor/init.lieppos.slotb-checkpoints.rc:29-31
+==============================================================================
+   29: on property:ro.vendor.soc.model_ready=1
+   30:     write /metadata/lieppos-slotb/51-soc-model-ready 1
+   31: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/device/ulefone/armol/configs/vendor/init.lieppos.slotb-checkpoints.rc:32-34
+==============================================================================
+   32: on property:apexd.status=activated
+   33:     write /metadata/lieppos-slotb/60-apex-activated 1
+   34: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/device/ulefone/armol/configs/vendor/init.lieppos.slotb-checkpoints.rc:35-37
+==============================================================================
+   35: on property:init.svc.odsign=running
+   36:     write /metadata/lieppos-slotb/69-odsign-running 1
+   37: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/device/ulefone/armol/configs/vendor/init.lieppos.slotb-checkpoints.rc:38-40
+==============================================================================
+   38: on property:odsign.key.done=1
+   39:     write /metadata/lieppos-slotb/70-odsign-key-done 1
+   40: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/device/ulefone/armol/configs/vendor/init.lieppos.slotb-checkpoints.rc:41-43
+==============================================================================
+   41: on property:odsign.verification.done=1
+   42:     write /metadata/lieppos-slotb/80-odsign-verification-done 1
+   43: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/device/ulefone/armol/configs/vendor/init.lieppos.slotb-checkpoints.rc:44-46
+==============================================================================
+   44: on property:init.svc.zygote=running
+   45:     write /metadata/lieppos-slotb/90-zygote-running 1
+   46: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/device/ulefone/armol/configs/vendor/init.lieppos.slotb-checkpoints.rc:47-53
+==============================================================================
+   47: on property:sys.boot_completed=1
+   48:     write /metadata/lieppos-slotb/99-boot-completed 1
+   49: 
+   50: # LieppOS hwservicemanager lifecycle v2.
+   51: # Controls distinguish a hwservicemanager-specific failure from a general
+   52: # essential-service/property-trigger failure.
+   53: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/factory_init.rc:37-83
+==============================================================================
+   37: on early-init
+   38:     # Set init and its forked children's oom_adj.
+   39:     write /proc/1/oom_score_adj -1000
+   40: 
+   41:     # Disable sysrq from keyboard
+   42:     write /proc/sys/kernel/sysrq 0
+   43: 
+   44:     # Set the security context of /adb_keys if present.
+   45:     restorecon /adb_keys
+   46: 
+   47:     # Set the security context of /postinstall if present.
+   48:     restorecon /postinstall
+   49: 
+   50: 
+   51:     # Set up linker config subdirectories based on mount namespaces
+   52:     mkdir /linkerconfig/bootstrap 0755
+   53:     mkdir /linkerconfig/default 0755
+   54: 
+   55:     # Generate ld.config.txt for early executed processes
+   56:     exec -- /system/bin/bootstrap/linkerconfig --target /linkerconfig/bootstrap
+   57: 
+   58:     chmod 644 /linkerconfig/bootstrap/ld.config.txt
+   59:     copy /linkerconfig/bootstrap/ld.config.txt /linkerconfig/default/ld.config.txt
+   60:     chmod 644 /linkerconfig/default/ld.config.txt
+   61: 
+   62:     # Mount bootstrap linker configuration as current
+   63:     mount none /linkerconfig/bootstrap /linkerconfig bind rec
+   64: 
+   65:     start ueventd
+   66: 
+   67: 
+   68:     # Run apexd-bootstrap so that APEXes that provide critical libraries
+   69:     # become available. Note that this is executed as exec_start to ensure that
+   70:     # the libraries are available to the processes started after this statement.
+   71:     exec_start apexd-bootstrap
+   72: 
+   73:     # Generate linker config based on apex mounted in bootstrap namespace
+   74:     update_linker_config
+   75: 
+   76: #INTERNAL_START
+   77:     mount debugfs debugfs /sys/kernel/debug
+   78:     chmod 0755 /sys/kernel/debug
+   79: #INTERNAL_END
+   80: 
+   81:     # initialize vendor.all.modules.ready to 1 here to prevent NOT GKI project blocked
+   82:     setprop vendor.all.modules.ready 1
+   83: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/factory_init.rc:445-539
+==============================================================================
+  445: on post-fs-data
+  446:     write /proc/bootprof "INIT:post-fs-data"
+  447:     wait_for_prop vendor.all.modules.ready 1
+  448:     write /proc/bootprof "modprobe: Load_Module_DONE"
+  449: 
+  450: 	#Thermal
+  451: 	mkdir /data/.tp/ 0775 system system
+  452: 
+  453:     # symlink to bugreport storage location
+  454:     rm /data/bugreports
+  455:     symlink /data/user_de/0/com.android.shell/files/bugreports /data/bugreports
+  456: 
+  457:     # VIA flashlessd service
+  458:     mkdir /data/flashless 0770 radio nvram
+  459:     mkdir /mnt/vendor/nvdata/md_via 0770 root nvram
+  460:     chmod 0660 /dev/ttyMT4
+  461:     chown radio radio /dev/ttyMT4
+  462:     chmod 0660 /dev/vmodem
+  463:     chown radio radio /dev/vmodem
+  464: 
+  465:     #VIA pppd service
+  466:     mkdir /data/pppd_via 0770 radio system
+  467: 
+  468:     # md32 boot
+  469:     chown root system /dev/md32
+  470:     chmod 0440 /dev/md32
+  471:     chown root system /sys/class/misc/md32/md32_mobile_log
+  472:     chmod 0660 /sys/class/misc/md32/md32_mobile_log
+  473:     write /sys/class/misc/md32/md32_boot 1
+  474: 
+  475:     # dhcp server
+  476:     mkdir /data/misc/dhcp 0770 dhcp dhcp
+  477:     chown dhcp dhcp /data/misc/dhcp
+  478: 
+  479:     # device info interface
+  480:     chmod 0440 /dev/devmap
+  481:     chown root system /dev/devmap
+  482: 
+  483: 
+  484: 
+  485:     #change partition permission
+  486:     exec /vendor/etc/partition_permission.sh
+  487: #INTERNAL_START
+  488: #SeLinux
+  489:     mkdir /data/ccci_cfg 0770 system radio
+  490:     restorecon /data/ccci_cfg
+  491:     restorecon_recursive /mnt/vendor/protect_f
+  492:     restorecon_recursive /mnt/vendor/protect_s
+  493: 
+  494: ## Custom pos-fs area (START)
+  495: # Please add custom fs operation below
+  496: 
+  497:     # Touch Panel
+  498:     chown root diag /sys/module/tpd_setting/parameters/tpd_calmat
+  499:     chown root diag /sys/module/tpd_setting/parameters/tpd_em_debounce_time
+  500:     chown root diag /sys/module/tpd_debug/parameters/tpd_em_log
+  501:     chown root diag /sys/module/tpd_debug/parameters/tpd_em_log_to_fs
+  502: 
+  503:     # RTC
+  504:     mkdir /data/misc/rtc 0770 system system
+  505: 
+  506:     # Modem related device nodes
+  507:     mkdir /mnt/vendor/nvdata/md  0770 root system
+  508:     mkdir /mnt/vendor/nvdata/md2 0770 root system
+  509:     mkdir /mnt/vendor/nvdata/md3 0770 root system
+  510:     mkdir /data/md3	0770 root system
+  511: 
+  512:     chown radio radio /sys/kernel/ccci/boot
+  513: 
+  514:     #set mlock limit to infinate (for m4u operation)
+  515:     setrlimit 8 -1 -1
+  516: 
+  517: 
+  518:     #VideoCodec
+  519:     chmod 0666 /dev/Vcodec
+  520: 
+  521: 
+  522:     mkdir /data/amit/
+  523: 
+  524:     # GPIO
+  525:     chmod 0666 /dev/mtgpio
+  526: 
+  527:     chmod 0666 /dev/exm0
+  528: 
+  529:     #NFC
+  530:     rm /data/mtknfc_server
+  531: 
+  532: ## Custom pos_fs area (END)
+  533: #INTERNAL_END
+  534: 
+  535:     # Separate location for storing security policy files on data
+  536:     mkdir /data/security 0711 system system
+  537: 
+  538: # It is recommended to put unnecessary data/ initialization from post-fs-data
+  539: # to start-zygote in device's init.rc to unblock zygote start.
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mt6878.rc:21-27
+==============================================================================
+   21: on early-init
+   22:     write /proc/bootprof "INIT:early-init"
+   23: 
+   24:     # initialize vendor.all.modules.ready to 1 here to prevent NOT GKI project blocked
+   25:     setprop vendor.all.modules.ready 1
+   26: 
+   27: # Keep debugfs mounted in non-user builds
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mt6878.rc:186-771
+==============================================================================
+  186: on post-fs-data
+  187:     # LieppOS exact MTK post-fs-data bracket v8
+  188:     write /metadata/lieppos-slotb/v8-mtk-pfsd-start 1
+  189: 
+  190:     write /proc/bootprof "INIT:post-fs-data"
+  191: 
+  192:     # LieppOS V15 diagnostic: force modules-ready from init after recording
+  193:     # the producer lifecycle separately.
+  194:     write /metadata/lieppos-slotb/v15-before-force-ready 1
+  195:     setprop vendor.all.modules.ready 1
+  196:     write /metadata/lieppos-slotb/v15-after-force-ready 1
+  197: 
+  198:     wait_for_prop vendor.all.modules.ready 1
+  199:     write /metadata/lieppos-slotb/v8-modules-ready-passed 1
+  200: 
+  201:     write /proc/bootprof "modprobe: Load_Module_DONE"
+  202: 
+  203:     # Disable watermark boost
+  204:     write /proc/sys/vm/watermark_boost_factor 0
+  205: 
+  206:     # multi-gen LRU
+  207:     write /sys/kernel/mm/lru_gen/enabled y
+  208: 
+  209:     # zram
+  210:     write /sys/block/zram0/comp_algorithm lz4
+  211:     write /proc/sys/vm/page-cluster 0
+  212:     write /proc/sys/vm/swappiness 100
+  213:     write /sys/kernel/mm/swap/vma_ra_enabled false
+  214: 
+  215:     # boot time fs tune
+  216:     write /sys/block/mmcblk0/queue/iostats 0
+  217:     write /sys/block/mmcblk0/queue/read_ahead_kb 2048
+  218:     write /sys/block/mmcblk0/queue/nr_requests 256
+  219:     write /sys/block/sdc/queue/iostats 0
+  220:     write /sys/block/sdc/queue/read_ahead_kb 2048
+  221:     write /sys/block/sdc/queue/nr_requests 256
+  222:     write /sys/block/dm-0/queue/read_ahead_kb 2048
+  223:     write /sys/block/dm-1/queue/read_ahead_kb 2048
+  224:     write /sys/block/dm-2/queue/read_ahead_kb 2048
+  225:     write /sys/block/dm-3/queue/read_ahead_kb 2048
+  226:     write /sys/block/dm-4/queue/read_ahead_kb 2048
+  227:     write /sys/block/dm-5/queue/read_ahead_kb 2048
+  228: 
+  229:     chown system system /mnt/vendor/nvcfg
+  230:     chmod 0771 /mnt/vendor/nvcfg
+  231:     restorecon_recursive /mnt/vendor/nvcfg
+  232:     chown system system /mnt/vendor/nvcfg/fg
+  233:     chown system system /mnt/vendor/nvcfg/fg/old_fg_data
+  234:     chown system system /mnt/vendor/nvcfg/fg/car_tune_value
+  235: 
+  236:     # create basic filesystem structure
+  237:     # We chown/chmod /mnt/vendor/nvdata again so because mount is run as root + defaults
+  238:     chown root system /mnt/vendor/nvdata
+  239:     chmod 0771 /mnt/vendor/nvdata
+  240:     mkdir /mnt/vendor/nvdata/media 0771 media audio
+  241: 
+  242:     #Create cct mount point
+  243:     mkdir /mnt/vendor/cct
+  244:     chown root system /mnt/vendor/cct
+  245:     chmod 0771 /mnt/vendor/cct
+  246: 
+  247:     #Create flash folder
+  248:     mkdir /data/vendor/flash
+  249:     chown root system /data/vendor/flash
+  250:     chmod 0771 /data/vendor/flash
+  251: 
+  252:     #Create shading mount point
+  253:     mkdir /data/vendor/shading
+  254:     chown root system /data/vendor/shading
+  255:     chmod 0771 /data/vendor/shading
+  256: 
+  257:     #Create shading_otp mount point
+  258:     mkdir /data/vendor/shading_otp
+  259:     chown root system /data/vendor/shading_otp
+  260:     chmod 0771 /data/vendor/shading_otp
+  261: 
+  262:     #Create NDD mount point
+  263:     mkdir /data/vendor/camera_dump
+  264:     chown root system /data/vendor/camera_dump
+  265:     chmod 0771 /data/vendor/camera_dump
+  266: 
+  267:     #Create imgsys mount point
+  268:     mkdir /data/vendor/imgsys_dump
+  269:     chown root system /data/vendor/imgsys_dump
+  270:     chmod 0771 /data/vendor/imgsys_dump
+  271: 
+  272:     #Create ulog file mode
+  273:     mkdir /data/vendor/cam_ulog
+  274:     chown root system /data/vendor/cam_ulog
+  275:     chmod 0771 /data/vendor/cam_ulog
+  276: 
+  277:     #Create Camera Dip Debug Folder
+  278:     mkdir /data/vendor/dipdebug
+  279:     chown root system /data/vendor/dipdebug
+  280:     chmod 0771 /data/vendor/dipdebug
+  281: 
+  282:     #Create flicker mount point
+  283:     mkdir /data/vendor/flicker
+  284:     chown root system /data/vendor/flicker
+  285:     chmod 0771 /data/vendor/flicker
+  286: 
+  287:     # Set SELinux security contexts on upgrade or policy update.
+  288:     restorecon_recursive /mnt/vendor/nvdata
+  289: 
+  290:     #give system access to rfkill device node
+  291:     chmod 0660 /dev/rfkill
+  292: 
+  293:     # create for muxd pts device node , to operate without root
+  294:     mkdir /dev/radio 0770 radio radio
+  295: 
+  296:     # create mdota to mount mcf_ota
+  297:     mkdir /mnt/vendor/mdota
+  298: 
+  299:     chmod 0660 /dev/spm
+  300:     chown system system /dev/spm
+  301: 
+  302: # GPS
+  303:     chmod 0775 /vendor/xbin/MPED
+  304:     chmod 0666 /dev/gps_emi
+  305: 
+  306: # -----------------------
+  307: # Add by MTK
+  308:     # SCP log
+  309:     chmod 0660 /sys/class/misc/scp/scp_mobile_log
+  310:     chown root system /sys/class/misc/scp/scp_mobile_log
+  311:     chmod 0220 /sys/class/misc/scp/scp_log_flush
+  312:     chown root system /sys/class/misc/scp/scp_log_flush
+  313:     chmod 0440 /dev/scp
+  314:     chown root system /dev/scp
+  315:     chmod 0664 /sys/class/misc/scp/scp_ee_force_ke
+  316:     chown root system /sys/class/misc/scp/scp_ee_force_ke
+  317: 
+  318:     # ADSP log
+  319:     chmod 0660 /sys/class/misc/adsp_0/log_enable
+  320:     chown root system /sys/class/misc/adsp_0/log_enable
+  321:     chmod 0660 /sys/class/misc/adsp_1/log_enable
+  322:     chown root system /sys/class/misc/adsp_1/log_enable
+  323:     chmod 0660 /dev/adsp
+  324:     chown root media /dev/adsp
+  325:     chmod 0440 /dev/adsp_0
+  326:     chown system media /dev/adsp_0
+  327:     chmod 0440 /dev/adsp_1
+  328:     chown system media /dev/adsp_1
+  329: 
+  330:     chmod 0660 /dev/adsp_in_scp
+  331:     chown root media /dev/adsp_in_scp
+  332: 
+  333:     # SSPM log
+  334:     chmod 0620 /sys/class/misc/sspm/sspm_mobile_log
+  335:     chown root system /sys/class/misc/sspm/sspm_mobile_log
+  336:     chmod 0440 /dev/sspm
+  337:     chown root system /dev/sspm
+  338: 
+  339:     # VCP log
+  340:     chmod 0660 /sys/class/misc/vcp/vcp_mobile_log
+  341:     chown root system /sys/class/misc/vcp/vcp_mobile_log
+  342:     chmod 0220 /sys/class/misc/vcp/vcp_log_flush
+  343:     chown root system /sys/class/misc/vcp/vcp_log_flush
+  344:     chmod 0440 /dev/vcp
+  345:     chown root system /dev/vcp
+  346:     chmod 0664 /sys/class/misc/vcp/vcp_ee_force_ke
+  347:     chown root system /sys/class/misc/vcp/vcp_ee_force_ke
+  348: 
+  349:     # radvd
+  350:     chmod 444 /etc/radvd/radvd.conf
+  351: 
+  352:     # Mali 3D GPU driver
+  353:     #insmod /vendor/lib/modules/mali.ko
+  354:     #chmod 666 /dev/mali0
+  355:     #chown system graphics /dev/mali
+  356: 
+  357: 
+  358: 
+  359:     # Touch Panel
+  360:     # chmod 0664 /dev/touch
+  361:     chown root diag /sys/module/tpd_setting/parameters/tpd_calmat
+  362:     chown root diag /sys/module/tpd_setting/parameters/tpd_em_debounce_time
+  363:     chown root diag /sys/module/tpd_setting/parameters/tpd_mode
+  364:     chown root diag /sys/module/tpd_setting/parameters/tpd_em_debounce_time0
+  365:     chown root diag /sys/module/tpd_setting/parameters/tpd_em_debounce_time1
+  366:     chown root diag /sys/module/tpd_setting/parameters/tpd_em_spl_num
+  367:     chown root diag /sys/module/tpd_setting/parameters/tpd_em_pressure_threshold
+  368:     chown root diag /sys/module/tpd_setting/parameters/tpd_em_auto_time_interval
+  369:     chown root diag /sys/module/tpd_setting/parameters/tpd_em_sample_cnt
+  370:     chown root diag /sys/module/tpd_setting/parameters/tpd_em_asamp
+  371:     chown root diag /sys/module/tpd_debug/parameters/tpd_em_log
+  372:     chown root diag /sys/module/tpd_debug/parameters/tpd_em_log_to_fs
+  373: 
+  374:     chmod 0666 /dev/pmem_multimedia
+  375: 
+  376:     # set ptmx group to non-root
+  377:     chown root radio /dev/ptmx
+  378: 
+  379:     # RTC
+  380:     chmod 660 /dev/alarm
+  381:     chown root system /dev/alarm
+  382: 
+  383:     # CMDQ
+  384:     chmod 0640 /dev/mtk_mdp
+  385:     chown system system /dev/mtk_mdp
+  386: 
+  387:     # MDP SYNC
+  388:     chmod 0640 /dev/mdp_sync
+  389:     chown system system /dev/mdp_sync
+  390: 
+  391:     # MML PQ
+  392:     chmod 0640 /dev/mml_pq
+  393:     chown system system /dev/mml_pq
+  394: 
+  395:     #OFFLOAD SERVICE
+  396:     chmod 0640 /dev/offloadservice
+  397:     chown media media /dev/offloadservice
+  398: 
+  399:     #OPEN DSP
+  400:     chmod 0640 /dev/audio_ipi
+  401:     chown media media /dev/audio_ipi
+  402: 
+  403:     #SmartPA
+  404:     chmod 0640 /dev/audio_scp
+  405:     chown media media /dev/audio_scp
+  406:     chown audioserver audio /sys/bus/platform/devices/rt5509_param.0/prop_param
+  407:     chown audioserver audio /sys/bus/platform/devices/rt5509_param.1/prop_param
+  408: 
+  409:     #Accdet
+  410:     chown root radio /sys/devices/platform/Accdet_Driver/driver/accdet_call_state
+  411: 
+  412:     #Fingerprint
+  413:     chown system system /dev/goodix_fp
+  414:     chmod 0660 /dev/goodix_fp
+  415: 
+  416:     #v4l2 codec
+  417:     chmod 0660 /dev/vcu
+  418:     chown media system /dev/vcu
+  419:     chmod 0660 /dev/video0
+  420:     chown media system /dev/video0
+  421:     chmod 0660 /dev/video1
+  422:     chown media system /dev/video1
+  423:     mkdir /data/vendor/vcodec 0777 media system
+  424:     mkdir /data/vendor/vcodec/log 0770 media system
+  425:     mkdir /data/vendor/vcodec/in 0770 media system
+  426:     mkdir /data/vendor/vcodec/out 0770 media system
+  427: 
+  428:     #MJC
+  429:     #insmod /vendor/lib/modules/mjc_kernel_driver.ko
+  430:     chmod 0660 /dev/MJC
+  431:     chown media system /dev/MJC
+  432: 
+  433:     #kpd
+  434:     chown radio radio /sys/devices/platform/mtk-kpd/driver/kpd_call_state
+  435: 
+  436:     #Charging Battery
+  437:     chown radio radio /sys/devices/platform/battery/Charging_CallState
+  438: 
+  439:     # PMIC property
+  440:     chown radio system /sys/devices/platform/mt-pmic/low_battery_protect_stop
+  441:     chown radio system /sys/devices/platform/mt-pmic/low_battery_protect_ut
+  442: 
+  443:     #MDDB
+  444:     mkdir /data/vendor_de/meta 0770 system system
+  445:     mkdir /data/vendor_de/meta/mddb 0770 system system
+  446: 
+  447:     chown system /sys/devices/platform/msensor/driver/cpsopmode
+  448:     chown system /sys/devices/platform/msensor/driver/cpsreptxy
+  449:     chown system /sys/devices/platform/msensor/driver/cpsreptz
+  450:     chown system /sys/devices/platform/gsensor/driver/cpsopmode
+  451:     chown system /sys/devices/platform/gsensor/driver/cpsrange
+  452: 
+  453:     chown system /sys/class/input/input1/enable
+  454:     chown system /sys/class/input/input1/delay
+  455:     chown system /sys/class/input/input1/wake
+  456:     chown system /sys/class/input/input1/offsets
+  457:     chown system /sys/class/input/input2/enable
+  458:     chown system /sys/class/input/input2/delay
+  459:     chown system /sys/class/input/input2/wake
+  460:     chown system /sys/class/input/input2/offsets
+  461:     chown system /sys/class/input/input3/enable
+  462:     chown system /sys/class/input/input3/delay
+  463:     chown system /sys/class/input/input3/wake
+  464:     chown system /sys/class/input/input3/offsets
+  465:     chown system /sys/class/input/input4/enable
+  466:     chown system /sys/class/input/input4/delay
+  467:     chown system /sys/class/input/input4/wake
+  468:     chown system /sys/class/input/input4/offsets
+  469:     chown system /sys/class/input/input5/enable
+  470:     chown system /sys/class/input/input5/delay
+  471:     chown system /sys/class/input/input5/wake
+  472:     chown system /sys/class/input/input5/offsets
+  473:     chown system /sys/class/input/input6/enable
+  474:     chown system /sys/class/input/input6/delay
+  475:     chown system /sys/class/input/input6/wake
+  476:     chown system /sys/class/input/input6/offsets
+  477:     chown system /sys/class/input/input7/enable
+  478:     chown system /sys/class/input/input7/delay
+  479:     chown system /sys/class/input/input7/wake
+  480:     chown system /sys/class/input/input7/offsets
+  481:     chown system /sys/class/input/input8/enable
+  482:     chown system /sys/class/input/input8/delay
+  483:     chown system /sys/class/input/input8/wake
+  484:     chown system /sys/class/input/input8/offsets
+  485:     chown system /sys/class/input/input9/enable
+  486:     chown system /sys/class/input/input9/delay
+  487:     chown system /sys/class/input/input9/wake
+  488:     chown system /sys/class/input/input9/offsets
+  489:     chown system /sys/class/input/input10/enable
+  490:     chown system /sys/class/input/input10/delay
+  491:     chown system /sys/class/input/input10/wake
+  492:     chown system /sys/class/input/input10/offsets
+  493: 
+  494:     #EM eint
+  495:     chown root diag /sys/bus/platform/drivers/eint/current_eint
+  496: 
+  497:     # Display
+  498:     chmod 0660 /dev/graphics/fb0
+  499:     chown system graphics /dev/graphics/fb0
+  500: 
+  501:     chmod 0660 /dev/mtk_disp_mgr
+  502:     chown system graphics /dev/mtk_disp_mgr
+  503: 
+  504:     chmod 0660 /dev/mtkfb_vsync
+  505:     chown system graphics /dev/mtkfb_vsync
+  506: 
+  507:     chmod 0660 /dev/sw_sync
+  508:     chown system graphics /dev/sw_sync
+  509: 
+  510:     # EM baseband file
+  511:     chown root diag /vendor/bin/baseband_regdump
+  512:     chmod 4750 /vendor/bin/baseband_regdump
+  513: 
+  514:     #pmu
+  515:     chown root radio /sys/devices/platform/mt-pmic/pmic_access_bank0
+  516:     chown root radio /sys/devices/platform/mt-pmic/pmic_access_bank1
+  517:     chown root radio /sys/devices/platform/mt6311-user/mt6311_access
+  518:     chown root radio /sys/devices/platform/mt-pmic/pmic_access
+  519:     chmod 0664 /sys/devices/platform/mt-pmic/pmic_access_bank0
+  520:     chmod 0664 /sys/devices/platform/mt-pmic/pmic_access_bank1
+  521:     chmod 0664 /sys/devices/platform/mt6311-user/mt6311_access
+  522:     chmod 0664 /sys/devices/platform/mt-pmic/pmic_access
+  523: 
+  524:     # EM CPU Speed Stress
+  525:     chown root radio /proc/cpu_ss/cpu_ss_debug_mode
+  526:     chown root radio /proc/cpu_ss/cpu_ss_mode
+  527:     chown root radio /proc/cpu_ss/cpu_ss_period
+  528:     chown root radio /proc/cpu_ss/cpu_ss_period_mode
+  529:     chmod 0664 /proc/cpu_ss/cpu_ss_debug_mode
+  530:     chmod 0664 /proc/cpu_ss/cpu_ss_mode
+  531:     chmod 0664 /proc/cpu_ss/cpu_ss_period
+  532:     chmod 0664 /proc/cpu_ss/cpu_ss_period_mode
+  533: 
+  534:     #EM eint
+  535:     chown root diag /sys/bus/platform/drivers/eint/current_eint
+  536: 
+  537:     # Android SEC related device nodes
+  538:     chmod 0660 /dev/sec
+  539:     chown root system /dev/sec
+  540: 
+  541:     # FM Radio device node
+  542:     chmod 0660 /dev/fm
+  543:     chown media media /dev/fm
+  544: 
+  545:     # device apc settings
+  546: 
+  547:     # device info /proc interface
+  548:     chmod 0440 /dev/devmap
+  549:     chown root system /dev/devmap
+  550: 
+  551:     # bluetooth
+  552:     chown bluetooth bluetooth /dev/hid-keyboard
+  553:     chmod 0660 /dev/hid-keyboard
+  554:     #Use uinput's default permission
+  555:     chown system net_bt_admin /dev/uinput
+  556: 
+  557:     # UIBC
+  558:     chown system media /dev/uibc
+  559:     chmod 0660 /dev/uibc
+  560: 
+  561:     #TV-out
+  562:     chmod 0664 /dev/TV-out
+  563: 
+  564:     #HDMI
+  565:     chown media system /dev/hdmitx
+  566:     chmod 0664 /dev/hdmitx
+  567: 
+  568: 
+  569:     # JPEG
+  570:     chmod 0666 /proc/mtk_jpeg
+  571: 
+  572:     # almk
+  573:     chmod 0440 /dev/mtk_almk
+  574: 
+  575:     # DISP
+  576:     chmod 0444 /dev/mtk_disp
+  577: 
+  578:     #ANC SERVICE
+  579:     chmod 0640 /dev/ancservice
+  580:     chown media media /dev/ancservice
+  581: 
+  582:     # gz device
+  583:     chmod 0660 /dev/gz_kree
+  584:     chown system system /dev/gz_kree
+  585: 
+  586:     # gz ffa device
+  587:     chmod 0660 /dev/gz_ffa_dev
+  588:     chown system system /dev/gz_ffa_dev
+  589: 
+  590:     #Camera
+  591:     chmod 0660 /dev/camera-sysram
+  592:     chmod 0660 /dev/camera-isp
+  593:     chmod 0660 /dev/camera-mem
+  594:     chmod 0660 /dev/camera-dip
+  595:     chmod 0660 /dev/camera-tsf
+  596:     chmod 0660 /dev/camera-dpe
+  597:     chmod 0660 /dev/camera-mfb
+  598:     chmod 0660 /dev/camera-rsc
+  599:     chmod 0660 /dev/camera-owe
+  600:     chmod 0660 /dev/camera-fdvt
+  601:     chmod 0660 /dev/camera-pda
+  602:     chmod 0660 /dev/camera-wpe
+  603:     chmod 0660 /dev/camera-pipemgr
+  604:     chmod 0660 /dev/kd_camera_hw
+  605:     chmod 0660 /dev/seninf
+  606:     chmod 0660 /dev/flashlight
+  607:     chmod 0660 /dev/kd_camera_hw_bus2
+  608:     chmod 0660 /dev/FM50AF
+  609:     chmod 0660 /dev/CAM_CAL_DRV
+  610:     chmod 0660 /dev/MAINAF
+  611:     chmod 0660 /dev/MAIN2AF
+  612:     chmod 0660 /dev/MAIN3AF
+  613:     chmod 0660 /dev/SUBAF
+  614:     chmod 0660 /dev/apusys
+  615:     chmod 0660 /dev/mtk_ccd
+  616:     write /sys/module/mtk_imgsys_cmdq/parameters/imgsys_fine_grain_dvfs_en 1
+  617: 
+  618:     chown system camera /dev/camera-sysram
+  619:     chown system camera /dev/camera-isp
+  620:     chown system camera /dev/camera-mem
+  621:     chown system camera /dev/camera-dip
+  622:     chown system camera /dev/camera-dpe
+  623:     chown system camera /dev/camera-mfb
+  624:     chown system camera /dev/camera-rsc
+  625:     chown system camera /dev/camera-owe
+  626:     chown system camera /dev/camera-tsf
+  627:     chown system camera /dev/camera-fdvt
+  628:     chown system camera /dev/camera-pda
+  629:     chown system camera /dev/camera-wpe
+  630:     chown system camera /dev/camera-pipemgr
+  631:     chown system camera /dev/kd_camera_hw
+  632:     chown system camera /dev/seninf
+  633:     chown system camera /dev/flashlight
+  634:     chown system camera /dev/kd_camera_hw_bus2
+  635:     chown system camera /dev/FM50AF
+  636:     chown system camera /dev/CAM_CAL_DRV
+  637:     chown system camera /dev/MAINAF
+  638:     chown system camera /dev/MAIN2AF
+  639:     chown system camera /dev/MAIN3AF
+  640:     chown system camera /dev/SUBAF
+  641:     chown system camera /dev/apusys
+  642:     chown system camera /dev/mtk_ccd
+  643:     chown system camera /sys/kernel/debug/mtk_cam_dbg/0/ctrl
+  644:     chown system camera /sys/kernel/debug/mtk_cam_dbg/1/ctrl
+  645:     chown system camera /sys/kernel/debug/mtk_cam_dbg/2/ctrl
+  646:     chown system camera /proc/c2ps/c2ps_ioctl
+  647: 
+  648:     #APU
+  649:     chmod 0644 /dev/apuext
+  650: 
+  651:     #CCU
+  652:     chmod 0660 /dev/ccu
+  653:     chown system camera /dev/ccu
+  654: 
+  655:     #VOW
+  656:     chmod 0640 /dev/vow
+  657:     chown media media /dev/vow
+  658: 
+  659:     #MATV
+  660:     chmod 0660 /dev/MATV
+  661:     chown system media /dev/MATV
+  662: 
+  663:     # otg_test
+  664:     chown root radio /dev/mt_otg_test
+  665:     chmod 0660 /dev/mt_otg_test
+  666: 
+  667:     # MDP
+  668:     chmod 0660 /dev/mt-mdp
+  669:     chown system media /dev/mt-mdp
+  670: 
+  671:     # SMI
+  672:     chmod 0660 /dev/MTK_SMI
+  673:     chown media media /dev/MTK_SMI
+  674: 
+  675:     # MMQoS
+  676:     chmod 0660 /sys/devices/platform/interconnect/mmqos_hrt/camera_max_bw
+  677:     chown media media /sys/devices/platform/interconnect/mmqos_hrt/camera_max_bw
+  678:     chmod 0660 /sys/devices/platform/interconnect/mmqos_hrt/mtk_mmqos_scen
+  679:     chown media media /sys/devices/platform/interconnect/mmqos_hrt/mtk_mmqos_scen
+  680: 
+  681:     # RRC
+  682:     chmod 0660 /dev/mtk_rrc
+  683:     chown media system /dev/mtk_rrc
+  684: 
+  685:     # DFRC
+  686:     chmod 0660 /dev/mtk_dfrc
+  687:     chown system graphics /dev/mtk_dfrc
+  688: 
+  689: 
+  690:    #change partition permission
+  691: 
+  692:     chmod 0640 /mtd@sec_ro
+  693:     chown root system /mtd@sec_ro
+  694: 
+  695:     chmod 0640 /mtd@preloader
+  696:     chown root system /mtd@preloader
+  697: 
+  698:     chmod 0660 /mtd@pro_info
+  699:     chown root system /mtd@pro_info
+  700: 
+  701:     chmod 0640 /mtd@bootimg
+  702:     chown root system /mtd@bootimg
+  703: 
+  704:     chmod 0640 /mtd@recovery
+  705:     chown root system /mtd@recovery
+  706: 
+  707:     chmod 0660 /mtd@nvram
+  708:     chown root system /mtd@nvram
+  709: 
+  710:     chmod 0660 /mtd@seccfg
+  711:     chown root system /mtd@seccfg
+  712: 
+  713:     chmod 0660 /mtd@misc
+  714:     chown root system /mtd@misc
+  715: 
+  716:     chmod 0664 /sys/bus/platform/drivers/emi_ctrl/concurrency_scenario
+  717:     chown media media /sys/bus/platform/drivers/emi_ctrl/concurrency_scenario
+  718: 
+  719:     #mtk_sched
+  720:     chmod 0660 /dev/mtk_sched
+  721:     chown system media /dev/mtk_sched
+  722: 
+  723:     #BT SCO CVSD, for MT6572 and MT6582 CVSD codec on AP
+  724:     chmod 0660 /dev/ebc
+  725:     chown media media /dev/ebc
+  726: 
+  727:     #usip
+  728:     chmod 0660 /dev/usip
+  729:     chown media media /dev/usip
+  730: 
+  731:     chmod 0666 /dev/uio0
+  732: 
+  733:     #otp
+  734:     chmod 0660 /proc/driver/otp
+  735:     chown root system /proc/driver/otp
+  736: 
+  737:     # secure memory
+  738:     chown system system /proc/secmem0
+  739: 
+  740:     chmod 0666 /dev/exm0
+  741: 
+  742: 
+  743: 	#Thermal
+  744: 	mkdir /data/vendor/.tp/ 0775 system system
+  745: 	mkdir /data/vendor/thermal/ 0775 system system
+  746: 
+  747:     #MCUPM log
+  748:     chmod 0620 /sys/class/misc/mcupm/mcupm_mobile_log
+  749:     chown root system /sys/class/misc/mcupm/mcupm_mobile_log
+  750:     chmod 0440 /dev/mcupm
+  751:     chown root system /dev/mcupm
+  752: 
+  753:     #EM of MT6360
+  754:     chmod 0664 sys/kernel/debug/rt-regmap/mt6360_pmu.5-0034/data
+  755:     chmod 0664 sys/kernel/debug/rt-regmap/mt6360_pmic.5-001a/data
+  756:     chmod 0664 sys/kernel/debug/rt-regmap/mt6360_ldo.5-0064/data
+  757:     chmod 0664 sys/kernel/debug/rt-regmap/mt6360-4e/data
+  758:     chmod 0664 sys/kernel/debug/rt-regmap/mt6360_pmu.5-0034/reg_addr
+  759:     chmod 0664 sys/kernel/debug/rt-regmap/mt6360_pmic.5-001a/reg_addr
+  760:     chmod 0664 sys/kernel/debug/rt-regmap/mt6360_ldo.5-0064/reg_addr
+  761:     chmod 0664 sys/kernel/debug/rt-regmap/mt6360-4e/reg_addr
+  762: 
+  763:     #widevine driver node
+  764:     chmod 0660 /dev/drm_wv
+  765:     chown media system /dev/drm_wv
+  766: 
+  767:     #blocktag driver node
+  768:     chown system system /proc/blocktag/eara_io_boost
+  769: 
+  770: # End of adding by MTK drivers
+  771: # -----------------------
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mtkgki.rc:8-16
+==============================================================================
+    8: on early-init
+    9:     # LieppOS V15: instrument modules-ready producer lifecycle.
+   10:     write /metadata/lieppos-slotb/v15-mtkgki-early-init 1
+   11:     setprop vendor.all.modules.ready 0
+   12:     write /metadata/lieppos-slotb/v15-after-ready-zero 1
+   13:     write /proc/bootprof "modprobe: Load_Module_START"
+   14:     start insmod_sh
+   15:     write /metadata/lieppos-slotb/v15-after-insmod-start 1
+   16: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mtkgki.rc:17-19
+==============================================================================
+   17: on property:init.svc.insmod_sh=running
+   18:     write /metadata/lieppos-slotb/v15-insmod-running 1
+   19: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mtkgki.rc:20-22
+==============================================================================
+   20: on property:init.svc.insmod_sh=stopped
+   21:     write /metadata/lieppos-slotb/v15-insmod-stopped 1
+   22: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mtkgki.rc:23-25
+==============================================================================
+   23: on post-fs-data && property:vendor.all.modules.ready=0
+   24:     write /metadata/lieppos-slotb/v15-ready-zero-at-postfsdata 1
+   25: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mtkgki.rc:26-27
+==============================================================================
+   26: on post-fs-data && property:vendor.all.modules.ready=1
+   27:     write /metadata/lieppos-slotb/v15-ready-one-at-postfsdata 1
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/meta_init.rc:62-75
+==============================================================================
+   62: on early-init
+   63:     write /proc/bootprof "INIT:early-init"
+   64:     # Set init and its forked children's oom_adj.
+   65:     write /proc/1/oom_score_adj -1000
+   66: 
+   67: 
+   68: #INTERNAL_START
+   69:     mount debugfs debugfs /sys/kernel/debug
+   70:     chmod 0755 /sys/kernel/debug
+   71: #INTERNAL_END
+   72: 
+   73:     # initialize vendor.all.modules.ready to 1 here to prevent NOT GKI project blocked
+   74:     setprop vendor.all.modules.ready 1
+   75: 
+
+==============================================================================
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/meta_init.rc:204-234
+==============================================================================
+  204: on post-fs-data
+  205:     write /proc/bootprof "INIT:post-fs-data"
+  206:     wait_for_prop vendor.all.modules.ready 1
+  207:     write /proc/bootprof "modprobe: Load_Module_DONE"
+  208: 
+  209:     #Thermal
+  210:     mkdir /data/.tp/ 0775 system system
+  211: 
+  212: #INTERNAL_START
+  213:     # WiFi
+  214:     mkdir /data/misc/wifi 0770 system wifi
+  215:     mkdir /data/misc/wifi/sockets 0770 system wifi
+  216:     mkdir /data/misc/dhcp 0770 dhcp dhcp
+  217:     chown dhcp dhcp /data/misc/dhcp
+  218:     #give system access to rfkill device node
+  219:     chmod 0660 /dev/rfkill
+  220: 
+  221:     # RTC
+  222:     mkdir /data/misc/rtc 0770 system system
+  223: 
+  224:     # Android SEC related device nodes
+  225:     chmod 0660 /dev/sec
+  226:     chown root system /dev/sec
+  227: 
+  228:     #change partition permission
+  229:     exec /vendor/etc/partition_permission.sh
+  230: 
+  231:     chmod 0666 /dev/exm0
+  232: #INTERNAL_END
+  233: 
+  234: 
+
+===== SELINUX SOURCE REFERENCES =====
+/mnt/SamsungSSD/android/lineage-22.2/device/ulefone/armol/configs/vendor/init.lieppos.slotb-checkpoints.rc:23:on property:vendor.all.modules.ready=1
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mtkgki.rc:1:service insmod_sh /vendor/bin/init.insmod.sh /vendor/etc/init.insmod.${ro.hardware}.cfg
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mtkgki.rc:11:    setprop vendor.all.modules.ready 0
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mtkgki.rc:14:    start insmod_sh
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mtkgki.rc:17:on property:init.svc.insmod_sh=running
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mtkgki.rc:20:on property:init.svc.insmod_sh=stopped
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mtkgki.rc:23:on post-fs-data && property:vendor.all.modules.ready=0
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mtkgki.rc:26:on post-fs-data && property:vendor.all.modules.ready=1
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/factory_init.rc:81:    # initialize vendor.all.modules.ready to 1 here to prevent NOT GKI project blocked
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/factory_init.rc:82:    setprop vendor.all.modules.ready 1
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/factory_init.rc:447:    wait_for_prop vendor.all.modules.ready 1
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mt6878.rc:24:    # initialize vendor.all.modules.ready to 1 here to prevent NOT GKI project blocked
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mt6878.rc:25:    setprop vendor.all.modules.ready 1
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mt6878.rc:195:    setprop vendor.all.modules.ready 1
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/init.mt6878.rc:198:    wait_for_prop vendor.all.modules.ready 1
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/meta_init.rc:73:    # initialize vendor.all.modules.ready to 1 here to prevent NOT GKI project blocked
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/meta_init.rc:74:    setprop vendor.all.modules.ready 1
+/mnt/SamsungSSD/android/lineage-22.2/vendor/ulefone/armol/proprietary/vendor/etc/init/hw/meta_init.rc:206:    wait_for_prop vendor.all.modules.ready 1
+
+===== B VENDOR IMAGE SELINUX XATTR =====
+debugfs 1.47.4 (6-Mar-2025)
+debugfs: Bad magic number in super-block while trying to open /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor.v15-lifecycle-force-ready.fixed.img
+stat: Filesystem not open
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor.v15-lifecycle-force-ready.fixed.img contains a erofs file system
+
+debugfs 1.47.4 (6-Mar-2025)
+debugfs: Bad magic number in super-block while trying to open /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor.v15-lifecycle-force-ready.fixed.img
+ea_list: Filesystem not open
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor.v15-lifecycle-force-ready.fixed.img contains a erofs file system
+
+===== HOST BUILT SEPOLICY CANDIDATES =====
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system_ext/etc/selinux/system_ext_sepolicy.cil
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/selinux/plat_sepolicy.cil
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/selinux/plat_sepolicy_genfs_202504.cil
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/product/etc/selinux/product_sepolicy.cil
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/odm/etc/selinux/odm_sepolicy.cil
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/selinux/precompiled_sepolicy
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/selinux/vendor_sepolicy.cil
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/ETC/vendor_sepolicy.cil_intermediates/vendor_sepolicy.cil
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/ETC/plat_sepolicy.cil_intermediates/plat_sepolicy.cil
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/ETC/precompiled_sepolicy_intermediates/precompiled_sepolicy
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/ETC/plat_sepolicy_genfs_202504.cil_intermediates/plat_sepolicy_genfs_202504.cil
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/ETC/odm_sepolicy.cil_intermediates/odm_sepolicy.cil
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/ETC/system_ext_sepolicy.cil_intermediates/system_ext_sepolicy.cil
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/obj/ETC/product_sepolicy.cil_intermediates/product_sepolicy.cil
+
+===== INIT.INSMOD FILE-CONTEXT REFERENCES =====
+
+===== BUILT RC ORDER / LOCATIONS =====
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/ramdisk/system/etc/init/snapuserd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/aconfigd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/android.system.suspend-service.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/apexd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/atrace.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/atrace_userdebug.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/audioserver.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/blank_screen.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/bootanim.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/bootstat-debug.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/bootstat.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/cameraserver.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/clean_scratch_files.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/cppreopts.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/credstore.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/dmesgd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/drmserver.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/dumpstate.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/flags_health_check.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/gatekeeperd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/gpuservice.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/gsid.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/heapprofd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.boringssl.zygote64_32.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.boringssl.zygote64.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.usb.configfs.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.usb.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.zygote32.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.zygote64_32.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.zygote64.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/idmap2d.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/incidentd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/init-debug.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/installd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/kcmdlinectrl.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/keystore2.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/llkd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/lmkd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/logcatd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/logd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/logtagd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/lpdumpd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/mdnsd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/mediaextractor.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/mediametrics.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/mediaserver.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/misctrl.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/mtectrl.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/netbpfload.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/netd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/odsign.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/perfetto.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/prefetch.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/prng_seeder.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/profcollectd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/recovery-persist.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/recovery-refresh.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/rss_hwm_reset.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/servicemanager.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/simpleperf.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/snapuserd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/storaged.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/surfaceflinger.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/tombstoned.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/traced_perf.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/tradeinmode.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/uncrypt.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/UprobeStats-platform.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/usbd.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/virtual_camera.hal.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/vold.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/wificond.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/wifi.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc
+/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mtkgki.rc
+
+===== PHONE MODIFICATION ACCOUNTING =====
+PHONE_MODIFIED=0
