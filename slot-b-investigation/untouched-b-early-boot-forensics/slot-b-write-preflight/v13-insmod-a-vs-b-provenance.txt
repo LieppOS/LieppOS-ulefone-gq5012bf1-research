@@ -1,0 +1,1009 @@
+===== A STATE =====
+slot=_a
+boot=1
+hardware=mt6878
+ready=
+insmod_service=stopped
+
+===== A FILE HASHES =====
+8685a0965f414e58ce5901b09737e3cb8a90819a08b3aca72ec37cd491a1a462  /vendor/bin/init.insmod.sh
+683d5f45ddf50f6091ce5bbcf4b90d3e92b4bd5ebf05bebab0d59ccf8b112c98  /vendor/etc/init.insmod.mt6878.cfg
+0c676a47dcac01e30dca4bf5dd7debff613cbb804b13553d7f4befe820e567ec  /vendor/etc/init/hw/init.mtkgki.rc
+12b5aed87f03df3226d84c3a545b53b98c23269a5bd8c81408c6616c2676ffbb  /vendor/etc/init/hw/init.mt6878.rc
+
+===== B-BUILD FILE HASHES =====
+8685a0965f414e58ce5901b09737e3cb8a90819a08b3aca72ec37cd491a1a462  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/bin/init.insmod.sh
+683d5f45ddf50f6091ce5bbcf4b90d3e92b4bd5ebf05bebab0d59ccf8b112c98  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init.insmod.mt6878.cfg
+0c676a47dcac01e30dca4bf5dd7debff613cbb804b13553d7f4befe820e567ec  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mtkgki.rc
+c7fac5c1d9a69087d7cc94072d2c566ef63a7e67ec51f2545ae345f6b9a94de2  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc
+
+===== A INIT.MTKGKI.RC =====
+service insmod_sh /vendor/bin/init.insmod.sh /vendor/etc/init.insmod.${ro.hardware}.cfg
+    class main
+    user root
+    group root system
+    disabled
+    oneshot
+
+on early-init
+    setprop vendor.all.modules.ready 0
+    write /proc/bootprof "modprobe: Load_Module_START"
+    start insmod_sh
+
+===== B INIT.MTKGKI.RC =====
+     1	service insmod_sh /vendor/bin/init.insmod.sh /vendor/etc/init.insmod.${ro.hardware}.cfg
+     2	    class main
+     3	    user root
+     4	    group root system
+     5	    disabled
+     6	    oneshot
+     7	
+     8	on early-init
+     9	    setprop vendor.all.modules.ready 0
+    10	    write /proc/bootprof "modprobe: Load_Module_START"
+    11	    start insmod_sh
+
+===== A INSMOD CFG =====
+#############################################
+#           init.insmod.cfg                 #
+# This file contains kernel modules to load #
+# at init time by init.insmod.sh script     #
+#############################################
+
+# Load kernel modules here, add your KO behind
+modprobe|*
+
+# All modules loaded
+setprop|vendor.all.modules.ready
+
+
+===== B INSMOD CFG =====
+     1	#############################################
+     2	#           init.insmod.cfg                 #
+     3	# This file contains kernel modules to load #
+     4	# at init time by init.insmod.sh script     #
+     5	#############################################
+     6	
+     7	# Load kernel modules here, add your KO behind
+     8	modprobe|*
+     9	
+    10	# All modules loaded
+    11	setprop|vendor.all.modules.ready
+    12	
+
+===== A INSMOD SCRIPT =====
+#!/vendor/bin/sh
+
+########################################################
+### init.insmod.cfg format:                          ###
+### -----------------------------------------------  ###
+### [insmod|setprop|enable/moprobe] [path|prop name] ###
+### ...                                              ###
+########################################################
+
+if [ $# -eq 1 ]; then
+  cfg_file=$1
+else
+  exit 1
+fi
+
+if [ -f $cfg_file ]; then
+  while IFS="|" read -r action arg
+  do
+    case $action in
+      "insmod") insmod $arg ;;
+      "setprop")
+        times=1
+        setprop $arg 1
+        while [ "$?" -ne 0 ]
+        do
+          if [ $times -gt 128 ]; then
+            break
+          fi
+          let times++
+          setprop $arg 1
+        done ;;
+      "enable") echo 1 > $arg ;;
+      "modprobe")
+        insmod_arg=${arg}
+        for partition in system_dlkm vendor
+        do
+          case ${insmod_arg} in
+            "-b *" | "-b")
+              arg="-b $(cat /${partition}/lib/modules/modules.load)" ;;
+            "*" | "")
+              arg="$(cat /${partition}/lib/modules/modules.load)" ;;
+          esac
+          modprobe -a -d /${partition}/lib/modules $arg
+        done
+    esac
+  done < $cfg_file
+else
+  exit 2
+fi
+
+
+===== B INSMOD SCRIPT =====
+     1	#!/vendor/bin/sh
+     2	
+     3	########################################################
+     4	### init.insmod.cfg format:                          ###
+     5	### -----------------------------------------------  ###
+     6	### [insmod|setprop|enable/moprobe] [path|prop name] ###
+     7	### ...                                              ###
+     8	########################################################
+     9	
+    10	if [ $# -eq 1 ]; then
+    11	  cfg_file=$1
+    12	else
+    13	  exit 1
+    14	fi
+    15	
+    16	if [ -f $cfg_file ]; then
+    17	  while IFS="|" read -r action arg
+    18	  do
+    19	    case $action in
+    20	      "insmod") insmod $arg ;;
+    21	      "setprop")
+    22	        times=1
+    23	        setprop $arg 1
+    24	        while [ "$?" -ne 0 ]
+    25	        do
+    26	          if [ $times -gt 128 ]; then
+    27	            break
+    28	          fi
+    29	          let times++
+    30	          setprop $arg 1
+    31	        done ;;
+    32	      "enable") echo 1 > $arg ;;
+    33	      "modprobe")
+    34	        insmod_arg=${arg}
+    35	        for partition in system_dlkm vendor
+    36	        do
+    37	          case ${insmod_arg} in
+    38	            "-b *" | "-b")
+    39	              arg="-b $(cat /${partition}/lib/modules/modules.load)" ;;
+    40	            "*" | "")
+    41	              arg="$(cat /${partition}/lib/modules/modules.load)" ;;
+    42	          esac
+    43	          modprobe -a -d /${partition}/lib/modules $arg
+    44	        done
+    45	    esac
+    46	  done < $cfg_file
+    47	else
+    48	  exit 2
+    49	fi
+    50	
+
+===== A MT6878 IMPORT HEADER =====
+# MTK platform .rc configure
+
+import ${ro.vendor.rc}init.cgroup.rc
+import ${ro.vendor.rc}init.connectivity.rc
+import ${ro.vendor.rc}init.mt6878.usb.rc
+import /vendor/etc/init/hw/init.project.rc
+import /system_ext/etc/init/hw/init.aee.rc
+import /FWUpgradeInit.rc
+import /vendor/etc/init/hw/init.aee.rc
+import ${ro.vendor.rc}init.volte.rc
+import ${ro.vendor.rc}init.mal.rc
+import ${ro.vendor.rc}${ro.vendor.init.sensor.rc}
+
+#add by yft
+import ${ro.vendor.rc}init.yft.rc
+
+# init.modem.rc must be the LAST rc file because vold.post_fs_data_done is set in it
+import ${ro.vendor.rc}init.modem.rc
+# *** DO NOT import the new rc file after this line ***
+
+on early-init
+    write /proc/bootprof "INIT:early-init"
+
+    # initialize vendor.all.modules.ready to 1 here to prevent NOT GKI project blocked
+    setprop vendor.all.modules.ready 1
+
+# Keep debugfs mounted in non-user builds
+on early-init && property:ro.build.type=eng
+    mount debugfs debugfs /sys/kernel/debug
+    chmod 0755 /sys/kernel/debug
+    write /sys/power/pm_print_times 0
+    setprop persist.dbg.keep_debugfs_mounted true
+
+on early-init && property:ro.build.type=userdebug
+    mount debugfs debugfs /sys/kernel/debug
+    chmod 0755 /sys/kernel/debug
+    setprop persist.dbg.keep_debugfs_mounted true
+
+on init
+    write /proc/bootprof "INIT:init"
+
+    # Support legacy paths
+    symlink /sdcard /mnt/sdcard
+
+    # if primary storage is physical, set ro.vold.primary_physical to 1
+
+===== B MT6878 IMPORT HEADER =====
+     1	# MTK platform .rc configure
+     2	
+     3	import ${ro.vendor.rc}init.cgroup.rc
+     4	import ${ro.vendor.rc}init.connectivity.rc
+     5	import ${ro.vendor.rc}init.mt6878.usb.rc
+     6	import /vendor/etc/init/hw/init.project.rc
+     7	import /system_ext/etc/init/hw/init.aee.rc
+     8	import /FWUpgradeInit.rc
+     9	import /vendor/etc/init/hw/init.aee.rc
+    10	import ${ro.vendor.rc}init.volte.rc
+    11	import ${ro.vendor.rc}init.mal.rc
+    12	import ${ro.vendor.rc}${ro.vendor.init.sensor.rc}
+    13	
+    14	#add by yft
+    15	import ${ro.vendor.rc}init.yft.rc
+    16	
+    17	# init.modem.rc must be the LAST rc file because vold.post_fs_data_done is set in it
+    18	import ${ro.vendor.rc}init.modem.rc
+    19	# *** DO NOT import the new rc file after this line ***
+    20	
+    21	on early-init
+    22	    write /proc/bootprof "INIT:early-init"
+    23	
+    24	    # initialize vendor.all.modules.ready to 1 here to prevent NOT GKI project blocked
+    25	    setprop vendor.all.modules.ready 1
+    26	
+    27	# Keep debugfs mounted in non-user builds
+    28	on early-init && property:ro.build.type=eng
+    29	    mount debugfs debugfs /sys/kernel/debug
+    30	    chmod 0755 /sys/kernel/debug
+    31	    write /sys/power/pm_print_times 0
+    32	    setprop persist.dbg.keep_debugfs_mounted true
+    33	
+    34	on early-init && property:ro.build.type=userdebug
+    35	    mount debugfs debugfs /sys/kernel/debug
+    36	    chmod 0755 /sys/kernel/debug
+    37	    setprop persist.dbg.keep_debugfs_mounted true
+    38	
+    39	on init
+    40	    write /proc/bootprof "INIT:init"
+    41	
+    42	    # Support legacy paths
+    43	    symlink /sdcard /mnt/sdcard
+    44	
+    45	    # if primary storage is physical, set ro.vold.primary_physical to 1
+
+===== A SYSTEM_DLKM MODULES.LOAD =====
+gzvm.ko
+kheaders.ko
+zsmalloc.ko
+libarc4.ko
+zram.ko
+mii.ko
+can-dev.ko
+vcan.ko
+slcan.ko
+ppp_generic.ko
+bsd_comp.ko
+ppp_deflate.ko
+ppp_mppe.ko
+pppox.ko
+pptp.ko
+slhc.ko
+wwan.ko
+rtl8150.ko
+r8152.ko
+asix.ko
+ax88179_178a.ko
+cdc_ether.ko
+cdc_eem.ko
+usbnet.ko
+cdc_ncm.ko
+aqc111.ko
+r8153_ecm.ko
+cdc-acm.ko
+usbserial.ko
+ftdi_sio.ko
+hci_uart.ko
+btsdio.ko
+btbcm.ko
+btqca.ko
+8021q.ko
+can.ko
+can-raw.ko
+can-bcm.ko
+can-gw.ko
+bluetooth.ko
+rfcomm.ko
+hidp.ko
+l2tp_core.ko
+l2tp_ppp.ko
+tipc.ko
+diag.ko
+rfkill.ko
+6lowpan.ko
+nhc_dest.ko
+nhc_fragment.ko
+nhc_hop.ko
+nhc_ipv6.ko
+nhc_mobility.ko
+nhc_routing.ko
+nhc_udp.ko
+ieee802154_6lowpan.ko
+ieee802154.ko
+ieee802154_socket.ko
+mac802154.ko
+nfc.ko
+
+===== B SYSTEM_DLKM MODULES.LOAD =====
+
+===== A VENDOR MODULES.LOAD =====
+cfg80211.ko
+mac80211.ko
+reboot-mode.ko
+syscon-reboot-mode.ko
+spmi-mtk-mpu.ko
+fhctl.ko
+clk-dbg-mt6878.ko
+mtk-vmm-notifier.ko
+cmdq-sec-drv.ko
+mtk_hcp.ko
+mtk-ipesys-me.ko
+mtk_imgsys_cmdq.ko
+mtk_imgsys_v4l2.ko
+mtk_imgsys_isp7sp.ko
+mtk_aie.ko
+mtk_aie_debug_7sp_2.ko
+camera_dpe_isp7sp.ko
+mtk-pmic-oc-debug.ko
+mtk-ssc.ko
+mtk-ssc-dbg-v2.ko
+trace_mmstat.ko
+ccmni.ko
+rps_perf.ko
+mtk-pwm.ko
+mtk_irtx_pwm.ko
+sspm_v3.ko
+mtk_battery_oc_throttling.ko
+mtk_low_battery_throttling.ko
+mtk_dynamic_loading_throttling.ko
+mtk_md_power_throttling.ko
+mtk_cpu_power_throttling.ko
+mtk_gpu_power_throttling.ko
+mtk_peak_power_budget.ko
+mtk_pbm.ko
+mtk_cg_peak_power_throttling.ko
+mtk_mdpm.ko
+gpueb.ko
+mtk_gpu_hal.ko
+mtk_gpufreq_wrapper.ko
+mtk_gpufreq_mt6878.ko
+ged.ko
+mali_prot_alloc_mt6878_r44.ko
+mali_mgm_mt6878_r44.ko
+mali_kbase_mt6878_r44.ko
+mali_dmabuf_test_mt6878_r44.ko
+nvmem-mt635x-efuse.ko
+audio_ipi.ko
+mtk-scp-audiocommon.ko
+usb_offload.ko
+aw883xx_driver.ko
+snd-soc-tfa98xx.ko
+mtk-sp-spk-amp.ko
+mtk-btcvsd.ko
+snd-soc-mtk-common.ko
+snd-soc-mt6878-afe.ko
+snd-soc-mt6369.ko
+snd-soc-audiodsp-common.ko
+mtk-scp-ultra.ko
+snd-soc-mtk-scp-ultra.ko
+mtk-soc-offload-common.ko
+mt6878-mt6369.ko
+mddp.ko
+soc_temp_lvts.ko
+pmic_temp.ko
+thermal-generic-adc.ko
+thermal_trace.ko
+board_temp.ko
+vtskin_temp.ko
+md_cooling_all.ko
+charger_cooling.ko
+backlight_cooling.ko
+thermal_interface.ko
+wifi_cooling.ko
+mtk_gpu_qos.ko
+mt6369-accdet.ko
+cpudvfs.ko
+vcp.ko
+mtk-vcu.ko
+mtk_jpeg.ko
+mtk-vcodec-common.ko
+mtk-vcodec-dec-v1.ko
+mtk-vcodec-enc-v1.ko
+cpuqos_v3.ko
+mtk_ccuv.ko
+mtk-vmm-isp71-regulator.ko
+mtk_rpmsg_mbox.ko
+mtk-mbox.ko
+mtk_tinysys_ipi.ko
+scp.ko
+mtk-vow.ko
+mtk-scp-vow.ko
+mcupm.ko
+mtk_ccd_remoteproc.ko
+ccd_rpmsg.ko
+mtk_cm_ipi.ko
+mtk_cm_mgr.ko
+mtk_cm_mgr_mt6878.ko
+mtk_perf_ioctl.ko
+mtk_fpsgo.ko
+fpsgo.ko
+frs.ko
+custom-ldo-wl2868.ko
+custom-ldo.ko
+mtk-cam-isp7sp.ko
+imgsensor-glue.ko
+imgsensor.ko
+camera_eeprom_v4l2.ko
+mtk-swpm.ko
+mtk-swpm-dbg-common-v1.ko
+mtk-swpm-dbg-v6878.ko
+mtk-swpm-cpu-dbg-v6878.ko
+ccci_auxadc.ko
+ccci_ccif.ko
+ccci_dpmaif.ko
+ccci_fsm_scp.ko
+ccci_md_all.ko
+ccci_util_lib.ko
+connadp.ko
+connscp.ko
+connfem.ko
+conninfra.ko
+wmt_chrdev_wifi_connac2.ko
+wlan_drv_gen4m_6878.ko
+mtk-lpm.ko
+mtk-lpm-dbg-common-v2.ko
+mtk-lpm-plat-v1.ko
+mtk-lpm-dbg-mt6878.ko
+lpm-gov-MHSP.ko
+fmradio_drv_connac2x.ko
+gps_drv_dl_v051.ko
+mtk_qos.ko
+powerhal_cpu_ctrl.ko
+touch_boost.ko
+mtk_ioctl_touch_boost.ko
+mtk_ioctl_powerhal.ko
+cpufreq_sugov_ext.ko
+scheduler.ko
+hf_manager.ko
+sensorhub.ko
+mtk-composite.ko
+aw36515.ko
+aw36518.ko
+aw36518_v2.ko
+flashlight.ko
+gz_trusty_mod.ko
+gz_ipc_mod.ko
+gz_irq_mod.ko
+gz_virtio_mod.ko
+gz_tz_system.ko
+gz_main_mod.ko
+gz_log_mod.ko
+tmem_ffa.ko
+camera_af_media.ko
+main_vcm.ko
+main2_vcm.ko
+main3_vcm.ko
+main4_vcm.ko
+dw9781c.ko
+sub_vcm.ko
+pda_drv_mt6878.ko
+mtk_sec_heap.ko
+mtk_heap_debug.ko
+sapu.ko
+iommu_test.ko
+atf_logger.ko
+mtk_core_ctl.ko
+mtk-dvfsrc-start.ko
+bt_drv_6878.ko
+bluetooth.ko
+c2k_usb.ko
+c2k_usb_f_via_atc.ko
+c2k_usb_f_via_ets.ko
+c2k_usb_f_via_modem.ko
+mtk_u_ether.ko
+mtk_usb_f_rndis.ko
+clk-disable-unused.ko
+mtk-pm-domain-disable-unused.ko
+hbt.ko
+apu_top.ko
+apusys.ko
+widevine_driver.ko
+task_turbo.ko
+mtk_perf_common.ko
+mtk_disp_sec.ko
+mtk_perf_ioctl_magt.ko
+mtk-mmdvfs-v3-start.ko
+uload_ind.ko
+load_track.ko
+mtk_c2ps.ko
+mtk_mbraink.ko
+c2ps_perf_ioctl.ko
+spi_tiny_co5300_lcd.ko
+leds-ln2403.ko
+yft_devinfo.ko
+yft_tiny2c_usb.ko
+
+===== B VENDOR MODULES.LOAD =====
+
+===== MODULE COUNTS =====
+A_SYSTEM_DLKM_COUNT=60
+B_SYSTEM_DLKM_COUNT=
+A_VENDOR_COUNT=195
+B_VENDOR_COUNT=
+
+===== A LOADED MODULES =====
+6lowpan
+8021q
+8250_mtk
+adapter_class
+adsp
+aee_aed
+aee_hangdet
+aee_rs
+apusys
+apu_top
+aqc111
+arm_dsu_pmu
+asix
+atf_logger
+audio_ipi
+aw36515
+aw36518
+aw36518_v2
+aw883xx_driver
+ax88179_178a
+backlight_cooling
+blocktag
+bluetooth
+board_temp
+bootprof
+bsd_comp
+btbcm
+bt_drv_6878
+btqca
+btsdio
+bus_parity
+c2k_usb
+c2k_usb_f_via_atc
+c2k_usb_f_via_ets
+c2k_usb_f_via_modem
+c2ps_perf_ioctl
+cache_parity
+camera_af_media
+camera_dpe_isp7sp
+camera_eeprom_v4l2
+can
+can_bcm
+can_dev
+can_gw
+can_raw
+ccci_auxadc
+ccci_ccif
+ccci_dpmaif
+ccci_fsm_scp
+ccci_md_all
+ccci_util_lib
+ccd_rpmsg
+ccmni
+cdc_acm
+cdc_eem
+cdc_ether
+cdc_ncm
+cfg80211
+charger_class
+charger_cooling
+clk_bringup
+clkbuf
+clk_chk_mt6878
+clk_common
+clk_dbg_mt6878
+clk_disable_unused
+clk_fmeter_mt6878
+clk_mt6878
+clk_mt6878_adsp
+clk_mt6878_bus
+clk_mt6878_cam
+clk_mt6878_ccu
+clk_mt6878_img
+clk_mt6878_mdpsys
+clk_mt6878_mmsys
+clk_mt6878_peri
+clk_mt6878_vcodec
+clk_mt6878_vlp
+cmdq_helper_inf
+cmdq_platform_mt6878
+cmdq_sec_drv
+connadp
+connfem
+conninfra
+connscp
+cpudvfs
+cpufreq_sugov_ext
+cpuqos_v3
+cqhci
+custom_ldo
+custom_ldo_wl2868
+dbg_error_flag
+dbgtop_drm
+device_apc_common
+device_apc_mt6878
+diag
+drm_display_helper
+drm_dma_helper
+dw9781c
+emi
+emi_mpu
+extcon_mtk_usb
+extdev_io_class
+ffa_v10
+fhctl
+fingerprint
+flashlight
+fmradio_drv_connac2x
+focaltech_touch_spi_ft3680
+fpsgo
+frs
+ftdi_sio
+ged
+gps_drv_dl_v051
+gps_pwr
+gps_scp
+gpueb
+gz_ipc_mod
+gz_irq_mod
+gz_log_mod
+gz_main_mod
+gz_trusty_mod
+gz_tz_system
+gz_virtio_mod
+gzvm
+hbt
+hci_uart
+hf_manager
+hidp
+hynitron
+i2c_mt65xx
+ieee802154
+ieee802154_6lowpan
+ieee802154_socket
+imgsensor
+imgsensor_glue
+industrialio_triggered_buffer
+iommu_debug
+iommu_secure
+iommu_test
+irq_dbg
+kernelsu
+kfifo_buf
+kheaders
+l2tp_core
+l2tp_ppp
+last_bus
+leds_ln2403
+leds_mtk
+leds_mtk_disp
+leds_rgb_aw2013
+libarc4
+load_track
+log_store
+lpm_gov_MHSP
+mac80211
+mac802154
+main2_vcm
+main3_vcm
+main4_vcm
+main_vcm
+mali_dmabuf_test_mt6878_r44
+mali_kbase_mt6878_r44
+mali_mgm_mt6878_r44
+mali_prot_alloc_mt6878_r44
+mcupm
+md_cooling_all
+mddp
+mdp_drv_mt6878
+mediatek_cpufreq_hw
+mediatek_drm
+mediatek_drm_gateic
+mediatek_drm_panel_drv
+microarray_fp_tee
+mii
+mmprofile
+mmqos_common
+mmqos_mt6878
+monitor_hang
+mrdump
+msync2_frd
+mt6315_regulator
+mt6338_core
+mt6363_regulator
+mt6369_accdet
+mt6369_regulator
+mt6375
+mt6375_adc
+mt6375_auxadc
+mt6375_battery
+mt6375_charger
+mt6685_audclk
+mt6685_core
+mt6878_dcm
+mt6878_mt6369
+mtk_afe_external
+mtk_aie
+mtk_aie_debug_7sp_2
+mtk_battery_oc_throttling
+mtk_bp_thl
+mtk_btcvsd
+mtk_c2ps
+mtk_cam_isp7sp
+mtk_ccd_remoteproc
+mtk_ccuv
+mtk_cg_peak_power_throttling
+mtk_charger_algorithm_class
+mtk_charger_framework
+mtk_chg_type_det
+mtk_cmdq_drv_ext
+mtk_cm_ipi
+mtk_cm_mgr
+mtk_cm_mgr_mt6878
+mtk_composite
+mtk_core_ctl
+mtk_cpu_power_throttling
+mtk_dcm
+mtk_disp_notify
+mtk_disp_sec
+mtk_dpc
+mtk_dramc
+mtk_dvfsrc
+mtk_dvfsrc_devfreq
+mtk_dvfsrc_helper
+mtk_dvfsrc_regulator
+mtk_dvfsrc_start
+mtk_dynamic_loading_throttling
+mtk_emi
+mtk_fpsgo
+mtk_gpufreq_mt6878
+mtk_gpufreq_wrapper
+mtk_gpu_hal
+mtk_gpu_power_throttling
+mtk_gpu_qos
+mtk_hcp
+mtk_heap_debug
+mtk_icc_core
+mtk_imgsys_cmdq
+mtk_imgsys_isp7sp
+mtk_imgsys_v4l2
+mtk_ioctl_powerhal
+mtk_ioctl_touch_boost
+mtk_iommu
+mtk_ipesys_me
+mtk_irtx_pwm
+mtk_jpeg
+mtk_low_battery_throttling
+mtk_lpm
+mtk_lpm_dbg_common_v2
+mtk_lpm_dbg_mt6878
+mtk_lpm_plat_v1
+mtk_mbox
+mtk_mbox_mailbox
+mtk_mbraink
+mtk_mdpm
+mtk_md_power_throttling
+mtk_mmc
+mtk_mmc_dbg
+mtk_mmdvfs
+mtk_mmdvfs_debug
+mtk_mmdvfs_ftrace
+mtk_mmdvfs_v3
+mtk_mmdvfs_v3_start
+mtk_mminfra_debug
+mtk_mminfra_imax
+mtk_mml
+mtk_mml_mt6878
+mtk_panel_ext
+mtk_pbm
+mtk_pd_adapter
+mtk_pd_charging
+mtk_peak_power_budget
+mtk_pep
+mtk_pep40
+mtk_pep50
+mtk_perf_common
+mtk_perf_ioctl
+mtk_perf_ioctl_magt
+mtk_pm_domain_disable_unused
+mtk_pmic_keys
+mtk_pmic_oc_debug
+mtk_pmic_wrap
+mtk_printk_ctrl
+mtk_pwm
+mtk_qos
+mtk_rpmsg_mbox
+mtk_scp_audiocommon
+mtk_scpsys
+mtk_scpsys_bringup
+mtk_scpsys_mt6878
+mtk_scp_ultra
+mtk_scp_vow
+mtk_sec_heap
+mtk_slbc
+mtk_smi
+mtk_smi_dbg
+mtk_socinfo
+mtk_soc_offload_common
+mtk_spmi_pmic
+mtk_spmi_pmic_adc
+mtk_sp_spk_amp
+mtk_ssc
+mtk_ssc_dbg_v2
+mtk_swpm
+mtk_swpm_cpu_dbg_v6878
+mtk_swpm_dbg_common_v1
+mtk_swpm_dbg_v6878
+mtk_swpm_perf_arm_pmu
+mtk_sync
+mtk_tinysys_ipi
+mtk_uart_apdma
+mtk_u_ether
+mtk_usb_f_rndis
+mtk_vcodec_common
+mtk_vcodec_dec_v1
+mtk_vcodec_enc_v1
+mtk_vcu
+mtk_vmm_isp71_regulator
+mtk_vmm_notifier
+mtk_vmm_spm
+mtk_vow
+mtk_wdt
+mtk_wp
+mtu3
+mux_switch
+nfc
+nhc_dest
+nhc_fragment
+nhc_hop
+nhc_ipv6
+nhc_mobility
+nhc_routing
+nhc_udp
+nvmem_mt635x_efuse
+nvmem_mtk_devinfo
+panel_ky_vtdr6115_dphy_cmd
+pda_drv_mt6878
+pd_chk_mt6878
+pd_dbg_info
+phy_mtk_ufs
+phy_mtk_xsphy
+pidmap
+pinctrl_mt6363
+pinctrl_mt6878
+pinctrl_mtk_common_v2_debug
+pinctrl_mtk_v2
+pmic_lbat_service
+pmic_lvsys_notify
+pmic_temp
+powerhal_cpu_ctrl
+ppp_deflate
+ppp_generic
+ppp_mppe
+pppox
+pptp
+pwm_mtk_disp
+r8152
+r8153_ecm
+reboot_mode
+regulator_vibrator
+reset_ti_syscon
+rfcomm
+rfkill
+rpmb
+rpmb_mtk
+rps_perf
+rt4831a_drv
+rt5133_regulator
+rt6160_regulator
+rtc_mt6685
+rtl8150
+rt_pd_manager
+sapu
+sc851x_charger
+sc8571_charger
+scheduler
+scp
+sec
+sec_rng
+sensorhub
+sh366003_fg
+slcan
+slhc
+smpu
+smpu_hook_v1
+snd_soc_audiodsp_common
+snd_soc_mt6369
+snd_soc_mt6878_afe
+snd_soc_mtk_common
+snd_soc_mtk_scp_ultra
+snd_soc_tfa98xx
+soc_temp_lvts
+spi_mt65xx
+spi_tiny_co5300_lcd
+spmi_mtk_mpu
+spmi_mtk_pmif
+sspm_v3
+st21nfc
+sub_vcm
+syscon_reboot_mode
+system_heap
+task_turbo
+tcpc_class
+tcpci_late_sync
+tcpc_mt6375
+teeperf
+thermal_generic_adc
+thermal_interface
+thermal_trace
+timer_mediatek
+tinysys_scmi
+tipc
+tkcore
+tkcore_drv
+tmem_ffa
+touch_boost
+trace_mmstat
+tui_common
+uarthub_drv
+ufs_mediatek_dbg
+ufs_mediatek_mod
+uload_ind
+usb_boost
+usb_logger
+usb_meta
+usbnet
+usb_offload
+usbserial
+vcan
+vcp
+vcp_status
+vtskin_temp
+widevine_driver
+wifi_cooling
+wlan_drv_gen4m_6878
+wmt_chrdev_wifi_connac2
+wwan
+xhci_mtk_hcd_v2
+yft_devinfo
+yft_gpio_keys
+yft_tiny2c_usb
+yft_tpd_gesture
+zram
+zsmalloc
+
+===== A MODULE FILESYSTEMS =====
+drwxr-xr-x 2 root root 1458 2009-01-01 02:00 /system_dlkm/lib/modules
+lrw-r--r-- 1 root root   24 2009-01-01 02:00 /vendor/lib/modules -> /vendor_dlkm/lib/modules
+-rw-r--r-- 1 root root 67132 2009-01-01 02:00 /system_dlkm/lib/modules/modules.alias
+-rw-r--r-- 1 root root  4745 2009-01-01 02:00 /system_dlkm/lib/modules/modules.dep
+-rw-r--r-- 1 root root   672 2009-01-01 02:00 /system_dlkm/lib/modules/modules.load
+-rw-r--r-- 1 root root 28428 2009-01-01 02:00 /vendor/lib/modules/modules.alias
+-rw-r--r-- 1 root root 52077 2009-01-01 02:00 /vendor/lib/modules/modules.dep
+-rw-r--r-- 1 root root  3326 2009-01-01 02:00 /vendor/lib/modules/modules.load
+
+===== B MODULE FILESYSTEMS =====
+
+===== B STATIC MODPROBE COMMAND EXPANSION =====
+SYSTEM_DLKM:
+
+
+VENDOR:
+
+
+===== INIT.SVC INSMOD PROPERTY HISTORY AVAILABLE NOW =====
+[init.svc.insmod_sh]: [stopped]
+
+PHONE_MODIFIED=0
