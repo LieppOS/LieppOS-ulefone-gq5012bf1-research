@@ -1,0 +1,17 @@
+# Checkpoint Slot-B pair write
+
+Diagnostic vendor_b:
+814335c726d0d29b54009c4df4f869498c6c5e7ea0457fbd3442657b142a59de
+
+Diagnostic vbmeta_vendor_b:
+2b16ad27b333fb4ef35fb7d49eca36e5c20c86ac3558352a39a263cf0a5fd0ed
+
+Root vbmeta_b:
+bb2c7cb52dd15ee636cdb27b60f3fa5ed8fd6f774fe4acfc0a77301cbb4b17fb
+
+Safe Slot-A return:
+slot=_a
+boot_completed=
+
+PAIR_WRITE_OK=0
+B_ACTIVATED=0
