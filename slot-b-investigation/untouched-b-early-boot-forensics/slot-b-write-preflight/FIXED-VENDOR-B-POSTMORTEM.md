@@ -35,3 +35,19 @@ spontaneous B reset.
 Updated failure class:
 
 `FIXED_VENDOR_B_STABLE_LOGO_HANG_ANDROID_USB_NO_ADB`
+
+## ADB/FunctionFS refinement
+
+Static MT6878 USB rules show that the normal adb-only configuration selects
+PID 0x201C and binds the ffs.adb function after sys.usb.ffs.ready=1.
+
+The failed fixed-vendor B boot exposed USB VID:PID 0e8d:201c, while no usable
+host ADB transport existed.
+
+This therefore supports a later boot stage than merely USB-controller
+initialization: adbd/FunctionFS likely reached readiness, but a usable ADB
+transport was not established.
+
+Refined failure class:
+
+`FIXED_VENDOR_B_STABLE_LOGO_HANG_ADBD_FFS_REACHED_NO_USABLE_TRANSPORT`
