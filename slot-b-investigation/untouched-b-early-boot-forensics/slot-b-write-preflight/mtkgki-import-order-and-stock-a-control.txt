@@ -1,0 +1,390 @@
+===== IMPORT PARSER IMPLEMENTATION =====
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-49-    if (fdp_.ConsumeBool()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-50-        std::vector<std::string> input;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-51-        input.push_back("");
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-52-        input.push_back(fdp_.ConsumeRandomLengthString(kMaxBytes));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-53-        input.push_back(fdp_.ConsumeRandomLengthString(kMaxBytes));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-54-        input.push_back(fdp_.ConsumeRandomLengthString(kMaxBytes));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-55-        ParseRlimit(input);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-56-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-57-        ParseRlimit(fdp_.PickValueInArray(kValidInputs));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-58-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-59-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-60-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-61-void InitParserFuzzer::InvokeParser() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-62-    Parser parser;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-63-    std::string name = fdp_.ConsumeBool() ? fdp_.ConsumeRandomLengthString(kMaxBytes) : "import";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp:64:    parser.AddSectionParser(name, std::make_unique<ImportParser>(&parser));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-65-    std::string path = fdp_.ConsumeBool() ? fdp_.PickValueInArray(kValidPaths)
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-66-                                          : fdp_.ConsumeRandomLengthString(kMaxBytes);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-67-    parser.ParseConfig(path);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-68-    parser.ParseConfigFileInsecure(path, false /* follow_symlinks */);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-69-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-70-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-71-void InitParserFuzzer::Process() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-72-    while (fdp_.remaining_bytes()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-73-        auto invoke_parser_fuzzer = fdp_.PickValueInArray<const std::function<void()>>({
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-74-                [&]() { InvokeParser(); },
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-75-                [&]() { InvokeLimitParser(); },
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-76-        });
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-77-        invoke_parser_fuzzer();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-78-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-79-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-80-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-81-extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-82-    InitParserFuzzer init_parser_fuzzer(data, size);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-83-    init_parser_fuzzer.Process();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-84-    return 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/fuzzer/init_parser_fuzzer.cpp-85-}
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-13- * See the License for the specific language governing permissions and
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-14- * limitations under the License.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-15- */
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-16-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-17-#ifndef _INIT_IMPORT_PARSER_H
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-18-#define _INIT_IMPORT_PARSER_H
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-19-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-20-#include <string>
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-21-#include <vector>
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-22-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-23-#include "parser.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-24-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-25-namespace android {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-26-namespace init {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-27-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h:28:class ImportParser : public SectionParser {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-29-  public:
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h:30:    ImportParser(Parser* parser) : parser_(parser) {}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-31-    Result<void> ParseSection(std::vector<std::string>&& args, const std::string& filename,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-32-                              int line) override;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-33-    Result<void> ParseLineSection(std::vector<std::string>&&, int) override;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-34-    void EndFile() override;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-35-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-36-  private:
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-37-    Parser* parser_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-38-    // Store filename for later error reporting.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-39-    std::string filename_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-40-    // Vector of imports and their line numbers for later error reporting.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-41-    std::vector<std::pair<std::string, int>> imports_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-42-};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-43-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-44-}  // namespace init
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-45-}  // namespace android
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-46-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.h-47-#endif
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-11- * distributed under the License is distributed on an "AS IS" BASIS,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-12- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-13- * See the License for the specific language governing permissions and
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-14- * limitations under the License.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-15- */
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-16-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-17-#include "import_parser.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-18-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-19-#include <android-base/logging.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-20-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-21-#include "util.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-22-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-23-namespace android {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-24-namespace init {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-25-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp:26:Result<void> ImportParser::ParseSection(std::vector<std::string>&& args,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-27-                                        const std::string& filename, int line) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-28-    if (args.size() != 2) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-29-        return Error() << "single argument needed for import\n";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-30-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-31-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-32-    auto conf_file = ExpandProps(args[1]);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-33-    if (!conf_file.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-34-        return Error() << "Could not expand import: " << conf_file.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-35-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-36-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-37-    LOG(INFO) << "Added '" << *conf_file << "' to import list";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-38-    if (filename_.empty()) filename_ = filename;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-39-    imports_.emplace_back(std::move(*conf_file), line);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-40-    return {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-41-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-42-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp:43:Result<void> ImportParser::ParseLineSection(std::vector<std::string>&&, int) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-44-    return Error() << "Unexpected line found after import statement";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-45-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-46-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp:47:void ImportParser::EndFile() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-48-    auto current_imports = std::move(imports_);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-49-    imports_.clear();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-50-    for (const auto& [import, line_num] : current_imports) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-51-        parser_->ParseConfig(import);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-52-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-53-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-54-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-55-}  // namespace init
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/import_parser.cpp-56-}  // namespace android
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-11- * distributed under the License is distributed on an "AS IS" BASIS,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-12- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-13- * See the License for the specific language governing permissions and
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-14- * limitations under the License.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-15- */
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-16-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-17-#include "host_import_parser.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-18-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-19-#include <android-base/strings.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-20-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-21-using android::base::StartsWith;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-22-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-23-namespace android {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-24-namespace init {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-25-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp:26:Result<void> HostImportParser::ParseSection(std::vector<std::string>&& args, const std::string&,
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-27-                                            int) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-28-    if (args.size() != 2) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-29-        return Error() << "single argument needed for import\n";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-30-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-31-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-32-    return {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-33-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-34-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp:35:Result<void> HostImportParser::ParseLineSection(std::vector<std::string>&&, int) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-36-    return Error() << "Unexpected line found after import statement";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-37-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-38-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-39-}  // namespace init
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/host_import_parser.cpp-40-}  // namespace android
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-260-    std::string shutdown_command_ GUARDED_BY(shutdown_command_lock_);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-261-    bool do_shutdown_ = false;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-262-} shutdown_state;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-263-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-264-void DumpState() {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-265-    ServiceList::GetInstance().DumpState();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-266-    ActionManager::GetInstance().DumpState();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-267-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-268-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-269-Parser CreateParser(ActionManager& action_manager, ServiceList& service_list) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-270-    Parser parser;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-271-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-272-    parser.AddSectionParser("service",
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-273-                            std::make_unique<ServiceParser>(&service_list, GetSubcontext()));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-274-    parser.AddSectionParser("on", std::make_unique<ActionParser>(&action_manager, GetSubcontext()));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp:275:    parser.AddSectionParser("import", std::make_unique<ImportParser>(&parser));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-276-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-277-    return parser;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-278-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-279-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-280-#ifndef RECOVERY
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-281-template <typename T>
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-282-struct LibXmlErrorHandler {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-283-    T handler_;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-284-    template <typename Handler>
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-285-    LibXmlErrorHandler(Handler&& handler) : handler_(std::move(handler)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-286-        xmlSetGenericErrorFunc(nullptr, &ErrorHandler);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-287-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-288-    ~LibXmlErrorHandler() { xmlSetGenericErrorFunc(nullptr, nullptr); }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-289-    static void ErrorHandler(void*, const char* msg, ...) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-290-        va_list args;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-291-        va_start(args, msg);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-292-        char* formatted;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-293-        if (vasprintf(&formatted, msg, args) >= 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-294-            LOG(ERROR) << formatted;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-295-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-296-        free(formatted);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-297-        va_end(args);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-298-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-299-};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-300-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-301-template <typename Handler>
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-302-LibXmlErrorHandler(Handler&&) -> LibXmlErrorHandler<Handler>;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-303-#endif  // RECOVERY
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-304-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-305-// Returns a Parser that accepts scripts from APEX modules. It supports `service` and `on`.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-306-Parser CreateApexConfigParser(ActionManager& action_manager, ServiceList& service_list) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-307-    Parser parser;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-308-    auto subcontext = GetSubcontext();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-309-#ifndef RECOVERY
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-310-    if (subcontext) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-311-        const auto apex_info_list_file = "/apex/apex-info-list.xml";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-312-        auto error_handler = LibXmlErrorHandler([&](const auto& error_message) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-313-            LOG(ERROR) << "Failed to read " << apex_info_list_file << ":" << error_message;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-314-        });
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-315-        const auto apex_info_list = com::android::apex::readApexInfoList(apex_info_list_file);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-316-        if (apex_info_list.has_value()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-317-            std::vector<std::string> subcontext_apexes;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-318-            for (const auto& info : apex_info_list->getApexInfo()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-319-                if (subcontext->PartitionMatchesSubcontext(info.getPartition())) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-320-                    subcontext_apexes.push_back(info.getModuleName());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-321-                }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-322-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-323-            subcontext->SetApexList(std::move(subcontext_apexes));
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-324-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-325-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-326-#endif  // RECOVERY
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/init.cpp-327-    parser.AddSectionParser("service", std::make_unique<ServiceParser>(&service_list, subcontext));
+
+===== PARSECONFIG IMPLEMENTATION =====
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-119-                } else if (!bad_section_found) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-120-                    parse_error_count_++;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-121-                    LOG(ERROR) << filename << ": " << state.line
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-122-                               << ": Invalid section keyword found";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-123-                }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-124-                args.clear();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-125-                break;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-126-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-127-            case T_TEXT:
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-128-                args.emplace_back(state.text);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-129-                break;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-130-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-131-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-132-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-133-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp:134:bool Parser::ParseConfigFileInsecure(const std::string& path, bool follow_symlinks = false) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-135-    std::string config_contents;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-136-    if (!android::base::ReadFileToString(path, &config_contents, follow_symlinks)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-137-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-138-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-139-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-140-    ParseData(path, &config_contents);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-141-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-142-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-143-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp:144:Result<void> Parser::ParseConfigFile(const std::string& path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-145-    LOG(INFO) << "Parsing file " << path << "...";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-146-    android::base::Timer t;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-147-    auto config_contents = ReadFile(path);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-148-    if (!config_contents.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-149-        return Error() << "Unable to read config file '" << path
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-150-                       << "': " << config_contents.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-151-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-152-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-153-    ParseData(path, &config_contents.value());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-154-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-155-    LOG(VERBOSE) << "(Parsing " << path << " took " << t << ".)";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-156-    return {};
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-157-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-158-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp:159:bool Parser::ParseConfigDir(const std::string& path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-160-    LOG(INFO) << "Parsing directory " << path << "...";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-161-    std::unique_ptr<DIR, decltype(&closedir)> config_dir(opendir(path.c_str()), closedir);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-162-    if (!config_dir) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-163-        PLOG(INFO) << "Could not import directory '" << path << "'";
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-164-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-165-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-166-    dirent* current_file;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-167-    std::vector<std::string> files;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-168-    while ((current_file = readdir(config_dir.get()))) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-169-        // Ignore directories and only process regular files.
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-170-        if (current_file->d_type == DT_REG) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-171-            std::string current_path =
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-172-                android::base::StringPrintf("%s/%s", path.c_str(), current_file->d_name);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-173-            files.emplace_back(current_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-174-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-175-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-176-    // Sort first so we load files in a consistent order (bug 31996208)
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-177-    std::sort(files.begin(), files.end());
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-178-    for (const auto& file : files) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-179-        if (auto result = ParseConfigFile(file); !result.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-180-            LOG(ERROR) << "could not import file '" << file << "': " << result.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-181-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-182-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-183-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-184-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-185-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp:186:bool Parser::ParseConfig(const std::string& path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-187-    if (is_dir(path.c_str())) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-188-        return ParseConfigDir(path);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-189-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-190-    auto result = ParseConfigFile(path);
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-191-    if (!result.ok()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-192-        LOG(INFO) << result.error();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-193-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-194-    return result.ok();
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-195-}
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-196-
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-197-}  // namespace init
+/mnt/SamsungSSD/android/lineage-22.2/system/core/init/parser.cpp-198-}  // namespace android
+
+===== BUILT B HASHES =====
+15989f5792ff91a25ba797d4b06441b25af79b2d9a8aa9629eca5a8e853243b5  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mt6878.rc
+19c1725e034b355f1643cc650169db74c7cb58f7506f953d986577206f564796  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.project.rc
+0c676a47dcac01e30dca4bf5dd7debff613cbb804b13553d7f4befe820e567ec  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init/hw/init.mtkgki.rc
+8685a0965f414e58ce5901b09737e3cb8a90819a08b3aca72ec37cd491a1a462  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/bin/init.insmod.sh
+683d5f45ddf50f6091ce5bbcf4b90d3e92b4bd5ebf05bebab0d59ccf8b112c98  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/vendor/etc/init.insmod.mt6878.cfg
+
+===== LIVE A HASHES =====
+12b5aed87f03df3226d84c3a545b53b98c23269a5bd8c81408c6616c2676ffbb  /vendor/etc/init/hw/init.mt6878.rc
+19c1725e034b355f1643cc650169db74c7cb58f7506f953d986577206f564796  /vendor/etc/init/hw/init.project.rc
+0c676a47dcac01e30dca4bf5dd7debff613cbb804b13553d7f4befe820e567ec  /vendor/etc/init/hw/init.mtkgki.rc
+8685a0965f414e58ce5901b09737e3cb8a90819a08b3aca72ec37cd491a1a462  /vendor/bin/init.insmod.sh
+683d5f45ddf50f6091ce5bbcf4b90d3e92b4bd5ebf05bebab0d59ccf8b112c98  /vendor/etc/init.insmod.mt6878.cfg
+
+===== LIVE A MODULE-READY STATE AS ROOT =====
+ready=1
+insmod=stopped
+
+===== LIVE A MTKGKI =====
+service insmod_sh /vendor/bin/init.insmod.sh /vendor/etc/init.insmod.${ro.hardware}.cfg
+    class main
+    user root
+    group root system
+    disabled
+    oneshot
+
+on early-init
+    setprop vendor.all.modules.ready 0
+    write /proc/bootprof "modprobe: Load_Module_START"
+    start insmod_sh
+
+===== LIVE A MT6878 EARLY-INIT =====
+# MTK platform .rc configure
+
+import ${ro.vendor.rc}init.cgroup.rc
+import ${ro.vendor.rc}init.connectivity.rc
+import ${ro.vendor.rc}init.mt6878.usb.rc
+import /vendor/etc/init/hw/init.project.rc
+import /system_ext/etc/init/hw/init.aee.rc
+import /FWUpgradeInit.rc
+import /vendor/etc/init/hw/init.aee.rc
+import ${ro.vendor.rc}init.volte.rc
+import ${ro.vendor.rc}init.mal.rc
+import ${ro.vendor.rc}${ro.vendor.init.sensor.rc}
+
+#add by yft
+import ${ro.vendor.rc}init.yft.rc
+
+# init.modem.rc must be the LAST rc file because vold.post_fs_data_done is set in it
+import ${ro.vendor.rc}init.modem.rc
+# *** DO NOT import the new rc file after this line ***
+
+on early-init
+    write /proc/bootprof "INIT:early-init"
+
+    # initialize vendor.all.modules.ready to 1 here to prevent NOT GKI project blocked
+    setprop vendor.all.modules.ready 1
+
+# Keep debugfs mounted in non-user builds
+on early-init && property:ro.build.type=eng
+    mount debugfs debugfs /sys/kernel/debug
+    chmod 0755 /sys/kernel/debug
+    write /sys/power/pm_print_times 0
+    setprop persist.dbg.keep_debugfs_mounted true
+
+on early-init && property:ro.build.type=userdebug
+    mount debugfs debugfs /sys/kernel/debug
+    chmod 0755 /sys/kernel/debug
+    setprop persist.dbg.keep_debugfs_mounted true
+
+
+===== A BOOT LOG MODULE-LOADER REFERENCES =====
+09-20 21:26:42.504   467   467 I auditd  : type=1400 audit(0.0:10): avc:  denied  { read } for  comm="modprobe" name="cmdline" dev="proc" ino=4026532084 scontext=u:r:init_insmod_sh:s0 tcontext=u:object_r:proc_cmdline:s0 tclass=file permissive=0
+09-20 21:26:42.696   494   494 I auditd  : type=1400 audit(0.0:12): avc:  denied  { read } for  comm="modprobe" name="cmdline" dev="proc" ino=4026532084 scontext=u:r:init_insmod_sh:s0 tcontext=u:object_r:proc_cmdline:s0 tclass=file permissive=0
+09-20 21:26:42.712   494   494 I auditd  : type=1400 audit(0.0:13): avc:  denied  { write } for  comm="modprobe" scontext=u:r:init_insmod_sh:s0 tcontext=u:r:init_insmod_sh:s0 tclass=key permissive=0
+09-20 21:26:42.712   494   494 I auditd  : type=1400 audit(0.0:14): avc:  denied  { write } for  comm="modprobe" scontext=u:r:init_insmod_sh:s0 tcontext=u:r:init_insmod_sh:s0 tclass=key permissive=0
+09-20 21:26:42.756   494   494 I auditd  : type=1400 audit(0.0:15): avc:  denied  { sys_nice } for  comm="modprobe" capability=23  scontext=u:r:init_insmod_sh:s0 tcontext=u:r:init_insmod_sh:s0 tclass=capability permissive=0
+09-20 21:26:43.768   494   494 I auditd  : type=1400 audit(0.0:22): avc:  denied  { sys_nice } for  comm="modprobe" capability=23  scontext=u:r:init_insmod_sh:s0 tcontext=u:r:init_insmod_sh:s0 tclass=capability permissive=0
+09-20 21:26:43.768   494   494 I auditd  : type=1400 audit(0.0:23): avc:  denied  { setsched } for  comm="modprobe" scontext=u:r:init_insmod_sh:s0 tcontext=u:r:kernel:s0 tclass=process permissive=0
+09-20 21:26:43.768   494   494 I auditd  : type=1400 audit(0.0:24): avc:  denied  { sys_nice } for  comm="modprobe" capability=23  scontext=u:r:init_insmod_sh:s0 tcontext=u:r:init_insmod_sh:s0 tclass=capability permissive=0
+09-20 21:26:43.768   494   494 I auditd  : type=1400 audit(0.0:25): avc:  denied  { setsched } for  comm="modprobe" scontext=u:r:init_insmod_sh:s0 tcontext=u:r:kernel:s0 tclass=process permissive=0
+09-20 21:26:43.768   494   494 I auditd  : type=1400 audit(0.0:26): avc:  denied  { sys_nice } for  comm="modprobe" capability=23  scontext=u:r:init_insmod_sh:s0 tcontext=u:r:init_insmod_sh:s0 tclass=capability permissive=0
+09-20 21:26:43.768   494   494 I auditd  : type=1400 audit(0.0:27): avc:  denied  { setsched } for  comm="modprobe" scontext=u:r:init_insmod_sh:s0 tcontext=u:r:kernel:s0 tclass=process permissive=0
+09-20 21:26:43.768   494   494 I auditd  : type=1400 audit(0.0:28): avc:  denied  { sys_nice } for  comm="modprobe" capability=23  scontext=u:r:init_insmod_sh:s0 tcontext=u:r:init_insmod_sh:s0 tclass=capability permissive=0
+09-20 21:26:43.768   494   494 I auditd  : type=1400 audit(0.0:29): avc:  denied  { setsched } for  comm="modprobe" scontext=u:r:init_insmod_sh:s0 tcontext=u:r:kernel:s0 tclass=process permissive=0
+09-20 21:54:25.795  3818  3818 W libc    : Access denied finding property "vendor.all.modules.ready"
