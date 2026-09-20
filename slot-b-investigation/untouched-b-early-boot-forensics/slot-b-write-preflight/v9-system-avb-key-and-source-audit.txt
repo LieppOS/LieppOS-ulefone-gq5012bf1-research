@@ -1,0 +1,224 @@
+===== SYSTEM INIT SOURCE / BUILT COPY =====
+6c75c2c35dc558f523e57b39b4dfefebd9d8c7aa137871caf83846205eae592b  /mnt/SamsungSSD/android/lineage-22.2/system/core/rootdir/init.rc
+6c75c2c35dc558f523e57b39b4dfefebd9d8c7aa137871caf83846205eae592b  /mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system/etc/init/hw/init.rc
+
+===== SOURCE POST-FS-DATA HEAD =====
+692-    write /sys/kernel/tracing/instances/bootreceiver/buffer_size_kb 1
+693-    write /sys/kernel/tracing/instances/bootreceiver/trace_options disable_on_free
+694-    write /sys/kernel/tracing/instances/bootreceiver/events/error_report/error_report_end/enable 1
+695-
+696:on post-fs-data
+697-
+698-    # Start checkpoint before we touch data
+699-    exec - system system -- /system/bin/vdc checkpoint prepareCheckpoint
+700-
+701-    # We chown/chmod /data again so because mount is run as root + defaults
+702-    chown system system /data
+703-    chmod 0771 /data
+704-    # We restorecon /data in case the userdata partition has been reset.
+705-    restorecon /data
+706-
+707-    # Make sure we have the device encryption key.
+708-    installkey /data
+709-
+710-    # Start bootcharting as soon as possible after the data partition is
+711-    # mounted to collect more data.
+712-    mkdir /data/bootchart 0755 shell shell encryption=Require
+713-    bootchart start
+714-
+715-    # Avoid predictable entropy pool. Carry over entropy from previous boot.
+716-    copy /data/system/entropy.dat /dev/urandom
+717-
+718-    mkdir /data/vendor 0771 root root encryption=Require
+719-    mkdir /data/vendor/hardware 0771 root root
+720-
+721-    # Start tombstoned early to be able to store tombstones.
+722-    mkdir /data/anr 0775 system system encryption=Require
+723-    mkdir /data/tombstones 0775 system system encryption=Require
+724-    mkdir /data/vendor/tombstones 0771 root root
+725-    mkdir /data/vendor/tombstones/wifi 0771 wifi wifi
+726-    start tombstoned
+727-
+728-    # Make sure that apexd is started in the default namespace
+729-    enter_default_mount_ns
+730-
+731-    # set up keystore directory structure first so that we can end early boot
+732-    # and start apexd
+733-    mkdir /data/misc 01771 system misc encryption=Require
+734-    mkdir /data/misc/keystore 0700 keystore keystore
+735-    # work around b/183668221
+736-    restorecon /data/misc /data/misc/keystore
+737-
+738-    # Boot level 30
+739-    # odsign signing keys have MAX_BOOT_LEVEL=30
+740-    # This is currently the earliest boot level, but we start at 30
+741-    # to leave room for earlier levels.
+742-    setprop keystore.boot_level 30
+743-
+744-    # Now that /data is mounted and we have created /data/misc/keystore,
+745-    # we can tell keystore to stop allowing use of early-boot keys,
+746-    # and access its database for the first time to support creation and
+747-    # use of MAX_BOOT_LEVEL keys.
+748-    exec - system system -- /system/bin/vdc keymaster earlyBootEnded
+749-
+750-    # Multi-installed APEXes are selected using persist props.
+751-    # Load persist properties and override properties (if enabled) from /data,
+752-    # before starting apexd.
+753-    # /data/property should be created before `load_persist_props`
+754-    mkdir /data/property 0700 root root encryption=Require
+755-    load_persist_props
+756-
+757-    start logd
+758-    start logd-reinit
+759-
+760-    # Some existing vendor rc files use 'on load_persist_props_action' to know
+761-    # when persist props are ready. These are difficult to change due to GRF,
+
+===== ROOT VBMETA_B =====
+Minimum libavb version:   1.0
+Header Block:             256 bytes
+Authentication Block:     320 bytes
+Auxiliary Block:          6208 bytes
+Public key (sha1):        d6b1afef32b1fce5c47f537df3d7ec167ae2b469
+Algorithm:                SHA256_RSA2048
+Rollback Index:           0
+Flags:                    0
+Rollback Index Location:  0
+Release String:           'avbtool 1.3.0'
+Descriptors:
+    Chain Partition descriptor:
+      Partition Name:          boot
+      Rollback Index Location: 3
+      Public key (sha1):       9d808b0995768d0677fccb1efcddb7cf9e153d99
+      Flags:                   0
+    Chain Partition descriptor:
+      Partition Name:          vbmeta_system
+      Rollback Index Location: 2
+      Public key (sha1):       579a140d204d847f0c74332c73996baf1ed6a5fc
+      Flags:                   0
+    Chain Partition descriptor:
+      Partition Name:          vbmeta_vendor
+      Rollback Index Location: 4
+      Public key (sha1):       664998c1c258771293715a829bd8caeae5d5626b
+      Flags:                   0
+    Prop: com.android.build.init_boot.os_version -> '15'
+    Prop: com.android.build.init_boot.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.vendor_boot.fingerprint -> 'Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys'
+    Prop: com.android.build.dtbo.fingerprint -> 'Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys'
+    Prop: com.android.build.product.os_version -> '15'
+    Prop: com.android.build.product.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.product.security_patch -> '2026-07-01'
+    Prop: com.android.build.system_ext.os_version -> '15'
+    Prop: com.android.build.system_ext.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.system_ext.security_patch -> '2026-07-01'
+    Prop: com.android.build.vendor_dlkm.os_version -> '14'
+    Prop: com.android.build.vendor_dlkm.fingerprint -> 'Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys'
+    Prop: com.android.build.system_dlkm.os_version -> '14'
+    Prop: com.android.build.system_dlkm.fingerprint -> 'Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys'
+    Prop: com.android.build.odm_dlkm.os_version -> '14'
+    Prop: com.android.build.odm_dlkm.fingerprint -> 'Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys'
+    Hash descriptor:
+      Image Size:            48320 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        dtbo
+      Salt:                  9c02741721a24549180ce75e774265e894e30f7442167b91ef7b06dec913b654
+      Digest:                b14ed1243ef1b47bd4d93cab9244121bc4c2435321c89a5ab0955e4ef5949958
+      Flags:                 0
+    Hash descriptor:
+      Image Size:            2351104 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        init_boot
+      Salt:                  4642dd56f38e0262832f9c794c9a1bbf4c15a0cc5cade528c41031ba44711efb6c0e298eecf113b6eacb075ab0a3dbc1d35121b4a5496ed30503685b9eec0dd1
+      Digest:                619a16cdf8b6fca0744af83cd8dc90e8e4f8cf78d3539f48922863301250fafa
+      Flags:                 0
+    Hash descriptor:
+      Image Size:            33828864 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        vendor_boot
+      Salt:                  9c02741721a24549180ce75e774265e894e30f7442167b91ef7b06dec913b654
+      Digest:                63c2d4b2a2a8c61ed469bbe22734e620be071a566b3759d0d0ec18ada97bd305
+      Flags:                 0
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            57344 bytes
+      Tree Offset:           57344
+      Tree Size:             4096 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            61440
+      FEC size:              8192 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        odm_dlkm
+      Salt:                  9c02741721a24549180ce75e774265e894e30f7442167b91ef7b06dec913b654
+      Root Digest:           54d68478a49b7ccbc3509414f1e546a1b7c6709c46e9a31b7c1503c793cc8934
+      Flags:                 0
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            331276288 bytes
+      Tree Offset:           331276288
+      Tree Size:             2613248 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            333889536
+      FEC size:              2646016 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        product
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           82f2881b4fb4830478455dec29bab5a67274b0e1
+      Flags:                 0
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            7241728 bytes
+      Tree Offset:           7241728
+      Tree Size:             61440 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            7303168
+      FEC size:              65536 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        system_dlkm
+      Salt:                  9c02741721a24549180ce75e774265e894e30f7442167b91ef7b06dec913b654
+      Root Digest:           6eb178d7de3a9ff47578fcbde7d9e3280c5e4fffe28ce39698fbd2eeb57a8a95
+      Flags:                 0
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            359931904 bytes
+      Tree Offset:           359931904
+      Tree Size:             2842624 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            362774528
+      FEC size:              2875392 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        system_ext
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           cead2796001e72dd567c97a00b2165a78ab80d92
+      Flags:                 0
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            17125376 bytes
+      Tree Offset:           17125376
+      Tree Size:             139264 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            17264640
+      FEC size:              139264 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        vendor_dlkm
+      Salt:                  9c02741721a24549180ce75e774265e894e30f7442167b91ef7b06dec913b654
+      Root Digest:           dfa8ca21eae3ff84a2090d793955d07c07aa9b16f7c37a08e0aa9e5b9d35645b
+      Flags:                 0
+ROOT_VBMETA_B_SHA256=e14e11e184950d487b31def17a349f4f161e34988825bf35d85fc9bd6c3bde93
+
+===== CANDIDATE AVB PRIVATE KEYS =====
+d6b1afef32b1fce5c47f537df3d7ec167ae2b469  /mnt/SamsungSSD/TIER3/phase4/private/avb-bringup/root.pem
+579a140d204d847f0c74332c73996baf1ed6a5fc  /mnt/SamsungSSD/TIER3/phase4/private/avb-bringup/system.pem
+664998c1c258771293715a829bd8caeae5d5626b  /mnt/SamsungSSD/TIER3/phase4/private/avb-bringup/vendor.pem
+
+===== TARGET SYSTEM CHILD KEY =====
+EXPECTED_PUBLIC_KEY_SHA1=579a140d204d847f0c74332c73996baf1ed6a5fc
