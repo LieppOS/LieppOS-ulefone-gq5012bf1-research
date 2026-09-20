@@ -1,0 +1,42 @@
+# MTK platform .rc configure
+
+import ${ro.vendor.rc}init.cgroup.rc
+import ${ro.vendor.rc}init.connectivity.rc
+import ${ro.vendor.rc}init.mt6878.usb.rc
+import /vendor/etc/init/hw/init.project.rc
+import /system_ext/etc/init/hw/init.aee.rc
+import /FWUpgradeInit.rc
+import /vendor/etc/init/hw/init.aee.rc
+import ${ro.vendor.rc}init.volte.rc
+import ${ro.vendor.rc}init.mal.rc
+import ${ro.vendor.rc}${ro.vendor.init.sensor.rc}
+
+#add by yft
+import ${ro.vendor.rc}init.yft.rc
+
+# init.modem.rc must be the LAST rc file because vold.post_fs_data_done is set in it
+import ${ro.vendor.rc}init.modem.rc
+# *** DO NOT import the new rc file after this line ***
+
+on early-init
+    write /proc/bootprof "INIT:early-init"
+
+    # initialize vendor.all.modules.ready to 1 here to prevent NOT GKI project blocked
+    setprop vendor.all.modules.ready 1
+
+# Keep debugfs mounted in non-user builds
+on early-init && property:ro.build.type=eng
+    mount debugfs debugfs /sys/kernel/debug
+    chmod 0755 /sys/kernel/debug
+    write /sys/power/pm_print_times 0
+    setprop persist.dbg.keep_debugfs_mounted true
+
+on early-init && property:ro.build.type=userdebug
+    mount debugfs debugfs /sys/kernel/debug
+    chmod 0755 /sys/kernel/debug
+    setprop persist.dbg.keep_debugfs_mounted true
+
+on init
+    write /proc/bootprof "INIT:init"
+
+    # Support legacy paths
