@@ -2,12 +2,15 @@
 
 ## Evidence
 
-- `evidence/stock-module-metadata.txt`: SHA-256, vermagic, names, dependencies and aliases.
-- `evidence/stock-module-symbols.tsv`: complete undefined-import and `__ksymtab` export inventory.
+- `evidence/stock-module-metadata.txt`: initial central-module SHA-256, vermagic, dependencies and aliases.
+- `evidence/stock-module-symbols.tsv`: initial central-module import/export inventory.
+- `evidence/stock-usb-module-inventory.tsv`: expanded 42-module location/hash/vermagic/dependency/alias/count inventory.
+- `evidence/stock-usb-module-symbols.tsv`: expanded complete undefined-import and `__ksymtab` export inventory.
+- `evidence/stock-usb-module-strings.tsv`: reproducibly filtered USB/Type-C/charging strings.
 - `evidence/stock-usb-modules.txt`: live loaded-module set.
 - stock load order: `workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/modules.load` and `workspace/gq5012bf1/stock/partitions/vendor_dlkm/lib/modules/modules.load`.
 
-All inspected modules use stock vermagic `6.1.115-android14-11-g945dff7bc1bf ... aarch64` unless otherwise recorded in the metadata file.
+The expanded selection scans all 471 extracted `.ko` files and retains 42 direct USB/Type-C/charging/factory modules. Vendor modules use vermagic `6.1.115-android14-11-g945dff7bc1bf ... aarch64`; generic `system_dlkm` modules use GKI vermagic `6.1.115-android14-11-g6b18f0b574ab-ab12901745 ... aarch64`. Exact values are recorded per row.
 
 ## Core data path
 
@@ -24,6 +27,22 @@ All inspected modules use stock vermagic `6.1.115-android14-11-g945dff7bc1bf ...
 | `usb_meta.ko` | vendor ramdisk | META/factory UDC support | 71 / 0 | **MEDIATEK MODIFIED** |
 
 `mtu3.ko` advertises `MediaTek USB3 DRD Controller Driver`, but the description identifies the driver family, not the configured speed of this instance. The effective DT references only the USB2 XS-PHY and caps the instance at `high-speed`.
+
+### Expanded peripheral/factory boundary
+
+The broad inventory additionally closes the previously abbreviated edges:
+
+| Group | Modules | Role |
+|---|---|---|
+| generic host networking/serial | `cdc-acm`, `cdc_ether`, `cdc_ncm`, `usbnet`, `usbserial` | GKI `system_dlkm` host-class support |
+| MediaTek gadget networking | `mtk_u_ether`, `mtk_usb_f_rndis` | RNDIS/Ethernet gadget implementation used by init configfs modes |
+| C2K factory/modem functions | `c2k_usb`, `c2k_usb_f_via_atc`, `...ets`, `...modem` | vendor modem/factory USB functions |
+| charger core/policy | `adapter_class`, `charger_class`, `mtk_charger_algorithm_class`, `mtk_charger_framework`, `mtk_chg_type_det` | common adapter/charger objects and detection |
+| charge algorithms | `mtk_pd_charging`, `mtk_pep`, `mtk_pep40`, `mtk_pep50` | PD/PPS and MediaTek fast-charge algorithms |
+| power/fuel support | `charger_cooling`, `rt6160-regulator`, `sh366003_fg` | thermal limiting, rails and fuel telemetry |
+| TCPC diagnostics/sync | `pd_dbg_info`, `tcpci_late_sync` | PD debug state and late synchronization |
+
+This inventory is deliberately broad: inclusion means the module is USB/charging-adjacent, not that it owns the USB data path.
 
 The stock `mux_switch.ko` exports only callback registration APIs (`mtk_typec_mux_register/unregister`, `mtk_typec_switch_register/unregister`) and imports Type-C core registration helpers. It has no I2C, GPIO or regmap imports. Therefore this module is a software notifier/fan-out layer, not evidence of a physical SS mux/redriver IC.
 
@@ -51,6 +70,10 @@ MT6375 charger -> shared USB2 PHY for BC1.2
 ```
 
 `extcon-mtk-usb.ko` depends on `tcpc_class` and `mt6375-charger`. `mt6375-charger.ko` exports `yft_usb_flag`; that Ulefone-specific flag coordinates charger/BC1.2 behavior with the internal thermal path.
+
+### UFCS provider audit
+
+`evidence/stock-charger-ufcs-analysis.txt` scans every extracted module plus the GKI and raw DT string table. UFCS-aware policy is present in `mtk_charger_framework.ko` and `mtk_pep40.ko`, but only `mtk_pd_adapter.ko` imports `adapter_device_register`; the DT names only `pd_adapter`. Disassembly shows protocol initialization sets both state fields to `1`, so `ufcs_type:1` is not positive negotiation evidence. No operational UFCS provider is proven in this build.
 
 ## Internal thermal glue
 

@@ -12,7 +12,7 @@ This directory reconstructs five paths separately:
 4. internal ThermoVue thermal-camera USB;
 5. Type-C CC/PD and charging/power.
 
-SoC capability, DT enablement, runtime operation and PCB routing are independent claims. In particular, PD/PPS/UFCS support and a USB-C receptacle do **not** prove SuperSpeed data routing. A 480 Mbit/s observation does **not** prove that SuperSpeed lanes are electrically absent.
+SoC capability, DT enablement, runtime operation and PCB routing are independent claims. In particular, charging-protocol policy and a USB-C receptacle do **not** prove SuperSpeed data routing. A 480 Mbit/s observation does **not** prove that SuperSpeed lanes are electrically absent.
 
 Finding labels are: `PROVEN`, `STRONGLY_SUPPORTED`, `LIKELY`, `POSSIBLE`, `UNKNOWN`, and `DISPROVEN`.
 
@@ -35,6 +35,7 @@ Finding labels are: `PROVEN`, `STRONGLY_SUPPORTED`, `LIKELY`, `POSSIBLE`, `UNKNO
 - `MT6878-DONOR-COMPARISON.md` — NothingOSS and sibling-SoC comparison.
 - `CUSTOM-KERNEL-USB-PLAN.md` — complete function-preserving implementation plan.
 - `USB-WEB-SOURCE-LEDGER.md` — external source provenance and caveats.
+- `USB-RESEARCH-COVERAGE-AUDIT.md` — honest phase-by-phase completeness and remaining tests.
 
 ## Provenance baseline
 
@@ -65,7 +66,11 @@ Earlier reports that say PCB routing is known are not accepted without PCB/schem
 - `evidence/stock-usb-dt-nodes.txt`: reproducible base-DTB + slot-A-DTBO extraction of selected USB/Type-C/thermal nodes.
 - `evidence/live-usb-dt-nodes.txt`: matching selected-node extraction from the running kernel's `/sys/firmware/fdt`.
 - `evidence/stock-module-metadata.txt`: hashes and `modinfo` metadata for the stock USB/TCPC/charging modules.
-- `evidence/stock-module-symbols.tsv`: complete import/export inventory for those modules.
+- `evidence/stock-module-symbols.tsv`: initial central-module import/export inventory.
+- `evidence/stock-usb-module-inventory.tsv`: expanded 42-module hash/location/vermagic/dependency inventory selected from all 471 extracted modules.
+- `evidence/stock-usb-module-symbols.tsv`: expanded complete imports/exports for the 42 modules.
+- `evidence/stock-usb-module-strings.tsv`: reproducibly filtered USB/Type-C/charging strings.
+- `evidence/stock-charger-ufcs-analysis.txt`: all-module/GKI/DT provider audit and charger-framework state disassembly.
 - `evidence/stock-android-usb-services.txt`: live AIDL service and USB property state.
 - `evidence/stock-udc-gadget.txt`: live UDC, configfs and negotiated gadget state.
 - `evidence/stock-platform-bindings.txt`: live platform-device/driver bindings.
@@ -94,7 +99,21 @@ python3 usb-research/scripts/extract_stock_usb_dt.py \
   --overlay slot-b-investigation/device-dumps/dtbo_a.img
 ```
 
-The extractor understands a raw FDT or the first entry of an Android DT table and emits only selected nodes, hashes and container metadata.
+The extractor understands a raw FDT or the first entry of an Android DT table and emits only selected nodes, hashes and container metadata. Expanded binary inventories are reproduced with:
+
+```sh
+python3 usb-research/scripts/extract_stock_usb_module_inventory.py \
+  workspace/gq5012bf1/stock \
+  usb-research/evidence/stock-usb-module-inventory.tsv \
+  usb-research/evidence/stock-usb-module-symbols.tsv \
+  usb-research/evidence/stock-usb-module-strings.tsv
+
+python3 usb-research/scripts/analyze_stock_ufcs.py \
+  workspace/gq5012bf1/stock \
+  workspace/gq5012bf1/stock/boot-unpacked/kernel \
+  workspace/gq5012bf1/stock/vendor_boot-unpacked/dtb \
+  usb-research/evidence/stock-charger-ufcs-analysis.txt
+```
 
 ## Current checkpoint
 
@@ -102,4 +121,4 @@ The stock DT and live runtime already prove that `11201000.usb0` is the MTU3 dua
 
 Those facts prove the **stock configured external data path is High-Speed**. A controlled stock-app test additionally proved that the internal ThermoVue camera is direct root-port device `1-1`, USB `3474:4321`, UVC 1.10, negotiated at 480 Mbit/s through `11200000.xhci0`; external gadget/ADB disconnects while that shared path is active.
 
-None of those facts proves that MT6878T lacks dormant USB3 IP or that this PCB lacks routed SuperSpeed pairs. Those questions remain open pending SoC/donor and physical-board evidence.
+NothingOSS MT6878 source independently confirms the shipped production topology but does not prove the absence of dormant silicon IP. Whether MT6878T has package-accessible U3 hardware and whether GQ5012BF1 routes SuperSpeed pairs remain open pending primary silicon/package documentation and physical-board evidence.

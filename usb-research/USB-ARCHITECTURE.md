@@ -78,19 +78,19 @@ USB-C VBUS + CC negotiation
           └──▶ MT6375 primary charger / BC1.2 / power-path
                          │
                          ├──▶ MediaTek charger framework
-                         │      ├──▶ PD/PPS adapter policy
-                         │      └──▶ UFCS adapter policy
+                         │      ├──▶ PD/PPS adapter/provider path
+                         │      └──▶ UFCS-aware policy [provider not found]
                          │
                          ├──▶ SC8571 master pump @ 11-0066
                          ├──▶ SC8571 slave pump  @ 6-0067
-                         ├──▶ SC8510/SC851x      @ 6-0069
+                         ├──▶ SC8510 config/IRQ shim @ 6-0069
                          ├──▶ SH366003 gauge     @ 9-0055
                          └──▶ battery / system rails
 
 Official sink capability: 120 W
 ```
 
-The protocol-policy and hardware inventory are proven. The exact 120-W live protocol and pump state sequence remains unmeasured.
+The PD/PPS path, UFCS-aware policy and hardware inventory are proven. No operational UFCS provider was found in the extracted kernel/module set. The exact 120-W live protocol and pump state sequence remains unmeasured.
 
 ## 5. External host / OTG / reverse-power path
 

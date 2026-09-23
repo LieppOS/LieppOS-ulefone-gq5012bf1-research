@@ -2,6 +2,26 @@
 
 Overall USB3 verdict: **UNKNOWN — NEED PCB EVIDENCE**, with the shipped design **likely hardware-limited** and stock software conclusively USB2-only.
 
+## Executive reconstruction
+
+GQ5012BF1 does not expose independent internal and external USB controllers. It has one operational MTU3 DRD fabric and one production USB2 XS-PHY path. Ulefone switches that shared fabric between:
+
+```text
+external gadget: Android configfs -> 11201000.usb0 UDC -> USB2 PHY -> Type-C
+external host:   MT6375/extcon -> 11200000.xhci0 -> USB2 PHY -> Type-C
+internal camera: YFT power/route -> 11200000.xhci0 -> direct 3474:4321 UVC
+```
+
+The controlled thermal capture is decisive: launching ThermoVue binds xHCI, enumerates the camera directly at 480 Mbit/s and removes external ADB; returning Home removes the internal tree, and cable replug restores the external gadget. This proves shared operational resources rather than two simultaneously usable ports.
+
+The effective GQ DT and independent NothingOSS MT6878 source both cap MTU3 at High-Speed and reference only a USB2 PHY child. The shared XS-PHY driver contains generic U3 code for sibling SoCs, but MT6878 supplies no production U3 child/resource. Runtime likewise creates no SuperSpeed companion root hub. Stock USB3 software support for this instance is therefore disproven; undocumented silicon/package capability and PCB copper remain unknown.
+
+The charging plane is separate. MT6375 handles CC/PD/VCONN/OTG, MediaTek policy handles PD/PPS, and SC8571 master/slave devices are charger-class pump actuators. SC8510's stock module is only a configuration/debug/IRQ shim. A new all-471-module audit found UFCS-aware policy consumers but no registered provider; `ufcs_type:1` is initialization state, not negotiation proof.
+
+The phase audit in `USB-RESEARCH-COVERAGE-AUDIT.md` marks only two acquisition phases partial: a certified both-orientation external test and physical/FCC board evidence. Neither gap changes the proven stock USB2 topology.
+
+## Required 25 answers
+
 1. **Exact identity of `11201000.usb0`:** `/soc/usb0@11201000`, `compatible = "mediatek,mtu3"`, the sole operational MTU3 dual-role controller. MAC `0x11201000/0x2e00`, IPPC `0x11203e00/0x100`, device IRQ 384. See `USB-CONTROLLER.md`.
 
 2. **Exact stock controller driver:** platform driver `mtu3` from `mtu3.ko`; dynamic host child `11200000.xhci0` binds `xhci-mtk` from `xhci-mtk-hcd-v2.ko`.
@@ -28,7 +48,7 @@ Overall USB3 verdict: **UNKNOWN — NEED PCB EVIDENCE**, with the shipped design
 
 13. **VBUS/VCONN control:** external source VBUS uses MT6375 `usb-otg-vbus` plus GPIO 37; internal accessory power uses GPIO 152. MT6375 TCPC directly controls protected VCONN through its power/VCONN registers.
 
-14. **PD/PPS/UFCS integration:** PD/PPS use MT6375 TCPC, TCPC policy, adapter class and charger framework. UFCS is a separate charger-framework adapter path. These negotiate power and do not imply USB3 data.
+14. **PD/PPS/UFCS integration:** PD/PPS use MT6375 TCPC, TCPC policy, adapter class and charger framework. UFCS-aware policy code searches for a separate `ufcs_adapter`, but an all-471-module/GKI/DT audit found no provider. The logged `ufcs_type:1` is the initialized baseline, not proof of negotiation. None of these power protocols imply USB3 data.
 
 15. **OTG/reverse charging:** TCPC source-role event → `extcon-mtk-usb` → GPIO 37 + MT6375 regulator at 5.25 V/1.8 A → MTU3 host/xHCI. Approximately 9.45 W matches the official 10-W reverse rating.
 
@@ -44,11 +64,11 @@ Overall USB3 verdict: **UNKNOWN — NEED PCB EVIDENCE**, with the shipped design
 
 21. **Can kernel/DT alone enable USB3?** Currently implausible. Required MT6878 U3 registers, clocks, resets, calibration, driver binding and physical lanes are all unidentified.
 
-22. **What must a custom LieppOS kernel implement?** MTU3 gadget/DRD, MediaTek xHCI, calibrated XS-PHY, MT6375 TCPC/VCONN/PD, extcon role/VBUS/GPIO sequencing, charger/BC1.2/PPS/UFCS integration, YFT rail/flag behavior, Android HAL/configfs/VINTF/SELinux and all offload/boost/factory consumers. See `CUSTOM-KERNEL-USB-PLAN.md`.
+22. **What must a custom LieppOS kernel implement?** MTU3 gadget/DRD, MediaTek xHCI, calibrated XS-PHY, MT6375 TCPC/VCONN/PD, extcon role/VBUS/GPIO sequencing, charger/BC1.2/PPS integration, stock-equivalent UFCS-aware policy behavior, YFT rail/flag behavior, Android HAL/configfs/VINTF/SELinux and all offload/boost/factory consumers. See `CUSTOM-KERNEL-USB-PLAN.md`.
 
 23. **What could break the thermal camera?** MTU3/xHCI creation, USB2 PHY tuning, resets/clocks/power domains, autosuspend, DMA/IOMMU, role-switch/GPIO order, BC1.2 arbitration, USB boost and userspace interface claiming. Thermal enumeration, video, radiometry, calibration and return to ADB are mandatory regression gates.
 
-24. **What remains UNKNOWN?** MT6878 transistor/package U3 capability; PCB SS lanes; receptacle contact population; board-connector pinout; physical mux/redriver; exact UFCS provider; exact 120-W protocol/pump sequence; operational DP Alt Mode.
+24. **What remains UNKNOWN?** MT6878 transistor/package U3 capability; PCB SS lanes; receptacle contact population; board-connector pinout; physical mux/redriver; whether this build has any operational UFCS provider despite generic policy code; exact 120-W protocol/pump sequence; operational DP Alt Mode.
 
 25. **Single highest-value next experiment:** on a spare `BM65_SUB_V1.2` and mating mainboard, battery disconnected, continuity-map all eight Type-C SS contacts through the daughterboard and board connector toward the SoC side. This directly tests whether a daughterboard-only path exists without risking the sealed in-service phone.
 

@@ -20,13 +20,31 @@ This high-power charging architecture does not imply SuperSpeed data capability.
 | Component | Stock role | USB relationship | Confidence |
 |---|---|---|---|
 | MT6375 | primary charger + TCPC + OTG VBUS provider + BC1.2 | owns CC/PD, references MTU3 and USB2 PHY, provides `usb-otg-vbus` | PROVEN |
-| SC8571 at `11-0066` | master charge pump | high-power conversion | PROVEN device identity; exact 120-W stage sequencing not dynamically traced here |
-| SC8571 at `6-0067` | slave charge pump | parallel/high-power conversion | PROVEN device identity |
-| SC8510/SC851x at `6-0069` | additional charger/power-conversion path | no proven USB data/role ownership | PROVEN separation from USB routing |
+| SC8571 at `11-0066` | `primary_dvchg`, alias `sc-cp-master` | charger-class charge-pump actuator/ADC leaf | PROVEN |
+| SC8571 at `6-0067` | `secondary_dvchg`, alias `sc-cp-slave` | parallel charger-class charge-pump actuator/ADC leaf | PROVEN |
+| SC8510/SC851x at `6-0069` | 2S switched-capacitor configuration/debug/IRQ shim | registers no charger, power supply, regulator, extcon or USB role and exports no enable/direction API | PROVEN role boundary; board rail use UNKNOWN |
 | SH366003 at `9-0055` | secondary fuel gauge | battery telemetry, not USB data | PROVEN |
 | RT6160 devices | power-management rails | no USB data ownership shown | PROVEN identity; exact rail consumers outside this report |
 
-The MediaTek charger framework and charging algorithms select among ordinary USB, PD, PPS, UFCS and pump-assisted paths.
+The MediaTek charger framework and charging algorithms select among ordinary USB, PD, PPS and pump-assisted paths and contain a generic UFCS-adapter search path.
+
+## Control ownership
+
+| Function | Owning component/path | Evidence boundary |
+|---|---|---|
+| CC attach and polarity | MT6375 TCPC + `tcpc_mt6375.ko` | exact driver control flow |
+| PD message transport | MT6375 TCPC + `tcpc_class.ko` | exact imports/exports and reconstructed driver |
+| PPS PDO/APDO request policy | `mtk_pd_adapter.ko`, `mtk_pd_charging.ko`, charger framework | `tcpm_dpm_pd_get_pps_status` and adapter-class edges |
+| UFCS policy | `mtk_charger_framework.ko` / `mtk_pep40.ko` consumer path | policy proven; provider not found |
+| sink charging policy | MediaTek charger framework + selected algorithm | exact 120-W live selection unmeasured |
+| charge-pump actuation/telemetry | `primary_dvchg` and `secondary_dvchg` SC8571 charger devices | SC8571 itself imports no PD/PPS/adapter policy API |
+| BC1.2 detection | MT6375 charger coordinated with USB2 PHY | Ulefone `yft_usb_flag` gates conflicts |
+| external source VBUS / OTG boost | MT6375 `usb-otg-vbus`, commanded by `extcon-mtk-usb` | exact 5.25-V/1.8-A stock request |
+| USB data role | `extcon-mtk-usb` → MTU3 role switch | independent of sink/source charging algorithm |
+| SC8510 direction/enable | not exposed by the stock SC851x module | external pin/default or other control remains UNKNOWN |
+| battery telemetry | primary MediaTek path plus SH366003 secondary gauge | not a USB data controller |
+
+The exact SC8571 contract is preserved in `kernel/phase4-sc8571-hardware-contract.md`; the SC8510 role boundary is preserved in `kernel/phase4-sc851x-hardware-contract.md`.
 
 ## MT6375 USB2/BC1.2 integration
 
@@ -42,14 +60,17 @@ This lets the charger coordinate BC1.2 detection and USB data-role transitions w
 
 ## 120-W sink charging
 
-Ulefone officially states 120-W wired charging. Stock software exposes PD, PD_PPS and UFCS policy paths, while SC8571 master/slave pumps provide the high-current conversion architecture.
+Ulefone officially states 120-W wired charging. Stock software exposes PD, PD_PPS and UFCS-aware policy paths, while SC8571 master/slave pumps provide the high-current conversion architecture.
 
 Classification:
 
 - advertised 120-W capability: **PROVEN official product specification**;
 - PD/PPS integration: **PROVEN**;
-- UFCS policy path: **PROVEN**;
+- UFCS-aware policy code: **PROVEN**;
+- operational UFCS provider/negotiation: **NOT PROVEN and strongly disfavored by the extracted registration audit**;
 - exact protocol/pump combination used at the 120-W operating point: **UNKNOWN without charger-analyzer and live register trace**.
+
+`evidence/stock-charger-ufcs-analysis.txt` scans all 471 extracted modules. Only `mtk_pd_adapter.ko` imports `adapter_device_register`; the DT names only `pd_adapter`. The framework initializes both protocol state fields to `1`, so the old `ufcs_type:1` log is not affirmative capability evidence.
 
 No 120-W claim should be assigned solely to MT6375's OTG regulator; sink charging uses the wider charger/pump system.
 

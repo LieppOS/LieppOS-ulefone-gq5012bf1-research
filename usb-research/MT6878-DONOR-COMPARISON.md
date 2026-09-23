@@ -46,6 +46,11 @@ The GQ controller/PHY topology is not an accidental minimal reconstruction: it c
 
 The donor `mgk_64_k61_defconfig` builds the same platform pieces as modules: `CONFIG_DEVICE_MODULES_USB_MTU3=m`, `CONFIG_DEVICE_MODULES_USB_XHCI_MTK=m`, and `CONFIG_DEVICE_MODULES_PHY_MTK_XSPHY=m`. It also builds MediaTek USB boost, META, offload and logger modules. There is no MT6878-specific production U3-PHY configuration accompanying them.
 
+The shared `phy-mtk-xsphy.c` source is generically USB3.1-capable: it contains `PHY_TYPE_USB3`, U3 power-on/off, ownership, tuning and efuse paths. This is **driver-family capability**, not MT6878 hardware proof. The same multi-SoC driver is compiled for platforms whose DTs do instantiate U3 children; MT6878's DT never supplies such a child or U3 resource. This distinction prevents both incorrect inferences:
+
+- generic U3 code does not prove MT6878 package pins/PHY hardware;
+- MT6878's U2-only DT does not prove those transistors are absent from undocumented silicon.
+
 ## Comparison with sibling MediaTek source
 
 The same NothingOSS source drop contains other MediaTek SoC descriptions:

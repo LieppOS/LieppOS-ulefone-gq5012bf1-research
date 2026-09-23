@@ -11,12 +11,13 @@ Accessed 2026-09-23. Web claims remain lower confidence than exact stock DT/runt
 | <https://buy2fix.co.uk/products/for-ulefone-armor-29-pro-charging-port-board> | replacement-part listing | dedicated Armor 29 Pro charging-port board, SKU `EDA006599748`; product image | Third-party listing; not a schematic; title does not separately say Thermal variant |
 | <https://www.bobshop.co.za/for-ulefone-armor-29-pro-charging-port-board/p/679058920> | listing mirror | independently repeats SKU `EDA006599748` and original image URL | Marketplace source |
 | <https://img.myipadbox.com/sec/product_raw/EDA006599748.jpg> | listing source image | top side of `BM65_SUB_V1.2` daughterboard: USB-C receptacle, board-to-board connector and components | One side only; no net labels, underside, X-ray or continuity data |
-| <https://fccid.io/2AOWK-5012> | FCC filing index | FCC family `2AOWK-5012`, Shenzhen Gotron model 5012; internal-photo exhibit 8392091 is listed | Cloudflare blocked direct exhibit retrieval in this session |
-| <https://device.report/shenzhen-gotron-electronic/5012> | FCC mirror/index | identifies 12-page internal-photo exhibit, approximately 3.7 MB | Mirror also blocked direct retrieval |
+| <https://fccid.io/2AOWK-5012> | FCC filing index | FCC family `2AOWK-5012`, Shenzhen Gotron model 5012; internal-photo exhibits 8392091/8392022 are listed | Cloudflare blocked direct exhibit retrieval |
+| <https://apps.fcc.gov/eas/GetApplicationAttachment.html?id=8392091> | official FCC attachment endpoint | exact 12-page internal-photo attachment target | Akamai returned Access Denied; no pages were obtained or interpreted |
+| <https://device.report/fccid/2aowk-5012> | FCC mirror/index | identifies 12-page internal-photo exhibit, approximately 3.7 MB | Mirror returned HTTP 403 |
 | PhoneDB MT6878 processor entry | secondary database | claims USB 3.0 / 5 Gbit/s for MT6878 | marked preliminary; no cited primary MediaTek source; conflicts with OEM-published MT6878 kernel topology |
 
 Locally frozen visual evidence:
 
 - `evidence/EDA006599748-armor29pro-charging-board.jpg`, SHA-256 `6930efc7c12ce05f97e2f8ccfaefbc98fa3f2b7d5650b32b0f2d20aee5d1b420`.
 
-The FCC internal-photo exhibit is the best known public next source. Its existence is verified, but no visual conclusion from it is claimed until the actual pages can be obtained and archived.
+The FCC internal-photo exhibit is the best known public next source. Its existence, attachment IDs and approximate size are verified, but direct FCC, FCCID.IO, FCC.Report and Device.Report retrieval paths were access-blocked. No visual conclusion is claimed until the actual pages can be obtained and archived.

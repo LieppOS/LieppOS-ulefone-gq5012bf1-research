@@ -7,7 +7,7 @@ Preserve the complete stock function set before any USB3 experiment:
 - ADB, MTP/PTP and configfs gadget modes;
 - external host/OTG and 10-W reverse power;
 - Type-C orientation, data/power-role swap and VCONN;
-- PD, PPS, UFCS and 120-W charging;
+- PD, PPS and 120-W charging, plus UFCS policy/provider behavior exactly as stock (without claiming an absent provider);
 - internal `3474:4321` thermal-camera enumeration, streaming and radiometry;
 - recovery/factory/META modes;
 - USB audio/offload/boost/logger consumers.
@@ -27,9 +27,9 @@ Preserve the complete stock function set before any USB3 experiment:
 | Type-C mux callback | MediaTek | `mux_switch`; `/soc/typec-mux-switch` | module | binary + reconstructable behavior | MediaTek family | no | proc/sysfs if retained | TCPC callbacks | likely | medium | orientation notify | physical mux still needed |
 | MT6375 charger/OTG | MediaTek + YFT delta | `mt6375-charger`; `chg/otg` | module | donor source; exact GQ delta partial | NothingOSS `mt6375-charger.c` | no external blob known | charger/extcon sysfs | charger service | YES after YFT parity | critical charging risk | YES | YES |
 | PD manager/adapter | MediaTek | `rt_pd_manager`, `mtk_pd_adapter`, `mtk_pd_charging` | modules | donor/public family partial | NothingOSS | adapter/charger policy | power-supply sysfs | charger framework | likely | critical fast-charge risk | charging | charging |
-| charger framework/algorithms | MediaTek | charger class, PE/PD/PPS/UFCS policy | modules | donor source expected; exact parity needed | NothingOSS | charger IC behavior | power-supply policy | vendor charger stack | staged | critical 120-W risk | charging | unrelated to SS |
+| charger framework/algorithms | MediaTek | charger class, PE/PD/PPS/UFCS-aware policy | modules | donor source expected; exact parity needed | NothingOSS | charger IC behavior | power-supply policy | vendor charger stack | staged; no UFCS provider found | critical 120-W risk | charging | unrelated to SS |
 | SC8571 pumps | vendor | master/slave modules | modules | public-family source may exist; exact stock not established | none approved | IC registers | power-supply | charger framework | uncertain | critical battery/thermal | 120 W | no |
-| SC851x path | vendor/Ulefone | `sc851x_charger` | module | reconstructed evidence, exact source uncertain | none approved | IC registers | sysfs if exposed | charger framework | uncertain | high | charging only | no |
+| SC8510 configuration shim | vendor/Ulefone | `sc851x_charger`; `6-0069` | module | clean-room reconstructed | no external donor required | IC registers/defaults/external control unknown | raw debug sysfs | no charger-class dependency | YES for observed shim | high 2S power-path risk | stock power parity | no |
 | YFT thermal rails | Ulefone-specific | `yft_tiny2c_usb`; `/yft_tiny2c_usb` | `vendor_dlkm` module | YES reconstructed | GQ clean-room source | no | `sysfs_yft_file` | ThermoVue Pro | YES | critical thermal regression | YES for thermal | no |
 | thermal userspace | proprietary AC020/libusb/libuvc | `com.energy.tc2c` | APK/JNI | binary only | none | calibration assets | USB permission/domain | ThermoVue Pro | retain stock | critical functionality | YES | no current benefit |
 | USB offload/boost/logger/META | MediaTek modules | several platform nodes | modules | donor source for major pieces | NothingOSS | audio DSP for offload | vendor policy | audio/factory services | staged | medium/high | stock parity | maybe |
@@ -83,7 +83,7 @@ Run, in order:
 4. Type-C cable flip in both orientations;
 5. host OTG enumeration and removal;
 6. 5-V source output, current limit and shutdown cleanup;
-7. PD fixed PDO, PPS and UFCS charger tests with analyzer;
+7. PD fixed-PDO and PPS tests with analyzer; test UFCS only if a provider is first proven to register;
 8. thermal camera `3474:4321` direct-port enumeration;
 9. thermal image, 25-Hz streaming, radiometry and calibration checks;
 10. return from thermal mode to external ADB without reboot;

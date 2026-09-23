@@ -81,9 +81,23 @@ PD/PPS manage power negotiation. They do not imply USB3 data lanes.
 
 ## UFCS
 
-The MediaTek charger framework contains an independent `ufcs_adapter` policy path and logs `pd_type` and `ufcs_type` separately. Existing stock evidence records `pd_type:2, ufcs_type:1`. `mtk_pep40.ko` also searches independently for PD and UFCS adapters.
+The MediaTek charger framework contains an independent `ufcs_adapter` policy path and logs `pd_type` and `ufcs_type` separately. `mtk_pep40.ko` also searches independently for PD and UFCS adapters. This proves **UFCS-aware generic policy**, not a working GQ5012BF1 provider.
 
-Classification: **PROVEN stock UFCS policy integration; exact low-level UFCS adapter provider remains UNKNOWN**. No evidence connects UFCS signaling to MTU3 SuperSpeed data.
+The expanded all-module audit changes the interpretation of the existing `pd_type:2, ufcs_type:1` log:
+
+- `mtk_adapter_protocol_init()` initializes the adjacent PD and UFCS state fields to `1` by storing `0x0000000100000001` before negotiation;
+- among all 471 extracted modules, only `mtk_pd_adapter.ko` imports `adapter_device_register`;
+- only the charger framework and `mtk_pep40.ko` contain `ufcs` strings, and both are consumers/searchers;
+- the GKI kernel contains no `ufcs` string;
+- the raw DT names only `pd_adapter`, not `ufcs_adapter`.
+
+Therefore `ufcs_type:1` is a baseline state, **not proof of UFCS registration or negotiation**. Classification:
+
+- UFCS-aware policy code: **PROVEN**;
+- operational UFCS provider on this stock build: **UNKNOWN, strongly disfavored by the extracted kernel/module set**;
+- live UFCS negotiation: **NOT PROVEN**.
+
+Evidence: `evidence/stock-charger-ufcs-analysis.txt`. No UFCS conclusion affects MTU3/SuperSpeed data capability.
 
 ## DisplayPort Alt Mode
 

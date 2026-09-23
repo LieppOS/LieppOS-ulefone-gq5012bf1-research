@@ -24,10 +24,10 @@ Confidence vocabulary is defined in `README.md`. “DISPROVEN” is scoped to th
 | VCONN control | MT6375 TCPC power/protection registers | `tcpc_mt6375` `set_vconn` | PROVEN | live sourced-VCONN measurement |
 | PD support | MT6375 TCPC + TCPC class + PD manager/adapter | modules, DT, Type-C sysfs | PROVEN | analyzer trace for specific charger |
 | PPS support | charger framework PD_PPS path | power-supply types, stock module strings | PROVEN software support | live PPS negotiation trace |
-| UFCS support | independent `ufcs_adapter` policy path | charger framework/PE4 strings; existing logs | PROVEN policy support | low-level provider/register trace |
+| UFCS support | policy searches for `ufcs_adapter`, but no provider was found | all 471 modules + GKI + DT registration audit; baseline-state disassembly | PROVEN policy awareness; operational support UNKNOWN/strongly disfavored | actual provider or live UFCS analyzer trace |
 | OTG support | MTU3 host + MT6375 source VBUS | DT, extcon contract, stock behavior | PROVEN | new external peripheral capture optional |
 | reverse charging | external Type-C source at ~5.25 V × 1.8 A, consistent with 10 W | official spec + exact extcon/regulator path | STRONGLY_SUPPORTED | inline USB power measurement |
-| 120-W charging | official and backed by PD/PPS/UFCS + dual pumps | official spec; charger inventory | PROVEN product capability | live protocol/pump trace at 120 W |
+| 120-W charging | official and backed by PD/PPS policy plus dual pumps; exact protocol unmeasured | official spec; charger inventory | PROVEN product capability | live protocol/pump trace at 120 W |
 | mainboard SuperSpeed routing | not established | no schematic/continuity/X-ray | UNKNOWN | mainboard photos and continuity/X-ray |
 | board-to-board connector SS lanes | connector visible; net assignment unknown | `EDA006599748` photo | UNKNOWN | exact pinout/continuity |
 | daughterboard SS routing | top side insufficient; no positive SS evidence | replacement-board photo | UNKNOWN | underside, X-ray, continuity |

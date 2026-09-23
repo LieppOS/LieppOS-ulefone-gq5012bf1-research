@@ -27,6 +27,7 @@ REQUIRED_REPORTS = [
     "MT6878-DONOR-COMPARISON.md",
     "CUSTOM-KERNEL-USB-PLAN.md",
     "USB-WEB-SOURCE-LEDGER.md",
+    "USB-RESEARCH-COVERAGE-AUDIT.md",
 ]
 
 REQUIRED_EVIDENCE = [
@@ -35,6 +36,10 @@ REQUIRED_EVIDENCE = [
     "live-usb-dt-nodes.txt",
     "stock-module-metadata.txt",
     "stock-module-symbols.tsv",
+    "stock-usb-module-inventory.tsv",
+    "stock-usb-module-symbols.tsv",
+    "stock-usb-module-strings.tsv",
+    "stock-charger-ufcs-analysis.txt",
     "stock-android-usb-services.txt",
     "stock-udc-gadget.txt",
     "stock-platform-bindings.txt",
@@ -105,6 +110,14 @@ def main() -> int:
     ])
     require_text(evidence / "nothing-mt6878-usb-nodes.txt", [
         'maximum-speed = "high-speed"', "PHY_TYPE_USB2", "status = \"disabled\"",
+    ])
+    inventory_lines = (evidence / "stock-usb-module-inventory.tsv").read_text().splitlines()
+    if len(inventory_lines) != 43:
+        raise AssertionError("expanded stock module inventory must contain 42 data rows")
+    require_text(evidence / "stock-charger-ufcs-analysis.txt", [
+        "modules_scanned=471",
+        "mtk_adapter_protocol_init stores 0x0000000100000001",
+        "Only mtk_pd_adapter.ko imports the",
     ])
     require_text(ROOT / "USB3-FEASIBILITY.md", [
         "UNKNOWN — NEED PCB EVIDENCE", "Single highest-value next experiment",
