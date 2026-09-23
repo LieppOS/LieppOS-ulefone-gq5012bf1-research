@@ -1,0 +1,132 @@
+# Stock UFCS-provider static audit
+stock_root=workspace/gq5012bf1/stock
+modules_scanned=471
+kernel=workspace/gq5012bf1/stock/boot-unpacked/kernel
+kernel_sha256=1f2a9e9b1c1d2533ca649a472c29df42b029b63dac677c5d439a358ede67e722
+dtb=workspace/gq5012bf1/stock/vendor_boot-unpacked/dtb
+dtb_sha256=bc156c29c33d8226230f07888df0a3d7a1e9c4b85c5fd550a4c4bd1a3134c0d4
+charger_framework=workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/mtk_charger_framework.ko
+charger_framework_sha256=c4f3cc9f4d4542be924bb151cebfa9704785188f0e2754e0d67a4bcf2be18f15
+
+## modules containing a case-insensitive UFCS string
+workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/mtk_charger_framework.ko
+  5%s pd_type:%d, ufcs_type:%d, ret:%d, state: %d, set_pri:%d, cnt:%d
+  5%s: evt: pd:%d, ufcs:%d
+  5%s: note : can't find ufcs_adapter
+  5%s: run ufcs_adapter
+  UFCS
+  ufcs_adapter
+workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/mtk_pep40.ko
+  5%s: Error : can't find pd, ufcs adapter
+  5%s: Found ufcs adapter
+  5%s: note : can't find ufcs adapter
+  ufcs_adapter
+
+## modules importing adapter_device_register
+workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/mtk_pd_adapter.ko
+
+## GKI kernel UFCS strings
+(none)
+
+## raw stock DT adapter/UFCS strings
+/pd-adapter
+adapter-name
+mediatek,pd_adapter
+pd-adapter
+pd_adapter
+
+## adapter protocol disassembly
+
+workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/mtk_charger_framework.ko:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+000000000000efec <mtk_adapter_protocol_init>:
+    efec: b20003e9     	mov	x9, #0x100000001        // =4294967297
+    eff0: aa0003e8     	mov	x8, x0
+    eff4: d2c0004a     	mov	x10, #0x200000000       // =8589934592
+    eff8: f9037c09     	str	x9, [x0, #0x6f8]
+    effc: 52800020     	mov	w0, #0x1                // =1
+    f000: f907610a     	str	x10, [x8, #0xec0]
+    f004: b90ec91f     	str	wzr, [x8, #0xec8]
+    f008: f902f91f     	str	xzr, [x8, #0x5f0]
+    f00c: d65f03c0     	ret
+
+000000000000f088 <mtk_adapter_switch_control>:
+    f088: d503233f     	paciasp
+    f08c: a9be7bfd     	stp	x29, x30, [sp, #-0x20]!
+    f090: f9000bf3     	str	x19, [sp, #0x10]
+    f094: 910003fd     	mov	x29, sp
+    f098: b941dc06     	ldr	w6, [x0, #0x1dc]
+    f09c: b946f808     	ldr	w8, [x0, #0x6f8]
+    f0a0: b946fc09     	ldr	w9, [x0, #0x6fc]
+    f0a4: 710008df     	cmp	w6, #0x2
+    f0a8: 54000140     	b.eq	0xf0d0 <mtk_adapter_switch_control+0x48>
+    f0ac: 710004df     	cmp	w6, #0x1
+    f0b0: 540000a0     	b.eq	0xf0c4 <mtk_adapter_switch_control+0x3c>
+    f0b4: 350001e6     	cbnz	w6, 0xf0f0 <mtk_adapter_switch_control+0x68>
+    f0b8: 34000089     	cbz	w9, 0xf0c8 <mtk_adapter_switch_control+0x40>
+    f0bc: 34000328     	cbz	w8, 0xf120 <mtk_adapter_switch_control+0x98>
+    f0c0: 1400001c     	b	0xf130 <mtk_adapter_switch_control+0xa8>
+    f0c4: 35000229     	cbnz	w9, 0xf108 <mtk_adapter_switch_control+0x80>
+    f0c8: 5280004a     	mov	w10, #0x2               // =2
+    f0cc: 14000016     	b	0xf124 <mtk_adapter_switch_control+0x9c>
+    f0d0: 34000288     	cbz	w8, 0xf120 <mtk_adapter_switch_control+0x98>
+    f0d4: 350002e9     	cbnz	w9, 0xf130 <mtk_adapter_switch_control+0xa8>
+    f0d8: 7100091f     	cmp	w8, #0x2
+    f0dc: 54ffff60     	b.eq	0xf0c8 <mtk_adapter_switch_control+0x40>
+    f0e0: b94ec80a     	ldr	w10, [x0, #0xec8]
+    f0e4: 71000d5f     	cmp	w10, #0x3
+    f0e8: 54ffff0a     	b.ge	0xf0c8 <mtk_adapter_switch_control+0x40>
+    f0ec: 14000029     	b	0xf190 <mtk_adapter_switch_control+0x108>
+    f0f0: 34000188     	cbz	w8, 0xf120 <mtk_adapter_switch_control+0x98>
+    f0f4: 52800053     	mov	w19, #0x2               // =2
+    f0f8: 350001e9     	cbnz	w9, 0xf134 <mtk_adapter_switch_control+0xac>
+    f0fc: b90ec013     	str	w19, [x0, #0xec0]
+    f100: 52800093     	mov	w19, #0x4               // =4
+    f104: 1400000c     	b	0xf134 <mtk_adapter_switch_control+0xac>
+    f108: 35000148     	cbnz	w8, 0xf130 <mtk_adapter_switch_control+0xa8>
+    f10c: 7100093f     	cmp	w9, #0x2
+    f110: 54000080     	b.eq	0xf120 <mtk_adapter_switch_control+0x98>
+    f114: b94ec80a     	ldr	w10, [x0, #0xec8]
+    f118: 71000d5f     	cmp	w10, #0x3
+    f11c: 540003ab     	b.lt	0xf190 <mtk_adapter_switch_control+0x108>
+    f120: 5280002a     	mov	w10, #0x1               // =1
+    f124: 52800093     	mov	w19, #0x4               // =4
+    f128: b90ec00a     	str	w10, [x0, #0xec0]
+    f12c: 14000002     	b	0xf134 <mtk_adapter_switch_control+0xac>
+    f130: 52800053     	mov	w19, #0x2               // =2
+    f134: 7100093f     	cmp	w9, #0x2
+    f138: 5280002a     	mov	w10, #0x1               // =1
+    f13c: 1a8a154b     	cinc	w11, w10, eq
+    f140: 7100013f     	cmp	w9, #0x0
+    f144: 52800089     	mov	w9, #0x4                // =4
+    f148: b94ec005     	ldr	w5, [x0, #0xec0]
+    f14c: 1a8b0123     	csel	w3, w9, w11, eq
+    f150: 7100091f     	cmp	w8, #0x2
+    f154: 1a8a154a     	cinc	w10, w10, eq
+    f158: 7100011f     	cmp	w8, #0x0
+    f15c: 1a8a0122     	csel	w2, w9, w10, eq
+    f160: b94ec807     	ldr	w7, [x0, #0xec8]
+    f164: 90000000     	adrp	x0, 0xf000 <mtk_adapter_protocol_init+0x14>
+    f168: 91000000     	add	x0, x0, #0x0
+    f16c: 90000001     	adrp	x1, 0xf000 <mtk_adapter_protocol_init+0x14>
+    f170: 91000021     	add	x1, x1, #0x0
+    f174: 2a1303e4     	mov	w4, w19
+    f178: 94000000     	bl	0xf178 <mtk_adapter_switch_control+0xf0>
+    f17c: 2a1303e0     	mov	w0, w19
+    f180: f9400bf3     	ldr	x19, [sp, #0x10]
+    f184: a8c27bfd     	ldp	x29, x30, [sp], #0x20
+    f188: d50323bf     	autiasp
+    f18c: d65f03c0     	ret
+    f190: 1100054a     	add	w10, w10, #0x1
+    f194: 52800073     	mov	w19, #0x3               // =3
+    f198: b90ec80a     	str	w10, [x0, #0xec8]
+    f19c: 17ffffe6     	b	0xf134 <mtk_adapter_switch_control+0xac>
+
+## bounded interpretation
+mtk_adapter_protocol_init stores 0x0000000100000001 at offsets 0x6f8/0x6fc,
+initializing both adjacent protocol-state fields to integer 1 before negotiation.
+Therefore a log value ufcs_type:1 is an initialized baseline, not by itself proof
+that a UFCS provider registered or negotiated. Only mtk_pd_adapter.ko imports the
+adapter registration API; the raw DT string table names only pd_adapter.
