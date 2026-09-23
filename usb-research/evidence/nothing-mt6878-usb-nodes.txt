@@ -1,0 +1,116 @@
+NothingOSS MT6878 USB donor evidence
+remote=https://github.com/NothingOSS/android_kernel_device_modules_6.1_nothing_mt6878
+commit=957dac185efe46cbf6336b0fff9516d84c8cd78f
+source=device_modules/arch/arm64/boot/dts/mediatek/mt6878.dts
+source_sha256=a8e99530fabc14f1490acac8a720af04bda3428328004762c654f8aa083db617
+
+===== ssusb: usb0@11201000 =====
+10137:		ssusb: usb0@11201000 {
+10138:			compatible = "mediatek,mtu3";
+10139:			reg = <0 0x11201000 0 0x2e00>,
+10140:				<0 0x11203e00 0 0x0100>;
+10141:			reg-names = "mac", "ippc";
+10142:			vusb33-supply = <&mt6369_vusb>;
+10143:			interrupts = <GIC_SPI 384 IRQ_TYPE_LEVEL_HIGH 0>;
+10144:			phy-cells = <1>;
+10145:			phys = <&u2port0 PHY_TYPE_USB2>;
+10146:			clocks = <&topckgen_clk CLK_TOP_USB_TOP_SEL>,
+10147:				<&topckgen_clk CLK_TOP_USB_XHCI_SEL>,
+10148:				<&pericfg_ao_clk CLK_PERAOP_SSUSB0_FRMCNT>;
+10149:			clock-names = "sys_ck", "host_ck", "frmcnt_ck";
+10150:			power-domains = <&scpsys MT6878_POWER_DOMAIN_SSUSB>;
+10151:			#address-cells = <2>;
+10152:			#size-cells = <2>;
+10153:			ranges;
+10154:			dr_mode = "otg";
+10155:			maximum-speed = "high-speed";
+10156:			mediatek,force-vbus;
+10157:			mediatek,clk-mgr;
+10158:			mediatek,noise-still-tr;
+10159:			mediatek,hwrscs-vers = <1>;
+10160:			mediatek,syscon-wakeup = <&pericfg_ao_clk 0x214 105>;
+10161:			wakeup-source;
+10162:			usb-role-switch;
+10163:			cdp-block;
+10164:			typec-name = "rt-pd-manager";
+10165:			typec-port-name = "port0";
+10166:			usb-psy-name = "mtk-master-charger";
+10167:			port {
+10168:				mtu3_drd_switch: endpoint {
+10169:					remote-endpoint = <&usb_role>;
+10170:				};
+10171:			};
+10172:
+10173:			usb_host: xhci0@11200000 {
+10174:				compatible = "mediatek,mtk-xhci";
+10175:				reg = <0 0x11200000 0 0x1000>;
+10176:				reg-names = "mac";
+10177:				interrupts = <GIC_SPI 385 IRQ_TYPE_LEVEL_HIGH 0>;
+10178:				clocks = <&clk26m>;
+10179:				clock-names = "sys_ck";
+10180:				mediatek,usb-offload = <&usb_offload>;
+10181:				status = "okay";
+10182:			};
+10183:		};
+
+===== u2phy: usb-phy0@11f40000 =====
+10185:		u2phy: usb-phy0@11f40000 {
+10186:			compatible = "mediatek,xsphy", "mediatek,mt6878-xsphy";
+10187:			reg = <0 0x11f40000 0 0x400>;
+10188:			reg-names = "u2_port_base";
+10189:			tx-chirpk-capable;
+10190:			#address-cells = <2>;
+10191:			#size-cells = <2>;
+10192:			ranges;
+10193:
+10194:			u2port0: usb2-phy0@11f40000 {
+10195:				reg = <0 0x11f40000 0 0x400>;
+10196:				clocks = <&clk26m>;
+10197:				clock-names = "ref";
+10198:				#phy-cells = <1>;
+10199:				usb2jtag = <&infra_ao_reg_clk 1>;
+10200:				usb2uart;
+10201:				nvmem-cells = <&u2_phy_data>, <&u2_phy_data>;
+10202:				nvmem-cell-names = "intr_cal", "term_cal";
+10203:				nvmem-cell-masks = <0x3f 0xf00>;
+10204:				mediatek,efuse-intr = <0x23>;
+10205:				mediatek,eye-term = <7>;
+10206:				mediatek,eye-vrt = <7>;
+10207:				mediatek,eye-vrt-host = <2>;
+10208:				mediatek,discth= <0x9>;
+10209:			};
+10210:		};
+
+===== u3fpgaphy: usb-phy =====
+10965:	u3fpgaphy: usb-phy {
+10966:		compatible = "mediatek,fpga-u3phy";
+10967:		mediatek,ippc = <0x11203e00>;
+10968:		fpga_i2c_physical_base = <0x11c22000>;
+10969:		status = "disabled";
+10970:
+10971:		u3fpgaport0: usb-phy@0 {
+10972:			chip-id= <0xa60931a>;
+10973:			port = <0>;
+10974:			pclk_phase = <23>;
+10975:			#phy-cells = <1>;
+10976:		};
+10977:	};
+
+===== extcon_usb: extcon-usb =====
+11646:	extcon_usb: extcon-usb {
+11647:		compatible = "mediatek,extcon-usb";
+11648:		vbus-supply = <&mt6375_otg_vbus>;
+11649:		vbus-voltage = <5400000>;
+11650:		vbus-current = <1300000>;
+11651:		vbus-limit-current = <500000>;
+11652:		charger = <&mt6375_chg>;
+11653:		tcpc = "type_c_port0";
+11654:		mediatek,bypss-typec-sink = <1>;
+11655:		mediatek,u2;
+11656:		port {
+11657:			usb_role: endpoint {
+11658:				remote-endpoint = <&mtu3_drd_switch>;
+11659:			};
+11660:		};
+11661:	};
+
