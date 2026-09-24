@@ -1,0 +1,20 @@
+# Next investigation commands
+
+# Boot control HAL search
+adb shell ls -R /vendor 2>/dev/null | grep -i bootctrl
+
+# Search boot control libraries
+adb shell find /vendor /system -iname "*bootcontrol*" 2>/dev/null
+
+# Dump boot properties
+adb shell getprop | grep -Ei "slot|boot|partition"
+
+# Check misc partition
+adb shell ls -l /dev/block/by-name/misc
+
+# Check partition map
+adb shell ls -l /dev/block/by-name/
+
+# MediaTek bootloader strings (requires dumped LK)
+strings lk.bin | grep -Ei "slot|bootctrl|misc|a/b|suffix"
+
