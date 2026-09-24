@@ -1,0 +1,95 @@
+===== EXACT PHASE4 RECIPE =====
+    raise SystemExit("factory boot chain location/flags differ from 3/0")
+if hashlib.sha1(desc.public_key).hexdigest() != "9d808b0995768d0677fccb1efcddb7cf9e153d99":
+    raise SystemExit("factory boot chain public-key fingerprint mismatch")
+output_path.write_bytes(desc.public_key)
+PY
+chmod 0600 "$RUN_DIR/keys/boot.avbpubkey"
+
+printf '\n== Generate child vbmeta images ==\n'
+"$AVBTOOL" make_vbmeta_image \
+    --output "$STAGE/vbmeta_system.img" \
+    --algorithm SHA256_RSA2048 \
+    --key "$KEY_DIR/system.pem" \
+    --rollback_index 0 \
+    --rollback_index_location 0 \
+    --flags 0 \
+    --padding_size 4096 \
+    --include_descriptors_from_image "$STAGE/system.img"
+"$AVBTOOL" make_vbmeta_image \
+    --output "$STAGE/vbmeta_vendor.img" \
+    --algorithm SHA256_RSA2048 \
+    --key "$KEY_DIR/vendor.pem" \
+    --rollback_index 0 \
+    --rollback_index_location 0 \
+
+===== SYSTEM KEY =====
+901233f64c8b5443bca5f6c5043adbb24455ff4641061b31e5b5597cd3245d09  /mnt/SamsungSSD/TIER3/phase4/private/avb-bringup/system.pem
+7ec327ef73c0452ffc116973ef347f83c3300acd51f057b61959369abe031e7b  /mnt/SamsungSSD/TIER3/phase4/controls/keymint-parity-16-20260601/system.parity.avbpubkey
+
+===== ORIGINAL KEY ID =====
+Public key (sha1):        579a140d204d847f0c74332c73996baf1ed6a5fc
+Algorithm:                SHA256_RSA2048
+Rollback Index:           0
+Flags:                    0
+Rollback Index Location:  0
+      Hash Algorithm:        sha1
+      Flags:                 0
+
+===== GENERATE PARITY VBMETA_SYSTEM =====
+
+===== OUTPUT IDENTITY =====
+SIZE=4096 MODE=644
+eb65267939a602680a897249212b7da3daaebd8214b759e90827e837884306f2  /mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231651Z/vbmeta_system.img
+4abbcf32d6d731d538a6924d5a6363df54e354d3a37a5256d007194388f36c63  /mnt/SamsungSSD/TIER3/phase4/controls/keymint-parity-16-20260601/vbmeta_system.parity.img
+
+===== PARITY VBMETA_SYSTEM INFO =====
+Minimum libavb version:   1.0
+Header Block:             256 bytes
+Authentication Block:     320 bytes
+Auxiliary Block:          1088 bytes
+Public key (sha1):        579a140d204d847f0c74332c73996baf1ed6a5fc
+Algorithm:                SHA256_RSA2048
+Rollback Index:           0
+Flags:                    0
+Rollback Index Location:  0
+Release String:           'avbtool 1.3.0'
+Descriptors:
+    Prop: com.android.build.system.os_version -> '16'
+    Prop: com.android.build.system.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.system.security_patch -> '2026-06-01'
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            652840960 bytes
+      Tree Offset:           652840960
+      Tree Size:             5148672 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            657989632
+      FEC size:              5201920 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        system
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           d54fad2c20b6937254bbf3cdc7b730b748098e2f
+      Flags:                 0
+
+===== KEY CONTRACT =====
+ORIG_KEY_SHA1=579a140d204d847f0c74332c73996baf1ed6a5fc
+NEW_KEY_SHA1=579a140d204d847f0c74332c73996baf1ed6a5fc
+SAME_SIGNING_KEY=1
+
+===== DESCRIPTOR GATES =====
+SYSTEM_DESCRIPTOR_PRESENT=1
+ONLY_SYSTEM_DESCRIPTOR=1
+PARITY_SYSTEM_ROOT_DIGEST=d54fad2c20b6937254bbf3cdc7b730b748098e2f
+VBMETA_SYSTEM_ROOT_DIGEST=d54fad2c20b6937254bbf3cdc7b730b748098e2f
+DESCRIPTOR_DIGEST_MATCH=1
+
+===== SELF VERIFY =====
+Verifying image /mnt/SamsungSSD/TIER3/phase4/controls/keymint-parity-16-20260601/verify-vbmeta-system-parity/vbmeta_system.img using key at /mnt/SamsungSSD/TIER3/phase4/private/avb-bringup/system.pem
+vbmeta: Successfully verified SHA256_RSA2048 vbmeta struct in /mnt/SamsungSSD/TIER3/phase4/controls/keymint-parity-16-20260601/verify-vbmeta-system-parity/vbmeta_system.img
+system: Successfully verified sha1 hashtree of /mnt/SamsungSSD/TIER3/phase4/controls/keymint-parity-16-20260601/verify-vbmeta-system-parity/system.img for image of 652840960 bytes
+VBMETA_SYSTEM_VERIFY_RC=0
+
+PHONE_MODIFIED=0
