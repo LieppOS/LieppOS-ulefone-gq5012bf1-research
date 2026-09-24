@@ -3,7 +3,7 @@
 V20 decisively reproduced the pre-early-init failure.
 
 The V20 control added only one unused bare vendor SELinux type relative
-to the V17-working vendor policy.
+to the historical V17 vendor policy artifact.
 
 The next question is whether the failure comes from:
 

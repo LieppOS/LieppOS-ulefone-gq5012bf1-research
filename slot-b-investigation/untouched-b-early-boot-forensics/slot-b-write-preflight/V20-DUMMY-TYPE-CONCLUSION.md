@@ -2,7 +2,7 @@
 
 V20 was designed as a minimal control against V17.
 
-V17 reached Android early-init.
+V17 did not boot successfully; it is a historical policy/artifact baseline only.
 
 V20 differs from V17's vendor SELinux policy by exactly one unused bare
 SELinux type plus its automatically generated object_r roletype:

@@ -1,7 +1,7 @@
 # V20 type-order clarification
 
 V20 decisively reproduced the pre-early-init failure, but its generated
-vendor policy changed in two separable ways relative to working V17:
+vendor policy changed in two separable ways relative to the historical V17 policy artifact:
 
 - vendor type count increased from 181 to 182;
 - the V20 dummy type was inserted at ordinal 155;
