@@ -1,0 +1,261 @@
+lieppos_make_slotb_vendor() {
+
+    SRC="/mnt/SamsungSSD/android/lineage-22.2"
+
+    RESEARCH="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"
+
+    RDIR="$RESEARCH/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight"
+
+    PAIRDIR="$RESEARCH/slot-b-investigation/untouched-b-early-boot-forensics/fixed-vendor-vbmeta-regeneration"
+
+    BUILT_VENDOR="$SRC/out/target/product/armol/vendor.img"
+
+    FIT_VENDOR="$SRC/out/target/product/armol/vendor.slotb-fit.img"
+
+    CHILD="$PAIRDIR/vbmeta_vendor.fixed.img"
+
+    VENDOR_KEY="/mnt/SamsungSSD/TIER3/phase4/private/avb-bringup/vendor.pem"
+
+    AVBTOOL="/home/armol/.local/bin/avbtool"
+
+    TARGET_SIZE=816349184
+    AVB_MAX_ORIGINAL=803381248
+    FIXED_ORIGINAL=800980992
+
+    EXPECTED_BUILT_SHA="850a58b16357597e0fa93f7d5ab9443c85e1b49df33b0e86fa1d2d393044ca50"
+
+    EXPECTED_CHILD_SHA="1ac2a85791813b70f7a901c73d43a19d1358ba0c4158a7e20688f32a2ffe783f"
+
+
+    echo
+    echo "======================================================================"
+    echo "  BUILD SLOT-B-SIZED FIXED vendor.img"
+    echo "======================================================================"
+    echo
+    echo "PHONE_OPERATIONS=0"
+    echo "FLASH_OPERATIONS=0"
+    echo "SUPER_METADATA_CHANGES=0"
+    echo "SLOT_CHANGES=0"
+
+
+    mkdir -p "$RDIR" || {
+        echo "STOP: cannot create research directory"
+        return 2
+    }
+
+
+    ###########################################################################
+    # 1. INPUT IDENTITIES
+    ###########################################################################
+
+    echo
+    echo "===== INPUT PREFLIGHT ====="
+
+
+    if [ ! -f "$BUILT_VENDOR" ]; then
+        echo "STOP: built vendor missing"
+        return 3
+    fi
+
+
+    if [ ! -f "$CHILD" ]; then
+        echo "STOP: fixed vbmeta_vendor missing"
+        return 3
+    fi
+
+
+    if [ ! -f "$VENDOR_KEY" ]; then
+        echo "STOP: vendor signing key missing"
+        return 3
+    fi
+
+
+    BUILT_SHA="$(sha256sum "$BUILT_VENDOR" | awk '{print $1}')"
+
+    CHILD_SHA="$(sha256sum "$CHILD" | awk '{print $1}')"
+
+
+    echo "BUILT_VENDOR_SHA256=$BUILT_SHA"
+    echo "FIXED_VBMETA_VENDOR_SHA256=$CHILD_SHA"
+
+
+    if [ "$BUILT_SHA" != "$EXPECTED_BUILT_SHA" ]; then
+        echo "STOP: built vendor hash changed"
+        return 4
+    fi
+
+
+    if [ "$CHILD_SHA" != "$EXPECTED_CHILD_SHA" ]; then
+        echo "STOP: vbmeta_vendor hash changed"
+        return 4
+    fi
+
+
+    HEADROOM=$((AVB_MAX_ORIGINAL - FIXED_ORIGINAL))
+
+
+    echo
+    echo "CURRENT_VENDOR_B_SIZE=$TARGET_SIZE"
+    echo "AVB_MAX_ORIGINAL_IMAGE=$AVB_MAX_ORIGINAL"
+    echo "FIXED_ORIGINAL_IMAGE=$FIXED_ORIGINAL"
+    echo "AVB_ORIGINAL_IMAGE_HEADROOM=$HEADROOM"
+
+
+    if [ "$FIXED_ORIGINAL" -gt "$AVB_MAX_ORIGINAL" ]; then
+        echo "STOP: fixed filesystem exceeds AVB capacity"
+        return 5
+    fi
+
+
+    echo "FIXED_ORIGINAL_FITS_CURRENT_VENDOR_B_AVB_CAPACITY=1"
+
+
+    ###########################################################################
+    # 2. SAVE ORIGINAL AVB INFO
+    ###########################################################################
+
+    echo
+    echo "===== ORIGINAL FIXED VENDOR AVB INFO ====="
+
+
+    "$AVBTOOL" info_image \
+        --image "$BUILT_VENDOR" \
+        > "$RDIR/vendor-built-avb-info.txt" 2>&1 ||
+    {
+        cat "$RDIR/vendor-built-avb-info.txt"
+        echo "STOP: cannot inspect original fixed vendor"
+        return 6
+    }
+
+
+    sed -n '1,100p' "$RDIR/vendor-built-avb-info.txt"
+
+
+    ###########################################################################
+    # 3. COPY â€ƒ´ NEVER MODIFY BUILD OUTPUT
+    ###########################################################################
+
+    echo
+    echo "===== CREATE WORKING COPY ====="
+
+
+    rm -f "$FIT_VENDOR"
+
+
+    if ! cp --reflink=auto "$BUILT_VENDOR" "$FIT_VENDOR"; then
+        echo "STOP: could not create working copy"
+        return 7
+    fi
+
+
+    COPY_SHA="$(sha256sum "$FIT_VENDOR" | awk '{print $1}')"
+
+
+    echo "PRE_RESIZE_COPY_SHA256=$COPY_SHA"
+
+
+    if [ "$COPY_SHA" != "$BUILT_SHA" ]; then
+        echo "STOP: working copy differs before resize"
+        return 7
+    fi
+
+
+    ###########################################################################
+    # 4. RESIZE AVB ENVELOPE ONLY
+    ###########################################################################
+
+    echo
+    echo "===== AVB RESIZE IMAGE ====="
+
+
+    if "$AVBTOOL" resize_image \
+        --image "$FIT_VENDOR" \
+        --partition_size "$TARGET_SIZE"
+    then
+        echo "AVB_RESIZE_IMAGE=PASS"
+    else
+        RC=$?
+        echo "AVB_RESIZE_IMAGE=FAIL"
+        echo "AVB_RESIZE_RC=$RC"
+        return 8
+    fi
+
+
+    FIT_SIZE="$(stat -c '%s' "$FIT_VENDOR")"
+
+    FIT_SHA="$(sha256sum "$FIT_VENDOR" | awk '{print $1}')"
+
+
+    echo "SLOTB_VENDOR_SIZE=$FIT_SIZE"
+    echo "SLOTB_VENDOR_SHA256=$FIT_SHA"
+
+
+    if [ "$FIT_SIZE" -ne "$TARGET_SIZE" ]; then
+        echo "STOP: resized image is not exact vendor_b size"
+        return 8
+    fi
+
+
+    echo "SLOTB_VENDOR_EXACT_PARTITION_SIZE=1"
+
+
+    ###########################################################################
+    # 5. INSPECT RESIZED IMAGE
+    ###########################################################################
+
+    echo
+    echo "===== RESIZED AVB INFO ====="
+
+
+    "$AVBTOOL" info_image \
+        --image "$FIT_VENDOR" \
+        > "$RDIR/vendor-slotb-fit-avb-info.txt" 2>&1 ||
+    {
+        cat "$RDIR/vendor-slotb-fit-avb-info.txt"
+        echo "STOP: resized image is not parseable by avbtool"
+        return 9
+    }
+
+
+    cat "$RDIR/vendor-slotb-fit-avb-info.txt"
+
+
+    ###########################################################################
+    # 6. COMPARE EMBEDDED VBMETA/DESCRIPTORS EXACTLY
+    #
+    # Exclude outer AVB footer location / total image size.
+    # Everything beginning at "Minimum libavb version" describes the embedded
+    # vbmeta and descriptors and should remain identical.
+    ###########################################################################
+
+    sed -n \
+        '/^Minimum libavb version:/,$p' \
+        "$RDIR/vendor-built-avb-info.txt" \
+        > "$RDIR/vendor-built-semantic-avb.txt"
+
+
+    sed -n \
+        '/^Minimum libavb version:/,$p' \
+        "$RDIR/vendor-slotb-fit-avb-info.txt" \
+        > "$RDIR/vendor-slotb-fit-semantic-avb.txt"
+
+
+    if diff -u \
+        "$RDIR/vendor-built-semantic-avb.txt" \
+        "$RDIR/vendor-slotb-fit-semantic-avb.txt" \
+        > "$RDIR/vendor-resize-semantic.diff"
+    then
+        SEMANTIC_IDENTICAL=1
+    else
+        SEMANTIC_IDENTICAL=0
+    fi
+
+
+    echo
+    echo "EMBEDDED_AVB_SEMANTICS_IDENTICAL=$SEMANTIC_IDENTICAL"
+
+
+    if [ "$SEMANTIC_IDENTICAL" != "1" ]; then
+        echo
+        echo "Unexpected AVB semantic difference:"
+        cat "$RDIR/vendor-resize-semantic.diff"
