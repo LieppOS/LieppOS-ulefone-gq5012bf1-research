@@ -1,0 +1,114 @@
+===== EXACT CUSTOM VOLD STRING =====
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/Keystore.cpp:227:    LOG(WARNING) << "LieppOS V12: bypassing vold Keystore earlyBootEnded";
+
+===== SOURCE CONTEXT =====
+SOURCE_FILE=/mnt/SamsungSSD/android/lineage-22.2/system/vold/Keystore.cpp
+            .alias = std::nullopt,
+    };
+    keyDesc.blob =
+            std::optional<std::vector<uint8_t>>(std::vector<uint8_t>(key.begin(), key.end()));
+
+    ks2::CreateOperationResponse cor;
+    auto rc = securityLevel->createOperation(keyDesc, inParams.vector_data(), true, &cor);
+    if (logKeystore2ExceptionIfPresent(rc, "createOperation")) {
+        if (rc.getExceptionCode() == EX_SERVICE_SPECIFIC)
+            return KeystoreOperation((km::ErrorCode)rc.getServiceSpecificError());
+        else
+            return KeystoreOperation();
+    }
+
+    if (!cor.iOperation) {
+        LOG(ERROR) << "keystore2 createOperation didn't return an operation";
+        return KeystoreOperation();
+    }
+
+    if (outParams && cor.parameters) *outParams = cor.parameters->keyParameter;
+
+    return KeystoreOperation(cor.iOperation, cor.upgradedBlob);
+}
+
+void Keystore::earlyBootEnded() {
+    LOG(WARNING) << "LieppOS V12: bypassing vold Keystore earlyBootEnded";
+    return;
+    ::ndk::SpAIBinder binder(AServiceManager_waitForService(maintenance_service_name));
+    auto maint_service = ks2_maint::IKeystoreMaintenance::fromBinder(binder);
+
+    if (!maint_service) {
+        LOG(ERROR) << "Unable to connect to keystore2 maintenance service for earlyBootEnded";
+        return;
+    }
+
+    auto rc = maint_service->earlyBootEnded();
+    logKeystore2ExceptionIfPresent(rc, "earlyBootEnded");
+}
+
+void Keystore::deleteAllKeys() {
+    ::ndk::SpAIBinder binder(AServiceManager_waitForService(maintenance_service_name));
+    auto maint_service = ks2_maint::IKeystoreMaintenance::fromBinder(binder);
+
+    if (!maint_service) {
+        LOG(ERROR) << "Unable to connect to keystore2 maintenance service for deleteAllKeys";
+        return;
+    }
+
+    auto rc = maint_service->deleteAllKeys();
+    logKeystore2ExceptionIfPresent(rc, "deleteAllKeys");
+}
+
+===== VOLD GIT STATUS =====
+
+===== VOLD HISTORY FOR CUSTOM STRING =====
+
+===== RUNNING A SYSTEM BINARIES =====
+a525a98d85bed7d05c4ec681eeca0ac4c7b81c13c4c4eb2406c37235a21e5d1d  /system/bin/vold
+-rwxr-xr-x 1 root shell 1056768 2026-08-30 04:57 /system/bin/vold
+416862dce4df0ffdf7a4c40e8c45c6ca9803608c7330e0937408bd27686e246e  /system/bin/vdc
+-rwxr-xr-x 1 root shell 119568 2026-08-30 04:56 /system/bin/vdc
+a1ba655592231420ddb2c639de140f3f6e76cffc66e7775444f932a94e25f7ec  /system/bin/keystore2
+-rwxr-xr-x 1 root shell 2370416 2026-08-30 04:57 /system/bin/keystore2
+
+===== RUNNING A VOLD CUSTOM MARKERS =====
+read_key failed in mountFstab
+encrypt_inplace failed in mountFstab
+AIDL::cpp::IVold::mountFstab::cppServer
+decryptWithKeystoreKey failed
+AIDL::cpp::IVold::earlyBootEnded::cppServer
+create_crypto_blk_dev failed in mountFstab
+Unable to connect to keystore2 maintenance service for earlyBootEnded
+mountFstab
+earlyBootEnded
+
+===== B SYSTEM IMAGE =====
+/mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231651Z/system.img SIZE=665391104
+4a0bb9f615e1d2de9c05a2ebb770beda2c9b4e1dc9466dfd6ed6c3a6dd94a8d5  /mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231651Z/system.img
+/mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231651Z/system.img: EROFS filesystem, compat: SB_CHKSUM MTIME, blocksize=12, exslots=0, uuid=bb0b1128-e988-5128-9a1e-81753d044da9, incompat: LZ4_0PADDING
+
+===== FAILED-B KEY ERROR =====
+437-[    4.805136][  T428] servicemanager: Caller(pid=571,uid=1000,sid=u:r:hal_keymint_default:s0) Found android.hardware.security.keymint.IRemotelyProvisionedComponent/default in device VINTF manifest.
+438-[    4.806662][    T1] vdc: vdc terminated by exit(1)
+439-[    4.806672][    T1] vdc: 
+440-[    4.807272][    T1] init: [libfs_mgr] Invalid f2fs superblock on '/dev/block/by-name/userdata'
+441-[    4.807391][    T1] init: [libfs_mgr] mount_with_alternatives(): skipping mount due to invalid magic, mountpoint=/data blk_dev=/dev/block/sdc76 rec[15].fs_type=f2fs
+442:[    4.807573][    T1] init: Calling: /system/bin/vdc cryptfs mountFstab /dev/block/by-name/userdata /data false 
+443-[    4.808072][  T457] mt6878-audio 11050000.mt6878-afe-pcm: mt6878_afe_runtime_suspend() successfully start
+444-[    4.808945][  T457] mt6878-audio 11050000.mt6878-afe-pcm: mtk_audio_sram_init(), size 49152, block_size 4096, block_num 12, virt_addr 0000000003690f91, phys_addr 0x0000000011059000
+445-[    4.808957][  T457] mt6878-audio 11050000.mt6878-afe-pcm: mtk_audio_sram_init(), prefer_mode 0, mode_size[0] 0xc000, mode_size[1] 0x11300
+446-[    4.809072][  T457] mt6878-audio 11050000.mt6878-afe-pcm: mt6878_dai_adda_register() successfully start
+447-[    4.809080][  T457] mt6878-audio 11050000.mt6878-afe-pcm: mt6878_dai_adda_register() failed to read ap_dmic, default not support
+--
+600-[    4.898432][  T457] mtk-charger-cooling charger-cooler: register charger-cooler done
+601-[    4.901384][  T457] mtk-backlight-cooling backlight-cooler: register lcd-backlight done
+602-[    4.905986][  T428] servicemanager: Caller(pid=569,uid=1017,sid=u:r:keystore:s0) Found android.system.keystore2.IKeystoreService/default in framework VINTF manifest.
+603-[    4.907528][  T457] mtk-wifi-cooler wifi-cooler: register wifi-cooler done
+604-[    4.908366][  T428] BpBinder: onLastStrongRef automatically unlinking death recipients: 
+605:[    4.911363][  T447] vold: keystore2 Keystore createOperation returned service specific error: -38
+606:[    4.911394][  T447] vold: decryptWithKeystoreKey failed
+607:[    4.911422][  T447] vold: read_key failed in mountFstab
+608:[    4.911560][  T593] vdc: Command: cryptfs mountFstab /dev/block/by-name/userdata /data false  Failed: Status(-8, EX_SERVICE_SPECIFIC): '0: '
+609-[    4.912497][  T445] [HYN][Info]
+610-[    4.912497][  T445] hyn chipversion: 3,chipmodule: ff,chipproject: 42,chiptype: b7
+611-[    4.912497][  T445] 
+612-[    4.912509][  T445] [HYN]cst8xx_firmware_info: Exit(2485)
+613-[    4.912514][  T445] [HYN]hyn_firmware_info: Exit(2503)
+
+PHONE_MODIFIED=0
