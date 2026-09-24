@@ -1,0 +1,231 @@
+echo
+echo "V20_CIL_MINUS_DUMMY_EQUALS_V17_RC=$CIL_MINUS_DUMMY_CMP_RC"
+echo "BASEATTR_EXACT_RC=$BASEATTR_CMP_RC"
+echo "V20_SIDECARS_EXACT_V17=$SIDECARS_OK"
+echo
+echo "Interpretation:"
+echo "RC=0 for CIL-minus-dummy means V20 vendor_sepolicy.cil becomes"
+echo "byte-identical to V17 after removing only the dummy type and roletype."
+echo
+echo "V20_COMPACT_AUDIT_OK=$AUDIT_OK"
+echo "PHONE_MODIFIED=0"
+} > "$REPORT"
+
+REL="${RDIR#"$RESEARCH/"}"
+
+git -C "$RESEARCH" add -- \
+  "$REL/v17-v20-compact-policy-audit.txt"
+
+git -C "$RESEARCH" diff --cached --quiet -- "$REL" || \
+git -C "$RESEARCH" commit --only \
+  -m "research: verify minimal V20 SELinux delta" \
+  -- "$REL/v17-v20-compact-policy-audit.txt"
+
+echo
+echo "===== FINAL ====="
+echo "V20_CIL_MINUS_DUMMY_EQUALS_V17_RC=$CIL_MINUS_DUMMY_CMP_RC"
+echo "BASEATTR_EXACT_RC=$BASEATTR_CMP_RC"
+echo "V20_SIDECARS_EXACT_V17=$SIDECARS_OK"
+echo "V20_COMPACT_AUDIT_OK=$AUDIT_OK"
+echo "RESEARCH_HEAD=$(git -C "$RESEARCH" rev-parse --short HEAD)"
+echo "PHONE_MODIFIED=0"
+unsetopt ERR_EXIT ERR_RETURN 2>/dev/null || true
+set +e
+
+SRC="/mnt/SamsungSSD/android/lineage-22.2"
+OUT="$SRC/out/target/product/armol"
+
+AVB="/home/armol/.local/bin/avbtool"
+VKEY="/mnt/SamsungSSD/TIER3/phase4/private/avb-bringup/vendor.pem"
+
+RESEARCH="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"
+RDIR="$RESEARCH/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight"
+REPORT="$RDIR/v20-unused-dummy-type-signed-pair.txt"
+
+SRCIMG="$OUT/vendor.img"
+FIXED="$OUT/vendor.v20-unused-dummy-type.fixed.img"
+CHILD="$OUT/vbmeta_vendor.v20-unused-dummy-type.img"
+
+TARGET_SIZE=816349184
+EXPECTED_KEY_SHA1="664998c1c258771293715a829bd8caeae5d5626b"
+
+EXPECTED_FC="0b1eb70cfa67e330efb781eee449a3e0a09da12b5de8bf6bdbeea08eb74a5209"
+EXPECTED_PC="235fddcf0aa520a664567c355245c2d26be20e0935db672629a9c938eb0cb31d"
+EXPECTED_CIL="c601e4ed017ffda81c5fa1a790e3fcf2ff41e9170b0c7b78ac896808f3e480ef"
+EXPECTED_PRE="0bcedd41deb40f3d8e8a2598cbc7fcb7e9c1325c24909b9ca6449aa2449f9c09"
+
+EXPECTED_SCRIPT="8685a0965f414e58ce5901b09737e3cb8a90819a08b3aca72ec37cd491a1a462"
+EXPECTED_CFG="683d5f45ddf50f6091ce5bbcf4b90d3e92b4bd5ebf05bebab0d59ccf8b112c98"
+EXPECTED_MT6878="4b647c9f986e93023aecb2442da6fe2bdb45b137825dd3ce3396261b4ded0878"
+EXPECTED_MTKGKI="e9606e55469f1cf14af83ea55102959d67e64729a84220032ad3dc0d22c3ba6e"
+
+TMP="/tmp/v20-sign"
+rm -rf "$TMP"
+mkdir -p "$TMP"
+
+rm -f "$FIXED" "$CHILD"
+
+echo "===== V20 ARTIFACT GATE ====="
+
+FC="$OUT/vendor/etc/selinux/vendor_file_contexts"
+PC="$OUT/vendor/etc/selinux/vendor_property_contexts"
+CIL="$OUT/vendor/etc/selinux/vendor_sepolicy.cil"
+PRE="$OUT/vendor/etc/selinux/precompiled_sepolicy"
+
+SCRIPT="$OUT/vendor/bin/init.insmod.sh"
+CFG="$OUT/vendor/etc/init.insmod.mt6878.cfg"
+MT6878="$OUT/vendor/etc/init/hw/init.mt6878.rc"
+MTKGKI="$OUT/vendor/etc/init/hw/init.mtkgki.rc"
+
+FC_SHA="$(sha256sum "$FC" | awk '{print $1}')"
+PC_SHA="$(sha256sum "$PC" | awk '{print $1}')"
+CIL_SHA="$(sha256sum "$CIL" | awk '{print $1}')"
+PRE_SHA="$(sha256sum "$PRE" | awk '{print $1}')"
+
+SCRIPT_SHA="$(sha256sum "$SCRIPT" | awk '{print $1}')"
+CFG_SHA="$(sha256sum "$CFG" | awk '{print $1}')"
+MT6878_SHA="$(sha256sum "$MT6878" | awk '{print $1}')"
+MTKGKI_SHA="$(sha256sum "$MTKGKI" | awk '{print $1}')"
+
+POLICY_OK=0
+RUNTIME_OK=0
+SHAPE_OK=0
+
+[ "$FC_SHA" = "$EXPECTED_FC" ] && \
+[ "$PC_SHA" = "$EXPECTED_PC" ] && \
+[ "$CIL_SHA" = "$EXPECTED_CIL" ] && \
+[ "$PRE_SHA" = "$EXPECTED_PRE" ] && \
+POLICY_OK=1
+
+[ "$SCRIPT_SHA" = "$EXPECTED_SCRIPT" ] && \
+[ "$CFG_SHA" = "$EXPECTED_CFG" ] && \
+[ "$MT6878_SHA" = "$EXPECTED_MT6878" ] && \
+[ "$MTKGKI_SHA" = "$EXPECTED_MTKGKI" ] && \
+RUNTIME_OK=1
+
+DUMMY_TYPE_COUNT="$(
+  grep -Ec '^\(type lieppos_v20_dummy_type\)$' "$CIL" || true
+)"
+
+DUMMY_ROLE_COUNT="$(
+  grep -Ec '^\(roletype object_r lieppos_v20_dummy_type\)$' "$CIL" || true
+)"
+
+MTK_HITS="$(
+  grep -c 'vendor_mtk_device_prop' "$CIL" || true
+)"
+
+MODULES_READY_PC="$(
+  grep -Ec '^vendor\.all\.modules\.ready[[:space:]]+' "$PC" || true
+)"
+
+[ "$DUMMY_TYPE_COUNT" = 1 ] && \
+[ "$DUMMY_ROLE_COUNT" = 1 ] && \
+[ "$MTK_HITS" = 0 ] && \
+[ "$MODULES_READY_PC" = 0 ] && \
+SHAPE_OK=1
+
+echo "V20_POLICY_HASHES_OK=$POLICY_OK"
+echo "V20_RUNTIME_EXACT_V16=$RUNTIME_OK"
+echo "V20_DUMMY_SHAPE_OK=$SHAPE_OK"
+
+echo
+echo "===== SOURCE VENDOR IMAGE ====="
+
+SRC_SIZE="$(stat -c %s "$SRCIMG")"
+SRC_SHA="$(sha256sum "$SRCIMG" | awk '{print $1}')"
+
+SRC_ROOT="$(
+  "$AVB" info_image --image "$SRCIMG" 2>/dev/null |
+  awk '/Root Digest:/ {print $3; exit}'
+)"
+
+echo "SOURCE_SIZE=$SRC_SIZE"
+echo "SOURCE_SHA256=$SRC_SHA"
+echo "SOURCE_ROOT_DIGEST=$SRC_ROOT"
+
+echo
+echo "===== RESIZE ====="
+
+cp --reflink=auto "$SRCIMG" "$FIXED"
+
+"$AVB" resize_image \
+  --image "$FIXED" \
+  --partition_size "$TARGET_SIZE"
+
+RESIZE_RC=$?
+
+FIXED_SIZE="$(stat -c %s "$FIXED" 2>/dev/null)"
+FIXED_SHA="$(sha256sum "$FIXED" 2>/dev/null | awk '{print $1}')"
+
+FIXED_ROOT="$(
+  "$AVB" info_image --image "$FIXED" 2>/dev/null |
+  awk '/Root Digest:/ {print $3; exit}'
+)"
+
+echo "RESIZE_RC=$RESIZE_RC"
+echo "FIXED_SIZE=$FIXED_SIZE"
+echo "FIXED_SHA256=$FIXED_SHA"
+echo "FIXED_ROOT_DIGEST=$FIXED_ROOT"
+
+echo
+echo "===== VERIFY FIXED V20 ====="
+
+"$AVB" verify_image --image "$FIXED" >/tmp/v20-fixed-verify.log 2>&1
+FIXED_VERIFY_RC=$?
+
+echo "FIXED_VERIFY_RC=$FIXED_VERIFY_RC"
+
+if [ "$FIXED_VERIFY_RC" != 0 ]; then
+    tail -n 40 /tmp/v20-fixed-verify.log
+fi
+
+echo
+echo "===== CREATE CHILD VBMETA ====="
+
+CHILD_MAKE_RC=99
+
+if [ "$RESIZE_RC" = 0 ] && \
+   [ "$FIXED_SIZE" = "$TARGET_SIZE" ] && \
+   [ "$FIXED_VERIFY_RC" = 0 ] && \
+   [ -n "$SRC_ROOT" ] && \
+   [ "$SRC_ROOT" = "$FIXED_ROOT" ]; then
+
+    "$AVB" make_vbmeta_image \
+      --output "$CHILD" \
+      --key "$VKEY" \
+      --algorithm SHA256_RSA2048 \
+      --rollback_index 0 \
+      --include_descriptors_from_image "$FIXED" \
+      --padding_size 4096
+
+    CHILD_MAKE_RC=$?
+fi
+
+CHILD_SIZE="$(stat -c %s "$CHILD" 2>/dev/null)"
+CHILD_SHA="$(sha256sum "$CHILD" 2>/dev/null | awk '{print $1}')"
+
+echo "CHILD_MAKE_RC=$CHILD_MAKE_RC"
+echo "CHILD_SIZE=$CHILD_SIZE"
+echo "CHILD_SHA256=$CHILD_SHA"
+
+echo
+echo "===== SIGNING KEY ====="
+
+"$AVB" extract_public_key \
+  --key "$VKEY" \
+  --output "$TMP/vendor.avbpub"
+
+KEY_SHA1="$(sha1sum "$TMP/vendor.avbpub" | awk '{print $1}')"
+
+echo "VENDOR_KEY_SHA1=$KEY_SHA1"
+echo "EXPECTED_KEY_SHA1=$EXPECTED_KEY_SHA1"
+
+echo
+echo "===== VERIFY PAIR ====="
+
+PAIR_VERIFY_RC=99
+
+if [ "$CHILD_MAKE_RC" = 0 ]; then
+    cp "$FIXED" "$TMP/vendor.img"
+    cp "$CHILD" "$TMP/vbmeta_vendor.img"
