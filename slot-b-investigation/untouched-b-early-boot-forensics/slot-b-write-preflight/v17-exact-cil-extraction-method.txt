@@ -1,0 +1,431 @@
+echo "DEVICE_COMMIT_RC=$COMMIT_RC"
+echo "DEVICE_HEAD=$DEVICE_HEAD"
+echo "PHONE_MODIFIED=0"
+} > "$REPORT"
+
+REL="${RDIR#"$RESEARCH/"}"
+
+git -C "$RESEARCH" add -- \
+  "$REL/v20-unused-dummy-type-source.txt"
+
+git -C "$RESEARCH" diff --cached --quiet -- "$REL" || \
+git -C "$RESEARCH" commit --only \
+  -m "research: record V20 dummy-type source control" \
+  -- "$REL/v20-unused-dummy-type-source.txt"
+
+echo
+echo "===== FINAL ====="
+echo "V20_SOURCE_OK=$SOURCE_OK"
+echo "DEVICE_COMMIT_RC=$COMMIT_RC"
+echo "DEVICE_HEAD=$DEVICE_HEAD"
+echo "RESEARCH_HEAD=$(git -C "$RESEARCH" rev-parse --short HEAD)"
+echo "PHONE_MODIFIED=0"
+unsetopt ERR_EXIT ERR_RETURN 2>/dev/null || true
+set +e
+
+SRC="/mnt/SamsungSSD/android/lineage-22.2"
+OUT="$SRC/out/target/product/armol"
+DEVICE="$SRC/device/ulefone/armol"
+
+RESEARCH="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"
+RDIR="$RESEARCH/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight"
+REPORT="$RDIR/v20-unused-dummy-type-build.txt"
+
+BLOG="/tmp/v20-unused-dummy-type-build.log"
+
+EXPECTED_DEVICE_HEAD="842e488"
+
+EXPECTED_V17_FC="0b1eb70cfa67e330efb781eee449a3e0a09da12b5de8bf6bdbeea08eb74a5209"
+EXPECTED_V17_PC="235fddcf0aa520a664567c355245c2d26be20e0935db672629a9c938eb0cb31d"
+EXPECTED_V17_CIL="8dd1223b0548bb6f475b8cca488a6e6f20b87b57538af38a2cdd3773423e3692"
+EXPECTED_V17_PRE="343a583f9c9440fa9f7f259421b153b74a114a711902c4faf2fbe1a7b8a44f1f"
+
+EXPECTED_SCRIPT="8685a0965f414e58ce5901b09737e3cb8a90819a08b3aca72ec37cd491a1a462"
+EXPECTED_CFG="683d5f45ddf50f6091ce5bbcf4b90d3e92b4bd5ebf05bebab0d59ccf8b112c98"
+EXPECTED_MT6878="4b647c9f986e93023aecb2442da6fe2bdb45b137825dd3ce3396261b4ded0878"
+EXPECTED_MTKGKI="e9606e55469f1cf14af83ea55102959d67e64729a84220032ad3dc0d22c3ba6e"
+
+echo "===== SOURCE GATE ====="
+
+HEAD="$(git -C "$DEVICE" rev-parse --short HEAD)"
+STATUS="$(git -C "$DEVICE" status --short)"
+
+echo "DEVICE_HEAD=$HEAD"
+
+if [ -n "$STATUS" ]; then
+    printf '%s\n' "$STATUS"
+else
+    echo "DEVICE_TREE_CLEAN=1"
+fi
+
+SOURCE_GATE=1
+
+[ "$HEAD" = "$EXPECTED_DEVICE_HEAD" ] || SOURCE_GATE=0
+[ -z "$STATUS" ] || SOURCE_GATE=0
+
+echo "SOURCE_GATE_OK=$SOURCE_GATE"
+
+BUILD_RC=99
+
+if [ "$SOURCE_GATE" = 1 ]; then
+    echo
+    echo "===== BUILD V20 ====="
+
+    cd "$SRC"
+
+    source build/envsetup.sh >/dev/null 2>&1
+    lunch lineage_armol-bp1a-userdebug >/dev/null 2>&1
+
+    rm -f "$BLOG"
+
+    m vendorimage >"$BLOG" 2>&1
+    BUILD_RC=$?
+
+    echo "BUILD_RC=$BUILD_RC"
+    echo "BUILD_LOG=$BLOG"
+
+    if [ "$BUILD_RC" != 0 ]; then
+        echo
+        echo "===== BUILD LOG TAIL ====="
+        tail -n 100 "$BLOG"
+    fi
+fi
+
+if [ "$BUILD_RC" = 0 ]; then
+
+    FC="$OUT/vendor/etc/selinux/vendor_file_contexts"
+    PC="$OUT/vendor/etc/selinux/vendor_property_contexts"
+    CIL="$OUT/vendor/etc/selinux/vendor_sepolicy.cil"
+    PRE="$OUT/vendor/etc/selinux/precompiled_sepolicy"
+
+    SCRIPT="$OUT/vendor/bin/init.insmod.sh"
+    CFG="$OUT/vendor/etc/init.insmod.mt6878.cfg"
+    MT6878="$OUT/vendor/etc/init/hw/init.mt6878.rc"
+    MTKGKI="$OUT/vendor/etc/init/hw/init.mtkgki.rc"
+
+    echo
+    echo "===== POLICY HASHES ====="
+
+    FC_SHA="$(sha256sum "$FC" | awk '{print $1}')"
+    PC_SHA="$(sha256sum "$PC" | awk '{print $1}')"
+    CIL_SHA="$(sha256sum "$CIL" | awk '{print $1}')"
+    PRE_SHA="$(sha256sum "$PRE" | awk '{print $1}')"
+
+    echo "V20_FILE_CONTEXTS_SHA256=$FC_SHA"
+    echo "V20_PROPERTY_CONTEXTS_SHA256=$PC_SHA"
+    echo "V20_VENDOR_CIL_SHA256=$CIL_SHA"
+    echo "V20_PRECOMPILED_SHA256=$PRE_SHA"
+
+    echo
+    echo "===== SEMANTIC COUNTS ====="
+
+    DUMMY_TYPE_COUNT="$(
+      grep -Ec \
+        '^\(type lieppos_v20_dummy_type\)$' \
+        "$CIL" 2>/dev/null || true
+    )"
+
+    DUMMY_ROLE_COUNT="$(
+      grep -Ec \
+        '^\(roletype object_r lieppos_v20_dummy_type\)$' \
+        "$CIL" 2>/dev/null || true
+    )"
+
+    MTK_CIL_HITS="$(
+      grep -c \
+        'vendor_mtk_device_prop' \
+        "$CIL" 2>/dev/null || true
+    )"
+
+    MODULES_READY_PC_COUNT="$(
+      grep -Ec \
+        '^vendor\.all\.modules\.ready[[:space:]]+' \
+        "$PC" 2>/dev/null || true
+    )"
+
+    INSMOD_CIL_COUNT="$(
+      grep -Ec \
+        '^\(type init_insmod_sh\)$|^\(type init_insmod_sh_exec\)$' \
+        "$CIL" 2>/dev/null || true
+    )"
+
+    INSMOD_FC_COUNT="$(
+      grep -Ec \
+        '/vendor/bin/init\\\.insmod\\\.sh.*init_insmod_sh_exec' \
+        "$FC" 2>/dev/null || true
+    )"
+
+    echo "DUMMY_CIL_TYPE_COUNT=$DUMMY_TYPE_COUNT"
+    echo "DUMMY_CIL_ROLE_COUNT=$DUMMY_ROLE_COUNT"
+    echo "MTK_PROPERTY_CIL_HITS=$MTK_CIL_HITS"
+    echo "MODULES_READY_PROPERTY_CONTEXT_COUNT=$MODULES_READY_PC_COUNT"
+    echo "INSMOD_CIL_TYPE_COUNT=$INSMOD_CIL_COUNT"
+    echo "INSMOD_FILE_CONTEXT_COUNT=$INSMOD_FC_COUNT"
+
+    echo
+    echo "===== V17 BASELINE COMPARISON ====="
+
+    FC_EXACT_V17=0
+    PC_EXACT_V17=0
+    CIL_DIFF_V17=0
+    PRE_DIFF_V17=0
+
+    [ "$FC_SHA" = "$EXPECTED_V17_FC" ] && FC_EXACT_V17=1
+    [ "$PC_SHA" = "$EXPECTED_V17_PC" ] && PC_EXACT_V17=1
+    [ "$CIL_SHA" != "$EXPECTED_V17_CIL" ] && CIL_DIFF_V17=1
+    [ "$PRE_SHA" != "$EXPECTED_V17_PRE" ] && PRE_DIFF_V17=1
+
+    echo "V20_FILE_CONTEXTS_EXACT_V17=$FC_EXACT_V17"
+    echo "V20_PROPERTY_CONTEXTS_EXACT_V17=$PC_EXACT_V17"
+    echo "V20_VENDOR_CIL_DIFFERS_V17=$CIL_DIFF_V17"
+    echo "V20_PRECOMPILED_DIFFERS_V17=$PRE_DIFF_V17"
+
+    echo
+    echo "===== RUNTIME HASHES ====="
+
+    SCRIPT_SHA="$(sha256sum "$SCRIPT" | awk '{print $1}')"
+    CFG_SHA="$(sha256sum "$CFG" | awk '{print $1}')"
+    MT6878_SHA="$(sha256sum "$MT6878" | awk '{print $1}')"
+    MTKGKI_SHA="$(sha256sum "$MTKGKI" | awk '{print $1}')"
+
+    echo "SCRIPT_SHA256=$SCRIPT_SHA"
+    echo "CFG_SHA256=$CFG_SHA"
+    echo "MT6878_SHA256=$MT6878_SHA"
+    echo "MTKGKI_SHA256=$MTKGKI_SHA"
+
+    RUNTIME_OK=0
+
+    [ "$SCRIPT_SHA" = "$EXPECTED_SCRIPT" ] && \
+    [ "$CFG_SHA" = "$EXPECTED_CFG" ] && \
+    [ "$MT6878_SHA" = "$EXPECTED_MT6878" ] && \
+    [ "$MTKGKI_SHA" = "$EXPECTED_MTKGKI" ] && \
+    RUNTIME_OK=1
+
+    echo "V20_RUNTIME_EXACT_V16=$RUNTIME_OK"
+
+    echo
+    echo "===== CIL COMPACT AUDIT ====="
+
+    CIL_BYTES="$(stat -c %s "$CIL")"
+    CIL_LINES="$(wc -l < "$CIL" | tr -d ' ')"
+
+    echo "V20_CIL_BYTES=$CIL_BYTES"
+    echo "V20_CIL_LINES=$CIL_LINES"
+
+    grep -n \
+      'lieppos_v20_dummy_type' \
+      "$CIL" 2>/dev/null || true
+
+    V20_READY=0
+
+    [ "$DUMMY_TYPE_COUNT" = 1 ] && \
+    [ "$DUMMY_ROLE_COUNT" = 1 ] && \
+    [ "$MTK_CIL_HITS" = 0 ] && \
+    [ "$MODULES_READY_PC_COUNT" = 0 ] && \
+    [ "$INSMOD_CIL_COUNT" = 0 ] && \
+    [ "$INSMOD_FC_COUNT" = 0 ] && \
+    [ "$FC_EXACT_V17" = 1 ] && \
+    [ "$PC_EXACT_V17" = 1 ] && \
+    [ "$CIL_DIFF_V17" = 1 ] && \
+    [ "$PRE_DIFF_V17" = 1 ] && \
+    [ "$RUNTIME_OK" = 1 ] && \
+    V20_READY=1
+
+    echo
+    echo "V20_BUILD_READY=$V20_READY"
+
+else
+    V20_READY=0
+fi
+
+{
+echo "# V20 unused dummy-type build"
+echo
+echo "DEVICE_HEAD=$HEAD"
+echo "SOURCE_GATE_OK=$SOURCE_GATE"
+echo "BUILD_RC=$BUILD_RC"
+echo
+echo "DUMMY_CIL_TYPE_COUNT=${DUMMY_TYPE_COUNT:-NA}"
+echo "DUMMY_CIL_ROLE_COUNT=${DUMMY_ROLE_COUNT:-NA}"
+echo "MTK_PROPERTY_CIL_HITS=${MTK_CIL_HITS:-NA}"
+echo "MODULES_READY_PROPERTY_CONTEXT_COUNT=${MODULES_READY_PC_COUNT:-NA}"
+echo "INSMOD_CIL_TYPE_COUNT=${INSMOD_CIL_COUNT:-NA}"
+echo "INSMOD_FILE_CONTEXT_COUNT=${INSMOD_FC_COUNT:-NA}"
+echo
+echo "V20_FILE_CONTEXTS_SHA256=${FC_SHA:-NA}"
+echo "V20_PROPERTY_CONTEXTS_SHA256=${PC_SHA:-NA}"
+echo "V20_VENDOR_CIL_SHA256=${CIL_SHA:-NA}"
+echo "V20_PRECOMPILED_SHA256=${PRE_SHA:-NA}"
+echo
+echo "V20_FILE_CONTEXTS_EXACT_V17=${FC_EXACT_V17:-NA}"
+echo "V20_PROPERTY_CONTEXTS_EXACT_V17=${PC_EXACT_V17:-NA}"
+echo "V20_VENDOR_CIL_DIFFERS_V17=${CIL_DIFF_V17:-NA}"
+echo "V20_PRECOMPILED_DIFFERS_V17=${PRE_DIFF_V17:-NA}"
+echo "V20_RUNTIME_EXACT_V16=${RUNTIME_OK:-NA}"
+echo
+echo "V20_BUILD_READY=$V20_READY"
+echo "PHONE_MODIFIED=0"
+} > "$REPORT"
+
+REL="${RDIR#"$RESEARCH/"}"
+
+git -C "$RESEARCH" add -- \
+  "$REL/v20-unused-dummy-type-build.txt"
+
+git -C "$RESEARCH" diff --cached --quiet -- "$REL" || \
+git -C "$RESEARCH" commit --only \
+  -m "research: build V20 unused SELinux type control" \
+  -- "$REL/v20-unused-dummy-type-build.txt"
+
+echo
+echo "===== FINAL ====="
+echo "SOURCE_GATE_OK=$SOURCE_GATE"
+echo "BUILD_RC=$BUILD_RC"
+echo "DUMMY_CIL_TYPE_COUNT=${DUMMY_TYPE_COUNT:-NA}"
+echo "MTK_PROPERTY_CIL_HITS=${MTK_CIL_HITS:-NA}"
+echo "V20_FILE_CONTEXTS_EXACT_V17=${FC_EXACT_V17:-NA}"
+echo "V20_PROPERTY_CONTEXTS_EXACT_V17=${PC_EXACT_V17:-NA}"
+echo "V20_RUNTIME_EXACT_V16=${RUNTIME_OK:-NA}"
+echo "V20_BUILD_READY=$V20_READY"
+echo "RESEARCH_HEAD=$(git -C "$RESEARCH" rev-parse --short HEAD)"
+echo "PHONE_MODIFIED=0"
+unsetopt ERR_EXIT ERR_RETURN 2>/dev/null || true
+set +e
+
+SRC="/mnt/SamsungSSD/android/lineage-22.2"
+OUT="$SRC/out/target/product/armol"
+EROFS="$SRC/out/host/linux-x86/bin/fsck.erofs"
+
+V17="$OUT/vendor.v17-policy-off.fixed.img"
+V20="$OUT/vendor.img"
+
+RESEARCH="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"
+RDIR="$RESEARCH/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight"
+REPORT="$RDIR/v17-v20-compact-policy-audit.txt"
+
+TMP="/tmp/v17-v20-compact"
+rm -rf "$TMP"
+mkdir -p "$TMP/v17" "$TMP/v20"
+
+echo "===== EXTRACT ====="
+
+"$EROFS" --extract="$TMP/v17" "$V17" >/dev/null 2>&1
+RC17=$?
+
+"$EROFS" --extract="$TMP/v20" "$V20" >/dev/null 2>&1
+RC20=$?
+
+echo "V17_EXTRACT_RC=$RC17"
+echo "V20_EXTRACT_RC=$RC20"
+
+echo
+echo "===== TREE SUMMARY ====="
+
+python3 - "$TMP/v17" "$TMP/v20" <<'PY'
+from pathlib import Path
+import hashlib, os, stat, sys
+
+a = Path(sys.argv[1])
+b = Path(sys.argv[2])
+
+def sha(p):
+    h = hashlib.sha256()
+    with p.open("rb") as f:
+        for c in iter(lambda: f.read(1024*1024), b""):
+            h.update(c)
+    return h.hexdigest()
+
+def tree(root):
+    out = {}
+    for p in root.rglob("*"):
+        rel = str(p.relative_to(root))
+        st = p.lstat()
+
+        if p.is_symlink():
+            out[rel] = ("L", os.readlink(p))
+        elif p.is_file():
+            out[rel] = ("F", st.st_size, sha(p))
+        elif p.is_dir():
+            out[rel] = ("D",)
+    return out
+
+A = tree(a)
+B = tree(b)
+
+only17 = sorted(set(A) - set(B))
+only20 = sorted(set(B) - set(A))
+changed = sorted(p for p in set(A) & set(B) if A[p] != B[p])
+
+print(f"V17_ENTRIES={len(A)}")
+print(f"V20_ENTRIES={len(B)}")
+print(f"ONLY_V17={len(only17)}")
+print(f"ONLY_V20={len(only20)}")
+print(f"CHANGED={len(changed)}")
+
+print("CHANGED_FILES=" + ",".join(changed))
+
+for p in changed:
+    print(f"{p}")
+    print(f"  V17={A[p]}")
+    print(f"  V20={B[p]}")
+PY
+
+V17_CIL="$TMP/v17/etc/selinux/vendor_sepolicy.cil"
+V20_CIL="$TMP/v20/etc/selinux/vendor_sepolicy.cil"
+
+echo
+echo "===== DUMMY TYPE ====="
+
+grep -n -E \
+  '^\(type lieppos_v20_dummy_type\)$|^\(roletype object_r lieppos_v20_dummy_type\)$' \
+  "$V20_CIL" || true
+
+DUMMY_TYPE_COUNT="$(
+  grep -Ec '^\(type lieppos_v20_dummy_type\)$' "$V20_CIL" || true
+)"
+
+DUMMY_ROLE_COUNT="$(
+  grep -Ec '^\(roletype object_r lieppos_v20_dummy_type\)$' "$V20_CIL" || true
+)"
+
+echo "DUMMY_TYPE_COUNT=$DUMMY_TYPE_COUNT"
+echo "DUMMY_ROLE_COUNT=$DUMMY_ROLE_COUNT"
+
+echo
+echo "===== REMOVE ONLY DUMMY LINES ====="
+
+grep -v -E \
+  '^\(type lieppos_v20_dummy_type\)$|^\(roletype object_r lieppos_v20_dummy_type\)$' \
+  "$V20_CIL" > "$TMP/v20-without-dummy.cil"
+
+cmp -s \
+  "$V17_CIL" \
+  "$TMP/v20-without-dummy.cil"
+
+CIL_MINUS_DUMMY_CMP_RC=$?
+
+echo "V20_CIL_MINUS_DUMMY_EQUALS_V17_RC=$CIL_MINUS_DUMMY_CMP_RC"
+
+echo
+echo "===== ANONYMOUS ATTRIBUTE STABILITY ====="
+
+grep -E \
+  '^\(typeattribute base_typeattr_|^\(typeattributeset base_typeattr_' \
+  "$V17_CIL" > "$TMP/v17-baseattrs.txt"
+
+grep -E \
+  '^\(typeattribute base_typeattr_|^\(typeattributeset base_typeattr_' \
+  "$V20_CIL" > "$TMP/v20-baseattrs.txt"
+
+V17_BASEATTR_SHA="$(
+  sha256sum "$TMP/v17-baseattrs.txt" | awk '{print $1}'
+)"
+
+V20_BASEATTR_SHA="$(
+  sha256sum "$TMP/v20-baseattrs.txt" | awk '{print $1}'
+)"
+
+cmp -s \
+  "$TMP/v17-baseattrs.txt" \
+  "$TMP/v20-baseattrs.txt"
+
