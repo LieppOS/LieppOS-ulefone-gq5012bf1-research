@@ -1,28 +1,35 @@
 ===== BOOT_A AVB =====
-Traceback (most recent call last):
-  File "/home/armol/.local/bin/avbtool", line 5052, in <module>
-    tool.run(sys.argv)
-    ~~~~~~~~^^^^^^^^^^
-  File "/home/armol/.local/bin/avbtool", line 4834, in run
-    args.func(args)
-    ~~~~~~~~~^^^^^^
-  File "/home/armol/.local/bin/avbtool", line 4983, in info_image
-    self.avb.info_image(args.image.name, args.output,
-    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                        args.cert, args.output_pubkey)
-                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/armol/.local/bin/avbtool", line 2436, in info_image
-    image = ImageHandler(image_filename, read_only=True)
-  File "/home/armol/.local/bin/avbtool", line 772, in __init__
-    self._read_header()
-    ~~~~~~~~~~~~~~~~~^^
-  File "/home/armol/.local/bin/avbtool", line 797, in _read_header
-    _) = struct.unpack(self.HEADER_FORMAT, header_bin)
-         ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-struct.error: unpack requires a buffer of 28 bytes
+Footer version:           1.0
+Image size:               67108864 bytes
+Original image size:      16523264 bytes
+VBMeta offset:            16523264
+VBMeta size:              1664 bytes
+--
+Minimum libavb version:   1.0
+Header Block:             256 bytes
+Authentication Block:     320 bytes
+Auxiliary Block:          1088 bytes
+Public key (sha1):        9d808b0995768d0677fccb1efcddb7cf9e153d99
+Algorithm:                SHA256_RSA2048
+Rollback Index:           0
+Flags:                    0
+Rollback Index Location:  0
+Release String:           'avbtool 1.3.0'
+Descriptors:
+    Hash descriptor:
+      Image Size:            16523264 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        boot
+      Salt:                  1f2a9e9b1c1d2533ca649a472c29df42b029b63dac677c5d439a358ede67e722
+      Digest:                76709277d79152fb1b9eb9350a50332c21a541a5d20319e100dac2ad0b25de26
+      Flags:                 0
+    Prop: com.android.build.boot.os_version -> '14'
+    Prop: com.android.build.boot.fingerprint -> 'Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys'
+    Prop: com.android.build.boot.security_patch -> '2024-04-05'
 
 ===== BOOT_A VERIFY =====
 Verifying image /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/boot-chain-compare/boot_a.img using embedded public key
+vbmeta: Successfully verified footer and SHA256_RSA2048 vbmeta struct in /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/boot-chain-compare/boot_a.img
 Traceback (most recent call last):
   File "/home/armol/.local/bin/avbtool", line 5052, in <module>
     tool.run(sys.argv)
@@ -39,15 +46,20 @@ Traceback (most recent call last):
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
                           args.accept_zeroed_hashtree)
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/armol/.local/bin/avbtool", line 2559, in verify_image
+  File "/home/armol/.local/bin/avbtool", line 2603, in verify_image
+    elif not desc.verify(image_dir, image_ext, expected_chain_partitions_map,
+             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         image, accept_zeroed_hashtree):
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/armol/.local/bin/avbtool", line 1699, in verify
     image = ImageHandler(image_filename, read_only=True)
   File "/home/armol/.local/bin/avbtool", line 772, in __init__
     self._read_header()
     ~~~~~~~~~~~~~~~~~^^
-  File "/home/armol/.local/bin/avbtool", line 797, in _read_header
-    _) = struct.unpack(self.HEADER_FORMAT, header_bin)
-         ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-struct.error: unpack requires a buffer of 28 bytes
+  File "/home/armol/.local/bin/avbtool", line 787, in _read_header
+    self._image = open(self.filename, 'rb')
+                  ~~~~^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/boot-chain-compare/boot.img'
 BOOT_VERIFY_RC=1
 
 ===== INIT_BOOT_A AVB =====
