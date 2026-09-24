@@ -1,0 +1,38 @@
+===== V20 INSTALL DEVICE COMMANDS =====
+45:SLOT="$(adb shell getprop ro.boot.slot_suffix </dev/null | tr -d '\r')"
+47:CURRENT="$(adb shell 'su -c "bootctl get-current-slot"' </dev/null | tr -d '\r')"
+48:ACTIVE="$(adb shell 'su -c "bootctl get-active-boot-slot"' </dev/null | tr -d '\r')"
+66:  sha256sum "$VENDOR_IMG" 2>/dev/null |
+71:  sha256sum "$CHILD_IMG" 2>/dev/null |
+95:    dmctl delete lieppos_vendor_b_check >/dev/null 2>&1 || true
+96:    dmctl delete lieppos_system_b_check >/dev/null 2>&1 || true
+98:    dmctl create lieppos_vendor_b_check \
+99:      linear 0 1594432 /dev/block/by-name/super 17098384
+101:    dmctl create lieppos_system_b_check \
+102:      linear 0 58208 /dev/block/by-name/super 6301696 \
+103:      linear 58208 673216 /dev/block/by-name/super 14474368 \
+104:      linear 731424 568168 /dev/block/by-name/super 15154088
+108:      adb shell 'su -c "sha256sum /dev/block/mapper/lieppos_vendor_b_check"' </dev/null |
+113:      adb shell 'su -c "dd if=/dev/block/by-name/vbmeta_vendor_b bs=4096 count=1 2>/dev/null | sha256sum"' </dev/null |
+118:      adb shell 'su -c "sha256sum /dev/block/mapper/lieppos_system_b_check"' </dev/null |
+123:      adb shell 'su -c "dd if=/dev/block/by-name/vbmeta_system_b bs=4096 count=1 2>/dev/null | sha256sum"' </dev/null |
+128:      adb shell 'su -c "sha256sum /dev/block/by-name/vbmeta_b"' </dev/null |
+133:    dmctl delete lieppos_vendor_b_check >/dev/null 2>&1 || true
+134:    dmctl delete lieppos_system_b_check >/dev/null 2>&1 || true
+167:      adb shell 'su -c "sha256sum /data/local/tmp/vendor.v20.img"' </dev/null |
+172:      adb shell 'su -c "sha256sum /data/local/tmp/vbmeta_vendor.v20.img"' </dev/null |
+194:    dmctl delete lieppos_vendor_b_rw >/dev/null 2>&1 || true
+196:    dmctl create lieppos_vendor_b_rw \
+197:      linear 0 1594432 /dev/block/by-name/super 17098384
+199:    dd if=/data/local/tmp/vendor.v20.img \
+200:       of=/dev/block/mapper/lieppos_vendor_b_rw \
+219:    dd if=/data/local/tmp/vbmeta_vendor.v20.img \
+220:       of=/dev/block/by-name/vbmeta_vendor_b \
+249:      adb shell 'su -c "sha256sum /dev/block/mapper/lieppos_vendor_b_rw"' </dev/null |
+254:      adb shell 'su -c "dd if=/dev/block/by-name/vbmeta_vendor_b bs=4096 count=1 2>/dev/null | sha256sum"' </dev/null |
+259:      adb shell 'su -c "sha256sum /dev/block/by-name/vbmeta_b"' </dev/null |
+264:      adb shell 'su -c "dd if=/dev/block/by-name/vbmeta_system_b bs=4096 count=1 2>/dev/null | sha256sum"' </dev/null |
+281:dmctl delete lieppos_vendor_b_rw >/dev/null 2>&1 || true
+289:  adb shell 'su -c "bootctl get-current-slot"' </dev/null |
+
+PHONE_MODIFIED=0
