@@ -1,0 +1,171 @@
+    echo "ROOT_VBMETA_B_SHA256=$ROOT_SHA"
+
+    [ "$PRE_VENDOR" = "$EXPECTED_PRE_VENDOR" ] || GATE=0
+    [ "$PRE_CHILD" = "$EXPECTED_PRE_CHILD" ] || GATE=0
+    [ "$SYSTEM_SHA" = "$EXPECTED_SYSTEM" ] || GATE=0
+    [ "$VBMETA_SYSTEM_SHA" = "$EXPECTED_VBMETA_SYSTEM" ] || GATE=0
+    [ "$ROOT_SHA" = "$EXPECTED_ROOT" ] || GATE=0
+fi
+
+echo "PREWRITE_STATE_OK=$GATE"
+
+if [ "$GATE" = 1 ]; then
+    echo
+    echo "===== PUSH V20 ====="
+
+    adb push \
+      "$VENDOR_IMG" \
+      /data/local/tmp/vendor.v20.img
+    PUSH_VENDOR_RC=$?
+
+    adb push \
+      "$CHILD_IMG" \
+      /data/local/tmp/vbmeta_vendor.v20.img
+    PUSH_CHILD_RC=$?
+
+    PUSH_VENDOR="$(
+      adb shell 'su -c "sha256sum /data/local/tmp/vendor.v20.img"' </dev/null |
+      tr -d '\r' | awk '{print $1}'
+    )"
+
+    PUSH_CHILD="$(
+      adb shell 'su -c "sha256sum /data/local/tmp/vbmeta_vendor.v20.img"' </dev/null |
+      tr -d '\r' | awk '{print $1}'
+    )"
+
+    echo "PUSH_VENDOR_RC=$PUSH_VENDOR_RC"
+    echo "PUSH_CHILD_RC=$PUSH_CHILD_RC"
+    echo "PUSH_VENDOR_SHA256=$PUSH_VENDOR"
+    echo "PUSH_CHILD_SHA256=$PUSH_CHILD"
+
+    [ "$PUSH_VENDOR_RC" = 0 ] || GATE=0
+    [ "$PUSH_CHILD_RC" = 0 ] || GATE=0
+    [ "$PUSH_VENDOR" = "$EXPECTED_V20_VENDOR" ] || GATE=0
+    [ "$PUSH_CHILD" = "$EXPECTED_V20_CHILD" ] || GATE=0
+fi
+
+echo "PUSH_GATE_OK=$GATE"
+
+if [ "$GATE" = 1 ]; then
+    echo
+    echo "===== WRITE V20 VENDOR_B ====="
+
+    adb shell 'su -c "
+    dmctl delete lieppos_vendor_b_rw >/dev/null 2>&1 || true
+
+    dmctl create lieppos_vendor_b_rw \
+      linear 0 1594432 /dev/block/by-name/super 17098384
+
+    dd if=/data/local/tmp/vendor.v20.img \
+       of=/dev/block/mapper/lieppos_vendor_b_rw \
+       bs=4M \
+       conv=fsync
+
+    sync
+    "' </dev/null
+
+    VENDOR_WRITE_RC=$?
+
+    echo "VENDOR_WRITE_RC=$VENDOR_WRITE_RC"
+
+    if [ "$VENDOR_WRITE_RC" = 0 ]; then
+        PHONE_MODIFIED=1
+    fi
+
+    echo
+    echo "===== WRITE V20 VBMETA_VENDOR_B ====="
+
+    adb shell 'su -c "
+    dd if=/data/local/tmp/vbmeta_vendor.v20.img \
+       of=/dev/block/by-name/vbmeta_vendor_b \
+       bs=4096 \
+       count=1 \
+       conv=fsync
+
+    sync
+    "' </dev/null
+
+    CHILD_WRITE_RC=$?
+
+    echo "CHILD_WRITE_RC=$CHILD_WRITE_RC"
+
+    if [ "$CHILD_WRITE_RC" = 0 ]; then
+        PHONE_MODIFIED=1
+    fi
+
+    [ "$VENDOR_WRITE_RC" = 0 ] && \
+    [ "$CHILD_WRITE_RC" = 0 ] && \
+    WRITE_DONE=1
+fi
+
+echo
+echo "WRITE_DONE=$WRITE_DONE"
+
+if [ "$WRITE_DONE" = 1 ]; then
+    echo
+    echo "===== POST-WRITE VERIFY ====="
+
+    POST_VENDOR="$(
+      adb shell 'su -c "sha256sum /dev/block/mapper/lieppos_vendor_b_rw"' </dev/null |
+      tr -d '\r' | awk '{print $1}'
+    )"
+
+    POST_CHILD="$(
+      adb shell 'su -c "dd if=/dev/block/by-name/vbmeta_vendor_b bs=4096 count=1 2>/dev/null | sha256sum"' </dev/null |
+      tr -d '\r' | awk '{print $1}'
+    )"
+
+    POST_ROOT="$(
+      adb shell 'su -c "sha256sum /dev/block/by-name/vbmeta_b"' </dev/null |
+      tr -d '\r' | awk '{print $1}'
+    )"
+
+    POST_VBMETA_SYSTEM="$(
+      adb shell 'su -c "dd if=/dev/block/by-name/vbmeta_system_b bs=4096 count=1 2>/dev/null | sha256sum"' </dev/null |
+      tr -d '\r' | awk '{print $1}'
+    )"
+
+    echo "POST_VENDOR_B_SHA256=$POST_VENDOR"
+    echo "POST_VBMETA_VENDOR_B_FIRST4096_SHA256=$POST_CHILD"
+    echo "POST_ROOT_VBMETA_B_SHA256=$POST_ROOT"
+    echo "POST_VBMETA_SYSTEM_B_FIRST4096_SHA256=$POST_VBMETA_SYSTEM"
+
+    [ "$POST_VENDOR" = "$EXPECTED_V20_VENDOR" ] && \
+    [ "$POST_CHILD" = "$EXPECTED_V20_CHILD" ] && \
+    [ "$POST_ROOT" = "$EXPECTED_ROOT" ] && \
+    [ "$POST_VBMETA_SYSTEM" = "$EXPECTED_VBMETA_SYSTEM" ] && \
+    INSTALL_OK=1
+fi
+
+adb shell 'su -c "
+dmctl delete lieppos_vendor_b_rw >/dev/null 2>&1 || true
+
+rm -f \
+  /data/local/tmp/vendor.v20.img \
+  /data/local/tmp/vbmeta_vendor.v20.img
+"' </dev/null
+
+CURRENT_AFTER="$(
+  adb shell 'su -c "bootctl get-current-slot"' </dev/null |
+  tr -d '\r'
+)"
+
+ACTIVE_AFTER="$(
+  adb shell 'su -c "bootctl get-active-boot-slot"' </dev/null |
+  tr -d '\r'
+)"
+
+{
+echo "# V20 unused dummy-type installation"
+echo
+echo "PRE_VENDOR_B_SHA256=$PRE_VENDOR"
+echo "PRE_VBMETA_VENDOR_B_FIRST4096_SHA256=$PRE_CHILD"
+echo
+echo "V20_VENDOR_SHA256=$EXPECTED_V20_VENDOR"
+echo "V20_VBMETA_VENDOR_FIRST4096_SHA256=$EXPECTED_V20_CHILD"
+echo
+echo "SYSTEM_B_SHA256=$SYSTEM_SHA"
+echo "VBMETA_SYSTEM_B_FIRST4096_SHA256=$VBMETA_SYSTEM_SHA"
+echo "ROOT_VBMETA_B_SHA256=$ROOT_SHA"
+echo
+echo "WRITE_DONE=$WRITE_DONE"
