@@ -1,0 +1,588 @@
+===== BOOT HAL SERVICE =====
+Argument to option 'c' missing
+KernelSU
+
+Usage: su [options] [-] [user [argument...]]
+
+Options:
+    -c, --command COMMAND
+                        pass COMMAND to the invoked shell
+    -h, --help          display this help message and exit
+    -l, --login         pretend the shell to be a login shell
+    -p, --preserve-environment 
+                        preserve the entire environment
+    -s, --shell SHELL   use SHELL instead of the default /system/bin/sh
+    -v, --version       display version number and exit
+    -V                  display version code and exit
+    -M, --mount-master  force run in the global mount namespace
+    -g, --group GROUP   Specify the primary group
+    -G, --supp-group GROUP
+                        Specify a supplementary group. The first specified
+                        supplementary group is also used as a primary group if
+                        the option -g is not specified.
+    -W, --no-wrapper    don't use ksu fd wrapper
+        --ksu-no-new-privs 
+                        Prevent this process (and its children) from privilege
+                        re-escalation via KernelSU Next
+/vendor/etc/init/android.hardware.boot-service.mtk.rc:1:service vendor.boot-default /vendor/bin/hw/android.hardware.boot-service.mtk
+/vendor/etc/init/hw/factory_init.rc:16:import /vendor/etc/init/android.hardware.boot@1.2-service.rc
+/vendor/etc/init/hw/factory_init.rc:17:import /vendor/etc/init/android.hardware.boot@1.2-service-lazy.rc
+/vendor/etc/init/hw/meta_init.vendor.rc:14:import /vendor/etc/init/android.hardware.boot-service.mtk.rc
+/vendor/etc/init/hw/meta_init.vendor.rc:15:import /vendor/etc/init/android.hardware.boot-service.mtk-service-lazy.rc
+/vendor/etc/vintf/manifest/android.hardware.boot-service.mtk.xml:3:        <name>android.hardware.boot</name>
+/system/etc/selinux/plat_service_contexts:20:android.hardware.boot.IBootControl/default                           u:object_r:hal_bootctl_service:s0
+/system/etc/vintf/compatibility_matrix.202404.xml:158:        <name>android.hardware.boot</name>
+/system/etc/vintf/compatibility_matrix.202504.xml:157:        <name>android.hardware.boot</name>
+/system/etc/vintf/compatibility_matrix.6.xml:150:        <name>android.hardware.boot</name>
+/system/etc/vintf/compatibility_matrix.7.xml:159:        <name>android.hardware.boot</name>
+/system/etc/vintf/compatibility_matrix.8.xml:159:        <name>android.hardware.boot</name>
+
+===== INIT RC REFERENCES =====
+Argument to option 'c' missing
+KernelSU
+
+Usage: su [options] [-] [user [argument...]]
+
+Options:
+    -c, --command COMMAND
+                        pass COMMAND to the invoked shell
+    -h, --help          display this help message and exit
+    -l, --login         pretend the shell to be a login shell
+    -p, --preserve-environment 
+                        preserve the entire environment
+    -s, --shell SHELL   use SHELL instead of the default /system/bin/sh
+    -v, --version       display version number and exit
+    -V                  display version code and exit
+    -M, --mount-master  force run in the global mount namespace
+    -g, --group GROUP   Specify the primary group
+    -G, --supp-group GROUP
+                        Specify a supplementary group. The first specified
+                        supplementary group is also used as a primary group if
+                        the option -g is not specified.
+    -W, --no-wrapper    don't use ksu fd wrapper
+        --ksu-no-new-privs 
+                        Prevent this process (and its children) from privilege
+                        re-escalation via KernelSU Next
+/vendor/etc/init/android.hardware.boot-service.mtk.rc:1:service vendor.boot-default /vendor/bin/hw/android.hardware.boot-service.mtk
+/vendor/etc/init/android.hardware.usb-aidl-service.mediatek.rc:1:on boot
+/vendor/etc/init/android.hardware.usb.gadget-aidl-service.mediatek.rc:1:on boot
+/vendor/etc/init/atcid.rc:17:on property:sys.boot_completed=1
+/vendor/etc/init/atcid.rc:18:setprop vendor.mtk.atci.boot_completed 1
+/vendor/etc/init/bootperf.rc:1:#====== Capture Boot Systrace ======
+/vendor/etc/init/bootperf.rc:2:on early-init && property:ro.boot.boot_trace=1
+/vendor/etc/init/bootperf.rc:29:   #Trace SystemUI App for booting
+/vendor/etc/init/bootperf.rc:33:on early-init && property:ro.boot.boot_trace=1 && property:ro.boot.perf_event=* && property:ro.boot.perf_intvl=*
+/vendor/etc/init/bootperf.rc:34:   exec_background /system/bin/simpleperf stat -a -e "${ro.boot.perf_event}" --interval "${ro.boot.perf_intvl}"
+/vendor/etc/init/bootperf.rc:37:on late-fs && property:ro.boot.boot_trace=1
+/vendor/etc/init/bootperf.rc:47:on post-fs-data && property:ro.boot.boot_trace=1
+/vendor/etc/init/bootperf.rc:57:on late-init && property:ro.boot.boot_trace=1
+/vendor/etc/init/bootperf.rc:60:on property:sys.boot_completed=* &&  property:ro.boot.boot_trace=1
+/vendor/etc/init/bootperf.rc:61:   #force to disable boot ftrace after boot complete.
+/vendor/etc/init/bootperf.rc:68:on property:persist.vendor.boot_trace=1
+/vendor/etc/init/bootperf.rc:69:   write /proc/bootprof "Persist boot_trace trigger"
+/vendor/etc/init/bootperf.rc:74:   # enable flags for boot Systrace
+/vendor/etc/init/bootperf.rc:101:   #Trace SystemUI App for booting
+/vendor/etc/init/bootperf.rc:105:on property:sys.boot_completed=* && property:persist.vendor.boot_trace=1
+/vendor/etc/init/bootperf.rc:106:   #force to disable boot ftrace after boot complete.
+/vendor/etc/init/boringssl_self_test.rc:6:    reboot_on_failure reboot,boringssl-self-check-failed
+/vendor/etc/init/boringssl_self_test.rc:12:    reboot_on_failure reboot,boringssl-self-check-failed
+/vendor/etc/init/fpsgo.rc:7:on boot
+/vendor/etc/init/gbe.rc:7:on boot
+/vendor/etc/init/gpuserv-default.rc:7:on boot && property:ro.vendor.mtk.gpu.service=1
+/vendor/etc/init/gpuserv-default.rc:10:on boot && property:ro.vendor.mtk.gpu.service=1 && property:ro.vendor.mtk.gpu.service.lazy=1
+/vendor/etc/init/hw/factory_init.connectivity.common.rc:30:on boot
+/vendor/etc/init/hw/factory_init.connectivity.common.rc:77:# start wlan assistant on boot
+/vendor/etc/init/hw/factory_init.connectivity.common.rc:78:on boot
+/vendor/etc/init/hw/factory_init.connectivity.rc:3:on boot
+/vendor/etc/init/hw/factory_init.rc:16:import /vendor/etc/init/android.hardware.boot@1.2-service.rc
+/vendor/etc/init/hw/factory_init.rc:17:import /vendor/etc/init/android.hardware.boot@1.2-service-lazy.rc
+/vendor/etc/init/hw/factory_init.rc:26:import /system/etc/init/art_apex_boot_integrity.rc
+/vendor/etc/init/hw/factory_init.rc:52:    mkdir /linkerconfig/bootstrap 0755
+/vendor/etc/init/hw/factory_init.rc:56:    exec -- /system/bin/bootstrap/linkerconfig --target /linkerconfig/bootstrap
+/vendor/etc/init/hw/factory_init.rc:58:    chmod 644 /linkerconfig/bootstrap/ld.config.txt
+/vendor/etc/init/hw/factory_init.rc:59:    copy /linkerconfig/bootstrap/ld.config.txt /linkerconfig/default/ld.config.txt
+/vendor/etc/init/hw/factory_init.rc:62:    # Mount bootstrap linker configuration as current
+/vendor/etc/init/hw/factory_init.rc:63:    mount none /linkerconfig/bootstrap /linkerconfig bind rec
+/vendor/etc/init/hw/factory_init.rc:68:    # Run apexd-bootstrap so that APEXes that provide critical libraries
+/vendor/etc/init/hw/factory_init.rc:71:    exec_start apexd-bootstrap
+/vendor/etc/init/hw/factory_init.rc:73:    # Generate linker config based on apex mounted in bootstrap namespace
+/vendor/etc/init/hw/factory_init.rc:92:    write /proc/bootprof "INIT: on init start"
+/vendor/etc/init/hw/factory_init.rc:105:    symlink /dev/block/by-name/boot /dev/bootimg
+/vendor/etc/init/hw/factory_init.rc:261:    # Healthd can trigger a full boot from charger mode by signaling this
+/vendor/etc/init/hw/factory_init.rc:263:    on property:sys.boot_from_charger_mode=1
+/vendor/etc/init/hw/factory_init.rc:278:    rm /dev/.booting
+/vendor/etc/init/hw/factory_init.rc:313:    trigger early-boot
+/vendor/etc/init/hw/factory_init.rc:314:    trigger boot
+/vendor/etc/init/hw/factory_init.rc:348:    write /proc/bootprof "INIT:Mount_START"
+/vendor/etc/init/hw/factory_init.rc:349:    start vendor.boot-hal-1-2
+/vendor/etc/init/hw/factory_init.rc:351:    write /proc/bootprof "INIT:Mount_END"
+/vendor/etc/init/hw/factory_init.rc:446:    write /proc/bootprof "INIT:post-fs-data"
+/vendor/etc/init/hw/factory_init.rc:448:    write /proc/bootprof "modprobe: Load_Module_DONE"
+/vendor/etc/init/hw/factory_init.rc:468:    # md32 boot
+/vendor/etc/init/hw/factory_init.rc:473:    write /sys/class/misc/md32/md32_boot 1
+/vendor/etc/init/hw/factory_init.rc:512:    chown radio radio /sys/kernel/ccci/boot
+/vendor/etc/init/hw/factory_init.rc:541:    # A/B update verifier that marks a successful boot.
+/vendor/etc/init/hw/factory_init.rc:548:    # A/B update verifier that marks a successful boot.
+/vendor/etc/init/hw/factory_init.rc:555:    # A/B update verifier that marks a successful boot.
+/vendor/etc/init/hw/factory_init.rc:561:on boot
+/vendor/etc/init/hw/factory_init.rc:564:    setprop vendor.usb.clear boot
+/vendor/etc/init/hw/factory_init.rc:630:    # A/B update verifier that marks a successful boot.
+/vendor/etc/init/hw/factory_init.rc:637:    # A/B update verifier that marks a successful boot.
+/vendor/etc/init/hw/factory_init.rc:654:#   To speed up the booting in meta/factory mode, we don't encrypt the device.
+/vendor/etc/init/hw/factory_init.rc:751:    capabilities BLOCK_SUSPEND NET_RAW NET_ADMIN SYS_ADMIN SYS_BOOT
+/vendor/etc/init/hw/factory_init.rc:805:on property:ro.boot.usbconfig=0 && property:sys.usb.configfs=1 && property:vendor.usb.clear=boot
+/vendor/etc/init/hw/factory_init.rc:808:on property:sys.usb.ffs.ready=1 && property:ro.boot.usbconfig=0 && \
+/vendor/etc/init/hw/factory_init.rc:809:property:sys.usb.configfs=1 && property:vendor.usb.clear=boot
+/vendor/etc/init/hw/factory_init.rc:821:on property:ro.boot.usbconfig=1 && property:sys.usb.configfs=1 && property:vendor.usb.clear=boot
+/vendor/etc/init/hw/init.aee.rc:25:on property:sys.boot_completed=1
+/vendor/etc/init/hw/init.aee.rc:28:on property:persist.vendor.aeev.boot.reason.status=done && property:ro.vendor.aee.convert64=0
+/vendor/etc/init/hw/init.aee.rc:31:on property:persist.vendor.aeev.boot.reason.status=done && property:ro.vendor.aee.convert64=1
+/vendor/etc/init/hw/init.cgroup.rc:2:    # boot perf. tune
+/vendor/etc/init/hw/init.cgroup.rc:17:    # boot perf. tune
+/vendor/etc/init/hw/init.cgroup.rc:29:on property:sys.boot_completed=1
+/vendor/etc/init/hw/init.cgroup.rc:31:    # restore boot perf. tune
+/vendor/etc/init/hw/init.cgroup.rc:46:    write /sys/devices/system/cpu/cpuqos/cpuqos_boot_complete 1
+/vendor/etc/init/hw/init.connectivity.common.rc:40:on boot
+/vendor/etc/init/hw/init.fingerprint.rc:1:on boot
+/vendor/etc/init/hw/init.modem.rc:37:    write /proc/bootprof "post-fs-data: on modem start"
+/vendor/etc/init/hw/init.mt6878.rc:22:    write /proc/bootprof "INIT:early-init"
+/vendor/etc/init/hw/init.mt6878.rc:40:    write /proc/bootprof "INIT:init"
+/vendor/etc/init/hw/init.mt6878.rc:66:    write /proc/bootprof "INIT:late-init"
+/vendor/etc/init/hw/init.mt6878.rc:115:    # Stop bootprof
+/vendor/etc/init/hw/init.mt6878.rc:116:    write /proc/bootprof "0"
+/vendor/etc/init/hw/init.mt6878.rc:119:    write /proc/bootprof "INIT:early-fs"
+/vendor/etc/init/hw/init.mt6878.rc:121:    write /proc/bootprof "INIT:fs"
+/vendor/etc/init/hw/init.mt6878.rc:124:    write /proc/bootprof "INIT:Mount_START"
+/vendor/etc/init/hw/init.mt6878.rc:129:    write /proc/bootprof "INIT:Mount_END"
+/vendor/etc/init/hw/init.mt6878.rc:136:    write /proc/bootprof "INIT:late-fs"
+/vendor/etc/init/hw/init.mt6878.rc:139:    write /proc/bootprof "INIT:Mount_START --late"
+/vendor/etc/init/hw/init.mt6878.rc:143:    write /proc/bootprof "INIT:Mount_END --late"
+/vendor/etc/init/hw/init.mt6878.rc:146:    write /proc/bootprof "INIT:post-fs"
+/vendor/etc/init/hw/init.mt6878.rc:167:    chown system system /proc/bootprof
+/vendor/etc/init/hw/init.mt6878.rc:168:    chmod 0664 /proc/bootprof
+/vendor/etc/init/hw/init.mt6878.rc:170:    chown root system /proc/mtprof/reboot_pid
+/vendor/etc/init/hw/init.mt6878.rc:179:    write /proc/bootprof "INIT:post-fs-data"
+/vendor/etc/init/hw/init.mt6878.rc:181:    write /proc/bootprof "modprobe: Load_Module_DONE"
+/vendor/etc/init/hw/init.mt6878.rc:195:    # boot time fs tune
+/vendor/etc/init/hw/init.mt6878.rc:681:    chmod 0640 /mtd@bootimg
+/vendor/etc/init/hw/init.mt6878.rc:682:    chown root system /mtd@bootimg
+/vendor/etc/init/hw/init.mt6878.rc:753:    write /proc/bootprof "INIT:zygote-start"
+/vendor/etc/init/hw/init.mt6878.rc:755:on early-boot
+/vendor/etc/init/hw/init.mt6878.rc:756:    write /proc/bootprof "INIT:early-boot"
+/vendor/etc/init/hw/init.mt6878.rc:776:on boot
+/vendor/etc/init/hw/init.mt6878.rc:777:    write /proc/bootprof "INIT:boot"
+/vendor/etc/init/hw/init.mt6878.rc:967:    write /proc/bootprof "INIT:vold.decrypt=trigger_reset_main"
+/vendor/etc/init/hw/init.mt6878.rc:968:    setprop sys.boot_completed 0
+/vendor/etc/init/hw/init.mt6878.rc:969:    setprop dev.bootcomplete 0
+/vendor/etc/init/hw/init.mt6878.rc:972:    write /proc/bootprof "INIT:vold.decrypt=trigger_post_fs_data"
+/vendor/etc/init/hw/init.mt6878.rc:975:    write /proc/bootprof "INIT:vold.decrypt=trigger_restart_min_framework"
+/vendor/etc/init/hw/init.mt6878.rc:980:    write /proc/bootprof "INIT:vold.decrypt=trigger_restart_framework"
+/vendor/etc/init/hw/init.mt6878.rc:985:    write /proc/bootprof "INIT:vold.decrypt=trigger_shutdown_framework"
+/vendor/etc/init/hw/init.mt6878.rc:986:    setprop sys.boot_completed 0
+/vendor/etc/init/hw/init.mt6878.rc:987:    setprop dev.bootcomplete 0
+/vendor/etc/init/hw/init.mt6878.rc:997:# end boot time fs tune
+/vendor/etc/init/hw/init.mt6878.rc:998:on property:sys.boot_completed=1
+/vendor/etc/init/hw/init.mt6878.rc:1016:on property:sys.boot_completed=1
+/vendor/etc/init/hw/init.mt6878.rc:1018:    # stop bootprof
+/vendor/etc/init/hw/init.mt6878.rc:1019:    write /proc/bootprof 0
+/vendor/etc/init/hw/init.mt6878.rc:1056:on property:ro.boot.slot_suffix=_a
+/vendor/etc/init/hw/init.mt6878.rc:1060:on property:ro.boot.slot_suffix=_b
+/vendor/etc/init/hw/init.mt6878.rc:1091:    capabilities BLOCK_SUSPEND NET_RAW NET_ADMIN SYS_ADMIN SYS_BOOT
+/vendor/etc/init/hw/init.mt6878.rc:1097:on property:sys.boot_completed=1 && property:ro.boot.atm=enable
+/vendor/etc/init/hw/init.mt6878.rc:1116:on boot
+/vendor/etc/init/hw/init.mt6878.rc:1118:on boot
+/vendor/etc/init/hw/init.mt6878.usb.rc:50:on boot
+/vendor/etc/init/hw/init.mt6878.usb.rc:115:on property:ro.bootmode=charger && property:ro.debuggable=0
+/vendor/etc/init/hw/init.mt6878.usb.rc:118:on property:ro.bootmode=charger && property:ro.debuggable=1 && property:ro.vendor.usb.kpoc_adb=0
+/vendor/etc/init/hw/init.mt6878.usb.rc:128:on property:ro.bootmode=charger && property:ro.debuggable=1 && property:ro.vendor.usb.kpoc_adb=1
+/vendor/etc/init/hw/init.mt6878.usb.rc:722:on property:persist.vendor.radio.port_index="0" && property:sys.boot_completed=1
+/vendor/etc/init/hw/init.mt6878.usb.rc:729:on property:persist.vendor.radio.port_index="1" && property:sys.boot_completed=1
+/vendor/etc/init/hw/init.mt6878.usb.rc:744:on property:persist.vendor.radio.port_index="2" && property:sys.boot_completed=1
+/vendor/etc/init/hw/init.mt6878.usb.rc:755:on property:persist.vendor.radio.port_index="3" && property:sys.boot_completed=1
+/vendor/etc/init/hw/init.mt6878.usb.rc:768:on property:persist.vendor.radio.port_index="4" && property:sys.boot_completed=1
+/vendor/etc/init/hw/init.mt6878.usb.rc:800:on property:persist.vendor.radio.port_index="1,4" && property:sys.boot_completed=1
+/vendor/etc/init/hw/init.mtkgki.rc:10:    write /proc/bootprof "modprobe: Load_Module_START"
+/vendor/etc/init/hw/init.project.rc:48:    # Therefore, if the target doesn't support sd hot-plugging (Ex: the SD card slot in a battery compartment), we need to export SECONDARY_STORAGE in 'boot' section
+/vendor/etc/init/hw/init.project.rc:57:on property:sys.boot_completed=1
+/vendor/etc/init/hw/init.stnfc.rc:2:# This file needs to be executed by vendor_init at boot of the device,
+/vendor/etc/init/hw/init.yft.rc:23:on boot
+/vendor/etc/init/hw/init_conninfra.rc:9:on boot
+/vendor/etc/init/hw/meta_init.connectivity.common.rc:29:on boot
+/vendor/etc/init/hw/meta_init.connectivity.common.rc:82:# start wlan assistant on boot
+/vendor/etc/init/hw/meta_init.connectivity.common.rc:83:on boot
+/vendor/etc/init/hw/meta_init.connectivity.rc:11:on boot
+/vendor/etc/init/hw/meta_init.modem.rc:9:    write /proc/bootprof "post-fs-data: on meta modem start"
+/vendor/etc/init/hw/meta_init.modem.rc:20:    chown radio radio /sys/kernel/ccci/boot
+/vendor/etc/init/hw/meta_init.rc:63:    write /proc/bootprof "INIT:early-init"
+/vendor/etc/init/hw/meta_init.rc:77:    write /proc/bootprof "INIT:init"
+/vendor/etc/init/hw/meta_init.rc:90:    symlink /dev/block/by-name/boot /dev/bootimg
+/vendor/etc/init/hw/meta_init.rc:122:    write /proc/bootprof "INIT:fs"
+/vendor/etc/init/hw/meta_init.rc:147:    write /proc/bootprof "INIT:Mount_START"
+/vendor/etc/init/hw/meta_init.rc:150:    write /proc/bootprof "INIT:Mount_END"
+/vendor/etc/init/hw/meta_init.rc:154:    write /proc/bootprof "INIT:post-fs"
+/vendor/etc/init/hw/meta_init.rc:180:    chown system system /proc/bootprof
+/vendor/etc/init/hw/meta_init.rc:185:    write /proc/bootprof "INIT:late-fs"
+/vendor/etc/init/hw/meta_init.rc:205:    write /proc/bootprof "INIT:post-fs-data"
+/vendor/etc/init/hw/meta_init.rc:207:    write /proc/bootprof "modprobe: Load_Module_DONE"
+/vendor/etc/init/hw/meta_init.rc:235:on boot
+/vendor/etc/init/hw/meta_init.rc:236:    write /proc/bootprof "INIT:boot"
+/vendor/etc/init/hw/meta_init.rc:256:on property:ro.bootmode=meta
+/vendor/etc/init/hw/meta_init.rc:263:#   To speed up the booting in meta/factory mode, we don't encrypt the device.
+/vendor/etc/init/hw/meta_init.rc:304:    capabilities BLOCK_SUSPEND NET_RAW NET_ADMIN SYS_ADMIN SYS_BOOT
+/vendor/etc/init/hw/meta_init.rc:325:on property:ro.boot.usbconfig=0 && property:sys.usb.configfs=1
+/vendor/etc/init/hw/meta_init.rc:326:    write /proc/bootprof "INIT:start adbd"
+/vendor/etc/init/hw/meta_init.rc:329:on property:sys.usb.ffs.ready=1 && property:ro.boot.usbconfig=0 && property:sys.usb.configfs=1
+/vendor/etc/init/hw/meta_init.rc:330:    write /proc/bootprof "INIT:on property:ro.boot.usbconfig=0"
+/vendor/etc/init/hw/meta_init.rc:340:on property:ro.boot.usbconfig=1 && property:sys.usb.configfs=1
+/vendor/etc/init/hw/meta_init.rc:341:    write /proc/bootprof "INIT:on property:ro.boot.usbconfig 1"
+/vendor/etc/init/hw/meta_init.rc:351:on property:ro.boot.usbconfig=2 && property:sys.usb.configfs=1
+/vendor/etc/init/hw/meta_init.rc:352:    write /proc/bootprof "INIT:on property:ro.boot.usbconfig 2"
+/vendor/etc/init/hw/meta_init.rc:364:on property:ro.boot.usbconfig=3 && property:sys.usb.configfs=1
+/vendor/etc/init/hw/meta_init.rc:365:    write /proc/bootprof "INIT:start adbd"
+/vendor/etc/init/hw/meta_init.rc:368:on property:sys.usb.ffs.ready=1 && property:ro.boot.usbconfig=3 && property:sys.usb.configfs=1
+/vendor/etc/init/hw/meta_init.rc:369:    write /proc/bootprof "INIT:on property:ro.boot.usbconfig 3"
+/vendor/etc/init/hw/meta_init.vendor.rc:14:import /vendor/etc/init/android.hardware.boot-service.mtk.rc
+/vendor/etc/init/hw/meta_init.vendor.rc:15:import /vendor/etc/init/android.hardware.boot-service.mtk-service-lazy.rc
+/vendor/etc/init/init.cccimdinit.rc:14:#   chown radio radio /sys/class/BOOT/BOOT/boot/md
+/vendor/etc/init/init.cccimdinit.rc:15:    chown radio radio /sys/kernel/ccci/boot
+/vendor/etc/init/init.change_node.rc:1:on boot
+/vendor/etc/init/init.frs.rc:8:on property:sys.boot_completed=1
+/vendor/etc/init/init.tinylcd.rc:1:on boot
+/vendor/etc/init/init.wlan_drv.rc:2:# start wlan assistant on boot
+/vendor/etc/init/init.wlan_drv.rc:3:on boot
+/vendor/etc/init/loghidlvendorservice.rc:2:#on boot
+/vendor/etc/init/loghidlvendorservice.rc:16: on property:sys.boot_completed=1 && property:ro.boot.atm=enable
+/vendor/etc/init/mtklog.rc:1:on property:sys.boot_completed=1 && property:ro.build.type=eng
+/vendor/etc/init/mtklog.rc:3:on property:sys.boot_completed=1 && property:ro.build.type=userdebug
+/vendor/etc/init/mtklog.rc:6:on property:sys.boot_completed=1
+/vendor/etc/init/touch_boost.rc:6:on boot
+/vendor/etc/init/trustkernel.rc:2:	write /proc/bootprof "tkcore: prepare system ta path"
+/vendor/etc/init/trustkernel.rc:17:	write /proc/bootprof "tkcore: prepare basic"
+/vendor/etc/init/trustkernel.rc:22:	write /proc/bootprof "tkcore: prepare sfs"
+/vendor/etc/init/trustkernel.rc:27:	write /proc/bootprof "tkcore: prepare service provider ta path"
+/vendor/etc/init/trustkernel.rc:54:	write /proc/bootprof "tkcore: prepare log file"
+/vendor/etc/init/vendor.mediatek.hardware.mtkpower@1.0-init.rc:1:on property:sys.boot_completed=1
+/vendor/etc/init/vendor.mediatek.hardware.mtkpower@1.0-init.rc:2:    setprop vendor.powerhal.boot_complete 1
+/vendor/etc/init/vendor.yft.hardware.changenode@1.0-service.rc:3:    # in /data. As a workaround, postpone startup until later in boot once
+/vendor/etc/init/vendor.yft.hardware.gesturewake@1.0-service.rc:3:    # in /data. As a workaround, postpone startup until later in boot once
+/vendor/etc/init/vendor.yft.hardware.obtainvendor@1.0-service.rc:3:    # in /data. As a workaround, postpone startup until later in boot once
+/vendor/etc/init/vendor.yft.hardware.tinylcd@1.0-service.rc:3:    # in /data. As a workaround, postpone startup until later in boot once
+/vendor/etc/init/volte_clientapi_ua.rc:4:on property:sys.boot_completed=1 && property:persist.vendor.clientapi_support=1
+/system/etc/init/aconfigd.rc:30:    mkdir /metadata/aconfig/boot 0775 root system
+/system/etc/init/aconfigd.rc:37:    mkdir /metadata/aconfig/boot 0775 root system
+/system/etc/init/android.hardware.biometrics.fingerprint@2.1-service.oplus.rc:3:    # in /data. As a workaround, postpone startup until later in boot once
+/system/etc/init/android.hardware.biometrics.fingerprint@2.1-service.oppo.rc:3:    # in /data. As a workaround, postpone startup until later in boot once
+/system/etc/init/apexd.rc:8:    reboot_on_failure reboot,apexd-failed
+/system/etc/init/apexd.rc:13:service apexd-bootstrap /system/bin/apexd --bootstrap
+/system/etc/init/apexd.rc:18:    reboot_on_failure reboot,bootloader,bootstrap-apexd-failed
+/system/etc/init/apexd.rc:20:    # apexd-bootstrap doesn't manage apexdata snapshot & restore, hence no need for other capabilities.
+/system/etc/init/atrace.rc:311:on late-init && property:ro.boot.fastboot.boottrace=
+/system/etc/init/atrace.rc:318:on late-init && property:ro.boot.hypervisor.vm.supported=1
+/system/etc/init/atrace.rc:560:on property:sys.boot_completed=1
+/system/etc/init/atrace.rc:566:on property:persist.debug.atrace.boottrace=1
+/system/etc/init/atrace.rc:567:    start boottrace
+/system/etc/init/atrace.rc:570:service boottrace /system/bin/atrace --async_start -f /data/misc/boottrace/categories
+/system/etc/init/bootanim.rc:1:service bootanim /system/bin/bootanimation
+/system/etc/init/bootstat.rc:1:# This file is the LOCAL_INIT_RC file for the bootstat command.
+/system/etc/init/bootstat.rc:3:# Mirror bootloader boot reason to system boot reason
+/system/etc/init/bootstat.rc:4:# ro.boot.bootreason should be set by init already
+/system/etc/init/bootstat.rc:6:on post-fs && property:ro.boot.bootreason=*
+/system/etc/init/bootstat.rc:7:    setprop sys.boot.reason ${ro.boot.bootreason}
+/system/etc/init/bootstat.rc:10:    mkdir /data/misc/bootstat 0700 system log
+/system/etc/init/bootstat.rc:13:    chown system log /data/misc/bootstat/absolute_boot_time
+/system/etc/init/bootstat.rc:14:    chown system log /data/misc/bootstat/boot_complete
+/system/etc/init/bootstat.rc:15:    chown system log /data/misc/bootstat/boot_complete_no_encryption
+/system/etc/init/bootstat.rc:16:    chown system log /data/misc/bootstat/boot_reason
+/system/etc/init/bootstat.rc:17:    chown system log /data/misc/bootstat/boottime.bootloader.1BLE
+/system/etc/init/bootstat.rc:18:    chown system log /data/misc/bootstat/boottime.bootloader.1BLL
+/system/etc/init/bootstat.rc:19:    chown system log /data/misc/bootstat/boottime.bootloader.2BLE
+/system/etc/init/bootstat.rc:20:    chown system log /data/misc/bootstat/boottime.bootloader.2BLL
+/system/etc/init/bootstat.rc:21:    chown system log /data/misc/bootstat/boottime.bootloader.AVB
+/system/etc/init/bootstat.rc:22:    chown system log /data/misc/bootstat/boottime.bootloader.KD
+/system/etc/init/bootstat.rc:23:    chown system log /data/misc/bootstat/boottime.bootloader.KL
+/system/etc/init/bootstat.rc:24:    chown system log /data/misc/bootstat/boottime.bootloader.ODT
+/system/etc/init/bootstat.rc:25:    chown system log /data/misc/bootstat/boottime.bootloader.SW
+/system/etc/init/bootstat.rc:26:    chown system log /data/misc/bootstat/boottime.bootloader.total
+/system/etc/init/bootstat.rc:27:    chown system log /data/misc/bootstat/build_date
+/system/etc/init/bootstat.rc:28:    chown system log /data/misc/bootstat/factory_reset
+/system/etc/init/bootstat.rc:29:    chown system log /data/misc/bootstat/factory_reset_boot_complete
+/system/etc/init/bootstat.rc:30:    chown system log /data/misc/bootstat/factory_reset_boot_complete_no_encryption
+/system/etc/init/bootstat.rc:31:    chown system log /data/misc/bootstat/factory_reset_current_time
+/system/etc/init/bootstat.rc:32:    chown system log /data/misc/bootstat/factory_reset_record_value
+/system/etc/init/bootstat.rc:33:    chown system log /data/misc/bootstat/last_boot_time_utc
+/system/etc/init/bootstat.rc:34:    chown system log /data/misc/bootstat/ota_boot_complete
+/system/etc/init/bootstat.rc:35:    chown system log /data/misc/bootstat/ota_boot_complete_no_encryption
+/system/etc/init/bootstat.rc:36:    chown system log /data/misc/bootstat/ro.boottime.init
+/system/etc/init/bootstat.rc:37:    chown system log /data/misc/bootstat/ro.boottime.init.cold_boot_wait
+/system/etc/init/bootstat.rc:38:    chown system log /data/misc/bootstat/ro.boottime.init.selinux
+/system/etc/init/bootstat.rc:39:    chown system log /data/misc/bootstat/time_since_factory_reset
+/system/etc/init/bootstat.rc:40:    chown system log /data/misc/bootstat/time_since_last_boot
+/system/etc/init/bootstat.rc:43:# Initialize bootstat state machine.
+/system/etc/init/bootstat.rc:45:# sys.bootstat.first_boot_completed: responsible for making sure that record_boot_complete happens
+/system/etc/init/bootstat.rc:46:# only once per device hard reboot. Possible values:
+/system/etc/init/bootstat.rc:48:#   sys.bootstat.first_boot_completed=0 - first boot completed trigger wasn't processed yet.
+/system/etc/init/bootstat.rc:49:#   sys.bootstat.first_boot_completed=1 - first boot completed trigger was processed and
+/system/etc/init/bootstat.rc:50:#                                         record_boot_complete was called. Subsequent boot completed
+/system/etc/init/bootstat.rc:51:#                                         triggers (e.g. due to userspace reboot) won't retrigger
+/system/etc/init/bootstat.rc:52:#                                         record_boot_complete
+/system/etc/init/bootstat.rc:55:# state machine only once, which as result ensures that bootstat --set_system_boot_reason and
+/system/etc/init/bootstat.rc:56:# bootstat --record_boot_complete will be called only once per full reboot.
+/system/etc/init/bootstat.rc:58:  setprop sys.bootstat.first_boot_completed 0
+/system/etc/init/bootstat.rc:60:# Set boot reason
+/system/etc/init/bootstat.rc:62:    # Converts bootloader boot reason and persist.sys.boot.reason to system boot reason
+/system/etc/init/bootstat.rc:64:    exec_background - system log -- /system/bin/bootstat --set_system_boot_reason
+/system/etc/init/bootstat.rc:66:# Record boot complete metrics.
+/system/etc/init/bootstat.rc:67:on property:sys.boot_completed=1 && property:sys.bootstat.first_boot_completed=0
+/system/etc/init/bootstat.rc:68:    # Record boot_complete and related stats (decryption, etc).
+/system/etc/init/bootstat.rc:69:    # Record the boot reason.
+/system/etc/init/bootstat.rc:71:    # Log all boot events.
+/system/etc/init/bootstat.rc:72:    exec_background - system log -- /system/bin/bootstat --record_boot_complete --record_boot_reason --record_time_since_factory_reset -l
+/system/etc/init/bootstat.rc:73:    setprop sys.bootstat.first_boot_completed 1
+/system/etc/init/charger.rc:6:import /vendor/etc/init/${ro.bootmode}/init.${ro.bootmode}.rc
+/system/etc/init/charger.rc:12:    capabilities SYS_BOOT
+/system/etc/init/dmesgd.rc:3:# Fire once at boot time to collect early reports, if there are any.
+/system/etc/init/dmesgd.rc:4:on property:sys.boot_completed=1
+/system/etc/init/dmesgd.rc:7:on property:ro.product.cpu.abilist64=* && property:bootreceiver.enable=1
+/system/etc/init/dmesgd.rc:12:on property:ro.product.cpu.abilist64=* && property:bootreceiver.enable=1 && property:dmesgd.start=1
+/system/etc/init/dumpstate.rc:1:on boot
+/system/etc/init/evgrab.rc:1:on property:sys.boot_completed=1
+/system/etc/init/flags_health_check.rc:5:    exec - system system -- /system/bin/flags_health_check BOOT_FAILURE
+/system/etc/init/flags_health_check.rc:7:on property:sys.boot_completed=1
+/system/etc/init/flags_health_check.rc:8:    setprop persist.device_config.attempted_boot_count 0
+/system/etc/init/gsid.rc:14:    chmod 0664 /metadata/gsi/dsu/booted
+/system/etc/init/gsid.rc:25:on boot
+/system/etc/init/hw/init.rc:52:    mkdir /linkerconfig/bootstrap 0755
+/system/etc/init/hw/init.rc:65:    write /linkerconfig/bootstrap/ld.config.txt \#
+/system/etc/init/hw/init.rc:67:    chmod 644 /linkerconfig/bootstrap/ld.config.txt
+/system/etc/init/hw/init.rc:70:    # Mount bootstrap linker configuration as current
+/system/etc/init/hw/init.rc:71:    mount none /linkerconfig/bootstrap /linkerconfig bind rec
+/system/etc/init/hw/init.rc:81:    # Run apexd-bootstrap so that APEXes that provide critical libraries
+/system/etc/init/hw/init.rc:84:    exec_start apexd-bootstrap
+/system/etc/init/hw/init.rc:111:    copy /proc/bootconfig /dev/urandom
+/system/etc/init/hw/init.rc:318:    # For Pre-reboot Dexopt
+/system/etc/init/hw/init.rc:319:    mkdir /mnt/pre_reboot_dexopt 0755 artd artd
+/system/etc/init/hw/init.rc:473:    # that they can be chown'd to system:system later on boot
+/system/etc/init/hw/init.rc:515:# Run boringssl self test for each ABI.  Any failures trigger reboot to firmware.
+/system/etc/init/hw/init.rc:519:    reboot_on_failure reboot,boringssl-self-check-failed
+/system/etc/init/hw/init.rc:526:    reboot_on_failure reboot,boringssl-self-check-failed
+/system/etc/init/hw/init.rc:533:    reboot_on_failure reboot,boringssl-self-check-failed
+/system/etc/init/hw/init.rc:540:    reboot_on_failure reboot,boringssl-self-check-failed
+/system/etc/init/hw/init.rc:546:# Healthd can trigger a full boot from charger mode by signaling this
+/system/etc/init/hw/init.rc:548:on property:sys.boot_from_charger_mode=1
+/system/etc/init/hw/init.rc:554:    rm /dev/.booting
+/system/etc/init/hw/init.rc:588:    trigger early-boot
+/system/etc/init/hw/init.rc:589:    trigger boot
+/system/etc/init/hw/init.rc:596:    exec - system system -- /system/bin/vdc checkpoint markBootAttempt
+/system/etc/init/hw/init.rc:655:    mkdir /metadata/bootstat 0750 system log
+/system/etc/init/hw/init.rc:668:    # on /metadata/apex. For most of the boot sequences /metadata/apex will
+/system/etc/init/hw/init.rc:684:# Only enable the bootreceiver tracing instance for kernels 5.10 and above.
+/system/etc/init/hw/init.rc:686:    setprop bootreceiver.enable 0
+/system/etc/init/hw/init.rc:688:    setprop bootreceiver.enable 0
+/system/etc/init/hw/init.rc:690:    setprop bootreceiver.enable 0
+/system/etc/init/hw/init.rc:692:    setprop bootreceiver.enable 0
+/system/etc/init/hw/init.rc:694:    # Bootreceiver tracing instance is enabled by default.
+/system/etc/init/hw/init.rc:695:    setprop bootreceiver.enable ${bootreceiver.enable:-1}
+/system/etc/init/hw/init.rc:697:on property:ro.product.cpu.abilist64=* && property:bootreceiver.enable=1
+/system/etc/init/hw/init.rc:701:    mkdir /sys/kernel/tracing/instances/bootreceiver 0700 system system
+/system/etc/init/hw/init.rc:702:    restorecon_recursive /sys/kernel/tracing/instances/bootreceiver
+/system/etc/init/hw/init.rc:703:    write /sys/kernel/tracing/instances/bootreceiver/buffer_size_kb 1
+/system/etc/init/hw/init.rc:704:    write /sys/kernel/tracing/instances/bootreceiver/trace_options disable_on_free
+/system/etc/init/hw/init.rc:705:    write /sys/kernel/tracing/instances/bootreceiver/events/error_report/error_report_end/enable 1
+/system/etc/init/hw/init.rc:721:    # Start bootcharting as soon as possible after the data partition is
+/system/etc/init/hw/init.rc:723:    mkdir /data/bootchart 0755 shell shell encryption=Require
+/system/etc/init/hw/init.rc:724:    bootchart start
+/system/etc/init/hw/init.rc:726:    # Avoid predictable entropy pool. Carry over entropy from previous boot.
+/system/etc/init/hw/init.rc:742:    # set up keystore directory structure first so that we can end early boot
+/system/etc/init/hw/init.rc:749:    # Boot level 30
+/system/etc/init/hw/init.rc:750:    # odsign signing keys have MAX_BOOT_LEVEL=30
+/system/etc/init/hw/init.rc:751:    # This is currently the earliest boot level, but we start at 30
+/system/etc/init/hw/init.rc:753:    setprop keystore.boot_level 30
+/system/etc/init/hw/init.rc:756:    # we can tell keystore to stop allowing use of early-boot keys,
+/system/etc/init/hw/init.rc:758:    # use of MAX_BOOT_LEVEL keys.
+/system/etc/init/hw/init.rc:759:    exec - system system -- /system/bin/vdc keymaster earlyBootEnded
+/system/etc/init/hw/init.rc:778:    # To handle userspace reboots, make sure that apexd is started cleanly here
+/system/etc/init/hw/init.rc:850:    mkdir /data/misc/boottrace 0771 system shell
+/system/etc/init/hw/init.rc:870:    # create location to store pre-reboot information
+/system/etc/init/hw/init.rc:871:    mkdir /data/misc/prereboot 0700 system system
+/system/etc/init/hw/init.rc:1075:    # Create directories for boot animation.
+/system/etc/init/hw/init.rc:1076:    mkdir /data/misc/bootanim 0755 system system
+/system/etc/init/hw/init.rc:1090:    # Start ART's oneshot boot service to propagate boot experiment flags to
+/system/etc/init/hw/init.rc:1093:    exec_start art_boot
+/system/etc/init/hw/init.rc:1103:    # Bump the boot level to 1000000000; this prevents further on-device signing.
+/system/etc/init/hw/init.rc:1106:    setprop keystore.boot_level 1000000000
+/system/etc/init/hw/init.rc:1135:# stuff) and we absolutely want to be before netd and the system boot slot is
+/system/etc/init/hw/init.rc:1136:# considered to have booted successfully.
+/system/etc/init/hw/init.rc:1160:on boot && property:ro.config.low_ram=true
+/system/etc/init/hw/init.rc:1165:on property:sys.boot_completed=1 && property:ro.config.batteryless=true
+/system/etc/init/hw/init.rc:1172:on boot && property:suspend.disable_sync_on_suspend=true
+/system/etc/init/hw/init.rc:1175:on boot
+/system/etc/init/hw/init.rc:1278:    chown root system /proc/bootconfig
+/system/etc/init/hw/init.rc:1298:on property:sys.boot_completed=1
+/system/etc/init/hw/init.rc:1299:    bootchart stop
+/system/etc/init/hw/init.rc:1300:    # Setup per_boot directory so other .rc could start to use it on boot_completed
+/system/etc/init/hw/init.rc:1301:    exec - system system -- /bin/rm -rf /data/per_boot
+/system/etc/init/hw/init.rc:1302:    mkdir /data/per_boot 0700 system system encryption=Require key=per_boot_ref
+/system/etc/init/hw/init.rc:1336:# bootstrap, which means it can also be used to perform conditional APEX
+/system/etc/init/hw/init.rc:1337:# activation via selection sysprops (e.g. setting ro.boot.vendor.apex.*).
+/system/etc/init/hw/init.rc:1340:# bootstrap bionic and labeled as 'init_dev_config_exec'.
+/system/etc/init/hw/init.usb.rc:26:# Set default value on sys.usb.configfs early in boot sequence. It will be
+/system/etc/init/hw/init.usb.rc:27:# overridden in `on boot` action of init.hardware.rc.
+/system/etc/init/hw/init.usb.rc:107:# Used to set USB configuration at boot and to switch the configuration
+/system/etc/init/hw/init.usb.rc:109:on boot && property:persist.sys.usb.config=*
+/system/etc/init/init-mmd-prop.rc:1:on property:sys.boot_completed=1
+/system/etc/init/installd.rc:7:on early-boot
+/system/etc/init/kcmdlinectrl.rc:17:on early-boot
+/system/etc/init/keystore2.rc:16:    # Reboot to bootloader if Keystore crashes more than 4 times before `sys.boot_completed`.
+/system/etc/init/lieppos-microg-location-defaults.rc:1:on property:sys.boot_completed=1
+/system/etc/init/lmkd.rc:13:on property:sys.boot_completed=1
+/system/etc/init/lmkd.rc:14:    exec_background /system/bin/lmkd --boot_completed
+/system/etc/init/lmkd.rc:16:# reinitialize lmkd after device finished booting if experiments set any flags during boot
+/system/etc/init/lmkd.rc:17:on property:sys.boot_completed=1 && property:lmkd.reinit=0
+/system/etc/init/lmkd.rc:22:# if the device finished booting or sets lmkd.reinit=0 to re-initialize lmkd after boot completes
+/system/etc/init/lmkd.rc:24:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:27:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:30:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:33:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:36:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:39:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:42:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:45:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:48:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:51:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:54:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:57:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:60:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:63:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:66:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:69:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/lmkd.rc:72:    setprop lmkd.reinit ${sys.boot_completed:-0}
+/system/etc/init/logd.rc:35:on property:sys.boot_completed=1
+/system/etc/init/lpdumpd.rc:23:    # On Launch devices, assume "super". On virtual devices, ${ro.boot.super_partition}
+/system/etc/init/lpdumpd.rc:25:    file /dev/block/by-name/${ro.boot.super_partition:-super} r
+/system/etc/init/lpdumpd.rc:26:    # On retrofit devices, ${ro.boot.super_partition} is slot-suffixed.
+/system/etc/init/lpdumpd.rc:29:    file /dev/block/by-name/${ro.boot.super_partition:-NO_SUCH_DEVICE}${ro.boot.slot_suffix:-_NO_SUCH_SUFFIX} r
+/system/etc/init/mtectrl.rc:15:on property:arm64.memtag.bootctl=* && property:ro.arm64.memtag.bootctl_supported=1
+/system/etc/init/mtectrl.rc:16:  wait_for_prop arm64.memtag.bootctl_loaded 1
+/system/etc/init/mtectrl.rc:17:  exec -- /system/bin/mtectrl ${arm64.memtag.bootctl:-none} ${persist.device_config.runtime_native_boot.bootloader_override:-default}
+/system/etc/init/mtectrl.rc:19:on property:persist.device_config.runtime_native_boot.bootloader_override=* && property:ro.arm64.memtag.bootctl_supported=1
+/system/etc/init/mtectrl.rc:20:  wait_for_prop arm64.memtag.bootctl_loaded 1
+/system/etc/init/mtectrl.rc:21:  exec -- /system/bin/mtectrl ${arm64.memtag.bootctl:-none} ${persist.device_config.runtime_native_boot.bootloader_override:-default}
+/system/etc/init/mtectrl.rc:25:on early-boot && property:ro.arm64.memtag.bootctl_supported=1
+/system/etc/init/mtectrl.rc:26:  exec_background -- /system/bin/mtectrl -s arm64.memtag.bootctl -f arm64.memtag.bootctl_loaded
+/system/etc/init/mtectrl.rc:28:on shutdown && property:ro.arm64.memtag.bootctl_supported=1 && property:arm64.memtag.bootctl_loaded=*
+/system/etc/init/mtectrl.rc:30:  exec -- /system/bin/mtectrl ${arm64.memtag.bootctl:-none} ${persist.device_config.runtime_native_boot.bootloader_override:-default}
+/system/etc/init/mtectrl.rc:32:on property:persist.device_config.runtime_native_boot.bootloader_override=force_on
+/system/etc/init/mtk-sms-fwk-ready.rc:1:on property:sys.boot_completed=1
+/system/etc/init/netbpfload.rc:15:    reboot_on_failure reboot,netbpfload-missing
+/system/etc/init/perfetto.rc:103:# Reset the Perfetto guard rail state on boot:
+/system/etc/init/perfetto.rc:108:#  perfetto_trace_on_boot - Starts a perfetto trace on boot
+/system/etc/init/perfetto.rc:112:# sure that perfetto_trace_on_boot is started only once on boot (otherwise,
+/system/etc/init/perfetto.rc:113:# whenever persist.debug.perfetto.boottrace=1 is set, perfetto_trace_on_boot
+/system/etc/init/perfetto.rc:116:# persist.debug.perfetto.boottrace=1 can be manually set after boot (to record
+/system/etc/init/perfetto.rc:117:# a trace on the next reboot) and we don't want to immediately start a trace
+/system/etc/init/perfetto.rc:121:on perfetto_maybe_trace_on_boot && property:persist.debug.perfetto.boottrace=1 && property:persist.traced.enable=1
+/system/etc/init/perfetto.rc:122:    setprop persist.debug.perfetto.boottrace ""
+/system/etc/init/perfetto.rc:123:    rm /data/misc/perfetto-traces/boottrace.perfetto-trace
+/system/etc/init/perfetto.rc:127:    start perfetto_trace_on_boot
+/system/etc/init/perfetto.rc:130:    trigger perfetto_maybe_trace_on_boot
+/system/etc/init/perfetto.rc:132:service perfetto_trace_on_boot /system/bin/perfetto -c /data/misc/perfetto-configs/boottrace.pbtxt --txt -o /data/misc/perfetto-traces/boottrace.perfetto-trace
+/system/etc/init/perfetto.rc:139:# This is meant to stop the boot tracing.
+/system/etc/init/perfetto.rc:140:# To use this, add a trigger with mode STOP_TRACING in the configuration used in perfetto_trace_on_boot.
+/system/etc/init/perfetto.rc:142:# the name specified in configuration used in perfetto_trace_on_boot.
+/system/etc/init/perfetto.rc:143:on property:sys.boot_completed=1 && property:init.svc.perfetto_trace_on_boot=running
+/system/etc/init/perfetto.rc:144:    exec -- /system/bin/perfetto -c /data/misc/perfetto-configs/stopboottracetrigger.pbtxt --txt
+/system/etc/init/perfetto.rc:147:# userspace boot. This is primarily for capturing zygote events without waiting
+/system/etc/init/perfetto.rc:149:on late-init && property:ro.boot.fastboot.boottrace=enabled
+/system/etc/init/perfetto.rc:152:# disable on boot complete when using textual ftrace tracing without perfetto.
+/system/etc/init/perfetto.rc:153:on property:sys.boot_completed=1 && property:ro.boot.fastboot.boottrace=enabled && property:init.svc.perfetto_trace_on_boot=
+/system/etc/init/phh-ota.rc:11:on property:sys.boot_completed=1
+/system/etc/init/prefetch.rc:6:#   stop by setting `prefetch_boot.record_stop` to 1.
+/system/etc/init/prefetch.rc:18:#   on early-init && property:ro.prefetch_boot.enabled=true
+/system/etc/init/prefetch.rc:21:#   on init && property:ro.prefetch_boot.enabled=true
+/system/etc/init/prefetch.rc:24:#   on property:sys.boot_completed=1 && property:ro.prefetch_boot.enabled=true
+/system/etc/init/prefetch.rc:25:#     setprop prefetch_boot.record_stop 1
+/system/etc/init/prefetch.rc:27:service prefetch_record /system/bin/prefetch record --duration ${ro.prefetch_boot.duration_s:-0}
+/system/etc/init/prefetch.rc:33:service prefetch_replay /system/bin/prefetch replay --io-depth ${ro.prefetch_boot.io_depth:-2} --max-fds ${ro.prefetch_boot.max_fds:-1024}
+/system/etc/init/prefetch.rc:39:service prefetch_apex_record /system/bin/prefetch record --duration ${ro.prefetch_boot.duration_s:-0} --include-mount-prefix /apex --tracing-instance prefetch_apex
+/system/etc/init/prefetch.rc:45:service prefetch_apex_replay /system/bin/prefetch replay --io-depth ${ro.prefetch_boot.io_depth:-2} --max-fds ${ro.prefetch_boot.max_fds:-1024} --path /metadata/prefetch/prefetch_apex.pack
+/system/etc/init/simpleperf.rc:5:on early-init && property:ro.boot.simpleperf.boot_record=*
+/system/etc/init/simpleperf.rc:6:  exec_background u:r:su:s0 root root -- /system/bin/simpleperf record -a -g --exclude-perf -o /tmp/boot_perf.data
+/system/etc/init/simpleperf.rc:8:on property:sys.boot_completed=1 && property:ro.boot.simpleperf.boot_record=*
+/system/etc/init/slsi-booted.rc:1:on property:sys.boot_completed=1
+/system/etc/init/slsi-booted.rc:2:	exec u:r:phhsu_daemon:s0 root -- /system/bin/slsi-booted
+/system/etc/init/update_engine.rc:8:on property:ro.boot.slot_suffix=*
+/system/etc/init/vndk.rc:12:on early-boot
+/system/etc/init/vndk.rc:15:service phh_on_boot /system/bin/phh-on-boot.sh
+/system/etc/init/vndk.rc:23:on property:sys.boot_completed=1
+/system/etc/init/vndk.rc:24:    start phh_on_boot
+/system/etc/init/vndk.rc:44:# persistent-property trigger (fires during early boot) rather than
+/system/etc/init/vndk.rc:45:# phh-on-boot.sh (boot_completed is too late, and a camerahalserver restart
+/system/etc/init/vndk.rc:61:# reads 0 at SystemServer start (same-boot fix). Gated on the Mini 20 profile.
+/system/etc/init/vndk.rc:66:# phh-on-boot.sh, not here. It is class late_start (the GSI never runs
+/system/etc/init/vndk.rc:71:# (on property:sys.boot_completed=1 && property:persist.lieppos.device_patches=armor_mini20)
+/system/etc/init/vndk.rc:72:# did NOT fire on device, so the start is issued from phh-on-boot.sh instead.
+/system/etc/init/vndk.rc:128:# the bias/boost is still enabled from the bootloader, so the power-on
+/system/etc/init/vold.rc:10:    reboot_on_failure reboot,vold-failed
+/system/etc/init/wifi.rc:28:on property:sys.boot_completed=1 && property:sys.wifitracing.started=0
+/system/etc/init/wifi.rc:70:on property:sys.boot_completed=1 && property:wifi.interface=* && property:sys.wifitracing.started=1
+
+===== VENDOR BINARIES =====
+Argument to option 'c' missing
+KernelSU
+
+Usage: su [options] [-] [user [argument...]]
+
+Options:
+    -c, --command COMMAND
+                        pass COMMAND to the invoked shell
+    -h, --help          display this help message and exit
+    -l, --login         pretend the shell to be a login shell
+    -p, --preserve-environment 
+                        preserve the entire environment
+    -s, --shell SHELL   use SHELL instead of the default /system/bin/sh
+    -v, --version       display version number and exit
+    -V                  display version code and exit
+    -M, --mount-master  force run in the global mount namespace
+    -g, --group GROUP   Specify the primary group
+    -G, --supp-group GROUP
+                        Specify a supplementary group. The first specified
+                        supplementary group is also used as a primary group if
+                        the option -g is not specified.
+    -W, --no-wrapper    don't use ksu fd wrapper
+        --ksu-no-new-privs 
+                        Prevent this process (and its children) from privilege
+                        re-escalation via KernelSU Next
+/system/bin/bootctl
+/system/bin/bootstrap/linker
+/system/bin/bootstrap/linker64
+/system/bin/lshal
+/system/bin/phh-on-boot.sh
+/system/bin/reboot
+/system/bin/slsi-booted
+
+===== HAL LIB STRINGS =====
+Argument to option 'c' missing
+KernelSU
+
+Usage: su [options] [-] [user [argument...]]
+
+Options:
+    -c, --command COMMAND
+                        pass COMMAND to the invoked shell
+    -h, --help          display this help message and exit
+    -l, --login         pretend the shell to be a login shell
+    -p, --preserve-environment 
+                        preserve the entire environment
+    -s, --shell SHELL   use SHELL instead of the default /system/bin/sh
+    -v, --version       display version number and exit
+    -V                  display version code and exit
+    -M, --mount-master  force run in the global mount namespace
+    -g, --group GROUP   Specify the primary group
+    -G, --supp-group GROUP
+                        Specify a supplementary group. The first specified
+                        supplementary group is also used as a primary group if
+                        the option -g is not specified.
+    -W, --no-wrapper    don't use ksu fd wrapper
+        --ksu-no-new-privs 
+                        Prevent this process (and its children) from privilege
+                        re-escalation via KernelSU Next
