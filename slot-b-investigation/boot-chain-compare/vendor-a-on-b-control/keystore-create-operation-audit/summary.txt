@@ -1,0 +1,495 @@
+===== B VOLD: BEGIN KEYSTORE OP =====
+123:                                .Authorization(km::TAG_APPLICATION_ID, appId)
+167:static km::AuthorizationSet beginParams(const std::string& appId) {
+170:            .Authorization(km::TAG_APPLICATION_ID, appId);
+329:static KeystoreOperation BeginKeystoreOp(Keystore& keystore, const std::string& dir,
+382:            km::AuthorizationSetBuilder().Authorization(km::TAG_PURPOSE, km::KeyPurpose::ENCRYPT);
+384:    auto opHandle = BeginKeystoreOp(keystore, dir, keyParams, opParams, &outParams);
+386:    auto nonceBlob = outParams.GetTagValue(km::TAG_NONCE);
+410:                            .Authorization(km::TAG_NONCE, nonce)
+411:                            .Authorization(km::TAG_PURPOSE, km::KeyPurpose::DECRYPT);
+412:    auto opHandle = BeginKeystoreOp(keystore, dir, keyParams, opParams, nullptr);
+570:        km::AuthorizationSet keyParams = beginParams(appId);
+620:        km::AuthorizationSet keyParams = beginParams(appId);
+    }
+
+    if (rename(old_name.c_str(), new_name.c_str()) != 0) {
+        PLOG(ERROR) << "Failed to rename key directory \"" << old_name << "\" to \"" << new_name
+                    << "\"";
+        return false;
+    }
+
+    if (it != key_dirs_to_commit.end()) *it = new_name;
+
+    return true;
+}
+
+// Deletes a leftover upgraded key, if present.  An upgraded key can be left
+// over if an update failed, or if we rebooted before committing the key in a
+// freak accident.  Either way, we can re-upgrade the key if we need to.
+static void DeleteUpgradedKey(Keystore& keystore, const std::string& path) {
+    if (pathExists(path)) {
+        LOG(DEBUG) << "Deleting leftover upgraded key " << path;
+        std::string blob;
+        if (!android::base::ReadFileToString(path, &blob)) {
+            LOG(WARNING) << "Failed to read leftover upgraded key " << path
+                         << "; continuing anyway";
+        } else if (!keystore.deleteKey(blob)) {
+            LOG(WARNING) << "Failed to delete leftover upgraded key " << path
+                         << " from Keystore; continuing anyway";
+        }
+        if (unlink(path.c_str()) != 0) {
+            LOG(WARNING) << "Failed to unlink leftover upgraded key " << path
+                         << "; continuing anyway";
+        }
+    }
+}
+
+// Begins a Keystore operation using the key stored in |dir|.
+static KeystoreOperation BeginKeystoreOp(Keystore& keystore, const std::string& dir,
+                                         const km::AuthorizationSet& keyParams,
+                                         const km::AuthorizationSet& opParams,
+                                         km::AuthorizationSet* outParams) {
+    km::AuthorizationSet inParams(keyParams);
+    inParams.append(opParams.begin(), opParams.end());
+
+    auto blob_file = dir + "/" + kFn_keymaster_key_blob;
+    auto upgraded_blob_file = dir + "/" + kFn_keymaster_key_blob_upgraded;
+
+    std::lock_guard<std::mutex> lock(key_upgrade_lock);
+
+    std::string blob;
+    bool already_upgraded = IsKeyCommitPending(dir);
+    if (already_upgraded) {
+        LOG(DEBUG)
+                << blob_file
+                << " was already upgraded and is waiting to be committed; using the upgraded blob";
+        if (!readFileToString(upgraded_blob_file, &blob)) return KeystoreOperation();
+    } else {
+        DeleteUpgradedKey(keystore, upgraded_blob_file);
+        if (!readFileToString(blob_file, &blob)) return KeystoreOperation();
+    }
+
+    auto opHandle = keystore.begin(blob, inParams, outParams);
+    if (!opHandle) return opHandle;
+
+    // If key blob wasn't upgraded, nothing left to do.
+    if (!opHandle.getUpgradedBlob()) return opHandle;
+
+    if (already_upgraded) {
+        LOG(ERROR) << "Unexpected case; already-upgraded key " << upgraded_blob_file
+                   << " still requires upgrade";
+        return KeystoreOperation();
+    }
+    LOG(INFO) << "Upgrading key: " << blob_file;
+    if (!writeStringToFile(*opHandle.getUpgradedBlob(), upgraded_blob_file))
+        return KeystoreOperation();
+    if (cp_needsCheckpoint()) {
+        LOG(INFO) << "Wrote upgraded key to " << upgraded_blob_file
+                  << "; delaying commit due to checkpoint";
+        ScheduleKeyCommit(dir);
+    } else {
+        if (!CommitUpgradedKey(keystore, dir)) return KeystoreOperation();
+        LOG(INFO) << "Key upgraded: " << blob_file;
+    }
+    return opHandle;
+}
+
+static bool encryptWithKeystoreKey(Keystore& keystore, const std::string& dir,
+                                   const km::AuthorizationSet& keyParams, const KeyBuffer& message,
+                                   std::string* ciphertext) {
+    km::AuthorizationSet opParams =
+            km::AuthorizationSetBuilder().Authorization(km::TAG_PURPOSE, km::KeyPurpose::ENCRYPT);
+    km::AuthorizationSet outParams;
+    auto opHandle = BeginKeystoreOp(keystore, dir, keyParams, opParams, &outParams);
+    if (!opHandle) return false;
+    auto nonceBlob = outParams.GetTagValue(km::TAG_NONCE);
+    if (!nonceBlob) {
+        LOG(ERROR) << "GCM encryption but no nonce generated";
+        return false;
+    }
+    // nonceBlob here is just a pointer into existing data, must not be freed
+    std::string nonce(nonceBlob.value().get().begin(), nonceBlob.value().get().end());
+    if (!checkSize("nonce", nonce.size(), GCM_NONCE_BYTES)) return false;
+    std::string body;
+    if (!opHandle.updateCompletely(message, &body)) return false;
+
+    std::string mac;
+    if (!opHandle.finish(&mac)) return false;
+    if (!checkSize("mac", mac.size(), GCM_MAC_BYTES)) return false;
+    *ciphertext = nonce + body + mac;
+    return true;
+}
+
+static bool decryptWithKeystoreKey(Keystore& keystore, const std::string& dir,
+                                   const km::AuthorizationSet& keyParams,
+                                   const std::string& ciphertext, KeyBuffer* message) {
+    const std::string nonce = ciphertext.substr(0, GCM_NONCE_BYTES);
+    auto bodyAndMac = ciphertext.substr(GCM_NONCE_BYTES);
+    auto opParams = km::AuthorizationSetBuilder()
+                            .Authorization(km::TAG_NONCE, nonce)
+                            .Authorization(km::TAG_PURPOSE, km::KeyPurpose::DECRYPT);
+    auto opHandle = BeginKeystoreOp(keystore, dir, keyParams, opParams, nullptr);
+    if (!opHandle) return false;
+    if (!opHandle.updateCompletely(bodyAndMac, message)) return false;
+    if (!opHandle.finish(nullptr)) return false;
+    return true;
+}
+
+static std::string generateAppId(const KeyAuthentication& auth,
+
+===== B KEYSTORE2: CREATE_OPERATION =====
+230:    fn create_operation(
+233:        operation_parameters: &[KeyParameter],
+305:        let purpose = operation_parameters.iter().find(|p| p.tag == Tag::PURPOSE).map_or(
+307:                .context(ks_err!("No operation purpose specified.")),
+311:                    .context(ks_err!("Malformed KeyParameter.")),
+315:        // Remove Tag::PURPOSE from the operation_parameters, since some keymaster devices return
+316:        // an error on begin() if Tag::PURPOSE is in the operation_parameters.
+318:            operation_parameters.iter().filter(|p| p.tag != Tag::PURPOSE).cloned().collect();
+319:        let operation_parameters = op_params.as_slice();
+325:                operation_parameters.as_ref(),
+341:                operation_parameters,
+347:                        self.keymint.begin(
+350:                            operation_parameters,
+378:        let op_params: Vec<KeyParameter> = operation_parameters.to_vec();
+1053:        operation_parameters: &[KeyParameter],
+1057:        self.create_operation(key, operation_parameters, forced).map_err(into_logged_binder)
+                        .context(ks_err!())?;
+                    Ok(KeyDescriptor {
+                        domain: Domain::KEY_ID,
+                        nspace: key_id.id(),
+                        ..Default::default()
+                    })
+                })
+                .context(ks_err!())?,
+        };
+
+        Ok(KeyMetadata {
+            key,
+            keySecurityLevel: self.security_level,
+            certificate: cert_info.take_cert(),
+            certificateChain: cert_info.take_cert_chain(),
+            authorizations: crate::utils::key_parameters_to_authorizations(key_parameters),
+            modificationTimeMs: creation_date.to_millis_epoch(),
+        })
+    }
+
+    fn create_operation(
+        &self,
+        key: &KeyDescriptor,
+        operation_parameters: &[KeyParameter],
+        forced: bool,
+    ) -> Result<CreateOperationResponse> {
+        let caller_uid = ThreadState::get_calling_uid();
+        // We use `scoping_blob` to extend the life cycle of the blob loaded from the database,
+        // so that we can use it by reference like the blob provided by the key descriptor.
+        // Otherwise, we would have to clone the blob from the key descriptor.
+        let scoping_blob: Vec<u8>;
+        let (km_blob, key_properties, key_id_guard, blob_metadata) = match key.domain {
+            Domain::BLOB => {
+                check_key_permission(KeyPerm::Use, key, &None)
+                    .context(ks_err!("checking use permission for Domain::BLOB."))?;
+                if forced {
+                    check_key_permission(KeyPerm::ReqForcedOp, key, &None)
+                        .context(ks_err!("checking forced permission for Domain::BLOB."))?;
+                }
+                (
+                    match &key.blob {
+                        Some(blob) => blob,
+                        None => {
+                            return Err(Error::sys()).context(ks_err!(
+                                "Key blob must be specified when \
+                                using Domain::BLOB."
+                            ));
+                        }
+                    },
+                    None,
+                    None,
+                    BlobMetaData::new(),
+                )
+            }
+            _ => {
+                let super_key = SUPER_KEY
+                    .read()
+                    .unwrap()
+                    .get_after_first_unlock_key_by_user_id(uid_to_android_user(caller_uid));
+                let (key_id_guard, mut key_entry) = DB
+                    .with::<_, Result<(KeyIdGuard, KeyEntry)>>(|db| {
+                        LEGACY_IMPORTER.with_try_import(key, caller_uid, super_key, || {
+                            db.borrow_mut().load_key_entry(
+                                key,
+                                KeyType::Client,
+                                KeyEntryLoadBits::KM,
+                                caller_uid,
+                                |k, av| {
+                                    check_key_permission(KeyPerm::Use, k, &av)?;
+                                    if forced {
+                                        check_key_permission(KeyPerm::ReqForcedOp, k, &av)?;
+                                    }
+                                    Ok(())
+                                },
+                            )
+                        })
+                    })
+                    .context(ks_err!("Failed to load key blob."))?;
+
+                let (blob, blob_metadata) =
+                    key_entry.take_key_blob_info().ok_or_else(Error::sys).context(ks_err!(
+                        "Successfully loaded key entry, \
+                        but KM blob was missing."
+                    ))?;
+                scoping_blob = blob;
+
+                (
+                    &scoping_blob,
+                    Some((key_id_guard.id(), key_entry.into_key_parameters())),
+                    Some(key_id_guard),
+                    blob_metadata,
+                )
+            }
+        };
+
+        let purpose = operation_parameters.iter().find(|p| p.tag == Tag::PURPOSE).map_or(
+            Err(Error::Km(ErrorCode::INVALID_ARGUMENT))
+                .context(ks_err!("No operation purpose specified.")),
+            |kp| match kp.value {
+                KeyParameterValue::KeyPurpose(p) => Ok(p),
+                _ => Err(Error::Km(ErrorCode::INVALID_ARGUMENT))
+                    .context(ks_err!("Malformed KeyParameter.")),
+            },
+        )?;
+
+        // Remove Tag::PURPOSE from the operation_parameters, since some keymaster devices return
+        // an error on begin() if Tag::PURPOSE is in the operation_parameters.
+        let op_params: Vec<KeyParameter> =
+            operation_parameters.iter().filter(|p| p.tag != Tag::PURPOSE).cloned().collect();
+        let operation_parameters = op_params.as_slice();
+
+        let (immediate_hat, mut auth_info) = ENFORCEMENTS
+            .authorize_create(
+                purpose,
+                key_properties.as_ref(),
+                operation_parameters.as_ref(),
+                self.hw_info.timestampTokenRequired,
+            )
+            .context(ks_err!())?;
+
+        let km_blob = SUPER_KEY
+            .read()
+            .unwrap()
+            .unwrap_key_if_required(&blob_metadata, km_blob)
+            .context(ks_err!("Failed to handle super encryption."))?;
+
+        let (begin_result, upgraded_blob) = self
+            .upgrade_keyblob_if_required_with(
+                key_id_guard,
+                &km_blob,
+                blob_metadata.km_uuid().copied(),
+                operation_parameters,
+                |blob| loop {
+                    match map_km_error({
+                        let _wp = self.watch(
+                            "KeystoreSecurityLevel::create_operation: calling IKeyMintDevice::begin",
+                        );
+                        self.keymint.begin(
+                            purpose,
+                            blob,
+                            operation_parameters,
+                            immediate_hat.as_ref(),
+                        )
+                    }) {
+                        Err(Error::Km(ErrorCode::TOO_MANY_OPERATIONS)) => {
+                            self.operation_db.prune(caller_uid, forced)?;
+                            continue;
+                        }
+                        v @ Err(Error::Km(ErrorCode::INVALID_KEY_BLOB)) => {
+                            if let Some((key_id, _)) = key_properties {
+                                if let Ok(Some(key)) =
+                                    DB.with(|db| db.borrow_mut().load_key_descriptor(key_id))
+                                {
+                                    log_key_integrity_violation(&key);
+                                } else {
+                                    log::error!("Failed to load key descriptor for audit log");
+                                }
+                            }
+                            return v;
+                        }
+                        v => return v,
+                    }
+                },
+            )
+            .context(ks_err!("Failed to begin operation."))?;
+
+        let operation_challenge = auth_info.finalize_create_authorization(begin_result.challenge);
+
+        let op_params: Vec<KeyParameter> = operation_parameters.to_vec();
+
+        let operation = match begin_result.operation {
+            Some(km_op) => self.operation_db.create_operation(
+                km_op,
+                caller_uid,
+                auth_info,
+                forced,
+                LoggingInfo::new(self.security_level, purpose, op_params, upgraded_blob.is_some()),
+            ),
+            None => {
+                return Err(Error::sys()).context(ks_err!(
+                    "Begin operation returned successfully, \
+                    but did not return a valid operation."
+                ));
+            }
+        };
+
+        let op_binder: binder::Strong<dyn IKeystoreOperation> =
+            KeystoreOperation::new_native_binder(operation)
+                .as_binder()
+                .into_interface()
+                .context(ks_err!("Failed to create IKeystoreOperation."))?;
+
+        Ok(CreateOperationResponse {
+            iOperation: Some(op_binder),
+            operationChallenge: operation_challenge,
+            parameters: match begin_result.params.len() {
+                0 => None,
+                _ => Some(KeyParameters { keyParameter: begin_result.params }),
+            },
+            // An upgraded blob should only be returned if the caller has permission
+            // to use Domain::BLOB keys. If we got to this point, we already checked
+            // that the caller had that permission.
+            upgradedBlob: if key.domain == Domain::BLOB { upgraded_blob } else { None },
+        })
+    }
+
+    fn add_required_parameters(
+        &self,
+        uid: u32,
+        params: &[KeyParameter],
+        key: &KeyDescriptor,
+
+===== PURPOSE STRIPPING CHECK =====
+297-                    &scoping_blob,
+298-                    Some((key_id_guard.id(), key_entry.into_key_parameters())),
+299-                    Some(key_id_guard),
+300-                    blob_metadata,
+301-                )
+302-            }
+303-        };
+304-
+305:        let purpose = operation_parameters.iter().find(|p| p.tag == Tag::PURPOSE).map_or(
+306-            Err(Error::Km(ErrorCode::INVALID_ARGUMENT))
+307-                .context(ks_err!("No operation purpose specified.")),
+308-            |kp| match kp.value {
+309-                KeyParameterValue::KeyPurpose(p) => Ok(p),
+310-                _ => Err(Error::Km(ErrorCode::INVALID_ARGUMENT))
+311-                    .context(ks_err!("Malformed KeyParameter.")),
+312-            },
+313-        )?;
+314-
+315:        // Remove Tag::PURPOSE from the operation_parameters, since some keymaster devices return
+316:        // an error on begin() if Tag::PURPOSE is in the operation_parameters.
+317-        let op_params: Vec<KeyParameter> =
+318:            operation_parameters.iter().filter(|p| p.tag != Tag::PURPOSE).cloned().collect();
+319-        let operation_parameters = op_params.as_slice();
+320-
+321-        let (immediate_hat, mut auth_info) = ENFORCEMENTS
+322-            .authorize_create(
+323-                purpose,
+324-                key_properties.as_ref(),
+325-                operation_parameters.as_ref(),
+326-                self.hw_info.timestampTokenRequired,
+
+===== KEYSTORE2 LOCAL MODIFICATIONS =====
+
+===== B BOOT KEYSTORE2 MESSAGES =====
+402-[    4.790322][  T457] [Awinic][6-0034]aw_parse_port_id_dt: rx-port-id: 0x1006
+403-[    4.790518][  T457] [Awinic][6-0034]aw883xx_append_i2c_suffix: change name :aw883xx-aif-6-34
+404-[    4.790526][  T457] [Awinic][6-0034]aw883xx_append_i2c_suffix: change name :Speaker_Playback_6_34
+405-[    4.790530][  T457] [Awinic][6-0034]aw883xx_append_i2c_suffix: change name :Speaker_Capture_6_34
+406-[    4.790533][  T457] [Awinic][6-0034]aw883xx_dai_drv_append_suffix: dai name [aw883xx-aif-6-34]
+407-[    4.790536][  T457] [Awinic][6-0034]aw883xx_dai_drv_append_suffix: pstream_name [Speaker_Playback_6_34]
+408-[    4.790539][  T457] [Awinic][6-0034]aw883xx_dai_drv_append_suffix: cstream_name [Speaker_Capture_6_34]
+409-[    4.790566][  T457] [Awinic][6-0034]aw883xx_i2c_probe: dev_cnt 1 probe completed successfully
+410:[    4.800948][  T428] servicemanager: Caller(pid=571,uid=1000,sid=u:r:hal_keymint_default:s0) Found android.hardware.security.keymint.IKeyMintDevice/default in device VINTF manifest.
+411-[    4.802135][  T584] vdc: Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: vold
+412:[    4.802810][  T428] servicemanager: Caller(pid=571,uid=1000,sid=u:r:hal_keymint_default:s0) Found android.hardware.security.secureclock.ISecureClock/default in device VINTF manifest.
+413-[    4.802856][  T457] +mt6878_afe_pcm_dev_probe()
+414-[    4.803176][  T457] mt6878-audio 11050000.mt6878-afe-pcm: mt6878_afe_runtime_resume() successfully start
+415-[    4.803221][  T457] mt6878-audio 11050000.mt6878-afe-pcm: mt6878_afe_runtime_resume() skip regmap
+416-[    4.803291][  T428] servicemanager: Caller(pid=447,uid=0,sid=u:r:vold:s0) Found android.hardware.boot.IBootControl/default in device VINTF manifest.
+417-[    4.803354][  T457] mt6878-audio 11050000.mt6878-afe-pcm: No cache defaults, reading back from HW
+418:[    4.803988][  T428] servicemanager: Caller(pid=571,uid=1000,sid=u:r:hal_keymint_default:s0) Found android.hardware.security.sharedsecret.ISharedSecret/default in device VINTF manifest.
+419-[    4.804486][  T445] [HYN][Info]
+420-[    4.804486][  T445] hyn chipversion: 3,chipmodule: ff,chipproject: 42,chiptype: b7
+421-[    4.804486][  T445] 
+422-[    4.804496][  T445] [HYN]cst8xx_firmware_info: Exit(2485)
+423-[    4.804499][  T445] [HYN]hyn_firmware_info: Exit(2503)
+424-[    4.804503][  T445] [HYN][Info]hyn_firmware_info success.
+425-[    4.804503][  T445] 
+426-[    4.804505][  T445] [HYN]hyn_input_dev_int: Enter
+--
+429-[    4.804713][  T445] [HYN]hyn_input_dev_int: Exit(1363)
+430-[    4.804722][  T445] [HYN][Info]irq in ts_data:56 irq in client:56
+431-[    4.804725][  T445] [HYN]hyn_irq_registration: Enter
+432-[    4.805107][  T445] [HYN][Info]IRQ request succussfully, irq=56 ,trigger_rising:0 .
+433-[    4.805112][  T445] [HYN]hyn_irq_registration: Exit(654)
+434-[    4.805116][  T445] [HYN]hyn_update_firmware_init: Enter
+435-[    4.805120][  T445] [HYN]hyn_firmware_info: Enter
+436-[    4.805122][  T445] [HYN]cst8xx_firmware_info: Enter
+437:[    4.805136][  T428] servicemanager: Caller(pid=571,uid=1000,sid=u:r:hal_keymint_default:s0) Found android.hardware.security.keymint.IRemotelyProvisionedComponent/default in device VINTF manifest.
+438-[    4.806662][    T1] vdc: vdc terminated by exit(1)
+439-[    4.806672][    T1] vdc: 
+440-[    4.807272][    T1] init: [libfs_mgr] Invalid f2fs superblock on '/dev/block/by-name/userdata'
+441-[    4.807391][    T1] init: [libfs_mgr] mount_with_alternatives(): skipping mount due to invalid magic, mountpoint=/data blk_dev=/dev/block/sdc76 rec[15].fs_type=f2fs
+442-[    4.807573][    T1] init: Calling: /system/bin/vdc cryptfs mountFstab /dev/block/by-name/userdata /data false 
+443-[    4.808072][  T457] mt6878-audio 11050000.mt6878-afe-pcm: mt6878_afe_runtime_suspend() successfully start
+444-[    4.808945][  T457] mt6878-audio 11050000.mt6878-afe-pcm: mtk_audio_sram_init(), size 49152, block_size 4096, block_num 12, virt_addr 0000000003690f91, phys_addr 0x0000000011059000
+445-[    4.808957][  T457] mt6878-audio 11050000.mt6878-afe-pcm: mtk_audio_sram_init(), prefer_mode 0, mode_size[0] 0xc000, mode_size[1] 0x11300
+--
+597-[    4.889576][  T457] mtk-board-ntc 1c013130.thermal-ntc3: invalid resource
+598-[    4.889736][  T457] mtk-board-ntc 1c013120.thermal-ntc6: invalid resource
+599-[    4.889739][  T457] mtk-board-ntc 1c013120.thermal-ntc6: invalid resource
+600-[    4.898432][  T457] mtk-charger-cooling charger-cooler: register charger-cooler done
+601-[    4.901384][  T457] mtk-backlight-cooling backlight-cooler: register lcd-backlight done
+602-[    4.905986][  T428] servicemanager: Caller(pid=569,uid=1017,sid=u:r:keystore:s0) Found android.system.keystore2.IKeystoreService/default in framework VINTF manifest.
+603-[    4.907528][  T457] mtk-wifi-cooler wifi-cooler: register wifi-cooler done
+604-[    4.908366][  T428] BpBinder: onLastStrongRef automatically unlinking death recipients: 
+605:[    4.911363][  T447] vold: keystore2 Keystore createOperation returned service specific error: -38
+606-[    4.911394][  T447] vold: decryptWithKeystoreKey failed
+607-[    4.911422][  T447] vold: read_key failed in mountFstab
+608-[    4.911560][  T593] vdc: Command: cryptfs mountFstab /dev/block/by-name/userdata /data false  Failed: Status(-8, EX_SERVICE_SPECIFIC): '0: '
+609-[    4.912497][  T445] [HYN][Info]
+610-[    4.912497][  T445] hyn chipversion: 3,chipmodule: ff,chipproject: 42,chiptype: b7
+611-[    4.912497][  T445] 
+612-[    4.912509][  T445] [HYN]cst8xx_firmware_info: Exit(2485)
+613-[    4.912514][  T445] [HYN]hyn_firmware_info: Exit(2503)
+--
+810-[    4.964209][  T280] tkcore: [   18.802981]: <4>(1)ERR KERN:tee_rpmb_init:1209: Verify RPMB Key failed with 0x7
+811-[    4.964214][  T280] tkcore: [   18.803344]: <4>(1)INF KERN:truststore_init:650: Candidate truststore: RPMB
+812-[    4.964219][  T280] tkcore: [   18.803346]: <4>(1)INF KERN:truststore_init:650: Candidate truststore: DEFAULT
+813-[    4.964224][  T280] tkcore: [   18.803348]: <4>(1)INF KERN:truststore_init:670: Truststore DEFAULT Setup ... Done
+814-[    4.964229][  T280] tkcore: [   18.815156]: <4>(1)INF KERN:get_pubk:796: KeyID = 1
+815-[    4.964234][  T280] tkcore: [   18.815465]: <4>(1)INF KERN:license_init:1880: Load Secondary cert success
+816-[    4.964239][  T280] tkcore: [   18.815468]: <4>(1)INF KERN:license_init:1907: VERIFY_STATE: 1 TRIAL_STATE: 1
+817-[    4.964244][  T280] tkcore: [   18.858532]: <3>(1)DBG KERN:init_ta_context:813: Loaded TA 9ef77781-7bd5-4e39-965f20f6f211f400
+818:[    4.964250][  T280] tkcore: [   18.858781]: <4>(1)MSG KEYMINT3:TA_OpenSessionEntryPoint:186: ta-version=ta_commit-keymint3-keymint-3-0afbef6
+819:[    4.964255][  T280] tkcore: [   18.860297]: <4>(1)ERR KEYMINT3:root_of_trust_verify:142: WARNING: Unexpected os version from REE
+820:[    4.964260][  T280] tkcore: [   18.972067]: <0>(1)ERR KEYMINT3:upgrade_key_tags:44: Failed to update os version
+821:[    4.964265][  T280] tkcore: [   18.972078]: <0>(1)ERR KEYMINT3:upgrade_key:2032: Can't upgrade key params
+822-[    4.964959][    T1] init: starting service 'tombstoned'...
+823-[    4.965659][    T1] init: Created socket '/dev/socket/tombstoned_crash', mode 666, user 1000, group 1000
+824-[    4.966192][    T1] init: Created socket '/dev/socket/tombstoned_intercept', mode 666, user 1000, group 1000
+825-[    4.966544][  T457] mtk_iommu: mtk_iommu_device_group create group, data:(0,0)-->(0,0), dev:16000000.vdec, domid:5
+826-[    4.966571][  T457] mtk-vcodec-dec 16000000.vdec: Adding to iommu group 4
+827-[    4.966583][  T457] mtk_iommu: mtk_iommu_domain_finalise, dom:5, start:0x0000000170000000, end:0x00000001ffffffff, table:0x66e30000
+828-[    4.966587][  T457] mtk_iommu: mtk_iommu_attach_device, set mtk_iommu_domain, data:(0,0), tab_id:0
+829-[    4.966622][    T1] init: Created socket '/dev/socket/tombstoned_java_trace', mode 666, user 1000, group 1000
+
+===== ERROR CODE =====
+KEYMINT_-38=INVALID_ARGUMENT
+
+===== INTERPRETATION =====
+APPLICATION_ID mismatch is expected to report INVALID_KEY_BLOB per KeyMint contract.
+If PURPOSE is absent/malformed inside Keystore2, Keystore2 itself returns INVALID_ARGUMENT.
+Some Keystore2 versions strip PURPOSE before forwarding params to KeyMint.
+PHONE_MODIFIED=0
