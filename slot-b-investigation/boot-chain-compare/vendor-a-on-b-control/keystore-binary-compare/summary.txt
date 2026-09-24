@@ -1,0 +1,102 @@
+===== RUNNING A BUILD IDENTITY =====
+SYSTEM_FP=Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+BUILD_FP=Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+RELEASE=16
+SDK=36
+VENDOR_FP=Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+
+===== A/B BINARY HASHES =====
+
+--- vold ---
+A=a525a98d85bed7d05c4ec681eeca0ac4c7b81c13c4c4eb2406c37235a21e5d1d
+B=34f452c3890b1633fb1cc51112b821fc43e88bc865368d4162dfe43f96bb6251
+A_B_IDENTICAL=0
+
+--- vdc ---
+A=416862dce4df0ffdf7a4c40e8c45c6ca9803608c7330e0937408bd27686e246e
+B=6e952d64e3846f5548b83d5c1de420017490a38a8abd008e9cd2215ded0469a9
+A_B_IDENTICAL=0
+
+--- keystore2 ---
+A=a1ba655592231420ddb2c639de140f3f6e76cffc66e7775444f932a94e25f7ec
+B=bc932aa949727c60b9821999c32636052326a124c1af305b26fc0fc8ce7b5c0e
+A_B_IDENTICAL=0
+
+===== A VOLD MARKERS =====
+read_key failed in mountFstab
+decryptWithKeystoreKey failed
+read_key failed with zoned device: 
+AIDL::cpp::IVold::earlyBootEnded::cppServer
+Unable to connect to keystore2 maintenance service for earlyBootEnded
+earlyBootEnded
+
+===== B VOLD MARKERS =====
+read_key failed in mountFstab
+decryptWithKeystoreKey failed
+read_key failed with zoned device: 
+AIDL::cpp::IVold::earlyBootEnded::cppServer
+Unable to connect to keystore2 maintenance service for earlyBootEnded
+earlyBootEnded
+
+===== SYSTEM/VOLD REAL GIT STATE =====
+
+===== SYSTEM/VOLD DIFF =====
+
+===== SYSTEM/VOLD COMMIT =====
+6f96dacb0e0478d9aadaf6ba997249c0a7bc12da
+6f96dac vold: bypass Keystore earlyBootEnded for Slot-B V12
+
+===== KEYSTORE2 REAL GIT STATE =====
+
+46a6f18f6fd0004d1f7490fe3f948c35b1c809ed
+
+===== LIEPPOS MODIFICATIONS =====
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/Keystore.cpp:227:    LOG(WARNING) << "LieppOS V12: bypassing vold Keystore earlyBootEnded";
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs:242:        // LieppOS V11 diagnostic: skip KeyMint earlyBootEnded propagation.
+/mnt/SamsungSSD/android/lineage-22.2/system/security/keystore2/src/maintenance.rs:244:        log::warn!("LieppOS V11: bypassing KeyMint earlyBootEnded propagation");
+
+===== KEYMINT ERROR -38 =====
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/security/keymint/aidl/aidl_api/android.hardware.security.keymint/2/android/hardware/security/keymint/ErrorCode.aidl:76:  INVALID_ARGUMENT = -38,
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/security/keymint/aidl/aidl_api/android.hardware.security.keymint/1/android/hardware/security/keymint/ErrorCode.aidl:76:  INVALID_ARGUMENT = -38,
+/mnt/SamsungSSD/android/lineage-22.2/hardware/interfaces/security/keymint/aidl/android/hardware/security/keymint/ErrorCode.aidl:65:    INVALID_ARGUMENT = -38,
+
+===== FAILED B CONTEXT =====
+597-[    4.889576][  T457] mtk-board-ntc 1c013130.thermal-ntc3: invalid resource
+598-[    4.889736][  T457] mtk-board-ntc 1c013120.thermal-ntc6: invalid resource
+599-[    4.889739][  T457] mtk-board-ntc 1c013120.thermal-ntc6: invalid resource
+600-[    4.898432][  T457] mtk-charger-cooling charger-cooler: register charger-cooler done
+601-[    4.901384][  T457] mtk-backlight-cooling backlight-cooler: register lcd-backlight done
+602-[    4.905986][  T428] servicemanager: Caller(pid=569,uid=1017,sid=u:r:keystore:s0) Found android.system.keystore2.IKeystoreService/default in framework VINTF manifest.
+603-[    4.907528][  T457] mtk-wifi-cooler wifi-cooler: register wifi-cooler done
+604-[    4.908366][  T428] BpBinder: onLastStrongRef automatically unlinking death recipients: 
+605:[    4.911363][  T447] vold: keystore2 Keystore createOperation returned service specific error: -38
+606:[    4.911394][  T447] vold: decryptWithKeystoreKey failed
+607:[    4.911422][  T447] vold: read_key failed in mountFstab
+608-[    4.911560][  T593] vdc: Command: cryptfs mountFstab /dev/block/by-name/userdata /data false  Failed: Status(-8, EX_SERVICE_SPECIFIC): '0: '
+609-[    4.912497][  T445] [HYN][Info]
+610-[    4.912497][  T445] hyn chipversion: 3,chipmodule: ff,chipproject: 42,chiptype: b7
+611-[    4.912497][  T445] 
+612-[    4.912509][  T445] [HYN]cst8xx_firmware_info: Exit(2485)
+613-[    4.912514][  T445] [HYN]hyn_firmware_info: Exit(2503)
+614-[    4.912517][  T445] [HYN]config [hyn] hyn_ts_data->config_chip_type = 183
+615-[    4.912517][  T445] 
+--
+1073-[    5.000362][  T285] mtk_ccd remoteproc-ccd: ccd started: 00000000a22c2984
+1074-[    5.000365][  T285] remoteproc remoteproc2: remote processor remoteproc-ccd is now up
+1075-[    5.002733][  T601] mt6369-sound mt6369-sound: stop_trim_hardware(), ++
+1076-[    5.002762][  T601] mt6369-sound mt6369-sound: +mtk_hp_disable()
+1077-[    5.003174][    T1] init: Service 'tombstoned' (pid 613) exited with status 1
+1078-[    5.003225][    T1] init: Sending signal 9 to service 'tombstoned' (pid 613) process group...
+1079-[    5.003658][    T1] libprocessgroup: Removed cgroup /sys/fs/cgroup/uid_1058/pid_613
+1080-[    5.004476][  T601] mt6369-sound mt6369-sound: headset_volume_ramp(), from 8, to 18
+1081:[    5.006709][  T447] vold: LieppOS V12: bypassing vold Keystore earlyBootEnded
+1082-[    5.007267][  T457] cm_mgr_check_dts_setting_mt6878(287): required_opps count 7
+1083-[    5.007762][  T457] cm_mgr_check_dts_setting_mt6878(316): cm_mgr_num_array 7
+1084-[    5.007804][  T457] cm_mgr_check_dts_setting_mt6878(338): cm_perf_mode_enable 1
+1085-[    5.007808][  T457] cm_mgr_check_dts_setting_mt6878(349): cm_perf_mode_ceiling_opp 0
+1086-[    5.007810][  T457] cm_mgr_check_dts_setting_mt6878(360): cm_perf_mode_thd 5
+1087-[    5.007848][  T457] cm_ipi_init(98) scmi-cm_id 9
+1088-[    5.007853][  T457] cm ipi is ready!
+1089-[    5.007881][  T457] cm_mgr_check_dram_type(151): ddr_type 8, ddr_hz 6370, cm_mgr_idx 1
+
+PHONE_MODIFIED=0
