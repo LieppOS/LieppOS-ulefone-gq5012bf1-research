@@ -1,0 +1,292 @@
+===== SYSTEM_B WRITE REFERENCES =====
+/mnt/SamsungSSD/TIER3/phase4/scripts/99-status.sh:197:   *chronological kernel narrative* of early boot.
+/mnt/SamsungSSD/TIER3/phase4/scripts/53-validate-phase4.sh:10:FBD=$(readlink -f "$PROJECT/phase4/inventory/fastbootd/latest")
+/mnt/SamsungSSD/TIER3/phase4/scripts/53-validate-phase4.sh:20:cap,img,avb,fbd,plan,prov,logical,elig,fail,out,report=map(Path,sys.argv[1:])
+/mnt/SamsungSSD/TIER3/phase4/scripts/53-validate-phase4.sh:25:lr=tsv(logical/'b-logical-readback.tsv');pr=tsv(prov/'b-physical-readback.tsv');checks=[]
+/mnt/SamsungSSD/TIER3/phase4/scripts/53-validate-phase4.sh:35:add('fastbootd_inventory',f.get('STATUS','').startswith('PASS'),f.get('STATUS','missing'))
+/mnt/SamsungSSD/TIER3/phase4/scripts/53-validate-phase4.sh:43:add('logical_readback',len(lr)==7 and all(x['result']=='PASS' for x in lr),f'{sum(x["result"]=="PASS" for x in lr)}/7')
+/mnt/SamsungSSD/TIER3/phase4/scripts/53-validate-phase4.sh:71:Phase 4 completed the capacity plan, exact image generation, complete AVB chain, fastbootd inventory, reviewed B-only provisioning, full logical/physical readback, and one controlled B boot attempt. The device automatically fell back before B reached ADB. Slot A remained fully booted, bootable, successful, and hash-identical; super metadata and all B physical images remained unchanged.
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:9:RUN_DIR="$PROJECT/phase4/inventory/fastbootd/run-$STAMP"
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:10:REPORT="$PROJECT/docs/phase4/reports/fastbootd-capabilities.md"
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:19:  Android A -> bootloader -> userspace fastbootd -> bootloader -> Android A
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:22:It does not flash, erase, format, resize, create/delete a logical partition,
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:29:fastbootd, only with:
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:30:  --resume-approved-fastbootd-inventory
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:37:    --resume-approved-fastbootd-inventory) MODE=resume ;;
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:48:    RUN_DIR=$(find "$PROJECT/phase4/inventory/fastbootd" -mindepth 1 -maxdepth 1 -type d -name 'run-*' | sort | tail -1)
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:165:    fb_capture bootloader.getvar.is-userspace getvar is-userspace
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:171:    printf '\n== Bootloader -> userspace fastbootd ==\n'
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:172:    fb_capture transition.reboot-fastboot reboot fastboot
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:173:    [[ $(cat "$RUN_DIR/commands/transition.reboot-fastboot.exit") == 0 ]] || fail 'reboot fastboot command failed'
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:174:    wait_fastboot || fail 'device did not appear in userspace fastbootd'
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:176:    printf '\n== Resume approved inventory in already-running userspace fastbootd ==\n'
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:181:    wait_fastboot || fail 'device is not available for approved fastbootd resume'
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:183:fb_capture fastbootd.getvar.is-userspace getvar is-userspace
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:184:fb_capture fastbootd.getvar.current-slot getvar current-slot
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:185:fb_capture fastbootd.getvar.super-partition-name getvar super-partition-name
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:186:fb_capture fastbootd.getvar.partition-size-super getvar partition-size:super
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:187:fb_capture fastbootd.getvar.partition-type-super getvar partition-type:super
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:188:fb_capture fastbootd.getvar.has-slot-system getvar has-slot:system
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:189:fb_capture fastbootd.getvar.is-logical-scratch getvar is-logical:scratch
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:190:fb_capture fastbootd.getvar.partition-size-scratch getvar partition-size:scratch
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:193:[[ $(fb_value fastbootd.getvar.is-userspace is-userspace) == yes ]] || fail 'is-userspace is not yes in fastbootd'
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:194:[[ $(fb_value fastbootd.getvar.current-slot current-slot) == a ]] || fail 'fastbootd current slot is not A'
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:196:B_NAMES=(system_b system_ext_b product_b vendor_b vendor_dlkm_b system_dlkm_b odm_dlkm_b)
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:199:    fb_capture "fastbootd.getvar.is-logical-$safe" getvar "is-logical:$partition"
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:200:    fb_capture "fastbootd.getvar.partition-size-$safe" getvar "partition-size:$partition"
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:203:# direct system_b query before that syntax can be selected for a write plan.
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:204:fb_capture fastbootd.slot-b.getvar.partition-size-system --slot=b getvar partition-size:system
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:206:printf '\n== Userspace fastbootd -> bootloader -> Android A ==\n'
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:211:fb_capture final-bootloader.getvar.is-userspace getvar is-userspace
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:242:names=['system_b','system_ext_b','product_b','vendor_b','vendor_dlkm_b','system_dlkm_b','odm_dlkm_b']
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:246:    logical=value(f'fastbootd.getvar.is-logical-{safe}',f'is-logical:{p}')
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:247:    size=value(f'fastbootd.getvar.partition-size-{safe}',f'partition-size:{p}')
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:248:    rows.append((p,logical,size,number(size)))
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:249:with (out/'logical-partitions.tsv').open('w') as f:
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:250:    f.write('partition\tis_logical\tsize_raw\tsize_bytes\n')
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:253:commands={name:(name in help_text) for name in ['create-logical-partition','delete-logical-partition','resize-logical-partition']}
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:254:with (out/'logical-command-support.tsv').open('w') as f:
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:257:direct=next(r[3] for r in rows if r[0]=='system_b')
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:258:slot_raw=value('fastbootd.slot-b.getvar.partition-size-system','partition-size:system')
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:261:visible=sum(1 for _,logical,_,_ in rows if logical=='yes')
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:262:super_raw=value('fastbootd.getvar.partition-size-super','partition-size:super')
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:264:scratch_raw=value('fastbootd.getvar.partition-size-scratch','partition-size:scratch')
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:284:ln -sfn "run-$STAMP" "$PROJECT/phase4/inventory/fastbootd/latest"
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:301:Userspace fastbootd:                    yes
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:303:B logical names visible:                $VISIBLE
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:307:Host logical commands advertised:       yes
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:316:\`partition-size:system_b\`. The final provisioning plan must use the naming
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:318:logical commands, but Gate 4 intentionally does not issue any mutating command;
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:321:No flash, erase, format, resize, logical create/delete, slot selection, or
+/mnt/SamsungSSD/TIER3/phase4/scripts/48-rollback-to-a.sh:37:if [[ $(fbvar is-userspace) == yes ]]; then
+/mnt/SamsungSSD/TIER3/phase4/scripts/48-rollback-to-a.sh:38:    timeout "$TIMEOUT_SECONDS" "${FASTBOOT[@]}" reboot bootloader || fail 'could not leave fastbootd'
+/mnt/SamsungSSD/TIER3/phase4/scripts/49-generate-b-boot-eligibility.sh:17:provision,logical,avb,plan,out,report=map(Path,sys.argv[1:])
+/mnt/SamsungSSD/TIER3/phase4/scripts/49-generate-b-boot-eligibility.sh:22:lr,pr=rows(logical/'b-logical-readback.tsv'),rows(provision/'b-physical-readback.tsv')
+/mnt/SamsungSSD/TIER3/phase4/scripts/49-generate-b-boot-eligibility.sh:28: ('logical_readback',len(lr)==7 and all(x['result']=='PASS' for x in lr)),
+/mnt/SamsungSSD/TIER3/phase4/scripts/49-generate-b-boot-eligibility.sh:39:summary=['STATUS='+('PASS' if eligible else 'FAIL'),'B_BOOT_ELIGIBLE='+('yes' if eligible else 'no'),'REQUIRES_EXPLICIT_APPROVAL=true','CONTROLLED_ATTEMPTS_ALLOWED=1','AUTO_MARK_SUCCESSFUL=false','ROLLBACK_TO_A_REQUIRED=true','HOST_ONLY=true','DEVICE_COMMANDS=0','PARTITION_WRITES=0',f'PROVISION_EVIDENCE={provision}',f'LOGICAL_EVIDENCE={logical}',f'AVB_EVIDENCE={avb}',f'PLAN_EVIDENCE={plan}',f'OUTPUT={out}']
+/mnt/SamsungSSD/TIER3/phase4/scripts/49-generate-b-boot-eligibility.sh:49:All {len(checks)} offline conditions passed. The provisioned B set has 7/7 logical and 7/7 physical readbacks, the complete 14-image AVB chain verifies, A hashes are unchanged, and the rollback helper defaults to a no-command dry run.
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:78:    if [[ $DEVICE_MODE == fastbootd ]]; then
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:135:        scratch|system_b|system_ext_b|product_b|vendor_b|vendor_dlkm_b|system_dlkm_b|odm_dlkm_b) required_mode=fastbootd ;;
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:136:        boot_b|init_boot_b|vendor_boot_b|dtbo_b|vbmeta_b|vbmeta_system_b|vbmeta_vendor_b) required_mode=bootloader ;;
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:140:    if [[ $required_mode == fastbootd ]]; then
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:141:        [[ $(raw_fastboot_value is-userspace) == yes ]] || fatal 'userspace fastboot lost before write'
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:143:        [[ $(raw_fastboot_value is-userspace) != yes ]] || fatal 'physical write attempted in userspace fastbootd'
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:237:    mutable={'scratch','system_b','system_ext_b','product_b','vendor_b','vendor_dlkm_b','system_dlkm_b','odm_dlkm_b'}
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:293:enter_fastbootd_from_android() {
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:295:    [[ $DEVICE_MODE == android ]] || fatal "$label: expected Android before fastbootd entry"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:303:    fb_capture "$label-reboot-fastboot" reboot fastboot || fatal "$label: reboot fastboot failed"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:304:    wait_fastboot || fatal "$label: userspace fastbootd unavailable"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:305:    DEVICE_MODE=fastbootd
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:306:    [[ $(raw_fastboot_value is-userspace) == yes ]] || fatal "$label: is-userspace is not yes"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:307:    [[ $(raw_fastboot_value current-slot) == a ]] || fatal "$label: fastbootd slot is not A"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:312:    [[ $DEVICE_MODE == fastbootd ]] || fatal "$label: expected fastbootd before A verification cycle"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:331:verify_logical_images_from_super() {
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:332:    local raw="$PRIVATE_DIR/super-post-logical.raw.img" extract="$PRIVATE_DIR/lpunpack-b"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:335:    printf 'Streaming physical super once for selective B logical readback...\n'
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:343:        -p system_b -p system_ext_b -p product_b -p vendor_b -p vendor_dlkm_b -p system_dlkm_b -p odm_dlkm_b \
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:345:    printf 'target\tbytes\tsha256\tresult\n' > "$RUN_DIR/b-logical-readback.tsv"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:347:    for target in system_b system_ext_b product_b vendor_b vendor_dlkm_b system_dlkm_b odm_dlkm_b; do
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:351:        printf '%s\t%s\t%s\tPASS\n' "$target" "$size" "$expected" >> "$RUN_DIR/b-logical-readback.tsv"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:353:    printf '%s  super-post-logical.raw.img\n' "$host_sha" > "$RUN_DIR/super-post-logical.sha256"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:402:FASTBOOTD_STATUS=$(prereq_path fastbootd-status)
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:403:FASTBOOTD_LOGICALS=$(prereq_path fastbootd-logicals)
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:406:SCRATCH_FINAL=$(plan_field create-logical-partition scratch argument)
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:457:vbmeta_system_b	8388608
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:475:printf '\n== Enter userspace fastbootd ==\n'
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:476:enter_fastbootd_from_android initial
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:479:fb_write scratch-delete scratch delete-logical-partition scratch
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:480:fb_write scratch-create scratch create-logical-partition scratch "$SCRATCH_FINAL"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:485:enter_fastbootd_from_android after-scratch
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:487:printf '\n== Resize B logical partitions; reboot A and lpdump after each ==\n'
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:488:LOGICALS=(system_b system_ext_b product_b vendor_b vendor_dlkm_b system_dlkm_b odm_dlkm_b)
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:490:    size=$(plan_field resize-logical-partition "$target" argument)
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:492:    fb_write "resize-$target" "$target" resize-logical-partition "$target" "$size"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:495:    enter_fastbootd_from_android "after-$target-resize"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:498:printf '\n== Flash every B logical image ==\n'
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:505:printf '\n== Return to A and verify logical B content from physical super ==\n'
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:506:return_a_verify_lpdump logical-final
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:507:verify_logical_images_from_super
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:515:PHYSICAL=(boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_system_b vbmeta_vendor_b vbmeta_b)
+/mnt/SamsungSSD/TIER3/phase4/scripts/70-bootchain-backup.sh:30:    boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_b vbmeta_system_b vbmeta_vendor_b
+/mnt/SamsungSSD/TIER3/phase4/scripts/51-execute-approved-single-b-boot.sh:72:python3 - "$LOGICAL/b-logical-readback.tsv" "$PROVISION/b-physical-readback.tsv" "$AVB/status.txt" <<'PY'
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:30:LOGICAL_READBACK="$SOURCE_RUN/b-logical-readback.tsv"
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:64:    [[ $target =~ ^(boot_b|init_boot_b|vendor_boot_b|dtbo_b|vbmeta_system_b|vbmeta_vendor_b|vbmeta_b)$ ]] || fatal "forbidden target $target"
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:67:    [[ $(fbvar is-userspace) != yes ]] || fatal 'unexpected userspace fastboot'
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:95:t=['system_b','system_ext_b','product_b','vendor_b','vendor_dlkm_b','system_dlkm_b','odm_dlkm_b'];e={x['target']:x for x in p if x['action']=='flash' and x['target'] in t};g={x['target']:x for x in r}
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:108:cmp -s "$SOURCE_RUN/metadata/logical-final.slot0.txt" "$RUN_DIR/metadata/current.slot0.txt"||fatal 'live super slot 0 differs from verified logical-final state'
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:109:cmp -s "$SOURCE_RUN/metadata/logical-final.slot1.txt" "$RUN_DIR/metadata/current.slot1.txt"||fatal 'live super slot 1 differs from verified logical-final state'
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:110:raw="$PRIVATE_DIR/super-post-logical.raw.img";[[ -f $raw&&$(stat -c %s "$raw") == 9663676416 ]]||fatal 'trusted full-super readback missing'
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:111:host_super_sha=$(sha256sum "$raw"|awk '{print $1}');device_super_sha=$(remote_root 'sha256sum /dev/block/by-name/super'|awk '{print $1}');[[ $host_super_sha == "$device_super_sha" ]]||fatal 'live super no longer matches verified full readback';printf '%s  super-post-logical.raw.img\n' "$host_super_sha">"$RUN_DIR/super-post-logical.sha256"
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:115:for spec in boot_b:67108864 init_boot_b:8388608 vendor_boot_b:67108864 dtbo_b:8388608 vbmeta_b:8388608 vbmeta_system_b:8388608 vbmeta_vendor_b:8388608; do
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:135:for target in boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_system_b vbmeta_vendor_b vbmeta_b;do image=$(plan_field flash "$target" image);sha=$(plan_field flash "$target" sha256);bytes=$(plan_field flash "$target" argument);fb_write "$target" "$image" "$sha" "$bytes";done
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:145:printf 'target\tbytes\tsha256\tresult\n'>"$RUN_DIR/b-physical-readback.tsv";for target in boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_system_b vbmeta_vendor_b vbmeta_b;do bytes=$(plan_field flash "$target" argument);sha=$(plan_field flash "$target" sha256);blocks=$((bytes/4096));actual=$(remote_root "dd if=/dev/block/by-name/$target bs=4096 count=$blocks 2>/dev/null|sha256sum"|awk '{print $1}');[[ $actual == "$sha" ]]||fatal "physical readback mismatch $target";printf '%s\t%s\t%s\tPASS\n' "$target" "$bytes" "$sha">>"$RUN_DIR/b-physical-readback.tsv";done
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:146:rm -f "$PRIVATE_DIR/super-post-logical.raw.img"
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:30:FASTBOOTD_RUN=$(readlink -f "$PROJECT/phase4/inventory/fastbootd/latest")
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:38:grep -qx 'ALIGNMENT_BYTES=4096' "$CAPACITY_RUN/status.txt" || fail 'logical target alignment is not AVB-footer-safe 4096 bytes'
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:40:grep -qx 'STATUS=PASS_WITH_LIMITATION' "$FASTBOOTD_RUN/status.txt" || fail 'fastbootd inventory is not reviewed PASS_WITH_LIMITATION'
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:41:grep -qx 'IS_USERSPACE_FASTBOOTD=yes' "$FASTBOOTD_RUN/status.txt" || fail 'userspace fastbootd was not proven'
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:42:grep -qx 'B_LOGICAL_NAMES_VISIBLE=7/7' "$FASTBOOTD_RUN/status.txt" || fail 'B logical names were not all visible'
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:78:logical={'system_b','system_ext_b','product_b','vendor_b','vendor_dlkm_b','system_dlkm_b','odm_dlkm_b'}
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:79:proposed={r['name']:int(r['proposed_bytes']) for r in rows if r['record_type']=='partition' and r['name'] in logical}
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:83:    if row['target'] in logical and proposed.get(row['target'])!=int(row['bytes']):
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:103:add transition enter-fastbootd state userspace '' '' bootloader fastbootd false 'Require is-userspace=yes and current-slot=a.'
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:104:add verify verify-fastbootd-getvars super-metadata prewrite '' '' current confirmed false 'Device lacks fastboot fetch; require direct sizes, userspace=yes, and slot A.'
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:105:add scratch delete-logical-partition scratch '' '' '' "$SCRATCH_CURRENT" 0 true 'First metadata write; stop on any failure.'
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:106:add scratch create-logical-partition scratch "$SCRATCH_FINAL" '' '' 0 "$SCRATCH_FINAL" true 'Recreate immediately in default group.'
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:108:add verify reboot-a-lpdump-return-fastbootd super-metadata after-scratch '' '' previous 'scratch verified' false 'Reboot current A, capture lpdump slots 0/1, verify, then re-enter fastbootd.'
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:112:    case $target in system_b|system_ext_b|product_b|vendor_b|vendor_dlkm_b|system_dlkm_b|odm_dlkm_b)
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:113:        before=$(awk -F'\t' -v n="$target" '$1==n{print $4}' "$FASTBOOTD_RUN/logical-partitions.tsv")
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:114:        add logical resize-logical-partition "$target" "$bytes" '' '' "${before:-0}" "$bytes" true 'Exact image size keeps AVB footer at partition end.'
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:115:        add verify reboot-a-lpdump-return-fastbootd super-metadata "after-$target-resize" '' '' previous "$target verified" false 'Reboot current A, capture both lpdumps, verify A and target, then re-enter fastbootd.'
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:121:    case $target in system_b|system_ext_b|product_b|vendor_b|vendor_dlkm_b|system_dlkm_b|odm_dlkm_b)
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:122:        add logical flash "$target" "$bytes" "$IMAGE_STAGE/$file" "$sha" resized flashed true 'Direct suffixed B target only.'
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:128:for target in boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_system_b vbmeta_vendor_b vbmeta_b; do
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:149:    "fastbootd-status|$FASTBOOTD_RUN/status.txt" \
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:150:    "fastbootd-logicals|$FASTBOOTD_RUN/logical-partitions.tsv" \
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:244:logical target uses its direct \`*_b\` name and exact staged image size so the
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:248:after every logical resize, the executor must therefore reboot the still-active
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:250:intended B size, and re-enter fastbootd before continuing. This is slower but
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:253:After the seven logical B flashes, the executor returns to A, streams physical
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:254:super once, selectively extracts the seven B logical images with \`lpunpack\`,
+/mnt/SamsungSSD/TIER3/phase4/scripts/40-plan-b-slot-provisioning.sh:141:                logical_first, logical_last, physical_first = map(int, match.groups())
+/mnt/SamsungSSD/TIER3/phase4/scripts/40-plan-b-slot-provisioning.sh:142:                extents.append((physical_first, physical_first + logical_last - logical_first + 1))
+/mnt/SamsungSSD/TIER3/phase4/scripts/40-plan-b-slot-provisioning.sh:160:        raise PlanError("logical extent lies outside super geometry")
+/mnt/SamsungSSD/TIER3/phase4/scripts/40-plan-b-slot-provisioning.sh:242:        raise PlanError("missing logical partitions: " + ", ".join(missing))
+/mnt/SamsungSSD/TIER3/phase4/scripts/40-plan-b-slot-provisioning.sh:244:        raise PlanError("A/B logical partitions are not in expected main_a/main_b groups")
+/mnt/SamsungSSD/TIER3/phase4/scripts/40-plan-b-slot-provisioning.sh:265:        "system_b": product_out / "system.img",
+/mnt/SamsungSSD/TIER3/phase4/scripts/40-plan-b-slot-provisioning.sh:283:            "provenance": "LineageOS 22.2 armol build" if name in {"system_b", "system_ext_b", "product_b", "vendor_b"} else "factory Android 15 V15 logical image",
+/mnt/SamsungSSD/TIER3/phase4/scripts/40-plan-b-slot-provisioning.sh:313:    plan_rows.append({"record_type": "scratch", "name": "scratch", "group": current["scratch"]["group"], "current_bytes": scratch_bytes, "image_bytes": "", "proposed_bytes": scratch_remaining, "delta_bytes": -proposed_reclaim, "sha256": "", "source": super_run, "status": "BLOCKED_PENDING_GATE4_PROOF" if not scratch_proven else "ELIGIBLE_FOR_SEPARATE_REVIEW", "notes": "Delete/recreate only after separate fastbootd proof and approval; never shrink its filesystem in place."})
+/mnt/SamsungSSD/TIER3/phase4/scripts/41-build-complete-b-image-set.sh:41:printf '\n== Rebuild and validate current logical images ==\n'
+/mnt/SamsungSSD/TIER3/phase4/scripts/41-build-complete-b-image-set.sh:43:    "$PROJECT/phase3/scripts/34-build-partition-images.sh" || fail 'logical partition build/validation failed'
+/mnt/SamsungSSD/TIER3/phase4/scripts/41-build-complete-b-image-set.sh:218:The set intentionally excludes \`vbmeta_b\`, \`vbmeta_system_b\`, and
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:327:vbmeta_system_b -> system_b
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:331:vbmeta_b -> vbmeta_system_b (chain, rollback location 2)
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:348:| \`vbmeta_system_b\` | \`$SYSTEM_SHA\` |
+/mnt/SamsungSSD/TIER3/phase4/inventory/boot-control/latest/conditions.tsv:7:logical_readback	PASS
+/mnt/SamsungSSD/TIER3/phase4/inventory/boot-control/run-20260812T005426Z/conditions.tsv:7:logical_readback	PASS
+/mnt/SamsungSSD/TIER3/phase4/inventory/image-set/latest/image-set.tsv:6:system_b	system.img	665391104	4a0bb9f615e1d2de9c05a2ebb770beda2c9b4e1dc9466dfd6ed6c3a6dd94a8d5	LineageOS 22.2 armol build	/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system.img	EROFS filesystem, compat: SB_CHKSUM MTIME, blocksize=12, exslots=0, uuid=bb0b1128-e988-5128-9a1e-81753d044da9, incompat: LZ4_0PADDING	PASS	PASS	PASS
+/mnt/SamsungSSD/TIER3/phase4/inventory/image-set/run-20260811T230645Z/image-set.tsv:6:system_b	system.img	665391104	4a0bb9f615e1d2de9c05a2ebb770beda2c9b4e1dc9466dfd6ed6c3a6dd94a8d5	LineageOS 22.2 armol build	/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol/system.img	EROFS filesystem, compat: SB_CHKSUM MTIME, blocksize=12, exslots=0, uuid=bb0b1128-e988-5128-9a1e-81753d044da9, incompat: LZ4_0PADDING	PASS	PASS	PASS
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/b-physical-readback.tsv:6:vbmeta_system_b	4096	eb65267939a602680a897249212b7da3daaebd8214b759e90827e837884306f2	PASS
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/current.slot1.txt:48:  Name: system_b
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/current.slot1.txt:118:super: 6301696 .. 6359904: system_b (58208 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/current.slot1.txt:129:super: 14474368 .. 15147584: system_b (673216 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/current.slot1.txt:131:super: 15154088 .. 15722256: system_b (568168 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/after.slot0.txt:48:  Name: system_b
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/after.slot0.txt:118:super: 6301696 .. 6359904: system_b (58208 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/after.slot0.txt:129:super: 14474368 .. 15147584: system_b (673216 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/after.slot0.txt:131:super: 15154088 .. 15722256: system_b (568168 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/after.slot1.txt:48:  Name: system_b
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/after.slot1.txt:118:super: 6301696 .. 6359904: system_b (58208 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/after.slot1.txt:129:super: 14474368 .. 15147584: system_b (673216 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/after.slot1.txt:131:super: 15154088 .. 15722256: system_b (568168 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/current.slot0.txt:48:  Name: system_b
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/current.slot0.txt:118:super: 6301696 .. 6359904: system_b (58208 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/current.slot0.txt:129:super: 14474368 .. 15147584: system_b (673216 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/latest/metadata/current.slot0.txt:131:super: 15154088 .. 15722256: system_b (568168 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/b-physical-readback.tsv:6:vbmeta_system_b	4096	eb65267939a602680a897249212b7da3daaebd8214b759e90827e837884306f2	PASS
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/current.slot1.txt:48:  Name: system_b
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/current.slot1.txt:118:super: 6301696 .. 6359904: system_b (58208 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/current.slot1.txt:129:super: 14474368 .. 15147584: system_b (673216 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/current.slot1.txt:131:super: 15154088 .. 15722256: system_b (568168 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/after.slot0.txt:48:  Name: system_b
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/after.slot0.txt:118:super: 6301696 .. 6359904: system_b (58208 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/after.slot0.txt:129:super: 14474368 .. 15147584: system_b (673216 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/after.slot0.txt:131:super: 15154088 .. 15722256: system_b (568168 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/after.slot1.txt:48:  Name: system_b
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/after.slot1.txt:118:super: 6301696 .. 6359904: system_b (58208 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/after.slot1.txt:129:super: 14474368 .. 15147584: system_b (673216 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/after.slot1.txt:131:super: 15154088 .. 15722256: system_b (568168 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/current.slot0.txt:48:  Name: system_b
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/current.slot0.txt:118:super: 6301696 .. 6359904: system_b (58208 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/current.slot0.txt:129:super: 14474368 .. 15147584: system_b (673216 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T005004Z/metadata/current.slot0.txt:131:super: 15154088 .. 15722256: system_b (568168 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T004610Z/metadata/current.slot1.txt:48:  Name: system_b
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T004610Z/metadata/current.slot1.txt:118:super: 6301696 .. 6359904: system_b (58208 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T004610Z/metadata/current.slot1.txt:129:super: 14474368 .. 15147584: system_b (673216 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T004610Z/metadata/current.slot1.txt:131:super: 15154088 .. 15722256: system_b (568168 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T004610Z/metadata/current.slot0.txt:48:  Name: system_b
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T004610Z/metadata/current.slot0.txt:118:super: 6301696 .. 6359904: system_b (58208 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T004610Z/metadata/current.slot0.txt:129:super: 14474368 .. 15147584: system_b (673216 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/provision-resume/run-20260812T004610Z/metadata/current.slot0.txt:131:super: 15154088 .. 15722256: system_b (568168 sectors)
+/mnt/SamsungSSD/TIER3/phase4/inventory/flash-plan/latest/prerequisites.tsv:6:fastbootd-status	/mnt/SamsungSSD/TIER3/phase4/inventory/fastbootd/run-20260811T232127Z/status.txt	c75d6dee536161ea1f6fe16e8477c196e525c45d9bdcc2b253bba767ddaeb4f9
+/mnt/SamsungSSD/TIER3/phase4/inventory/flash-plan/latest/prerequisites.tsv:7:fastbootd-logicals	/mnt/SamsungSSD/TIER3/phase4/inventory/fastbootd/run-20260811T232127Z/logical-partitions.tsv	f6ef728c5e5a31a0e8e1b22092d9bd7691ef544db334b8715ef79315a9933e66
+/mnt/SamsungSSD/TIER3/phase4/inventory/flash-plan/latest/plan.tsv:11:10	transition	enter-fastbootd	state	userspace			bootloader	fastbootd	false	Require is-userspace=yes and current-slot=a.
+/mnt/SamsungSSD/TIER3/phase4/inventory/flash-plan/latest/plan.tsv:12:11	verify	verify-fastbootd-getvars	super-metadata	prewrite			current	confirmed	false	Device lacks fastboot fetch; require direct sizes, userspace=yes, and slot A.
+/mnt/SamsungSSD/TIER3/phase4/inventory/flash-plan/latest/plan.tsv:13:12	scratch	delete-logical-partition	scratch				1908113408	0	true	First metadata write; stop on any failure.
+/mnt/SamsungSSD/TIER3/phase4/inventory/flash-plan/latest/plan.tsv:14:13	scratch	create-logical-partition	scratch	1563426816			0	1563426816	true	Recreate immediately in default group.
+/mnt/SamsungSSD/TIER3/phase4/inventory/flash-plan/latest/plan.tsv:16:15	verify	reboot-a-lpdump-return-fastbootd	super-metadata	after-scratch			previous	scratch verified	false	Reboot current A, capture lpdump slots 0/1, verify, then re-enter fastbootd.
+/mnt/SamsungSSD/TIER3/phase4/inventory/flash-plan/latest/plan.tsv:17:16	logical	resize-logical-partition	system_b	665391104			29802496	665391104	true	Exact image size keeps AVB footer at partition end.
+/mnt/SamsungSSD/TIER3/phase4/inventory/flash-plan/latest/plan.tsv:18:17	verify	reboot-a-lpdump-return-fastbootd	super-metadata	after-system_b-resize			previous	system_b verified	false	Reboot current A, capture both lpdumps, verify A and target, then re-enter fastbootd.
+/mnt/SamsungSSD/TIER3/phase4/inventory/flash-plan/latest/plan.tsv:19:18	logical	resize-logical-partition	system_ext_b	366891008			0	366891008	true	Exact image size keeps AVB footer at partition end.
+/mnt/SamsungSSD/TIER3/phase4/inventory/flash-plan/latest/plan.tsv:20:19	verify	reboot-a-lpdump-return-fastbootd	super-metadata	after-system_ext_b-resize			previous	system_ext_b verified	false	Reboot current A, capture both lpdumps, verify A and target, then re-enter fastbootd.
+
+===== VBMETA_SYSTEM_B WRITE REFERENCES =====
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:128:fb_write() {
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:136:        boot_b|init_boot_b|vendor_boot_b|dtbo_b|vbmeta_b|vbmeta_system_b|vbmeta_vendor_b) required_mode=bootloader ;;
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:457:vbmeta_system_b	8388608
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:479:fb_write scratch-delete scratch delete-logical-partition scratch
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:480:fb_write scratch-create scratch create-logical-partition scratch "$SCRATCH_FINAL"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:482:fb_write scratch-flash scratch flash scratch "$SCRATCH_IMAGE"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:492:    fb_write "resize-$target" "$target" resize-logical-partition "$target" "$size"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:502:    fb_write "flash-$target" "$target" flash "$target" "$image"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:515:PHYSICAL=(boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_system_b vbmeta_vendor_b vbmeta_b)
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:519:    fb_write "flash-$target" "$target" flash "$target" "$image"
+/mnt/SamsungSSD/TIER3/phase4/scripts/70-bootchain-backup.sh:30:    boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_b vbmeta_system_b vbmeta_vendor_b
+/mnt/SamsungSSD/TIER3/phase4/scripts/90-recovery-sheet.sh:200:   (see section 8) using fastboot flash of the A images ONLY.
+/mnt/SamsungSSD/TIER3/phase4/scripts/90-recovery-sheet.sh:210:fastboot flash
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:62:fb_write(){
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:64:    [[ $target =~ ^(boot_b|init_boot_b|vendor_boot_b|dtbo_b|vbmeta_system_b|vbmeta_vendor_b|vbmeta_b)$ ]] || fatal "forbidden target $target"
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:115:for spec in boot_b:67108864 init_boot_b:8388608 vendor_boot_b:67108864 dtbo_b:8388608 vbmeta_b:8388608 vbmeta_system_b:8388608 vbmeta_vendor_b:8388608; do
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:135:for target in boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_system_b vbmeta_vendor_b vbmeta_b;do image=$(plan_field flash "$target" image);sha=$(plan_field flash "$target" sha256);bytes=$(plan_field flash "$target" argument);fb_write "$target" "$image" "$sha" "$bytes";done
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:145:printf 'target\tbytes\tsha256\tresult\n'>"$RUN_DIR/b-physical-readback.tsv";for target in boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_system_b vbmeta_vendor_b vbmeta_b;do bytes=$(plan_field flash "$target" argument);sha=$(plan_field flash "$target" sha256);blocks=$((bytes/4096));actual=$(remote_root "dd if=/dev/block/by-name/$target bs=4096 count=$blocks 2>/dev/null|sha256sum"|awk '{print $1}');[[ $actual == "$sha" ]]||fatal "physical readback mismatch $target";printf '%s\t%s\t%s\tPASS\n' "$target" "$bytes" "$sha">>"$RUN_DIR/b-physical-readback.tsv";done
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:128:for target in boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_system_b vbmeta_vendor_b vbmeta_b; do
+/mnt/SamsungSSD/TIER3/phase4/scripts/10-host-inventory.sh:191:- This kit never runs \`fastboot flash\`, \`erase\`, \`format\`, \`set_active\`, \`-w\`, or any bootctl/snapshot setter.
+/mnt/SamsungSSD/TIER3/phase4/scripts/41-build-complete-b-image-set.sh:218:The set intentionally excludes \`vbmeta_b\`, \`vbmeta_system_b\`, and
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:327:vbmeta_system_b -> system_b
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:331:vbmeta_b -> vbmeta_system_b (chain, rollback location 2)
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:348:| \`vbmeta_system_b\` | \`$SYSTEM_SHA\` |
+
+===== PHYSICAL PROVISIONING CORE =====
+for spec in boot_b:67108864 init_boot_b:8388608 vendor_boot_b:67108864 dtbo_b:8388608 vbmeta_b:8388608 vbmeta_system_b:8388608 vbmeta_vendor_b:8388608; do
+    part=${spec%%:*}; bytes=${spec##*:}; out="$PRIVATE_DIR/b-physical/$part.img"
+    record=$(awk -F'\t' -v p="$part" '$1==p{print $4" "$5}' "$PRIVATE_DIR/backup-manifest.tsv" | tail -1)
+    reuse=false
+    if [[ -n $record ]]; then
+        record_sha=${record%% *}; record_path=${record#* }
+        if [[ -f $record_path && $(stat -c %s "$record_path") == "$bytes" && $(sha256sum "$record_path" | awk '{print $1}') == "$record_sha" ]]; then
+            reuse=true
+        fi
+    fi
+    if $reuse; then
+        printf 'BACKUP_OK=%s existing\n' "$part"
+    else
+        stream_backup "$part" "/dev/block/by-name/$part" "$bytes" "$out"
+        printf 'BACKUP_OK=%s new\n' "$part"
+    fi
+done
+
+printf '\n== Flash seven physical B images; root vbmeta last ==\n'
+timeout "$TIMEOUT_SECONDS" "${ADB[@]}" reboot bootloader||fatal 'adb reboot bootloader failed';DEVICE_MODE=bootloader;wait_fastboot||fatal 'bootloader unavailable';[[ $(fbvar current-slot) == a ]]||fatal 'bootloader slot is not A';[[ $(fbvar unlocked) == yes ]]||fatal 'bootloader not unlocked'
+for target in boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_system_b vbmeta_vendor_b vbmeta_b;do image=$(plan_field flash "$target" image);sha=$(plan_field flash "$target" sha256);bytes=$(plan_field flash "$target" argument);fb_write "$target" "$image" "$sha" "$bytes";done
+[[ $(fbvar current-slot) == a ]]||fatal 'slot changed after physical B writes'
+fb_capture reboot-android reboot||fatal 'reboot A failed';DEVICE_MODE=android;wait_boot||fatal 'Android A did not complete boot'
+[[ $("${ADB[@]}" shell getprop ro.boot.slot_suffix|tr -d '\r\n') == _a ]]||fatal 'post-write slot is not A'
+[[ $(remote_root 'bootctl is-slot-bootable 0'|tr -d '\r\n') == 1 ]]||fatal 'A not bootable after writes'
+[[ $(remote_root 'bootctl is-slot-marked-successful 0'|tr -d '\r\n') == 1 ]]||fatal 'A not successful after writes'
+{ remote_root 'bootctl is-slot-marked-successful 1'||true; }|tr -d '\r'>"$RUN_DIR/b-successful.txt";[[ $(tr -d '\r\n'<"$RUN_DIR/b-successful.txt") == 0 ]]||fatal 'B unexpectedly successful'
+[[ $(remote_root 'bootctl get-snapshot-merge-status'|tr -d '\r\n') == none ]]||fatal 'merge state changed'
+remote_root 'for p in boot init_boot vendor_boot dtbo vbmeta vbmeta_system vbmeta_vendor;do sha256sum /dev/block/by-name/${p}_a;done'>"$RUN_DIR/a-after.sha256";cmp -s "$RUN_DIR/a-before.sha256" "$RUN_DIR/a-after.sha256"||fatal 'A hashes changed'
+remote_root 'lpdump --slot=0 /dev/block/by-name/super'>"$RUN_DIR/metadata/after.slot0.txt";remote_root 'lpdump --slot=1 /dev/block/by-name/super'>"$RUN_DIR/metadata/after.slot1.txt";cmp -s "$RUN_DIR/metadata/current.slot0.txt" "$RUN_DIR/metadata/after.slot0.txt"||fatal 'super slot 0 changed during physical writes';cmp -s "$RUN_DIR/metadata/current.slot1.txt" "$RUN_DIR/metadata/after.slot1.txt"||fatal 'super slot 1 changed during physical writes'
+printf 'target\tbytes\tsha256\tresult\n'>"$RUN_DIR/b-physical-readback.tsv";for target in boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_system_b vbmeta_vendor_b vbmeta_b;do bytes=$(plan_field flash "$target" argument);sha=$(plan_field flash "$target" sha256);blocks=$((bytes/4096));actual=$(remote_root "dd if=/dev/block/by-name/$target bs=4096 count=$blocks 2>/dev/null|sha256sum"|awk '{print $1}');[[ $actual == "$sha" ]]||fatal "physical readback mismatch $target";printf '%s\t%s\t%s\tPASS\n' "$target" "$bytes" "$sha">>"$RUN_DIR/b-physical-readback.tsv";done
+rm -f "$PRIVATE_DIR/super-post-logical.raw.img"
+ln -sfn "run-$STAMP" "$PROJECT/phase4/inventory/provision-resume/latest"
+printf 'STATUS=PASS\nB_PROVISIONED=true\nB_SELECTED=false\nB_BOOT_ATTEMPTED=false\nCURRENT_SLOT=_a\nA_HASHES_UNCHANGED=7/7\nB_LOGICAL_READBACK=7/7\nB_PHYSICAL_READBACK=7/7\nSUPER_METADATA_UNCHANGED=true\nWRITE_COUNT=7\nA_WRITE_TARGETS=0\nSUPER_FLASH_TARGETS=0\nSET_ACTIVE_STEPS=0\nOUTPUT=%s\nPRIVATE_BACKUP=%s\n' "$RUN_DIR" "$PRIVATE_DIR">"$RUN_DIR/status.txt";chmod -R go-rwx "$RUN_DIR" "$PRIVATE_DIR";cat "$RUN_DIR/status.txt"
+
+===== POSSIBLE LOGICAL PROVISIONING SCRIPTS =====
+44-query-fastbootd-capabilities.sh
+
+===== CURRENT PROVEN BASELINE =====
+SYSTEM_B_SHA256=1a1e7468a62c5129c579df1d050565badaa81c183b0d4df65b54910df5ef6c5b
+SYSTEM_B_SIZE=665391104
+VBMETA_SYSTEM_B_SHA256=d7ec0fec34494a10eef5ba758e83fbc1f5034fbe051201c2756bdfe3cc96aa74
+PHONE_MODIFIED=0
