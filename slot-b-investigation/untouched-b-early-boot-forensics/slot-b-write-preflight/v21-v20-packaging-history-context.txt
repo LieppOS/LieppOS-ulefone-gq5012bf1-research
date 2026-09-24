@@ -1,0 +1,222 @@
+===== V20 BUILD/SIGN CONTEXT =====
+    else\
+        if git -C "$RESEARCH" commit \\
+            --only \\
+            -m "research: correct vendor AVB capacity calculation" \\
+            -- \\
+            "$REL/avb-max-image-size-corrected.txt" \\
+            "$REL/AVB-CAPACITY-CORRECTION.md"\
+        then\
+            echo "RESEARCH_COMMIT=PASS"\
+        else\
+            echo "RESEARCH_COMMIT=FAIL"\
+        fi\
+    fi\
+fi\
+\
+echo\
+echo "===== FINAL ====="\
+echo "PHONE_OPERATIONS=0"\
+echo "FLASH_OPERATIONS=0"\
+echo "SLOT_CHANGES=0"\
+echo "SUPER_METADATA_CHANGES=0"\
+echo "TERMINAL_SAFE=1"
+unsetopt ERR_EXIT ERR_RETURN 2>/dev/null || true\
+set +e\
+\
+lieppos_make_slotb_vendor() {\
+\
+    SRC="/mnt/SamsungSSD/android/lineage-22.2"\
+\
+    RESEARCH="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+\
+    RDIR="$RESEARCH/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight"\
+\
+    PAIRDIR="$RESEARCH/slot-b-investigation/untouched-b-early-boot-forensics/fixed-vendor-vbmeta-regeneration"\
+\
+    BUILT_VENDOR="$SRC/out/target/product/armol/vendor.img"\
+\
+    FIT_VENDOR="$SRC/out/target/product/armol/vendor.slotb-fit.img"\
+\
+    CHILD="$PAIRDIR/vbmeta_vendor.fixed.img"\
+\
+    VENDOR_KEY="/mnt/SamsungSSD/TIER3/phase4/private/avb-bringup/vendor.pem"\
+\
+    AVBTOOL="/home/armol/.local/bin/avbtool"\
+\
+    TARGET_SIZE=816349184\
+    AVB_MAX_ORIGINAL=803381248\
+    FIXED_ORIGINAL=800980992\
+\
+    EXPECTED_BUILT_SHA="850a58b16357597e0fa93f7d5ab9443c85e1b49df33b0e86fa1d2d393044ca50"\
+\
+    EXPECTED_CHILD_SHA="1ac2a85791813b70f7a901c73d43a19d1358ba0c4158a7e20688f32a2ffe783f"\
+\
+\
+    echo\
+    echo "======================================================================"\
+    echo "  BUILD SLOT-B-SIZED FIXED vendor.img"\
+    echo "======================================================================"\
+    echo\
+    echo "PHONE_OPERATIONS=0"\
+    echo "FLASH_OPERATIONS=0"\
+    echo "SUPER_METADATA_CHANGES=0"\
+    echo "SLOT_CHANGES=0"\
+\
+\
+    mkdir -p "$RDIR" || {\
+        echo "STOP: cannot create research directory"\
+        return 2\
+    }\
+\
+\
+    ###########################################################################\
+    # 1. INPUT IDENTITIES\
+    ###########################################################################\
+\
+    echo\
+    echo "===== INPUT PREFLIGHT ====="\
+\
+\
+    if [ ! -f "$BUILT_VENDOR" ]; then\
+        echo "STOP: built vendor missing"\
+        return 3\
+    fi\
+\
+\
+    if [ ! -f "$CHILD" ]; then\
+        echo "STOP: fixed vbmeta_vendor missing"\
+        return 3\
+    fi\
+\
+\
+    if [ ! -f "$VENDOR_KEY" ]; then\
+        echo "STOP: vendor signing key missing"\
+        return 3\
+    fi\
+\
+\
+    BUILT_SHA="$(sha256sum "$BUILT_VENDOR" | awk '{print $1}')"\
+\
+    CHILD_SHA="$(sha256sum "$CHILD" | awk '{print $1}')"\
+\
+\
+    echo "BUILT_VENDOR_SHA256=$BUILT_SHA"\
+    echo "FIXED_VBMETA_VENDOR_SHA256=$CHILD_SHA"\
+\
+\
+    if [ "$BUILT_SHA" != "$EXPECTED_BUILT_SHA" ]; then\
+        echo "STOP: built vendor hash changed"\
+        return 4\
+    fi\
+\
+\
+    if [ "$CHILD_SHA" != "$EXPECTED_CHILD_SHA" ]; then\
+        echo "STOP: vbmeta_vendor hash changed"\
+        return 4\
+    fi\
+
+===== V20 INSTALL CONTEXT =====
+echo\
+echo "===== FINAL ====="\
+echo "V20_FIXED_VENDOR_SHA256=$FIXED_SHA"\
+echo "V20_VBMETA_VENDOR_SHA256=$CHILD_SHA"\
+echo "V20_FIXED_ROOT_DIGEST=$FIXED_ROOT"\
+echo "V20_POLICY_HASHES_OK=$POLICY_OK"\
+echo "V20_RUNTIME_EXACT_V16=$RUNTIME_OK"\
+echo "V20_DUMMY_SHAPE_OK=$SHAPE_OK"\
+echo "V20_PAIR_READY=$PAIR_READY"\
+echo "RESEARCH_HEAD=$(git -C "$RESEARCH" rev-parse --short HEAD)"\
+echo "PHONE_MODIFIED=0"
+unsetopt ERR_EXIT ERR_RETURN 2>/dev/null || true\
+set +e\
+\
+unset PRE_VENDOR PRE_CHILD SYSTEM_SHA VBMETA_SYSTEM_SHA ROOT_SHA\
+unset POST_VENDOR POST_CHILD POST_ROOT POST_VBMETA_SYSTEM\
+unset WRITE_DONE INSTALL_OK PHONE_MODIFIED\
+\
+OUT="/mnt/SamsungSSD/android/lineage-22.2/out/target/product/armol"\
+\
+VENDOR_IMG="$OUT/vendor.v20-unused-dummy-type.fixed.img"\
+CHILD_IMG="$OUT/vbmeta_vendor.v20-unused-dummy-type.img"\
+\
+RESEARCH="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+RDIR="$RESEARCH/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight"\
+REPORT="$RDIR/v20-unused-dummy-type-install-b.txt"\
+\
+# Current expected Slot-B state = V19.\
+EXPECTED_PRE_VENDOR="c7cdc8fde5415f81f1813c24a58cf45e31db3660f9726eb7506d0636d19cf298"\
+EXPECTED_PRE_CHILD="a4cc9fe8aa173ec1d796d6268ca1bd1af7473c3956956108cc9c536a885ffa61"\
+\
+# V20 pair.\
+EXPECTED_V20_VENDOR="ac3a557e1b0e92ea8b9138a7de1429fd3eb892112e4499b4e9f6b3302712731d"\
+EXPECTED_V20_CHILD="93bfd8880742d46385b0cc5ef3d4005bc665852ae827e80256410fad6a60d9c7"\
+\
+# Frozen companion state.\
+EXPECTED_SYSTEM="1a1e7468a62c5129c579df1d050565badaa81c183b0d4df65b54910df5ef6c5b"\
+EXPECTED_VBMETA_SYSTEM="d7ec0fec34494a10eef5ba758e83fbc1f5034fbe051201c2756bdfe3cc96aa74"\
+EXPECTED_ROOT="e14e11e184950d487b31def17a349f4f161e34988825bf35d85fc9bd6c3bde93"\
+\
+GATE=1\
+WRITE_DONE=0\
+INSTALL_OK=0\
+PHONE_MODIFIED=0\
+\
+POST_VENDOR=""\
+POST_CHILD=""\
+POST_ROOT=""\
+POST_VBMETA_SYSTEM=""\
+\
+echo "===== SLOT-A SAFETY ====="\
+\
+SLOT="$(adb shell getprop ro.boot.slot_suffix </dev/null | tr -d '\r')"\
+BOOT="$(adb shell getprop sys.boot_completed </dev/null | tr -d '\r')"\
+CURRENT="$(adb shell 'su -c "bootctl get-current-slot"' </dev/null | tr -d '\r')"\
+ACTIVE="$(adb shell 'su -c "bootctl get-active-boot-slot"' </dev/null | tr -d '\r')"\
+\
+echo "SLOT=$SLOT"\
+echo "BOOT=$BOOT"\
+echo "CURRENT=$CURRENT"\
+echo "ACTIVE=$ACTIVE"\
+\
+[ "$SLOT" = "_a" ] || GATE=0\
+[ "$BOOT" = "1" ] || GATE=0\
+[ "$CURRENT" = "0" ] || GATE=0\
+[ "$ACTIVE" = "0" ] || GATE=0\
+\
+echo "A_SAFETY_OK=$GATE"\
+\
+echo\
+echo "===== HOST V20 GATE ====="\
+\
+HOST_VENDOR="$(\
+  sha256sum "$VENDOR_IMG" 2>/dev/null |\
+  awk '{print $1}'\
+)"\
+\
+HOST_CHILD="$(\
+  sha256sum "$CHILD_IMG" 2>/dev/null |\
+  awk '{print $1}'\
+)"\
+\
+HOST_VENDOR_SIZE="$(stat -c %s "$VENDOR_IMG" 2>/dev/null)"\
+HOST_CHILD_SIZE="$(stat -c %s "$CHILD_IMG" 2>/dev/null)"\
+\
+echo "HOST_VENDOR_SHA256=$HOST_VENDOR"\
+echo "HOST_VENDOR_SIZE=$HOST_VENDOR_SIZE"\
+echo "HOST_CHILD_SHA256=$HOST_CHILD"\
+echo "HOST_CHILD_SIZE=$HOST_CHILD_SIZE"\
+\
+[ "$HOST_VENDOR" = "$EXPECTED_V20_VENDOR" ] || GATE=0\
+[ "$HOST_VENDOR_SIZE" = "816349184" ] || GATE=0\
+[ "$HOST_CHILD" = "$EXPECTED_V20_CHILD" ] || GATE=0\
+[ "$HOST_CHILD_SIZE" = "4096" ] || GATE=0\
+\
+echo "HOST_GATE_OK=$GATE"\
+\
+if [ "$GATE" = 1 ]; then\
+    echo\
+    echo "===== VERIFY CURRENT V19 SLOT-B STATE ====="\
+\
+
+PHONE_MODIFIED=0
