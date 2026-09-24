@@ -1,0 +1,152 @@
+===== ORIGINAL VBMETA_SYSTEM =====
+SIZE=4096 MODE=600 MTIME=2026-08-12 02:16:55.349954328 +0300
+eb65267939a602680a897249212b7da3daaebd8214b759e90827e837884306f2  /mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231651Z/vbmeta_system.img
+
+Minimum libavb version:   1.0
+Header Block:             256 bytes
+Authentication Block:     320 bytes
+Auxiliary Block:          1088 bytes
+Public key (sha1):        579a140d204d847f0c74332c73996baf1ed6a5fc
+Algorithm:                SHA256_RSA2048
+Rollback Index:           0
+Flags:                    0
+Rollback Index Location:  0
+Release String:           'avbtool 1.3.0'
+Descriptors:
+    Prop: com.android.build.system.os_version -> '15'
+    Prop: com.android.build.system.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.system.security_patch -> '2026-07-01'
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            652840960 bytes
+      Tree Offset:           652840960
+      Tree Size:             5148672 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            657989632
+      FEC size:              5201920 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        system
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           140bb4cb2f6843ca8ab627fdab2c8738add10ef3
+      Flags:                 0
+
+===== ROOT VBMETA CHAIN =====
+SIZE=8192 MODE=600 MTIME=2026-08-12 02:16:55.543944468 +0300
+bb2c7cb52dd15ee636cdb27b60f3fa5ed8fd6f774fe4acfc0a77301cbb4b17fb  /mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231651Z/vbmeta.img
+Authentication Block:     320 bytes
+Auxiliary Block:          6208 bytes
+Public key (sha1):        d6b1afef32b1fce5c47f537df3d7ec167ae2b469
+Algorithm:                SHA256_RSA2048
+Rollback Index:           0
+Flags:                    0
+Rollback Index Location:  0
+Release String:           'avbtool 1.3.0'
+Descriptors:
+    Chain Partition descriptor:
+      Partition Name:          boot
+      Rollback Index Location: 3
+      Public key (sha1):       9d808b0995768d0677fccb1efcddb7cf9e153d99
+      Flags:                   0
+    Chain Partition descriptor:
+      Partition Name:          vbmeta_system
+      Rollback Index Location: 2
+      Public key (sha1):       579a140d204d847f0c74332c73996baf1ed6a5fc
+      Flags:                   0
+    Chain Partition descriptor:
+      Partition Name:          vbmeta_vendor
+      Rollback Index Location: 4
+      Public key (sha1):       664998c1c258771293715a829bd8caeae5d5626b
+      Flags:                   0
+    Prop: com.android.build.init_boot.os_version -> '15'
+    Prop: com.android.build.init_boot.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.vendor_boot.fingerprint -> 'Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys'
+    Prop: com.android.build.dtbo.fingerprint -> 'Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys'
+    Prop: com.android.build.product.os_version -> '15'
+    Prop: com.android.build.product.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.product.security_patch -> '2026-07-01'
+
+===== PHASE4 SCRIPT REFERENCES =====
+/mnt/SamsungSSD/TIER3/phase4/scripts/44-query-fastbootd-capabilities.sh:126:    remote_root 'for p in boot init_boot vendor_boot dtbo vbmeta vbmeta_system vbmeta_vendor; do for s in a b; do sha256sum /dev/block/by-name/${p}_${s}; done; done' > "$RUN_DIR/$prefix.bootchain.sha256"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:136:        boot_b|init_boot_b|vendor_boot_b|dtbo_b|vbmeta_b|vbmeta_system_b|vbmeta_vendor_b) required_mode=bootloader ;;
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:279:    remote_root 'for p in boot init_boot vendor_boot dtbo vbmeta vbmeta_system vbmeta_vendor; do sha256sum /dev/block/by-name/${p}_a; done' > "$RUN_DIR/$prefix.a-bootchain.sha256"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:324:    remote_root 'for p in boot init_boot vendor_boot dtbo vbmeta vbmeta_system vbmeta_vendor; do sha256sum /dev/block/by-name/${p}_a; done' > "$RUN_DIR/$label.a-bootchain.sha256"
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:457:vbmeta_system_b	8388608
+/mnt/SamsungSSD/TIER3/phase4/scripts/46-execute-approved-b-provisioning.sh:515:PHYSICAL=(boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_system_b vbmeta_vendor_b vbmeta_b)
+/mnt/SamsungSSD/TIER3/phase4/scripts/70-bootchain-backup.sh:29:    boot_a init_boot_a vendor_boot_a dtbo_a vbmeta_a vbmeta_system_a vbmeta_vendor_a
+/mnt/SamsungSSD/TIER3/phase4/scripts/70-bootchain-backup.sh:30:    boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_b vbmeta_system_b vbmeta_vendor_b
+/mnt/SamsungSSD/TIER3/phase4/scripts/51-execute-approved-single-b-boot.sh:68:a_root 'for p in boot init_boot vendor_boot dtbo vbmeta vbmeta_system vbmeta_vendor;do sha256sum /dev/block/by-name/${p}_a;done'>"$OUT/a-before.sha256"
+/mnt/SamsungSSD/TIER3/phase4/scripts/51-execute-approved-single-b-boot.sh:120:a_root 'for p in boot init_boot vendor_boot dtbo vbmeta vbmeta_system vbmeta_vendor;do sha256sum /dev/block/by-name/${p}_a;done'>"$OUT/a-after.sha256";cmp -s "$OUT/a-before.sha256" "$OUT/a-after.sha256"||fatal 'A hashes changed during controlled attempt'
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:64:    [[ $target =~ ^(boot_b|init_boot_b|vendor_boot_b|dtbo_b|vbmeta_system_b|vbmeta_vendor_b|vbmeta_b)$ ]] || fatal "forbidden target $target"
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:104:remote_root 'for p in boot init_boot vendor_boot dtbo vbmeta vbmeta_system vbmeta_vendor;do sha256sum /dev/block/by-name/${p}_a;done'>"$RUN_DIR/a-before.sha256"
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:115:for spec in boot_b:67108864 init_boot_b:8388608 vendor_boot_b:67108864 dtbo_b:8388608 vbmeta_b:8388608 vbmeta_system_b:8388608 vbmeta_vendor_b:8388608; do
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:135:for target in boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_system_b vbmeta_vendor_b vbmeta_b;do image=$(plan_field flash "$target" image);sha=$(plan_field flash "$target" sha256);bytes=$(plan_field flash "$target" argument);fb_write "$target" "$image" "$sha" "$bytes";done
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:143:remote_root 'for p in boot init_boot vendor_boot dtbo vbmeta vbmeta_system vbmeta_vendor;do sha256sum /dev/block/by-name/${p}_a;done'>"$RUN_DIR/a-after.sha256";cmp -s "$RUN_DIR/a-before.sha256" "$RUN_DIR/a-after.sha256"||fatal 'A hashes changed'
+/mnt/SamsungSSD/TIER3/phase4/scripts/47-resume-approved-b-physical-provisioning.sh:145:printf 'target\tbytes\tsha256\tresult\n'>"$RUN_DIR/b-physical-readback.tsv";for target in boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_system_b vbmeta_vendor_b vbmeta_b;do bytes=$(plan_field flash "$target" argument);sha=$(plan_field flash "$target" sha256);blocks=$((bytes/4096));actual=$(remote_root "dd if=/dev/block/by-name/$target bs=4096 count=$blocks 2>/dev/null|sha256sum"|awk '{print $1}');[[ $actual == "$sha" ]]||fatal "physical readback mismatch $target";printf '%s\t%s\t%s\tPASS\n' "$target" "$bytes" "$sha">>"$RUN_DIR/b-physical-readback.tsv";done
+/mnt/SamsungSSD/TIER3/phase4/scripts/45-generate-b-provisioning-plan.sh:128:for target in boot_b init_boot_b vendor_boot_b dtbo_b vbmeta_system_b vbmeta_vendor_b vbmeta_b; do
+/mnt/SamsungSSD/TIER3/phase4/scripts/41-build-complete-b-image-set.sh:218:The set intentionally excludes \`vbmeta_b\`, \`vbmeta_system_b\`, and
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:104:"$AVBTOOL" make_vbmeta_image \
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:105:    --output "$STAGE/vbmeta_system.img" \
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:112:    --include_descriptors_from_image "$STAGE/system.img"
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:113:"$AVBTOOL" make_vbmeta_image \
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:121:    --include_descriptors_from_image "$STAGE/vendor.img"
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:125:    make_vbmeta_image
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:134:    --chain_partition "vbmeta_system:2:$RUN_DIR/keys/system.avbpubkey"
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:138:    root_args+=(--include_descriptors_from_image "$STAGE/$image.img")
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:143:for image in vbmeta vbmeta_system vbmeta_vendor; do
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:150:"$AVBTOOL" verify_image --image "$STAGE/vbmeta_system.img" --key "$KEY_DIR/system.pem" > "$RUN_DIR/vbmeta_system.verify.txt" 2>&1 || fail 'vbmeta_system chain verification failed'
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:156:    --expected_chain_partition "vbmeta_system:2:$RUN_DIR/keys/system.avbpubkey" \
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:191:    "vbmeta_system": {"system"},
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:195:expected_chains = {"boot": 3, "vbmeta_system": 2, "vbmeta_vendor": 4}
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:198:    "vbmeta_system": (key_dir / "system.avbpubkey").read_bytes(),
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:202:for name in ["vbmeta_system", "vbmeta_vendor", "vbmeta"]:
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:253:for name in vbmeta vbmeta_system vbmeta_vendor; do
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:261:SYSTEM_SHA=$(sha256sum "$STAGE/vbmeta_system.img" | awk '{print $1}')
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:314:vbmeta_system chain location:    2
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:327:vbmeta_system_b -> system_b
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:331:vbmeta_b -> vbmeta_system_b (chain, rollback location 2)
+/mnt/SamsungSSD/TIER3/phase4/scripts/43-generate-bringup-vbmeta.sh:348:| \`vbmeta_system_b\` | \`$SYSTEM_SHA\` |
+/mnt/SamsungSSD/TIER3/phase4/scripts/52-capture-controlled-b-fallback.sh:38:remote_root 'for p in boot init_boot vendor_boot dtbo vbmeta vbmeta_system vbmeta_vendor;do sha256sum /dev/block/by-name/${p}_a;done'>"$OUT/a-after-attempt.sha256"
+
+===== AVB KEY FILE NAMES =====
+root.pem
+system.pem
+vendor.pem
+
+===== STAGED CHILD IMAGES =====
+--- system ---
+4a0bb9f615e1d2de9c05a2ebb770beda2c9b4e1dc9466dfd6ed6c3a6dd94a8d5  /mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231651Z/system.img
+Image size:               665391104 bytes
+Original image size:      652840960 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        system
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           140bb4cb2f6843ca8ab627fdab2c8738add10ef3
+    Prop: com.android.build.system.os_version -> '15'
+    Prop: com.android.build.system.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.system.security_patch -> '2026-07-01'
+--- system_ext ---
+a63bd6e22cc8a451a7ffb0d8c9f026957c9ea03f89f032fd408134805865af4a  /mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231651Z/system_ext.img
+Image size:               366891008 bytes
+Original image size:      359931904 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        system_ext
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           cead2796001e72dd567c97a00b2165a78ab80d92
+    Prop: com.android.build.system_ext.os_version -> '15'
+    Prop: com.android.build.system_ext.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.system_ext.security_patch -> '2026-07-01'
+--- product ---
+10c17f4eea7ba7d79b22d85f88672a3e0694113777ab6a49dd225f67f463e1a1  /mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231651Z/product.img
+Image size:               337686528 bytes
+Original image size:      331276288 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        product
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           82f2881b4fb4830478455dec29bab5a67274b0e1
+    Prop: com.android.build.product.os_version -> '15'
+    Prop: com.android.build.product.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.product.security_patch -> '2026-07-01'
+
+PHONE_MODIFIED=0
