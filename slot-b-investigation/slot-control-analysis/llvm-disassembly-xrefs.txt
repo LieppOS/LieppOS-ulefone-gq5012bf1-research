@@ -1,0 +1,220 @@
+===== ELF SECTIONS =====
+  [12] .rodata           PROGBITS         0000000000003d30  00003d30
+  [15] .text             PROGBITS         0000000000008000  00008000
+
+===== STRING VIRTUAL ADDRESSES =====
+  [   91a]  slot_suffix
+  [   964]  Failed to load bootloader control block
+  [   9f4]  ro.boot.slot_suffix
+  [   a76]  setActiveBootSlot SetBootRegionSlot 
+  [   db2]  /misc
+  [   e6d]  failed to find /misc partition
+  [  1082]  Could not switch boot part
+
+===== OBJDUMP AVAILABLE =====
+/usr/lib/llvm/23/bin/llvm-objdump
+/usr/bin/objdump
+
+===== DISASSEMBLY AROUND TEXT =====
+21-    8040: aa1f03e1     	mov	x1, xzr
+22-    8044: a900a7e8     	stp	x8, x9, [sp, #0x8]
+23-    8048: d503201f     	nop
+24-    804c: 1008ffa8     	adr	x8, 0x1a040
+25-    8050: f9000fe8     	str	x8, [sp, #0x18]
+26-    8054: d503201f     	nop
+27-    8058: 100004c2     	adr	x2, 0x80f0 <main>
+28-    805c: 940044b5     	bl	0x19330 <__libc_init@plt>
+29-    8060: a9bf7bfd     	stp	x29, x30, [sp, #-0x10]!
+30-    8064: 910003fd     	mov	x29, sp
+31-    8068: d503201f     	nop
+32-    806c: 1009d4a8     	adr	x8, 0x1bb00 <_ZGVN4aidl7android8hardware4boot12IBootControl4hashE>
+33-    8070: 38bfc108     	ldaprb	w8, [x8]
+34-    8074: 370003a8     	tbnz	w8, #0x0, 0x80e8 <.text+0xe8>
+35-    8078: d503201f     	nop
+36-    807c: 1009d420     	adr	x0, 0x1bb00 <_ZGVN4aidl7android8hardware4boot12IBootControl4hashE>
+37-    8080: 940044b4     	bl	0x19350 <__cxa_guard_acquire@plt>
+38-    8084: 34000320     	cbz	w0, 0x80e8 <.text+0xe8>
+39-    8088: 52800600     	mov	w0, #0x30               // =48
+40-    808c: 940044b5     	bl	0x19360 <_Znwm@plt>
+41:    8090: f0ffffc8     	adrp	x8, 0x3000
+42-    8094: 3dc34d00     	ldr	q0, [x8, #0xd30]
+43-    8098: d503201f     	nop
+44-    809c: 10fe4268     	adr	x8, 0x48e8
+45-    80a0: d503201f     	nop
+46-    80a4: 1009d221     	adr	x1, 0x1bae8 <_ZN4aidl7android8hardware4boot12IBootControl4hashE>
+47-    80a8: 3900a01f     	strb	wzr, [x0, #0x28]
+48-    80ac: d503201f     	nop
+49-    80b0: 1009d182     	adr	x2, 0x1bae0
+50-    80b4: ad400901     	ldp	q1, q2, [x8]
+51-    80b8: f9000820     	str	x0, [x1, #0x10]
+52-    80bc: 3d800020     	str	q0, [x1]
+53-    80c0: f9401108     	ldr	x8, [x8, #0x20]
+54-    80c4: ad000801     	stp	q1, q2, [x0]
+55-    80c8: f9001008     	str	x8, [x0, #0x20]
+56:    80cc: d0000080     	adrp	x0, 0x1a000
+57-    80d0: f9437400     	ldr	x0, [x0, #0x6e8]
+58-    80d4: 9400449b     	bl	0x19340 <__cxa_atexit@plt>
+59-    80d8: d503201f     	nop
+60-    80dc: 1009d120     	adr	x0, 0x1bb00 <_ZGVN4aidl7android8hardware4boot12IBootControl4hashE>
+61-    80e0: a8c17bfd     	ldp	x29, x30, [sp], #0x10
+62-    80e4: 140044a3     	b	0x19370 <__cxa_guard_release@plt>
+63-    80e8: a8c17bfd     	ldp	x29, x30, [sp], #0x10
+64-    80ec: d65f03c0     	ret
+65-
+66-00000000000080f0 <main>:
+67-    80f0: d10343ff     	sub	sp, sp, #0xd0
+68-    80f4: a9077bfd     	stp	x29, x30, [sp, #0x70]
+69-    80f8: a9086ffc     	stp	x28, x27, [sp, #0x80]
+70-    80fc: a90967fa     	stp	x26, x25, [sp, #0x90]
+71-    8100: a90a5ff8     	stp	x24, x23, [sp, #0xa0]
+72-    8104: a90b57f6     	stp	x22, x21, [sp, #0xb0]
+73-    8108: a90c4ff4     	stp	x20, x19, [sp, #0xc0]
+74-    810c: 9101c3fd     	add	x29, sp, #0x70
+75-    8110: d53bd058     	mrs	x24, TPIDR_EL0
+76:    8114: d0000089     	adrp	x9, 0x1a000
+77-    8118: 91018129     	add	x9, x9, #0x60
+78-    811c: f9401708     	ldr	x8, [x24, #0x28]
+79:    8120: d000008a     	adrp	x10, 0x1a000
+80-    8124: f943794a     	ldr	x10, [x10, #0x6f0]
+81-    8128: aa0103e0     	mov	x0, x1
+82-    812c: 910003f3     	mov	x19, sp
+83-    8130: f81f83a8     	stur	x8, [x29, #-0x8]
+84-    8134: 9100c3e8     	add	x8, sp, #0x30
+85-    8138: a9032be9     	stp	x9, x10, [sp, #0x30]
+86:    813c: d0000089     	adrp	x9, 0x1a000
+87-    8140: 9102a129     	add	x9, x9, #0xa8
+88:    8144: d000008a     	adrp	x10, 0x1a000
+89-    8148: f9437d4a     	ldr	x10, [x10, #0x6f8]
+90-    814c: 9100c3e1     	add	x1, sp, #0x30
+91-    8150: 910003e2     	mov	x2, sp
+92-    8154: f9002be8     	str	x8, [sp, #0x50]
+93-    8158: f90013f3     	str	x19, [sp, #0x20]
+94-    815c: a9002be9     	stp	x9, x10, [sp]
+95-    8160: 94004488     	bl	0x19380 <_ZN7android4base11InitLoggingEPPcONSt3__18functionIFvNS0_5LogIdENS0_11LogSeverityEPKcS8_jS8_EEEONS4_IFvS8_EEE@plt>
+96-    8164: f94013e0     	ldr	x0, [sp, #0x20]
+97-    8168: eb13001f     	cmp	x0, x19
+98-    816c: 540000a0     	b.eq	0x8180 <main+0x90>
+99-    8170: b4000120     	cbz	x0, 0x8194 <main+0xa4>
+100-    8174: f9400008     	ldr	x8, [x0]
+101-    8178: 9100a108     	add	x8, x8, #0x28
+102-    817c: 14000004     	b	0x818c <main+0x9c>
+103-    8180: f94003e8     	ldr	x8, [sp]
+104-    8184: 910003e0     	mov	x0, sp
+105-    8188: 91008108     	add	x8, x8, #0x20
+106-    818c: f9400108     	ldr	x8, [x8]
+107-    8190: d63f0100     	blr	x8
+108-    8194: f9402be0     	ldr	x0, [sp, #0x50]
+--
+110-    819c: eb08001f     	cmp	x0, x8
+111-    81a0: 540000a0     	b.eq	0x81b4 <main+0xc4>
+112-    81a4: b4000120     	cbz	x0, 0x81c8 <main+0xd8>
+113-    81a8: f9400008     	ldr	x8, [x0]
+114-    81ac: 9100a108     	add	x8, x8, #0x28
+115-    81b0: 14000004     	b	0x81c0 <main+0xd0>
+116-    81b4: f9401be8     	ldr	x8, [sp, #0x30]
+117-    81b8: 9100c3e0     	add	x0, sp, #0x30
+118-    81bc: 91008108     	add	x8, x8, #0x20
+119-    81c0: f9400108     	ldr	x8, [x8]
+120-    81c4: d63f0100     	blr	x8
+121-    81c8: 2a1f03e0     	mov	w0, wzr
+122-    81cc: 94004471     	bl	0x19390 <ABinderProcess_setThreadPoolMaxThreadCount@plt>
+123-    81d0: 52801000     	mov	w0, #0x80               // =128
+124-    81d4: 94004473     	bl	0x193a0 <malloc@plt>
+125-    81d8: aa0003f3     	mov	x19, x0
+126-    81dc: 94000261     	bl	0x8b60 <_ZNSt3__120__shared_ptr_pointerIPN3ndk13SharedRefBaseENS_14default_deleteIS2_EENS_9allocatorIS2_EEE21__on_zero_shared_weakEv+0x10>
+127-    81e0: 9100c3e8     	add	x8, sp, #0x30
+128-    81e4: aa1303e0     	mov	x0, x19
+129-    81e8: 940001da     	bl	0x8950 <_ZNSt3__110__function6__funcIPFvPKcENS_9allocatorIS5_EES4_EclEOS3_+0x10>
+130:    81ec: d0000088     	adrp	x8, 0x1a000
+131-    81f0: f9438108     	ldr	x8, [x8, #0x700]
+132-    81f4: a9434ff4     	ldp	x20, x19, [sp, #0x30]
+133-    81f8: a9007fff     	stp	xzr, xzr, [sp]
+134-    81fc: f9400115     	ldr	x21, [x8]
+135-    8200: f9000bff     	str	xzr, [sp, #0x10]
+136-    8204: aa1503e0     	mov	x0, x21
+137-    8208: 9400446a     	bl	0x193b0 <strlen@plt>
+138-    820c: b100401f     	cmn	x0, #0x10
+139-    8210: 54001702     	b.hs	0x84f0 <main+0x400>
+140-    8214: aa0003f6     	mov	x22, x0
+141-    8218: f1005c1f     	cmp	x0, #0x17
+142-    821c: 540000e2     	b.hs	0x8238 <main+0x148>
+143-    8220: 910003e9     	mov	x9, sp
+144-    8224: 531f7ac8     	lsl	w8, w22, #1
+145-    8228: b2400137     	orr	x23, x9, #0x1
+146-    822c: 390003e8     	strb	w8, [sp]
+147-    8230: b5000136     	cbnz	x22, 0x8254 <main+0x164>
+148-    8234: 1400000c     	b	0x8264 <main+0x174>
+149-    8238: b2400ed9     	orr	x25, x22, #0xf
+150-    823c: 91000720     	add	x0, x25, #0x1
+151-    8240: 94004448     	bl	0x19360 <_Znwm@plt>
+152-    8244: 91000b28     	add	x8, x25, #0x2
+153-    8248: aa0003f7     	mov	x23, x0
+154-    824c: a90083f6     	stp	x22, x0, [sp, #0x8]
+155-    8250: f90003e8     	str	x8, [sp]
+156-    8254: aa1703e0     	mov	x0, x23
+157-    8258: aa1503e1     	mov	x1, x21
+158-    825c: aa1603e2     	mov	x2, x22
+159-    8260: 94004458     	bl	0x193c0 <memcpy@plt>
+160:    8264: 90ffffe1     	adrp	x1, 0x4000
+161-    8268: 91280c21     	add	x1, x1, #0xa03
+162-    826c: 910003e0     	mov	x0, sp
+163-    8270: 38366aff     	strb	wzr, [x23, x22]
+164-    8274: 94004457     	bl	0x193d0 <_ZNSt3__112basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6appendEPKc@plt>
+165-    8278: f9400808     	ldr	x8, [x0, #0x10]
+166-    827c: 3dc00000     	ldr	q0, [x0]
+167-    8280: f90023e8     	str	x8, [sp, #0x40]
+168-    8284: 3d800fe0     	str	q0, [sp, #0x30]
+169-    8288: a900fc1f     	stp	xzr, xzr, [x0, #0x8]
+170-    828c: f900001f     	str	xzr, [x0]
+171-    8290: 394003e8     	ldrb	w8, [sp]
+172-    8294: 36000068     	tbz	w8, #0x0, 0x82a0 <main+0x1b0>
+173-    8298: f9400be0     	ldr	x0, [sp, #0x10]
+174-    829c: 94004451     	bl	0x193e0 <_ZdlPv@plt>
+175-    82a0: f9400288     	ldr	x8, [x20]
+176-    82a4: aa1403e0     	mov	x0, x20
+177-    82a8: f9400909     	ldr	x9, [x8, #0x10]
+178-    82ac: 910003e8     	mov	x8, sp
+179-    82b0: d63f0120     	blr	x9
+180-    82b4: 3940c3e8     	ldrb	w8, [sp, #0x30]
+--
+210-    832c: b50000e8     	cbnz	x8, 0x8348 <main+0x258>
+211-    8330: f9400268     	ldr	x8, [x19]
+212-    8334: aa1303e0     	mov	x0, x19
+213-    8338: f9400908     	ldr	x8, [x8, #0x10]
+214-    833c: d63f0100     	blr	x8
+215-    8340: aa1303e0     	mov	x0, x19
+216-    8344: 9400443b     	bl	0x19430 <_ZNSt3__119__shared_weak_count14__release_weakEv@plt>
+217-    8348: f9401708     	ldr	x8, [x24, #0x28]
+218-    834c: f85f83a9     	ldur	x9, [x29, #-0x8]
+219-    8350: eb09011f     	cmp	x8, x9
+220-    8354: 54000de1     	b.ne	0x8510 <main+0x420>
+221-    8358: 52800020     	mov	w0, #0x1                // =1
+222-    835c: a94c4ff4     	ldp	x20, x19, [sp, #0xc0]
+223-    8360: a94b57f6     	ldp	x22, x21, [sp, #0xb0]
+224-    8364: a94a5ff8     	ldp	x24, x23, [sp, #0xa0]
+225-    8368: a94967fa     	ldp	x26, x25, [sp, #0x90]
+226-    836c: a9486ffc     	ldp	x28, x27, [sp, #0x80]
+227-    8370: a9477bfd     	ldp	x29, x30, [sp, #0x70]
+228-    8374: 910343ff     	add	sp, sp, #0xd0
+229-    8378: d65f03c0     	ret
+230:    837c: 90fffff5     	adrp	x21, 0x4000
+231-    8380: 91255eb5     	add	x21, x21, #0x957
+232:    8384: 90fffff6     	adrp	x22, 0x4000
+233-    8388: 911db2d6     	add	x22, x22, #0x76c
+234:    838c: 90fffff7     	adrp	x23, 0x4000
+235-    8390: 912832f7     	add	x23, x23, #0xa0c
+236:    8394: 90fffff8     	adrp	x24, 0x4000
+237-    8398: 9107cf18     	add	x24, x24, #0x1f3
+238:    839c: 90fffff9     	adrp	x25, 0x4000
+239-    83a0: 91081b39     	add	x25, x25, #0x206
+240:    83a4: 90fffffa     	adrp	x26, 0x4000
+241-    83a8: 9121b35a     	add	x26, x26, #0x86c
+242:    83ac: 90fffffb     	adrp	x27, 0x4000
+243-    83b0: 91195b7b     	add	x27, x27, #0x656
+244:    83b4: 90fffffc     	adrp	x28, 0x4000
+245-    83b8: 91339b9c     	add	x28, x28, #0xce6
+246:    83bc: 90fffff3     	adrp	x19, 0x4000
+247-    83c0: 91259a73     	add	x19, x19, #0x966
+248-    83c4: 910003e0     	mov	x0, sp
+
+DONE
