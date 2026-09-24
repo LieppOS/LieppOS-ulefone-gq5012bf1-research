@@ -1,0 +1,127 @@
+===== PHASE4 ORIGINAL GENERATOR =====
+    90	matches = [d for d in module.parse_descriptors(blob)
+    91	           if isinstance(d, module.AvbChainPartitionDescriptor) and d.partition_name == "boot"]
+    92	if len(matches) != 1:
+    93	    raise SystemExit(f"expected one factory boot chain descriptor, found {len(matches)}")
+    94	desc = matches[0]
+    95	if desc.rollback_index_location != 3 or desc.flags != 0:
+    96	    raise SystemExit("factory boot chain location/flags differ from 3/0")
+    97	if hashlib.sha1(desc.public_key).hexdigest() != "9d808b0995768d0677fccb1efcddb7cf9e153d99":
+    98	    raise SystemExit("factory boot chain public-key fingerprint mismatch")
+    99	output_path.write_bytes(desc.public_key)
+   100	PY
+   101	chmod 0600 "$RUN_DIR/keys/boot.avbpubkey"
+   102	
+   103	printf '\n== Generate child vbmeta images ==\n'
+   104	"$AVBTOOL" make_vbmeta_image \
+   105	    --output "$STAGE/vbmeta_system.img" \
+   106	    --algorithm SHA256_RSA2048 \
+   107	    --key "$KEY_DIR/system.pem" \
+   108	    --rollback_index 0 \
+   109	    --rollback_index_location 0 \
+   110	    --flags 0 \
+   111	    --padding_size 4096 \
+   112	    --include_descriptors_from_image "$STAGE/system.img"
+   113	"$AVBTOOL" make_vbmeta_image \
+   114	    --output "$STAGE/vbmeta_vendor.img" \
+   115	    --algorithm SHA256_RSA2048 \
+   116	    --key "$KEY_DIR/vendor.pem" \
+   117	    --rollback_index 0 \
+   118	    --rollback_index_location 0 \
+   119	    --flags 0 \
+   120	    --padding_size 4096 \
+   121	    --include_descriptors_from_image "$STAGE/vendor.img"
+   122	
+   123	printf '\n== Generate root vbmeta image ==\n'
+   124	root_args=(
+   125	    make_vbmeta_image
+   126	    --output "$STAGE/vbmeta.img"
+   127	    --algorithm SHA256_RSA2048
+   128	    --key "$KEY_DIR/root.pem"
+   129	    --rollback_index 0
+   130	    --rollback_index_location 0
+   131	    --flags 0
+   132	    --padding_size 4096
+   133	    --chain_partition "boot:3:$RUN_DIR/keys/boot.avbpubkey"
+   134	    --chain_partition "vbmeta_system:2:$RUN_DIR/keys/system.avbpubkey"
+   135	    --chain_partition "vbmeta_vendor:4:$RUN_DIR/keys/vendor.avbpubkey"
+   136	)
+   137	for image in init_boot vendor_boot dtbo product system_ext vendor_dlkm system_dlkm odm_dlkm; do
+   138	    root_args+=(--include_descriptors_from_image "$STAGE/$image.img")
+   139	done
+   140	"$AVBTOOL" "${root_args[@]}"
+   141	chmod 0600 "$STAGE"/*.img
+   142	
+   143	for image in vbmeta vbmeta_system vbmeta_vendor; do
+   144	    [[ -s $STAGE/$image.img ]] || fail "$image generation produced no image"
+   145	    [[ $(stat -c %s "$STAGE/$image.img") -le 8388608 ]] || fail "$image exceeds its 8 MiB physical partition"
+   146	    "$AVBTOOL" info_image --image "$STAGE/$image.img" > "$RUN_DIR/$image.info.txt" 2>&1 || fail "$image metadata parse failed"
+   147	done
+   148	
+   149	printf '\n== Verify child and complete root chains ==\n'
+   150	"$AVBTOOL" verify_image --image "$STAGE/vbmeta_system.img" --key "$KEY_DIR/system.pem" > "$RUN_DIR/vbmeta_system.verify.txt" 2>&1 || fail 'vbmeta_system chain verification failed'
+   151	"$AVBTOOL" verify_image --image "$STAGE/vbmeta_vendor.img" --key "$KEY_DIR/vendor.pem" > "$RUN_DIR/vbmeta_vendor.verify.txt" 2>&1 || fail 'vbmeta_vendor chain verification failed'
+   152	"$AVBTOOL" verify_image \
+   153	    --image "$STAGE/vbmeta.img" \
+   154	    --key "$KEY_DIR/root.pem" \
+   155	    --expected_chain_partition "boot:3:$RUN_DIR/keys/boot.avbpubkey" \
+   156	    --expected_chain_partition "vbmeta_system:2:$RUN_DIR/keys/system.avbpubkey" \
+   157	    --expected_chain_partition "vbmeta_vendor:4:$RUN_DIR/keys/vendor.avbpubkey" \
+   158	    > "$RUN_DIR/vbmeta.verify.txt" 2>&1 || fail 'root AVB descriptor verification failed'
+   159	# Pinned avbtool 1.3.0 incorrectly reuses the root --key while following a
+   160	# differently keyed chain. Verify each child independently, then compare every
+   161	# chain descriptor's exact AVB public-key blob below.
+   162	"$AVBTOOL" verify_image --image "$STAGE/boot.img" > "$RUN_DIR/boot.verify.txt" 2>&1 || fail 'factory boot self-signature/digest verification failed'
+   163	
+   164	printf '\n== Parse and assert exact descriptor topology ==\n'
+   165	python3 - "$AVBTOOL_PY" "$STAGE" "$RUN_DIR/keys" "$RUN_DIR/descriptors.tsv" <<'PY'
+   166	import importlib.util
+   167	import sys
+   168	from pathlib import Path
+   169	module_path, stage, key_dir, output = map(Path, sys.argv[1:])
+   170	spec = importlib.util.spec_from_file_location("pinned_avbtool", module_path)
+   171	module = importlib.util.module_from_spec(spec)
+   172	spec.loader.exec_module(module)
+   173	
+   174	def parse(name):
+   175	    data = (stage / f"{name}.img").read_bytes()
+
+===== PHASE5 DIAGNOSTIC GENERATOR =====
+   120	 for payload in dtb bootconfig vendor_ramdisk00 vendor_ramdisk01;do
+   121	  printf '%s\t%s\t%s\tPASS\n' "$payload" "$(stat -c %s "$WORK/diagnostic/unpacked/$payload")" "$(sha "$WORK/diagnostic/unpacked/$payload")"
+   122	 done
+   123	}>"$OUT/payload-preservation.tsv"
+   124	
+   125	cp "$WORK/diagnostic/vendor_boot.raw.img" "$STAGE/vendor_boot.img";add_footer "$STAGE/vendor_boot.img"
+   126	$AVBTOOL info_image --image "$STAGE/vendor_boot.img">"$OUT/vendor_boot.info.txt"
+   127	$AVBTOOL verify_image --image "$STAGE/vendor_boot.img">"$OUT/vendor_boot.verify.txt"
+   128	[[ $(stat -c %s "$STAGE/vendor_boot.img") -eq 67108864 ]]||fail 'diagnostic vendor_boot partition size mismatch'
+   129	[[ $(sha "$STAGE/vendor_boot.img") != "$EXPECTED_VENDOR_BOOT_SHA" ]]||fail 'diagnostic vendor_boot hash did not change'
+   130	
+   131	printf '\n== Regenerate only root vbmeta descriptor coverage ==\n'
+   132	ROOT_ARGS=(make_vbmeta_image --output "$STAGE/vbmeta.img" --algorithm SHA256_RSA2048 \
+   133	 --key "$KEYS/root.pem" --rollback_index 0 --rollback_index_location 0 --flags 0 \
+   134	 --padding_size 4096 \
+   135	 --chain_partition "boot:3:$AVB_EVIDENCE/keys/boot.avbpubkey" \
+   136	 --chain_partition "vbmeta_system:2:$AVB_EVIDENCE/keys/system.avbpubkey" \
+   137	 --chain_partition "vbmeta_vendor:4:$AVB_EVIDENCE/keys/vendor.avbpubkey")
+   138	for image in init_boot vendor_boot dtbo product system_ext vendor_dlkm system_dlkm odm_dlkm;do
+   139	 ROOT_ARGS+=(--include_descriptors_from_image "$STAGE/$image.img")
+   140	done
+   141	$AVBTOOL "${ROOT_ARGS[@]}"
+   142	$AVBTOOL info_image --image "$STAGE/vbmeta.img">"$OUT/vbmeta.info.txt"
+   143	$AVBTOOL verify_image --image "$STAGE/vbmeta.img" --key "$KEYS/root.pem" \
+   144	 --expected_chain_partition "boot:3:$AVB_EVIDENCE/keys/boot.avbpubkey" \
+   145	 --expected_chain_partition "vbmeta_system:2:$AVB_EVIDENCE/keys/system.avbpubkey" \
+   146	 --expected_chain_partition "vbmeta_vendor:4:$AVB_EVIDENCE/keys/vendor.avbpubkey" \
+   147	 >"$OUT/vbmeta.verify.txt"
+   148	$AVBTOOL verify_image --image "$STAGE/vbmeta_system.img" --key "$KEYS/system.pem">"$OUT/vbmeta_system.verify.txt"
+   149	$AVBTOOL verify_image --image "$STAGE/vbmeta_vendor.img" --key "$KEYS/vendor.pem">"$OUT/vbmeta_vendor.verify.txt"
+   150	$AVBTOOL verify_image --image "$STAGE/boot.img">"$OUT/boot.verify.txt"
+   151	
+   152	printf 'image\tphase4_sha256\tdiagnostic_sha256\tresult\n'>"$OUT/differences.tsv";differences=0
+   153	for image in boot init_boot vendor_boot dtbo system system_ext product vendor vendor_dlkm system_dlkm odm_dlkm vbmeta vbmeta_system vbmeta_vendor;do
+   154	 before=$(sha "$BASE_STAGE/$image.img");after=$(sha "$STAGE/$image.img")
+   155	 if [[ $before == "$after" ]];then result=IDENTICAL;else result=DIFFERENT;differences=$((differences+1));fi
+
+PHONE_MODIFIED=0
