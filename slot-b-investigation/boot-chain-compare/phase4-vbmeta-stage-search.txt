@@ -1,0 +1,101 @@
+===== PHASE4 PATH SETUP =====
+     1	#!/usr/bin/env bash
+     2	set -Eeuo pipefail
+     3	
+     4	SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+     5	PROJECT=${PROJECT:-$(cd -- "$SCRIPT_DIR/../.." && pwd -P)}
+     6	ROM=${ROM:-/mnt/SamsungSSD/android/lineage-22.2}
+     7	FACTORY_ROOT=${FACTORY_ROOT:-/home/armol/androido_dalykai/Ulefone_Armor_29_Thermal/Ka as turiu/m170b-gq-gq5012-512g16g-fhdp-V0-bom103-cts-eu_GQ5012BF1_EEA_V15_user_20251022}
+     8	STAMP=$(date -u +%Y%m%dT%H%M%SZ)
+     9	RUN_DIR="$PROJECT/phase4/inventory/avb/run-$STAMP"
+    10	KEY_DIR="$PROJECT/phase4/private/avb-bringup"
+    11	STAGE_ROOT="$PROJECT/phase4/staging/complete-b-set"
+    12	STAGE="$STAGE_ROOT/run-$STAMP"
+    13	REPORT="$PROJECT/docs/phase4/reports/bringup-avb.md"
+    14	AVBTOOL="$ROM/out/host/linux-x86/bin/avbtool"
+    15	AVBTOOL_PY="$ROM/external/avb/avbtool.py"
+    16	
+    17	umask 077
+    18	mkdir -p "$RUN_DIR/keys" "$KEY_DIR" "$STAGE" "$(dirname -- "$REPORT")"
+    19	chmod 0700 "$RUN_DIR" "$RUN_DIR/keys" "$KEY_DIR" "$STAGE_ROOT" "$STAGE"
+    20	exec > >(tee "$RUN_DIR/driver.log") 2>&1
+    21	
+    22	fail() {
+    23	    local reason=$1
+    24	    printf 'STATUS=FAIL\nREASON=%s\nHOST_ONLY=true\nDEVICE_COMMANDS=0\nPARTITION_WRITES=0\nOUTPUT=%s\n' \
+    25	        "$reason" "$RUN_DIR" > "$RUN_DIR/status.txt"
+    26	    chmod 0600 "$RUN_DIR/status.txt"
+    27	    printf 'STATUS=FAIL\nREASON=%s\n' "$reason" >&2
+    28	    exit 1
+    29	}
+    30	
+    31	printf '%s\n' \
+    32	    'HOST_ONLY=true' \
+    33	    'DEVICE_COMMANDS=0' \
+    34	    'PARTITION_WRITES=0' \
+    35	    'AVB_VERIFICATION_DISABLED=false' \
+    36	    'GENERATING_BRINGUP_AVB_CHAIN=true'
+    37	
+    38	[[ -x $AVBTOOL && -f $AVBTOOL_PY ]] || fail 'pinned branch avbtool is unavailable'
+    39	[[ -s $FACTORY_ROOT/vbmeta.img ]] || fail 'authoritative factory root vbmeta is missing'
+    40	IMAGE_RUN=$(readlink -f "$PROJECT/phase4/inventory/image-set/latest")
+    41	IMAGE_STATUS="$IMAGE_RUN/status.txt"
+    42	IMAGE_MANIFEST="$IMAGE_RUN/image-set.tsv"
+    43	SOURCE_STAGE=$(awk -F= '$1=="STAGING"{print $2}' "$IMAGE_STATUS" 2>/dev/null || true)
+    44	[[ -f $IMAGE_STATUS && -f $IMAGE_MANIFEST && -d $SOURCE_STAGE ]] || fail 'Gate 2 image-set evidence is incomplete'
+    45	grep -qx 'STATUS=PASS' "$IMAGE_STATUS" || fail 'Gate 2 image set did not pass'
+    46	grep -qx 'IMAGES=11' "$IMAGE_STATUS" || fail 'Gate 2 image count is not eleven'
+    47	grep -qx 'AVB_VERIFY_PASS=11/11' "$IMAGE_STATUS" || fail 'Gate 2 image AVB verification is incomplete'
+    48	
+    49	printf '\n== Copy and rehash immutable Gate 2 inputs ==\n'
+    50	while IFS=$'\t' read -r target file bytes sha provenance source type fsck avb_info avb_verify; do
+    51	    [[ $target == target ]] && continue
+    52	    [[ $target == *_b && -s $SOURCE_STAGE/$file ]] || fail "invalid Gate 2 manifest row: $target"
+    53	    cp --reflink=auto -- "$SOURCE_STAGE/$file" "$STAGE/$file"
+    54	    chmod 0600 "$STAGE/$file"
+    55	    [[ $(stat -c %s "$STAGE/$file") == "$bytes" ]] || fail "$target size changed while staging"
+    56	    [[ $(sha256sum "$STAGE/$file" | awk '{print $1}') == "$sha" ]] || fail "$target hash changed while staging"
+    57	done < "$IMAGE_MANIFEST"
+    58	[[ $(find "$STAGE" -maxdepth 1 -type f -name '*.img' | wc -l) -eq 11 ]] || fail 'staged Gate 2 image count is not eleven'
+    59	
+    60	printf '\n== Create or validate dedicated private bring-up keys ==\n'
+    61	for role in root system vendor; do
+    62	    key="$KEY_DIR/$role.pem"
+    63	    if [[ ! -e $key ]]; then
+    64	        tmp="$KEY_DIR/.$role.pem.tmp"
+    65	        rm -f "$tmp"
+    66	        openssl genrsa -out "$tmp" 2048 >/dev/null 2>&1 || fail "could not generate $role RSA key"
+    67	        chmod 0600 "$tmp"
+    68	        mv "$tmp" "$key"
+    69	    fi
+    70	    [[ -f $key && $(stat -c %a "$key") == 600 ]] || fail "$role private key permissions are not 0600"
+    71	    openssl rsa -in "$key" -check -noout >/dev/null 2>&1 || fail "$role private key validation failed"
+    72	    "$AVBTOOL" extract_public_key --key "$key" --output "$RUN_DIR/keys/$role.avbpubkey" || fail "$role AVB public key extraction failed"
+    73	    chmod 0600 "$RUN_DIR/keys/$role.avbpubkey"
+    74	done
+    75	
+    76	printf '\n== Extract authoritative factory boot chain public key ==\n'
+    77	python3 - "$AVBTOOL_PY" "$FACTORY_ROOT/vbmeta.img" "$RUN_DIR/keys/boot.avbpubkey" <<'PY'
+    78	import hashlib
+    79	import importlib.util
+    80	import sys
+    81	from pathlib import Path
+    82	module_path, image_path, output_path = map(Path, sys.argv[1:])
+    83	spec = importlib.util.spec_from_file_location("pinned_avbtool", module_path)
+    84	module = importlib.util.module_from_spec(spec)
+    85	spec.loader.exec_module(module)
+    86	data = image_path.read_bytes()
+    87	header = module.AvbVBMetaHeader(data[:module.AvbVBMetaHeader.SIZE])
+    88	aux = module.AvbVBMetaHeader.SIZE + header.authentication_data_block_size
+    89	blob = data[aux + header.descriptors_offset:aux + header.descriptors_offset + header.descriptors_size]
+
+===== PHASE4 VBMETA CANDIDATES =====
+bb2c7cb52dd15ee636cdb27b60f3fa5ed8fd6f774fe4acfc0a77301cbb4b17fb  /mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231651Z/vbmeta.img
+LIVE_B_EXACT_MATCH=/mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231651Z/vbmeta.img
+bb2c7cb52dd15ee636cdb27b60f3fa5ed8fd6f774fe4acfc0a77301cbb4b17fb  /mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231614Z/vbmeta.img
+LIVE_B_EXACT_MATCH=/mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231614Z/vbmeta.img
+bb2c7cb52dd15ee636cdb27b60f3fa5ed8fd6f774fe4acfc0a77301cbb4b17fb  /mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231456Z/vbmeta.img
+LIVE_B_EXACT_MATCH=/mnt/SamsungSSD/TIER3/phase4/staging/complete-b-set/run-20260811T231456Z/vbmeta.img
+
+EXPECTED_LIVE_B_FIRST8192=bb2c7cb52dd15ee636cdb27b60f3fa5ed8fd6f774fe4acfc0a77301cbb4b17fb
+PHONE_MODIFIED=0
