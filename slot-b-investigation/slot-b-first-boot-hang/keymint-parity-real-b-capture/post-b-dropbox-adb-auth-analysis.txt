@@ -1,0 +1,796 @@
+============================================================
+ SLOT-B POSTMORTEM: DROPBOX + ADB AUTH
+============================================================
+
+===== SAFETY GATE: CURRENTLY RUNNING A =====
+List of devices attached
+5012BF3010001335	device
+
+SLOT=_a
+BOOT_COMPLETED=1
+ROOT_UID=0
+A_SAFE_AND_BOOTED=1
+
+===== BOOT CONTROL BEFORE RESTORING SUCCESS FLAG =====
+CURRENT=0
+A_SUCCESSFUL=1
+B_SUCCESSFUL=0
+
+===== SAVE MISC BEFORE MARK-SUCCESSFUL =====
+MISC_BEFORE_A_SUCCESS_SHA=4ba901cf1477308e4796ed74b00b795a63f15ddcb5445e9510c5597cf40d1a7e
+
+BCB BEFORE:
+00000000: 5f61 0000 4243 4142 0102 0000 9700 4600  _a..BCAB......F.
+00000010: 0000 0000 0000 0000 0000 0000 efab 3021  ..............0!
+00000020: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+00000030: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+
+A_ALREADY_MARKED_SUCCESSFUL=1
+
+===== VERIFY A SUCCESSFUL =====
+A_SUCCESSFUL_NOW=1
+B_SUCCESSFUL_NOW=0
+A_SUCCESS_STATE_RESTORED=1
+
+===== SAVE MISC AFTER MARK-SUCCESSFUL =====
+MISC_AFTER_A_SUCCESS_SHA=4ba901cf1477308e4796ed74b00b795a63f15ddcb5445e9510c5597cf40d1a7e
+
+BCB AFTER:
+00000000: 5f61 0000 4243 4142 0102 0000 9700 4600  _a..BCAB......F.
+00000010: 0000 0000 0000 0000 0000 0000 efab 3021  ..............0!
+00000020: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+00000030: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+
+BCB CHANGES:
+
+============================================================
+ DROPBOX RECORDS FROM SLOT-B BOOT WINDOW
+============================================================
+
+===== EXACT 13:02 CRASH FILES =====
+
+------------------------------------------------------------
+FILE=data_app_crash@1790330521368.txt
+------------------------------------------------------------
+-rw------- 1 system system u:object_r:dropbox_data_file:s0  2254 2026-09-25 13:02 /data/system/dropbox/data_app_crash@1790330521368.txt
+
+SystemUptimeMs: 9575686
+Process: com.casio.gshockmove
+PID: 17033
+UID: 10260
+Frozen: false
+Flags: 0x20983e44
+Package: com.casio.gshockmove v2026061000 (3.5.0)
+Foreground: No
+Process-Runtime: 558
+Timestamp: 2026-09-25 13:02:01.367+0300
+Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+Crash-Handler: com.android.internal.os.RuntimeInit$KillApplicationHandler
+Loading-Progress: 1.0
+Dropped-Count: 0
+
+android.app.BackgroundServiceStartNotAllowedException: Not allowed to start service Intent { act=com.casio.casiolib.airdata.intent.action.ACTION_CHECK_ACCESS_TIME xflg=0x4 cmp=com.casio.gshockmove/com.casio.casiolib.airdata.ServerCheckService }: app is in background uid UidRecord{b8e174d u0a260 CEM  bg:+503ms idle change:cached|procstate|procadj procs:0 seq(21433,21433)} caps=---------
+	at android.app.ContextImpl.startServiceCommon(ContextImpl.java:2108)
+	at android.app.ContextImpl.startService(ContextImpl.java:2063)
+	at android.content.ContextWrapper.startService(ContextWrapper.java:870)
+	at com.casio.casiolib.util.CasioLibUtil.startBackgroundService(Unknown Source:125)
+	at com.casio.casiolib.airdata.ServerCheckService.checkAccessTime(SourceFile:4)
+	at com.casio.casiolib.application.CasioLib.checkAccessTime(Unknown Source:45)
+	at com.casio.casio_watch_lib.Library.checkAccessTime(Unknown Source:4)
+	at com.casio.casio_watch_lib.Library.a(Unknown Source:0)
+	at com.casio.casio_watch_lib.Library$1.onServiceConnected(Unknown Source:83)
+	at android.content.ServiceConnection.onServiceConnected(ServiceConnection.java:75)
+	at android.app.LoadedApk$ServiceDispatcher.doConnected(LoadedApk.java:2334)
+	at android.app.LoadedApk$ServiceDispatcher$RunConnection.run(LoadedApk.java:2370)
+	at android.os.Handler.handleCallback(Handler.java:1070)
+	at android.os.Handler.dispatchMessage(Handler.java:125)
+	at android.os.Looper.dispatchMessage(Looper.java:333)
+	at android.os.Looper.loopOnce(Looper.java:263)
+	at android.os.Looper.loop(Looper.java:367)
+	at android.app.ActivityThread.main(ActivityThread.java:9287)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:566)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+
+------------------------------------------------------------
+FILE=data_app_crash@1790330530977.txt
+------------------------------------------------------------
+-rw------- 1 system system u:object_r:dropbox_data_file:s0  2254 2026-09-25 13:02 /data/system/dropbox/data_app_crash@1790330530977.txt
+
+SystemUptimeMs: 9585295
+Process: com.casio.gshockmove
+PID: 17246
+UID: 10260
+Frozen: false
+Flags: 0x20983e44
+Package: com.casio.gshockmove v2026061000 (3.5.0)
+Foreground: No
+Process-Runtime: 138
+Timestamp: 2026-09-25 13:02:10.976+0300
+Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+Crash-Handler: com.android.internal.os.RuntimeInit$KillApplicationHandler
+Loading-Progress: 1.0
+Dropped-Count: 0
+
+android.app.BackgroundServiceStartNotAllowedException: Not allowed to start service Intent { act=com.casio.casiolib.airdata.intent.action.ACTION_CHECK_ACCESS_TIME xflg=0x4 cmp=com.casio.gshockmove/com.casio.casiolib.airdata.ServerCheckService }: app is in background uid UidRecord{918ec6d u0a260 CEM  bg:+103ms idle change:cached|procstate|procadj procs:0 seq(21483,21483)} caps=---------
+	at android.app.ContextImpl.startServiceCommon(ContextImpl.java:2108)
+	at android.app.ContextImpl.startService(ContextImpl.java:2063)
+	at android.content.ContextWrapper.startService(ContextWrapper.java:870)
+	at com.casio.casiolib.util.CasioLibUtil.startBackgroundService(Unknown Source:125)
+	at com.casio.casiolib.airdata.ServerCheckService.checkAccessTime(SourceFile:4)
+	at com.casio.casiolib.application.CasioLib.checkAccessTime(Unknown Source:45)
+	at com.casio.casio_watch_lib.Library.checkAccessTime(Unknown Source:4)
+	at com.casio.casio_watch_lib.Library.a(Unknown Source:0)
+	at com.casio.casio_watch_lib.Library$1.onServiceConnected(Unknown Source:83)
+	at android.content.ServiceConnection.onServiceConnected(ServiceConnection.java:75)
+	at android.app.LoadedApk$ServiceDispatcher.doConnected(LoadedApk.java:2334)
+	at android.app.LoadedApk$ServiceDispatcher$RunConnection.run(LoadedApk.java:2370)
+	at android.os.Handler.handleCallback(Handler.java:1070)
+	at android.os.Handler.dispatchMessage(Handler.java:125)
+	at android.os.Looper.dispatchMessage(Looper.java:333)
+	at android.os.Looper.loopOnce(Looper.java:263)
+	at android.os.Looper.loop(Looper.java:367)
+	at android.app.ActivityThread.main(ActivityThread.java:9287)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:566)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+
+===== ALL DROPBOX FILES NEAR THE ATTEMPT =====
+total 308
+drwxrwxr-x 32 system system u:object_r:system_data_file:s0    8192 2026-09-25 13:13 ..
+drwx------  2 system system u:object_r:dropbox_data_file:s0   8192 2026-09-25 13:12 .
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-25 13:12 SYSTEM_BOOT@1790331132228.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   4361 2026-09-25 13:12 SYSTEM_FSCK@1790331132230.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-25 13:10 data_app_crash@1790331019302.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   2254 2026-09-25 13:02 data_app_crash@1790330530977.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   2254 2026-09-25 13:02 data_app_crash@1790330521368.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   2376 2026-09-25 03:52 data_app_crash@1790297533470.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1085 2026-09-25 02:47 SYSTEM_AUDIT@1790293629432.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   9339 2026-09-25 02:47 SYSTEM_LAST_KMSG@1790293629425.txt.gz
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-25 02:47 SYSTEM_BOOT@1790293629418.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-25 01:44 data_app_crash@1790289846565.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-25 00:54 data_app_crash@1790286893373.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-25 00:52 data_app_crash@1790286762214.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-25 00:44 data_app_crash@1790286250536.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-25 00:43 data_app_crash@1790286189201.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-25 00:30 data_app_crash@1790285435264.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-24 23:56 SYSTEM_AUDIT@1790283369586.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0  14803 2026-09-24 23:56 SYSTEM_LAST_KMSG@1790283369584.txt.gz
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-24 23:56 SYSTEM_BOOT@1790283369576.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-24 23:12 data_app_crash@1790280778731.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-24 22:36 data_app_crash@1790278592613.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-24 22:26 data_app_crash@1790278007431.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-24 21:49 SYSTEM_BOOT@1790275777367.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-24 21:47 data_app_crash@1790275624961.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-24 21:29 SYSTEM_AUDIT@1790274577610.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0  11111 2026-09-24 21:29 SYSTEM_LAST_KMSG@1790274577608.txt.gz
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-24 21:29 SYSTEM_BOOT@1790274577599.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-24 21:14 data_app_crash@1790273667596.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1942 2026-09-24 21:13 data_app_crash@1790273595073.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1945 2026-09-24 21:13 data_app_crash@1790273594017.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1138 2026-09-24 19:00 system_app_crash@1790265600043.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   2378 2026-09-24 15:27 data_app_crash@1790252841337.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-24 14:22 SYSTEM_AUDIT@1790248926606.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0  10260 2026-09-24 14:22 SYSTEM_LAST_KMSG@1790248926604.txt.gz
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-24 14:22 SYSTEM_BOOT@1790248926602.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-24 14:21 data_app_crash@1790248908417.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-24 13:18 SYSTEM_BOOT@1790245135504.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-24 13:18 data_app_crash@1790245104370.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   2237 2026-09-24 13:12 data_app_crash@1790244730019.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   2254 2026-09-24 13:11 data_app_crash@1790244682515.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   2254 2026-09-24 13:11 data_app_crash@1790244679529.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   2377 2026-09-24 05:13 data_app_crash@1790216029299.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-24 03:58 SYSTEM_BOOT@1790211499490.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-24 03:37 data_app_crash@1790210266657.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   2254 2026-09-24 03:10 data_app_crash@1790208609258.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   2377 2026-09-24 03:08 data_app_crash@1790208521934.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-24 01:54 SYSTEM_BOOT@1790204054965.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-24 00:49 data_app_crash@1790200183729.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-24 00:22 data_app_crash@1790198530395.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1138 2026-09-23 20:00 system_app_crash@1790182801733.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1969 2026-09-23 14:12 data_app_crash@1790161952698.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-23 13:07 SYSTEM_AUDIT@1790158042385.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-23 13:07 SYSTEM_BOOT@1790158042381.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0  11883 2026-09-23 13:07 SYSTEM_LAST_KMSG@1790158042384.txt.gz
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-23 13:06 data_app_crash@1790158004946.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0    568 2026-09-23 13:00 SYSTEM_BOOT@1790157624478.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1989 2026-09-23 11:58 data_app_crash@1790153906309.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0     16 2026-09-23 11:58 storage_trim@1790153899344.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0     16 2026-09-23 11:58 storage_trim@1790153899343.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1946 2026-09-22 21:41 data_app_crash@1790102461464.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1946 2026-09-22 21:39 data_app_crash@1790102356321.txt
+-rw-------  1 system system u:object_r:dropbox_data_file:s0   1963 2026-09-22 21:39 data_app_crash@1790102355150.txt
+
+===== SEARCH DROPBOX CONTENT FOR BOOT / KEYMINT / FBE / CRASH =====
+/data/system/dropbox/SYSTEM_AUDIT@1790158042385.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_AUDIT@1790158042385.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_AUDIT@1790248926606.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_AUDIT@1790248926606.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_AUDIT@1790274577610.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_AUDIT@1790274577610.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_AUDIT@1790283369586.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_AUDIT@1790283369586.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_AUDIT@1790293629432.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_AUDIT@1790293629432.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+11:[   11.779261][  T505] type=1400 audit(1790289800.184:114): avc:  denied  { relabelto } for  comm="init" name="keystore2" dev="rootfs" ino=5001 scontext=u:r:init:s0 tcontext=u:object_r:keystore_exec:s0 tclass=file permissive=1
+/data/system/dropbox/SYSTEM_BOOT@1790157624478.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_BOOT@1790157624478.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_BOOT@1790158042381.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_BOOT@1790158042381.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_BOOT@1790204054965.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_BOOT@1790204054965.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_BOOT@1790211499490.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_BOOT@1790211499490.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_BOOT@1790245135504.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_BOOT@1790245135504.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_BOOT@1790248926602.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_BOOT@1790248926602.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_BOOT@1790274577599.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_BOOT@1790274577599.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_BOOT@1790275777367.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_BOOT@1790275777367.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_BOOT@1790283369576.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_BOOT@1790283369576.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_BOOT@1790293629418.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_BOOT@1790293629418.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_BOOT@1790331132228.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_BOOT@1790331132228.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/SYSTEM_FSCK@1790331132230.txt
+
+============================================================
+FILE=/data/system/dropbox/SYSTEM_FSCK@1790331132230.txt
+============================================================
+2:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+5:Bootloader: unknown
+/data/system/dropbox/data_app_crash@1790102355150.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790102355150.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+32:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790102356321.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790102356321.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+32:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790102461464.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790102461464.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+32:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790153906309.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790153906309.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790158004946.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790158004946.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790161952698.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790161952698.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+32:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790198530395.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790198530395.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790200183729.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790200183729.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790208521934.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790208521934.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+28:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790208609258.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790208609258.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+37:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790210266657.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790210266657.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790216029299.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790216029299.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+28:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790244679529.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790244679529.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+37:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790244682515.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790244682515.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+37:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790244730019.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790244730019.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+37:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790245104370.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790245104370.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790248908417.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790248908417.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790252841337.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790252841337.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+28:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790273594017.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790273594017.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+32:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790273595073.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790273595073.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+32:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790273667596.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790273667596.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790275624961.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790275624961.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790278007431.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790278007431.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790278592613.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790278592613.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790280778731.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790280778731.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790285435264.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790285435264.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790286189201.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790286189201.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790286250536.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790286250536.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790286762214.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790286762214.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790286893373.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790286893373.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790289846565.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790289846565.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790297533470.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790297533470.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+28:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790330521368.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790330521368.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+37:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790330530977.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790330530977.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+37:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/data_app_crash@1790331019302.txt
+
+============================================================
+FILE=/data/system/dropbox/data_app_crash@1790331019302.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+27:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/system_app_crash@1790182801733.txt
+
+============================================================
+FILE=/data/system/dropbox/system_app_crash@1790182801733.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+26:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+/data/system/dropbox/system_app_crash@1790265600043.txt
+
+============================================================
+FILE=/data/system/dropbox/system_app_crash@1790265600043.txt
+============================================================
+11:Build: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+26:	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+
+============================================================
+ DID SLOT B HAVE /DATA?
+============================================================
+
+===== ADB AUTH DIRECTORY =====
+drwxr-s--- 2 system shell u:object_r:adb_keys_file:s0  3452 2026-09-15 11:22 /data/misc/adb
+total 10
+drwxr-s---  2 system shell u:object_r:adb_keys_file:s0     3452 2026-09-15 11:22 .
+drwxrwx--t 65 system misc  u:object_r:system_data_file:s0  3452 2026-08-30 10:23 ..
+-rw-r-----  1 system shell u:object_r:adb_keys_file:s0        0 2026-09-15 11:22 adb_keys
+-rw-------  1 system shell u:object_r:adb_keys_file:s0       81 2026-09-15 11:22 adb_temp_keys.xml
+
+===== ADB KEYS METADATA / HASH ONLY =====
+===== /data/misc/adb/adb_keys =====
+mode=640 uid=1000 gid=2000 size=0 mtime=1789460569 path=/data/misc/adb/adb_keys
+-rw-r----- 1 system shell u:object_r:adb_keys_file:s0  0 2026-09-15 11:22 /data/misc/adb/adb_keys
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /data/misc/adb/adb_keys
+===== /data/misc/adb/adb_temp_keys.xml =====
+mode=600 uid=1000 gid=2000 size=81 mtime=1789460569 path=/data/misc/adb/adb_temp_keys.xml
+-rw------- 1 system shell u:object_r:adb_keys_file:s0  81 2026-09-15 11:22 /data/misc/adb/adb_temp_keys.xml
+811bf95ecb793ff7e872aad2257428ab0db550c7024af9406d5eca2d9a767b6a  /data/misc/adb/adb_temp_keys.xml
+
+===== USERDATA / METADATA MOUNTS ON WORKING A =====
+/dev/block/sdc16 on /metadata type f2fs (rw,lazytime,seclabel,nosuid,nodev,noatime,background_gc=on,nogc_merge,discard,discard_unit=block,user_xattr,inline_xattr,acl,inline_data,inline_dentry,flush_merge,barrier,extent_cache,mode=adaptive,active_logs=6,alloc_mode=reuse,checkpoint_merge,fsync_mode=posix,memory=normal)
+/dev/block/dm-57 on /data type f2fs (rw,lazytime,seclabel,nosuid,nodev,noatime,background_gc=on,nogc_merge,discard,discard_unit=block,user_xattr,inline_xattr,acl,inline_data,inline_dentry,noflush_merge,barrier,extent_cache,mode=adaptive,active_logs=6,reserve_root=134217,resuid=0,resgid=1065,inlinecrypt,alloc_mode=default,checkpoint_merge,fsync_mode=nobarrier,memory=normal)
+
+Filesystem       Size Used Avail Use% Mounted on
+/dev/block/dm-57 466G  67G  399G  15% /mnt/pass_through/0/emulated
+/dev/block/sdc16  72M  40M   32M  56% /metadata
+
+===== FBE PROPERTIES ON A =====
+[dev.mnt.blk.metadata]: [sdc16]
+[dev.mnt.dev.metadata]: [sdc16]
+[dev.mnt.rootdisk.metadata]: [sdc]
+[init.svc.vold]: [running]
+[ro.crypto.metadata.enabled]: [true]
+[ro.crypto.metadata_init_delete_all_keys.enabled]: [false]
+[ro.crypto.state]: [encrypted]
+[ro.crypto.type]: [file]
+[ro.crypto.volume.filenames_mode]: [aes-256-cts]
+[vold.checkpoint_committed]: [1]
+[vold.has_adoptable]: [1]
+[vold.has_compress]: [0]
+[vold.has_quota]: [1]
+[vold.has_reserved]: [1]
+
+===== RECENT TOMBSTONES =====
+total 22831
+drwxrwx--x 55 system     system u:object_r:system_data_root_file:s0    4096 2026-09-25 13:10 ..
+drwxrwxr-x  2 system     system u:object_r:tombstone_data_file:s0      3452 2026-09-06 21:41 .
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    458238 2026-09-06 21:32 tombstone_09
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    264962 2026-09-06 21:32 tombstone_09.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    461881 2026-09-06 21:32 tombstone_08
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    267148 2026-09-06 21:32 tombstone_08.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    463029 2026-09-06 21:31 tombstone_07
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268263 2026-09-06 21:31 tombstone_07.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    458427 2026-09-06 21:31 tombstone_06
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    265022 2026-09-06 21:31 tombstone_06.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    463867 2026-09-06 21:31 tombstone_05
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268935 2026-09-06 21:31 tombstone_05.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    461617 2026-09-06 21:31 tombstone_04
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    267058 2026-09-06 21:31 tombstone_04.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    463029 2026-09-06 21:30 tombstone_03
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268272 2026-09-06 21:30 tombstone_03.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    457963 2026-09-06 21:30 tombstone_02
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    264839 2026-09-06 21:30 tombstone_02.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    458046 2026-09-06 21:30 tombstone_01
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    264864 2026-09-06 21:30 tombstone_01.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    461524 2026-09-06 21:30 tombstone_00
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    266989 2026-09-06 21:30 tombstone_00.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    463010 2026-09-06 21:30 tombstone_31
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268262 2026-09-06 21:30 tombstone_31.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    462838 2026-09-06 21:30 tombstone_30
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268230 2026-09-06 21:30 tombstone_30.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    461672 2026-09-06 21:29 tombstone_29
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    267075 2026-09-06 21:29 tombstone_29.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    463138 2026-09-06 21:29 tombstone_28
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268281 2026-09-06 21:29 tombstone_28.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    461818 2026-09-06 21:29 tombstone_27
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    267424 2026-09-06 21:29 tombstone_27.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    466845 2026-09-06 21:29 tombstone_26
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    270548 2026-09-06 21:29 tombstone_26.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    462543 2026-09-06 21:29 tombstone_25
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    267923 2026-09-06 21:29 tombstone_25.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    462882 2026-09-06 21:29 tombstone_24
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268054 2026-09-06 21:29 tombstone_24.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    463138 2026-09-06 21:29 tombstone_23
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268292 2026-09-06 21:29 tombstone_23.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    463221 2026-09-06 21:28 tombstone_22
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268324 2026-09-06 21:28 tombstone_22.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    462882 2026-09-06 21:28 tombstone_21
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268038 2026-09-06 21:28 tombstone_21.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    466928 2026-09-06 21:28 tombstone_20
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    270577 2026-09-06 21:28 tombstone_20.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    463074 2026-09-06 21:28 tombstone_19
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268275 2026-09-06 21:28 tombstone_19.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    463138 2026-09-06 21:28 tombstone_18
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268287 2026-09-06 21:28 tombstone_18.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    463714 2026-09-06 21:28 tombstone_17
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268908 2026-09-06 21:28 tombstone_17.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    462901 2026-09-06 21:28 tombstone_16
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268247 2026-09-06 21:28 tombstone_16.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    463074 2026-09-06 21:28 tombstone_15
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    268263 2026-09-06 21:28 tombstone_15.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    469165 2026-09-06 21:28 tombstone_14
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    272052 2026-09-06 21:28 tombstone_14.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    436234 2026-09-06 19:16 tombstone_13
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    254802 2026-09-06 19:16 tombstone_13.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    433214 2026-09-06 19:16 tombstone_12
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    252901 2026-09-06 19:16 tombstone_12.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    439947 2026-09-06 19:16 tombstone_11
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    258138 2026-09-06 19:16 tombstone_11.pb
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    436170 2026-09-06 19:16 tombstone_10
+-rw-rw-r--  1 tombstoned system u:object_r:tombstone_data_file:s0    254792 2026-09-06 19:16 tombstone_10.pb
+
+===== RECENT ANR =====
+total 556
+drwxrwx--x 55 system system u:object_r:system_data_root_file:s0   4096 2026-09-25 13:10 ..
+-rw-------  1 system system u:object_r:anr_data_file:s0            107 2026-09-06 19:16 temp_anr_7897500896942029746.txt
+drwxrwxr-x  2 system system u:object_r:anr_data_file:s0          20480 2026-09-06 19:16 .
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_6660967822316112998.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0          25137 2026-09-06 19:16 temp_anr_8460542367052859940.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            107 2026-09-06 19:16 temp_anr_7172811485914161693.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_4554899815218447462.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_4021636825621747483.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_8545997226317785120.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_914415501657199921.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_2030293920654401252.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_9218041722235222450.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_1686021660284983676.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_6143911759328315903.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_867003968562392935.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_5984058673130540749.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_919722840548807548.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_4428356277809584412.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_4245430289821754744.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_3206871469711749379.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_2285844534543624249.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_7370611190356971833.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_392910994034726543.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            803 2026-09-06 19:16 temp_anr_5683788182010124320.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_217292426447322012.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_3446288723824980457.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_6234958066942226795.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_1467741787444362537.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_2561973423756960782.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_1935545767012480505.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            839 2026-09-06 19:16 temp_anr_5874426513457202043.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_7304254877964312443.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_5657649038898259450.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_9002527931603087658.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_2200196058287824627.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_6508006057032358248.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_2384600845303549853.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_4436665325187557256.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_4533557568950567085.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_757982200720500529.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_6668868019025274273.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_274602844258737703.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_9081053969261559568.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_4140519943351322020.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            803 2026-09-06 19:16 temp_anr_7719072338363584743.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_7229641927407977070.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_2948233337972368131.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_433344796324942036.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_6075670715204620701.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_1799489554597424394.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_7713989866068492050.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_7531026448894493444.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_1634336757907076980.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_311468399717856432.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_3502834860025413018.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            761 2026-09-06 19:16 temp_anr_2844342360729440754.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0          24813 2026-09-06 19:16 temp_anr_9162522537799350368.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_2848852665891588916.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_3006484736733867151.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_8340312835000267893.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_2330312646382251689.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_534282055700008189.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_4758990085663767427.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_9133321482655424513.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_579259184489676786.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_6671829397614835663.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_1111355172102342763.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            839 2026-09-06 19:16 temp_anr_5226643059123161225.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_5782311839578236244.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_176859571395210266.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_4953879603225061523.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_5118581405852492133.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_7306175258128349195.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_2673658850879688766.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_4506876883952253636.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_2870426141486636324.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:16 temp_anr_1903138228552059173.txt
+-rw-------  1 system system u:object_r:anr_data_file:s0           2325 2026-09-06 19:16 anr_2026-09-06-19-15-50-191
+-rw-------  1 system system u:object_r:anr_data_file:s0            309 2026-09-06 19:15 temp_anr_8467539098680653200.txt
+
+===== CHECK B CANDIDATE STILL UNCHANGED =====
+SYSTEM_B=6fd4b633d616ec50c6fa69c6b50471c00654974e3b2e19dfc30ed8782a2289ab
+VBMETA_SYSTEM_B_FIRST4096=4abbcf32d6d731d538a6924d5a6363df54e354d3a37a5256d007194388f36c63
+B_CANDIDATE_STILL_EXACT=1
+
+===== WRITE ANALYSIS NOTE =====
+
+===== FINAL STATE =====
+SLOT=_a
+BOOT_COMPLETED=1
+A_SUCCESSFUL=1
+B_SUCCESSFUL=0
+NO_FACTORY_RESET=1
+NO_USERDATA_FORMAT=1
+NO_METADATA_FORMAT=1
