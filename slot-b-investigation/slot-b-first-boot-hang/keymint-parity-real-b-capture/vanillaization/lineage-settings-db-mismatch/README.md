@@ -25,3 +25,10 @@ the known-good daily boot.
 schema version, A-side provider and B-side provider.
 
 No partition or userdata content is modified by this investigation.
+
+## Candidate
+
+`db24-candidate/` records the offline repair candidate: Slot B's
+`LineageSettingsProvider` rebuilt with `DATABASE_VERSION = 24`, repacked into an
+exact `system_ext_b` replica with a matching root `vbmeta_b`, plus the verification
+gates and a `LIVE-BOOT-PLAN.md` that was not executed.

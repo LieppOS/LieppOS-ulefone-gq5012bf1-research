@@ -20,3 +20,16 @@ system/system_ext layouts, logical partition sizes, and local Lineage SDK
 source before selecting the next candidate.
 
 No userdata or partition contents are modified.
+
+## Selected path
+
+Neither `feasibility.txt` option was taken yet. A third, smaller option was
+built and verified offline first: keep Slot B at SDK 35 but rebuild its
+`LineageSettingsProvider` with `DATABASE_VERSION = 24`, which upstream proves to
+be a constant-only change because the 21->24 upgrade path contains no schema or
+table-level SQL. That candidate and its verification gates are recorded in
+`../vanillaization/lineage-settings-db-mismatch/db24-candidate/`. The full
+SDK 36 / Lineage 23.2 userspace pivot remains the fallback if the DB-24 provider
+candidate still fails to boot.
+
+The shared Slot-A schema-24 database is never downgraded or deleted.

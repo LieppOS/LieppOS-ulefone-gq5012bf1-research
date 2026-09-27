@@ -1,0 +1,77 @@
+diff --git lineage-22.2/mnt/SamsungSSD/android/lineage-22.2/lineage-sdk/packages/LineageSettingsProvider/src/org/lineageos/lineagesettings/LineageDatabaseHelper.java lineage-23.2/mnt/SamsungSSD/TIER3/phase4/controls/system-ext-b-lineagesettings-db24-debug/upstream-lineage-sdk-23.2/packages/LineageSettingsProvider/src/org/lineageos/lineagesettings/LineageDatabaseHelper.java
+index 1601091..2057bee 100644
+--- lineage-22.2/mnt/SamsungSSD/android/lineage-22.2/lineage-sdk/packages/LineageSettingsProvider/src/org/lineageos/lineagesettings/LineageDatabaseHelper.java
++++ lineage-23.2/mnt/SamsungSSD/TIER3/phase4/controls/system-ext-b-lineagesettings-db24-debug/upstream-lineage-sdk-23.2/packages/LineageSettingsProvider/src/org/lineageos/lineagesettings/LineageDatabaseHelper.java
+@@ -1,6 +1,6 @@
+ /*
+  * SPDX-FileCopyrightText: 2015-2016 The CyanogenMod Project
+- * SPDX-FileCopyrightText: 2017-2023 The LineageOS Project
++ * SPDX-FileCopyrightText: The LineageOS Project
+  * SPDX-License-Identifier: Apache-2.0
+  */
+ 
+@@ -37,7 +37,7 @@ public class LineageDatabaseHelper extends SQLiteOpenHelper{
+     private static final boolean LOCAL_LOGV = false;
+ 
+     private static final String DATABASE_NAME = "lineagesettings.db";
+-    private static final int DATABASE_VERSION = 21;
++    private static final int DATABASE_VERSION = 24;
+ 
+     public static class LineageTableNames {
+         public static final String TABLE_SYSTEM = "system";
+@@ -325,6 +325,34 @@ public class LineageDatabaseHelper extends SQLiteOpenHelper{
+             upgradeVersion = 21;
+         }
+ 
++        if (upgradeVersion < 22) {
++            // Enable status bar vibrate icon by default since we handle it in SystemUI tuner
++            Integer oldSetting = Settings.Secure.getInt(mContext.getContentResolver(),
++                    Settings.Secure.STATUS_BAR_SHOW_VIBRATE_ICON, 1);
++            if (oldSetting != 1) {
++                Settings.Secure.putInt(mContext.getContentResolver(),
++                        Settings.Secure.STATUS_BAR_SHOW_VIBRATE_ICON, 1);
++            }
++            upgradeVersion = 22;
++        }
++
++        if (upgradeVersion < 23) {
++            // Migrate navigation bar button order to AOSP
++            Integer oldSetting = Settings.Secure.getInt(mContext.getContentResolver(),
++                    "sysui_nav_bar_inverse", 0);
++            if (oldSetting != 0) {
++                Settings.Secure.putInt(mContext.getContentResolver(),
++                        Settings.Secure.NAVIGATIONBAR_KEY_ORDER, oldSetting);
++            }
++            upgradeVersion = 23;
++        }
++
++        if (upgradeVersion < 24) {
++            // Set default value for Settings.Global.DISABLE_WINDOW_BLURS
++            loadDisableWindowBlursSetting();
++            upgradeVersion = 24;
++        }
++
+         // *** Remember to update DATABASE_VERSION above!
+         if (upgradeVersion != newVersion) {
+             Log.wtf(TAG, "warning: upgrading settings database to version "
+@@ -395,6 +423,7 @@ public class LineageDatabaseHelper extends SQLiteOpenHelper{
+         if (mUserHandle == UserHandle.USER_SYSTEM) {
+             loadGlobalSettings(db);
+             loadRestrictedNetworkingModeSetting();
++            loadDisableWindowBlursSetting();
+         }
+     }
+ 
+@@ -484,6 +513,12 @@ public class LineageDatabaseHelper extends SQLiteOpenHelper{
+                 Settings.Global.RESTRICTED_NETWORKING_MODE, 1);
+     }
+ 
++    private void loadDisableWindowBlursSetting() {
++        Settings.Global.putInt(mContext.getContentResolver(),
++                Settings.Global.DISABLE_WINDOW_BLURS,
++                mContext.getResources().getInteger(R.integer.def_disable_window_blurs));
++    }
++
+     /**
+      * Loads a region locked string setting into a database table. If the resource for the specific
+      * mcc is not found, the setting is loaded from the default resources.

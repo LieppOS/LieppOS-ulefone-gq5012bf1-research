@@ -1,0 +1,33 @@
+BASELINE_REPRODUCTION_OF_LIVE_SYSTEM_EXT_B
+
+BASELINE_RAW=/mnt/SamsungSSD/TIER3/phase4/controls/system-ext-b-lineagesettings-db24-debug/system_ext_b.baseline2.raw.img
+BASELINE_RAW_SIZE=359931904
+BASELINE_RAW_SHA256=606c8af2949614b48ede94f393c777a3fcd501abab7200769ec90472498f1a67
+LIVE_DUMP=/mnt/SamsungSSD/TIER3/phase4/controls/system-ext-b-lineagesettings-db24-debug/system_ext_b.current.img
+LIVE_DUMP_SHA256=a63bd6e22cc8a451a7ffb0d8c9f026957c9ea03f89f032fd408134805865af4a
+COMPARED_PREFIX_BYTES=359931904
+
+BASELINE_VS_LIVE_RAW_PREFIX=DIFFERS_IN_7_BYTES
+
+# cmp -l offsets are 1-based absolute byte positions
+sb+0x04..0x07 (abs 1028..1031) erofs_super_block.checksum (crc32c of superblock)
+                     baseline=0x4f3d7a4d live=0x93483987   # differs because content differs
+sb+0x20..0x23 (abs 1056..1059) erofs_super_block.build_time_nsec
+                     baseline=0 live=0x000b6c14 (0x23 byte equal)  # -T pins whole seconds, ns=0
+
+Semantic superblock attributes are equal (dump.erofs -s):
+  magic 0xE0F5E1E2, blocksize 4096, blocks 87874, meta start 0, shared xattr start 0,
+  root nid 39, lz4_max_distance 65535, sb_size 128, inode count 3860,
+  created Wed Aug 12 02:07:51 2026 (1786489671),
+  features sb_csum mtime xattr_filter 0padding,
+  UUID ed639924-966e-5159-8c17-be23b62cf6c6
+
+CANDIDATE_RAW=/mnt/SamsungSSD/TIER3/phase4/controls/system-ext-b-lineagesettings-db24-debug/system-ext-b-lineagesettings-db24-debug.raw.img
+CANDIDATE_RAW_SIZE=359931904
+CANDIDATE_RAW_SHA256=72d99e59d53223090978944ecff8cf2b2a835893a0e1c6f2717954ef02c99f77
+BASELINE_VS_CANDIDATE=DIFFERS (intended: one replaced APK payload)
+
+CONCLUSION=the proven mkfs.erofs procedure reproduces the live Slot-B system_ext
+image exactly except the self-consistent superblock checksum and the pinned
+sub-second build timestamp; therefore the candidate delta is attributable solely
+to the replaced LineageSettingsProvider APK.
