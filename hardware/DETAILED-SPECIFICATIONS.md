@@ -558,36 +558,43 @@ web search: ST21NFCL Arm core NFC CLF.
 
 | Field | Specification |
 |---|---|
-| **Codec** | MediaTek MT6369 (integrated PMIC audio codec) |
-| **I2C address** | `5-0018` |
+| **Codec** | MediaTek MT6369 (integrated sub-PMIC audio codec) |
+| **Bus/address** | SPMI `second_pmic@5/mt6369codec` |
 | **Headset jack** | `mt6878-mt6369 Headset Jack` |
 | **Features** | Headphone output, microphone input, line-out, physical-insertion detection |
-| **DAC** | Integrated 16-bit (TBD) |
-| **Sample rates** | TBD (8–192 kHz typical) |
-| **Output power** | TBD (typically ~30 mW @ 32 Ω) |
+| **Built-in capture** | Two AMICs through internal mic bias, PGAs and ADCs |
+| **Sample rates** | Source dependent; do not infer acoustic capability from generic AFE rates |
 
-**Evidence**: ALSA `mt6878-mt6369 Headset Jack`, `mt6369` I2C binding at `5-0018`.
+**Evidence**: live DT, stock mixer/AudioParam configuration and ALSA card. I2C
+`5-0018` is RT5133, a separate camera LDO, not the codec.
 
 ### K.2 Speaker Amplifier
 
 | Field | Specification |
 |---|---|
 | **I2C address** | `6-0034` |
-| **Driver** | `speaker_amp` / `mtk_sp_spk_amp` |
-| **IC** | TBD (generic speaker amplifier) |
-| **Manufacturer** | TBD |
-| **Output power** | TBD |
-| **Class** | Class D (typical for mobile) |
-| **Interface** | I2C + PDM/DMIC or PWM |
+| **Driver** | `aw883xx_driver` through `mtk_sp_spk_amp` |
+| **IC** | AW88394 (runtime chip ID `0x2049`) |
+| **Manufacturer** | Awinic |
+| **Output power** | board/profile dependent |
+| **Class** | Smart Class-D |
+| **Interface** | I2C control + I2S/TDM audio |
 
 ### K.3 Microphones
 
 | Field | Specification |
 |---|---|
-| **Count** | ≥2 (headset mic + internal mics) |
-| **Type** | MEMS PDM (Phase-Digital-Microphone) |
-| **Count (internal)** | TBD (typically 2-3 for noise cancellation) |
-| **Alsa card** | MediaTek |
+| **Count (built-in)** | Exactly 2 in the selected product configuration |
+| **Type** | Analog (AMIC); exact physical part numbers unverified |
+| **Main role** | `bottom`: AIN0 -> PGA_L -> ADC_L -> UL1_CH1 |
+| **Sub role** | `back`: AIN2 -> PGA_R -> ADC_R -> UL1_CH2 |
+| **Headset mic** | separate accessory input on AIN0/accdet route |
+| **Processing** | dual-mic/DMNR profiles; Android AEC/NS/AGC; MediaTek Aurisys |
+| **ALSA card** | `mediatek,mt6878-mt6369-sound` |
+
+AP/SCP DMIC and ThreeMic routes are dormant platform capability, not evidence
+of fitted hardware. Exact PCB coordinates, port orientation and acoustic
+behavior require teardown/runtime tests.
 
 ---
 

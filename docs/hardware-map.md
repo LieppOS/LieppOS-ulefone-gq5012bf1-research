@@ -14,8 +14,9 @@
 | Charge pumps / 2S converter | SC8571 master at 11-0066 (`primary_dvchg`) and slave at 6-0067 (`secondary_dvchg`); SC8510 at 6-0069 (`@6f` suffix stale, `reg=0x69`) | VERIFIED stock binding; both stock drivers reconstructed and exact-GKI/static-parity validated; reconstructed modules not hardware-run; exact board nets UNKNOWN |
 | Cameras | IMX989, S5KJN1, S5KJN1MAIN2, OV64B | VERIFIED enumeration |
 | Thermal camera | ThermoVue Pro AC020 userspace with UVC/USB native stack and bundled calibration; `yft_tiny2c_usb` mode path | VERIFIED components; end-to-end ROM integration not tested |
-| Audio | MT6369 headset jack and external `speaker_amp` at I2C 6-0034 | VERIFIED; exact amp IC UNKNOWN |
+| Audio | MT6369 codec/headset; two built-in AMICs (bottom/AIN0/UL1_CH1 + back/AIN2/UL1_CH2); Awinic AW88394 at I2C 6-0034 | VERIFIED topology; microphone parts/acoustics unverified |
 | Notification RGB | AW2013 at I2C 11-0045 | VERIFIED binding |
+| Consumer IR | `/irtx-pwm`, PWM0, `mt6369_vio28`; rc-core `mtk_irtx_pwm.ko`; selected MTK `consumerir.common.so` LIRC backend | VERIFIED software ownership/ABI; emitter and waveform unverified |
 | Work/warning lights | Stock `YftOutdoorLightUlefone` and `YftRedBlueLight` apps | VERIFIED userspace artifacts; control ABI UNKNOWN |
 | Physical action keys | `yft-gpio-keys` emits F1/F2 | VERIFIED |
 | USB / uSmart | configfs + UDC `11201000.usb0`; accessory host path is the same shared USB0 / MTU3 / USB2 PHY / xHCI fabric routed by `extcon-mtk-usb` (UVC switch/accessory-power GPIOs) with MT6375 `usb-otg-vbus` | VERIFIED stock control path; legacy `11211000.usb1` userspace references have no live DT controller; SC8510 proven unrelated to software/VBUS control |

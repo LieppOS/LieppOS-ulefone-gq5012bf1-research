@@ -43,7 +43,7 @@
 | **Rear display** | 1 (CO5300, 1.04″ 340×340 AMOLED, SPI) |
 | **Rear touch controllers** | 1 (Hynitron hyn_ts) |
 | **Speakers** | ≥1 external; earpiece separate |
-| **Microphones** | ≥2 (headset + internal) |
+| **Microphones** | 2 built-in AMICs (bottom/main + back/sub); headset mic is separate |
 | **Flash / torch LEDs** | Controlled by AW36515 + AW36518-family |
 | **IR blaster** | Yes (listed in official sensor list; vendor `ir-default` service present) |
 | **Physical buttons** | ≥3 (power, volume, yft-gpio-keys → F1/F2) |
@@ -589,9 +589,12 @@ Ulefone official spec sheet (full band list).
 | Codec | Integrated in MediaTek PMIC (MT6369) |
 | Headset jack | `mt6878-mt6369 Headset Jack` |
 | Features | Headphone, microphone, line-out, physical-insert detection |
-| DSP | MediaTek audio DSP (vendor HAL) |
+| DSP | MediaTek AudioDSP/Aurisys plus Android preprocessing |
+| Built-in microphones | 2 AMICs: bottom/main AIN0->ADC_L->UL1_CH1; back/sub AIN2->ADC_R->UL1_CH2 |
 
-**Evidence**: ALSA `mt6878-mt6369 Headset Jack`, `mt6369` I2C binding at `5-0018`.
+**Evidence**: live DT `second_pmic@5/mt6369codec`, stock mixer/AudioParam files,
+HAL MicInfo selection branch, and ALSA `mt6878-mt6369 Headset Jack`. MT6369 is
+an SPMI sub-PMIC; I2C `5-0018` is the separate RT5133 camera LDO.
 
 ---
 
@@ -915,8 +918,9 @@ See `../docs/known-unknowns.md` for the full list. Key gaps (after 2026-08-31 fa
 | Ambient light | Sensor | Sensortek | STK3A5X | 1 | I2C | TBD | Sensor HAL | PROVEN |
 | Proximity | Sensor | Sensortek | STK3A5X | 1 | I2C | TBD (same) | Sensor HAL | PROVEN |
 | Barometer | Sensor | Goer | SPL07 | 1 | I2C | TBD | Sensor HAL | PROVEN |
-| Audio codec | Headset jack | MediaTek | MT6369 | 1 | I2C | 5-0018 | ALSA | PROVEN |
-| Speaker amp | External amp | — | speaker_amp | 1 | I2C | 6-0034 | Kernel probe | LIKELY |
+| Audio codec | PMIC codec/headset | MediaTek | MT6369 | 1 | SPMI | second_pmic@5 | DT + ALSA | PROVEN |
+| Built-in mic | Analog microphone (exact parts TBD) | TBD | bottom/main + back/sub | 2 | MT6369 analog inputs | AIN0 + AIN2 | DT + mixer + MicInfo | PROVEN topology |
+| Speaker amp | External smart PA | Awinic | AW88394 | 1 | I2C | 6-0034 | chip ID + kernel probe | PROVEN |
 | PMIC | Power management | Crichtek | RT6160 | 2 | I2C | 5-0075, 6-0075 | Kernel probe | PROVEN |
 | PMIC | Power management | — | WL2864C | 1 | I2C | 11-0029 | Kernel probe | PROVEN |
 
