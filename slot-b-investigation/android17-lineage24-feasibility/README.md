@@ -4,6 +4,12 @@ Host-side source and build feasibility pass for the Ulefone Armor 29 Pro
 (`gq5012bf1`, MT6878 family). Research baseline was
 `fc662645511dd03052f87cba9d57efb66f886e19`.
 
+> **Build continuation:** the storage blocker was later resolved and the EROFS
+> GSI build succeeded. Actual artifacts, folded-payload measurements and Slot-B
+> fit results are in [`build-and-measure/`](build-and-measure/). That directory
+> supersedes the pre-build size/build-status statements below while preserving
+> this original feasibility snapshot.
+
 ## Executive result
 
 | Question | Answer | Classification |
