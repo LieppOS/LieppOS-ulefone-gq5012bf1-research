@@ -9,6 +9,12 @@ Host-side source and build feasibility pass for the Ulefone Armor 29 Pro
 > fit results are in [`build-and-measure/`](build-and-measure/). That directory
 > supersedes the pre-build size/build-status statements below while preserving
 > this original feasibility snapshot.
+>
+> **Split-product continuation:** a real `lineage_gq5012bf1` target now builds
+> separate system/system_ext/product images, all three fit the current B extents,
+> and host VINTF/AVB validation passes. See
+> [`gq5012bf1-split-product/`](gq5012bf1-split-product/). That directory is the
+> authoritative current Android 17 result.
 
 ## Executive result
 
