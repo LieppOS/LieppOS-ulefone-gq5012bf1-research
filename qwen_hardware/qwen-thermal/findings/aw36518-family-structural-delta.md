@@ -111,7 +111,23 @@ pass. What carries over from AW36518 is the `.data` table layout, the `flashligh
 framework interface (`flashlight_dev_register_by_device_id`,
 `flashlight_kicker_pbm`, plus aw36515's extra `flashlight_pt_is_low`) and the
 register-access idiom (`regmap_read`/`regmap_update_bits_base` + raw GPIO through
-`gpio_to_desc`/`gpiod_set_raw_value`).
+`gpio_to_desc`/`gpiod_set_raw_value`). That is also the answer Phase 15 of
+`workspace/phase4-aw36518/README.md` asks for; its full per-dimension record is
+`workspace/phase4-aw36518/family-comparison.md`.
+
+## Beyond the structural tiers
+
+The tiers answer "how much of the code is shared". The remaining Phase-15 dimensions are
+recorded per sibling in `workspace/phase4-aw36518/family-comparison.md`; the headline
+numbers, all measured from the frozen extractions in that directory:
+
+| dimension | `aw36518_v2` | `aw36515` |
+|---|---|---|
+| imports / modversions (sibling/v1) | 45/46 and 46/47, 0 CRC mismatches, delta = `is_yft_cts_board` alone | 46/46 and 47/47, 0 CRC mismatches; `+flashlight_pt_is_low, fortify_panic, strnlen`, `-is_yft_cts_board, pm_runtime_force_{suspend,resume}` |
+| CALL26 profile | per-class counts identical (regmap 28, v4l2/media 16, flashlight 11, of_/GPIO 19), 166 vs 165 total | 139 total; flashlight 11→24 (`flashlight_pt_is_low` at 11 sites), `flashlight_dev_register_by_device_id` 1→2, `_printk` 59→7 |
+| data objects | all 12 name-invariant `.data`/`.rodata` objects identical | 9 of 14 identical; `pm_ops` absent; `led_ctrl_ops` 32→64 B; `flash_state_to_current_limit` `.rodata.cst16` 16 B → `.rodata` 20 B |
+| public-source overlap | 19/21 names in all six Motorola candidates (misses = vendor-only `reg_show`/`reg_store`) | 17/21 (misses = `led1_get_ctrl`, `led1_set_ctrl` + that pair) |
+| DT binding | one `compatible` + one i2c id each; **no DT node** in `vendor-boot.dts` or the raw `vendor_boot` DTB for any of the three | same, and it alone names `-led0` **and** `-led1` |
 
 ## Thermal-relevance caveat (unchanged)
 
