@@ -1,0 +1,152 @@
+============================================================
+3. ANDROID A BASELINE
+============================================================
+slot=_a
+boot=1
+release=16
+sdk=36
+
+2
+0
+HAL Version: android.hardware.boot@aidl::IBootControl
+
+============================================================
+4. GSI / DSU TOOLING
+============================================================
+--- binaries ---
+/system/bin/gsi_tool PRESENT
+-rwxr-xr-x 1 root shell 69248 2026-08-30 04:57 /system/bin/gsi_tool
+/system/bin/gsid PRESENT
+-rwxr-xr-x 1 root shell 885704 2026-08-30 04:57 /system/bin/gsid
+/system/bin/dynamic_system ABSENT
+/system/bin/avbctl ABSENT
+
+--- gsi_tool command strings ---
+               --userdata-size (the latter defaults to 8GiB)
+  wipe-data    Ensure the GSI's userdata will be formatted
+Unrecognized arguments to wipe-data.
+create-partition
+install-dir
+partition-name
+readwrite
+userdata-size
+wipe-data
+
+--- gsi_tool status ---
+normal
+
+============================================================
+5. GSID RUNTIME
+============================================================
+--- services ---
+152	dynamic_instrumentation: [android.os.instrumentation.IDynamicInstrumentationManager]
+153	dynamic_system: [android.os.image.IDynamicSystemService]
+166	gsiservice: [android.gsi.IGsiService]
+
+--- processes ---
+u:r:gsid:s0                    root          3223     1   10965036   6664 binder_thread_read  0 S gsid
+
+--- properties ---
+[gsid.image_installed]: [0]
+[init.svc.gsid]: [running]
+[init.svc.watchdogd-gsi]: [running]
+[init.svc_debug_pid.gsid]: [3223]
+[init.svc_debug_pid.watchdogd-gsi]: [1274]
+[ro.boottime.gsid]: [25901499923]
+[ro.boottime.watchdogd-gsi]: [10573769153]
+[ro.gsid.image_running]: [0]
+[ro.lineage.device]: [tdgsi_arm64_ab]
+[ro.lineage.display.version]: [LieppOS-23-20260830-VANILLA-EROFS-GSI]
+[ro.lineage.version]: [23.2-20260830-VANILLA-EROFS-GSI]
+
+============================================================
+6. CURRENT DSU STATE — READ ONLY
+============================================================
+--- /metadata/gsi ---
+total 23
+drwxrwx--x  6 root system 3452 2026-08-30 10:23 .
+drwxr-xr-x 15 root root   4096 2026-09-20 19:18 ..
+drwxrwx--x  2 root system 3452 2026-08-30 00:35 dsu
+drwxrwx--x  2 root system 3452 2026-08-30 00:35 ota
+drwx------  2 root system 3452 2026-08-30 10:23 phh
+drwxrwx--x  2 root system 3452 2026-08-30 00:35 remount
+
+--- /data/gsi ---
+total 23
+drwx------  6 root   root   3452 2026-08-30 10:23 .
+drwxrwx--x 65 system system 4096 2026-09-30 23:49 ..
+drwx------  2 root   root   3452 2026-08-30 00:35 dsu
+drwx------  2 root   root   3452 2026-08-30 00:35 ota
+drwx------  2 root   system 3452 2026-08-30 10:23 phh
+drwx------  2 root   root   3452 2026-08-30 00:35 remount
+
+--- DSU metadata files ---
+
+--- DSU backing files ---
+
+============================================================
+7. USERDATA FREE SPACE
+============================================================
+Filesystem       Size Used Avail Use% Mounted on
+/dev/block/dm-57 466G  67G  398G  15% /data/user/0
+
+Filesystem       1K-blocks     Used Available Use% Mounted on
+/dev/block/dm-57 488339424 70523700 417815724  15% /data/user/0
+
+============================================================
+8. USERDATA / ENCRYPTION FSTAB CONTRACT
+============================================================
+/vendor/etc/fstab.emmc:40:/dev/block/by-name/userdata /data f2fs noatime,nosuid,nodev,discard,noflush_merge,fsync_mode=nobarrier,reserve_root=134217,resgid=1065,inlinecrypt wait,check,formattable,quota,latemount,resize,reservedsize=128m,checkpoint=fs,fileencryption=aes-256-xts:aes-256-cts:v2,keydirectory=/metadata/vold/metadata_encryption,fsverity
+/vendor/etc/fstab.mt6878:40:/dev/block/by-name/userdata /data f2fs noatime,nosuid,nodev,discard,noflush_merge,fsync_mode=nobarrier,reserve_root=134217,resgid=1065,inlinecrypt wait,check,formattable,quota,latemount,resize,reservedsize=128m,checkpoint=fs,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption,fsverity
+/vendor/etc/init/hw/factory_init.rc:287:    # while /data is optional.
+/vendor/etc/init/hw/factory_init.rc:383:    # Same reason as /data above
+/vendor/etc/init/hw/factory_init.rc:657:    mount ext4 /dev/block/by-name/userdata /data noatime nosuid nodev noauto_da_alloc discard wait
+/vendor/etc/init/hw/meta_init.rc:266:    mount ext4 /dev/block/by-name/userdata /data noatime nosuid nodev noauto_da_alloc discard wait
+/vendor/etc/init/vendor.yft.hardware.changenode@1.0-service.rc:4:    # /data is mounted.
+/vendor/etc/init/vendor.yft.hardware.gesturewake@1.0-service.rc:4:    # /data is mounted.
+/vendor/etc/init/vendor.yft.hardware.obtainvendor@1.0-service.rc:4:    # /data is mounted.
+/vendor/etc/init/vendor.yft.hardware.tinylcd@1.0-service.rc:4:    # /data is mounted.
+/system/etc/build_flags.json:1291:        "description": "Mounts Data APEXes in apexd-bootstrap stage before /data partition",
+/system/etc/build_flags.json:1534:        "description": "Adds supports for VMs in the early boot, before /data mount.",
+/system/etc/init/android.hardware.biometrics.fingerprint@2.1-service.oplus.rc:4:    # /data is mounted.
+/system/etc/init/android.hardware.biometrics.fingerprint@2.1-service.oppo.rc:4:    # /data is mounted.
+/system/etc/init/hw/init.rc:563:    # while /data is optional.
+/system/etc/init/hw/init.rc:712:    # We chown/chmod /data again so because mount is run as root + defaults
+/system/etc/init/hw/init.rc:715:    # We restorecon /data in case the userdata partition has been reset.
+/system/etc/init/hw/init.rc:755:    # Now that /data is mounted and we have created /data/misc/keystore,
+/system/etc/init/hw/init.rc:956:    # Create all remaining /data root dirs so that they are made through init
+/system/etc/init/hw/init.rc:1025:    # Note that because the /data mount has the "shared" propagation type, the
+/system_ext/etc/build_flags.json:1291:        "description": "Mounts Data APEXes in apexd-bootstrap stage before /data partition",
+/system_ext/etc/build_flags.json:1534:        "description": "Adds supports for VMs in the early boot, before /data mount.",
+
+============================================================
+9. CRYPTO STATE
+============================================================
+ro.crypto.state=encrypted
+ro.crypto.type=file
+ro.crypto.volume.filenames_mode=aes-256-cts
+ro.crypto.metadata.enabled=true
+ro.crypto.dm_default_key.options_format.version=
+
+============================================================
+10. METADATA PARTITION
+============================================================
+Filesystem       Size Used Avail Use% Mounted on
+/dev/block/sdc16  72M  40M   32M  56% /metadata
+/dev/block/sdc16 on /metadata type f2fs (rw,lazytime,seclabel,nosuid,nodev,noatime,background_gc=on,nogc_merge,discard,discard_unit=block,user_xattr,inline_xattr,acl,inline_data,inline_dentry,flush_merge,barrier,extent_cache,mode=adaptive,active_logs=6,alloc_mode=reuse,checkpoint_merge,fsync_mode=posix,memory=normal)
+
+============================================================
+11. SHARED METADATA KEY INVARIANT
+============================================================
+1eac61edfe777d0c6fa2f2d4f62ec892b6a031b90cb7064e4d6581c0a944fbca  /metadata/vold/metadata_encryption/key/keymaster_key_blob
+
+============================================================
+12. VENDOR_BOOT_B AUTHENTICATED-REGION RESULT
+============================================================
+vendor_boot_b descriptor digest = 2dd35dbc5697256c8379f1e3ebb7c99ef209b4022cfc8b62736204f76b20cd53
+current vbmeta_b expected digest = 2dd35dbc5697256c8379f1e3ebb7c99ef209b4022cfc8b62736204f76b20cd53
+VENDOR_BOOT_B_MATCHES_CURRENT_VBMETA_DESCRIPTOR=1
+
+============================================================
+DONE — DSU NOT CREATED
+============================================================
