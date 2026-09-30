@@ -1,0 +1,290 @@
+============================================================
+1. RECOVERY IDENTITY
+============================================================
+bootmode=recovery
+orangefox=R12.0
+slot=_a
+usb_controller=11201000.usb0
+usb_config=adb
+usb_state=adb
+configfs=1
+ffs_ready=1
+fastboot_pid=4EE0
+adb_pid=D001
+
+============================================================
+2. MAIN RECOVERY INIT USB SECTION
+============================================================
+   105	
+   106	service ueventd /system/bin/ueventd
+   107	    critical
+   108	    seclabel u:r:ueventd:s0
+   109	
+   110	service adbd /system/bin/adbd --root_seclabel=u:r:su:s0 --device_banner=recovery
+   111	    disabled
+   112	    socket adbd stream 660 system system
+   113	    seclabel u:r:adbd:s0
+   114	
+   115	# Always start adbd on userdebug and eng builds
+   116	on property:ro.debuggable=1
+   117	    #write /sys/class/android_usb/android0/enable 1
+   118	    #start adbd
+   119	    setprop service.adb.root 1
+   120	
+   121	# Always start adbd on userdebug and eng builds
+   122	on fs && property:ro.debuggable=1
+   123	    setprop sys.usb.config adb
+   124	
+   125	service fastbootd /system/bin/fastbootd
+   126	    disabled
+   127	    group system
+   128	    seclabel u:r:fastbootd:s0
+   129	
+   130	# Restart adbd so it can run as root
+   131	on property:service.adb.root=1
+   132	    restart adbd
+   133	
+   134	on fs && property:sys.usb.configfs=1
+   135	    mount configfs none /config
+   136	    mkdir /config/usb_gadget/g1 0770 shell shell
+   137	    write /config/usb_gadget/g1/idVendor 0x${ro.recovery.usb.vid}
+   138	    mkdir /config/usb_gadget/g1/strings/0x409 0770
+   139	    write /config/usb_gadget/g1/strings/0x409/serialnumber ${ro.serialno}
+   140	    write /config/usb_gadget/g1/strings/0x409/manufacturer ${ro.product.manufacturer}
+   141	    write /config/usb_gadget/g1/strings/0x409/product ${ro.product.model}
+   142	    mkdir /config/usb_gadget/g1/functions/ffs.adb
+   143	    mkdir /config/usb_gadget/g1/functions/ffs.fastboot
+   144	    mkdir /config/usb_gadget/g1/configs/b.1 0777 shell shell
+   145	    # Set current limit to 900mA (b/277022505)
+   146	    write /config/usb_gadget/g1/configs/b.1/MaxPower 0x384
+   147	    mkdir /config/usb_gadget/g1/configs/b.1/strings/0x409 0770 shell shell
+   148	
+   149	on fs && property:sys.usb.configfs=0
+   150	    write /sys/class/android_usb/android0/f_ffs/aliases adb,fastboot
+   151	    write /sys/class/android_usb/android0/idVendor ${ro.recovery.usb.vid}
+   152	    write /sys/class/android_usb/android0/iManufacturer ${ro.product.manufacturer}
+   153	    write /sys/class/android_usb/android0/iProduct ${ro.product.model}
+   154	    write /sys/class/android_usb/android0/iSerial ${ro.serialno}
+   155	
+   156	on fs
+   157	    mount pstore pstore /sys/fs/pstore
+   158	    mkdir /dev/usb-ffs 0770 shell shell
+   159	    mkdir /dev/usb-ffs/adb 0770 shell shell
+   160	    mount functionfs adb /dev/usb-ffs/adb uid=2000,gid=2000
+   161	    mkdir /dev/usb-ffs/fastboot 0770 system system
+   162	    mount functionfs fastboot /dev/usb-ffs/fastboot rmode=0770,fmode=0660,uid=1000,gid=1000
+   163	
+   164	on property:sys.usb.config=adb
+   165	    start adbd
+   166	
+   167	on property:sys.usb.config=fastboot
+   168	    start fastbootd
+   169	
+   170	on property:sys.usb.config=none && property:sys.usb.configfs=0
+   171	    stop adbd
+   172	    stop fastbootd
+   173	    write /sys/class/android_usb/android0/enable 0
+   174	    setprop sys.usb.state ${sys.usb.config}
+   175	
+   176	on property:sys.usb.config=adb && property:sys.usb.configfs=0
+   177	    write /sys/class/android_usb/android0/idProduct ${ro.recovery.usb.adb.pid}
+   178	    write /sys/class/android_usb/android0/functions adb
+   179	    write /sys/class/android_usb/android0/enable 1
+   180	    setprop sys.usb.state ${sys.usb.config}
+   181	
+   182	on property:sys.usb.config=sideload && property:sys.usb.configfs=0
+   183	    write /sys/class/android_usb/android0/idProduct ${ro.recovery.usb.adb.pid}
+   184	    write /sys/class/android_usb/android0/functions adb
+   185	    write /sys/class/android_usb/android0/enable 1
+   186	    setprop sys.usb.state ${sys.usb.config}
+   187	
+   188	on property:sys.usb.config=fastboot && property:sys.usb.configfs=0
+   189	    write /sys/class/android_usb/android0/idProduct ${ro.recovery.usb.fastboot.pid}
+   190	    write /sys/class/android_usb/android0/functions fastboot
+   191	    write /sys/class/android_usb/android0/enable 1
+   192	    setprop sys.usb.state ${sys.usb.config}
+   193	
+   194	# Configfs triggers
+   195	on property:sys.usb.config=none && property:sys.usb.configfs=1
+   196	    write /config/usb_gadget/g1/UDC "none"
+   197	    stop adbd
+   198	    stop fastbootd
+   199	    setprop sys.usb.ffs.ready 0
+   200	    rm /config/usb_gadget/g1/configs/b.1/f1
+   201	    setprop sys.usb.state ${sys.usb.config}
+   202	
+   203	on property:sys.usb.config=sideload && property:sys.usb.ffs.ready=1 && property:sys.usb.configfs=1
+   204	    write /config/usb_gadget/g1/idProduct 0x${ro.recovery.usb.adb.pid}
+   205	    write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "adb"
+   206	    symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1
+   207	    write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+   208	    setprop sys.usb.state ${sys.usb.config}
+   209	
+   210	on property:sys.usb.config=adb && property:sys.usb.ffs.ready=1 && property:sys.usb.configfs=1
+   211	    write /config/usb_gadget/g1/idProduct 0x${ro.recovery.usb.adb.pid}
+   212	    write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "adb"
+   213	    symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1
+   214	    write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+   215	    setprop sys.usb.state ${sys.usb.config}
+   216	
+   217	on property:sys.usb.config=fastboot && property:sys.usb.ffs.ready=1 && property:sys.usb.configfs=1
+   218	    write /config/usb_gadget/g1/idProduct 0x${ro.recovery.usb.fastboot.pid}
+   219	    write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "fastboot"
+   220	    symlink /config/usb_gadget/g1/functions/ffs.fastboot /config/usb_gadget/g1/configs/b.1/f1
+   221	    write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+   222	    setprop sys.usb.state ${sys.usb.config}
+
+============================================================
+3. DEVICE-SPECIFIC USB RC
+============================================================
+
+===== /init.recovery.gq5012bf1.usb.rc =====
+     1	# MTP over FunctionFS for GQ5012BF1.
+     2	#
+     3	# This device composes USB through configfs and has no kernel MTP gadget
+     4	# function, so the legacy /dev/mtp_usb path TWRP falls back to cannot work
+     5	# here. TWRP's MTP server already prefers FunctionFS when /dev/usb-ffs/mtp/ep0
+     6	# is writable, so MTP is enabled by providing that transport rather than by
+     7	# changing recovery code.
+     8	#
+     9	# Sequencing matters. A FunctionFS function cannot be bound to the UDC until
+    10	# its descriptors have been written, and that only happens once the MTP server
+    11	# opens ep0. Binding early makes the UDC write fail and takes USB down
+    12	# completely, including ADB. So the work is split in two:
+    13	#
+    14	#   stage 1  create ffs.mtp and mount FunctionFS   (before the server starts)
+    15	#   stage 2  link ffs.mtp into the gadget and rebind the UDC
+    16	#            (after sys.usb.ffs.mtp.ready=1, set by MtpDescriptors.cpp)
+    17	
+    18	service gq5012bf1-mtp-setup /system/bin/sh /system/bin/gq5012bf1-mtp-setup.sh
+    19	    class core
+    20	    user root
+    21	    group root
+    22	    disabled
+    23	    oneshot
+    24	    seclabel u:r:recovery:s0
+    25	
+    26	service gq5012bf1-mtp-bind /system/bin/sh /system/bin/gq5012bf1-mtp-bind.sh
+    27	    class core
+    28	    user root
+    29	    group root
+    30	    disabled
+    31	    oneshot
+    32	    seclabel u:r:recovery:s0
+    33	
+    34	on boot
+    35	    start gq5012bf1-mtp-setup
+    36	
+    37	# MtpDescriptors.cpp sets this once the descriptors are on ep0, which is the
+    38	# only point at which the gadget can safely take the function.
+    39	on property:sys.usb.ffs.mtp.ready=1
+    40	    start gq5012bf1-mtp-bind
+
+============================================================
+4. ALL fastboot USB TRIGGERS
+============================================================
+/system/etc/init/hw/init.rc:143:    mkdir /config/usb_gadget/g1/functions/ffs.fastboot
+/system/etc/init/hw/init.rc:167:on property:sys.usb.config=fastboot
+/system/etc/init/hw/init.rc:168:    start fastbootd
+/system/etc/init/hw/init.rc:172:    stop fastbootd
+/system/etc/init/hw/init.rc:188:on property:sys.usb.config=fastboot && property:sys.usb.configfs=0
+/system/etc/init/hw/init.rc:198:    stop fastbootd
+/system/etc/init/hw/init.rc:199:    setprop sys.usb.ffs.ready 0
+/system/etc/init/hw/init.rc:203:on property:sys.usb.config=sideload && property:sys.usb.ffs.ready=1 && property:sys.usb.configfs=1
+/system/etc/init/hw/init.rc:210:on property:sys.usb.config=adb && property:sys.usb.ffs.ready=1 && property:sys.usb.configfs=1
+/system/etc/init/hw/init.rc:217:on property:sys.usb.config=fastboot && property:sys.usb.ffs.ready=1 && property:sys.usb.configfs=1
+/system/etc/init/hw/init.rc:220:    symlink /config/usb_gadget/g1/functions/ffs.fastboot /config/usb_gadget/g1/configs/b.1/f1
+
+============================================================
+5. CURRENT CONFIGFS TREE
+============================================================
+--- gadget root ---
+total 0
+drwxrwx--- 6 shell shell    0 2026-09-30 12:42 .
+drwxr-xr-x 3 root  root     0 2026-09-30 12:41 ..
+-rw-r--r-- 1 root  root  4096 2026-09-30 12:42 UDC
+-rw-r--r-- 1 root  root  4096 2026-09-30 12:50 bDeviceClass
+-rw-r--r-- 1 root  root  4096 2026-09-30 12:50 bDeviceProtocol
+-rw-r--r-- 1 root  root  4096 2026-09-30 12:50 bDeviceSubClass
+-rw-r--r-- 1 root  root  4096 2026-09-30 12:50 bMaxPacketSize0
+-rw-r--r-- 1 root  root  4096 2026-09-30 12:50 bcdDevice
+-rw-r--r-- 1 root  root  4096 2026-09-30 12:50 bcdUSB
+drwxr-xr-x 3 root  root     0 2026-09-30 12:41 configs
+drwxr-xr-x 5 root  root     0 2026-09-30 12:41 functions
+-rw-r--r-- 1 root  root  4096 2026-09-30 12:42 idProduct
+-rw-r--r-- 1 root  root  4096 2026-09-30 12:41 idVendor
+-rw-r--r-- 1 root  root  4096 2026-09-30 12:50 max_speed
+drwxr-xr-x 2 root  root     0 2026-09-30 12:41 os_desc
+drwxr-xr-x 3 root  root     0 2026-09-30 12:41 strings
+
+--- functions ---
+total 0
+drwxr-xr-x 5 root  root  0 2026-09-30 12:41 .
+drwxrwx--- 6 shell shell 0 2026-09-30 12:50 ..
+drwxr-xr-x 2 root  root  0 2026-09-30 12:41 ffs.adb
+drwxr-xr-x 2 root  root  0 2026-09-30 12:41 ffs.fastboot
+drwxr-xr-x 2 root  root  0 2026-09-30 12:41 ffs.mtp
+
+--- active config ---
+total 0
+drwxrwxrwx 3 shell shell    0 2026-09-30 12:41 .
+drwxr-xr-x 3 root  root     0 2026-09-30 12:41 ..
+-rw-r--r-- 1 root  root  4096 2026-09-30 12:41 MaxPower
+-rw-r--r-- 1 root  root  4096 2026-09-30 12:50 bmAttributes
+lrwxrwxrwx 1 root  root     0 2026-09-30 12:41 f1 -> ../../../../usb_gadget/g1/functions/ffs.adb
+drwxr-xr-x 3 root  root     0 2026-09-30 12:41 strings
+
+--- strings ---
+total 0
+drwxrwx--- 2 shell shell    0 2026-09-30 12:42 .
+drwxr-xr-x 3 root  root     0 2026-09-30 12:41 ..
+-rw-r--r-- 1 root  root  4096 2026-09-30 12:42 configuration
+
+--- UDC ---
+11201000.usb0
+
+--- IDs ---
+0x18d1
+0xd001
+
+============================================================
+6. FUNCTIONFS MOUNTS
+============================================================
+adb on /dev/usb-ffs/adb type functionfs (rw,relatime)
+fastboot on /dev/usb-ffs/fastboot type functionfs (rw,relatime)
+mtp on /dev/usb-ffs/mtp type functionfs (rw,relatime)
+
+total 0
+drwxrwx---  5 shell  shell   100 2026-09-30 12:41 .
+drwxr-xr-x 21 root   root   1780 2026-09-30 12:41 ..
+dr-x------  1 shell  shell     0 2026-09-30 12:41 adb
+dr-xr-x---  1 system system    0 2026-09-30 12:41 fastboot
+dr-xr-x---  1 root   root      0 2026-09-30 12:41 mtp
+
+total 0
+dr-x------ 1 shell shell   0 2026-09-30 12:41 .
+drwxrwx--- 5 shell shell 100 2026-09-30 12:41 ..
+-rw------- 1 shell shell   0 2026-09-30 12:41 ep0
+-rw------- 1 shell shell   0 2026-09-30 12:41 ep1
+-rw------- 1 shell shell   0 2026-09-30 12:41 ep2
+
+total 0
+dr-xr-x--- 1 system system   0 2026-09-30 12:41 .
+drwxrwx--- 5 shell  shell  100 2026-09-30 12:41 ..
+-rw-rw---- 1 system system   0 2026-09-30 12:41 ep0
+
+============================================================
+7. CURRENT SERVICE STATES
+============================================================
+adbd=running
+fastbootd=stopped
+vendor.boot-default=running
+recovery=running
+
+2
+0
+HAL Version: android.hardware.boot@aidl::IBootControl
+
+============================================================
+DONE — READ ONLY
+============================================================
