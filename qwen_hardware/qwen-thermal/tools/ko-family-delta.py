@@ -151,7 +151,12 @@ class Module:
             owners = [(s, n) for n, (v, s) in sym.items()
                       if s and v <= off < v + s and not n.startswith(("$", "____"))]
             owner = self.canon(min(owners)[1]) if owners else "?"
-            self.calls.setdefault(owner, []).append(m.group(3))
+            # An unlinked module object has no addend for a local call, so
+            # readelf prints no callee name at all. Keep those edges, but label
+            # them: they corroborate *that* a call exists, never *which* callee,
+            # so they must never be counted with the symbol-backed ones.
+            self.calls.setdefault(owner, []).append(
+                m.group(3) or f"UNRESOLVED@{off:#x}")
 
     def _imports(self) -> None:
         self.imports = {l.split()[-1].split(".")[0]
@@ -266,8 +271,14 @@ def compare(x: Module, y: Module, verbose: bool, args_all_sections: bool = False
         c1, c2 = sorted(x.calls.get(fn, [])), sorted(y.calls.get(fn, []))
         if c1 == c2:
             continue
-        entry = {"first_only": sorted(set(c1) - set(c2)),
-                 "second_only": sorted(set(c2) - set(c1)),
+        f_only, s_only = sorted(set(c1) - set(c2)), sorted(set(c2) - set(c1))
+        loose = lambda xs: [x for x in xs if x.startswith("UNRESOLVED")]
+        # first_only/second_only are the STRICT tier: every edge names a callee
+        # the symbol table corroborates. unresolved_* is the lenient remainder.
+        entry = {"first_only": [x for x in f_only if not x.startswith("UNRESOLVED")],
+                 "second_only": [x for x in s_only if not x.startswith("UNRESOLVED")],
+                 "unresolved_first_only": loose(f_only),
+                 "unresolved_second_only": loose(s_only),
                  "counts": [len(c1), len(c2)]}
         if fn in code:
             out["extra_calls"][fn] = entry
@@ -374,6 +385,12 @@ def main() -> int:
         s = r["strings"]
         print(f"  strings: {s['first']}/{s['second']} ({s['bytes'][0]}/{s['bytes'][1]} B) "
               f"canonicalised diff first-only={s['first_only']} second-only={s['second_only']}")
+        strict = sum(len(d["first_only"]) + len(d["second_only"])
+                     for d in r["extra_calls"].values())
+        loose = sum(len(d["unresolved_first_only"]) + len(d["unresolved_second_only"])
+                    for d in r["extra_calls"].values())
+        print(f"  evidence: strict={strict} symbol-corroborated, "
+              f"strict+unresolved={strict + loose} total differing call edges")
         for sec, d in r["sections"].items():
             if "lengths" in d:
                 print(f"  {sec}: {d['lengths'][0]}B vs {d['lengths'][1]}B")
@@ -384,6 +401,10 @@ def main() -> int:
         for fn, d in r["extra_calls"].items():
             print(f"  calls {fn}: {d['counts']} first-only={d['first_only']} "
                   f"second-only={d['second_only']}")
+            for k, tag in (("unresolved_first_only", "first"),
+                           ("unresolved_second_only", "second")):
+                if d[k]:
+                    print(f"    {tag}-only unresolved: {d[k]}")
         if args.verbose:
             for fn, d in r.get("noncode_calls", {}).items():
                 print(f"    (data) {fn}: {d['counts']} first-only={d['first_only']} "

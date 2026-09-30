@@ -50,6 +50,25 @@ calls parse_dt: [9, 8] first-only=['is_yft_cts_board']
 | `modinfo depends` | v1 `yft_devinfo,flashlight` → v2 `flashlight` |
 | `vermagic` | identical: `6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64` |
 
+### Call-edge evidence is entirely symbol-corroborated
+
+Every differing `R_AARCH64_CALL26` edge in this trio resolves to a named callee in the
+module's own `.symtab`, so there is no unresolved remainder to argue about — the strict
+and lenient counts coincide, and each reported call delta is independently corroborated
+rather than inferred from an anonymous relocation:
+
+| pair | strict (symbol-corroborated) | + unresolved | total |
+|---|---|---|---|
+| `aw36518` ↔ `aw36518_v2` | **1** (`is_yft_cts_board`) | 0 | 1 |
+| `aw36518` ↔ `aw36515` | **70** | 0 | 70 |
+
+An unlinked module object carries no addend for a *local* call, so a relocation whose
+symbol field is blank can prove that a call exists but never *which* callee it targets.
+`ko-family-delta.py` now labels any such edge `UNRESOLVED@0x<off>` and reports it apart
+from the named ones (`unresolved_first_only` / `unresolved_second_only`, `--json`) so the
+two tiers can never be added together by accident. On this module set that bucket is
+empty — the v1↔v2 call delta really is one named symbol, not a counting artefact.
+
 The `parse_dt` delta itself, read off the instruction diff:
 
 * v1's call multiset is v2's **plus exactly one target** —
@@ -147,6 +166,10 @@ python3 tools/ko-family-delta.py --verbose    # instruction-level diffs
 python3 tools/ko-family-delta.py --json       # machine-readable
 python3 tools/ko-family-delta.py --self-test  # asserts the invariants quoted above
 ```
+
+The last plain run is the source of the per-pair tables above; it is kept verbatim in
+[`ko-family-delta.txt`](ko-family-delta.txt) so the numbers quoted here can be diffed
+against a regeneration instead of trusted.
 
 `-v` is the short form of `--verbose`; `--all-sections` additionally byte-compares
 `.symtab`/`.rela*`/`____versions`;
