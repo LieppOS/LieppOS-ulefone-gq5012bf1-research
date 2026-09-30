@@ -1,11 +1,88 @@
-workspace/
+# Local kernel research runtime artifacts
 __pycache__/
 *.pyc
 *.log
+/kernel/*.log
+/kernel/scripts/__pycache__/
 
 # Reproducible generated Phase 2 intermediates
 /kernel/nothing-module-index.csv
 
-# Local kernel research runtime artifacts
-/kernel/*.log
-/kernel/scripts/__pycache__/
+# Unpacked vendor/system extractions and working reconstructions: everything here is
+# re-derived from the hash-pinned stock images, so it is never committed.
+workspace/
+
+# --- upstream reference clones -------------------------------------------------
+# Full upstream/SDK checkouts kept locally to compare stock code against. They own
+# their own history and licence, so they are never vendored into this repo.
+/hardware/nfc/aosp-reference/
+/hardware/nfc/esp32code/
+/qwen_hardware/qwen-thermal/re/apps/donors/
+
+# --- regenerable extractions --------------------------------------------------
+# Decompiled APK trees and per-binary symbol/string dumps: re-run the tool in
+# qwen_hardware/*/tools/ (or re-find the library) to regenerate them byte-identically.
+/qwen_hardware/qwen-thermal/re/apps/infisens/
+/qwen_hardware/qwen-thermal/re/apps/infdlp/
+/qwen_hardware/qwen-thermal/re/apps/factorymode/
+/qwen_hardware/qwen-thermal/evidence/apk/
+/qwen_hardware/qwen-thermal/evidence/local/dt/
+/qwen_hardware/qwen-thermal/evidence/binaries/strings/
+/qwen_hardware/qwen-thermal/evidence/binaries/symbols/
+/hardware/nfc/blobs/
+
+# ST21 re-audits: the per-topic reports and their cited evidence excerpts are
+# findings, the jadx trees and copied runtime blobs beside them are not. Keep the
+# reports, drop the ~93 MB of decompiled sources and binaries around them.
+/hardware/nfc/analysis/*
+!/hardware/nfc/analysis/st21-gemini-audit/
+/hardware/nfc/analysis/st21-gemini-audit/*
+!/hardware/nfc/analysis/st21-gemini-audit/*.md
+!/hardware/nfc/analysis/st21-gemini-audit/evidence/
+!/hardware/nfc/analysis/st21-mifare-ce-qwen-bad-report/
+/hardware/nfc/analysis/st21-mifare-ce-qwen-bad-report/*
+!/hardware/nfc/analysis/st21-mifare-ce-qwen-bad-report/*.md
+
+# Slot-B partition extractions and regenerated AVB trees — derived byte-for-byte
+# from the hash-pinned stock images, so they are deliberately not in history.
+/slot-b-investigation/current-b-logical-dumps/
+/slot-b-investigation/boot-chain-compare/init_boot_a/
+/slot-b-investigation/boot-chain-compare/init_boot_b/
+/slot-b-investigation/boot-chain-compare/vendor_boot_a/
+/slot-b-investigation/boot-chain-compare/vendor_boot_b/
+/slot-b-investigation/boot-chain-compare/initboot-contents/
+/slot-b-investigation/boot-chain-compare/initboot-audit/
+/slot-b-investigation/boot-chain-compare/child-vbmeta-live/
+/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_a/
+/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_b/
+/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_v15/
+/slot-b-investigation/untouched-b-early-boot-forensics/vendorboot-baseline/
+/slot-b-investigation/untouched-b-early-boot-forensics/vendorboot-diagnostic/
+/slot-b-investigation/untouched-b-early-boot-forensics/boringssl-apex-static-equivalence/
+/slot-b-investigation/untouched-b-early-boot-forensics/live-a-tethering-control/
+/slot-b-investigation/untouched-b-early-boot-forensics/shared-state-readonly/
+/slot-b-investigation/untouched-b-early-boot-forensics/post-untouched-b-persistent-state/
+
+# --- one-off bulk scan output ------------------------------------------------
+# Whole-volume searches whose interesting lines are already distilled into the
+# findings docs; the raw scan is orders of magnitude bigger than its conclusion.
+/slot-b-investigation/untouched-b-early-boot-forensics/local-avb-key-references.txt
+/hardware/nfc/st21nfc-analysis-blobs.tar.gz
+/hardware/nfc/README(1).md
+
+# --- raw images and machine code anywhere in the tree --------------------------
+*.img
+*.apex
+*.apk
+*.jar
+*.so
+*.o
+*.ko
+*.dex
+*.bin
+*.asm
+*.ramdisk
+*.logical
+*.trailing
+*.desc
+*.info

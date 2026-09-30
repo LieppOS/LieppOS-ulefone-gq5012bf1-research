@@ -1,0 +1,57 @@
+Binary files '/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_a/init' and '/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_b/init' differ
+Binary files '/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_a/init.real' and '/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_b/init.real' differ
+Binary files '/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_a/kernelsu.ko' and '/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_b/kernelsu.ko' differ
+Binary files '/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_a/system/bin/snapuserd' and '/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_b/system/bin/snapuserd' differ
+Binary files '/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_a/system/bin/snapuserd_ramdisk' and '/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_b/system/bin/snapuserd_ramdisk' differ
+diff --color -ruN "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_a/system/etc/init/snapuserd.rc" "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_b/system/etc/init/snapuserd.rc"
+--- "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_a/system/etc/init/snapuserd.rc"	1970-01-01 03:00:00.000000000 +0300
++++ "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_b/system/etc/init/snapuserd.rc"	1970-01-01 03:00:00.000000000 +0300
+@@ -1,20 +0,0 @@
+-service snapuserd /system/bin/snapuserd
+-    socket snapuserd stream 0660 system system
+-    oneshot
+-    disabled
+-    user root
+-    group root system
+-    task_profiles OtaProfiles
+-    seclabel u:r:snapuserd:s0
+-
+-service snapuserd_proxy /system/bin/snapuserd -socket-handoff
+-    socket snapuserd stream 0660 system system
+-    socket snapuserd_proxy seqpacket 0660 system root
+-    oneshot
+-    disabled
+-    user root
+-    group root system
+-    seclabel u:r:snapuserd:s0
+-
+-on property:init.svc.snapuserd=stopped
+-    setprop snapuserd.ready false
+diff --color -ruN "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_a/system/etc/ramdisk/build.prop" "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_b/system/etc/ramdisk/build.prop"
+--- "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_a/system/etc/ramdisk/build.prop"	1970-01-01 03:00:00.000000000 +0300
++++ "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/ramdisk_b/system/etc/ramdisk/build.prop"	1970-01-01 03:00:00.000000000 +0300
+@@ -1,24 +0,0 @@
+-####################################
+-# from generate-common-build-props
+-# These properties identify this partition image.
+-####################################
+-ro.product.bootimage.brand=Ulefone
+-ro.product.bootimage.device=GQ5012BF1
+-ro.product.bootimage.manufacturer=Ulefone
+-ro.product.bootimage.model=Armor 29 Pro
+-ro.product.bootimage.name=GQ5012BF1_EEA
+-ro.product.model_for_attestation=
+-ro.product.brand_for_attestation=
+-ro.product.name_for_attestation=
+-ro.bootimage.build.date=Wed Oct 22 19:07:54 CST 2025
+-ro.bootimage.build.date.utc=1761131274
+-ro.bootimage.build.fingerprint=Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+-ro.bootimage.build.id=GQ5012BF1_EEA_V15
+-ro.bootimage.build.tags=release-keys
+-ro.bootimage.build.type=user
+-ro.bootimage.build.version.incremental=mp1rck6989v164P8
+-ro.bootimage.build.version.release=14
+-ro.bootimage.build.version.release_or_codename=14
+-ro.bootimage.build.version.sdk=34
+-ro.bootimage.custom.version=DZ_M170_Ulefone_EEA_Armor29Pro_20251022_V35
+-# end of file

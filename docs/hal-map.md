@@ -20,6 +20,9 @@ are included). Machine-readable details are in generated `vintf.json`.
 - TrustKernel KeyMint, secure clock, shared secret, remotely provisioned
   component and Gatekeeper.
 - Fingerprint manifest/service artifacts and Microarray implementation library.
+- ConsumerIR AIDL v1 default instance: the AOSP example service is a binder
+  wrapper around selected legacy backend `consumerir.common.so` via
+  `ro.hardware.consumerir=common`; see [`ir-blaster.md`](ir-blaster.md).
 - DRM/CAS, media codec and neural-network services.
 
 ## Accounting policy

@@ -17,6 +17,7 @@
 - [Camera, night vision and ThermoVue](camera-thermal.md)
 - [Main and secondary display](display-secondary.md)
 - [Audio](audio.md)
+- [Consumer IR blaster](ir-blaster.md)
 - [Sensors](sensors.md)
 - [Connectivity](connectivity.md)
 - [Known unknowns](known-unknowns.md)

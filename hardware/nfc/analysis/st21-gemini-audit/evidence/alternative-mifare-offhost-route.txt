@@ -1,0 +1,138 @@
+=== alternative ST JNI routing symbols ===
+   887: 000000000015fb60   936 FUNC    GLOBAL DEFAULT   16 _ZN16StRoutingManager16checkIfUiccRouteEv
+  2641: 00000000001627d0   336 FUNC    GLOBAL DEFAULT   16 _ZN16StRoutingManager24setUserDefaultRoutesPrefEiiiiii
+  3088: 000000000015ff10  3124 FUNC    GLOBAL DEFAULT   16 _ZN16StRoutingManager24updateEeTechRouteSettingEv
+  3851: 000000000015f340  2076 FUNC    GLOBAL DEFAULT   16 _ZN16StRoutingManager19setVarDefaultRoutesEv
+
+=== updateEeTechRouteSetting mMifareRoute / NFA_EeSetDefaultTechRouting ===
+
+analysis/st21-gemini-audit/runtime-blobs/libstnfc_nci_jni.so:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+000000000015ff10 <_ZN16StRoutingManager24updateEeTechRouteSettingEv>:
+  160028:      	sub	x8, x29, #0x30
+  16002c:      	mov	w0, #0x1                // =1
+  160030:      	add	x8, x8, x25
+  160034:      	mov	x1, xzr
+  160038:      	ldrh	w28, [x8, #0x26]
+  16003c:      	bl	0x223640 <_ZN7android4base9ShouldLogENS0_11LogSeverityEPKc@plt>
+  160040:      	tbnz	w0, #0x0, 0x160348 <_ZN16StRoutingManager24updateEeTechRouteSettingEv+0x438>
+  160044:      	ldr	w8, [x19, #0xb8]
+  160048:      	mov	w21, wzr
+  16004c:      	cmp	w8, #0xff
+  160050:      	b.eq	0x16007c <_ZN16StRoutingManager24updateEeTechRouteSettingEv+0x16c>
+  160054:      	orr	w8, w8, #0x400
+  160058:      	cmp	w8, w28
+  16005c:      	b.ne	0x16007c <_ZN16StRoutingManager24updateEeTechRouteSettingEv+0x16c>
+  160060:      	add	x8, x25, #0x2
+  160064:      	cmn	x8, #0x26
+  160068:      	b.lo	0x160b3c <_ZN16StRoutingManager24updateEeTechRouteSettingEv+0xc2c>
+  16006c:      	sub	x8, x29, #0x30
+  160070:      	add	x8, x8, x25
+  160074:      	ldrb	w8, [x8, #0x28]
+  160078:      	ubfx	w21, w8, #1, #1
+  16007c:      	ldr	w8, [x19, #0xac]
+  160080:      	mov	w24, wzr
+  160084:      	cbz	w8, 0x1600f0 <_ZN16StRoutingManager24updateEeTechRouteSettingEv+0x1e0>
+  160088:      	orr	w8, w8, #0x400
+  16008c:      	cmp	w8, w28
+  160090:      	b.ne	0x1600f0 <_ZN16StRoutingManager24updateEeTechRouteSettingEv+0x1e0>
+  160094:      	add	x8, x25, #0x2
+  160098:      	cmn	x8, #0x26
+  16009c:      	b.lo	0x160b3c <_ZN16StRoutingManager24updateEeTechRouteSettingEv+0xc2c>
+  1600a0:      	sub	x8, x29, #0x30
+  1600a4:      	add	x8, x8, x25
+  1600a8:      	ldrb	w10, [x8, #0x28]
+  1600ac:      	cbz	w10, 0x1600c4 <_ZN16StRoutingManager24updateEeTechRouteSettingEv+0x1b4>
+  1600b0:      	lsr	w9, w10, #2
+  1600b4:      	mov	w21, #0x1               // =1
+  1600b8:      	and	w9, w9, #0x2
+  1600bc:      	bfxil	w9, w10, #1, #1
+  1600c0:      	b	0x1600c8 <_ZN16StRoutingManager24updateEeTechRouteSettingEv+0x1b8>
+  1600c4:      	mov	w9, wzr
+  1600c8:      	ldrb	w8, [x8, #0x29]
+  1600cc:      	orr	w10, w21, #0x2
+  1600d0:      	cmp	w8, #0x0
+  1600d4:      	orr	w8, w9, #0x4
+  1600d8:      	csel	w21, w21, w10, eq
+  1600dc:      	csel	w24, w9, w8, eq
+  1600e0:      	cbnz	w21, 0x1600f0 <_ZN16StRoutingManager24updateEeTechRouteSettingEv+0x1e0>
+  1600e4:      	str	wzr, [x19, #0xac]
+  1600e8:      	nop
+  1600ec:      	nop
+  1600f0:      	ldr	w8, [x19, #0xb4]
+  1600f4:      	add	w9, w8, #0x1
+  1600f8:      	cmp	w9, #0x2
+  1600fc:      	b.hs	0x1601e0 <_ZN16StRoutingManager24updateEeTechRouteSettingEv+0x2d0>
+  160100:      	cbz	w21, 0x1601c4 <_ZN16StRoutingManager24updateEeTechRouteSettingEv+0x2b4>
+  160104:      	mov	w0, #0x1                // =1
+  160108:      	mov	x1, xzr
+  16010c:      	bl	0x223640 <_ZN7android4base9ShouldLogENS0_11LogSeverityEPKc@plt>
+  160110:      	tbnz	w0, #0x0, 0x160400 <_ZN16StRoutingManager24updateEeTechRouteSettingEv+0x4f0>
+  160114:      	ldrb	w8, [x19, #0x38]
+  160118:      	mov	w0, w28
+  16011c:      	mov	w1, w21
+  160120:      	mov	w3, wzr
+  160124:      	cmp	w8, #0x0
+  160128:      	csel	w2, w21, wzr, eq
+  16012c:      	mov	w4, w2
+  160130:      	mov	w5, w2
+  160134:      	mov	w6, w2
+  160138:      	bl	0x224be0 <_Z27NFA_EeSetDefaultTechRoutingthhhhhh@plt>
+  16013c:      	tst	w0, #0xff
+  160140:      	b.eq	0x160210 <_ZN16StRoutingManager24updateEeTechRouteSettingEv+0x300>
+  160144:      	mov	w0, #0x4                // =4
+
+=== mMifareRoute config selection ===
+
+analysis/st21-gemini-audit/runtime-blobs/libstnfc_nci_jni.so:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+000000000015f340 <_ZN16StRoutingManager19setVarDefaultRoutesEv>:
+  15f440:      	add	x8, sp, #0x8
+  15f444:      	bl	0x223670 <_ZN7android4base12StringPrintfEPKcz@plt>
+  15f448:      	b	0x15faa8 <_ZN16StRoutingManager19setVarDefaultRoutesEv+0x768>
+  15f44c:      	tbnz	w0, #0x0, 0x15fa50 <_ZN16StRoutingManager19setVarDefaultRoutesEv+0x710>
+  15f450:      	ldr	w9, [x19, #0xa0]
+  15f454:      	mov	w8, #0xff               // =255
+  15f458:      	cmp	w9, #0xff
+  15f45c:      	str	w8, [x19, #0xb8]
+  15f460:      	str	w8, [x19, #0xd0]
+  15f464:      	b.eq	0x15f4a4 <_ZN16StRoutingManager19setVarDefaultRoutesEv+0x164>
+  15f468:      	mov	w0, #0x1                // =1
+  15f46c:      	mov	x1, xzr
+  15f470:      	bl	0x223640 <_ZN7android4base9ShouldLogENS0_11LogSeverityEPKc@plt>
+  15f474:      	tbnz	w0, #0x0, 0x15f840 <_ZN16StRoutingManager19setVarDefaultRoutesEv+0x500>
+  15f478:      	ldr	w1, [x19, #0xa0]
+  15f47c:      	str	w1, [x19, #0xd0]
+  15f480:      	adrp	x0, 0x238000
+  15f484:      	ldr	x0, [x0, #0x280]
+  15f488:      	bl	0x223e90 <_ZN15StSecureElement19getConnectedNfceeIdEh@plt>
+  15f48c:      	and	w8, w0, #0xff
+  15f490:      	mov	w0, #0x1                // =1
+  15f494:      	mov	x1, xzr
+  15f498:      	str	w8, [x19, #0xb8]
+  15f49c:      	bl	0x223640 <_ZN7android4base9ShouldLogENS0_11LogSeverityEPKc@plt>
+  15f4a0:      	tbnz	w0, #0x0, 0x15f8c8 <_ZN16StRoutingManager19setVarDefaultRoutesEv+0x588>
+
+=== route strings ===
+  65919 ; User set a MIFARE route = 0x%02X
+  71460 ; Default MIFARE route = 0x%02X
+  74bf5 ; Mifare route is UICC
+  74c0c %s; mifareRoute: 0x%02X, isoDepRoute: 0x%02X, felicaRoute: 0x%02X, abTechRoute: 0x%02X, scRoute: 0x%02X, aidRoute: 0x%02X
+
+=== Java/decompiled references ===
+686:            Log.d("NfcService", "onDefaultRoutesSet() - aidRoute: " + String.format("0x%02X", Integer.valueOf(i)) + "/" + this.mUsedAidRoute + ", mifareRoute: " + String.format("0x%02X", Integer.valueOf(i2)) + "/" + this.mUsedMifareRoute + ", isoDepRoute: " + String.format("0x%02X", Integer.valueOf(i3)) + "/" + this.mUsedIsoDepRoute + ", felicaRoute: " + String.format("0x%02X", Integer.valueOf(i4)) + "/" + this.mUsedFelicaRoute + ", abTechRoute" + String.format("0x%02X", Integer.valueOf(i5)) + "/" + this.mUsedAbTechRoute + ", scRoute" + String.format("0x%02X", Integer.valueOf(i6)) + "/" + this.mUsedScRoute);
+1723:                            NfcService.this.mDeviceHost.setUserDefaultRoutesPref(NfcService.this.convertPrefRouteToNfceeIdType("default_mifare_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_iso_dep_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_felica_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_default_ab_tech_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_sc_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_aid_route"));
+2188:                        if (!routeName.equals("default_mifare_route")) {
+2248:                    } else if (NfcService.this.mPrefs.getString("default_mifare_route", "Default") != routeLoc) {
+2251:                        NfcService.this.mPrefsEditor.putString("default_mifare_route", routeLoc);
+2264:                NfcService.this.mDeviceHost.setUserDefaultRoutesPref(NfcService.this.convertPrefRouteToNfceeIdType("default_mifare_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_iso_dep_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_felica_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_default_ab_tech_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_sc_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_aid_route"));
+2275:            arrayList.add(new DefaultRouteEntry("default_mifare_route", NfcService.this.mPrefs.getString("default_mifare_route", "Default")));
+2289:            arrayList.add(new DefaultRouteEntry("default_mifare_route", NfcService.this.mUsedMifareRoute));
+2310:        this.mPrefsEditor.putString("default_mifare_route", str);
+2317:        this.mDeviceHost.setUserDefaultRoutesPref(convertPrefRouteToNfceeIdType("default_mifare_route"), convertPrefRouteToNfceeIdType("default_iso_dep_route"), convertPrefRouteToNfceeIdType("default_felica_route"), convertPrefRouteToNfceeIdType("default_default_ab_tech_route"), convertPrefRouteToNfceeIdType("default_sc_route"), convertPrefRouteToNfceeIdType("default_aid_route"));
+3689:                        NfcService.this.mDeviceHost.setUserDefaultRoutesPref(NfcService.this.convertPrefRouteToNfceeIdType("default_mifare_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_iso_dep_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_felica_route"), 16, NfcService.this.convertPrefRouteToNfceeIdType("default_sc_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_aid_route"));
+3698:                        NfcService.this.mDeviceHost.setUserDefaultRoutesPref(NfcService.this.convertPrefRouteToNfceeIdType("default_mifare_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_iso_dep_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_felica_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_default_ab_tech_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_sc_route"), NfcService.this.convertPrefRouteToNfceeIdType("default_aid_route"));

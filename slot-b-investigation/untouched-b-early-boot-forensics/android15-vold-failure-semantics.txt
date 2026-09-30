@@ -1,0 +1,1666 @@
+===== VOLD MAIN =====
+/*
+ * Copyright (C) 2008 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#define ATRACE_TAG ATRACE_TAG_PACKAGE_MANAGER
+
+#include "FsCrypt.h"
+#include "MetadataCrypt.h"
+#include "NetlinkManager.h"
+#include "VoldNativeService.h"
+#include "VoldUtil.h"
+#include "VolumeManager.h"
+#include "model/Disk.h"
+#include "sehandle.h"
+
+#include <android-base/logging.h>
+#include <android-base/properties.h>
+#include <android-base/stringprintf.h>
+#include <cutils/klog.h>
+#include <hidl/HidlTransportSupport.h>
+#include <utils/Trace.h>
+
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <fs_mgr.h>
+#include <getopt.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+typedef struct vold_configs {
+    bool has_adoptable : 1;
+    bool has_quota : 1;
+    bool has_reserved : 1;
+    bool has_compress : 1;
+} VoldConfigs;
+
+static int process_config(VolumeManager* vm, VoldConfigs* configs);
+static void coldboot(const char* path);
+static void parse_args(int argc, char** argv);
+static void VoldLogger(android::base::LogId log_buffer_id, android::base::LogSeverity severity,
+                       const char* tag, const char* file, unsigned int line, const char* message);
+
+struct selabel_handle* sehandle;
+android::base::LogdLogger logd_logger(android::base::SYSTEM);
+
+using android::base::StringPrintf;
+using android::fs_mgr::ReadDefaultFstab;
+
+int main(int argc, char** argv) {
+    atrace_set_tracing_enabled(false);
+    setenv("ANDROID_LOG_TAGS", "*:d", 1);  // Do not submit with verbose logs enabled
+    android::base::InitLogging(argv, &VoldLogger);
+
+    LOG(INFO) << "Vold 3.0 (the awakening) firing up";
+
+    ATRACE_BEGIN("main");
+
+    LOG(DEBUG) << "Detected support for:"
+               << (android::vold::IsFilesystemSupported("exfat") ? " exfat" : "")
+               << (android::vold::IsFilesystemSupported("ext4") ? " ext4" : "")
+               << (android::vold::IsFilesystemSupported("f2fs") ? " f2fs" : "")
+               << (android::vold::IsFilesystemSupported("iso9660") ? " iso9660" : "")
+               << (android::vold::IsFilesystemSupported("ntfs") ? " ntfs" : "")
+               << (android::vold::IsFilesystemSupported("udf") ? " udf" : "")
+               << (android::vold::IsFilesystemSupported("vfat") ? " vfat" : "");
+
+    VolumeManager* vm;
+    NetlinkManager* nm;
+
+    parse_args(argc, argv);
+
+    sehandle = selinux_android_file_context_handle();
+    if (!sehandle) {
+        LOG(ERROR) << "Failed to get SELinux file contexts handle";
+        exit(1);
+    }
+    selinux_android_set_sehandle(sehandle);
+
+    mkdir("/dev/block/vold", 0755);
+
+    /* For when cryptfs checks and mounts an encrypted filesystem */
+    klog_set_level(6);
+
+    /* Create our singleton managers */
+    if (!(vm = VolumeManager::Instance())) {
+        LOG(ERROR) << "Unable to create VolumeManager";
+        exit(1);
+    }
+
+    if (!(nm = NetlinkManager::Instance())) {
+        LOG(ERROR) << "Unable to create NetlinkManager";
+        exit(1);
+    }
+
+    if (android::base::GetBoolProperty("vold.debug", false)) {
+        vm->setDebug(true);
+    }
+
+    if (vm->start()) {
+        PLOG(ERROR) << "Unable to start VolumeManager";
+        exit(1);
+    }
+
+    VoldConfigs configs = {};
+    if (process_config(vm, &configs)) {
+        PLOG(ERROR) << "Error reading configuration... continuing anyways";
+    }
+
+    android::hardware::configureRpcThreadpool(1, false /* callerWillJoin */);
+
+    ATRACE_BEGIN("VoldNativeService::start");
+    if (android::vold::VoldNativeService::start() != android::OK) {
+        LOG(ERROR) << "Unable to start VoldNativeService";
+        exit(1);
+    }
+    ATRACE_END();
+
+    LOG(DEBUG) << "VoldNativeService::start() completed OK";
+
+    ATRACE_BEGIN("NetlinkManager::start");
+    if (nm->start()) {
+        PLOG(ERROR) << "Unable to start NetlinkManager";
+        exit(1);
+    }
+    ATRACE_END();
+
+    // This call should go after listeners are started to avoid
+    // a deadlock between vold and init (see b/34278978 for details)
+    android::base::SetProperty("vold.has_adoptable", configs.has_adoptable ? "1" : "0");
+    android::base::SetProperty("vold.has_quota", configs.has_quota ? "1" : "0");
+    android::base::SetProperty("vold.has_reserved", configs.has_reserved ? "1" : "0");
+    android::base::SetProperty("vold.has_compress", configs.has_compress ? "1" : "0");
+
+    // Do coldboot here so it won't block booting,
+    // also the cold boot is needed in case we have flash drive
+    // connected before Vold launched
+    coldboot("/sys/block");
+
+    ATRACE_END();
+
+    android::IPCThreadState::self()->joinThreadPool();
+    LOG(INFO) << "vold shutting down";
+
+    exit(0);
+}
+
+static void parse_args(int argc, char** argv) {
+    static struct option opts[] = {
+        {"blkid_context", required_argument, 0, 'b'},
+        {"blkid_untrusted_context", required_argument, 0, 'B'},
+        {"fsck_context", required_argument, 0, 'f'},
+        {"fsck_untrusted_context", required_argument, 0, 'F'},
+        {nullptr, 0, nullptr, 0},
+    };
+
+    int c;
+    while ((c = getopt_long(argc, argv, "", opts, nullptr)) != -1) {
+        switch (c) {
+            // clang-format off
+        case 'b': android::vold::sBlkidContext = optarg; break;
+        case 'B': android::vold::sBlkidUntrustedContext = optarg; break;
+        case 'f': android::vold::sFsckContext = optarg; break;
+        case 'F': android::vold::sFsckUntrustedContext = optarg; break;
+                // clang-format on
+        }
+    }
+
+    CHECK(android::vold::sBlkidContext != nullptr);
+    CHECK(android::vold::sBlkidUntrustedContext != nullptr);
+    CHECK(android::vold::sFsckContext != nullptr);
+    CHECK(android::vold::sFsckUntrustedContext != nullptr);
+}
+
+static void do_coldboot(DIR* d, int lvl) {
+    struct dirent* de;
+    int dfd, fd;
+
+    dfd = dirfd(d);
+
+    fd = openat(dfd, "uevent", O_WRONLY | O_CLOEXEC);
+    if (fd >= 0) {
+        write(fd, "add\n", 4);
+        close(fd);
+    }
+
+    while ((de = readdir(d))) {
+        DIR* d2;
+
+        if (de->d_name[0] == '.') continue;
+
+        if (de->d_type != DT_DIR && lvl > 0) continue;
+
+        fd = openat(dfd, de->d_name, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+        if (fd < 0) continue;
+
+        d2 = fdopendir(fd);
+        if (d2 == 0)
+            close(fd);
+        else {
+            do_coldboot(d2, lvl + 1);
+            closedir(d2);
+        }
+    }
+}
+
+static void coldboot(const char* path) {
+    ATRACE_NAME("coldboot");
+    DIR* d = opendir(path);
+    if (d) {
+        do_coldboot(d, 0);
+        closedir(d);
+    }
+}
+
+static int process_config(VolumeManager* vm, VoldConfigs* configs) {
+    ATRACE_NAME("process_config");
+
+    if (!ReadDefaultFstab(&fstab_default)) {
+        PLOG(ERROR) << "Failed to open default fstab";
+        return -1;
+    }
+
+    /* Loop through entries looking for ones that vold manages */
+    configs->has_adoptable = false;
+    configs->has_quota = false;
+    configs->has_reserved = false;
+    configs->has_compress = false;
+    for (auto& entry : fstab_default) {
+        if (entry.fs_mgr_flags.quota) {
+            configs->has_quota = true;
+        }
+        if (entry.reserved_size > 0) {
+            configs->has_reserved = true;
+        }
+        if (entry.fs_mgr_flags.fs_compress) {
+            configs->has_compress = true;
+        }
+
+        /* Make sure logical partitions have an updated blk_device. */
+        if (entry.fs_mgr_flags.logical && !fs_mgr_update_logical_partition(&entry) &&
+            !entry.fs_mgr_flags.no_fail) {
+            PLOG(FATAL) << "could not find logical partition " << entry.blk_device;
+        }
+
+        if (entry.mount_point == "/data" && !entry.metadata_key_dir.empty()) {
+            // Pre-populate userdata dm-devices since the uevents are asynchronous (b/198405417).
+            android::vold::defaultkey_precreate_dm_device();
+        }
+
+        if (entry.fs_mgr_flags.vold_managed) {
+            std::string sysPattern(entry.blk_device);
+            std::string fstype;
+            if (!entry.fs_type.empty()) {
+                fstype = entry.fs_type;
+            }
+            std::string mntopts;
+            if (!entry.fs_options.empty()) {
+                mntopts = entry.fs_options;
+            }
+            std::string nickname(entry.label);
+            int partnum = entry.partnum;
+            int flags = 0;
+
+            if (entry.is_encryptable()) {
+                flags |= android::vold::Disk::Flags::kAdoptable;
+                configs->has_adoptable = true;
+            }
+            if (entry.fs_mgr_flags.no_emulated_sd ||
+                android::base::GetBoolProperty("vold.debug.default_primary", false)) {
+                flags |= android::vold::Disk::Flags::kDefaultPrimary;
+            }
+            if (entry.fs_mgr_flags.nonremovable) {
+                flags |= android::vold::Disk::Flags::kNonRemovable;
+            }
+
+            vm->addDiskSource(std::shared_ptr<VolumeManager::DiskSource>(
+                new VolumeManager::DiskSource(sysPattern, nickname, partnum, flags, fstype, mntopts)));
+        }
+    }
+    return 0;
+}
+
+static void VoldLogger(android::base::LogId log_buffer_id, android::base::LogSeverity severity,
+                       const char* tag, const char* file, unsigned int line, const char* message) {
+    logd_logger(log_buffer_id, severity, tag, file, line, message);
+
+    if (severity >= android::base::WARNING) {
+        static bool early_boot_done = false;
+
+        // If metadata encryption setup (fscrypt_mount_metadata_encrypted) or
+        // basic FBE setup (fscrypt_init_user0) fails, then the boot will fail
+        // before adb can be started, so logcat won't be available.  To allow
+        // debugging these early boot failures, log early errors and warnings to
+        // the kernel log.  This allows diagnosing failures via the serial log,
+        // or via last dmesg/"fastboot oem dmesg" on devices that support it.
+        //
+        // As a very quick-and-dirty test for whether /data has been mounted,
+        // check whether /data/misc/vold exists.
+        if (!early_boot_done) {
+            if (access("/data/misc/vold", F_OK) == 0 && fscrypt_init_user0_done) {
+                early_boot_done = true;
+                return;
+            }
+            android::base::KernelLogger(log_buffer_id, severity, tag, file, line, message);
+
+===== STARTUP FAILURE PATHS =====
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-169-        {nullptr, 0, nullptr, 0},
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-170-    };
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-171-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-172-    int c;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-173-    while ((c = getopt_long(argc, argv, "", opts, nullptr)) != -1) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-174-        switch (c) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-175-            // clang-format off
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-176-        case 'b': android::vold::sBlkidContext = optarg; break;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-177-        case 'B': android::vold::sBlkidUntrustedContext = optarg; break;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-178-        case 'f': android::vold::sFsckContext = optarg; break;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-179-        case 'F': android::vold::sFsckUntrustedContext = optarg; break;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-180-                // clang-format on
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-181-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-182-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-183-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:184:    CHECK(android::vold::sBlkidContext != nullptr);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:185:    CHECK(android::vold::sBlkidUntrustedContext != nullptr);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:186:    CHECK(android::vold::sFsckContext != nullptr);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:187:    CHECK(android::vold::sFsckUntrustedContext != nullptr);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-188-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-189-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-190-static void do_coldboot(DIR* d, int lvl) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-191-    struct dirent* de;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-192-    int dfd, fd;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-193-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-194-    dfd = dirfd(d);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-195-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-196-    fd = openat(dfd, "uevent", O_WRONLY | O_CLOEXEC);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-197-    if (fd >= 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-198-        write(fd, "add\n", 4);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-199-        close(fd);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-200-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-201-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-202-    while ((de = readdir(d))) {
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-221-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-222-static void coldboot(const char* path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-223-    ATRACE_NAME("coldboot");
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-224-    DIR* d = opendir(path);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-225-    if (d) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-226-        do_coldboot(d, 0);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-227-        closedir(d);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-228-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-229-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-230-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-231-static int process_config(VolumeManager* vm, VoldConfigs* configs) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-232-    ATRACE_NAME("process_config");
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-233-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-234-    if (!ReadDefaultFstab(&fstab_default)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-235-        PLOG(ERROR) << "Failed to open default fstab";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:236:        return -1;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-237-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-238-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-239-    /* Loop through entries looking for ones that vold manages */
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-240-    configs->has_adoptable = false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-241-    configs->has_quota = false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-242-    configs->has_reserved = false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-243-    configs->has_compress = false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-244-    for (auto& entry : fstab_default) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-245-        if (entry.fs_mgr_flags.quota) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-246-            configs->has_quota = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-247-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-248-        if (entry.reserved_size > 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-249-            configs->has_reserved = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-250-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-251-        if (entry.fs_mgr_flags.fs_compress) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-252-            configs->has_compress = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-253-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-254-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-255-        /* Make sure logical partitions have an updated blk_device. */
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-256-        if (entry.fs_mgr_flags.logical && !fs_mgr_update_logical_partition(&entry) &&
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-257-            !entry.fs_mgr_flags.no_fail) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp:258:            PLOG(FATAL) << "could not find logical partition " << entry.blk_device;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-259-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-260-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-261-        if (entry.mount_point == "/data" && !entry.metadata_key_dir.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-262-            // Pre-populate userdata dm-devices since the uevents are asynchronous (b/198405417).
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-263-            android::vold::defaultkey_precreate_dm_device();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-264-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-265-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-266-        if (entry.fs_mgr_flags.vold_managed) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-267-            std::string sysPattern(entry.blk_device);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-268-            std::string fstype;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-269-            if (!entry.fs_type.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-270-                fstype = entry.fs_type;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-271-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-272-            std::string mntopts;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/main.cpp-273-            if (!entry.fs_options.empty()) {
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-125-    mSecureKeyguardShowing = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-126-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-127-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-128-VolumeManager::~VolumeManager() {}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-129-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-130-int VolumeManager::updateVirtualDisk() {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-131-    ATRACE_NAME("VolumeManager::updateVirtualDisk");
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-132-    if (GetBoolProperty(kPropVirtualDisk, false)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-133-        if (access(kPathVirtualDisk, F_OK) != 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-134-            Loop::createImageFile(kPathVirtualDisk, kSizeVirtualDisk / 512);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-135-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-136-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-137-        if (mVirtualDisk == nullptr) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-138-            if (Loop::create(kPathVirtualDisk, mVirtualDiskPath) != 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-139-                LOG(ERROR) << "Failed to create virtual disk";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp:140:                return -1;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-141-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-142-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-143-            struct stat buf;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-144-            if (stat(mVirtualDiskPath.c_str(), &buf) < 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-145-                PLOG(ERROR) << "Failed to stat " << mVirtualDiskPath;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp:146:                return -1;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-147-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-148-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-149-            auto disk = new android::vold::Disk(
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-150-                "virtual", buf.st_rdev, "virtual",
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-151-                android::vold::Disk::Flags::kAdoptable | android::vold::Disk::Flags::kSd);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-152-            mVirtualDisk = std::shared_ptr<android::vold::Disk>(disk);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-153-            handleDiskAdded(mVirtualDisk);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-154-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-155-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-156-        if (mVirtualDisk != nullptr) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-157-            dev_t device = mVirtualDisk->getDevice();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-158-            handleDiskRemoved(device);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-159-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-160-            Loop::destroyByDevice(mVirtualDiskPath.c_str());
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-161-            mVirtualDisk = nullptr;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-162-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-163-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-164-        if (access(kPathVirtualDisk, F_OK) == 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-165-            unlink(kPathVirtualDisk);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-166-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-167-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-168-    return 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-169-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-170-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-171-int VolumeManager::setDebug(bool enable) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-172-    mDebug = enable;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-173-    return 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-174-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-175-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp:176:int VolumeManager::start() {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp:177:    ATRACE_NAME("VolumeManager::start");
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-178-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-179-    // Always start from a clean slate by unmounting everything in
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-180-    // directories that we own, in case we crashed.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-181-    unmountAll();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-182-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-183-    Loop::destroyAll();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-184-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-185-    // Assume that we always have an emulated volume on internal
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-186-    // storage; the framework will decide if it should be mounted.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp:187:    CHECK(mInternalEmulatedVolumes.empty());
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-188-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-189-    auto vol = std::shared_ptr<android::vold::VolumeBase>(
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-190-            new android::vold::EmulatedVolume("/data/media", 0));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-191-    vol->setMountUserId(0);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-192-    vol->create();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-193-    mInternalEmulatedVolumes.push_back(vol);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-194-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-195-    // Consider creating a virtual disk
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-196-    updateVirtualDisk();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-197-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-198-    return 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-199-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-200-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-201-void VolumeManager::handleBlockEvent(NetlinkEvent* evt) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-202-    std::lock_guard<std::mutex> lock(mLock);
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1223-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1224-        passedFlags |= (flags & android::vold::Disk::Flags::kStubInvisible);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1225-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1226-    // StubDisk doesn't have device node corresponds to it. So, a fake device
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1227-    // number is used.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1228-    auto disk = std::shared_ptr<android::vold::Disk>(
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1229-            new android::vold::Disk("stub", stubId, "stub", passedFlags));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1230-    disk->initializePartition(vol);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1231-    handleDiskAdded(disk);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1232-    *outVolId = vol->getId();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1233-    return android::OK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1234-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1235-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1236-int VolumeManager::destroyStubVolume(const std::string& volId) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1237-    auto tokens = android::base::Split(volId, ":");
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp:1238:    CHECK(tokens.size() == 2);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1239-    dev_t stubId;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp:1240:    CHECK(android::base::ParseUint(tokens[1], &stubId));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1241-    handleDiskRemoved(stubId);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1242-    return android::OK;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1243-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1244-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1245-int VolumeManager::mountAppFuse(uid_t uid, int mountId, unique_fd* device_fd) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1246-    return android::vold::MountAppFuse(uid, mountId, device_fd);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1247-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1248-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1249-int VolumeManager::unmountAppFuse(uid_t uid, int mountId) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1250-    return android::vold::UnmountAppFuse(uid, mountId);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1251-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1252-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1253-int VolumeManager::openAppFuseFile(uid_t uid, int mountId, int fileId, int flags) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1254-    return android::vold::OpenAppFuseFile(uid, mountId, fileId, flags);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/VolumeManager.cpp-1255-}
+
+===== METADATA/FBE FAILURE PATHS =====
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-29-#include <android-base/properties.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-30-#include <android-base/strings.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-31-#include <android-base/unique_fd.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-32-#include <cutils/fs.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-33-#include <fs_mgr.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-34-#include <libdm/dm.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-35-#include <libgsi/libgsi.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-36-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-37-#include "Checkpoint.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-38-#include "CryptoType.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-39-#include "EncryptInplace.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-40-#include "FsCrypt.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:41:#include "KeyStorage.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-42-#include "KeyUtil.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-43-#include "Keystore.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-44-#include "Utils.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-45-#include "VoldUtil.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-46-#include "fs/Ext4.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-47-#include "fs/F2fs.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-48-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-49-namespace android {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-50-namespace vold {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-51-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-52-using android::base::Basename;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-53-using android::fs_mgr::FstabEntry;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-54-using android::fs_mgr::GetEntryForMountPoint;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:55:using android::fscrypt::GetFirstApiLevel;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-56-using android::vold::KeyBuffer;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-57-using namespace android::dm;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-58-using namespace std::chrono_literals;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-59-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-60-// Parsed from metadata options
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-61-struct CryptoOptions {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-62-    struct CryptoType cipher = invalid_crypto_type;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-63-    bool use_legacy_options_format = false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-64-    bool set_dun = true;  // Non-legacy driver always sets DUN
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-65-    bool use_hw_wrapped_key = false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-66-};
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-67-
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-133-    if (!pathExists(dir) && !in_dsu && first_key) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-134-        auto delete_all = android::base::GetBoolProperty(
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-135-                "ro.crypto.metadata_init_delete_all_keys.enabled", false);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-136-        if (delete_all) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-137-            LOG(INFO) << "Metadata key does not exist, calling deleteAllKeys";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-138-            Keystore::deleteAllKeys();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-139-        } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-140-            LOG(DEBUG) << "Metadata key does not exist but "
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-141-                          "ro.crypto.metadata_init_delete_all_keys.enabled is false";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-142-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-143-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-144-    auto temp = metadata_key_dir + "/tmp";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:145:    return retrieveOrGenerateKey(dir, temp, kEmptyAuthentication, gen, key);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-146-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-147-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-148-static bool get_number_of_sectors(const std::string& real_blkdev, uint64_t* nr_sec) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-149-    if (android::vold::GetBlockDev512Sectors(real_blkdev, nr_sec) != android::OK) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-150-        PLOG(ERROR) << "Unable to measure size of " << real_blkdev;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-151-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-152-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-153-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-154-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-155-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-156-static bool create_crypto_blk_dev(const std::string& dm_name, const std::string& blk_device,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-157-                                  const KeyBuffer& key, const CryptoOptions& options,
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-190-    auto& dm = DeviceMapper::Instance();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-191-    if (dm_name == kDmNameUserdata && dm.GetState(dm_name) == DmDeviceState::SUSPENDED) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-192-        // The device was created in advance, populate it now.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-193-        if (!dm.LoadTableAndActivate(dm_name, table)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-194-            LOG(ERROR) << "Failed to populate default-key device " << dm_name;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-195-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-196-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-197-        if (!dm.WaitForDevice(dm_name, 20s, crypto_blkdev)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-198-            LOG(ERROR) << "Failed to wait for default-key device " << dm_name;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-199-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-200-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-201-    } else if (!dm.CreateDevice(dm_name, table, crypto_blkdev, 5s)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:202:        LOG(ERROR) << "Could not create default-key device " << dm_name;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-203-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-204-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-205-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-206-    // If there are multiple partitions used for a single mount, F2FS stores
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-207-    // their partition paths in superblock. If the paths are dm targets, we
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-208-    // cannot guarantee them across device boots. Let's use the logical paths.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-209-    if (is_userdata) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-210-        *crypto_blkdev = "/dev/block/mapper/" + dm_name;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-211-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-212-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-213-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-214-
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-244-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-245-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-246-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-247-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-248-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-249-class EncryptionInProgress {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-250-  private:
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-251-    std::string file_path_;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-252-    bool need_cleanup_ = false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-253-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-254-  public:
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-255-    EncryptionInProgress(const FstabEntry& entry) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:256:        file_path_ = fs_mgr_metadata_encryption_in_progress_file_name(entry);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-257-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-258-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-259-    [[nodiscard]] bool Mark() {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-260-        {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-261-            std::ofstream touch(file_path_);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-262-            if (!touch.is_open()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-263-                PLOG(ERROR) << "Failed to mark metadata encryption in progress " << file_path_;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-264-                return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-265-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-266-            need_cleanup_ = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-267-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-268-        if (!android::vold::FsyncParentDirectory(file_path_)) return false;
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-279-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-280-        if (!android::vold::FsyncParentDirectory(file_path_)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-281-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-282-        LOG(INFO) << "Cleared metadata encryption in progress (" << file_path_ << ")";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-283-        return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-284-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-285-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-286-    ~EncryptionInProgress() {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-287-        if (need_cleanup_) (void)Remove();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-288-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-289-};
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-290-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:291:bool fscrypt_mount_metadata_encrypted(const std::string& blk_device, const std::string& mount_point,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-292-                                      bool needs_encrypt, bool should_format,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-293-                                      const std::string& fs_type, bool is_zoned,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-294-                                      const std::vector<std::string>& user_devices,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-295-                                      const std::vector<bool>& device_aliased, int64_t length) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:296:    LOG(DEBUG) << "fscrypt_mount_metadata_encrypted: " << mount_point
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-297-               << " encrypt: " << needs_encrypt << " format: " << should_format << " with "
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-298-               << fs_type << " block device: " << blk_device << " with zoned " << is_zoned
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-299-               << " length: " << length;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-300-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-301-    for (auto& device : user_devices) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-302-        LOG(DEBUG) << " - user devices: " << device;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-303-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-304-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-305-    auto encrypted_state = android::base::GetProperty("ro.crypto.state", "");
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-306-    if (encrypted_state != "" && encrypted_state != "encrypted") {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:307:        LOG(ERROR) << "fscrypt_mount_metadata_encrypted got unexpected starting state: "
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-308-                   << encrypted_state;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-309-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-310-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-311-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-312-    auto data_rec = GetEntryForMountPoint(&fstab_default, mount_point);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-313-    if (!data_rec) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-314-        LOG(ERROR) << "Failed to get data_rec for " << mount_point;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-315-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-316-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-317-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-318-    unsigned int options_format_version = android::base::GetUintProperty<unsigned int>(
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-319-            "ro.crypto.dm_default_key.options_format.version",
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-320-            (GetFirstApiLevel() <= __ANDROID_API_Q__ ? 1 : 2));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-321-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-322-    CryptoOptions options;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-323-    if (options_format_version == 1) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:324:        if (!data_rec->metadata_encryption_options.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:325:            LOG(ERROR) << "metadata_encryption options cannot be set in legacy mode";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-326-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-327-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-328-        options.cipher = legacy_aes_256_xts;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-329-        options.use_legacy_options_format = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-330-        if (is_metadata_wrapped_key_supported())
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-331-            options.use_hw_wrapped_key = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-332-        options.set_dun = android::base::GetBoolProperty("ro.crypto.set_dun", false);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-333-        if (!options.set_dun && data_rec->fs_mgr_flags.checkpoint_blk) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-334-            LOG(ERROR)
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-335-                    << "Block checkpoints and metadata encryption require ro.crypto.set_dun option";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-336-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-337-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-338-    } else if (options_format_version == 2) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:339:        if (!parse_options(data_rec->metadata_encryption_options, &options)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-340-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-341-        LOG(ERROR) << "Unknown options_format_version: " << options_format_version;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-342-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-343-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-344-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-345-    auto default_metadata_key_dir = data_rec->metadata_key_dir;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-346-    if (!user_devices.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-347-        default_metadata_key_dir = default_metadata_key_dir + "/default";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-348-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-349-    auto gen = needs_encrypt ? makeGen(options) : neverGen();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-350-    KeyBuffer key;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-351-    if (!read_key(default_metadata_key_dir, gen, true, &key)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:352:        LOG(ERROR) << "read_key failed in mountFstab";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-353-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-354-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-355-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-356-    std::string crypto_blkdev;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-357-    uint64_t nr_sec;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:358:    if (!create_crypto_blk_dev(kDmNameUserdata, blk_device, key, options, &crypto_blkdev, &nr_sec,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-359-                               true)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:360:        LOG(ERROR) << "create_crypto_blk_dev failed in mountFstab";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-361-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-362-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-363-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:364:    // create dm-default-key for user devices
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-365-    std::vector<std::string> crypto_user_blkdev;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-366-    for (auto& device : user_devices) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-367-        std::string name = Basename(device);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-368-        auto metadata_key_dir = data_rec->metadata_key_dir + "/" + name;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-369-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-370-        if (!read_key(metadata_key_dir, gen, false, &key)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-371-            LOG(ERROR) << "read_key failed with zoned device: " << device;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-372-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-373-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-374-        std::string crypto_blkdev_arg;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:375:        if (!create_crypto_blk_dev(name, device, key, options, &crypto_blkdev_arg, &nr_sec, true)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:376:            LOG(ERROR) << "fscrypt_mount_metadata_encrypted: failed with device: " << device;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-377-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-378-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-379-        crypto_user_blkdev.push_back(crypto_blkdev_arg.c_str());
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-380-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-381-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-382-    if (needs_encrypt) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-383-        EncryptionInProgress marker(*data_rec);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-384-        if (!marker.Mark()) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-385-        if (should_format) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-386-            status_t error;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-387-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-388-            if (fs_type == "ext4") {
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-398-                LOG(ERROR) << "Format of " << crypto_blkdev << " for " << mount_point
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-399-                           << " failed (err=" << error << ").";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-400-                return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-401-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-402-            LOG(DEBUG) << "Format of " << crypto_blkdev << " for " << mount_point << " succeeded.";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-403-        } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-404-            if (!user_devices.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-405-                LOG(ERROR) << "encrypt_inplace cannot support zoned or userdata_exp device; should "
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-406-                              "format it.";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-407-                return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-408-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-409-            if (!encrypt_inplace(crypto_blkdev, blk_device, nr_sec)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:410:                LOG(ERROR) << "encrypt_inplace failed in mountFstab";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-411-                return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-412-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-413-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-414-        if (!marker.Remove()) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-415-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-416-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-417-    LOG(DEBUG) << "Mounting metadata-encrypted filesystem:" << mount_point;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-418-    mount_via_fs_mgr(mount_point.c_str(), crypto_blkdev.c_str(), needs_encrypt);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-419-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-420-    // Record that there's at least one fstab entry with metadata encryption
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-421-    if (!android::base::SetProperty("ro.crypto.metadata.enabled", "true")) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-422-        LOG(WARNING) << "failed to set ro.crypto.metadata.enabled";  // This isn't fatal
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-434-    if (!get_volume_options(&options)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-435-    *gen = makeGen(options);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-436-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-437-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-438-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-439-bool defaultkey_setup_ext_volume(const std::string& label, const std::string& blk_device,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-440-                                 const KeyBuffer& key, std::string* out_crypto_blkdev) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-441-    LOG(DEBUG) << "defaultkey_setup_ext_volume: " << label << " " << blk_device;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-442-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-443-    CryptoOptions options;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-444-    if (!get_volume_options(&options)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-445-    uint64_t nr_sec;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp:446:    return create_crypto_blk_dev(label, blk_device, key, options, out_crypto_blkdev, &nr_sec,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-447-                                 false);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-448-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-449-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-450-bool destroy_dsu_metadata_key(const std::string& dsu_slot) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-451-    LOG(DEBUG) << "destroy_dsu_metadata_key: " << dsu_slot;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-452-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-453-    const auto dsu_metadata_key_dir = android::gsi::GetDsuMetadataKeyDir(dsu_slot);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-454-    if (!pathExists(dsu_metadata_key_dir)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-455-        LOG(DEBUG) << "DSU metadata_key_dir doesn't exist, nothing to remove: "
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-456-                   << dsu_metadata_key_dir;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-457-        return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/MetadataCrypt.cpp-458-    }
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-5- * you may not use this file except in compliance with the License.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-6- * You may obtain a copy of the License at
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-7- *
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-8- *      http://www.apache.org/licenses/LICENSE-2.0
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-9- *
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-10- * Unless required by applicable law or agreed to in writing, software
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-11- * distributed under the License is distributed on an "AS IS" BASIS,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-12- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-13- * See the License for the specific language governing permissions and
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-14- * limitations under the License.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-15- */
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-16-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp:17:#include "KeyStorage.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-18-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-19-#include "Checkpoint.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-20-#include "Keystore.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-21-#include "Utils.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-22-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-23-#include <algorithm>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-24-#include <memory>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-25-#include <mutex>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-26-#include <vector>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-27-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-28-#include <errno.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-29-#include <stdio.h>
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-107-    SHA512_Init(&c);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-108-    // Personalise the hashing by introducing a fixed prefix.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-109-    // Hashing applications should use personalization except when there is a
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-110-    // specific reason not to; see section 4.11 of https://www.schneier.com/skein1.3.pdf
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-111-    std::string hashingPrefix = prefix;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-112-    hashingPrefix.resize(SHA512_CBLOCK);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-113-    SHA512_Update(&c, hashingPrefix.data(), hashingPrefix.size());
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-114-    SHA512_Update(&c, tohash.data(), tohash.size());
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-115-    res->assign(SHA512_DIGEST_LENGTH, '\0');
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-116-    SHA512_Final(reinterpret_cast<uint8_t*>(&(*res)[0]), &c);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-117-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-118-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp:119:static bool generateKeyStorageKey(Keystore& keystore, const std::string& appId, std::string* key) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-120-    auto paramBuilder = km::AuthorizationSetBuilder()
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-121-                                .AesEncryptionKey(AES_KEY_BYTES * 8)
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-122-                                .GcmModeMinMacLen(GCM_MAC_BYTES * 8)
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-123-                                .Authorization(km::TAG_APPLICATION_ID, appId)
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-124-                                .Authorization(km::TAG_NO_AUTH_REQUIRED);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-125-    LOG(DEBUG) << "Generating \"key storage\" key";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-126-    auto paramsWithRollback = paramBuilder;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-127-    paramsWithRollback.Authorization(km::TAG_ROLLBACK_RESISTANCE);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-128-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-129-    if (!keystore.generateKey(paramsWithRollback, key)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-130-        LOG(WARNING) << "Failed to generate rollback-resistant key.  This is expected if keystore "
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-131-                        "doesn't support rollback resistance.  Falling back to "
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-539-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-540-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-541-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-542-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-543-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-544-// Creates a directory at the given path |dir| and stores |key| in it, in such a
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-545-// way that it can only be retrieved via Keystore (if no secret is given in
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-546-// |auth|) or with the given secret (if a secret is given in |auth|).  In the
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-547-// former case, an attempt is made to make the key securely deletable.  In the
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-548-// latter case, secure deletion is expected to be handled at a higher level.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-549-//
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-550-// If a storage binding seed has been set, then the storage binding seed will be
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp:551:// required to retrieve the key as well.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-552-static bool storeKey(const std::string& dir, const KeyAuthentication& auth, const KeyBuffer& key) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-553-    if (TEMP_FAILURE_RETRY(mkdir(dir.c_str(), 0700)) == -1) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-554-        PLOG(ERROR) << "key mkdir " << dir;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-555-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-556-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-557-    if (!writeStringToFile(kCurrentVersion, dir + "/" + kFn_version)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-558-    std::string secdiscardable_hash;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-559-    if (auth.usesKeystore() &&
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-560-        !createSecdiscardable(dir + "/" + kFn_secdiscardable, &secdiscardable_hash))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-561-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-562-    std::string appId = generateAppId(auth, secdiscardable_hash);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-563-    std::string encryptedKey;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-564-    if (auth.usesKeystore()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-565-        Keystore keystore;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-566-        if (!keystore) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-567-        std::string ksKey;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp:568:        if (!generateKeyStorageKey(keystore, appId, &ksKey)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-569-        if (!writeStringToFile(ksKey, dir + "/" + kFn_keymaster_key_blob)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-570-        km::AuthorizationSet keyParams = beginParams(appId);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-571-        if (!encryptWithKeystoreKey(keystore, dir, keyParams, key, &encryptedKey)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-572-            LOG(ERROR) << "encryptWithKeystoreKey failed";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-573-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-574-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-575-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-576-        if (!encryptWithoutKeystore(appId, key, &encryptedKey)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-577-            LOG(ERROR) << "encryptWithoutKeystore failed";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-578-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-579-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-580-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-581-    if (!writeStringToFile(encryptedKey, dir + "/" + kFn_encrypted_key)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-582-    if (!FsyncDirectory(dir)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-583-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-584-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-585-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-586-bool storeKeyAtomically(const std::string& key_path, const std::string& tmp_path,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-587-                        const KeyAuthentication& auth, const KeyBuffer& key) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-588-    if (pathExists(key_path)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp:589:        LOG(ERROR) << "Already exists, cannot create key at: " << key_path;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-590-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-591-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-592-    if (pathExists(tmp_path)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-593-        LOG(DEBUG) << "Already exists, destroying: " << tmp_path;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-594-        destroyKey(tmp_path);  // May be partially created so ignore errors
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-595-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-596-    if (!storeKey(tmp_path, auth, key)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-597-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-598-    if (!RenameKeyDir(tmp_path, key_path)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-599-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-600-    if (!FsyncParentDirectory(key_path)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-601-    LOG(DEBUG) << "Stored key " << key_path;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-602-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-603-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-604-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp:605:bool retrieveKey(const std::string& dir, const KeyAuthentication& auth, KeyBuffer* key) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-606-    std::string version;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-607-    if (!readFileToString(dir + "/" + kFn_version, &version)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-608-    if (version != kCurrentVersion) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-609-        LOG(ERROR) << "Version mismatch, expected " << kCurrentVersion << " got " << version;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-610-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-611-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-612-    std::string secdiscardable_hash;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-613-    if (!readSecdiscardable(dir + "/" + kFn_secdiscardable, &secdiscardable_hash)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-614-    std::string appId = generateAppId(auth, secdiscardable_hash);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-615-    std::string encryptedMessage;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-616-    if (!readFileToString(dir + "/" + kFn_encrypted_key, &encryptedMessage)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-617-    if (auth.usesKeystore()) {
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-679-            success &= DeleteKeystoreKey(blob_file);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-680-            secdiscard_cmd.push_back(blob_file);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-681-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-682-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-683-    if (ForkExecvp(secdiscard_cmd) != 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-684-        LOG(ERROR) << "secdiscard failed";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-685-        success = false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-686-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-687-    success &= recursiveDeleteKey(dir);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-688-    return success;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-689-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-690-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp:691:bool setKeyStorageBindingSeed(const std::vector<uint8_t>& seed) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-692-    const std::lock_guard<std::mutex> scope_lock(storage_binding_info.guard);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-693-    switch (storage_binding_info.state) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-694-        case StorageBindingInfo::State::UNINITIALIZED:
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-695-            storage_binding_info.state = StorageBindingInfo::State::IN_USE;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-696-            storage_binding_info.seed = seed;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-697-            android::base::SetProperty("vold.storage_seed_bound", "1");
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-698-            return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-699-        case StorageBindingInfo::State::IN_USE:
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-700-            LOG(ERROR) << "key storage binding seed already set";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-701-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-702-        case StorageBindingInfo::State::NOT_USED:
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/KeyStorage.cpp-703-            LOG(ERROR) << "key storage already in use without binding";
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-8- *      http://www.apache.org/licenses/LICENSE-2.0
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-9- *
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-10- * Unless required by applicable law or agreed to in writing, software
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-11- * distributed under the License is distributed on an "AS IS" BASIS,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-12- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-13- * See the License for the specific language governing permissions and
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-14- * limitations under the License.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-15- */
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-16-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-17-#include "FsCrypt.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-18-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-19-#include "Checkpoint.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:20:#include "KeyStorage.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-21-#include "KeyUtil.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-22-#include "Utils.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-23-#include "VoldUtil.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-24-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-25-#include <algorithm>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-26-#include <map>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-27-#include <optional>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-28-#include <set>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-29-#include <sstream>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-30-#include <string>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-31-#include <vector>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-32-
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-39-#include <sys/types.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-40-#include <sys/utsname.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-41-#include <unistd.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-42-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-43-#include <private/android_filesystem_config.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-44-#include <private/android_projectid_config.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-45-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-46-#include "android/os/IVold.h"
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-47-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-48-#include <cutils/fs.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-49-#include <cutils/properties.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-50-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:51:#include <fscrypt/fscrypt.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-52-#include <keyutils.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-53-#include <libdm/dm.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-54-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-55-#include <android-base/file.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-56-#include <android-base/logging.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-57-#include <android-base/properties.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-58-#include <android-base/stringprintf.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-59-#include <android-base/strings.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-60-#include <android-base/unique_fd.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-61-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-62-using android::base::Basename;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-63-using android::base::Realpath;
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-67-using android::vold::BuildDataPath;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-68-using android::vold::IsDotOrDotDot;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-69-using android::vold::IsFilesystemSupported;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-70-using android::vold::kEmptyAuthentication;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-71-using android::vold::KeyBuffer;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-72-using android::vold::KeyGeneration;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-73-using android::vold::retrieveKey;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-74-using android::vold::retrieveOrGenerateKey;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-75-using android::vold::SetDefaultAcl;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-76-using android::vold::SetQuotaInherit;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-77-using android::vold::SetQuotaProjectId;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-78-using android::vold::writeStringToFile;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:79:using namespace android::fscrypt;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-80-using namespace android::dm;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-81-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-82-namespace {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-83-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:84:const std::string device_key_dir = std::string() + DATA_MNT_POINT + fscrypt_unencrypted_folder;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-85-const std::string device_key_path = device_key_dir + "/key";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-86-const std::string device_key_temp = device_key_dir + "/temp";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-87-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-88-const std::string user_key_dir = std::string() + DATA_MNT_POINT + "/misc/vold/user_keys";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-89-const std::string user_key_temp = user_key_dir + "/temp";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-90-const std::string prepare_subdirs_path = "/system/bin/vold_prepare_subdirs";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-91-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-92-const std::string systemwide_volume_key_dir =
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-93-    std::string() + DATA_MNT_POINT + "/misc/vold/volume_keys";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-94-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-95-const std::string data_data_dir = std::string() + DATA_MNT_POINT + "/data";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-96-const std::string data_user_0_dir = std::string() + DATA_MNT_POINT + "/user/0";
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-216-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-217-    if (need_sync && !android::vold::FsyncDirectory(directory_path)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-218-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-219-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-220-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-221-static bool read_and_fixate_user_ce_key(userid_t user_id,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-222-                                        const android::vold::KeyAuthentication& auth,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-223-                                        KeyBuffer* ce_key) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-224-    auto const directory_path = get_ce_key_directory_path(user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-225-    auto const paths = get_ce_key_paths(directory_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-226-    for (auto const ce_key_path : paths) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-227-        LOG(DEBUG) << "Trying user CE key " << ce_key_path;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:228:        if (retrieveKey(ce_key_path, auth, ce_key)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:229:            LOG(DEBUG) << "Successfully retrieved key";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-230-            s_deferred_fixations.erase(directory_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-231-            fixate_user_ce_key(directory_path, ce_key_path, paths);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-232-            return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-233-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-234-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-235-    LOG(ERROR) << "Failed to find working ce key for user " << user_id;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-236-    return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-237-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-238-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-239-// Checks whether the kernel definitely supports the sysfs files that describe the storage
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-240-// hardware's inline encryption capabilities.  They are supported in upstream 5.18 and later, and in
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-241-// android14-5.15 and later (but not android13-5.15).  For simplicity we just check for 5.18.
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-350-    if (options.use_hw_wrapped_key) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-351-        if (!exportWrappedStorageKey(key, &ephemeral_wrapped_key)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-352-            LOG(ERROR) << "Failed to get ephemeral wrapped key";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-353-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-354-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-355-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-356-    return installKey(mountpoint, options, options.use_hw_wrapped_key ? ephemeral_wrapped_key : key,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-357-                      policy);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-358-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-359-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-360-// Retrieve the options to use for encryption policies on adoptable storage.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-361-static bool get_volume_file_encryption_options(EncryptionOptions* options) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:362:    // If we give the empty string, libfscrypt will use the default (currently XTS)
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-363-    auto contents_mode = android::base::GetProperty("ro.crypto.volume.contents_mode", "");
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:364:    // HEH as default was always a mistake. Use the libfscrypt default (CTS)
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-365-    // for devices launching on versions above Android 10.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-366-    auto first_api_level = GetFirstApiLevel();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-367-    auto filenames_mode =
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-368-            android::base::GetProperty("ro.crypto.volume.filenames_mode",
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-369-                                       first_api_level > __ANDROID_API_Q__ ? "" : "aes-256-heh");
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-370-    auto options_string = android::base::GetProperty("ro.crypto.volume.options",
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-371-                                                     contents_mode + ":" + filenames_mode);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-372-    if (!ParseOptionsForApiLevel(first_api_level, options_string, options)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-373-        LOG(ERROR) << "Unable to parse volume encryption options: " << options_string;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-374-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-375-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-376-    if (options->flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32) {
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-450-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-451-// Checks whether at least one CE key subdirectory exists for the given user.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-452-static bool ce_key_exists(userid_t user_id) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-453-    auto directory_path = get_ce_key_directory_path(user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-454-    // The common case is that "$dir/current" exists, so check for that first.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-455-    if (android::vold::pathExists(get_ce_key_current_path(directory_path))) return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-456-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-457-    // Else, there could still be another subdirectory of $dir (if a crash
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-458-    // occurred during fixate_user_ce_key()), so check for one.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-459-    return android::vold::pathExists(directory_path) && !get_ce_key_paths(directory_path).empty();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-460-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-461-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:462:static bool create_de_key(userid_t user_id, bool ephemeral) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-463-    KeyBuffer de_key;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-464-    if (!generateStorageKey(makeGen(s_data_options), &de_key)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-465-    if (!ephemeral && !android::vold::storeKeyAtomically(get_de_key_path(user_id), user_key_temp,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-466-                                                         kEmptyAuthentication, de_key))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-467-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-468-    EncryptionPolicy de_policy;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-469-    if (!install_storage_key(DATA_MNT_POINT, s_data_options, de_key, &de_policy)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-470-    s_de_policies[user_id].internal = de_policy;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-471-    LOG(INFO) << "Created DE key for user " << user_id;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-472-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-473-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-474-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:475:static bool create_ce_key(userid_t user_id, bool ephemeral) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-476-    KeyBuffer ce_key;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-477-    if (!generateStorageKey(makeGen(s_data_options), &ce_key)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-478-    if (!ephemeral) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-479-        if (!prepare_dir(get_ce_key_directory_path(user_id), 0700, AID_ROOT, AID_ROOT))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-480-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-481-        // We don't store the CE key on disk here, since here we don't have the
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-482-        // secret needed to do so securely.  Instead, we cache it in memory for
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:483:        // now, and we store it later in fscrypt_set_ce_key_protection().
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-484-        s_new_ce_keys.insert({user_id, ce_key});
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-485-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-486-    EncryptionPolicy ce_policy;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-487-    if (!install_storage_key(DATA_MNT_POINT, s_data_options, ce_key, &ce_policy)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-488-    s_ce_policies[user_id].internal = ce_policy;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-489-    LOG(INFO) << "Created CE key for user " << user_id;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-490-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-491-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-492-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-493-static bool is_numeric(const char* name) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-494-    for (const char* p = name; *p != '\0'; p++) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-495-        if (!isdigit(*p)) return false;
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-513-                return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-514-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-515-            break;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-516-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-517-        if (IsDotOrDotDot(*entry)) continue;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-518-        if (entry->d_type != DT_DIR || !is_numeric(entry->d_name)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-519-            LOG(DEBUG) << "Skipping non-de-key " << entry->d_name;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-520-            continue;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-521-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-522-        userid_t user_id = std::stoi(entry->d_name);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-523-        auto key_path = de_dir + "/" + entry->d_name;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-524-        KeyBuffer de_key;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:525:        if (!retrieveKey(key_path, kEmptyAuthentication, &de_key)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-526-            // This is probably a partially removed user, so ignore
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-527-            if (user_id != 0) continue;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-528-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-529-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-530-        EncryptionPolicy de_policy;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-531-        if (!install_storage_key(DATA_MNT_POINT, s_data_options, de_key, &de_policy)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-532-        const auto& [existing, is_new] = s_de_policies.insert({user_id, {de_policy, {}}});
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-533-        if (!is_new && existing->second.internal != de_policy) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-534-            LOG(ERROR) << "DE policy for user" << user_id << " changed";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-535-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-536-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-537-        LOG(DEBUG) << "Installed de key for user " << user_id;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-538-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:539:    // fscrypt:TODO: go through all DE directories, ensure that all user dirs have the
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-540-    // correct policy set on them, and that no rogue ones exist.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-541-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-542-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-543-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:544:bool fscrypt_initialize_systemwide_keys() {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:545:    LOG(INFO) << "fscrypt_initialize_systemwide_keys";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-546-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-547-    if (!init_data_file_encryption_options()) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-548-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-549-    KeyBuffer device_key;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:550:    if (!retrieveOrGenerateKey(device_key_path, device_key_temp, kEmptyAuthentication,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-551-                               makeGen(s_data_options), &device_key))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-552-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-553-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-554-    // This initializes s_device_policy, which is a global variable so that
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:555:    // fscrypt_init_user0() can access it later.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-556-    if (!install_storage_key(DATA_MNT_POINT, s_data_options, device_key, &s_device_policy))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-557-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-558-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-559-    std::string options_string;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-560-    if (!OptionsToString(s_device_policy.options, &options_string)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-561-        LOG(ERROR) << "Unable to serialize options";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-562-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-563-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:564:    std::string options_filename = std::string(DATA_MNT_POINT) + fscrypt_key_mode;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-565-    if (!android::vold::writeStringToFile(options_string, options_filename)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-566-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:567:    std::string ref_filename = std::string(DATA_MNT_POINT) + fscrypt_key_ref;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-568-    if (!android::vold::writeStringToFile(s_device_policy.key_raw_ref, ref_filename)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-569-    LOG(INFO) << "Wrote system DE key reference to:" << ref_filename;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-570-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-571-    KeyBuffer per_boot_key;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-572-    if (!generateStorageKey(makeGen(s_data_options), &per_boot_key)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-573-    EncryptionPolicy per_boot_policy;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-574-    if (!install_storage_key(DATA_MNT_POINT, s_data_options, per_boot_key, &per_boot_policy))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-575-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:576:    std::string per_boot_ref_filename = std::string("/data") + fscrypt_key_per_boot_ref;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-577-    if (!android::vold::writeStringToFile(per_boot_policy.key_raw_ref, per_boot_ref_filename))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-578-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-579-    LOG(INFO) << "Wrote per boot key reference to:" << per_boot_ref_filename;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-580-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-581-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-582-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-583-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-584-static bool prepare_special_dirs() {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-585-    // Ensure that /data/data and its "alias" /data/user/0 exist, and create the
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:586:    // bind mount of /data/data onto /data/user/0.  This *should* happen in
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:587:    // fscrypt_prepare_user_storage().  However, it actually must be done early,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-588-    // before the rest of user 0's CE storage is prepared.  This is because
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-589-    // zygote may need to set up app data isolation before then, which requires
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:590:    // mounting a tmpfs over /data/data to ensure it remains hidden.  This issue
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-591-    // arises due to /data/data being in the top-level directory.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-592-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-593-    // /data/user/0 used to be a symlink to /data/data, so we must first delete
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-594-    // the old symlink if present.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-595-    if (android::vold::IsSymlink(data_user_0_dir) && android::vold::Unlink(data_user_0_dir) != 0)
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-596-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-597-    // On first boot, we'll be creating /data/data for the first time, and user
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-598-    // 0's CE key will be installed already since it was just created.  Take the
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-599-    // opportunity to also set the encryption policy of /data/data right away.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-600-    if (s_ce_policies.count(0) != 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-601-        const EncryptionPolicy& ce_policy = s_ce_policies[0].internal;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-602-        if (!prepare_dir_with_policy(data_data_dir, 0771, AID_SYSTEM, AID_SYSTEM, ce_policy)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-603-            // Preparing /data/data failed, yet we had just generated a new CE
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-604-            // key because one wasn't stored.  Before erroring out, try deleting
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-605-            // the directory and retrying, as it's possible that the directory
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-606-            // exists with different CE policy from an interrupted first boot.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-607-            if (rmdir(data_data_dir.c_str()) != 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-608-                PLOG(ERROR) << "rmdir " << data_data_dir << " failed";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-609-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-610-            if (!prepare_dir_with_policy(data_data_dir, 0771, AID_SYSTEM, AID_SYSTEM, ce_policy))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-611-                return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-612-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-613-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-614-        if (!prepare_dir(data_data_dir, 0771, AID_SYSTEM, AID_SYSTEM)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:615:        // EnsurePolicy() will have to happen later, in fscrypt_prepare_user_storage().
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-616-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-617-    if (!prepare_dir(data_user_0_dir, 0700, AID_SYSTEM, AID_SYSTEM)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-618-    if (android::vold::BindMount(data_data_dir, data_user_0_dir) != 0) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-619-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-620-    // If /data/media/obb doesn't exist, create it and encrypt it with the
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-621-    // device policy.  Normally, device-policy-encrypted directories are created
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-622-    // and encrypted by init; /data/media/obb is special because it is located
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-623-    // in /data/media.  Since /data/media also contains per-user encrypted
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-624-    // directories, by design only vold can write to it.  As a side effect of
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-625-    // that, vold must create /data/media/obb.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-626-    //
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-627-    // We must tolerate /data/media/obb being unencrypted if it already exists
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-628-    // on-disk, since it used to be unencrypted (b/64566063).
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-629-    if (android::vold::pathExists(media_obb_dir)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-630-        if (!prepare_dir(media_obb_dir, 0770, AID_MEDIA_RW, AID_MEDIA_RW)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-631-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-632-        if (!prepare_dir_with_policy(media_obb_dir, 0770, AID_MEDIA_RW, AID_MEDIA_RW,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-633-                                     s_device_policy))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-634-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-635-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-636-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-637-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-638-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:639:bool fscrypt_init_user0_done;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-640-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:641:bool fscrypt_init_user0() {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:642:    LOG(DEBUG) << "fscrypt_init_user0";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-643-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-644-    if (IsFbeEnabled()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-645-        if (!prepare_dir(user_key_dir, 0700, AID_ROOT, AID_ROOT)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-646-        if (!prepare_dir(user_key_dir + "/ce", 0700, AID_ROOT, AID_ROOT)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-647-        if (!prepare_dir(user_key_dir + "/de", 0700, AID_ROOT, AID_ROOT)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-648-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-649-        // Create user 0's DE and CE keys if they don't already exist.  Check
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-650-        // each key independently, since if the first boot was interrupted it is
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-651-        // possible that the DE key exists but the CE key does not.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:652:        if (!de_key_exists(0) && !create_de_key(0, false)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:653:        if (!ce_key_exists(0) && !create_ce_key(0, false)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-654-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-655-        // TODO: switch to loading only DE_0 here once framework makes
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-656-        // explicit calls to install DE keys for secondary users
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-657-        if (!load_all_de_keys()) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-658-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-659-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-660-    // Now that user 0's CE key has been created, we can prepare /data/data.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-661-    if (!prepare_special_dirs()) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-662-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-663-    // With the exception of what is done by prepare_special_dirs() above, we
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-664-    // only prepare DE storage here, since user 0's CE key won't be installed
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-665-    // yet unless it was just created.  The framework will prepare the user's CE
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-666-    // storage later, once their CE key is installed.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:667:    if (!fscrypt_prepare_user_storage("", 0, android::os::IVold::STORAGE_FLAG_DE)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-668-        LOG(ERROR) << "Failed to prepare user 0 storage";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-669-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-670-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-671-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:672:    fscrypt_init_user0_done = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-673-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-674-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-675-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-676-// Creates the CE and DE keys for a new user.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:677:bool fscrypt_create_user_keys(userid_t user_id, bool ephemeral) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:678:    LOG(DEBUG) << "fscrypt_create_user_keys for " << user_id;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-679-    if (!IsFbeEnabled()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-680-        return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-681-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-682-    // FIXME test for existence of key that is not loaded yet
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-683-    if (s_ce_policies.count(user_id) != 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:684:        LOG(ERROR) << "Already exists, can't create keys for " << user_id;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-685-        // FIXME should we fail the command?
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-686-        return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-687-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:688:    if (!create_de_key(user_id, ephemeral)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:689:    if (!create_ce_key(user_id, ephemeral)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-690-    if (ephemeral) s_ephemeral_users.insert(user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-691-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-692-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-693-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-694-// "Lock" all encrypted directories whose key has been removed.  This is needed
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-695-// in the case where the keys are being put in the session keyring (rather in
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-696-// the newer filesystem-level keyrings), because removing a key from the session
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-697-// keyring doesn't affect inodes in the kernel's inode cache whose per-file key
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-698-// was already set up.  So to remove the per-file keys and make the files
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-699-// "appear encrypted", these inodes must be evicted.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-700-//
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-701-// To do this, sync() to clean all dirty inodes, then drop all reclaimable slab
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-721-        const UserPolicies& policies = it->second;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-722-        success &= android::vold::evictKey(BuildDataPath(""), policies.internal);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-723-        for (const auto& [volume_uuid, policy] : policies.adoptable) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-724-            success &= android::vold::evictKey(BuildDataPath(volume_uuid), policy);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-725-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-726-        policy_map.erase(it);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-727-        drop_caches_if_needed();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-728-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-729-    return success;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-730-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-731-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-732-// Evicts and destroys all CE and DE keys for a user.  This is called when the user is removed.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:733:bool fscrypt_destroy_user_keys(userid_t user_id) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:734:    LOG(DEBUG) << "fscrypt_destroy_user_keys(" << user_id << ")";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-735-    if (!IsFbeEnabled()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-736-        return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-737-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-738-    bool success = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-739-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-740-    success &= evict_user_keys(s_ce_policies, user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-741-    success &= evict_user_keys(s_de_policies, user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-742-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-743-    if (!s_ephemeral_users.erase(user_id)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-744-        auto ce_path = get_ce_key_directory_path(user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-745-        if (!s_new_ce_keys.erase(user_id)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-746-            for (auto const path : get_ce_key_paths(ce_path)) {
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-769-        return android::vold::KeyAuthentication(secret_str);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-770-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-771-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-772-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-773-static std::string volkey_path(const std::string& misc_path, const std::string& volume_uuid) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-774-    return misc_path + "/vold/volume_keys/" + volume_uuid + "/default";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-775-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-776-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-777-static std::string volume_secdiscardable_path(const std::string& volume_uuid) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-778-    return systemwide_volume_key_dir + "/" + volume_uuid + "/secdiscardable";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-779-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-780-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:781:static bool read_or_create_volkey(const std::string& misc_path, const std::string& volume_uuid,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-782-                                  UserPolicies& user_policies, EncryptionPolicy* policy) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-783-    auto secdiscardable_path = volume_secdiscardable_path(volume_uuid);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-784-    std::string secdiscardable_hash;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-785-    if (android::vold::pathExists(secdiscardable_path)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-786-        if (!android::vold::readSecdiscardable(secdiscardable_path, &secdiscardable_hash))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-787-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-788-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-789-        if (!android::vold::MkdirsSync(secdiscardable_path, 0700)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-790-        if (!android::vold::createSecdiscardable(secdiscardable_path, &secdiscardable_hash))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-791-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-792-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-793-    auto key_path = volkey_path(misc_path, volume_uuid);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-794-    if (!android::vold::MkdirsSync(key_path, 0700)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-795-    android::vold::KeyAuthentication auth(secdiscardable_hash);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-796-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-797-    EncryptionOptions options;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-798-    if (!get_volume_file_encryption_options(&options)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-799-    KeyBuffer key;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:800:    if (!retrieveOrGenerateKey(key_path, key_path + "_tmp", auth, makeGen(options), &key))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-801-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-802-    if (!install_storage_key(BuildDataPath(volume_uuid), options, key, policy)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-803-    user_policies.adoptable[volume_uuid] = *policy;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-804-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-805-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-806-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-807-static bool destroy_volkey(const std::string& misc_path, const std::string& volume_uuid) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-808-    auto path = volkey_path(misc_path, volume_uuid);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-809-    if (!android::vold::pathExists(path)) return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-810-    return android::vold::destroyKey(path);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-811-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-812-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-813-// (Re-)encrypts the user's CE key with the given secret.  This function handles
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-814-// storing the CE key for a new user for the first time.  It also handles
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-815-// re-encrypting the CE key upon upgrade from an Android version where the CE
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-816-// key was stored with kEmptyAuthentication when the user didn't have an LSKF.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-817-// See the comments below for the different cases handled.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:818:bool fscrypt_set_ce_key_protection(userid_t user_id, const std::vector<uint8_t>& secret) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:819:    LOG(DEBUG) << "fscrypt_set_ce_key_protection " << user_id;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-820-    if (!IsFbeEnabled()) return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-821-    auto auth = authentication_from_secret(secret);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-822-    if (auth.secret.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:823:        LOG(ERROR) << "fscrypt_set_ce_key_protection: secret must be nonempty";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-824-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-825-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-826-    // We shouldn't store any keys for ephemeral users.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-827-    if (s_ephemeral_users.count(user_id) != 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-828-        LOG(DEBUG) << "Not storing key because user is ephemeral";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-829-        return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-830-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-831-    KeyBuffer ce_key;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-832-    auto it = s_new_ce_keys.find(user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-833-    if (it != s_new_ce_keys.end()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-834-        // If the key exists in s_new_ce_keys, then the key is a
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-835-        // not-yet-committed key for a new user, and we are committing it here.
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-840-        // then we are setting the protection on an existing key.  This happens
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-841-        // at upgrade time, when CE keys that were previously protected by
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-842-        // kEmptyAuthentication are encrypted by the user's synthetic password.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-843-        LOG(DEBUG) << "CE key already exists on-disk; re-protecting it with the given secret";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-844-        if (!read_and_fixate_user_ce_key(user_id, kEmptyAuthentication, &ce_key)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-845-            // Before failing, also check whether the key is already protected
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-846-            // with the given secret.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-847-            if (read_and_fixate_user_ce_key(user_id, auth, &ce_key)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-848-                LOG(INFO) << "CE key is already protected by given secret.  Nothing to do.";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-849-                LOG(INFO) << "Errors above are for the attempt with empty auth and can be ignored.";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-850-                return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-851-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:852:            LOG(ERROR) << "Failed to retrieve CE key for user " << user_id;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-853-            // The key isn't protected by either kEmptyAuthentication or by
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-854-            // |auth|.  This should never happen, and there's nothing we can do
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-855-            // besides return an error.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-856-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-857-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-858-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-859-        // If the key doesn't exist in memory or on-disk, then we need to
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-860-        // generate it here, then commit it to disk.  This is needed after the
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-861-        // unusual case where a non-system user was created during early boot,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-862-        // and then the device was force-rebooted before the boot completed.  In
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-863-        // that case, the Android user record was committed but the CE key was
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-864-        // not.  So the CE key was lost, and we need to regenerate it.  This
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-865-        // should be fine, since the key should not have been used yet.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-866-        LOG(WARNING) << "CE key not found!  Regenerating it";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:867:        if (!create_ce_key(user_id, false)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-868-        ce_key = s_new_ce_keys.find(user_id)->second;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-869-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-870-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-871-    auto const directory_path = get_ce_key_directory_path(user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-872-    auto const paths = get_ce_key_paths(directory_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-873-    std::string ce_key_path;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-874-    if (!get_ce_key_new_path(directory_path, paths, &ce_key_path)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-875-    if (!android::vold::storeKeyAtomically(ce_key_path, user_key_temp, auth, ce_key)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-876-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-877-    // Fixate the key, i.e. delete all other bindings of it.  (In practice this
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-878-    // just means the kEmptyAuthentication binding, if there is one.)  However,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-879-    // if a userdata filesystem checkpoint is pending, then we need to delay the
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-884-        s_deferred_fixations[directory_path] = ce_key_path;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-885-    } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-886-        s_deferred_fixations.erase(directory_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-887-        if (!fixate_user_ce_key(directory_path, ce_key_path, paths)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-888-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-889-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-890-    if (s_new_ce_keys.erase(user_id)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-891-        LOG(INFO) << "Stored CE key for new user " << user_id;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-892-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-893-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-894-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-895-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:896:void fscrypt_deferred_fixate_ce_keys() {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-897-    for (const auto& it : s_deferred_fixations) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-898-        const auto& directory_path = it.first;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-899-        const auto& to_fix = it.second;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-900-        LOG(INFO) << "Doing deferred fixation of " << directory_path;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-901-        fixate_user_ce_key(directory_path, to_fix, get_ce_key_paths(directory_path));
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-902-        // Continue on error.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-903-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-904-    s_deferred_fixations.clear();
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-905-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-906-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:907:std::vector<int> fscrypt_get_unlocked_users() {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-908-    std::vector<int> user_ids;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-909-    for (const auto& [user_id, user_policies] : s_ce_policies) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-910-        user_ids.push_back(user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-911-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-912-    return user_ids;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-913-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-914-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-915-// Unlocks internal CE storage for the given user.  This only unlocks internal storage, since
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:916:// fscrypt_prepare_user_storage() has to be called for each adoptable storage volume anyway (since
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-917-// the volume might have been absent when the user was created), and that handles the unlocking.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:918:bool fscrypt_unlock_ce_storage(userid_t user_id, const std::vector<uint8_t>& secret) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:919:    LOG(DEBUG) << "fscrypt_unlock_ce_storage " << user_id;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-920-    if (!IsFbeEnabled()) return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-921-    if (s_ce_policies.count(user_id) != 0) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-922-        LOG(WARNING) << "CE storage for user " << user_id << " is already unlocked";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-923-        return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-924-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-925-    auto auth = authentication_from_secret(secret);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-926-    KeyBuffer ce_key;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-927-    if (!read_and_fixate_user_ce_key(user_id, auth, &ce_key)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-928-    EncryptionPolicy ce_policy;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-929-    if (!install_storage_key(DATA_MNT_POINT, s_data_options, ce_key, &ce_policy)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-930-    s_ce_policies[user_id].internal = ce_policy;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-931-    LOG(DEBUG) << "Installed CE key for user " << user_id;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-932-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-933-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-934-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-935-// Locks CE storage for the given user.  This locks both internal and adoptable storage.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:936:bool fscrypt_lock_ce_storage(userid_t user_id) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:937:    LOG(DEBUG) << "fscrypt_lock_ce_storage " << user_id;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-938-    if (!IsFbeEnabled()) return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-939-    return evict_user_keys(s_ce_policies, user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-940-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-941-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-942-static bool prepare_subdirs(const std::string& action, const std::string& volume_uuid,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-943-                            userid_t user_id, int flags) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-944-    if (0 != android::vold::ForkExecvp(
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-945-                 std::vector<std::string>{prepare_subdirs_path, action, volume_uuid,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-946-                                          std::to_string(user_id), std::to_string(flags)})) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-947-        LOG(ERROR) << "vold_prepare_subdirs failed";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-948-        return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-949-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-950-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-951-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-952-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:953:bool fscrypt_prepare_user_storage(const std::string& volume_uuid, userid_t user_id, int flags) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:954:    LOG(DEBUG) << "fscrypt_prepare_user_storage for volume " << escape_empty(volume_uuid)
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-955-               << ", user " << user_id << ", flags " << flags;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-956-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-957-    // Internal storage must be prepared before adoptable storage, since the
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-958-    // user's volume keys are stored in their internal storage.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-959-    if (!volume_uuid.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-960-        if ((flags & android::os::IVold::STORAGE_FLAG_DE) &&
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-961-            !android::vold::pathExists(android::vold::BuildDataMiscDePath("", user_id))) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-962-            LOG(ERROR) << "Cannot prepare DE storage for user " << user_id << " on volume "
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-963-                       << volume_uuid << " before internal storage";
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-964-            return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-965-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-966-        if ((flags & android::os::IVold::STORAGE_FLAG_CE) &&
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-985-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-986-        if (IsFbeEnabled()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-987-            auto it = s_de_policies.find(user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-988-            if (it == s_de_policies.end()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-989-                LOG(ERROR) << "Cannot find DE policy for user " << user_id;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-990-                return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-991-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-992-            UserPolicies& user_de_policies = it->second;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-993-            if (volume_uuid.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-994-                de_policy = user_de_policies.internal;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-995-            } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-996-                auto misc_de_empty_volume_path = android::vold::BuildDataMiscDePath("", user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:997:                if (!read_or_create_volkey(misc_de_empty_volume_path, volume_uuid, user_de_policies,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-998-                                           &de_policy)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-999-                    return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1000-                }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1001-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1002-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1003-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1004-        if (volume_uuid.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1005-            if (!prepare_dir(system_legacy_path, 0700, AID_SYSTEM, AID_SYSTEM)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1006-            if (!prepare_dir(profiles_de_path, 0771, AID_SYSTEM, AID_SYSTEM)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1007-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1008-            if (!prepare_dir_with_policy(system_de_path, 0770, AID_SYSTEM, AID_SYSTEM, de_policy))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1009-                return false;
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1028-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1029-        if (IsFbeEnabled()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1030-            auto it = s_ce_policies.find(user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1031-            if (it == s_ce_policies.end()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1032-                LOG(ERROR) << "Cannot find CE policy for user " << user_id;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1033-                return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1034-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1035-            UserPolicies& user_ce_policies = it->second;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1036-            if (volume_uuid.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1037-                ce_policy = user_ce_policies.internal;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1038-            } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1039-                auto misc_ce_empty_volume_path = android::vold::BuildDataMiscCePath("", user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:1040:                if (!read_or_create_volkey(misc_ce_empty_volume_path, volume_uuid, user_ce_policies,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1041-                                           &ce_policy)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1042-                    return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1043-                }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1044-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1045-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1046-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1047-        if (volume_uuid.empty()) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1048-            if (!prepare_dir_with_policy(system_ce_path, 0770, AID_SYSTEM, AID_SYSTEM, ce_policy))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1049-                return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1050-            if (!prepare_dir_with_policy(vendor_ce_path, 0771, AID_ROOT, AID_ROOT, ce_policy))
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1051-                return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1052-        }
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1070-            // over these paths
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1071-            // NOTE: these paths need to be kept in sync with libselinux
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1072-            android::vold::RestoreconRecursive(system_ce_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1073-            android::vold::RestoreconRecursive(vendor_ce_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1074-            android::vold::RestoreconRecursive(misc_ce_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1075-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1076-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1077-    if (!prepare_subdirs("prepare", volume_uuid, user_id, flags)) return false;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1078-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1079-    return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1080-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1081-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:1082:bool fscrypt_destroy_user_storage(const std::string& volume_uuid, userid_t user_id, int flags) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:1083:    LOG(DEBUG) << "fscrypt_destroy_user_storage for volume " << escape_empty(volume_uuid)
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1084-               << ", user " << user_id << ", flags " << flags;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1085-    bool res = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1086-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1087-    res &= prepare_subdirs("destroy", volume_uuid, user_id, flags);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1088-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1089-    if (flags & android::os::IVold::STORAGE_FLAG_CE) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1090-        // CE_n key
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1091-        auto system_ce_path = android::vold::BuildDataSystemCePath(user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1092-        auto misc_ce_path = android::vold::BuildDataMiscCePath(volume_uuid, user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1093-        auto vendor_ce_path = android::vold::BuildDataVendorCePath(user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1094-        auto media_ce_path = android::vold::BuildDataMediaCePath(volume_uuid, user_id);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1095-        auto user_ce_path = android::vold::BuildDataUserCePath(volume_uuid, user_id);
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1164-    return res;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1165-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1166-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1167-static void erase_volume_policies(std::map<userid_t, UserPolicies>& policy_map,
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1168-                                  const std::string& volume_uuid) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1169-    for (auto& [user_id, user_policies] : policy_map) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1170-        user_policies.adoptable.erase(volume_uuid);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1171-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1172-}
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1173-
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1174-// Destroys all CE and DE keys for an adoptable storage volume that is permanently going away.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1175-// Requires VolumeManager::mCryptLock.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:1176:bool fscrypt_destroy_volume_keys(const std::string& volume_uuid) {
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1177-    if (!IsFbeEnabled()) return true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1178-    bool res = true;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp:1179:    LOG(DEBUG) << "fscrypt_destroy_volume_keys for volume " << escape_empty(volume_uuid);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1180-    auto secdiscardable_path = volume_secdiscardable_path(volume_uuid);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1181-    res &= android::vold::runSecdiscardSingle(secdiscardable_path);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1182-    res &= destroy_volume_keys("/data/misc_ce", volume_uuid);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1183-    res &= destroy_volume_keys("/data/misc_de", volume_uuid);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1184-    // Drop the CE and DE policies stored in memory, as they are not needed anymore.  Note that it's
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1185-    // not necessary to also evict the corresponding keys from the kernel, as that happens
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1186-    // automatically as a result of the volume being unmounted.
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1187-    erase_volume_policies(s_ce_policies, volume_uuid);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1188-    erase_volume_policies(s_de_policies, volume_uuid);
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1189-    return res;
+/mnt/SamsungSSD/android/lineage-22.2/system/vold/FsCrypt.cpp-1190-}

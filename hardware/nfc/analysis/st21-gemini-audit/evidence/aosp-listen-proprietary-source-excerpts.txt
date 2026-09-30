@@ -1,0 +1,511 @@
+===== aosp-reference/packages-modules-Nfc/libnfc-nci/src/include/vendor_cfg.h:25-76 =====
+25: 
+26: /* compile-time configuration structure for proprietary protocol and discovery
+27:  * value */
+28: typedef struct {
+29:   uint8_t pro_protocol_18092_active;
+30:   uint8_t pro_protocol_b_prime;
+31:   uint8_t pro_protocol_dual;
+32:   uint8_t pro_protocol_15693;
+33:   uint8_t pro_protocol_kovio;
+34:   uint8_t pro_protocol_mfc;
+35: 
+36:   uint8_t pro_discovery_kovio_poll;
+37:   uint8_t pro_discovery_b_prime_poll;
+38:   uint8_t pro_discovery_b_prime_listen;
+39:   uint8_t pro_protocol_chinese_id;
+40: } tNFA_PROPRIETARY_CFG;
+41: 
+42: extern tNFA_PROPRIETARY_CFG* p_nfa_proprietary_cfg;
+43: 
+44: /**********************************************
+45:  * Proprietary Protocols
+46:  **********************************************/
+47: #ifndef NCI_PROTOCOL_18092_ACTIVE
+48: #define NCI_PROTOCOL_18092_ACTIVE \
+49:   (p_nfa_proprietary_cfg->pro_protocol_18092_active)
+50: #endif
+51: #ifndef NCI_PROTOCOL_B_PRIME
+52: #define NCI_PROTOCOL_B_PRIME (p_nfa_proprietary_cfg->pro_protocol_b_prime)
+53: #endif
+54: #ifndef NCI_PROTOCOL_DUAL
+55: #define NCI_PROTOCOL_DUAL (p_nfa_proprietary_cfg->pro_protocol_dual)
+56: #endif
+57: #ifndef NCI_PROTOCOL_15693
+58: #define NCI_PROTOCOL_15693 (p_nfa_proprietary_cfg->pro_protocol_15693)
+59: #endif
+60: #ifndef NCI_PROTOCOL_KOVIO
+61: #define NCI_PROTOCOL_KOVIO (p_nfa_proprietary_cfg->pro_protocol_kovio)
+62: #endif
+63: #ifndef NCI_PROTOCOL_MIFARE
+64: #define NCI_PROTOCOL_MIFARE (p_nfa_proprietary_cfg->pro_protocol_mfc)
+65: #endif
+66: #ifndef NCI_PROTOCOL_CI
+67: #define NCI_PROTOCOL_CI (p_nfa_proprietary_cfg->pro_protocol_chinese_id)
+68: #endif
+69: 
+70: /**********************************************
+71:  * Proprietary Discovery technology and mode
+72:  **********************************************/
+73: #ifndef NCI_DISCOVERY_TYPE_POLL_KOVIO
+74: #define NCI_DISCOVERY_TYPE_POLL_KOVIO \
+75:   (p_nfa_proprietary_cfg->pro_discovery_kovio_poll)
+76: #endif
+===== aosp-reference/packages-modules-Nfc/libnfc-nci/src/adaptation/NfcAdaptation.cc:616-636 =====
+616:   if (NfcConfig::hasKey(NAME_NFA_PROPRIETARY_CFG)) {
+617:     std::vector<uint8_t> p_config =
+618:         NfcConfig::getBytes(NAME_NFA_PROPRIETARY_CFG);
+619:     if (p_config.size() > 0)
+620:       nfa_proprietary_cfg.pro_protocol_18092_active = p_config[0];
+621:     if (p_config.size() > 1)
+622:       nfa_proprietary_cfg.pro_protocol_b_prime = p_config[1];
+623:     if (p_config.size() > 2)
+624:       nfa_proprietary_cfg.pro_protocol_dual = p_config[2];
+625:     if (p_config.size() > 3)
+626:       nfa_proprietary_cfg.pro_protocol_15693 = p_config[3];
+627:     if (p_config.size() > 4)
+628:       nfa_proprietary_cfg.pro_protocol_kovio = p_config[4];
+629:     if (p_config.size() > 5) nfa_proprietary_cfg.pro_protocol_mfc = p_config[5];
+630:     if (p_config.size() > 6)
+631:       nfa_proprietary_cfg.pro_discovery_kovio_poll = p_config[6];
+632:     if (p_config.size() > 7)
+633:       nfa_proprietary_cfg.pro_discovery_b_prime_poll = p_config[7];
+634:     if (p_config.size() > 8)
+635:       nfa_proprietary_cfg.pro_discovery_b_prime_listen = p_config[8];
+636:     if (p_config.size() > 9)
+===== aosp-reference/packages-modules-Nfc/libnfc-nci/src/include/nci_defs.h:508-577 =====
+508: #define NCI_PARAM_ID_LA_BIT_FRAME_SDD 0x30
+509: #define NCI_PARAM_ID_LA_PLATFORM_CONFIG 0x31
+510: #define NCI_PARAM_ID_LA_SEL_INFO 0x32
+511: #define NCI_PARAM_ID_LA_NFCID1 0x33
+512: #define NCI_PARAM_ID_LB_SENSB_INFO 0x38
+513: #define NCI_PARAM_ID_LB_NFCID0 0x39
+514: #define NCI_PARAM_ID_LB_APPDATA 0x3A
+515: #define NCI_PARAM_ID_LB_SFGI 0x3B
+516: #define NCI_PARAM_ID_LB_ADC_FO 0x3C
+517: #define NCI_PARAM_ID_LB_PROTOCOL NCI_PARAM_ID_LB_SENSB_INFO
+518: 
+519: #define NCI_PARAM_ID_LF_T3T_ID1 0x40
+520: #define NCI_PARAM_ID_LF_T3T_ID2 0x41
+521: #define NCI_PARAM_ID_LF_T3T_ID3 0x42
+522: #define NCI_PARAM_ID_LF_T3T_ID4 0x43
+523: #define NCI_PARAM_ID_LF_T3T_ID5 0x44
+524: #define NCI_PARAM_ID_LF_T3T_ID6 0x45
+525: #define NCI_PARAM_ID_LF_T3T_ID7 0x46
+526: #define NCI_PARAM_ID_LF_T3T_ID8 0x47
+527: #define NCI_PARAM_ID_LF_T3T_ID9 0x48
+528: #define NCI_PARAM_ID_LF_T3T_ID10 0x49
+529: #define NCI_PARAM_ID_LF_T3T_ID11 0x4A
+530: #define NCI_PARAM_ID_LF_T3T_ID12 0x4B
+531: #define NCI_PARAM_ID_LF_T3T_ID13 0x4C
+532: #define NCI_PARAM_ID_LF_T3T_ID14 0x4D
+533: #define NCI_PARAM_ID_LF_T3T_ID15 0x4E
+534: #define NCI_PARAM_ID_LF_T3T_ID16 0x4F
+535: #define NCI_PARAM_ID_LF_PROTOCOL 0x50
+536: #define NCI_PARAM_ID_LF_T3T_PMM 0x51
+537: /* max num of LF_T3T_ID supported by NFCC (1 for now) */
+538: #define NCI_PARAM_ID_LF_T3T_MAX 0x52
+539: #define NCI_PARAM_ID_LF_T3T_FLAGS2 0x53
+540: #define NCI_PARAM_ID_LF_CON_BITR_F 0x54
+541: #define NCI_PARAM_ID_LF_CON_ADV_FEAT 0x55
+542: /*LF_T3T name changed in NCI2.0*/
+543: #define NCI_PARAM_ID_LF_T3T_RD_ALLOWED 0x55
+544: 
+545: #define NCI_PARAM_ID_FWI 0x58
+546: #define NCI_PARAM_ID_LA_HIST_BY 0x59
+547: #define NCI_PARAM_ID_LB_H_INFO_RSP 0x5A
+548: #define NCI_PARAM_ID_LI_BIT_RATE 0x5B
+549: 
+550: #define NCI_PARAM_ID_WT 0x60
+551: #define NCI_PARAM_ID_ATR_RES_GEN_BYTES 0x61
+552: #define NCI_PARAM_ID_ATR_RSP_CONFIG 0x62
+553: #define NCI_PARAM_ID_PACM_BIT_RATE 0x68
+554: 
+555: #define NCI_PARAM_ID_RF_FIELD_INFO 0x80
+556: #define NCI_PARAM_ID_NFC_DEP_OP 0x82
+557: 
+558: #define NCI_PARAM_ID_NFCC_CONFIG_CONTROL 0x85
+559: 
+560: /* Type A Parameters */
+561: #define NCI_PARAM_PLATFORM_T1T 0x0C
+562: #define NCI_PARAM_SEL_INFO_ISODEP 0x20
+563: /**********************************************
+564:  * NCI Parameter ID Lens
+565:  **********************************************/
+566: #define NCI_PARAM_LEN_TOTAL_DURATION 2
+567: 
+568: #define NCI_PARAM_LEN_CON_DISCOVERY_PARAM 1
+569: 
+570: #define NCI_PARAM_LEN_PF_RC 1
+571: 
+572: #define NCI_PARAM_LEN_LA_BIT_FRAME_SDD 1
+573: #define NCI_PARAM_LEN_LA_PLATFORM_CONFIG 1
+574: #define NCI_PARAM_LEN_LA_SEL_INFO 1
+575: 
+576: #define NCI_PARAM_LEN_LB_SENSB_INFO 1
+577: #define NCI_PARAM_LEN_LB_NFCID0 4
+===== aosp-reference/packages-modules-Nfc/libnfc-nci/src/nfa/include/nfa_api.h:579-600 =====
+579: #define NFA_LA_MAX_HIST_BYTES 15
+580: #define NFA_LB_MAX_H_INFO_LEN 15
+581: 
+582: typedef struct {
+583:   /*
+584:   ** Discovery Configuration Parameters for Listen A
+585:   */
+586:   bool la_enable;             /* TRUE if listening A                      */
+587:   uint8_t la_bit_frame_sdd;   /* Bit Frame SDD in Byte 1 of SENS_RES      */
+588:   uint8_t la_platform_config; /* Platform Config in Byte 2 of SENS_RES    */
+589:   uint8_t la_sel_info;        /* Byte of SEL_RES                          */
+590:   uint8_t la_nfcid1_len;      /* NFCID1 (0, 4, 7 or 10 bytes)             */
+591:   uint8_t la_nfcid1[NCI_NFCID1_MAX_LEN]; /*        if empty, NFCC will decide */
+592: 
+593:   /*
+594:   ** Discovery Configuration Parameters for Listen B
+595:   */
+596:   bool lb_enable;        /* TRUE if listening B                      */
+597:   uint8_t lb_sensb_info; /* Byte 2 of Protocol Info within SENSB_RES */
+598:   uint8_t lb_nfcid0_len; /* NFCID0 (0, 1 or 4 bytes)                 */
+599:   uint8_t
+600:       lb_nfcid0[NFA_LB_MAX_NFCID0_LEN]; /*         if empty, NFCC will decide */
+===== aosp-reference/packages-modules-Nfc/libnfc-nci/src/nfa/dm/nfa_dm_discover.cc:350-510 =====
+350:   uint8_t platform = 0;
+351:   uint8_t sens_info = 0;
+352: 
+353:   LOG(VERBOSE) << StringPrintf("%s: tech_proto_mask = 0x%08X", __func__,
+354:                                tech_proto_mask);
+355: 
+356:   /*
+357:   ** T1T listen     LA_PROT 0x80, LA_SENS_RES byte1:0x00 byte2:0x0C
+358:   ** T2T listen     LA_PROT 0x00
+359:   ** T3T listen     No bit for T3T in LF_PROT (CE T3T set listen parameters,
+360:   **                system code, NFCID2, etc.)
+361:   ** ISO-DEP listen LA_PROT 0x01, LB_PROT 0x01
+362:   ** NFC-DEP listen LA_PROT 0x02, LF_PROT 0x02
+363:   */
+364: 
+365:   if (tech_proto_mask & NFA_DM_DISC_MASK_LA_T1T) {
+366:     platform = NCI_PARAM_PLATFORM_T1T;
+367:   } else if (tech_proto_mask & NFA_DM_DISC_MASK_LA_T2T) {
+368:     /* platform = 0 and sens_info = 0 */
+369:   } else {
+370:     if (tech_proto_mask & NFA_DM_DISC_MASK_LA_ISO_DEP) {
+371:       sens_info |= NCI_PARAM_SEL_INFO_ISODEP;
+372:     }
+373:   }
+374: 
+375:   p = params;
+376: 
+377:   /*
+378:    * for Listen A
+379:    *
+380:    * Set ATQA 0x0C00 for T1T listen
+381:    * If the ATQA values are 0x0000, then the FW will use 0x0400
+382:    * which works for ISODEP, T2T and NFCDEP.
+383:    *
+384:    * In mode NFCC allowed to manage RF config (NFCC_CONFIG_CONTROL),
+385:    * DH will only add RF parameters for itself.
+386:    * In this case, we must program LA_SEL_INFO for DH techs only
+387:    */
+388:     UINT8_TO_STREAM(p, NFC_PMID_LA_BIT_FRAME_SDD);
+389:     UINT8_TO_STREAM(p, NCI_PARAM_LEN_LA_BIT_FRAME_SDD);
+390:     UINT8_TO_STREAM(p, 0x04);
+391:     UINT8_TO_STREAM(p, NFC_PMID_LA_PLATFORM_CONFIG);
+392:     UINT8_TO_STREAM(p, NCI_PARAM_LEN_LA_PLATFORM_CONFIG);
+393:     UINT8_TO_STREAM(p, platform);
+394:     UINT8_TO_STREAM(p, NFC_PMID_LA_SEL_INFO);
+395:     UINT8_TO_STREAM(p, NCI_PARAM_LEN_LA_SEL_INFO);
+396:     UINT8_TO_STREAM(p, sens_info);
+397: 
+398:   /* for Listen B */
+399: 
+400:     UINT8_TO_STREAM(p, NFC_PMID_LB_SENSB_INFO);
+401:     UINT8_TO_STREAM(p, NCI_PARAM_LEN_LB_SENSB_INFO);
+402:     if (tech_proto_mask & NFA_DM_DISC_MASK_LB_ISO_DEP) {
+403:       UINT8_TO_STREAM(p, NCI_LISTEN_PROTOCOL_ISO_DEP);
+404:     } else {
+405:       UINT8_TO_STREAM(p, 0x00);
+406:     }
+407: 
+408:   /* for Listen F */
+409:     /* NFCC can support T3T listening based on NFCID routing
+410:      * regardless of NFC-F tech routing */
+411:     UINT8_TO_STREAM(p, NFC_PMID_LF_PROTOCOL);
+412:     UINT8_TO_STREAM(p, NCI_PARAM_LEN_LF_PROTOCOL);
+413:     UINT8_TO_STREAM(p, 0x00);
+414: 
+415:     if (p > params) {
+416:       nfa_dm_check_set_config((uint8_t)(p - params), params, false);
+417:     }
+418: 
+419:   return NFA_STATUS_OK;
+420: }
+421: 
+422: /*******************************************************************************
+423: **
+424: ** Function         nfa_dm_set_total_duration
+425: **
+426: ** Description      Update total duration to NFCC
+427: **
+428: ** Returns          void
+429: **
+430: *******************************************************************************/
+431: static void nfa_dm_set_total_duration(void) {
+432:   uint8_t params[10], *p;
+433: 
+434:   LOG(VERBOSE) << __func__;
+435: 
+436:   p = params;
+437: 
+438:   /* for total duration */
+439:   UINT8_TO_STREAM(p, NFC_PMID_TOTAL_DURATION);
+440:   UINT8_TO_STREAM(p, NCI_PARAM_LEN_TOTAL_DURATION);
+441:   UINT16_TO_STREAM(p, nfa_dm_cb.disc_cb.disc_duration);
+442: 
+443:   if (p > params) {
+444:     nfa_dm_check_set_config((uint8_t)(p - params), params, false);
+445:   }
+446: }
+447: 
+448: /*******************************************************************************
+449: **
+450: ** Function         nfa_dm_set_rf_listen_mode_raw_config
+451: **
+452: ** Description      Set raw listen parameters
+453: **
+454: ** Returns          void
+455: **
+456: *******************************************************************************/
+457: static void nfa_dm_set_rf_listen_mode_raw_config(
+458:     tNFA_DM_DISC_TECH_PROTO_MASK* p_disc_mask) {
+459:   tNFA_DM_DISC_TECH_PROTO_MASK disc_mask = 0;
+460:   tNFA_LISTEN_CFG* p_cfg = &nfa_dm_cb.disc_cb.excl_listen_config;
+461:   uint8_t params[250], *p, xx;
+462: 
+463:   LOG(VERBOSE) << __func__;
+464: 
+465:   /*
+466:   ** Discovery Configuration Parameters for Listen A
+467:   */
+468:   if ((nfa_dm_cb.disc_cb.listen_RT[NFA_DM_DISC_LRT_NFC_A] ==
+469:        NFA_DM_DISC_HOST_ID_DH) &&
+470:       (p_cfg->la_enable)) {
+471:     p = params;
+472: 
+473:     UINT8_TO_STREAM(p, NFC_PMID_LA_BIT_FRAME_SDD);
+474:     UINT8_TO_STREAM(p, NCI_PARAM_LEN_LA_BIT_FRAME_SDD);
+475:     UINT8_TO_STREAM(p, p_cfg->la_bit_frame_sdd);
+476: 
+477:     UINT8_TO_STREAM(p, NFC_PMID_LA_PLATFORM_CONFIG);
+478:     UINT8_TO_STREAM(p, NCI_PARAM_LEN_LA_PLATFORM_CONFIG);
+479:     UINT8_TO_STREAM(p, p_cfg->la_platform_config);
+480: 
+481:     UINT8_TO_STREAM(p, NFC_PMID_LA_SEL_INFO);
+482:     UINT8_TO_STREAM(p, NCI_PARAM_LEN_LA_SEL_INFO);
+483:     UINT8_TO_STREAM(p, p_cfg->la_sel_info);
+484: 
+485:     if (p_cfg->la_platform_config == NCI_PARAM_PLATFORM_T1T) {
+486:       disc_mask |= NFA_DM_DISC_MASK_LA_T1T;
+487:     } else {
+488:       /* If T4T or NFCDEP */
+489:       if (p_cfg->la_sel_info & NCI_PARAM_SEL_INFO_ISODEP) {
+490:         disc_mask |= NFA_DM_DISC_MASK_LA_ISO_DEP;
+491:       }
+492:       /* If neither, T4T nor NFCDEP, then its T2T */
+493:       if (disc_mask == 0) {
+494:         disc_mask |= NFA_DM_DISC_MASK_LA_T2T;
+495:       }
+496:     }
+497: 
+498:     UINT8_TO_STREAM(p, NFC_PMID_LA_NFCID1);
+499:     UINT8_TO_STREAM(p, p_cfg->la_nfcid1_len);
+500:     ARRAY_TO_STREAM(p, p_cfg->la_nfcid1, p_cfg->la_nfcid1_len);
+501: 
+502:     nfa_dm_check_set_config((uint8_t)(p - params), params, false);
+503:   }
+504: 
+505:   /*
+506:   ** Discovery Configuration Parameters for Listen B
+507:   */
+508:   if ((nfa_dm_cb.disc_cb.listen_RT[NFA_DM_DISC_LRT_NFC_B] ==
+509:        NFA_DM_DISC_HOST_ID_DH) &&
+510:       (p_cfg->lb_enable)) {
+===== aosp-reference/packages-modules-Nfc/libnfc-nci/src/nfa/ce/nfa_ce_api.cc:116-153 =====
+116: tNFA_STATUS NFA_CeConfigureLocalTag(tNFA_PROTOCOL_MASK protocol_mask,
+117:                                     uint8_t* p_ndef_data,
+118:                                     uint16_t ndef_cur_size,
+119:                                     uint16_t ndef_max_size, bool read_only,
+120:                                     uint8_t uid_len, uint8_t* p_uid)
+121: 
+122: {
+123:   tNFA_CE_MSG* p_msg;
+124: 
+125:   LOG(VERBOSE) << __func__;
+126: 
+127:   if (protocol_mask) {
+128:     /* If any protocols are specified, then NDEF buffer pointer must be non-NULL
+129:      */
+130:     if (p_ndef_data == nullptr) {
+131:       LOG(ERROR) << StringPrintf("%s: NULL ndef data pointer", __func__);
+132:       return (NFA_STATUS_INVALID_PARAM);
+133:     }
+134: 
+135:     if ((protocol_mask & NFA_PROTOCOL_MASK_T1T) ||
+136:         (protocol_mask & NFA_PROTOCOL_MASK_T2T)) {
+137:       LOG(ERROR) << StringPrintf("%s: Cannot emulate Type 1 / Type 2 tag",
+138:                                  __func__);
+139:       return (NFA_STATUS_INVALID_PARAM);
+140:     }
+141: 
+142:     if (uid_len) {
+143:       LOG(ERROR) << StringPrintf("%s: Cannot Set UID for Protocol_mask=0x%x",
+144:                                  __func__, protocol_mask);
+145:       return (NFA_STATUS_INVALID_PARAM);
+146:     }
+147:   }
+148:   p_msg = (tNFA_CE_MSG*)GKI_getbuf((uint16_t)sizeof(tNFA_CE_MSG));
+149:   if (p_msg != nullptr) {
+150:     p_msg->local_tag.hdr.event = NFA_CE_API_CFG_LOCAL_TAG_EVT;
+151: 
+152:     /* Copy ndef info */
+153:     p_msg->local_tag.protocol_mask = protocol_mask;
+===== aosp-reference/packages-modules-Nfc/libnfc-nci/src/nfa/ce/nfa_ce_act.cc:422-495 =====
+422: tNFA_STATUS nfa_ce_start_listening(void) {
+423:   tNFA_DM_DISC_TECH_PROTO_MASK listen_mask;
+424:   tNFA_CE_CB* p_cb = &nfa_ce_cb;
+425:   tNFA_HANDLE disc_handle;
+426:   uint8_t listen_info_idx;
+427: 
+428:   /*************************************************************************/
+429:   /* Construct protocol preference list to listen for */
+430: 
+431:   /* First, get protocol preference for active NDEF (if any) */
+432:   if ((p_cb->listen_info[NFA_CE_LISTEN_INFO_IDX_NDEF].flags &
+433:        NFA_CE_LISTEN_INFO_IN_USE) &&
+434:       (p_cb->listen_info[NFA_CE_LISTEN_INFO_IDX_NDEF].rf_disc_handle ==
+435:        NFA_HANDLE_INVALID)) {
+436:     listen_mask = 0;
+437: 
+438:     if (p_cb->listen_info[NFA_CE_LISTEN_INFO_IDX_NDEF].protocol_mask &
+439:         NFA_PROTOCOL_MASK_T3T) {
+440:       /* set T3T config params */
+441:       nfc_ce_t3t_set_listen_params();
+442: 
+443:       listen_mask |= NFA_DM_DISC_MASK_LF_T3T;
+444:     }
+445: 
+446:     if (p_cb->listen_info[NFA_CE_LISTEN_INFO_IDX_NDEF].protocol_mask &
+447:         NFA_PROTOCOL_MASK_ISO_DEP) {
+448:       listen_mask |= nfa_ce_cb.isodep_disc_mask;
+449:     }
+450: 
+451:     disc_handle = nfa_dm_add_rf_discover(listen_mask, NFA_DM_DISC_HOST_ID_DH,
+452:                                          nfa_ce_discovery_cback);
+453: 
+454:     if (disc_handle == NFA_HANDLE_INVALID)
+455:       return (NFA_STATUS_FAILED);
+456:     else
+457:       p_cb->listen_info[NFA_CE_LISTEN_INFO_IDX_NDEF].rf_disc_handle =
+458:           disc_handle;
+459:   }
+460: 
+461:   /* Next, add protocols from non-NDEF, if any */
+462:   for (listen_info_idx = 0; listen_info_idx < NFA_CE_LISTEN_INFO_IDX_INVALID;
+463:        listen_info_idx++) {
+464:     /* add RF discovery to DM only if it is not added yet */
+465:     if ((p_cb->listen_info[listen_info_idx].flags &
+466:          NFA_CE_LISTEN_INFO_IN_USE) &&
+467:         (p_cb->listen_info[listen_info_idx].rf_disc_handle ==
+468:          NFA_HANDLE_INVALID)) {
+469:       if (p_cb->listen_info[listen_info_idx].flags &
+470:           NFA_CE_LISTEN_INFO_FELICA) {
+471:         /* set T3T config params */
+472:         nfc_ce_t3t_set_listen_params();
+473: 
+474:         disc_handle = nfa_dm_add_rf_discover(NFA_DM_DISC_MASK_LF_T3T,
+475:                                              NFA_DM_DISC_HOST_ID_DH,
+476:                                              nfa_ce_discovery_cback);
+477: 
+478:         if (disc_handle == NFA_HANDLE_INVALID)
+479:           return (NFA_STATUS_FAILED);
+480:         else
+481:           p_cb->listen_info[listen_info_idx].rf_disc_handle = disc_handle;
+482:       } else if (p_cb->listen_info[listen_info_idx].flags &
+483:                  NFA_CE_LISTEN_INFO_T4T_AID) {
+484:         disc_handle = nfa_dm_add_rf_discover(nfa_ce_cb.isodep_disc_mask,
+485:                                              NFA_DM_DISC_HOST_ID_DH,
+486:                                              nfa_ce_discovery_cback);
+487: 
+488:         if (disc_handle == NFA_HANDLE_INVALID)
+489:           return (NFA_STATUS_FAILED);
+490:         else
+491:           p_cb->listen_info[listen_info_idx].rf_disc_handle = disc_handle;
+492:       }
+493: #if (NFC_NFCEE_INCLUDED == TRUE)
+494:       else if (p_cb->listen_info[listen_info_idx].flags &
+495:                NFA_CE_LISTEN_INFO_UICC) {
+===== aosp-reference/packages-modules-Nfc/NfcNci/nci/jni/NativeNfcTag.cpp:570-610 =====
+570:   if (natTag.getActivationState() != NfcTag::Active) {
+571:     LOG(ERROR) << StringPrintf("%s: tag already deactivated", __func__);
+572:     retCode = NFCSTATUS_FAILED;
+573:     goto TheEnd;
+574:   }
+575: 
+576:   sCurrentConnectedTargetType = natTag.mTechList[i];
+577:   sCurrentConnectedTargetProtocol = natTag.mTechLibNfcTypes[i];
+578:   sCurrentConnectedTargetIdx = targetIdx;
+579: 
+580:   if (sCurrentConnectedTargetProtocol != NFC_PROTOCOL_ISO_DEP &&
+581:       sCurrentConnectedTargetProtocol != NFC_PROTOCOL_MIFARE &&
+582:       sCurrentConnectedTargetProtocol == sCurrentActivatedProtocl) {
+583:     LOG(DEBUG) << StringPrintf(
+584:         "%s: Nfc type = 0x%x, do nothing for non ISO_DEP and non Mifare ",
+585:         __func__, sCurrentConnectedTargetProtocol);
+586:     retCode = NFCSTATUS_SUCCESS;
+587:     goto TheEnd;
+588:   }
+589: 
+590:   if (sCurrentConnectedTargetType == TARGET_TYPE_ISO14443_3A ||
+591:       sCurrentConnectedTargetType == TARGET_TYPE_ISO14443_3B) {
+592:     if (sCurrentConnectedTargetProtocol != NFC_PROTOCOL_MIFARE) {
+593:       LOG(DEBUG) << StringPrintf(
+594:           "%s: switching to tech=%x need to switch rf intf to frame", __func__,
+595:           sCurrentConnectedTargetType);
+596:       intfType = NFA_INTERFACE_FRAME;
+597:     }
+598:   } else if (sCurrentConnectedTargetType == TARGET_TYPE_MIFARE_CLASSIC) {
+599:     intfType = NFA_INTERFACE_MIFARE;
+600:   } else {
+601:     intfType = NFA_INTERFACE_ISO_DEP;
+602:   }
+603: 
+604:   retCode = reSelect(intfType, force);
+605:   if (retCode == STATUS_CODE_TARGET_LOST) sIsISODepActivatedByApp = false;
+606: 
+607:   // Check we are connected to requested protocol/tech
+608:   if ((retCode == NFCSTATUS_SUCCESS) &&
+609:       ((sCurrentConnectedTargetProtocol != sCurrentActivatedProtocl) ||
+610:        (intfType != sCurrentRfInterface))) {
+===== aosp-reference/packages-modules-Nfc/libnfc-nci/src/nfc/nfc/nfc_main.cc:63-85 =====
+63: tNFC_CB nfc_cb;
+64: 
+65: #if (NFC_RW_ONLY == FALSE)
+66: #define NFC_NUM_INTERFACE_MAP 2
+67: #else
+68: #define NFC_NUM_INTERFACE_MAP 1
+69: #endif
+70: 
+71: static const tNCI_DISCOVER_MAPS nfc_interface_mapping[NFC_NUM_INTERFACE_MAP] = {
+72:     /* Protocols that use Frame Interface do not need to be included in the
+73:        interface mapping */
+74:     {NCI_PROTOCOL_ISO_DEP, NCI_INTERFACE_MODE_POLL_N_LISTEN,
+75:      NCI_INTERFACE_ISO_DEP}
+76: #if (NFC_RW_ONLY == FALSE)
+77:     ,
+78:     /* this can not be set here due to 2079xB0 NFCC issues */
+79:     {NCI_PROTOCOL_NFC_DEP, NCI_INTERFACE_MODE_POLL_N_LISTEN,
+80:      NCI_INTERFACE_NFC_DEP}
+81: #endif
+82: };
+83: 
+84: /*******************************************************************************
+85: **

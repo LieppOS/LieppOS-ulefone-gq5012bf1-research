@@ -17,6 +17,9 @@ native stack.
 - Exact external speaker-amplifier IC and complete audio calibration topology.
 - Exact 120 W protocol/state machine, cell wiring and reverse-charge ABI.
 - Night-vision sensor/illumination mapping by real capture test.
+- ConsumerIR physical emitter/driver circuit, measured carrier/pulse waveform,
+  alternate `/dev/ctrl` path and enforcing-SELinux validation; the kernel/HAL
+  ownership and LIRC ABI are now statically reconstructed.
 - Thermal sensor device-node transition sequence and ownership of any
   device-unique calibration beyond APK assets.
 - Work-light, AW2013 RGB and red/blue warning-light control ABI.

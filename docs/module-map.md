@@ -21,6 +21,11 @@ exact-GKI stock-oracle reconstruction with bounded static ABI/behavioral parity;
 it preserves the master/slave `charger_class` edge and requires provider CRC
 `0x36325d38`. Neither power-converter reconstruction was loaded on hardware.
 
+The ConsumerIR pair is also closed statically: `modules.load` orders
+`mtk-pwm.ko` before `mtk_irtx_pwm.ko`; the latter registers rc-core raw TX and
+uses PWM0, `mt6369_vio28`, and a 35-bit coherent DMA mask. Its MediaTek provider
+ABI and userspace LIRC protocol are documented in [`ir-blaster.md`](ir-blaster.md).
+
 ## Packaging model
 
 Modules remain assigned to `vendor_dlkm`/`odm_dlkm`; they are not copied into a

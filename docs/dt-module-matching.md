@@ -1,0 +1,880 @@
+# Stock DT-compatible x stock module alias matching
+
+Inputs: merged stock device tree (dtc), `modules.alias` + `modules.load` from stock `system_dlkm`, `vendor_dlkm` and the vendor ramdisk.
+
+- DT `compatible` values: **634**
+- Stock modules present: **523** (loaded at boot: system_dlkm=60, vendor_dlkm=195, ramdisk=183)
+- Compatibles claimed by a stock module: **174**
+- Compatibles with no stock module claiming them: **460**
+
+## DT compatibles claimed by stock modules (sample, sorted)
+
+- `android,nebula-virtio-v1` -> gz_virtio_mod
+- `android,trusty-virtio-v1` -> gz_virtio_mod
+- `arm,dsu-pmu` -> arm_dsu_pmu
+- `arm,mali-valhall` -> mali_kbase_mt6878_r44
+- `arm,physical-memory-group-manager` -> mali_mgm_mt6878_r44
+- `arm,protected-memory-allocator` -> mali_prot_alloc_mt6878_r44
+- `arm,sec-rng` -> sec_rng
+- `awinic,rgb,aw2013` -> leds_rgb_aw2013
+- `focaltech,fts` -> focaltech_touch_spi_ft3680
+- `gpio-keys` -> yft_gpio_keys
+- `hx,vtdr6115,cmd,120hz,ky` -> panel_ky_vtdr6115_dphy_cmd
+- `hynitron,hyn_ts` -> hynitron
+- `mediatek,aie-isp7sp-2` -> mtk_aie
+- `mediatek,aw36515` -> aw36515
+- `mediatek,aw36518` -> aw36518
+- `mediatek,aw36518_v2` -> aw36518_v2
+- `mediatek,backlight-cooler` -> backlight_cooling
+- `mediatek,cam-raw` -> mtk_cam_isp7sp
+- `mediatek,cam-rms` -> mtk_cam_isp7sp
+- `mediatek,cam-yuv` -> mtk_cam_isp7sp
+- `mediatek,camera-pda` -> pda_drv_mt6878
+- `mediatek,camera_eeprom` -> camera_eeprom_v4l2
+- `mediatek,camsv` -> mtk_cam_isp7sp
+- `mediatek,ccd` -> mtk_ccd_remoteproc
+- `mediatek,ccu_rproc` -> mtk_ccuv
+- `mediatek,ccucammain` -> mtk_ccuv
+- `mediatek,charger` -> mtk_charger_framework
+- `mediatek,charger,pd` -> mtk_pd_charging
+- `mediatek,charger,pe` -> mtk_pep
+- `mediatek,charger,pe5` -> mtk_pep50
+- `mediatek,clk-disable-unused` -> clk_disable_unused
+- `mediatek,cmdq-test` -> cmdq_test
+- `mediatek,common-apu-iommu0-bank1` -> iommu_secure
+- `mediatek,common-apu-iommu0-bank2` -> iommu_secure
+- `mediatek,common-apu-iommu0-bank3` -> iommu_secure
+- `mediatek,common-apu-iommu0-bank4` -> iommu_secure
+- `mediatek,common-disp-iommu-bank1` -> iommu_secure
+- `mediatek,common-disp-iommu-bank2` -> iommu_secure
+- `mediatek,common-disp-iommu-bank3` -> iommu_secure
+- `mediatek,common-disp-iommu-bank4` -> iommu_secure
+- `mediatek,common-emimpu` -> emi_mpu
+- `mediatek,cpu-power-throttling` -> mtk_cpu_power_throttling
+- `mediatek,devinfo` -> nvmem_mtk_devinfo
+- `mediatek,disp-leds` -> leds_mtk_disp
+- `mediatek,drm_wv` -> widevine_driver
+- `mediatek,dw9781c` -> dw9781c
+- `mediatek,extcon-usb` -> extcon_mtk_usb
+- `mediatek,flashlight_core` -> flashlight
+- `mediatek,ged` -> ged
+- `mediatek,geniezone-hyp` -> gzvm
+- `mediatek,gpu-power-throttling` -> mtk_gpu_power_throttling
+- `mediatek,gpueb` -> gpueb
+- `mediatek,gpufreq` -> mtk_gpufreq_mt6878
+- `mediatek,gpufreq_wrapper` -> mtk_gpufreq_wrapper
+- `mediatek,hcp7sp` -> mtk_hcp
+- `mediatek,imgsensor` -> imgsensor
+- `mediatek,imgsys-cmdq-7sp` -> mtk_imgsys_cmdq
+- `mediatek,imgsys-isp7sp-mt6878` -> mtk_imgsys_isp7sp
+- `mediatek,low_battery_throttling` -> mtk_low_battery_throttling
+- `mediatek,madev_finger` -> microarray_fp_tee
+- `mediatek,main2_vcm` -> main2_vcm
+- `mediatek,main4_vcm` -> main4_vcm
+- `mediatek,main_vcm` -> main_vcm
+- `mediatek,md-power-throttling` -> mtk_md_power_throttling
+- `mediatek,mraw` -> mtk_cam_isp7sp
+- `mediatek,mt-soc-offload-common` -> mtk_soc_offload_common
+- `mediatek,mt6315_6-regulator` -> mt6315_regulator
+- `mediatek,mt6319` -> mtk_spmi_pmic
+- `mediatek,mt6363` -> mtk_spmi_pmic
+- `mediatek,mt6363-auxadc` -> mtk_spmi_pmic_adc
+- `mediatek,mt6363-dynamic_loading_throttling` -> mtk_dynamic_loading_throttling
+- `mediatek,mt6363-keys` -> mtk_pmic_keys
+- `mediatek,mt6363-lvsys-notify` -> pmic_lvsys_notify
+- `mediatek,mt6363-pmic-temp` -> pmic_temp
+- `mediatek,mt6368-auxadc` -> mtk_spmi_pmic_adc
+- `mediatek,mt6369` -> mtk_spmi_pmic
+- `mediatek,mt6369-accdet` -> mt6369_accdet
+- `mediatek,mt6369-pmic-temp` -> pmic_temp
+- `mediatek,mt6369-sound` -> snd_soc_mt6369
+- `mediatek,mt6375` -> mt6375
+
+## Where the unclaimed compatibles go
+
+- **15** appear in the local GKI `common` source (so they are served by built-in or GKI-provided code, not by a stock `.ko`).
+- **445** have neither a stock module alias nor a GKI-source mention — these are the real driver-side questions.
+
+- `VA12_1`
+- `VA12_2`
+- `VA15`
+- `VANT18`
+- `VAUD28`
+- `VAUX18`
+- `VBUCK1`
+- `VBUCK2`
+- `VBUCK3`
+- `VBUCK4`
+- `VBUCK5`
+- `VBUCK6`
+- `VBUCK7`
+- `VCN13`
+- `VCN15`
+- `VCN33_1`
+- `VCN33_2`
+- `VEFUSE`
+- `VEMC`
+- `VFP`
+- `VIBR`
+- `VIO075`
+- `VIO18`
+- `VIO28`
+- `VM18`
+- `VMC`
+- `VMCH_EINT_HIGH`
+- `VMCH_EINT_LOW`
+- `VRF09`
+- `VRF12`
+- `VRF13`
+- `VRF18`
+- `VRFIO18`
+- `VS1`
+- `VS2`
+- `VS3`
+- `VSRAM_APU`
+- `VSRAM_CORE`
+- `VSRAM_CPUB`
+- `VSRAM_CPUL`
+- `VSRAM_CPUM`
+- `VSRAM_DIGRF`
+- `VSRAM_MDFE`
+- `VSRAM_MODEM`
+- `VTP`
+- `VTREF18`
+- `VUFS12`
+- `VUFS18`
+- `VUSB`
+- `android,nebula-gz-log-v1`
+- `android,nebula-irq-v1`
+- `android,nebula-smc-v1`
+- `android,trusty-gz-log-v1`
+- `android,trusty-irq-v1`
+- `android,trusty-smc-v1`
+- `arm,gic-v3`
+- `arm,scmi-shmem`
+- `chipone-tddi`
+- `focaltech,fp`
+- `hxytech, spi_tiny_lcd`
+- `isink_load`
+- `jdi,nt36672e,vdo,60hz`
+- `mediatek, apu_mem_code`
+- `mediatek, apu_mem_data`
+- `mediatek, dsi1_te-eint`
+- `mediatek, dsi_te-eint`
+- `mediatek, mdla-rv`
+- `mediatek, mrdump_ext_rst-eint`
+- `mediatek, soc-dbg-error-flag`
+- `mediatek,MT6878`
+- `mediatek,ap_ccif1`
+- `mediatek,ap_ccif3`
+- `mediatek,ap_ccif4`
+- `mediatek,ap_ccif5`
+- `mediatek,apcldmamisc`
+- `mediatek,apcldmaout`
+- `mediatek,apmixed`
+- `mediatek,aps-rx-rpmsg`
+- `mediatek,aps-tx-rpmsg`
+- `mediatek,apu-apummu-rpmsg`
+- `mediatek,apu-ctrl-rpmsg`
+- `mediatek,apu-edma-rpmsg`
+- `mediatek,apu-ipi-ut-rpmsg`
+- `mediatek,apu-lock-rv-rpmsg`
+- `mediatek,apu-mdw-rpmsg`
+- `mediatek,apu-mnoc-rpmsg`
+- `mediatek,apu-scp-mdw-rpmsg`
+- `mediatek,apu-scp-np-recover-rpmsg`
+- `mediatek,apusys_aov-v0`
+- `mediatek,apusys_hw_logger`
+- `mediatek,aputop-rpmsg`
+- `mediatek,audio_sram`
+- `mediatek,audio_xhci_sram`
+- `mediatek,bpi_bsi_slv0`
+- `mediatek,bpi_bsi_slv2`
+- `mediatek,bt`
+- `mediatek,bus-parity`
+- `mediatek,bus_dbg`
+- `mediatek,bus_tracer-v1`
+- `mediatek,camera-camsys-ccu`
+- `mediatek,camisp-larb`
+- `mediatek,ccci_ccif`
+- `mediatek,ccci_md_scp`
+- `mediatek,ccu_rproc1`
+- `mediatek,charger,hvbp`
+- `mediatek,charger,pe2`
+- `mediatek,charger,pe45`
+- `mediatek,charger,pe5p`
+- `mediatek,common-dramc`
+- `mediatek,common-emichn`
+- `mediatek,common-emiisu`
+- `mediatek,cpufreq-hybrid`
+- `mediatek,cpupm-sysram`
+- `mediatek,cqdma`
+- `mediatek,dbg-error-flag`
+- `mediatek,dbg_cti`
+- `mediatek,dbg_dem`
+- `mediatek,dbg_etr`
+- `mediatek,dbg_mdsys1`
+- `mediatek,dbg_tracker2`
+- `mediatek,dbgtop-drm`
+- `mediatek,devapc_ao_infra_peri`
+- `mediatek,devapc_ao_mm`
+- `mediatek,dfd`
+- `mediatek,dfd_mcu`
+- `mediatek,dfd_soc`
+- `mediatek,disp-sec-aidctl`
+- `mediatek,disp_aal0`
+- `mediatek,disp_c3d0`
+- `mediatek,disp_c3d1`
+- `mediatek,disp_ccorr0`
+- `mediatek,disp_ccorr1`
+- `mediatek,disp_ccorr2`
+- `mediatek,disp_ccorr3`
+- `mediatek,disp_color0`
+- `mediatek,disp_dither0`
+- `mediatek,disp_dither1`
+- `mediatek,disp_dsc_wrap0`
+- `mediatek,disp_dsi1`
+- `mediatek,disp_gamma0`
+- `mediatek,disp_gamma1`
+- `mediatek,disp_mutex0`
+- `mediatek,disp_ovl0_2l`
+- `mediatek,disp_ovl1_2l`
+- `mediatek,disp_ovl2_2l`
+- `mediatek,disp_ovl3_2l`
+- `mediatek,disp_postmask0`
+- `mediatek,disp_pwm0`
+- `mediatek,disp_pwm1`
+- `mediatek,disp_rsz0`
+- `mediatek,disp_rsz1`
+- `mediatek,disp_splitter0`
+- `mediatek,disp_tdshp0`
+- `mediatek,disp_tdshp1`
+- `mediatek,disp_ufbc_wdma0`
+- `mediatek,disp_wdma1`
+- `mediatek,dmaheap-mtk-sec-page`
+- `mediatek,dmaheap-mtk-sec-region`
+- `mediatek,dpmaif`
+- `mediatek,dpmaif-resv-cache-mem`
+- `mediatek,dpmaif-resv-nocache-mem`
+- `mediatek,dramc_ch0_top1`
+- `mediatek,dramc_ch0_top2`
+- `mediatek,dramc_ch0_top4`
+- `mediatek,dramc_ch0_top5`
+- `mediatek,dramc_ch0_top6`
+- `mediatek,dramc_ch1_rsv`
+- `mediatek,dramc_ch1_top0`
+- `mediatek,dramc_ch1_top1`
+- `mediatek,dramc_ch1_top2`
+- `mediatek,dramc_ch1_top3`
+- `mediatek,dramc_ch1_top4`
+- `mediatek,dramc_ch1_top5`
+- `mediatek,dramc_ch1_top6`
+- `mediatek,dramc_md32_s0_apb`
+- `mediatek,dramc_md32_s1_apb`
+- `mediatek,dsi0`
+- `mediatek,dvfsrc-helper`
+- `mediatek,dvfsrc-met`
+- `mediatek,eas-info`
+- `mediatek,emi-fake-engine`
+- `mediatek,fm`
+- `mediatek,fmradio`
+- `mediatek,fpga-u3phy`
+- `mediatek,fpsgo`
+- `mediatek,g3d_brisket`
+- `mediatek,gic500`
+- `mediatek,gic_cpu`
+- `mediatek,goodix-fp`
+- `mediatek,gpio`
+- `mediatek,gpio_usage_mapping`
+- `mediatek,gpu_fdvfs`
+- `mediatek,gpu_qos`
+- `mediatek,i2c`
+- `mediatek,i2c_lcd_bias`
+- `mediatek,infra_bcrm`
+- `mediatek,infra_device_mpu`
+- `mediatek,infra_dpmaif`
+- `mediatek,infra_mbist`
+- `mediatek,infra_md`
+- `mediatek,infracfg`
+- `mediatek,infracfg_ao`
+- `mediatek,infracfg_ao_mem`
+- `mediatek,infracfg_mem`
+- `mediatek,irtx-pwm`
+- `mediatek,kp`
+- `mediatek,ktf-mmdvfs-test`
+- `mediatek,lastbus`
+- `mediatek,lk_charger`
+- `mediatek,lpm-sysram`
+- `mediatek,m4u`
+- `mediatek,mailbox-gce-sec`
+- `mediatek,mali`
+- `mediatek,masp`
+- `mediatek,mbist`
+- `mediatek,mbist_ao`
+- `mediatek,mcucfg`
+- `mediatek,mcupm`
+- `mediatek,mcusys-ctrl`
+- `mediatek,md1_sim1_hot_plug_eint-eint`
+- `mediatek,md2md_md1_ccif0`
+- `mediatek,md2md_md2_ccif0`
+- `mediatek,md_auxadc`
+- `mediatek,md_ccif1`
+- `mediatek,md_ccif3`
+- `mediatek,md_ccif4`
+- `mediatek,md_ccif5`
+- `mediatek,mdcldmamisc`
+- `mediatek,mdcldmaout`
+- `mediatek,mddriver`
+- `mediatek,mdla-rx-rpmsg`
+- `mediatek,mdla-tx-rpmsg`
+- `mediatek,mdp`
+- `mediatek,mdp_color`
+- `mediatek,mdp_mutex0`
+- `mediatek,mdp_rdma1`
+- `mediatek,mdp_rsz1`
+- `mediatek,mdp_wrot1`
+- `mediatek,mdpsys_config`
+- `mediatek,memory-ffa-enabled`
+- `mediatek,memory-ssmr-features`
+- `mediatek,met_config`
+- `mediatek,met_emi`
+- `mediatek,met_res_ram`
+- `mediatek,mipi_tx_config0`
+- `mediatek,mipi_tx_config1`
+- `mediatek,mm_vpu_m0_sub_common`
+- `mediatek,mm_vpu_m1_sub_common`
+- `mediatek,mmdvfs`
+- `mediatek,mmdvfs-debug`
+- `mediatek,mmdvfs-v3-start`
+- `mediatek,mminfra-debug`
+- `mediatek,mminfra-imax`
+- `mediatek,mml-ait`
+- `mediatek,mml-test`
+- `mediatek,mml-tuning-mml_aal0`
+- `mediatek,mml-tuning-mml_hdr0`
+- `mediatek,mml-tuning-mml_tdshp0`
+- `mediatek,mt6363-consys`
+- `mediatek,mt6363-efuse`
+- `mediatek,mt6363-pinctrl`
+- `mediatek,mt6369-consys`
+- `mediatek,mt6373-efuse`
+- `mediatek,mt6375-dbg`
+- `mediatek,mt6685-clkbuf`
+- `mediatek,mt6685-consys`
+- `mediatek,mt6873-cache-parity`
+- `mediatek,mt6877-emicen`
+- `mediatek,mt6878-6631-consys`
+- `mediatek,mt6878-apmixedsys`
+- `mediatek,mt6878-apu-iommu0`
+- `mediatek,mt6878-apusys_rv`
+- `mediatek,mt6878-audiosys`
+- `mediatek,mt6878-cam_vcore`
+- `mediatek,mt6878-camsys_main`
+- `mediatek,mt6878-camsys_mraw`
+- `mediatek,mt6878-camsys_rawa`
+- `mediatek,mt6878-camsys_rawb`
+- `mediatek,mt6878-camsys_yuva`
+- `mediatek,mt6878-camsys_yuvb`
+- `mediatek,mt6878-ccu`
+- `mediatek,mt6878-clkbuf`
+- `mediatek,mt6878-clkchk`
+- `mediatek,mt6878-cm_mgr`
+- `mediatek,mt6878-connfem`
+- `mediatek,mt6878-dcm`
+- `mediatek,mt6878-devapc`
+- `mediatek,mt6878-dip_nr1_dip1`
+- `mediatek,mt6878-dip_nr2_dip1`
+- `mediatek,mt6878-dip_top_dip1`
+- `mediatek,mt6878-disp-iommu`
+- `mediatek,mt6878-disp-postmask`
+- `mediatek,mt6878-dramc`
+- `mediatek,mt6878-dsi`
+- `mediatek,mt6878-fhctl`
+- `mediatek,mt6878-gce`
+- `mediatek,mt6878-gps`
+- `mediatek,mt6878-hwv`
+- `mediatek,mt6878-img_vcore_d1a`
+- `mediatek,mt6878-imgsys_main`
+- `mediatek,mt6878-imp_iic_wrap_cen_s`
+- `mediatek,mt6878-imp_iic_wrap_e_s`
+- `mediatek,mt6878-imp_iic_wrap_es_s`
+- `mediatek,mt6878-imp_iic_wrap_w_s`
+- `mediatek,mt6878-infra_ao_reg`
+- `mediatek,mt6878-iommu-debug`
+- `mediatek,mt6878-mdpsys`
+- `mediatek,mt6878-mfgpll_pll_ctrl`
+- `mediatek,mt6878-mfgscpll_pll_ctrl`
+- `mediatek,mt6878-mipi-tx`
+- `mediatek,mt6878-mminfra_config`
+- `mediatek,mt6878-mmqos-wrapper`
+- `mediatek,mt6878-mmsys0`
+- `mediatek,mt6878-mt6369-sound`
+- `mediatek,mt6878-nemicfg_ao_mem_reg_bus`
+- `mediatek,mt6878-pdchk`
+- `mediatek,mt6878-pericfg_ao`
+- `mediatek,mt6878-pinctrl`
+- `mediatek,mt6878-scp`
+- `mediatek,mt6878-scpsys`
+- `mediatek,mt6878-smi-common`
+- `mediatek,mt6878-smi-larb`
+- `mediatek,mt6878-ssr_top`
+- `mediatek,mt6878-timer`
+- `mediatek,mt6878-topckgen`
+- `mediatek,mt6878-traw_dip1`
+- `mediatek,mt6878-uarthub`
+- `mediatek,mt6878-ufscfg_ao`
+- `mediatek,mt6878-ufscfg_pdn`
+- `mediatek,mt6878-usb-boost`
+- `mediatek,mt6878-vdecsys`
+- `mediatek,mt6878-vencsys`
+- `mediatek,mt6878-vlp_cksys`
+- `mediatek,mt6878-vlpcfg_reg`
+- `mediatek,mt6878-wdt`
+- `mediatek,mt6878-wpe1_dip1`
+- `mediatek,mt6878-wpe2_dip1`
+- `mediatek,mt6878-xsphy`
+- `mediatek,mt6893-qos`
+- `mediatek,mt6897-conn_scp`
+- `mediatek,mt6983-eint`
+- `mediatek,mtk-aie-debug-7sp-2`
+- `mediatek,mtk-lkg`
+- `mediatek,mtk-mmdvfs-v3`
+- `mediatek,mtk-pmsr`
+- `mediatek,mtk-smi-dbg`
+- `mediatek,mtk-swpm`
+- `mediatek,mtk_sec_video_path_support`
+- `mediatek,mtk_svp_on_mtee_support`
+- `mediatek,mtkfb`
+- `mediatek,mvpu-rx-rpmsg`
+- `mediatek,mvpu-tx-rpmsg`
+- `mediatek,page-based-v2-enabled`
+- `mediatek,pmic-auxadc`
+- `mediatek,pmic_tia`
+- `mediatek,pwm`
+- `mediatek,pwrmcu_partition_1`
+- `mediatek,pwrmcu_partition_2`
+- `mediatek,pwrmcu_partition_3`
+- `mediatek,pwrmcu_partition_4`
+- `mediatek,pwrmcu_partition_5`
+- `mediatek,pwrmcu_partition_6`
+- `mediatek,pwrmcu_partition_7`
+- `mediatek,reserved`
+- `mediatek,scp`
+- `mediatek,scp-clk-ctrl`
+- `mediatek,scp-dvfs`
+- `mediatek,security_ao`
+- `mediatek,sleep`
+- `mediatek,smi-common`
+- `mediatek,smi-larb`
+- `mediatek,smi-pd`
+- `mediatek,smi-sub-common`
+- `mediatek,smi-testcase`
+- `mediatek,smi_larb0`
+- `mediatek,smi_larb1`
+- `mediatek,smi_larb11`
+- `mediatek,smi_larb12`
+- `mediatek,smi_larb13`
+- `mediatek,smi_larb14`
+- `mediatek,smi_larb15`
+- `mediatek,smi_larb16`
+- `mediatek,smi_larb17`
+- `mediatek,smi_larb2`
+- `mediatek,smi_larb22`
+- `mediatek,smi_larb25`
+- `mediatek,smi_larb28`
+- `mediatek,smi_larb29`
+- `mediatek,smi_larb30`
+- `mediatek,smi_larb33`
+- `mediatek,smi_larb34`
+- `mediatek,smi_larb38`
+- `mediatek,smi_larb4`
+- `mediatek,smi_larb7`
+- `mediatek,smi_larb9`
+- `mediatek,speech-usip-mem`
+- `mediatek,spmi-pmic-debug`
+- `mediatek,sramrom`
+- `mediatek,srclken-rc`
+- `mediatek,sspm`
+- `mediatek,svp`
+- `mediatek,sys_cirq`
+- `mediatek,tee-mmap-by-page-enabled`
+- `mediatek,teeperf`
+- `mediatek,tfa_debug`
+- `mediatek,tiny2c_usb`
+- `mediatek,tinysys_mbox`
+- `mediatek,topckgen`
+- `mediatek,topckgen_ao`
+- `mediatek,topmisc`
+- `mediatek,touch-panel`
+- `mediatek,tracker`
+- `mediatek,trusted_mem`
+- `mediatek,tui_common`
+- `mediatek,typec_mux_switch`
+- `mediatek,usb-logger`
+- `mediatek,vcp`
+- `mediatek,vcp-io-sec`
+- `mediatek,vcp-io-vdec`
+- `mediatek,vcp-io-venc`
+- `mediatek,vcp-io-work`
+- `mediatek,vmm_spm_mt6878`
+- `mediatek,wifi`
+- `mediatek,yft_devices`
+- `mediatek,yft_tpd`
+- `microtrust,utos`
+- `mmio-sram_1`
+- `mmio-sram_2`
+- `mt6375,otg-vbus`
+- `mt6878,apu_top_3`
+- `regulator-vibrator`
+- `richtek,rt6160-dbg`
+- `richtek,rt6160-vbb`
+- `sc,sc8510`
+- `sc,sc8571-master`
+- `sc,sc8571-slave`
+- `shared-dma-pool`
+- `tchip,ilitek`
+- `truly,td4330,cmd`
+- `trustkernel,shared_mem`
+- `trustonic,mobicore`
+- `vbuck1`
+- `vbuck2`
+- `vbuck4`
+- `will,wl2864c_pmu`
+
+## Stock-loaded modules with no device table at all (333)
+
+These can only arrive via `modules.load`/`init.insmod*.cfg` ordering: they bind nothing from the device tree, so init ordering is their only binding contract.
+
+- `6lowpan`
+- `8021q`
+- `adapter_class`
+- `adsp`
+- `aee_aed`
+- `aee_hangdet`
+- `aee_rs`
+- `atf_logger`
+- `audio_ipi`
+- `aw883xx_driver`
+- `blocktag`
+- `bluetooth`
+- `bootprof`
+- `bsd_comp`
+- `bt_drv_6878`
+- `btbcm`
+- `btqca`
+- `bus-parity`
+- `c2k_usb`
+- `c2ps_perf_ioctl`
+- `cache-parity`
+- `camera_dpe_isp7sp`
+- `can`
+- `can-bcm`
+- `can-dev`
+- `can-gw`
+- `can-raw`
+- `ccci_auxadc`
+- `ccci_ccif`
+- `ccci_dpmaif`
+- `ccci_fsm_scp`
+- `ccci_md_all`
+- `ccci_util_lib`
+- `ccd_rpmsg`
+- `ccmni`
+- `cdc-acm`
+- `cfg80211`
+- `charger_class`
+- `clk-bringup`
+- `clk-chk-mt6878`
+- `clk-common`
+- `clk-dbg-mt6878`
+- `clk-disable-unused`
+- `clk-fmeter-mt6878`
+- `clk-mt6878`
+- `clk-mt6878-adsp`
+- `clk-mt6878-bus`
+- `clk-mt6878-cam`
+- `clk-mt6878-ccu`
+- `clk-mt6878-img`
+- `clk-mt6878-mdpsys`
+- `clk-mt6878-mmsys`
+- `clk-mt6878-peri`
+- `clk-mt6878-vcodec`
+- `clk-mt6878-vlp`
+- `clkbuf`
+- `cmdq-platform-mt6878`
+- `cmdq-sec-drv`
+- `cmdq_helper_inf`
+- `connadp`
+- `connfem`
+- `conninfra`
+- `connscp`
+- `cpudvfs`
+- `cpufreq_sugov_ext`
+- `cpuqos_v3`
+- `cqhci`
+- `custom-ldo`
+- `custom-ldo-wl2868`
+- `dbg_error_flag`
+- `dbgtop-drm`
+- `device-apc-common`
+- `device-apc-mt6878`
+- `diag`
+- `drm_display_helper`
+- `drm_dma_helper`
+- `emi`
+- `emi-mpu`
+- `extcon-mtk-usb`
+- `extdev_io_class`
+- `ffa_v10`
+- `fhctl`
+- `fmradio_drv_connac2x`
+- `fpsgo`
+- `frs`
+- `gps_drv_dl_v051`
+- `gz_ipc_mod`
+- `gz_irq_mod`
+- `gz_log_mod`
+- `gz_trusty_mod`
+- `hbt`
+- `hf_manager`
+- `hidp`
+- `i2c-mt65xx`
+- `ieee802154`
+- `ieee802154_6lowpan`
+- `ieee802154_socket`
+- `imgsensor-glue`
+- `industrialio-triggered-buffer`
+- `iommu_debug`
+- `iommu_test`
+- `irq-dbg`
+- `kfifo_buf`
+- `kheaders`
+- `l2tp_core`
+- `l2tp_ppp`
+- `last_bus`
+- `leds-ln2403`
+- `leds-mtk`
+- `leds-mtk-disp`
+- `leds-rgb-aw2013`
+- `libarc4`
+- `load_track`
+- `log_store`
+- `lpm-gov-MHSP`
+- `mac80211`
+- `mac802154`
+- `mali_dmabuf_test_mt6878_r44`
+- `mcupm`
+- `mddp`
+- `mdp_drv_mt6878`
+- `mediatek-cpufreq-hw`
+- `mediatek-drm`
+- `mediatek-drm-gateic`
+- `mediatek-drm-panel-drv`
+- `mii`
+- `mmprofile`
+- `mmqos-common`
+- `mmqos-mt6878`
+- `monitor_hang`
+- `mrdump`
+- `mt6315-regulator`
+- `mt6338-core`
+- `mt6363-regulator`
+- `mt6369-accdet`
+- `mt6369-regulator`
+- `mt6375-adc`
+- `mt6375-auxadc`
+- `mt6375-battery`
+- `mt6375-charger`
+- `mt6685-audclk`
+- `mt6685-core`
+- `mt6878-mt6369`
+- `mt6878_dcm`
+- `mtk-afe-external`
+- `mtk-btcvsd`
+- `mtk-cam-isp7sp`
+- `mtk-cmdq-drv-ext`
+- `mtk-composite`
+- `mtk-dvfsrc`
+- `mtk-dvfsrc-devfreq`
+- `mtk-dvfsrc-helper`
+- `mtk-dvfsrc-regulator`
+- `mtk-dvfsrc-start`
+- `mtk-emi`
+- `mtk-icc-core`
+- `mtk-ipesys-me`
+- `mtk-lpm`
+- `mtk-lpm-dbg-common-v2`
+- `mtk-lpm-dbg-mt6878`
+- `mtk-lpm-plat-v1`
+- `mtk-mbox`
+- `mtk-mbox-mailbox`
+- `mtk-mmc`
+- `mtk-mmc-dbg`
+- `mtk-mmdvfs`
+- `mtk-mmdvfs-debug`
+- `mtk-mmdvfs-ftrace`
+- `mtk-mmdvfs-v3`
+- `mtk-mmdvfs-v3-start`
+- `mtk-mminfra-debug`
+- `mtk-mminfra-imax`
+- `mtk-mml`
+- `mtk-mml-mt6878`
+- `mtk-pm-domain-disable-unused`
+- `mtk-pmic-keys`
+- `mtk-pmic-oc-debug`
+- `mtk-pmic-wrap`
+- `mtk-pwm`
+- `mtk-scp-audiocommon`
+- `mtk-scp-ultra`
+- `mtk-scp-vow`
+- `mtk-scpsys`
+- `mtk-scpsys-bringup`
+- `mtk-scpsys-mt6878`
+- `mtk-smi`
+- `mtk-smi-dbg`
+- `mtk-soc-offload-common`
+- `mtk-socinfo`
+- `mtk-sp-spk-amp`
+- `mtk-spmi-pmic`
+- `mtk-spmi-pmic-adc`
+- `mtk-ssc`
+- `mtk-ssc-dbg-v2`
+- `mtk-swpm`
+- `mtk-swpm-cpu-dbg-v6878`
+- `mtk-swpm-dbg-common-v1`
+- `mtk-swpm-dbg-v6878`
+- `mtk-swpm-perf-arm-pmu`
+- `mtk-uart-apdma`
+- `mtk-vcodec-common`
+- `mtk-vcodec-dec-v1`
+- `mtk-vcodec-enc-v1`
+- `mtk-vcu`
+- `mtk-vmm-isp71-regulator`
+- `mtk-vmm-notifier`
+- `mtk-vmm-spm`
+- `mtk-vow`
+- `mtk-wp`
+- `mtk_aie_debug_7sp_2`
+- `mtk_c2ps`
+- `mtk_charger_algorithm_class`
+- `mtk_cm_ipi`
+- `mtk_cm_mgr`
+- `mtk_cm_mgr_mt6878`
+- `mtk_core_ctl`
+- `mtk_dcm`
+- `mtk_disp_notify`
+- `mtk_disp_sec`
+- `mtk_dramc`
+- `mtk_fpsgo`
+- `mtk_gpu_hal`
+- `mtk_gpu_qos`
+- `mtk_heap_debug`
+- `mtk_ioctl_powerhal`
+- `mtk_ioctl_touch_boost`
+- `mtk_iommu`
+- `mtk_irtx_pwm`
+- `mtk_mbraink`
+- `mtk_panel_ext`
+- `mtk_perf_common`
+- `mtk_perf_ioctl`
+- `mtk_perf_ioctl_magt`
+- `mtk_printk_ctrl`
+- `mtk_qos`
+- `mtk_rpmsg_mbox`
+- `mtk_sec_heap`
+- `mtk_slbc`
+- `mtk_sync`
+- `mtk_tinysys_ipi`
+- `mtk_u_ether`
+- `mux_switch`
+- `nfc`
+- `nhc_dest`
+- `nhc_fragment`
+- `nhc_hop`
+- `nhc_ipv6`
+- `nhc_mobility`
+- `nhc_routing`
+- `nhc_udp`
+- `nvmem-mt635x-efuse`
+- `nvmem_mtk-devinfo`
+- `panel-ky-vtdr6115-dphy-cmd`
+- `pd-chk-mt6878`
+- `pd_dbg_info`
+- `phy-mtk-ufs`
+- `phy-mtk-xsphy`
+- `pidmap`
+- `pinctrl-mt6363`
+- `pinctrl-mt6878`
+- `pinctrl-mtk-common-v2_debug`
+- `pinctrl-mtk-v2`
+- `powerhal_cpu_ctrl`
+- `ppp_deflate`
+- `ppp_mppe`
+- `pppox`
+- `pptp`
+- `pwm-mtk-disp`
+- `reboot-mode`
+- `regulator-vibrator`
+- `reset-ti-syscon`
+- `rfcomm`
+- `rpmb`
+- `rpmb-mtk`
+- `rps_perf`
+- `rt4831a_drv`
+- `rt5133-regulator`
+- `rt6160-regulator`
+- `rtc-mt6685`
+- `sc851x_charger`
+- `sc8571_charger`
+- `scheduler`
+- `scp`
+- `sec`
+- `sec-rng`
+- `sensorhub`
+- `slcan`
+- `slhc`
+- `smpu-hook-v1`
+- `snd-soc-audiodsp-common`
+- `snd-soc-mt6369`
+- `snd-soc-mt6878-afe`
+- `snd-soc-mtk-common`
+- `snd-soc-mtk-scp-ultra`
+- `snd-soc-tfa98xx`
+- `spi-mt65xx`
+- `spmi-mtk-mpu`
+- `spmi-mtk-pmif`
+- `sspm_v3`
+- `syscon-reboot-mode`
+- `system_heap`
+- `task_turbo`
+- `tcpc_class`
+- `tcpci_late_sync`
+- `teeperf`
+- `thermal-generic-adc`
+- `thermal_trace`
+- `timer-mediatek`
+- `tinysys-scmi`
+- `tipc`
+- `tkcore`
+- `tkcore_drv`
+- `tmem_ffa`
+- `touch_boost`
+- `trace_mmstat`
+- `uarthub_drv`
+- `ufs-mediatek-dbg`
+- `ufs-mediatek-mod`
+- `uload_ind`
+- `usb_logger`
+- `usbnet`
+- `usbserial`
+- `vcan`
+- `vcp`
+- `vcp_status`
+- `wlan_drv_gen4m_6878`
+- `wmt_chrdev_wifi_connac2`
+- `wwan`
+- `xhci-mtk-hcd-v2`
+- `yft_devinfo`
+- `yft_tpd_gesture`
+- `zram`
+- `zsmalloc`

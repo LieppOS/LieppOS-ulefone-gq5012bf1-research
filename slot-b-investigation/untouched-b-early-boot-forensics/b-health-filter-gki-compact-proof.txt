@@ -1,0 +1,98 @@
+===== BPF_GEN_LD_ABS =====
+static int bpf_gen_ld_abs(const struct bpf_insn *orig,
+			  struct bpf_insn *insn_buf)
+{
+	bool indirect = BPF_MODE(orig->code) == BPF_IND;
+	struct bpf_insn *insn = insn_buf;
+
+	if (!indirect) {
+		*insn++ = BPF_MOV64_IMM(BPF_REG_2, orig->imm);
+	} else {
+		*insn++ = BPF_MOV64_REG(BPF_REG_2, orig->src_reg);
+		if (orig->imm)
+			*insn++ = BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, orig->imm);
+	}
+	/* We're guaranteed here that CTX is in R6. */
+	*insn++ = BPF_MOV64_REG(BPF_REG_1, BPF_REG_CTX);
+
+	switch (BPF_SIZE(orig->code)) {
+	case BPF_B:
+		*insn++ = BPF_EMIT_CALL(bpf_skb_load_helper_8_no_cache);
+		break;
+	case BPF_H:
+		*insn++ = BPF_EMIT_CALL(bpf_skb_load_helper_16_no_cache);
+		break;
+	case BPF_W:
+		*insn++ = BPF_EMIT_CALL(bpf_skb_load_helper_32_no_cache);
+		break;
+	}
+
+	*insn++ = BPF_JMP_IMM(BPF_JSGE, BPF_REG_0, 0, 2);
+	*insn++ = BPF_ALU32_REG(BPF_XOR, BPF_REG_0, BPF_REG_0);
+	*insn++ = BPF_EXIT_INSN();
+
+===== SOCKET FILTER VERIFIER OPS =====
+const struct bpf_verifier_ops sk_filter_verifier_ops = {
+	.get_func_proto		= sk_filter_func_proto,
+	.is_valid_access	= sk_filter_is_valid_access,
+	.convert_ctx_access	= bpf_convert_ctx_access,
+	.gen_ld_abs		= bpf_gen_ld_abs,
+};
+
+const struct bpf_prog_ops sk_filter_prog_ops = {
+	.test_run		= bpf_prog_test_run_skb,
+};
+
+
+===== LD_ABS VERIFIER HANDLING =====
+		return -EINVAL;
+	}
+
+	/* check whether implicit source operand (register R6) is readable */
+	err = check_reg_arg(env, ctx_reg, SRC_OP);
+	if (err)
+		return err;
+
+	/* Disallow usage of BPF_LD_[ABS|IND] with reference tracking, as
+	 * gen_ld_abs() may terminate the program at runtime, leading to
+	 * reference leak.
+	 */
+	err = check_reference_leak(env);
+	if (err) {
+		verbose(env, "BPF_LD_[ABS|IND] cannot be mixed with socket references\n");
+		return err;
+	}
+
+	if (env->cur_state->active_spin_lock) {
+		verbose(env, "BPF_LD_[ABS|IND] cannot be used inside bpf_spin_lock-ed region\n");
+		return -EINVAL;
+	}
+
+	if (regs[ctx_reg].type != PTR_TO_CTX) {
+		verbose(env,
+			"at the time of BPF_LD_ABS|IND R6 != pointer to skb\n");
+		return -EINVAL;
+	}
+
+	if (mode == BPF_IND) {
+		/* check explicit source operand */
+		err = check_reg_arg(env, insn->src_reg, SRC_OP);
+		if (err)
+			return err;
+	}
+
+	err = check_ptr_off_reg(env, &regs[ctx_reg], ctx_reg);
+	if (err < 0)
+		return err;
+
+	/* reset caller saved regs to unreadable */
+	for (i = 0; i < CALLER_SAVED_REGS; i++) {
+		mark_reg_not_init(env, regs, caller_saved[i]);
+		check_reg_arg(env, caller_saved[i], DST_OP_NO_MARK);
+	}
+
+	/* mark destination R0 register as readable, since it contains
+	 * the value fetched from the packet.
+	 * Already marked as written above.
+	 */
+	mark_reg_unknown(env, regs, BPF_REG_0);

@@ -1,0 +1,189 @@
+===== VERSION DEFINITIONS =====
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-64-using std::strerror;
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-65-using std::string;
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-66-using std::vector;
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-67-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-68-namespace android {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-69-namespace bpf {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-70-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-71-static unsigned int page_size = static_cast<unsigned int>(getpagesize());
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-72-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-73-static string pathToObjName(const string& path) {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-74-    // extract everything after the final slash, ie. this is the filename 'foo@1.o' or 'bar.o'
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-75-    string filename = android::base::Split(path, "/").back();
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-76-    // strip off everything from the final period onwards (strip '.o' suffix), ie. 'foo@1' or 'bar'
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-77-    string name = filename.substr(0, filename.find_last_of('.'));
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-78-    // strip any potential @1 suffix, this will leave us with just 'foo' or 'bar'
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp:79:    // this can be used to provide duplicate programs (mux based on the bpfloader version)
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-80-    return name.substr(0, name.find_last_of('@'));
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-81-}
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-82-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-83-typedef struct {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-84-    const char* name;
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-85-    enum bpf_prog_type type;
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-86-} sectionType;
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-87-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-88-/*
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-89- * Map section name prefixes to program types, the section name will be:
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-90- *   SECTION(<prefix>/<name-of-program>)
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-91- * For example:
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-92- *   SECTION("tracepoint/sched_switch_func") where sched_switch_funcs
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-93- * is the name of the program, and tracepoint is the type.
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-94- *
+
+===== LEGACY ENTRY =====
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-267-    for file_desc in FILE_ARR {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-268-        if let Err(e) = libbpf_worker(file_desc) {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-269-            if file_desc.critical {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-270-                panic!("Error when loading {0}: {e}", file_desc.filename);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-271-            } else {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-272-                error!("Error when loading {0}: {e}", file_desc.filename);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-273-            }
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-274-        };
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-275-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-276-}
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-277-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-278-#[cfg(not(enable_libbpf))]
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-279-fn load_libbpf_progs() {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-280-    // Empty stub for feature flag disabled case
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-281-    info!("Loading libbpf programs DISABLED");
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-282-}
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-283-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-284-fn main() {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-285-    let kmsg_fd = env::var("ANDROID_FILE__dev_kmsg").unwrap().parse::<i32>().unwrap();
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-286-    // SAFETY: The init script opens this file for us
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-287-    let kmsg_file = unsafe { File::from_raw_fd(kmsg_fd) };
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-288-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-289-    if let Err(logger) = BpfKmsgLogger::init(kmsg_file) {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-290-        error!("BpfLoader-rs: log::setlogger failed: {}", logger);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-291-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-292-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-293-    // Redirect panic messages to both logcat and serial port
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-294-    panic::set_hook(Box::new(|panic_info| {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-295-        error!("{}", panic_info);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-296-    }));
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-297-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-298-    load_libbpf_progs();
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-299-    info!("Loading legacy BPF progs");
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-300-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-301-    // SAFETY: Linking in the existing legacy bpfloader functionality.
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-302-    // Any of the four following bindgen functions can abort() or exit()
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-303-    // on failure and execNetBpfLoadDone() execve()'s.
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-304-    unsafe {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-305-        bpf_android_bindgen::initLogging();
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-306-        bpf_android_bindgen::createBpfFsSubDirectories();
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs:307:        bpf_android_bindgen::legacyBpfLoader();
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-308-        bpf_android_bindgen::execNetBpfLoadDone();
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-309-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/bpfloader.rs-310-}
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-13- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-14- * See the License for the specific language governing permissions and
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-15- * limitations under the License.
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-16- */
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-17-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-18-#pragma once
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-19-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-20-#ifdef __cplusplus
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-21-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-22-#include <linux/bpf.h>
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-23-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-24-#include <fstream>
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-25-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-26-namespace android {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-27-namespace bpf {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-28-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-29-struct Location {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-30-    const char* const dir = "";
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-31-    const char* const prefix = "";
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-32-    const bpf_prog_type* allowedProgTypes = nullptr;
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-33-    size_t allowedProgTypesLength = 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-34-};
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-35-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-36-// BPF loader implementation. Loads an eBPF ELF object
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-37-int loadProg(const char* elfPath, bool* isCritical, const Location &location = {});
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-38-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-39-// Exposed for testing
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-40-unsigned int readSectionUint(const char* name, std::ifstream& elfFile, unsigned int defVal);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-41-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-42-}  // namespace bpf
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-43-}  // namespace android
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-44-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-45-extern "C" {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-46-#else // __cplusplus
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-47-#define __noreturn
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-48-#endif // __cplusplus
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-49-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-50-// The C++ portion of the BpfLoader is exposed as 3 functions to be called in order.
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-51-void initLogging();
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-52-void createBpfFsSubDirectories();
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h:53:void legacyBpfLoader();
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-54-__noreturn void execNetBpfLoadDone();
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-55-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-56-#ifdef __cplusplus
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-57-}  // extern C
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/include/libbpf_android.h-58-#endif
+--
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-976-    if (*prefix) {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-977-        mode_t prevUmask = umask(0);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-978-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-979-        string s = "/sys/fs/bpf/";
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-980-        s += prefix;
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-981-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-982-        errno = 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-983-        int ret = mkdir(s.c_str(), S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-984-        if (ret && errno != EEXIST) {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-985-            const int err = errno;
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-986-            ALOGE("Failed to create directory: %s, ret: %s", s.c_str(), strerror(err));
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-987-            return -err;
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-988-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-989-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-990-        umask(prevUmask);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-991-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-992-    return 0;
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-993-}
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-994-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-995-}  // namespace bpf
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-996-}  // namespace android
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-997-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-998-// ----- extern C stuff for rust below here -----
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-999-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1000-void initLogging() {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1001-    // since we only ever get called from mainline NetBpfLoad
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1002-    // (see packages/modules/Connectivity/netbpfload/NetBpfLoad.cpp around line 516)
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1003-    // and there no arguments, so we can just pretend/assume this is the case.
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1004-    const char* argv[] = {"/system/bin/bpfloader", NULL};
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1005-    android::base::InitLogging(const_cast<char**>(argv), &android::base::KernelLogger);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1006-}
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1007-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1008-void createBpfFsSubDirectories() {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1009-    for (const auto& location : android::bpf::locations) {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1010-        if (android::bpf::createSysFsBpfSubDir(location.prefix)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1011-            exit(120);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1012-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1013-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1014-}
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1015-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp:1016:void legacyBpfLoader() {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1017-    // Load all ELF objects, create programs and maps, and pin them
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1018-    for (const auto& location : android::bpf::locations) {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1019-        if (android::bpf::loadAllElfObjects(location)) {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1020-            ALOGE("=== CRITICAL FAILURE LOADING BPF PROGRAMS FROM %s ===", location.dir);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1021-            ALOGE("If this triggers reliably, you're probably missing kernel options or patches.");
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1022-            ALOGE("If this triggers randomly, you might be hitting some memory allocation "
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1023-                  "problems or startup script race.");
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1024-            ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1025-            sleep(20);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1026-            exit(121);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1027-        }
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1028-    }
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1029-}
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1030-
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1031-void execNetBpfLoadDone() {
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1032-    const char* args[] = {"/apex/com.android.tethering/bin/netbpfload", "done", NULL};
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1033-    execve(args[0], (char**)args, environ);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1034-    ALOGE("FATAL: execve(): %d[%s]", errno, strerror(errno));
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1035-    exit(122);
+/mnt/SamsungSSD/android/lineage-22.2/system/bpf/loader/Loader.cpp-1036-}
+
+===== OBJECT VERSION GATE =====

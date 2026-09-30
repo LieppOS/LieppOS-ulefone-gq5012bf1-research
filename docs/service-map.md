@@ -23,8 +23,11 @@ must never gate recovery boot.
 
 The inventory accounts for camera, audio, sensors, graphics, thermal, power,
 health, radio/IMS, connectivity, NFC, TrustKernel security, fingerprint, USB,
-media/DRM and vendor diagnostics. Service RC files are extraction candidates;
-they are not copied into the device tree blindly.
+media/DRM and vendor diagnostics. ConsumerIR is `vendor.ir-default`: the AIDL
+example service is a wrapper around `consumerir.common.so`, selected by
+`ro.hardware.consumerir=common`; see [`ir-blaster.md`](ir-blaster.md). Service RC
+files are extraction candidates; they are not copied into the device tree
+blindly.
 
 ## Current gap
 
