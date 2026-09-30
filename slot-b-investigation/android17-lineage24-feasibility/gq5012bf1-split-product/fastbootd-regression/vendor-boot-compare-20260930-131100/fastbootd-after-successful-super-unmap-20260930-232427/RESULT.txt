@@ -1,0 +1,173 @@
+============================================================
+1. VERIFY CLEAN UNMAPPED STATE
+============================================================
+bootmode=recovery
+slot=_a
+bootcontrol=running
+
+BootControl:
+2
+0
+HAL Version: android.hardware.boot@aidl::IBootControl
+
+Existing dynamic mappers:
+system_a=UNMAPPED
+system_b=UNMAPPED
+system_ext_a=UNMAPPED
+system_ext_b=UNMAPPED
+product_a=UNMAPPED
+product_b=UNMAPPED
+vendor_a=UNMAPPED
+vendor_b=UNMAPPED
+
+Dynamic mounts:
+
+CLEAN_FASTBOOTD_PRECONDITION=1
+
+============================================================
+2. START FASTBOOTD LATE OVER TCP
+============================================================
+[01/20] state=running pid=3198   
+
+fastbootd=running
+pid=3198
+protocol=tcp
+I/fastbootd( 3198): Using AIDL version of IBootControl
+
+============================================================
+3. CONNECT HOST FASTBOOT OVER ADB/TCP
+============================================================
+15554
+
+============================================================
+4. SLOT / FASTBOOTD CONTROL
+============================================================
+is-userspace: yes
+Finished. Total time: 0.002s
+current-slot: a
+Finished. Total time: 0.002s
+slot-count: 2
+Finished. Total time: 0.003s
+super-partition-name: super
+Finished. Total time: 0.002s
+
+============================================================
+5. B LOGICAL PARTITION OPEN TEST
+============================================================
+
+===== system_b =====
+is-logical:system_b: yes
+Finished. Total time: 0.014s
+partition-size:system_b: 0x27A91000
+Finished. Total time: 0.070s
+partition-type:system_b: raw
+Finished. Total time: 0.005s
+
+===== system_ext_b =====
+is-logical:system_ext_b: yes
+Finished. Total time: 0.004s
+partition-size:system_ext_b: 0x15DE5000
+Finished. Total time: 0.083s
+partition-type:system_ext_b: raw
+Finished. Total time: 0.004s
+
+===== product_b =====
+is-logical:product_b: yes
+Finished. Total time: 0.003s
+partition-size:product_b: 0x1420B000
+Finished. Total time: 0.062s
+partition-type:product_b: raw
+Finished. Total time: 0.005s
+
+===== vendor_b =====
+is-logical:vendor_b: yes
+Finished. Total time: 0.003s
+partition-size:vendor_b: 0x30A88000
+Finished. Total time: 0.070s
+partition-type:vendor_b: raw
+Finished. Total time: 0.006s
+
+============================================================
+6. A LOGICAL CONTROL
+============================================================
+
+===== system_a =====
+is-logical:system_a: yes
+Finished. Total time: 0.004s
+partition-size:system_a: 0x771A4000
+Finished. Total time: 0.076s
+
+===== system_ext_a =====
+is-logical:system_ext_a: yes
+Finished. Total time: 0.005s
+partition-size:system_ext_a: 0x27298000
+Finished. Total time: 0.070s
+
+===== product_a =====
+is-logical:product_a: yes
+Finished. Total time: 0.005s
+partition-size:product_a: 0x6E9D9000
+Finished. Total time: 0.073s
+
+===== vendor_a =====
+is-logical:vendor_a: yes
+Finished. Total time: 0.004s
+partition-size:vendor_a: 0x4C812000
+Finished. Total time: 0.079s
+
+============================================================
+7. MAPPERS CREATED BY FASTBOOTD
+============================================================
+system_a       UNMAPPED
+system_b       UNMAPPED
+system_ext_a   UNMAPPED
+system_ext_b   UNMAPPED
+product_a      UNMAPPED
+product_b      UNMAPPED
+vendor_a       UNMAPPED
+vendor_b       UNMAPPED
+
+============================================================
+8. FASTBOOTD FAILURE CHECK
+============================================================
+
+============================================================
+9. VERIFY EXACT B SIZES
+============================================================
+system_b=0x27A91000
+system_ext_b=0x15DE5000
+product_b=0x1420B000
+vendor_b=0x30A88000
+
+decimal:
+system_b=665391104 expected=665391104
+system_ext_b=366891008 expected=366891008
+product_b=337686528 expected=337686528
+vendor_b=816349184 expected=816349184
+
+============================================================
+10. RESULT
+============================================================
+current_slot=a
+slot_count=2
+size_gate=1
+
+FASTBOOTD_FULLY_FUNCTIONAL=1
+BOOTCONTROL_RACE_WORKAROUND_PROVEN=1
+SUPER_DM_COLLISION_WORKAROUND_PROVEN=1
+B_LOGICAL_PARTITIONS_OPENABLE=1
+
+LEAVE_FASTBOOTD_RUNNING=1
+
+============================================================
+11. CURRENT SAFETY STATE
+============================================================
+slot=_a
+fastbootd=running
+bootcontrol=running
+2
+0
+
+NOTE:
+Fastbootd is intentionally left running if successful.
+No flash/resize/erase command was issued.
