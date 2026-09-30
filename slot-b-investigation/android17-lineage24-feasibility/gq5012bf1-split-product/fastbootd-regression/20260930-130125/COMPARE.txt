@@ -1,0 +1,489 @@
+============================================================
+FASTBOOTD REGRESSION COMPARISON
+============================================================
+2026-09-30T13:01:25+03:00
+
+===== 1. CURRENT ANDROID A =====
+SLOT=_a
+BOOT=1
+current_slot:
+0
+active_slot:
+0
+snapshot:
+none
+
+===== 2. CURRENT BUILD IDENTITY =====
+ro.build.fingerprint=Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+ro.system.build.fingerprint=Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+ro.build.version.release=16
+ro.build.version.sdk=36
+ro.boot.slot_suffix=_a
+
+===== 3. CURRENT FASTBOOTD BINARY CANDIDATES =====
+
+===== 4. OLD SUCCESSFUL EXECUTOR FASTBOOT CONFIG =====
+8:TIMEOUT_SECONDS=${TIMEOUT_SECONDS:-180}
+9:TRANSFER_TIMEOUT_SECONDS=${TRANSFER_TIMEOUT_SECONDS:-2400}
+10:BOOT_TIMEOUT_SECONDS=${BOOT_TIMEOUT_SECONDS:-360}
+16:ADB=(adb)
+18:FASTBOOT=(fastboot)
+69:raw_fastboot_value() {
+115:fb_capture() {
+128:fb_write() {
+293:enter_fastbootd_from_android() {
+310:return_a_verify_lpdump() {
+
+===== 5. OLD fb_write FUNCTION =====
+fb_write() {
+    local label=$1 target=$2; shift 2
+    local command=${1:-} required_mode capacity image_bytes image_path
+    [[ $target == scratch || $target == *_b ]] || fatal "forbidden non-B write target: $target"
+    [[ $target != super && $target != super_a && $target != super_b && $target != *_a ]] || fatal "forbidden write target: $target"
+    [[ $(raw_fastboot_value current-slot) == a ]] || fatal 'current slot changed away from A before write'
+    case $target in
+        scratch|system_b|system_ext_b|product_b|vendor_b|vendor_dlkm_b|system_dlkm_b|odm_dlkm_b) required_mode=fastbootd ;;
+        boot_b|init_boot_b|vendor_boot_b|dtbo_b|vbmeta_b|vbmeta_system_b|vbmeta_vendor_b) required_mode=bootloader ;;
+        *) fatal "unclassified write target: $target" ;;
+    esac
+    [[ $DEVICE_MODE == "$required_mode" ]] || fatal "$target write attempted in $DEVICE_MODE instead of $required_mode"
+    if [[ $required_mode == fastbootd ]]; then
+        [[ $(raw_fastboot_value is-userspace) == yes ]] || fatal 'userspace fastboot lost before write'
+    else
+        [[ $(raw_fastboot_value is-userspace) != yes ]] || fatal 'physical write attempted in userspace fastbootd'
+    fi
+    if [[ $command == flash ]]; then
+        image_path=${3:-}
+        [[ -f $image_path ]] || fatal "flash image missing for $target"
+        image_bytes=$(stat -c %s "$image_path")
+        capacity=$(raw_fastboot_value "partition-size:$target")
+        [[ $capacity =~ ^0[xX][0-9a-fA-F]+$ || $capacity =~ ^[0-9]+$ ]] || fatal "partition capacity unavailable for $target"
+        (( capacity >= image_bytes )) || fatal "$target capacity $capacity is below image size $image_bytes"
+    fi
+    if ! fb_capture "$label" "$@"; then
+        FAILED_WRITE=true
+        fatal "first failed write: $label"
+    fi
+    WRITE_COUNT=$((WRITE_COUNT + 1))
+    printf 'WRITE_OK=%s target=%s count=%s\n' "$label" "$target" "$WRITE_COUNT"
+}
+
+plan_field() {
+    local action=$1 target=$2 column=$3
+    awk -F'\t' -v a="$action" -v t="$target" -v c="$column" 'NR==1{for(i=1;i<=NF;i++)h[$i]=i;next}$3==a&&$4==t{print $h[c];exit}' "$PLAN"
+}
+
+prereq_path() {
+    awk -F'\t' -v a="$1" 'NR>1&&$1==a{print $2;exit}' "$PREREQUISITES"
+}
+
+set_expected() {
+    local partition=$1 size=$2
+    python3 - "$RUN_DIR/expected-sizes.tsv" "$partition" "$size" <<'PY'
+import csv,sys
+from pathlib import Path
+p=Path(sys.argv[1]); name=sys.argv[2]; size=sys.argv[3]
+rows=[]
+with p.open(newline='') as f: rows=list(csv.DictReader(f,delimiter='\t'))
+found=False
+for r in rows:
+    if r['partition']==name:r['size_bytes']=size;found=True
+if not found: rows.append({'partition':name,'group':'default' if name=='scratch' else ('main_a' if name.endswith('_a') else 'main_b'),'size_bytes':size})
+with p.open('w',newline='') as f:
+    w=csv.DictWriter(f,['partition','group','size_bytes'],delimiter='\t');w.writeheader();w.writerows(rows)
+
+===== 6. OLD enter_fastbootd FUNCTION =====
+enter_fastbootd_from_android() {
+    local label=$1
+    [[ $DEVICE_MODE == android ]] || fatal "$label: expected Android before fastbootd entry"
+    [[ $("${ADB[@]}" shell getprop ro.boot.slot_suffix | tr -d '\r\n') == _a ]] || fatal "$label: Android slot is not A"
+    [[ $(remote_root 'bootctl get-snapshot-merge-status' | tr -d '\r\n') == none ]] || fatal "$label: merge state is not none"
+    timeout "$TIMEOUT_SECONDS" "${ADB[@]}" reboot bootloader || fatal "$label: adb reboot bootloader failed"
+    DEVICE_MODE=bootloader
+    wait_fastboot || fatal "$label: bootloader unavailable"
+    [[ $(raw_fastboot_value current-slot) == a ]] || fatal "$label: bootloader slot is not A"
+    [[ $(raw_fastboot_value unlocked) == yes ]] || fatal "$label: bootloader is not unlocked"
+    fb_capture "$label-reboot-fastboot" reboot fastboot || fatal "$label: reboot fastboot failed"
+    wait_fastboot || fatal "$label: userspace fastbootd unavailable"
+    DEVICE_MODE=fastbootd
+    [[ $(raw_fastboot_value is-userspace) == yes ]] || fatal "$label: is-userspace is not yes"
+    [[ $(raw_fastboot_value current-slot) == a ]] || fatal "$label: fastbootd slot is not A"
+}
+
+return_a_verify_lpdump() {
+    local label=$1
+    [[ $DEVICE_MODE == fastbootd ]] || fatal "$label: expected fastbootd before A verification cycle"
+    fb_capture "$label-reboot-bootloader" reboot bootloader || fatal "$label: return to bootloader failed"
+    wait_fastboot || fatal "$label: bootloader unavailable"
+    DEVICE_MODE=bootloader
+    [[ $(raw_fastboot_value current-slot) == a ]] || fatal "$label: active slot changed away from A"
+    fb_capture "$label-reboot-android" reboot || fatal "$label: reboot A failed"
+    DEVICE_MODE=android
+    wait_boot_completed || fatal "$label: Android A did not complete boot"
+    [[ $("${ADB[@]}" shell getprop ro.boot.slot_suffix | tr -d '\r\n') == _a ]] || fatal "$label: returned Android slot is not A"
+    [[ $(remote_root 'bootctl is-slot-bootable 0' | tr -d '\r\n') == 1 ]] || fatal "$label: A is not bootable"
+    [[ $(remote_root 'bootctl is-slot-marked-successful 0' | tr -d '\r\n') == 1 ]] || fatal "$label: A is not successful"
+    [[ $(remote_root 'bootctl get-snapshot-merge-status' | tr -d '\r\n') == none ]] || fatal "$label: merge state changed"
+    remote_root 'for p in boot init_boot vendor_boot dtbo vbmeta vbmeta_system vbmeta_vendor; do sha256sum /dev/block/by-name/${p}_a; done' > "$RUN_DIR/$label.a-bootchain.sha256"
+    cmp -s "$RUN_DIR/before.a-bootchain.sha256" "$RUN_DIR/$label.a-bootchain.sha256" || fatal "$label: A physical hashes changed"
+    remote_root 'lpdump --slot=0 /dev/block/by-name/super' > "$RUN_DIR/metadata/$label.slot0.txt"
+    remote_root 'lpdump --slot=1 /dev/block/by-name/super' > "$RUN_DIR/metadata/$label.slot1.txt"
+    verify_lpdumps "$label" || fatal "$label: live lpdump invariant failed"
+}
+
+verify_logical_images_from_super() {
+    local raw="$PRIVATE_DIR/super-post-logical.raw.img" extract="$PRIVATE_DIR/lpunpack-b"
+    local device_sha host_sha
+    rm -rf "$extract"; mkdir -p "$extract"; chmod 0700 "$extract"
+    printf 'Streaming physical super once for selective B logical readback...\n'
+    device_sha=$(remote_root 'sha256sum /dev/block/by-name/super' | awk '{print $1}')
+    [[ $device_sha =~ ^[0-9a-f]{64}$ ]] || fatal 'device super hash failed'
+    timeout "$TRANSFER_TIMEOUT_SECONDS" "${ADB[@]}" exec-out su -c 'cat /dev/block/by-name/super' > "$raw" || fatal 'full super readback failed'
+    [[ $(stat -c %s "$raw") == 9663676416 ]] || fatal 'full super readback size mismatch'
+    host_sha=$(sha256sum "$raw" | awk '{print $1}')
+    [[ $host_sha == "$device_sha" ]] || fatal 'full super readback hash mismatch'
+    timeout "$TRANSFER_TIMEOUT_SECONDS" "$LPUNPACK" --slot=0 \
+        -p system_b -p system_ext_b -p product_b -p vendor_b -p vendor_dlkm_b -p system_dlkm_b -p odm_dlkm_b \
+        "$raw" "$extract" > "$RUN_DIR/lpunpack.stdout" 2> "$RUN_DIR/lpunpack.stderr" || fatal 'selective lpunpack failed'
+    printf 'target\tbytes\tsha256\tresult\n' > "$RUN_DIR/b-logical-readback.tsv"
+    local target image expected size extracted
+    for target in system_b system_ext_b product_b vendor_b vendor_dlkm_b system_dlkm_b odm_dlkm_b; do
+        image=$(plan_field flash "$target" image); expected=$(plan_field flash "$target" sha256); size=$(plan_field flash "$target" argument)
+        extracted="$extract/$target.img"
+        [[ -f $extracted && $(stat -c %s "$extracted") == "$size" && $(sha256sum "$extracted" | awk '{print $1}') == "$expected" ]] || fatal "lpunpack readback mismatch for $target"
+        printf '%s\t%s\t%s\tPASS\n' "$target" "$size" "$expected" >> "$RUN_DIR/b-logical-readback.tsv"
+    done
+    printf '%s  super-post-logical.raw.img\n' "$host_sha" > "$RUN_DIR/super-post-logical.sha256"
+    rm -rf "$raw" "$extract"
+}
+
+printf '%s\n' \
+    'APPROVAL=exact-pinned-gate-6-plan' \
+    "PLAN_RUN=$PLAN_RUN" \
+    'TARGET_SCOPE=B_AND_SCRATCH_ONLY' \
+    'A_WRITE_TARGETS=0' \
+    'SUPER_FLASH_TARGETS=0' \
+    'SET_ACTIVE_STEPS=0'
+
+[[ -s $PLAN && -s $PLAN_STATUS && -s $PREREQUISITES ]] || fatal 'pinned plan files are incomplete'
+grep -qx 'STATUS=PASS' "$PLAN_STATUS" || fatal 'pinned plan status is not PASS'
+grep -qx 'EXECUTE=0' "$PLAN_STATUS" || fatal 'pinned plan was not generated fail-closed'
+grep -qx 'A_WRITE_TARGETS=0' "$PLAN_STATUS" || fatal 'pinned plan contains an A write target'
+grep -qx 'SUPER_FLASH_TARGETS=0' "$PLAN_STATUS" || fatal 'pinned plan contains physical super target'
+grep -qx 'SET_ACTIVE_STEPS=0' "$PLAN_STATUS" || fatal 'pinned plan contains slot selection'
+grep -qx 'EXECUTION_ALLOWED=false' "$PLAN_STATUS" || fatal 'pinned plan unexpectedly allows execution without approval'
+[[ -x $LPDUMP ]] || fatal 'host lpdump is unavailable'
+[[ -x $LPUNPACK ]] || fatal 'host lpunpack is unavailable'
+
+===== 7. OLD return-A / RE-ENTER FLOW =====
+return_a_verify_lpdump() {
+    local label=$1
+    [[ $DEVICE_MODE == fastbootd ]] || fatal "$label: expected fastbootd before A verification cycle"
+    fb_capture "$label-reboot-bootloader" reboot bootloader || fatal "$label: return to bootloader failed"
+    wait_fastboot || fatal "$label: bootloader unavailable"
+    DEVICE_MODE=bootloader
+    [[ $(raw_fastboot_value current-slot) == a ]] || fatal "$label: active slot changed away from A"
+    fb_capture "$label-reboot-android" reboot || fatal "$label: reboot A failed"
+    DEVICE_MODE=android
+    wait_boot_completed || fatal "$label: Android A did not complete boot"
+    [[ $("${ADB[@]}" shell getprop ro.boot.slot_suffix | tr -d '\r\n') == _a ]] || fatal "$label: returned Android slot is not A"
+    [[ $(remote_root 'bootctl is-slot-bootable 0' | tr -d '\r\n') == 1 ]] || fatal "$label: A is not bootable"
+    [[ $(remote_root 'bootctl is-slot-marked-successful 0' | tr -d '\r\n') == 1 ]] || fatal "$label: A is not successful"
+    [[ $(remote_root 'bootctl get-snapshot-merge-status' | tr -d '\r\n') == none ]] || fatal "$label: merge state changed"
+    remote_root 'for p in boot init_boot vendor_boot dtbo vbmeta vbmeta_system vbmeta_vendor; do sha256sum /dev/block/by-name/${p}_a; done' > "$RUN_DIR/$label.a-bootchain.sha256"
+    cmp -s "$RUN_DIR/before.a-bootchain.sha256" "$RUN_DIR/$label.a-bootchain.sha256" || fatal "$label: A physical hashes changed"
+    remote_root 'lpdump --slot=0 /dev/block/by-name/super' > "$RUN_DIR/metadata/$label.slot0.txt"
+    remote_root 'lpdump --slot=1 /dev/block/by-name/super' > "$RUN_DIR/metadata/$label.slot1.txt"
+    verify_lpdumps "$label" || fatal "$label: live lpdump invariant failed"
+}
+
+verify_logical_images_from_super() {
+    local raw="$PRIVATE_DIR/super-post-logical.raw.img" extract="$PRIVATE_DIR/lpunpack-b"
+    local device_sha host_sha
+    rm -rf "$extract"; mkdir -p "$extract"; chmod 0700 "$extract"
+    printf 'Streaming physical super once for selective B logical readback...\n'
+    device_sha=$(remote_root 'sha256sum /dev/block/by-name/super' | awk '{print $1}')
+    [[ $device_sha =~ ^[0-9a-f]{64}$ ]] || fatal 'device super hash failed'
+    timeout "$TRANSFER_TIMEOUT_SECONDS" "${ADB[@]}" exec-out su -c 'cat /dev/block/by-name/super' > "$raw" || fatal 'full super readback failed'
+    [[ $(stat -c %s "$raw") == 9663676416 ]] || fatal 'full super readback size mismatch'
+    host_sha=$(sha256sum "$raw" | awk '{print $1}')
+    [[ $host_sha == "$device_sha" ]] || fatal 'full super readback hash mismatch'
+    timeout "$TRANSFER_TIMEOUT_SECONDS" "$LPUNPACK" --slot=0 \
+        -p system_b -p system_ext_b -p product_b -p vendor_b -p vendor_dlkm_b -p system_dlkm_b -p odm_dlkm_b \
+        "$raw" "$extract" > "$RUN_DIR/lpunpack.stdout" 2> "$RUN_DIR/lpunpack.stderr" || fatal 'selective lpunpack failed'
+    printf 'target\tbytes\tsha256\tresult\n' > "$RUN_DIR/b-logical-readback.tsv"
+    local target image expected size extracted
+    for target in system_b system_ext_b product_b vendor_b vendor_dlkm_b system_dlkm_b odm_dlkm_b; do
+        image=$(plan_field flash "$target" image); expected=$(plan_field flash "$target" sha256); size=$(plan_field flash "$target" argument)
+        extracted="$extract/$target.img"
+        [[ -f $extracted && $(stat -c %s "$extracted") == "$size" && $(sha256sum "$extracted" | awk '{print $1}') == "$expected" ]] || fatal "lpunpack readback mismatch for $target"
+        printf '%s\t%s\t%s\tPASS\n' "$target" "$size" "$expected" >> "$RUN_DIR/b-logical-readback.tsv"
+    done
+    printf '%s  super-post-logical.raw.img\n' "$host_sha" > "$RUN_DIR/super-post-logical.sha256"
+    rm -rf "$raw" "$extract"
+}
+
+printf '%s\n' \
+    'APPROVAL=exact-pinned-gate-6-plan' \
+    "PLAN_RUN=$PLAN_RUN" \
+    'TARGET_SCOPE=B_AND_SCRATCH_ONLY' \
+    'A_WRITE_TARGETS=0' \
+    'SUPER_FLASH_TARGETS=0' \
+    'SET_ACTIVE_STEPS=0'
+
+[[ -s $PLAN && -s $PLAN_STATUS && -s $PREREQUISITES ]] || fatal 'pinned plan files are incomplete'
+grep -qx 'STATUS=PASS' "$PLAN_STATUS" || fatal 'pinned plan status is not PASS'
+grep -qx 'EXECUTE=0' "$PLAN_STATUS" || fatal 'pinned plan was not generated fail-closed'
+grep -qx 'A_WRITE_TARGETS=0' "$PLAN_STATUS" || fatal 'pinned plan contains an A write target'
+grep -qx 'SUPER_FLASH_TARGETS=0' "$PLAN_STATUS" || fatal 'pinned plan contains physical super target'
+grep -qx 'SET_ACTIVE_STEPS=0' "$PLAN_STATUS" || fatal 'pinned plan contains slot selection'
+grep -qx 'EXECUTION_ALLOWED=false' "$PLAN_STATUS" || fatal 'pinned plan unexpectedly allows execution without approval'
+[[ -x $LPDUMP ]] || fatal 'host lpdump is unavailable'
+[[ -x $LPUNPACK ]] || fatal 'host lpunpack is unavailable'
+command -v adb >/dev/null || fatal 'adb unavailable'
+command -v fastboot >/dev/null || fatal 'fastboot unavailable'
+
+while IFS=$'\t' read -r artifact path sha; do
+    [[ $artifact == artifact ]] && continue
+    [[ -f $path && $(sha256sum "$path" | awk '{print $1}') == "$sha" ]] || fatal "pinned prerequisite changed: $artifact"
+done < "$PREREQUISITES"
+
+python3 - "$PLAN" <<'PY'
+import csv,sys
+with open(sys.argv[1],newline='') as f: rows=list(csv.DictReader(f,delimiter='\t'))
+for r in rows:
+    if r['write']=='true' and r['target']!='scratch' and not r['target'].endswith('_b'):raise SystemExit('non-B write target')
+    if r['write']=='true' and ('_a' in r['target'] or r['target'] in {'super','super_a','super_b'}):raise SystemExit('forbidden target')
+if any(r['action'] in {'set-active','set_active'} for r in rows):raise SystemExit('slot setter present')
+for r in rows:
+    if r['write']=='true' and r['image']:
+        import hashlib,pathlib
+        p=pathlib.Path(r['image'])
+        if not p.is_file():raise SystemExit(f'missing image {r["target"]}')
+        h=hashlib.sha256()
+        with p.open('rb') as f:
+            for block in iter(lambda:f.read(4*1024*1024),b''):h.update(block)
+        if h.hexdigest()!=r['sha256']:raise SystemExit(f'image mismatch {r["target"]}')
+PY
+
+CAPACITY_PLAN=$(prereq_path capacity-plan)
+COMPLETE_MANIFEST=$(prereq_path complete-image-set)
+FASTBOOTD_STATUS=$(prereq_path fastbootd-status)
+FASTBOOTD_LOGICALS=$(prereq_path fastbootd-logicals)
+SCRATCH_IMAGE=$(prereq_path scratch-image)
+SCRATCH_CURRENT=$(awk -F= '$1=="SCRATCH_SIZE_BYTES"{print $2}' "$FASTBOOTD_STATUS")
+SCRATCH_FINAL=$(plan_field create-logical-partition scratch argument)
+[[ $SCRATCH_CURRENT =~ ^[0-9]+$ && $SCRATCH_FINAL =~ ^[0-9]+$ ]] || fatal 'scratch sizes are invalid'
+python3 - "$SCRATCH_IMAGE" "$SCRATCH_FINAL" <<'PY'
+import struct,sys
+from pathlib import Path
+
+===== 8. OLD SUCCESSFUL system_b RESIZE =====
+
+--- resize-system_b.exit ---
+0
+
+--- resize-system_b.stdout ---
+
+--- resize-system_b.stderr ---
+Resizing 'system_b'                                OKAY [  0.007s]
+Finished. Total time: 0.021s
+
+===== 9. OLD SUCCESSFUL system_b FLASH =====
+
+--- flash-system_b.exit ---
+0
+
+--- flash-system_b.stdout ---
+
+--- flash-system_b.stderr ---
+Resizing 'system_b'                                OKAY [  0.005s]
+Sending sparse 'system_b' 1/3 (262140 KB)          OKAY [  6.866s]
+Writing 'system_b'                                 OKAY [  0.303s]
+Sending sparse 'system_b' 2/3 (262140 KB)          OKAY [  6.844s]
+Writing 'system_b'                                 OKAY [  0.332s]
+Sending sparse 'system_b' 3/3 (123376 KB)          OKAY [  3.275s]
+Writing 'system_b'                                 OKAY [  0.197s]
+Finished. Total time: 18.012s
+
+===== 10. OLD POST-RESIZE MODE TRANSITIONS =====
+
+--- after-system_b-resize-reboot-android.exit ---
+0
+
+--- after-system_b-resize-reboot-android.stdout ---
+
+--- after-system_b-resize-reboot-android.stderr ---
+Rebooting                                          OKAY [  0.001s]
+Finished. Total time: 0.251s
+
+--- after-system_b-resize-reboot-bootloader.exit ---
+0
+
+--- after-system_b-resize-reboot-bootloader.stdout ---
+
+--- after-system_b-resize-reboot-bootloader.stderr ---
+Rebooting into bootloader                          OKAY [  0.001s]
+Finished. Total time: 0.251s
+
+--- after-system_b-resize-reboot-fastboot.exit ---
+0
+
+--- after-system_b-resize-reboot-fastboot.stdout ---
+
+--- after-system_b-resize-reboot-fastboot.stderr ---
+Rebooting into fastboot                            OKAY [  0.002s]
+< waiting for any device >
+Finished. Total time: 24.263s
+
+===== 11. SEARCH OLD RUN FOR current-slot =====
+
+===== 12. OLD DRIVER AROUND system_b =====
+8-== Private pre-write backups ==
+9-METADATA_CHECK=PASS label=prewrite partitions=15 free_bytes=1904783360
+10-
+11-== Enter userspace fastbootd ==
+12-
+13-== Recreate scratch smaller with valid F2FS ==
+14-WRITE_OK=scratch-delete target=scratch count=1
+15-WRITE_OK=scratch-create target=scratch count=2
+16-WRITE_OK=scratch-flash target=scratch count=3
+17-METADATA_CHECK=PASS label=after-scratch partitions=15 free_bytes=2249469952
+18-
+19-== Resize B logical partitions; reboot A and lpdump after each ==
+20:WRITE_OK=resize-system_b target=system_b count=4
+21-METADATA_CHECK=PASS label=after-system_b-resize partitions=15 free_bytes=1613881344
+22-WRITE_OK=resize-system_ext_b target=system_ext_b count=5
+23-METADATA_CHECK=PASS label=after-system_ext_b-resize partitions=15 free_bytes=1246990336
+24-WRITE_OK=resize-product_b target=product_b count=6
+25-METADATA_CHECK=PASS label=after-product_b-resize partitions=15 free_bytes=909303808
+26-WRITE_OK=resize-vendor_b target=vendor_b count=7
+27-METADATA_CHECK=PASS label=after-vendor_b-resize partitions=15 free_bytes=92954624
+28-WRITE_OK=resize-vendor_dlkm_b target=vendor_dlkm_b count=8
+29-METADATA_CHECK=PASS label=after-vendor_dlkm_b-resize partitions=15 free_bytes=75419648
+30-WRITE_OK=resize-system_dlkm_b target=system_dlkm_b count=9
+31-METADATA_CHECK=PASS label=after-system_dlkm_b-resize partitions=15 free_bytes=67948544
+32-WRITE_OK=resize-odm_dlkm_b target=odm_dlkm_b count=10
+33-METADATA_CHECK=PASS label=after-odm_dlkm_b-resize partitions=15 free_bytes=67600384
+34-
+35-== Flash every B logical image ==
+36:WRITE_OK=flash-system_b target=system_b count=11
+37-WRITE_OK=flash-system_ext_b target=system_ext_b count=12
+38-WRITE_OK=flash-product_b target=product_b count=13
+39-WRITE_OK=flash-vendor_b target=vendor_b count=14
+40-WRITE_OK=flash-vendor_dlkm_b target=vendor_dlkm_b count=15
+41-WRITE_OK=flash-system_dlkm_b target=system_dlkm_b count=16
+42-WRITE_OK=flash-odm_dlkm_b target=odm_dlkm_b count=17
+43-
+44-== Return to A and verify logical B content from physical super ==
+45-METADATA_CHECK=PASS label=logical-final partitions=15 free_bytes=67600384
+46-Streaming physical super once for selective B logical readback...
+
+============================================================
+13. ENTER CURRENT BOOTLOADER
+============================================================
+
+--- current bootloader getvars ---
+current-slot: a
+Finished. Total time: 0.002s
+slot-count: 2
+Finished. Total time: 0.001s
+slot-successful:a: yes
+Finished. Total time: 0.001s
+slot-successful:b: yes
+Finished. Total time: 0.001s
+slot-unbootable:a: no
+Finished. Total time: 0.001s
+slot-unbootable:b: no
+Finished. Total time: 0.001s
+slot-retry-count:a: 1
+Finished. Total time: 0.001s
+slot-retry-count:b: 1
+Finished. Total time: 0.001s
+is-userspace: no
+Finished. Total time: 0.001s
+partition-size:system_b: 
+Finished. Total time: 0.001s
+partition-size:system_ext_b: 
+Finished. Total time: 0.001s
+partition-size:product_b: 
+Finished. Total time: 0.001s
+
+============================================================
+14. ENTER CURRENT FASTBOOTD
+============================================================
+Rebooting into fastboot                            OKAY [  0.002s]
+< waiting for any device >
+Finished. Total time: 23.057s
+
+--- current fastbootd getvars ---
+is-userspace: yes
+Finished. Total time: 0.001s
+current-slot: 
+Finished. Total time: 0.001s
+slot-count: 0
+Finished. Total time: 0.001s
+getvar:partition-size:system_b                     FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.013s
+getvar:partition-size:system_ext_b                 FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.002s
+getvar:partition-size:product_b                    FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.001s
+partition-type:system_b: raw
+Finished. Total time: 0.001s
+partition-type:system_ext_b: raw
+Finished. Total time: 0.001s
+partition-type:product_b: raw
+Finished. Total time: 0.001s
+has-slot:system: no
+Finished. Total time: 0.001s
+has-slot:product: no
+Finished. Total time: 0.001s
+
+===== selected getvar all =====
+(bootloader) super-partition-name:super
+(bootloader) is-userspace:yes
+(bootloader) partition-size:vbmeta_system_b:0x800000
+(bootloader) partition-type:vbmeta_system_b:raw
+(bootloader) partition-type:super:raw
+(bootloader) partition-type:product_b:raw
+(bootloader) partition-type:system_b:raw
+(bootloader) partition-type:system_ext_b:raw
+(bootloader) has-slot:vbmeta_system_b:no
+(bootloader) has-slot:super:no
+(bootloader) has-slot:product_b:no
+(bootloader) has-slot:system_b:no
+(bootloader) has-slot:system_ext_b:no
+(bootloader) current-slot:
+(bootloader) slot-count:0
+(bootloader) is-logical:vbmeta_system_b:no
+(bootloader) is-logical:super:no
+(bootloader) is-logical:product_b:yes
+(bootloader) is-logical:system_b:yes
+(bootloader) is-logical:system_ext_b:yes
+
+============================================================
+15. RETURN TO BOOTLOADER / A
+============================================================
+Rebooting into bootloader                          OKAY [  0.001s]
+Finished. Total time: 0.251s
+
+current-slot: a
+Finished. Total time: 0.002s
+is-userspace: no
+Finished. Total time: 0.001s
+
+Rebooting known-good A...
+Rebooting                                          OKAY [  0.001s]
+Finished. Total time: 0.252s
+[  1/180] SLOT=_a BOOT=   [  2/180] SLOT=_a BOOT=   [  3/180] SLOT=_a BOOT=   [  4/180] SLOT=_a BOOT=   [  5/180] SLOT= BOOT=   [  6/180] SLOT=_a BOOT=1   
+
+===== 16. FINAL A / METADATA =====
+SLOT=_a
+BOOT=1
+1eac61edfe777d0c6fa2f2d4f62ec892b6a031b90cb7064e4d6581c0a944fbca  /metadata/vold/metadata_encryption/key/keymaster_key_blob
+none
+
+============================================================
+COMPARISON COMPLETE — NO PARTITION WRITE
+============================================================
