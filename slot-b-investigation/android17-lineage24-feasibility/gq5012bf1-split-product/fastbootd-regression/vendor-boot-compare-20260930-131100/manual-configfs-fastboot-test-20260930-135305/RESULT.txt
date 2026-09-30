@@ -1,0 +1,62 @@
+============================================================
+1. VERIFY ORANGEFOX + HEALTHY BOOTCONTROL
+============================================================
+bootmode=recovery
+orangefox=R12.0
+slot=_a
+bootcontrol=running
+slots=2
+current=0
+active=0
+HAL Version: android.hardware.boot@aidl::IBootControl
+BOOTCONTROL_PRECONDITION_OK=1
+
+============================================================
+2. VERIFY CONFIGFS TOPOLOGY
+============================================================
+controller=11201000.usb0
+fastboot_pid=4EE0
+FFS_FASTBOOT_FUNCTION=YES
+fastboot on /dev/usb-ffs/fastboot type functionfs (rw,relatime)
+FFS_FASTBOOT_MOUNT=YES
+active:
+lrwxrwxrwx 1 root root 0 2026-09-30 12:41 /config/usb_gadget/g1/configs/b.1/f1 -> ../../../../usb_gadget/g1/functions/ffs.adb
+UDC:
+11201000.usb0
+PID:
+0xd001
+
+============================================================
+3. START FASTBOOTD LATE
+============================================================
+[01/20] state=running pid=933   
+
+fastbootd=running
+fastboot_pid=933
+context=u:r:fastbootd:s0
+endpoints:
+lrwx------ 1 root system 64 2026-09-30 12:53 6 -> /dev/usb-ffs/fastboot/ep0
+lr-x------ 1 root system 64 2026-09-30 12:53 7 -> /dev/usb-ffs/fastboot/ep1
+l-wx------ 1 root system 64 2026-09-30 12:53 8 -> /dev/usb-ffs/fastboot/ep2
+
+============================================================
+4. CONFIRM FASTBOOTD ACQUIRED AIDL BOOTCONTROL
+============================================================
+I/fastbootd(  808): Using AIDL version of IBootControl
+I/fastbootd(  933): Using AIDL version of IBootControl
+
+============================================================
+5. SWITCH LIVE CONFIGFS GADGET: ADB -> FASTBOOT
+============================================================
+ADB WILL DISCONNECT HERE. THIS IS EXPECTED.
+
+
+============================================================
+6. WAIT FOR HOST FASTBOOT
+============================================================
+[01/60] waiting   [02/60] waiting   [03/60] waiting   [04/60] waiting   [05/60] waiting   [06/60] waiting   [07/60] waiting   [08/60] waiting   [09/60] waiting   [10/60] waiting   [11/60] waiting   [12/60] waiting   [13/60] waiting   [14/60] waiting   [15/60] waiting   [16/60] waiting   [17/60] waiting   [18/60] waiting   [19/60] waiting   [20/60] waiting   [21/60] waiting   [22/60] waiting   [23/60] waiting   [24/60] waiting   [25/60] waiting   [26/60] waiting   [27/60] waiting   [28/60] waiting   [29/60] waiting   [30/60] waiting   [31/60] waiting   [32/60] waiting   [33/60] waiting   [34/60] waiting   [35/60] waiting   [36/60] waiting   [37/60] waiting   [38/60] waiting   [39/60] waiting   [40/60] waiting   [41/60] waiting   [42/60] waiting   [43/60] waiting   [44/60] waiting   [45/60] waiting   [46/60] waiting   [47/60] waiting   [48/60] waiting   [49/60] waiting   [50/60] waiting   [51/60] waiting   [52/60] waiting   [53/60] waiting   [54/60] waiting   [55/60] waiting   [56/60] waiting   [57/60] waiting   [58/60] waiting   [59/60] waiting   [60/60] waiting   
+
+FASTBOOT_ENUMERATION=FAILED
+
+No partition operation was performed.
+Use OrangeFox touchscreen: Reboot -> System.
