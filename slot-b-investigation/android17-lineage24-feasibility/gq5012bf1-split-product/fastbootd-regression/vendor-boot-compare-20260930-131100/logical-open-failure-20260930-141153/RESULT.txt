@@ -1,0 +1,433 @@
+============================================================
+1. VERIFY ORANGEFOX / BOOTCONTROL
+============================================================
+bootmode=recovery
+orangefox=R12.0
+slot=_a
+bootcontrol=running
+slots=2
+current=0
+HAL Version: android.hardware.boot@aidl::IBootControl
+
+============================================================
+2. PRE-EXISTING DM DEVICES
+============================================================
+--- dm devices ---
+/system/bin/sh: dmctl: inaccessible or not found
+/system/bin/sh: dmctl: inaccessible or not found
+
+--- relevant mapper nodes ---
+
+===== system_a =====
+lrwxrwxrwx 1 root root 15 2026-09-30 13:02 /dev/block/mapper/system_a -> /dev/block/dm-4
+RO=0
+SIZE=1998209024
+TABLE:
+/system/bin/sh: dmctl: inaccessible or not found
+INFO:
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== system_b =====
+lrwxrwxrwx 1 root root 15 2026-09-30 13:02 /dev/block/mapper/system_b -> /dev/block/dm-5
+RO=0
+SIZE=665391104
+TABLE:
+/system/bin/sh: dmctl: inaccessible or not found
+INFO:
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== system_ext_a =====
+lrwxrwxrwx 1 root root 15 2026-09-30 13:02 /dev/block/mapper/system_ext_a -> /dev/block/dm-8
+RO=0
+SIZE=657031168
+TABLE:
+/system/bin/sh: dmctl: inaccessible or not found
+INFO:
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== system_ext_b =====
+lrwxrwxrwx 1 root root 15 2026-09-30 13:02 /dev/block/mapper/system_ext_b -> /dev/block/dm-9
+RO=0
+SIZE=366891008
+TABLE:
+/system/bin/sh: dmctl: inaccessible or not found
+INFO:
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== product_a =====
+lrwxrwxrwx 1 root root 15 2026-09-30 13:02 /dev/block/mapper/product_a -> /dev/block/dm-2
+RO=0
+SIZE=1855819776
+TABLE:
+/system/bin/sh: dmctl: inaccessible or not found
+INFO:
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== product_b =====
+lrwxrwxrwx 1 root root 15 2026-09-30 13:02 /dev/block/mapper/product_b -> /dev/block/dm-3
+RO=0
+SIZE=337686528
+TABLE:
+/system/bin/sh: dmctl: inaccessible or not found
+INFO:
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== vendor_a =====
+lrwxrwxrwx 1 root root 16 2026-09-30 13:02 /dev/block/mapper/vendor_a -> /dev/block/dm-10
+RO=0
+SIZE=1283530752
+TABLE:
+/system/bin/sh: dmctl: inaccessible or not found
+INFO:
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== vendor_b =====
+lrwxrwxrwx 1 root root 16 2026-09-30 13:02 /dev/block/mapper/vendor_b -> /dev/block/dm-11
+RO=0
+SIZE=816349184
+TABLE:
+/system/bin/sh: dmctl: inaccessible or not found
+INFO:
+/system/bin/sh: dmctl: inaccessible or not found
+
+============================================================
+3. MOUNTS USING THOSE MAPPERS
+============================================================
+/dev/block/mapper/system_a /mnt/system_a erofs ro,seclabel,relatime,user_xattr,acl,cache_strategy=readaround 0 0
+/dev/block/mapper/vendor_a /vendor erofs ro,seclabel,relatime,user_xattr,acl,cache_strategy=readaround 0 0
+
+============================================================
+4. SUPER DEVICE
+============================================================
+lrwxrwxrwx 1 root root 16 2026-09-30 13:02 /dev/block/by-name/super -> /dev/block/sdc75
+/dev/block/sdc75
+SUPER_RO=0
+SUPER_SIZE=9663676416
+
+============================================================
+5. LP METADATA VISIBILITY
+============================================================
+lpdump unavailable
+
+============================================================
+6. START LATE TCP FASTBOOTD
+============================================================
+[01/20] fastbootd=running pid=900   
+
+15554
+
+============================================================
+7. CONTROL GETVARS
+============================================================
+is-userspace: yes
+Finished. Total time: 0.002s
+current-slot: a
+Finished. Total time: 0.003s
+slot-count: 2
+Finished. Total time: 0.003s
+super-partition-name: super
+Finished. Total time: 0.003s
+
+============================================================
+8. PHYSICAL PARTITION CONTROL
+============================================================
+getvar:partition-size:super                        FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.003s
+
+============================================================
+9. ACTIVE + INACTIVE LOGICAL OPEN TEST
+============================================================
+
+===== system_a =====
+is-logical:system_a: yes
+Finished. Total time: 0.003s
+getvar:partition-size:system_a                     FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.004s
+
+===== system_b =====
+is-logical:system_b: yes
+Finished. Total time: 0.002s
+getvar:partition-size:system_b                     FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.004s
+
+===== system_ext_a =====
+is-logical:system_ext_a: yes
+Finished. Total time: 0.003s
+getvar:partition-size:system_ext_a                 FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.004s
+
+===== system_ext_b =====
+is-logical:system_ext_b: yes
+Finished. Total time: 0.002s
+getvar:partition-size:system_ext_b                 FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.004s
+
+===== product_a =====
+is-logical:product_a: yes
+Finished. Total time: 0.003s
+getvar:partition-size:product_a                    FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.004s
+
+===== product_b =====
+is-logical:product_b: yes
+Finished. Total time: 0.002s
+getvar:partition-size:product_b                    FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.004s
+
+===== vendor_a =====
+is-logical:vendor_a: yes
+Finished. Total time: 0.003s
+getvar:partition-size:vendor_a                     FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.004s
+
+===== vendor_b =====
+is-logical:vendor_b: yes
+Finished. Total time: 0.002s
+getvar:partition-size:vendor_b                     FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.004s
+
+============================================================
+10. FASTBOOTD ERROR LOG — IMMEDIATELY AFTER GETVARS
+============================================================
+09-30 13:02:42.389     1     1 I init    : [libfs_mgr] ReadFstabFromDt(): failed to read fstab from dt
+09-30 13:02:42.390     1     1 W init    : [libfs_mgr] Warning: unknown flag: resize
+09-30 13:02:42.858     1     1 W init    : DM_DEV_STATUS failed for system_ext_a: No such device or address
+09-30 13:02:42.858     1     1 W init    : DM_DEV_STATUS failed for system_ext_a: No such device or address
+09-30 13:02:42.858     1     1 W init    : DM_DEV_STATUS failed for product_a: No such device or address
+09-30 13:02:42.858     1     1 W init    : DM_DEV_STATUS failed for product_a: No such device or address
+09-30 13:02:43.014     1     1 I init    : [libfs_mgr] vendor overlay: vndk version not defined
+09-30 13:02:43.017     1     1 W init    : No user specified for service 'fastbootd'. Defaults to root.
+09-30 13:02:43.890   377   377 W android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+09-30 13:02:43.893   377   377 W android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+09-30 13:02:43.959   349   349 E init    : Unable to set property 'ro.fastbootd.available' from uid:0 gid:0 pid:373: Read-only property was already set
+09-30 13:02:44.761   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 1th superblock
+09-30 13:02:44.761   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 2th superblock
+09-30 13:02:44.761   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 1th superblock
+09-30 13:02:44.761   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 2th superblock
+09-30 13:02:44.804   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 1th superblock
+09-30 13:02:44.804   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 2th superblock
+09-30 13:02:44.804   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 1th superblock
+09-30 13:02:44.805   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 2th superblock
+09-30 13:02:44.761   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 1th superblock
+09-30 13:02:44.761   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 2th superblock
+09-30 13:02:44.761   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 1th superblock
+09-30 13:02:44.761   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 2th superblock
+09-30 13:02:44.804   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 1th superblock
+09-30 13:02:44.804   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 2th superblock
+09-30 13:02:44.804   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 1th superblock
+09-30 13:02:44.805   373   373 E F2FS-fs (sdc76): Can't find valid F2FS filesystem in 2th superblock
+09-30 13:02:48.893   499   499 W android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+09-30 13:02:48.897   499   499 W android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+09-30 13:02:51.851   373   373 I recovery: [libfs_mgr] Running /system/bin/fsck.f2fs -a -c 10000 --debug-cache /dev/block/dm-15
+09-30 13:02:51.878   373   373 I fsck.f2fs: Info: superblock features = 1499 :  encrypt extra_attr project_quota quota verity casefold
+09-30 13:02:51.878   373   373 I fsck.f2fs: Info: superblock encrypt level = 0, salt = 00000000000000000000000000000000
+09-30 13:02:52.086   373   373 I F2FS-fs (dm-15): Using encoding defined by superblock: utf8-12.1.0 with flags 0x2
+09-30 13:02:52.201   373   373 I recovery: [libfs_mgr] __mount(source=/dev/block/mapper/userdata,target=/data,type=f2fs)=0: Success
+09-30 13:02:53.552   373   373 I [1003]  : type=1400 audit(0.0:675): avc:  denied  { getattr } for  comm="recovery" path="/data/user/0/zsEk8wAAAADI9atjx5X9M7Dy8GsUNQgIPn3duj6rNHKgh9QRLTIGrw" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:02:53.552   373   373 I recovery: type=1400 audit(0.0:675): avc:  denied  { getattr } for  path="/data/user/0/zsEk8wAAAADI9atjx5X9M7Dy8GsUNQgIPn3duj6rNHKgh9QRLTIGrw" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:02:53.552   373   373 I [1003]  : type=1400 audit(0.0:676): avc:  denied  { read } for  comm="recovery" name="zsEk8wAAAADI9atjx5X9M7Dy8GsUNQgIPn3duj6rNHKgh9QRLTIGrw" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:02:53.552   373   373 I recovery: type=1400 audit(0.0:676): avc:  denied  { read } for  name="zsEk8wAAAADI9atjx5X9M7Dy8GsUNQgIPn3duj6rNHKgh9QRLTIGrw" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:02:53.552   373   373 I [1003]  : type=1400 audit(0.0:677): avc:  denied  { open } for  comm="recovery" path="/data/user/0/zsEk8wAAAADI9atjx5X9M7Dy8GsUNQgIPn3duj6rNHKgh9QRLTIGrw" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:02:53.552   373   373 I recovery: type=1400 audit(0.0:677): avc:  denied  { open } for  path="/data/user/0/zsEk8wAAAADI9atjx5X9M7Dy8GsUNQgIPn3duj6rNHKgh9QRLTIGrw" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:02:53.552   373   373 I [1003]  : type=1400 audit(0.0:678): avc:  denied  { search } for  comm="recovery" name="zsEk8wAAAADI9atjx5X9M7Dy8GsUNQgIPn3duj6rNHKgh9QRLTIGrw" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:02:53.552   373   373 I recovery: type=1400 audit(0.0:678): avc:  denied  { search } for  name="zsEk8wAAAADI9atjx5X9M7Dy8GsUNQgIPn3duj6rNHKgh9QRLTIGrw" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:02:53.572   373   373 I [1003]  : type=1400 audit(0.0:779): avc:  denied  { getattr } for  comm="recovery" path="/data/user/0/wTUt8AAAAACl3htgGvd1llhOGqO_M3G85dcF-2IZuTrN5zCKlDXQqA/KUVrvgAAAADncxEe94M5CS5SlT3nsawa/Jf7y1gAAAADqwIenr0Wrq1vfQnfn25gJpex15d7Gy5f9EMP4th9Mo1hGg059dGDFH7bTSHEqG7c" dev="dm-15" ino=153119 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=file permissive=1
+09-30 13:02:53.572   373   373 I recovery: type=1400 audit(0.0:779): avc:  denied  { getattr } for  path="/data/user/0/wTUt8AAAAACl3htgGvd1llhOGqO_M3G85dcF-2IZuTrN5zCKlDXQqA/KUVrvgAAAADncxEe94M5CS5SlT3nsawa/Jf7y1gAAAADqwIenr0Wrq1vfQnfn25gJpex15d7Gy5f9EMP4th9Mo1hGg059dGDFH7bTSHEqG7c" dev="dm-15" ino=153119 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=file permissive=1
+09-30 13:02:53.808   373   373 I [1003]  : type=1400 audit(0.0:1115): avc:  denied  { getattr } for  comm="recovery" path="/data/user/0/ZWdXEgAAAAB-Lacl6V1fTjHr4gVfM7zkRcwuyknmdlMbCsL-fNg2vQ" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:02:53.808   373   373 I recovery: type=1400 audit(0.0:1115): avc:  denied  { getattr } for  path="/data/user/0/ZWdXEgAAAAB-Lacl6V1fTjHr4gVfM7zkRcwuyknmdlMbCsL-fNg2vQ" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:02:53.808   373   373 I [1003]  : type=1400 audit(0.0:1116): avc:  denied  { read } for  comm="recovery" name="ZWdXEgAAAAB-Lacl6V1fTjHr4gVfM7zkRcwuyknmdlMbCsL-fNg2vQ" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:02:53.808   373   373 I recovery: type=1400 audit(0.0:1116): avc:  denied  { read } for  name="ZWdXEgAAAAB-Lacl6V1fTjHr4gVfM7zkRcwuyknmdlMbCsL-fNg2vQ" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:02:53.808   373   373 I [1003]  : type=1400 audit(0.0:1117): avc:  denied  { open } for  comm="recovery" path="/data/user/0/ZWdXEgAAAAB-Lacl6V1fTjHr4gVfM7zkRcwuyknmdlMbCsL-fNg2vQ" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:02:53.808   373   373 I recovery: type=1400 audit(0.0:1117): avc:  denied  { open } for  path="/data/user/0/ZWdXEgAAAAB-Lacl6V1fTjHr4gVfM7zkRcwuyknmdlMbCsL-fNg2vQ" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:02:53.808   373   373 I [1003]  : type=1400 audit(0.0:1118): avc:  denied  { search } for  comm="recovery" name="ZWdXEgAAAAB-Lacl6V1fTjHr4gVfM7zkRcwuyknmdlMbCsL-fNg2vQ" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:02:53.808   373   373 I recovery: type=1400 audit(0.0:1118): avc:  denied  { search } for  name="ZWdXEgAAAAB-Lacl6V1fTjHr4gVfM7zkRcwuyknmdlMbCsL-fNg2vQ" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:02:58.596   373   373 I [1003]  : type=1400 audit(0.0:2103): avc:  denied  { open } for  comm="recovery" path="/dev/__properties__/u:object_r:system_audio_config_prop:s0" dev="tmpfs" ino=303 scontext=u:r:recovery:s0 tcontext=u:object_r:system_audio_config_prop:s0 tclass=file permissive=1
+09-30 13:02:58.596   373   373 I recovery: type=1400 audit(0.0:2103): avc:  denied  { open } for  path="/dev/__properties__/u:object_r:system_audio_config_prop:s0" dev="tmpfs" ino=303 scontext=u:r:recovery:s0 tcontext=u:object_r:system_audio_config_prop:s0 tclass=file permissive=1
+09-30 13:03:13.082   524   675 E keystore2:     0: system/security/keystore2/src/super_key.rs:429: Required super decryption key is not in memory.
+09-30 13:03:14.432   373   373 I [1003]  : type=1400 audit(0.0:2941): avc:  denied  { getattr } for  comm="recovery" path="/data/user/0/com.android.fmradio" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:03:14.432   373   373 I recovery: type=1400 audit(0.0:2941): avc:  denied  { getattr } for  path="/data/user/0/com.android.fmradio" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:03:14.432   373   373 I [1003]  : type=1400 audit(0.0:2942): avc:  denied  { read } for  comm="recovery" name="com.android.fmradio" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:03:14.432   373   373 I recovery: type=1400 audit(0.0:2942): avc:  denied  { read } for  name="com.android.fmradio" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:03:14.432   373   373 I [1003]  : type=1400 audit(0.0:2943): avc:  denied  { open } for  comm="recovery" path="/data/user/0/com.android.fmradio" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:03:14.432   373   373 I recovery: type=1400 audit(0.0:2943): avc:  denied  { open } for  path="/data/user/0/com.android.fmradio" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:03:14.432   373   373 I [1003]  : type=1400 audit(0.0:2944): avc:  denied  { search } for  comm="recovery" name="com.android.fmradio" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:03:14.432   373   373 I recovery: type=1400 audit(0.0:2944): avc:  denied  { search } for  name="com.android.fmradio" dev="dm-15" ino=151911 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=dir permissive=1
+09-30 13:03:14.440   373   373 I [1003]  : type=1400 audit(0.0:3023): avc:  denied  { getattr } for  comm="recovery" path="/data/user/0/me.phh.treble.app/shared_prefs/me.phh.treble.app_preferences.xml" dev="dm-15" ino=153119 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=file permissive=1
+09-30 13:03:14.440   373   373 I recovery: type=1400 audit(0.0:3023): avc:  denied  { getattr } for  path="/data/user/0/me.phh.treble.app/shared_prefs/me.phh.treble.app_preferences.xml" dev="dm-15" ino=153119 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0 tclass=file permissive=1
+09-30 13:03:14.512   373   373 I [1003]  : type=1400 audit(0.0:3304): avc:  denied  { getattr } for  comm="recovery" path="/data/user/0/com.android.DeviceAsWebcam" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:03:14.512   373   373 I recovery: type=1400 audit(0.0:3304): avc:  denied  { getattr } for  path="/data/user/0/com.android.DeviceAsWebcam" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:03:14.512   373   373 I [1003]  : type=1400 audit(0.0:3305): avc:  denied  { read } for  comm="recovery" name="com.android.DeviceAsWebcam" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:03:14.512   373   373 I recovery: type=1400 audit(0.0:3305): avc:  denied  { read } for  name="com.android.DeviceAsWebcam" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:03:14.512   373   373 I [1003]  : type=1400 audit(0.0:3306): avc:  denied  { open } for  comm="recovery" path="/data/user/0/com.android.DeviceAsWebcam" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:03:14.512   373   373 I recovery: type=1400 audit(0.0:3306): avc:  denied  { open } for  path="/data/user/0/com.android.DeviceAsWebcam" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:03:14.512   373   373 I [1003]  : type=1400 audit(0.0:3307): avc:  denied  { search } for  comm="recovery" name="com.android.DeviceAsWebcam" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:03:14.512   373   373 I recovery: type=1400 audit(0.0:3307): avc:  denied  { search } for  name="com.android.DeviceAsWebcam" dev="dm-15" ino=7888 scontext=u:r:recovery:s0 tcontext=u:object_r:system_app_data_file:s0:c232,c259,c512,c768 tclass=dir permissive=1
+09-30 13:08:29.263     1     1 I init    : Control message: Processed ctl.stop for 'fastbootd' from pid: 805 (stop fastbootd)
+09-30 13:08:30.304     1     1 I init    : starting service 'fastbootd'...
+09-30 13:08:30.323   810   810 I KernelSU: hook_manager: unmark 810 exec /system/bin/fastbootd
+09-30 13:08:30.324     1     1 I init    : ... started service 'fastbootd' has pid 810
+09-30 13:08:30.324     1     1 I init    : Control message: Processed ctl.start for 'fastbootd' from pid: 809 (start fastbootd)
+09-30 13:08:30.344   810   810 I [1003]  : type=1400 audit(0.0:4011): avc:  denied  { call } for  comm="fastbootd" scontext=u:r:fastbootd:s0 tcontext=u:r:recovery:s0 tclass=binder permissive=1
+09-30 13:08:30.344   810   810 I fastbootd: type=1400 audit(0.0:4011): avc:  denied  { call } for  scontext=u:r:fastbootd:s0 tcontext=u:r:recovery:s0 tclass=binder permissive=1
+09-30 13:08:30.344   368   368 I [1003]  : type=1400 audit(0.0:4012): avc:  denied  { transfer } for  comm="servicemanager" scontext=u:r:recovery:s0 tcontext=u:r:fastbootd:s0 tclass=binder permissive=1
+09-30 13:08:30.344   368   368 I servicemanager: type=1400 audit(0.0:4012): avc:  denied  { transfer } for  scontext=u:r:recovery:s0 tcontext=u:r:fastbootd:s0 tclass=binder permissive=1
+09-30 13:08:30.350   367   367 E SELinux : avc:  denied  { find } for interface=android.hardware.fastboot::IFastboot sid=u:r:fastbootd:s0 pid=810 scontext=u:r:fastbootd:s0 tcontext=u:object_r:default_android_hwservice:s0 tclass=hwservice_manager permissive=1
+09-30 13:08:30.350   367   367 I [1003]  : avc:  denied  { find } for interface=android.hardware.fastboot::IFastboot sid=u:r:fastbootd:s0 pid=810 scontext=u:r:fastbootd:s0 tcontext=u:object_r:default_android_hwservice:s0 tclass=hwservice_manager permissive=1
+09-30 13:08:30.356   810   810 I fastbootd: Using AIDL version of IBootControl
+09-30 13:08:30.357   810   810 I fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+09-30 13:08:30.358   810   810 W fastbootd: No fastboot implementation is found.
+09-30 13:08:30.358   810   810 I fastbootd: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+09-30 13:08:30.359   810   810 W fastbootd: [libfstab] Warning: unknown flag: resize
+09-30 13:08:30.359   810   810 E fastbootd: [libfs_mgr] unknown volume for path [/cache]
+09-30 13:08:32.658   810   810 I fastbootd: Fastboot command: getvar:is-userspace
+09-30 13:08:32.668   810   810 I fastbootd: Fastboot command: getvar:current-slot
+09-30 13:08:32.678   810   810 I fastbootd: Fastboot command: getvar:slot-count
+09-30 13:08:32.676   810   810 I [1003]  : type=1400 audit(0.0:4013): avc:  denied  { write } for  comm="fastbootd" name="sdc75" dev="tmpfs" ino=37 scontext=u:r:fastbootd:s0 tcontext=u:object_r:block_device:s0 tclass=blk_file permissive=1
+09-30 13:08:32.676   810   810 I fastbootd: type=1400 audit(0.0:4013): avc:  denied  { write } for  name="sdc75" dev="tmpfs" ino=37 scontext=u:r:fastbootd:s0 tcontext=u:object_r:block_device:s0 tclass=blk_file permissive=1
+09-30 13:08:32.676   810   810 I [1003]  : type=1400 audit(0.0:4014): avc:  denied  { getattr } for  comm="fastbootd" path="/dev/block/sdc75" dev="tmpfs" ino=37 scontext=u:r:fastbootd:s0 tcontext=u:object_r:block_device:s0 tclass=blk_file permissive=1
+09-30 13:08:32.676   810   810 I fastbootd: type=1400 audit(0.0:4014): avc:  denied  { getattr } for  path="/dev/block/sdc75" dev="tmpfs" ino=37 scontext=u:r:fastbootd:s0 tcontext=u:object_r:block_device:s0 tclass=blk_file permissive=1
+09-30 13:08:32.676   810   810 I [1003]  : type=1400 audit(0.0:4015): avc:  denied  { read } for  comm="fastbootd" name="sdc75" dev="tmpfs" ino=37 scontext=u:r:fastbootd:s0 tcontext=u:object_r:block_device:s0 tclass=blk_file permissive=1
+09-30 13:08:32.676   810   810 I fastbootd: type=1400 audit(0.0:4015): avc:  denied  { read } for  name="sdc75" dev="tmpfs" ino=37 scontext=u:r:fastbootd:s0 tcontext=u:object_r:block_device:s0 tclass=blk_file permissive=1
+09-30 13:08:32.676   810   810 I [1003]  : type=1400 audit(0.0:4016): avc:  denied  { open } for  comm="fastbootd" path="/dev/block/sdc75" dev="tmpfs" ino=37 scontext=u:r:fastbootd:s0 tcontext=u:object_r:block_device:s0 tclass=blk_file permissive=1
+09-30 13:08:32.676   810   810 I fastbootd: type=1400 audit(0.0:4016): avc:  denied  { open } for  path="/dev/block/sdc75" dev="tmpfs" ino=37 scontext=u:r:fastbootd:s0 tcontext=u:object_r:block_device:s0 tclass=blk_file permissive=1
+09-30 13:08:32.688   810   810 I fastbootd: Fastboot command: getvar:is-logical:system_b
+09-30 13:08:32.708   810   810 I fastbootd: Fastboot command: getvar:is-logical:system_ext_b
+09-30 13:08:32.718   810   810 I fastbootd: Fastboot command: getvar:is-logical:product_b
+09-30 13:08:32.728   810   810 I fastbootd: Fastboot command: getvar:partition-size:system_b
+09-30 13:08:32.729   810   810 E fastbootd: DM_DEV_CREATE failed for [system_b]: Device or resource busy
+09-30 13:08:32.729   810   810 E fastbootd: Could not map partition: system_b
+09-30 13:08:32.740   810   810 I fastbootd: Fastboot command: getvar:partition-size:system_ext_b
+09-30 13:08:32.742   810   810 E fastbootd: DM_DEV_CREATE failed for [system_ext_b]: Device or resource busy
+09-30 13:08:32.742   810   810 E fastbootd: Could not map partition: system_ext_b
+09-30 13:08:32.752   810   810 I fastbootd: Fastboot command: getvar:partition-size:product_b
+09-30 13:08:32.753   810   810 E fastbootd: DM_DEV_CREATE failed for [product_b]: Device or resource busy
+09-30 13:08:32.753   810   810 E fastbootd: Could not map partition: product_b
+09-30 13:08:32.764   810   810 I fastbootd: Fastboot command: getvar:partition-type:system_b
+09-30 13:08:32.774   810   810 I fastbootd: Fastboot command: getvar:partition-type:system_ext_b
+09-30 13:08:32.785   810   810 I fastbootd: Fastboot command: getvar:partition-type:product_b
+09-30 13:08:32.797   810   810 I fastbootd: Fastboot command: getvar:current-slot
+09-30 13:08:32.809   810   810 I fastbootd: Fastboot command: getvar:slot-count
+09-30 13:08:32.821   810   810 I fastbootd: Fastboot command: getvar:partition-size:system_b
+09-30 13:08:32.823   810   810 E fastbootd: DM_DEV_CREATE failed for [system_b]: Device or resource busy
+09-30 13:08:32.823   810   810 E fastbootd: Could not map partition: system_b
+09-30 13:08:32.859     1     1 I init    : Sending signal 9 to service 'fastbootd' (pid 810) process group...
+09-30 13:08:32.861     1     1 I init    : Control message: Processed ctl.stop for 'fastbootd' from pid: 835 (stop fastbootd)
+09-30 13:08:32.861     1     1 I init    : Service 'fastbootd' (pid 810) received signal 9
+09-30 13:08:32.861     1     1 I init    : Sending signal 9 to service 'fastbootd' (pid 810) process group...
+09-30 13:12:01.410     1     1 I init    : Control message: Processed ctl.stop for 'fastbootd' from pid: 897 (stop fastbootd)
+09-30 13:12:01.425     1     1 I init    : starting service 'fastbootd'...
+09-30 13:12:01.443   900   900 I KernelSU: hook_manager: unmark 900 exec /system/bin/fastbootd
+09-30 13:12:01.444     1     1 I init    : ... started service 'fastbootd' has pid 900
+09-30 13:12:01.444     1     1 I init    : Control message: Processed ctl.start for 'fastbootd' from pid: 899 (start fastbootd)
+09-30 13:12:01.460   900   900 I fastbootd: Using AIDL version of IBootControl
+09-30 13:12:01.460   900   900 I fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+09-30 13:12:01.461   900   900 W fastbootd: No fastboot implementation is found.
+09-30 13:12:01.461   900   900 I fastbootd: [libfstab] Using Android DT directory /proc/device-tree/firmware/android/
+09-30 13:12:01.462   900   900 W fastbootd: [libfstab] Warning: unknown flag: resize
+09-30 13:12:01.462   900   900 E fastbootd: [libfs_mgr] unknown volume for path [/cache]
+09-30 13:12:01.551   900   900 I fastbootd: Fastboot command: getvar:is-userspace
+09-30 13:12:01.561   900   900 I fastbootd: Fastboot command: getvar:current-slot
+09-30 13:12:01.572   900   900 I fastbootd: Fastboot command: getvar:slot-count
+09-30 13:12:01.581   900   900 I fastbootd: Fastboot command: getvar:super-partition-name
+09-30 13:12:01.591   900   900 I fastbootd: Fastboot command: getvar:partition-size:super
+09-30 13:12:01.592   900   900 E fastbootd: Failed to open block device: /dev/block/by-name/super: Device or resource busy
+09-30 13:12:01.602   900   900 I fastbootd: Fastboot command: getvar:is-logical:system_a
+09-30 13:12:01.612   900   900 I fastbootd: Fastboot command: getvar:partition-size:system_a
+09-30 13:12:01.614   900   900 E fastbootd: DM_DEV_CREATE failed for [system_a]: Device or resource busy
+09-30 13:12:01.614   900   900 E fastbootd: Could not map partition: system_a
+09-30 13:12:01.626   900   900 I fastbootd: Fastboot command: getvar:is-logical:system_b
+09-30 13:12:01.636   900   900 I fastbootd: Fastboot command: getvar:partition-size:system_b
+09-30 13:12:01.638   900   900 E fastbootd: DM_DEV_CREATE failed for [system_b]: Device or resource busy
+09-30 13:12:01.638   900   900 E fastbootd: Could not map partition: system_b
+09-30 13:12:01.648   900   900 I fastbootd: Fastboot command: getvar:is-logical:system_ext_a
+09-30 13:12:01.658   900   900 I fastbootd: Fastboot command: getvar:partition-size:system_ext_a
+09-30 13:12:01.660   900   900 E fastbootd: DM_DEV_CREATE failed for [system_ext_a]: Device or resource busy
+09-30 13:12:01.660   900   900 E fastbootd: Could not map partition: system_ext_a
+09-30 13:12:01.669   900   900 I fastbootd: Fastboot command: getvar:is-logical:system_ext_b
+09-30 13:12:01.680   900   900 I fastbootd: Fastboot command: getvar:partition-size:system_ext_b
+09-30 13:12:01.683   900   900 E fastbootd: DM_DEV_CREATE failed for [system_ext_b]: Device or resource busy
+09-30 13:12:01.683   900   900 E fastbootd: Could not map partition: system_ext_b
+09-30 13:12:01.692   900   900 I fastbootd: Fastboot command: getvar:is-logical:product_a
+09-30 13:12:01.703   900   900 I fastbootd: Fastboot command: getvar:partition-size:product_a
+09-30 13:12:01.705   900   900 E fastbootd: DM_DEV_CREATE failed for [product_a]: Device or resource busy
+09-30 13:12:01.705   900   900 E fastbootd: Could not map partition: product_a
+09-30 13:12:01.715   900   900 I fastbootd: Fastboot command: getvar:is-logical:product_b
+09-30 13:12:01.724   900   900 I fastbootd: Fastboot command: getvar:partition-size:product_b
+09-30 13:12:01.726   900   900 E fastbootd: DM_DEV_CREATE failed for [product_b]: Device or resource busy
+09-30 13:12:01.726   900   900 E fastbootd: Could not map partition: product_b
+09-30 13:12:01.735   900   900 I fastbootd: Fastboot command: getvar:is-logical:vendor_a
+09-30 13:12:01.745   900   900 I fastbootd: Fastboot command: getvar:partition-size:vendor_a
+09-30 13:12:01.747   900   900 E fastbootd: DM_DEV_CREATE failed for [vendor_a]: Device or resource busy
+09-30 13:12:01.747   900   900 E fastbootd: Could not map partition: vendor_a
+09-30 13:12:01.757   900   900 I fastbootd: Fastboot command: getvar:is-logical:vendor_b
+09-30 13:12:01.767   900   900 I fastbootd: Fastboot command: getvar:partition-size:vendor_b
+09-30 13:12:01.769   900   900 E fastbootd: DM_DEV_CREATE failed for [vendor_b]: Device or resource busy
+09-30 13:12:01.769   900   900 E fastbootd: Could not map partition: vendor_b
+
+============================================================
+11. DM STATE AFTER FAILED OPENS
+============================================================
+/system/bin/sh: dmctl: inaccessible or not found
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== system_a =====
+lrwxrwxrwx 1 root root 15 2026-09-30 13:02 /dev/block/mapper/system_a -> /dev/block/dm-4
+RO=0
+SIZE=1998209024
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== system_b =====
+lrwxrwxrwx 1 root root 15 2026-09-30 13:02 /dev/block/mapper/system_b -> /dev/block/dm-5
+RO=0
+SIZE=665391104
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== system_ext_a =====
+lrwxrwxrwx 1 root root 15 2026-09-30 13:02 /dev/block/mapper/system_ext_a -> /dev/block/dm-8
+RO=0
+SIZE=657031168
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== system_ext_b =====
+lrwxrwxrwx 1 root root 15 2026-09-30 13:02 /dev/block/mapper/system_ext_b -> /dev/block/dm-9
+RO=0
+SIZE=366891008
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== product_a =====
+lrwxrwxrwx 1 root root 15 2026-09-30 13:02 /dev/block/mapper/product_a -> /dev/block/dm-2
+RO=0
+SIZE=1855819776
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== product_b =====
+lrwxrwxrwx 1 root root 15 2026-09-30 13:02 /dev/block/mapper/product_b -> /dev/block/dm-3
+RO=0
+SIZE=337686528
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== vendor_a =====
+lrwxrwxrwx 1 root root 16 2026-09-30 13:02 /dev/block/mapper/vendor_a -> /dev/block/dm-10
+RO=0
+SIZE=1283530752
+/system/bin/sh: dmctl: inaccessible or not found
+
+===== vendor_b =====
+lrwxrwxrwx 1 root root 16 2026-09-30 13:02 /dev/block/mapper/vendor_b -> /dev/block/dm-11
+RO=0
+SIZE=816349184
+/system/bin/sh: dmctl: inaccessible or not found
+
+============================================================
+12. CLEANUP TCP FASTBOOTD
+============================================================
+fastbootd=stopped
+protocol=usb
+adb=running
+bootcontrol=running
+2
+0
+
+============================================================
+DONE — ZERO PARTITION / DM WRITES
+============================================================
