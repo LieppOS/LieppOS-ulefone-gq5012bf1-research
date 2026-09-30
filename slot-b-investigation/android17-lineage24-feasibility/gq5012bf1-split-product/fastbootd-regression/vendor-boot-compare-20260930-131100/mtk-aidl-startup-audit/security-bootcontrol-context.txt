@@ -1,0 +1,65 @@
+35-    user system
+36-    group system
+37-    disabled
+38-
+39-service gq5012bf1-tee-storage /system/bin/sh /system/bin/gq5012bf1-tee-storage.sh
+40-    class core
+41-    user root
+42-    group root
+43-    disabled
+44-    oneshot
+45-    seclabel u:r:recovery:s0
+46-
+47-service gq5012bf1-keystore2 /system/bin/keystore2 /tmp/misc/keystore
+48-    class early_hal
+49-    user root
+50-    group keystore readproc log
+51-    writepid /dev/cpuset/foreground/tasks
+52-    seclabel u:r:keystore:s0
+53-    disabled
+54-
+55-# Stock two-stage TrustKernel handshake.
+56-#
+57-# Stage 1 (gq5012bf1-security-prep) mounts the active system/vendor, installs
+58-# the VINTF and identity inputs, and announces fs.state=prepare.
+59-# Stage 2 (gq5012bf1-tee-storage) waits for OrangeFox to mount the
+60-# metadata-encrypted /data, creates the teed datapath there, and only then
+61-# announces fs.state=ready. teed must not start before that: tee_userinit runs
+62-# once per secure-world lifetime and cannot be redone by restarting the HALs.
+63-on boot
+64-    stop keystore2
+65:    stop vendor.boot-default
+66-    start gq5012bf1-security-prep
+67:    # BootControl must stay unconditional; recovery otherwise blocks on
+68:    # IBootControl at the splash logo (commit 078db47).
+69:    start vendor.boot-default
+70-
+71-# teed starts here, mirroring stock's "on post-fs / start teed". It must NOT
+72-# wait for /data: recovery gets the metadata key from KeyMint, KeyMint needs
+73-# teed, and /data cannot be mounted until that key is retrieved. Gating teed
+74-# on /data therefore deadlocks recovery at the splash.
+75-on property:vendor.trustkernel.fs.state=prepare
+76-    start teed
+77-    start gq5012bf1-tee-storage
+78-
+79-# KeyMint starts as soon as teed is up. Recovery needs it to retrieve the
+80-# metadata key, and it must not be gated behind anything that depends on /data.
+81-on property:vendor.trustkernel.ready=true
+82-    start vendor.keymint-3-0-trustkernel
+83-
+84-# Gatekeeper is started AFTER KeyMint is already running, never at the same
+85-# time. Build25 and Build26 started both from vendor.trustkernel.ready=true
+86-# simultaneously and reproduced the Keystore2 failure "No suitable auth token
+87-# found" / KEY_USER_NOT_AUTHENTICATED. Serialising the two trusted-application
+88-# sessions is what fixes it.
+89-#
+90-# Nothing here depends on /data. Recovery blocks at the splash until Gatekeeper
+91-# and Keystore2 exist, so anything gated behind /data deadlocks the boot.
+92-on property:init.svc.vendor.keymint-3-0-trustkernel=running
+93-    exec u:r:recovery:s0 root root -- /system/bin/sleep 5
+94-    start vendor.gatekeeper
+95-
+96-on property:init.svc.vendor.gatekeeper=running
+97-    exec u:r:recovery:s0 root root -- /system/bin/sleep 1
+98-    mkdir /tmp/misc 0755 root root
+99-    mkdir /tmp/misc/keystore 0755 root root
