@@ -1,0 +1,39 @@
+
+==================================================
+FILE: plat_property_contexts
+==================================================
+120: # Fastbootd protocol control property
+121: fastbootd.protocol    u:object_r:fastbootd_protocol_prop:s0 exact enum usb tcp
+228: # servicemanager properties
+229: servicemanager.ready    u:object_r:servicemanager_prop:s0 exact bool
+231: # hwservicemanager properties
+232: hwservicemanager.       u:object_r:hwservicemanager_prop:s0
+
+==================================================
+FILE: system/etc/init/android.hardware.boot-service.mtk_recovery.rc
+==================================================
+1: service vendor.boot-default /system/bin/hw/android.hardware.boot-service.mtk_recovery
+6:     interface aidl android.hardware.boot.IBootControl/default
+
+==================================================
+FILE: system/etc/init/hw/init.rc
+==================================================
+50:     start servicemanager
+93: service fastbootd /system/bin/fastbootd
+96:     seclabel u:r:fastbootd:s0
+135:     start fastbootd
+139:     stop fastbootd
+165:     stop fastbootd
+
+==================================================
+FILE: system/etc/init/servicemanager.recovery.rc
+==================================================
+1: service servicemanager /system/bin/servicemanager
+4:     onrestart setprop servicemanager.ready false
+5:     seclabel u:r:servicemanager:s0
+
+==================================================
+FILE: system/etc/vintf/manifest/android.hardware.boot-service.mtk.xml
+==================================================
+3:         <name>android.hardware.boot</name>
+4:         <fqname>IBootControl/default</fqname>

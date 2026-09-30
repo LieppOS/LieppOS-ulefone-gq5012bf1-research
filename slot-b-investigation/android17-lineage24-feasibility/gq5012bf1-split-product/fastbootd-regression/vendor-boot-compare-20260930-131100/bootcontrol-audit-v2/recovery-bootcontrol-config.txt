@@ -1,0 +1,62 @@
+
+==================================================
+FILE: init.recovery.gq5012bf1.security.rc
+==================================================
+67:     # BootControl must stay unconditional; recovery otherwise blocks on
+68:     # IBootControl at the splash logo (commit 078db47).
+
+==================================================
+FILE: plat_property_contexts
+==================================================
+139: # Fastbootd protocol control property
+140: fastbootd.protocol    u:object_r:fastbootd_protocol_prop:s0 exact enum usb tcp
+247: # servicemanager properties
+248: servicemanager.ready    u:object_r:servicemanager_prop:s0 exact bool
+250: # hwservicemanager properties
+251: hwservicemanager.       u:object_r:hwservicemanager_prop:s0
+
+==================================================
+FILE: system/etc/init/android.hardware.boot@1.0-service.rc
+==================================================
+1: service boot-hal-1-0 /system/bin/android.hardware.boot@1.0-service
+
+==================================================
+FILE: system/etc/init/android.hardware.boot@1.1-service.rc
+==================================================
+1: service boot-hal-1-1 /system/bin/android.hardware.boot@1.1-service
+
+==================================================
+FILE: system/etc/init/android.hardware.boot@1.2-service.rc
+==================================================
+1: service boot-hal-1-2 /system/bin/android.hardware.boot@1.2-service
+2:     interface android.hardware.boot@1.0::IBootControl default
+3:     interface android.hardware.boot@1.1::IBootControl default
+4:     interface android.hardware.boot@1.2::IBootControl default
+
+==================================================
+FILE: system/etc/init/hw/init.rc
+==================================================
+125: service fastbootd /system/bin/fastbootd
+128:     seclabel u:r:fastbootd:s0
+168:     start fastbootd
+172:     stop fastbootd
+198:     stop fastbootd
+
+==================================================
+FILE: system/etc/init/hwservicemanager.rc
+==================================================
+2:     start hwservicemanager
+4: service hwservicemanager /system/bin/hwservicemanager
+7:     onrestart setprop hwservicemanager.ready false
+
+==================================================
+FILE: system/etc/init/servicemanager.rc
+==================================================
+2:     start servicemanager
+4: service servicemanager /system/bin/servicemanager
+
+==================================================
+FILE: system/etc/init/vndservicemanager.rc
+==================================================
+2:     start vndservicemanager
+4: service vndservicemanager /system/bin/vndservicemanager /dev/vndbinder
