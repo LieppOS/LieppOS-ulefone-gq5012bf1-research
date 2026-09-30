@@ -1,0 +1,107 @@
+============================================================
+1. VERIFY CURRENT ORANGEFOX ADB
+============================================================
+adb_state=recovery
+bootmode=recovery
+orangefox=R12.0
+slot=_a
+bootcontrol=running
+slots=2
+current=0
+active=0
+HAL Version: android.hardware.boot@aidl::IBootControl
+
+PRECONDITION_OK=1
+
+============================================================
+2. START FASTBOOTD IN TCP MODE
+============================================================
+protocol=tcp
+[01/20] fastbootd=running pid=810   
+
+============================================================
+3. VERIFY TCP FASTBOOTD + BOOTCONTROL
+============================================================
+fastbootd=running
+pid=810
+protocol=tcp
+
+BOOTCONTROL:
+2
+0
+HAL Version: android.hardware.boot@aidl::IBootControl
+
+FASTBOOTD_LOGS:
+I/fastbootd(  810): Using AIDL version of IBootControl
+I/fastbootd(  810): Unable to get AIDL fastboot service, trying HIDL...
+
+============================================================
+4. ADB FORWARD HOST 15554 -> DEVICE 5554
+============================================================
+15554
+5012BF3010001335 tcp:15554 tcp:5554
+
+
+============================================================
+5. FASTBOOT OVER TCP — READ ONLY
+============================================================
+--- is-userspace ---
+is-userspace: yes
+Finished. Total time: 0.003s
+
+--- current-slot ---
+current-slot: a
+Finished. Total time: 0.002s
+
+--- slot-count ---
+slot-count: 2
+Finished. Total time: 0.002s
+
+--- logical B ---
+is-logical:system_b: yes
+Finished. Total time: 0.013s
+is-logical:system_ext_b: yes
+Finished. Total time: 0.002s
+is-logical:product_b: yes
+Finished. Total time: 0.002s
+
+--- B sizes ---
+getvar:partition-size:system_b                     FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.004s
+getvar:partition-size:system_ext_b                 FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.004s
+getvar:partition-size:product_b                    FAILED (remote: 'Could not open partition')
+Finished. Total time: 0.004s
+
+--- B types ---
+partition-type:system_b: raw
+Finished. Total time: 0.003s
+partition-type:system_ext_b: raw
+Finished. Total time: 0.002s
+partition-type:product_b: raw
+Finished. Total time: 0.003s
+
+============================================================
+6. CLASSIFY
+============================================================
+current_slot=a
+slot_count=2
+system_b_size=
+
+TCP_FASTBOOTD_SLOT_AWARE=0
+
+============================================================
+7. CLEAN UP — KEEP ORANGEFOX + ADB
+============================================================
+fastbootd=stopped
+protocol=usb
+adb=running
+usb=adb
+
+BOOTCONTROL:
+2
+0
+
+============================================================
+DONE — STILL IN ORANGEFOX, ZERO PARTITION WRITES
+============================================================
