@@ -1,0 +1,1031 @@
+# HAL VINTF reconciliation - Android 17 framework (system/system_ext/product Slot B) vs existing Ulefone vendor/ODM
+#
+# Device manifest = vendor/etc/vintf/manifest.xml + vendor/etc/vintf/manifest/*.xml (live collection)
+#                 + odm/etc/vintf/manifest_dsds.xml (only when ro.boot.product.hardware.sku=dsds; live sku is EMPTY,
+#                   ODM dsds content is a strict subset/duplicate of vendor manifest entries)
+#                 + vendor APEX com.google.android.widevine (stock vendor/apex, VENDOR partition apex)
+# Device target-level = 8. Combined FCM = matrices with level >= 8:
+#     compatibility_matrix.8.xml (addAll), 202404/202504/202604 (addAllAsOptional),
+#     compatibility_matrix.device.xml + compatibility_matrix.lineage.xml (level unspecified => treated as 8).
+#     compatibility_matrix.7.xml only feeds checkDeprecation (level < device level).
+#
+# libvintf android-17.0.0_r1 fatality rules (from source, not opinion):
+#   * HalManifest::checkCompatibility(device manifest, FCM) checks ONLY sepolicy version (+kernel on host).
+#     FCM <hal> entries are NOT required: libvintf 17 does not even parse optional=; a HAL that is in the FCM but
+#     absent from vendor is NEVER a checkvintf failure  => MISSING FROM VENDOR / FRAMEWORK-ONLY are informational.
+#   * VintfObject::checkUnusedHals (target-level>=R): every vendor instance must match some FCM instance
+#     (format, package, version-in-range, interface, instance/regex) => EXTRA VENDOR HAL / VERSION MISMATCH /
+#     INSTANCE MISMATCH on the VENDOR side are FATAL.
+#   * VintfObject::checkDeprecation: vendor HAL version older than allowed by the level-8 matrix => FATAL.
+#   * Framework manifest vs vendor device matrix: ONLY <vendor-ndk> and <system-sdk> are checked; framework HALs
+#     required by the vendor DCM are NOT checked by libvintf (runtime-only concern).
+#   * Transport (<transport>) is never compared against matrices by libvintf.
+
+==============================================================================================================
+SUMMARY
+==============================================================================================================
+Unique device-manifest HAL instances: 151  (vendor+fragments=150, odm dsds=48, vendor apex=1)
+  vendor-side MATCH               : 61
+  vendor-side VENDOR-ONLY         : 90
+  vendor-side EXTRA VENDOR HAL    : 0
+  vendor-side VERSION MISMATCH    : 0
+  vendor-side INSTANCE MISMATCH   : 0
+  framework-side MISSING FROM VENDOR: 19  (informational: FCM HALs are not required by libvintf 17)
+  framework-side FRAMEWORK-ONLY   : 88  (informational: FCM HALs are not required by libvintf 17)
+  framework-side VERSION MISMATCH : 22  (informational: FCM HALs are not required by libvintf 17)
+  TRANSPORT MISMATCH (same instance declared with different transports): 0
+  checkDeprecation candidates (emulated): 0
+  FATAL per libvintf semantics: 0
+  VENDOR-ONLY HALs that are accepted ONLY because of device/ulefone/gq5012bf1/vintf/framework_compatibility_matrix.xml: 90
+  (Real checkvintf confirms: runs C/D/E/F COMPATIBLE; control N2 without compatibility_matrix.device.xml => 90 unused
+   instances + 'Sepolicy version 34.0 doesn't satisify the requirements' => INCOMPATIBLE.)
+
+==============================================================================================================
+FOCUS AREAS
+==============================================================================================================
+
+### audio
+   MATCH              hidl  android.hardware.audio@7.1::IDevicesFactory/default                                   transport=hwbinder
+                      from: vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   MATCH              hidl  android.hardware.audio.effect@7.0::IEffectsFactory/default                            transport=hwbinder
+                      from: vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   FRAMEWORK-ONLY     aidl  android.hardware.audio.core.IConfig/default  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.audio.core.IModule/a2dp  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.audio.core.IModule/bluetooth  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.audio.core.IModule/default  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.audio.core.IModule/hearing_aid  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.audio.core.IModule/msd  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.audio.core.IModule/r_submix  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.audio.core.IModule/stub  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.audio.core.IModule/usb  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.audio.effect.IFactory/default  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.audio.sounddose.ISoundDoseFactory/default  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-3]}
+                      package not implemented by vendor - informational
+
+### camera
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.camera.atms.IATMs/default (@1)                               transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.camera.bgservice.IBGService/default (@1)                     transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   MATCH              aidl  android.hardware.camera.provider.ICameraProvider/internal/0 (@2)                      transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/manifest_cameraprovider.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.camera.isphal.IISPModule/internal/1 (@1)                     transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/manifest_isphal.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+
+### composer
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.composer_ext.IComposerExt/default (@1)                       transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   MATCH              aidl  android.hardware.graphics.composer3.IComposer/default (@2)                            transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/manifest_hwcomposer.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   VERSION MISMATCH   aidl  android.hardware.graphics.composer3.IComposer/default  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[4]; compatibility_matrix.202604.xml:[4-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+
+### graphics mapper/allocator
+   MATCH              hidl  android.hardware.graphics.mapper@4.0::IMapper/default                                 transport=passthrough/32+64
+                      from: vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.graphics.allocator.IAllocator/default (@2)                           transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/manifest_allocator.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+
+### GNSS
+   MATCH              aidl  android.hardware.gnss.IGnss/default (@3)                                              transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/gnss-default.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.gnss.IMtkGnss/default (@1)                                   transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/gnss-mtk.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_agps (@1)                           transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_wlan (@1)                           transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_bt (@1)                             transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_sensor (@1)                         transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_network (@1)                        transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_ipaddr (@1)                         transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_lbs (@1)                            transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_framework2agps (@1)                             transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_agps2framework (@1)                             transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_mnld2nlputils (@1)                              transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/AgpsInterface (@1)                                  transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/AgpsDebugInterface (@1)                             transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_meta2mnld (@1)                                  transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_debugService2mnld (@1)                          transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_mnld2debugService (@1)                          transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_mnld2mtklogger (@1)                             transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_mtklogger2mnld (@1)                             transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lbs_log_v2s (@1)                                transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_debugService2agpsd (@1)                         transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_agpsd2debugService (@1)                         transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_jam2mnl (@1)                                    transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_mnl2jam (@1)                                    transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.gnss.batching.IMtkGnssBatching/default (@1)                  transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtkgnss-batching.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+
+### health
+   MATCH              aidl  android.hardware.health.IHealth/default (@2)                                          transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/android.hardware.health-service.example.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   VERSION MISMATCH   aidl  android.hardware.health.IHealth/default  {compatibility_matrix.8.xml:[1-2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.health.storage.IStorage/default  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  vendor.lineage.health.IChargingControl/default  {compatibility_matrix.lineage.xml:[1-2]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  vendor.lineage.health.IFastCharge/default  {compatibility_matrix.lineage.xml:[1-2]}
+                      package not implemented by vendor - informational
+
+### keymint / security
+   MATCH              aidl  android.hardware.gatekeeper.IGatekeeper/default (@1)                                  transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/android.hardware.gatekeeper-service.trustkernel.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.security.keymint.IKeyMintDevice/default (@3)                         transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/android.hardware.security.keymint@3.0-service.trustkernel.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.security.keymint.IRemotelyProvisionedComponent/default (@3)          transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/android.hardware.security.keymint@3.0-service.trustkernel.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.security.secureclock.ISecureClock/default (@1)                       transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/android.hardware.security.secureclock-service.trustkernel.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.security.sharedsecret.ISharedSecret/default (@1)                     transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/android.hardware.security.sharedsecret-service.trustkernel.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+   FRAMEWORK-ONLY     aidl  android.hardware.authsecret.IAuthSecret/default  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1]}
+                      package not implemented by vendor - informational
+   MISSING FROM VENDOR aidl  android.hardware.security.keymint.IKeyMintDevice/strongbox  {compatibility_matrix.8.xml:[1-3]; compatibility_matrix.202404.xml:[1-3]; compatibility_matrix.202504.xml:[1-4]; compatibility_matrix.202604.xml:[1-5]}
+                      package implemented by vendor, but this interface/instance is not declared - informational
+   MISSING FROM VENDOR aidl  android.hardware.security.keymint.IRemotelyProvisionedComponent/strongbox  {compatibility_matrix.8.xml:[1-3]; compatibility_matrix.202404.xml:[1-3]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-3]}
+                      package implemented by vendor, but this interface/instance is not declared - informational
+   MISSING FROM VENDOR aidl  android.hardware.security.keymint.IRemotelyProvisionedComponent/widevine  {compatibility_matrix.8.xml:[1-3]}
+                      package implemented by vendor, but this interface/instance is not declared - informational
+   MISSING FROM VENDOR aidl  android.hardware.security.sharedsecret.ISharedSecret/strongbox  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1]}
+                      package implemented by vendor, but this interface/instance is not declared - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.weaver.IWeaver/default  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[2]; compatibility_matrix.202504.xml:[2]; compatibility_matrix.202604.xml:[2-3]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.security.authgraph.IAuthGraphKeyExchange/nonsecure  {compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.security.secretkeeper.ISecretkeeper/default  {compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1-2]; compatibility_matrix.202604.xml:[1-2]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.security.secretkeeper.ISecretkeeper/nonsecure  {compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1-2]; compatibility_matrix.202604.xml:[1-2]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.security.see.authmgr.IAuthMgrAuthorization/default  {compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.security.see.hwcrypto.IHwCryptoKey/default  {compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.security.see.storage.ISecureStorage/default  {compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.security.see.devicestate.IDeviceState/default  {compatibility_matrix.202604.xml:[1]}
+                      package not implemented by vendor - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.security.timestamp.ITimeStamper/default  {compatibility_matrix.202604.xml:[1]}
+                      package not implemented by vendor - informational
+
+### radio/*
+   MATCH              aidl  android.hardware.radio.config.IRadioConfig/default (@2)                               transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.radio.data.IRadioData/slot1 (@2)                                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.radio.data.IRadioData/slot2 (@2)                                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.radio.ims.IRadioIms/slot1 (@1)                                       transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.radio.ims.IRadioIms/slot2 (@1)                                       transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.radio.messaging.IRadioMessaging/slot1 (@2)                           transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.radio.messaging.IRadioMessaging/slot2 (@2)                           transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   VENDOR-ONLY        aidl  android.hardware.radio.modem.IRadioModem/imsSlot1 (@2)                                transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  android.hardware.radio.modem.IRadioModem/imsSlot2 (@2)                                transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  android.hardware.radio.modem.IRadioModem/se1 (@2)                                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  android.hardware.radio.modem.IRadioModem/se2 (@2)                                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   MATCH              aidl  android.hardware.radio.modem.IRadioModem/slot1 (@2)                                   transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.radio.modem.IRadioModem/slot2 (@2)                                   transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   VENDOR-ONLY        aidl  android.hardware.radio.network.IRadioNetwork/imsSlot1 (@2)                            transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  android.hardware.radio.network.IRadioNetwork/imsSlot2 (@2)                            transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   MATCH              aidl  android.hardware.radio.network.IRadioNetwork/slot1 (@2)                               transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.radio.network.IRadioNetwork/slot2 (@2)                               transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.radio.sap.ISap/slot1 (@1)                                            transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.radio.sap.ISap/slot2 (@1)                                            transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+   VENDOR-ONLY        aidl  android.hardware.radio.sim.IRadioSim/imsSlot1 (@2)                                    transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  android.hardware.radio.sim.IRadioSim/imsSlot2 (@2)                                    transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  android.hardware.radio.sim.IRadioSim/se1 (@2)                                         transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  android.hardware.radio.sim.IRadioSim/se2 (@2)                                         transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   MATCH              aidl  android.hardware.radio.sim.IRadioSim/slot1 (@2)                                       transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.radio.sim.IRadioSim/slot2 (@2)                                       transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   VENDOR-ONLY        aidl  android.hardware.radio.voice.IRadioVoice/imsSlot1 (@2)                                transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  android.hardware.radio.voice.IRadioVoice/imsSlot2 (@2)                                transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   MATCH              aidl  android.hardware.radio.voice.IRadioVoice/slot1 (@2)                                   transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.radio.voice.IRadioVoice/slot2 (@2)                                   transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.secure_element.ISecureElement/SIM1 (@1)                              transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.secure_element.ISecureElement/SIM2 (@1)                              transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.data.IMtkRadioExData/slot1 (@2)                   transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.data.IMtkRadioExData/slot2 (@2)                   transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.dch.IMtkRadioExDc/slot1 (@1)                      transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.dch.IMtkRadioExDc/slot2 (@1)                      transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.ims.IMtkRadioExIms/slot1 (@1)                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.ims.IMtkRadioExIms/slot2 (@1)                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.messaging.IMtkRadioExMessaging/slot1 (@1)         transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.messaging.IMtkRadioExMessaging/slot2 (@1)         transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.modem.IMtkRadioExModem/slot1 (@2)                 transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.modem.IMtkRadioExModem/slot2 (@2)                 transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.network.IMtkRadioExNetwork/slot1 (@1)             transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.network.IMtkRadioExNetwork/slot2 (@1)             transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.rcs.IMtkRadioExRcs/slot1 (@1)                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.rcs.IMtkRadioExRcs/slot2 (@1)                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.sim.IMtkRadioExSim/slot1 (@1)                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.sim.IMtkRadioExSim/slot2 (@1)                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.voice.IMtkRadioExVoice/slot1 (@1)                 transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.voice.IMtkRadioExVoice/slot2 (@1)                 transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VERSION MISMATCH   aidl  android.hardware.radio.config.IRadioConfig/default  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   VERSION MISMATCH   aidl  android.hardware.radio.data.IRadioData/slot1  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   VERSION MISMATCH   aidl  android.hardware.radio.data.IRadioData/slot2  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   MISSING FROM VENDOR aidl  android.hardware.radio.data.IRadioData/slot3  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      package implemented by vendor, but this interface/instance is not declared - informational
+   VERSION MISMATCH   aidl  android.hardware.radio.ims.IRadioIms/slot1  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[2]; compatibility_matrix.202504.xml:[2-3]; compatibility_matrix.202604.xml:[2-4]}
+                      vendor provides 1; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   VERSION MISMATCH   aidl  android.hardware.radio.ims.IRadioIms/slot2  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[2]; compatibility_matrix.202504.xml:[2-3]; compatibility_matrix.202604.xml:[2-4]}
+                      vendor provides 1; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   MISSING FROM VENDOR aidl  android.hardware.radio.ims.IRadioIms/slot3  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[2]; compatibility_matrix.202504.xml:[2-3]; compatibility_matrix.202604.xml:[2-4]}
+                      package implemented by vendor, but this interface/instance is not declared - informational
+   FRAMEWORK-ONLY     aidl  android.hardware.radio.ims.media.IImsMedia/default  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[2]; compatibility_matrix.202504.xml:[2-3]; compatibility_matrix.202604.xml:[2-4]}
+                      package not implemented by vendor - informational
+   VERSION MISMATCH   aidl  android.hardware.radio.messaging.IRadioMessaging/slot1  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   VERSION MISMATCH   aidl  android.hardware.radio.messaging.IRadioMessaging/slot2  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   MISSING FROM VENDOR aidl  android.hardware.radio.messaging.IRadioMessaging/slot3  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      package implemented by vendor, but this interface/instance is not declared - informational
+   VERSION MISMATCH   aidl  android.hardware.radio.modem.IRadioModem/slot1  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   VERSION MISMATCH   aidl  android.hardware.radio.modem.IRadioModem/slot2  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   MISSING FROM VENDOR aidl  android.hardware.radio.modem.IRadioModem/slot3  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      package implemented by vendor, but this interface/instance is not declared - informational
+   VERSION MISMATCH   aidl  android.hardware.radio.network.IRadioNetwork/slot1  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   VERSION MISMATCH   aidl  android.hardware.radio.network.IRadioNetwork/slot2  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   MISSING FROM VENDOR aidl  android.hardware.radio.network.IRadioNetwork/slot3  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      package implemented by vendor, but this interface/instance is not declared - informational
+   MISSING FROM VENDOR aidl  android.hardware.radio.sap.ISap/slot3  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1]}
+                      package implemented by vendor, but this interface/instance is not declared - informational
+   VERSION MISMATCH   aidl  android.hardware.radio.sim.IRadioSim/slot1  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   VERSION MISMATCH   aidl  android.hardware.radio.sim.IRadioSim/slot2  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   MISSING FROM VENDOR aidl  android.hardware.radio.sim.IRadioSim/slot3  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      package implemented by vendor, but this interface/instance is not declared - informational
+   VERSION MISMATCH   aidl  android.hardware.radio.voice.IRadioVoice/slot1  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   VERSION MISMATCH   aidl  android.hardware.radio.voice.IRadioVoice/slot2  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   MISSING FROM VENDOR aidl  android.hardware.radio.voice.IRadioVoice/slot3  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5]}
+                      package implemented by vendor, but this interface/instance is not declared - informational
+   MISSING FROM VENDOR aidl  android.hardware.secure_element.ISecureElement/eSE[1-9][0-9]* (regex)  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1]}
+                      package implemented by vendor, but this interface/instance is not declared - informational
+   FRAMEWORK-ONLY     hidl  lineage.hardware.radio.config.IRadioConfig/default  {compatibility_matrix.lineage.xml:[1.0-1]}
+                      package not implemented by vendor - informational
+
+### sensors
+   MATCH              aidl  android.hardware.sensors.ISensors/default (@2)                                        transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/android.hardware.sensors-multihal.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+   VENDOR-ONLY        hidl  vendor.yft.hardware.sensorcali@1.0::ISensorCali/default                               transport=hwbinder
+                      from: vendor/etc/vintf/manifest/sensorcali_manifest_v1.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        hidl  vendor.yft.hardware.sensorcali@2.0::ISensorCali/default                               transport=hwbinder
+                      from: vendor/etc/vintf/manifest/sensorcali_manifest_v2.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+
+### thermal
+   MATCH              aidl  android.hardware.thermal.IThermal/default (@1)                                        transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/thermal-mediatek.xml
+                      covered by AOSP FCM compatibility_matrix.8.xml
+   VERSION MISMATCH   aidl  android.hardware.thermal.IThermal/default  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[2]; compatibility_matrix.202504.xml:[3]; compatibility_matrix.202604.xml:[3]}
+                      vendor provides 1; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+
+### USB
+   MATCH              aidl  android.hardware.usb.IUsb/default (@1)                                                transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/android.hardware.usb-aidl-service.mediatek.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.usb.gadget.IUsbGadget/default (@1)                                   transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/android.hardware.usb.gadget-aidl-service.mediatek.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+
+### Wi-Fi
+   MATCH              aidl  android.hardware.wifi.IWifi/default (@1)                                              transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/android.hardware.wifi-service.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.wifi.hostapd.IHostapd/default (@1)                                   transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/android.hardware.wifi.hostapd.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.8.xml
+   MATCH              aidl  android.hardware.wifi.supplicant.ISupplicant/default (@2)                             transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/android.hardware.wifi.supplicant.xml
+                      covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.8.xml
+   VERSION MISMATCH   aidl  android.hardware.wifi.IWifi/default  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[2-3]; compatibility_matrix.202604.xml:[2-4]}
+                      vendor provides 1; accepted by compatibility_matrix.202404.xml,compatibility_matrix.8.xml; not in range of compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   VERSION MISMATCH   aidl  android.hardware.wifi.hostapd.IHostapd/default  {compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[2-3]; compatibility_matrix.202604.xml:[2-3]}
+                      vendor provides 1; accepted by compatibility_matrix.202404.xml,compatibility_matrix.8.xml; not in range of compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+   VERSION MISMATCH   aidl  android.hardware.wifi.supplicant.ISupplicant/default  {compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[2-3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[4-5]}
+                      vendor provides 2; accepted by compatibility_matrix.202404.xml,compatibility_matrix.8.xml; not in range of compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+
+### MediaTek vendor.*
+   VENDOR-ONLY        hidl  vendor.mediatek.hardware.aee@1.1::IAee/AEE                                            transport=hwbinder
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        hidl  vendor.mediatek.hardware.aee@1.1::IAee/default                                        transport=hwbinder
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.aee.IAee/AEE (@1)                                            transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.apmonitor.IApmService/default (@1)                           transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.atci.IAtcid/default (@1)                                     transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.audio.IMtkAudio/default (@1)                                 transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        hidl  vendor.mediatek.hardware.bluetooth.audio@2.2::IBluetoothAudioProvidersFactory/default transport=hwbinder
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.camera.atms.IATMs/default (@1)                               transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.camera.bgservice.IBGService/default (@1)                     transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.composer_ext.IComposerExt/default (@1)                       transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.dmc.IDmcService/default (@1)                                 transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.log.ILog/ATMWiFiHidlServer (@1)                              transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.log.ILog/ConnsysFWHidlServer (@1)                            transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.log.ILog/LoggerHidlServer (@1)                               transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.log.ILog/MobileLogHidlServer (@1)                            transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.log.ILog/ModemLogHidlServer (@1)                             transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mdmonitor.IMDMonitorService/default (@1)                     transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mmagent.IMMAgent/default (@1)                                transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.data.IMtkRadioExData/slot1 (@2)                   transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.data.IMtkRadioExData/slot2 (@2)                   transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.dch.IMtkRadioExDc/slot1 (@1)                      transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.dch.IMtkRadioExDc/slot2 (@1)                      transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.ims.IMtkRadioExIms/slot1 (@1)                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.ims.IMtkRadioExIms/slot2 (@1)                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.messaging.IMtkRadioExMessaging/slot1 (@1)         transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.messaging.IMtkRadioExMessaging/slot2 (@1)         transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.modem.IMtkRadioExModem/slot1 (@2)                 transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.modem.IMtkRadioExModem/slot2 (@2)                 transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.network.IMtkRadioExNetwork/slot1 (@1)             transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.network.IMtkRadioExNetwork/slot2 (@1)             transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.rcs.IMtkRadioExRcs/slot1 (@1)                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.rcs.IMtkRadioExRcs/slot2 (@1)                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.sim.IMtkRadioExSim/slot1 (@1)                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.sim.IMtkRadioExSim/slot2 (@1)                     transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.voice.IMtkRadioExVoice/slot1 (@1)                 transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkradioex.voice.IMtkRadioExVoice/slot2 (@1)                 transport=(aidl-default)
+                      from: odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.nvram.INvram/default (@1)                                    transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.pq_aidl.IPictureQuality_AIDL/default (@7)                    transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.videotelephony.IVideoTelephony/default (@1)                  transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.netdagent.INetdagents/default (@1)                           transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/CommandService.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.engineermode.IEmds/default (@1)                              transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/em_hal_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.gnss.IMtkGnss/default (@1)                                   transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/gnss-mtk.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.apuware.apusys.INeuronApusys/default (@3)                    transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/manifest_apuware_apusys_aidl.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.apuware.utils.IApuwareUtils/default (@1)                     transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/manifest_apuware_utils_aidl.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.camera.isphal.IISPModule/internal/1 (@1)                     transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/manifest_isphal.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mmlpq.IMmlpq/default (@3)                                    transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/manifest_mmlpq.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_agps (@1)                           transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_wlan (@1)                           transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_bt (@1)                             transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_sensor (@1)                         transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_network (@1)                        transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_ipaddr (@1)                         transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_lbs (@1)                            transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_framework2agps (@1)                             transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_agps2framework (@1)                             transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_mnld2nlputils (@1)                              transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/AgpsInterface (@1)                                  transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/AgpsDebugInterface (@1)                             transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_meta2mnld (@1)                                  transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_debugService2mnld (@1)                          transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_mnld2debugService (@1)                          transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_mnld2mtklogger (@1)                             transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_mtklogger2mnld (@1)                             transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_lbs_log_v2s (@1)                                transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_debugService2agpsd (@1)                         transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_agpsd2debugService (@1)                         transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_jam2mnl (@1)                                    transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.lbs.ILbs/mtk_mnl2jam (@1)                                    transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtk_lbs_service.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.gnss.batching.IMtkGnssBatching/default (@1)                  transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtkgnss-batching.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkpower_applist.IMtkpower_applist/default (@1)              transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/mtkpower_applist-mtk-default.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        aidl  vendor.mediatek.hardware.mtkpower.IMtkPowerService/default (@1)                       transport=(aidl-default)
+                      from: vendor/etc/vintf/manifest/power-mediatek.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+
+### Ulefone vendor.yft.*
+   VENDOR-ONLY        hidl  vendor.yft.hardware.changenode@1.0::IChangeNode/default                               transport=hwbinder
+                      from: vendor/etc/vintf/manifest/manifest_changenode.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        hidl  vendor.yft.hardware.gesturewake@1.0::IGestureWake/default                             transport=hwbinder
+                      from: vendor/etc/vintf/manifest/manifest_gesturewake.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        hidl  vendor.yft.hardware.obtainvendor@1.0::IObtainVendor/default                           transport=hwbinder
+                      from: vendor/etc/vintf/manifest/manifest_obtain_vendor.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        hidl  vendor.yft.hardware.tinylcd@1.0::ITinylcd/default                                     transport=hwbinder
+                      from: vendor/etc/vintf/manifest/manifest_tinylcd.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        hidl  vendor.yft.hardware.sensorcali@1.0::ISensorCali/default                               transport=hwbinder
+                      from: vendor/etc/vintf/manifest/sensorcali_manifest_v1.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+   VENDOR-ONLY        hidl  vendor.yft.hardware.sensorcali@2.0::ISensorCali/default                               transport=hwbinder
+                      from: vendor/etc/vintf/manifest/sensorcali_manifest_v2.xml
+                      accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+
+==============================================================================================================
+FULL VENDOR-SIDE INVENTORY (every device-manifest instance)
+==============================================================================================================
+MATCH              | hidl   | android.hardware.audio@7.1::IDevicesFactory/default                                        | transport=hwbinder | vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | hidl   | android.hardware.audio.effect@7.0::IEffectsFactory/default                                 | transport=hwbinder | vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.biometrics.face.IFace/default (@3)                                        | transport=(aidl-default) | vendor/etc/vintf/manifest/face-default.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | hidl   | android.hardware.bluetooth@1.1::IBluetoothHci/default                                      | transport=hwbinder | vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.bluetooth.IBluetoothHci/default (@1)                                      | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.bluetooth-service-mediatek.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.bluetooth.audio.IBluetoothAudioProviderFactory/default (@3)               | transport=(aidl-default) | vendor/etc/vintf/manifest/bluetooth_audio.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.boot.IBootControl/default (@1)                                            | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.boot-service.mtk.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.camera.provider.ICameraProvider/internal/0 (@2)                           | transport=(aidl-default) | vendor/etc/vintf/manifest/manifest_cameraprovider.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.cas.IMediaCasService/default (@1)                                         | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.cas-service.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.drm.IDrmFactory/clearkey (@1)                                             | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.drm-service.clearkey.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.drm.IDrmFactory/widevine (@1)                                             | transport=(aidl-default) | vendor/apex/com.google.android.widevine.nonupdatable.apex:/etc/vintf/com.google.android.widevine.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.gatekeeper.IGatekeeper/default (@1)                                       | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.gatekeeper-service.trustkernel.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.gnss.IGnss/default (@3)                                                   | transport=(aidl-default) | vendor/etc/vintf/manifest/gnss-default.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.graphics.allocator.IAllocator/default (@2)                                | transport=(aidl-default) | vendor/etc/vintf/manifest/manifest_allocator.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.graphics.composer3.IComposer/default (@2)                                 | transport=(aidl-default) | vendor/etc/vintf/manifest/manifest_hwcomposer.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | hidl   | android.hardware.graphics.mapper@4.0::IMapper/default                                      | transport=passthrough/32+64 | vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.health.IHealth/default (@2)                                               | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.health-service.example.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.ir.IConsumerIr/default (@1)                                               | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.ir-service.example.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.light.ILights/default (@2)                                                | transport=(aidl-default) | vendor/etc/vintf/manifest/lights-mtk-default.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | hidl   | android.hardware.media.c2@1.2::IComponentStore/default                                     | transport=hwbinder | vendor/etc/vintf/manifest/manifest_media_c2_V1_2_default.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.memtrack.IMemtrack/default (@1)                                           | transport=(aidl-default) | vendor/etc/vintf/manifest/memtrack-mediatek.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.neuralnetworks.IDevice/mtk-mdla_shim (@4)                                 | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.neuralnetworks-shim-service-mtk.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.neuralnetworks.IDevice/mtk-neuron_shim (@4)                               | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.neuralnetworks-shim-service-mtk.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.nfc.INfc/default (@1)                                                     | transport=(aidl-default) | vendor/etc/vintf/manifest/nfc-service-st.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.power.IPower/default (@4)                                                 | transport=(aidl-default) | vendor/etc/vintf/manifest/power-mediatek.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.config.IRadioConfig/default (@2)                                    | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.data.IRadioData/slot1 (@2)                                          | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.data.IRadioData/slot2 (@2)                                          | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.ims.IRadioIms/slot1 (@1)                                            | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.ims.IRadioIms/slot2 (@1)                                            | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.messaging.IRadioMessaging/slot1 (@2)                                | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.messaging.IRadioMessaging/slot2 (@2)                                | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.modem.IRadioModem/slot1 (@2)                                        | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.modem.IRadioModem/slot2 (@2)                                        | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.network.IRadioNetwork/slot1 (@2)                                    | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.network.IRadioNetwork/slot2 (@2)                                    | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.sap.ISap/slot1 (@1)                                                 | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.sap.ISap/slot2 (@1)                                                 | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.sim.IRadioSim/slot1 (@2)                                            | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.sim.IRadioSim/slot2 (@2)                                            | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.voice.IRadioVoice/slot1 (@2)                                        | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.radio.voice.IRadioVoice/slot2 (@2)                                        | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | hidl   | android.hardware.renderscript@1.0::IDevice/default                                         | transport=passthrough/32+64 | vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.secure_element.ISecureElement/SIM1 (@1)                                   | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.secure_element.ISecureElement/SIM2 (@1)                                   | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.security.keymint.IKeyMintDevice/default (@3)                              | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.security.keymint@3.0-service.trustkernel.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.security.keymint.IRemotelyProvisionedComponent/default (@3)               | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.security.keymint@3.0-service.trustkernel.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.security.secureclock.ISecureClock/default (@1)                            | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.security.secureclock-service.trustkernel.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.security.sharedsecret.ISharedSecret/default (@1)                          | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.security.sharedsecret-service.trustkernel.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.sensors.ISensors/default (@2)                                             | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.sensors-multihal.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.soundtrigger3.ISoundTriggerHw/default (@1)                                | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.tetheroffload.IOffload/default (@1)                                       | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.tetheroffload-V1-service.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.thermal.IThermal/default (@1)                                             | transport=(aidl-default) | vendor/etc/vintf/manifest/thermal-mediatek.xml | covered by AOSP FCM compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.usb.IUsb/default (@1)                                                     | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.usb-aidl-service.mediatek.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.usb.gadget.IUsbGadget/default (@1)                                        | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.usb.gadget-aidl-service.mediatek.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.vibrator.IVibrator/default (@2)                                           | transport=(aidl-default) | vendor/etc/vintf/manifest/vibrator-mtk-default.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.vibrator.IVibratorManager/default (@2)                                    | transport=(aidl-default) | vendor/etc/vintf/manifest/vibrator-mtk-default.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.wifi.IWifi/default (@1)                                                   | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.wifi-service.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.wifi.hostapd.IHostapd/default (@1)                                        | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.wifi.hostapd.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.8.xml
+MATCH              | aidl   | android.hardware.wifi.supplicant.ISupplicant/default (@2)                                  | transport=(aidl-default) | vendor/etc/vintf/manifest/android.hardware.wifi.supplicant.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.8.xml
+MATCH              | native | mapper@5.0/mediatek (native)                                                               | transport= | vendor/etc/vintf/manifest/mapper.mediatek.xml | covered by AOSP FCM compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml,compatibility_matrix.8.xml
+VENDOR-ONLY        | aidl   | android.hardware.radio.modem.IRadioModem/imsSlot1 (@2)                                     | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | android.hardware.radio.modem.IRadioModem/imsSlot2 (@2)                                     | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | android.hardware.radio.modem.IRadioModem/se1 (@2)                                          | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | android.hardware.radio.modem.IRadioModem/se2 (@2)                                          | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | android.hardware.radio.network.IRadioNetwork/imsSlot1 (@2)                                 | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | android.hardware.radio.network.IRadioNetwork/imsSlot2 (@2)                                 | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | android.hardware.radio.sim.IRadioSim/imsSlot1 (@2)                                         | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | android.hardware.radio.sim.IRadioSim/imsSlot2 (@2)                                         | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | android.hardware.radio.sim.IRadioSim/se1 (@2)                                              | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | android.hardware.radio.sim.IRadioSim/se2 (@2)                                              | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | android.hardware.radio.voice.IRadioVoice/imsSlot1 (@2)                                     | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | android.hardware.radio.voice.IRadioVoice/imsSlot2 (@2)                                     | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | arm.mali.platform.ICompression/default (@2)                                                | transport=(aidl-default) | vendor/etc/vintf/manifest/arm.mali.platform-mediatek.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | hidl   | vendor.mediatek.hardware.aee@1.1::IAee/AEE                                                 | transport=hwbinder | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.aee.IAee/AEE (@1)                                                 | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | hidl   | vendor.mediatek.hardware.aee@1.1::IAee/default                                             | transport=hwbinder | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.apmonitor.IApmService/default (@1)                                | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.apuware.apusys.INeuronApusys/default (@3)                         | transport=(aidl-default) | vendor/etc/vintf/manifest/manifest_apuware_apusys_aidl.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.apuware.utils.IApuwareUtils/default (@1)                          | transport=(aidl-default) | vendor/etc/vintf/manifest/manifest_apuware_utils_aidl.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.atci.IAtcid/default (@1)                                          | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.audio.IMtkAudio/default (@1)                                      | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | hidl   | vendor.mediatek.hardware.bluetooth.audio@2.2::IBluetoothAudioProvidersFactory/default      | transport=hwbinder | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.camera.atms.IATMs/default (@1)                                    | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.camera.bgservice.IBGService/default (@1)                          | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.camera.isphal.IISPModule/internal/1 (@1)                          | transport=(aidl-default) | vendor/etc/vintf/manifest/manifest_isphal.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.composer_ext.IComposerExt/default (@1)                            | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.dmc.IDmcService/default (@1)                                      | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.engineermode.IEmds/default (@1)                                   | transport=(aidl-default) | vendor/etc/vintf/manifest/em_hal_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.gnss.IMtkGnss/default (@1)                                        | transport=(aidl-default) | vendor/etc/vintf/manifest/gnss-mtk.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.gnss.batching.IMtkGnssBatching/default (@1)                       | transport=(aidl-default) | vendor/etc/vintf/manifest/mtkgnss-batching.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/AgpsDebugInterface (@1)                                  | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/AgpsInterface (@1)                                       | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_agps2framework (@1)                                  | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_agpsd2debugService (@1)                              | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_debugService2agpsd (@1)                              | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_debugService2mnld (@1)                               | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_framework2agps (@1)                                  | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_jam2mnl (@1)                                         | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_lbs_log_v2s (@1)                                     | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_agps (@1)                                | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_bt (@1)                                  | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_ipaddr (@1)                              | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_lbs (@1)                                 | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_network (@1)                             | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_sensor (@1)                              | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_lppe_socket_wlan (@1)                                | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_meta2mnld (@1)                                       | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_mnl2jam (@1)                                         | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_mnld2debugService (@1)                               | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_mnld2mtklogger (@1)                                  | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_mnld2nlputils (@1)                                   | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.lbs.ILbs/mtk_mtklogger2mnld (@1)                                  | transport=(aidl-default) | vendor/etc/vintf/manifest/mtk_lbs_service.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.log.ILog/ATMWiFiHidlServer (@1)                                   | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.log.ILog/ConnsysFWHidlServer (@1)                                 | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.log.ILog/LoggerHidlServer (@1)                                    | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.log.ILog/MobileLogHidlServer (@1)                                 | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.log.ILog/ModemLogHidlServer (@1)                                  | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mdmonitor.IMDMonitorService/default (@1)                          | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mmagent.IMMAgent/default (@1)                                     | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mmlpq.IMmlpq/default (@3)                                         | transport=(aidl-default) | vendor/etc/vintf/manifest/manifest_mmlpq.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkpower.IMtkPowerService/default (@1)                            | transport=(aidl-default) | vendor/etc/vintf/manifest/power-mediatek.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkpower_applist.IMtkpower_applist/default (@1)                   | transport=(aidl-default) | vendor/etc/vintf/manifest/mtkpower_applist-mtk-default.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.data.IMtkRadioExData/slot1 (@2)                        | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.data.IMtkRadioExData/slot2 (@2)                        | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.dch.IMtkRadioExDc/slot1 (@1)                           | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.dch.IMtkRadioExDc/slot2 (@1)                           | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.ims.IMtkRadioExIms/slot1 (@1)                          | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.ims.IMtkRadioExIms/slot2 (@1)                          | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.messaging.IMtkRadioExMessaging/slot1 (@1)              | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.messaging.IMtkRadioExMessaging/slot2 (@1)              | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.modem.IMtkRadioExModem/slot1 (@2)                      | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.modem.IMtkRadioExModem/slot2 (@2)                      | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.network.IMtkRadioExNetwork/slot1 (@1)                  | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.network.IMtkRadioExNetwork/slot2 (@1)                  | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.rcs.IMtkRadioExRcs/slot1 (@1)                          | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.rcs.IMtkRadioExRcs/slot2 (@1)                          | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.sim.IMtkRadioExSim/slot1 (@1)                          | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.sim.IMtkRadioExSim/slot2 (@1)                          | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.voice.IMtkRadioExVoice/slot1 (@1)                      | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.mtkradioex.voice.IMtkRadioExVoice/slot2 (@1)                      | transport=(aidl-default) | odm/etc/vintf/manifest_dsds.xml, vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.netdagent.INetdagents/default (@1)                                | transport=(aidl-default) | vendor/etc/vintf/manifest/CommandService.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.nvram.INvram/default (@1)                                         | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.pq_aidl.IPictureQuality_AIDL/default (@7)                         | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | aidl   | vendor.mediatek.hardware.videotelephony.IVideoTelephony/default (@1)                       | transport=(aidl-default) | vendor/etc/vintf/manifest.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | hidl   | vendor.yft.hardware.changenode@1.0::IChangeNode/default                                    | transport=hwbinder | vendor/etc/vintf/manifest/manifest_changenode.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | hidl   | vendor.yft.hardware.gesturewake@1.0::IGestureWake/default                                  | transport=hwbinder | vendor/etc/vintf/manifest/manifest_gesturewake.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | hidl   | vendor.yft.hardware.obtainvendor@1.0::IObtainVendor/default                                | transport=hwbinder | vendor/etc/vintf/manifest/manifest_obtain_vendor.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | hidl   | vendor.yft.hardware.sensorcali@1.0::ISensorCali/default                                    | transport=hwbinder | vendor/etc/vintf/manifest/sensorcali_manifest_v1.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | hidl   | vendor.yft.hardware.sensorcali@2.0::ISensorCali/default                                    | transport=hwbinder | vendor/etc/vintf/manifest/sensorcali_manifest_v2.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+VENDOR-ONLY        | hidl   | vendor.yft.hardware.tinylcd@1.0::ITinylcd/default                                          | transport=hwbinder | vendor/etc/vintf/manifest/manifest_tinylcd.xml | accepted only because LieppOS device FCM/Lineage FCM declares it: compatibility_matrix.device.xml
+
+==============================================================================================================
+FULL FRAMEWORK-SIDE INVENTORY (FCM >= 8 + device FCM + Lineage FCM entries with no matching vendor instance)
+==============================================================================================================
+FRAMEWORK-ONLY       | aidl  | android.hardware.audio.core.IConfig/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.audio.core.IModule/a2dp | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.audio.core.IModule/bluetooth | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.audio.core.IModule/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.audio.core.IModule/hearing_aid | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.audio.core.IModule/msd | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.audio.core.IModule/r_submix | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.audio.core.IModule/stub | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.audio.core.IModule/usb | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.audio.effect.IFactory/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-4] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.audio.sounddose.ISoundDoseFactory/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-3] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.authsecret.IAuthSecret/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.automotive.audiocontrol.IAudioControl/default | compatibility_matrix.8.xml:[2-3]; compatibility_matrix.202404.xml:[2-4]; compatibility_matrix.202504.xml:[2-5]; compatibility_matrix.202604.xml:[2-6] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.automotive.can.ICanController/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.automotive.evs.IEvsEnumerator/[a-z]+/[0-9]+ (regex) | compatibility_matrix.8.xml:[1-2]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-2]; compatibility_matrix.202604.xml:[1-2] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.automotive.ivn.IIvnAndroidDevice/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.automotive.occupant_awareness.IOccupantAwareness/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.automotive.remoteaccess.IRemoteAccess/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-2]; compatibility_matrix.202604.xml:[1-2] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.automotive.vehicle.IVehicle/default | compatibility_matrix.8.xml:[1-2]; compatibility_matrix.202404.xml:[1-3]; compatibility_matrix.202504.xml:[1-4]; compatibility_matrix.202604.xml:[1-4] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.biometrics.fingerprint.IFingerprint/default | compatibility_matrix.8.xml:[3]; compatibility_matrix.202404.xml:[3-4]; compatibility_matrix.202504.xml:[3-5]; compatibility_matrix.202604.xml:[3-5] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.biometrics.fingerprint.IFingerprint/virtual | compatibility_matrix.8.xml:[3]; compatibility_matrix.202404.xml:[3-4]; compatibility_matrix.202504.xml:[3-5]; compatibility_matrix.202604.xml:[3-5] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.bluetooth.finder.IBluetoothFinder/default | compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.bluetooth.gatt.IBluetoothGatt/default | compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.bluetooth.lmp_event.IBluetoothLmpEvent/default | compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.bluetooth.ranging.IBluetoothChannelSounding/default | compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1-2]; compatibility_matrix.202604.xml:[1-2] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.bluetooth.socket.IBluetoothSocket/default | compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1-2] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.bluetooth.socket.IBluetoothSocket/lpp | compatibility_matrix.202604.xml:[1-2] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.broadcastradio.IBroadcastRadio/.* (regex) | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-3] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.confirmationui.IConfirmationUI/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.contexthub.IContextHub/default | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.dumpstate.IDumpstateDevice/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.health.storage.IStorage/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.identity.IIdentityCredentialStore/default | compatibility_matrix.8.xml:[1-5]; compatibility_matrix.202404.xml:[1-5]; compatibility_matrix.202504.xml:[1-5]; compatibility_matrix.202604.xml:[1-5] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.input.processor.IInputProcessor/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.macsec.IMacsecPskPlugin/default | compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.media.c2.IComponentStore/default[0-9]* (regex) | compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1-2] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.media.c2.IComponentStore/vendor[0-9]*_software (regex) | compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1-2] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | hidl  | android.hardware.media.omx.IOmx/default | compatibility_matrix.8.xml:[1.0] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | hidl  | android.hardware.media.omx.IOmxStore/default | compatibility_matrix.8.xml:[1.0] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.motioncontext.IMotionContext/default | compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.net.nlinterceptor.IInterceptor/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.npu.IScheduling/default | compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.oemlock.IOemLock/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.power.stats.IPowerStats/default | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[2]; compatibility_matrix.202504.xml:[2]; compatibility_matrix.202604.xml:[2] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.radio.ims.media.IImsMedia/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[2]; compatibility_matrix.202504.xml:[2-3]; compatibility_matrix.202604.xml:[2-4] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.rebootescrow.IRebootEscrow/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.security.authgraph.IAuthGraphKeyExchange/nonsecure | compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.security.secretkeeper.ISecretkeeper/default | compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1-2]; compatibility_matrix.202604.xml:[1-2] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.security.secretkeeper.ISecretkeeper/nonsecure | compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1-2]; compatibility_matrix.202604.xml:[1-2] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.security.see.authmgr.IAuthMgrAuthorization/default | compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.security.see.devicestate.IDeviceState/default | compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.security.see.hwcrypto.IHwCryptoKey/default | compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.security.see.storage.ISecureStorage/default | compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.security.timestamp.ITimeStamper/default | compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | hidl  | android.hardware.soundtrigger.ISoundTriggerHw/default | compatibility_matrix.8.xml:[2.3] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | hidl  | android.hardware.tetheroffload.config.IOffloadConfig/default | compatibility_matrix.8.xml:[1.0] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | hidl  | android.hardware.tetheroffload.control.IOffloadControl/default | compatibility_matrix.8.xml:[1.1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.threadnetwork.IThreadChip/chip[0-9]+ (regex) | compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.tv.hdmi.cec.IHdmiCec/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.tv.hdmi.connection.IHdmiConnection/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.tv.hdmi.earc.IEArc/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.tv.input.ITvInput/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-3] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.tv.mediaquality.IMediaQuality/default | compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1-2] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.tv.tuner.ITuner/default | compatibility_matrix.8.xml:[1-2]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-3] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.uwb.IUwb/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.virtualization.capabilities.IVmCapabilitiesService/default | compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.virtualization.capabilities.IVmCapabilitiesService/noop | compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | android.hardware.weaver.IWeaver/default | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[2]; compatibility_matrix.202504.xml:[2]; compatibility_matrix.202604.xml:[2-3] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | hidl  | lineage.hardware.radio.config.IRadioConfig/default | compatibility_matrix.lineage.xml:[1.0-1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.health.IChargingControl/default | compatibility_matrix.lineage.xml:[1-2] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.health.IFastCharge/default | compatibility_matrix.lineage.xml:[1-2] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.livedisplay.IAdaptiveBacklight/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.livedisplay.IAntiFlicker/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.livedisplay.IAutoContrast/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.livedisplay.IColorBalance/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.livedisplay.IColorEnhancement/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.livedisplay.IDisplayColorCalibration/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.livedisplay.IDisplayModes/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.livedisplay.IPictureAdjustment/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.livedisplay.IReadingEnhancement/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.livedisplay.ISunlightEnhancement/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.powershare.IPowerShare/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.touch.IGloveMode/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.touch.IHighTouchPollingRate/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.touch.IKeyDisabler/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.touch.IKeySwapper/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.touch.IStylusMode/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+FRAMEWORK-ONLY       | aidl  | vendor.lineage.touch.ITouchscreenGesture/default | compatibility_matrix.lineage.xml:[1] | package not implemented by vendor - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.biometrics.face.IFace/virtual | compatibility_matrix.8.xml:[3-4]; compatibility_matrix.202404.xml:[3-4]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.bluetooth.IBluetoothHci/hci[1-9][0-9]* (regex) | compatibility_matrix.202604.xml:[1] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | hidl  | android.hardware.media.c2.IComponentStore/software | compatibility_matrix.8.xml:[1.0-2] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | hidl  | android.hardware.media.c2.IComponentStore/vendor[0-9]*_software (regex) | compatibility_matrix.8.xml:[1.0-2] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | hidl  | android.hardware.media.c2.IConfigurable/default | compatibility_matrix.8.xml:[1.0] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | hidl  | android.hardware.media.c2.IConfigurable/software | compatibility_matrix.8.xml:[1.0] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.radio.data.IRadioData/slot3 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.radio.ims.IRadioIms/slot3 | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[2]; compatibility_matrix.202504.xml:[2-3]; compatibility_matrix.202604.xml:[2-4] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.radio.messaging.IRadioMessaging/slot3 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.radio.modem.IRadioModem/slot3 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.radio.network.IRadioNetwork/slot3 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.radio.sap.ISap/slot3 | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.radio.sim.IRadioSim/slot3 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.radio.voice.IRadioVoice/slot3 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.secure_element.ISecureElement/eSE[1-9][0-9]* (regex) | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.security.keymint.IKeyMintDevice/strongbox | compatibility_matrix.8.xml:[1-3]; compatibility_matrix.202404.xml:[1-3]; compatibility_matrix.202504.xml:[1-4]; compatibility_matrix.202604.xml:[1-5] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.security.keymint.IRemotelyProvisionedComponent/strongbox | compatibility_matrix.8.xml:[1-3]; compatibility_matrix.202404.xml:[1-3]; compatibility_matrix.202504.xml:[1-3]; compatibility_matrix.202604.xml:[1-3] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.security.keymint.IRemotelyProvisionedComponent/widevine | compatibility_matrix.8.xml:[1-3] | package implemented by vendor, but this interface/instance is not declared - informational
+MISSING FROM VENDOR  | aidl  | android.hardware.security.sharedsecret.ISharedSecret/strongbox | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1]; compatibility_matrix.202504.xml:[1]; compatibility_matrix.202604.xml:[1] | package implemented by vendor, but this interface/instance is not declared - informational
+VERSION MISMATCH     | aidl  | android.hardware.graphics.composer3.IComposer/default | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[4]; compatibility_matrix.202604.xml:[4-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.health.IHealth/default | compatibility_matrix.8.xml:[1-2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.power.IPower/default | compatibility_matrix.8.xml:[4]; compatibility_matrix.202404.xml:[5]; compatibility_matrix.202504.xml:[5-6]; compatibility_matrix.202604.xml:[5-7] | vendor provides 4; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.config.IRadioConfig/default | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.data.IRadioData/slot1 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.data.IRadioData/slot2 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.ims.IRadioIms/slot1 | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[2]; compatibility_matrix.202504.xml:[2-3]; compatibility_matrix.202604.xml:[2-4] | vendor provides 1; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.ims.IRadioIms/slot2 | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[2]; compatibility_matrix.202504.xml:[2-3]; compatibility_matrix.202604.xml:[2-4] | vendor provides 1; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.messaging.IRadioMessaging/slot1 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.messaging.IRadioMessaging/slot2 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.modem.IRadioModem/slot1 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.modem.IRadioModem/slot2 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.network.IRadioNetwork/slot1 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.network.IRadioNetwork/slot2 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.sim.IRadioSim/slot1 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.sim.IRadioSim/slot2 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.voice.IRadioVoice/slot1 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.radio.voice.IRadioVoice/slot2 | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[3-5] | vendor provides 2; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.thermal.IThermal/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[2]; compatibility_matrix.202504.xml:[3]; compatibility_matrix.202604.xml:[3] | vendor provides 1; accepted by compatibility_matrix.8.xml; not in range of compatibility_matrix.202404.xml,compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.wifi.IWifi/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[2-3]; compatibility_matrix.202604.xml:[2-4] | vendor provides 1; accepted by compatibility_matrix.202404.xml,compatibility_matrix.8.xml; not in range of compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.wifi.hostapd.IHostapd/default | compatibility_matrix.8.xml:[1]; compatibility_matrix.202404.xml:[1-2]; compatibility_matrix.202504.xml:[2-3]; compatibility_matrix.202604.xml:[2-3] | vendor provides 1; accepted by compatibility_matrix.202404.xml,compatibility_matrix.8.xml; not in range of compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+VERSION MISMATCH     | aidl  | android.hardware.wifi.supplicant.ISupplicant/default | compatibility_matrix.8.xml:[2]; compatibility_matrix.202404.xml:[2-3]; compatibility_matrix.202504.xml:[3-4]; compatibility_matrix.202604.xml:[4-5] | vendor provides 2; accepted by compatibility_matrix.202404.xml,compatibility_matrix.8.xml; not in range of compatibility_matrix.202504.xml,compatibility_matrix.202604.xml (newer FCM level asks for a newer version) - informational
+
+==============================================================================================================
+TRANSPORT MISMATCH
+==============================================================================================================
+none - no instance is declared twice with different transports; libvintf does not check transport vs matrix.
+
+==============================================================================================================
+DEPRECATION (emulated VintfObject::checkDeprecation)
+==============================================================================================================
+none - real checkvintf checkDeprecation also returned NO_DEPRECATED_HALS (no error in runs C-G).
+
+==============================================================================================================
+FRAMEWORK MANIFEST vs ULEFONE DEVICE COMPATIBILITY MATRIX (vendor/etc/vintf/compatibility_matrix.xml)
+NOT evaluated by libvintf for HALs (only vendor-ndk/system-sdk). Runtime relevance only.
+==============================================================================================================
+NOT PROVIDED by A17 framework manifest   aidl  vendor.mediatek.framework.mtksf_ext@2::IMtkSF_ext/default optional=true
+NOT PROVIDED by A17 framework manifest   aidl  vendor.mediatek.hardware.mbrainj@1::IMBrainJava/default optional=true
+PROVIDED                                 hidl  android.frameworks.sensorservice@1.0::(any)/(any) optional=false  <- system/etc/vintf/manifest.xml android.frameworks.sensorservice@1.0::ISensorManager/default
+NOT PROVIDED by A17 framework manifest   hidl  android.hidl.allocator@1.0::(any)/(any) optional=false
+PROVIDED                                 hidl  android.hidl.manager@1.0::(any)/(any) optional=false  <- system_ext/etc/vintf/manifest.xml android.hidl.manager@1.2::IServiceManager/default
+PROVIDED                                 hidl  android.hidl.memory@1.0::(any)/(any) optional=false  <- system/etc/vintf/manifest.xml android.hidl.memory@1.0::IMapper/ashmem
+PROVIDED                                 hidl  android.hidl.token@1.0::(any)/(any) optional=false  <- system_ext/etc/vintf/manifest.xml android.hidl.token@1.0::ITokenManager/default

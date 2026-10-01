@@ -1,0 +1,88 @@
+# Android 17 checkvintf build info
+
+=== 1. Source discovery ===
+Searched: /mnt/SamsungSSD/LieppOS (lineage-23.x, libvintf 25Q4-release => Android 16, REJECTED)
+          /mnt/SamsungSSD/android/lineage-24.0 (Android 17, SELECTED)
+
+--- candidates for */system/libvintf/check_vintf.cpp ---
+-rw-r--r-- 1 armol armol 22927 Sep 27 21:35 /mnt/SamsungSSD/android/lineage-24.0/system/libvintf/check_vintf.cpp
+-rw-r--r-- 1 armol armol 22927 Apr 26 23:23 /mnt/SamsungSSD/LieppOS/system/libvintf/check_vintf.cpp
+/mnt/SamsungSSD/LieppOS/system/libvintf HEAD: 69c456ea4aa2f503a2904cfbc11f279a3b2efb09 Snap for 13683512 from 44f3c6a33ef92a9748a23e9ec988d987cf0bb3c9 to 25Q4-release
+
+--- candidates for out/host/linux-x86/bin/checkvintf ---
+ls: cannot access '/mnt/SamsungSSD/LieppOS/out/host/linux-x86/bin/checkvintf': No such file or directory
+-rwxr-xr-x 1 armol armol 6248080 Sep 28 17:29 /mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/checkvintf
+
+=== Selected Android 17 source tree ===
+SOURCE_ROOT=/mnt/SamsungSSD/android/lineage-24.0
+MANIFEST_BRANCH=default (tracking remotes/m/lineage-24.0 -> origin/lineage-24.0)
+MANIFEST_HEAD=f16772cb8c33a15e970abe42d7bb120e2dc84f33 manifest: Forks for android-security-17.0.0_r1
+AOSP default revision in manifest:
+/mnt/SamsungSSD/android/lineage-24.0/.repo/manifests/default.xml:14:           revision="refs/tags/android-17.0.0_r1" />
+/mnt/SamsungSSD/android/lineage-24.0/.repo/manifests/default.xml:14:           revision="refs/tags/android-17.0.0_r1" />
+
+system/libvintf:
+  HEAD=df89ad736e14ac375f61d50fa543ae7cd746a140
+  describe=android-17.0.0_r1
+  tags at HEAD: android-17.0.0_r1 
+  log -1: Wed Mar 25 16:30:53 2026 -0700 Snap for 15086948 from 8f11ff90bd6b8c473cfc43a34198a1a5f2d422dc to 26Q2-release
+  local modifications: 0
+hardware/interfaces (FCM source):
+  HEAD=1b92b77fe1f2f2c820c51b0b1e366c17d6b9911b describe=1b92b77fe1
+  local modifications: 0
+IS_ANDROID_17_0_0_R1_OR_LATER=YES (libvintf at tag android-17.0.0_r1, 26Q2-release snap)
+
+=== checkvintf binary ===
+BUILD ACTION: none required - binary already present, newer than check_vintf.cpp
+PATH=/mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/checkvintf
+SHA256=cd1b1f52a06d0aad06c7ee7e4ce75d0f0e699910196389c2f13ce701a5421f23
+mtime=2026-09-28 17:29:48.357894597 +0300 size=6248080
+check_vintf.cpp mtime=2026-09-27 21:35:04.764818613 +0300
+/mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/checkvintf: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.24, BuildID[md5/uuid]=9458fc9584b6e0dec579aab4e3f39320, with debug_info, not stripped
+built in out dir: /mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs (same out dir that produced the Slot-B gq5012bf1 system/system_ext/product images)
+
+=== checkvintf --help (stderr) ===
+/mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/checkvintf: check VINTF metadata.
+    Modes:
+        --dump-file-list: Dump a list of directories / files on device
+                that is required to be used by --check-compat.
+        -c, --check-compat: check compatibility for files under the root
+                directory specified by --root-dir.
+        --check-one: check consistency of VINTF metadata for a single partition.
+
+    Options:
+        --rootdir=<dir>: specify root directory for all metadata. Same as 
+                --dirmap /:<dir>
+        -D, --property <key>=<value>: specify sysprops.
+        --dirmap </system:/dir/to/system> [--dirmap </vendor:/dir/to/vendor>[...]]
+                Map partitions to directories. Cannot be specified with --rootdir.        --kernel <version:path/to/config>
+                Use the given kernel version and config to check. If
+                unspecified, kernel requirements are skipped.
+                The first half, version, can be just x.y.z, or a file 
+                containing the full kernel release string x.y.z-something.
+        --help: show this message.
+
+    Example:
+        # Get the list of required files.
+        /mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/checkvintf --dump-file-list > /tmp/files.txt
+        # Pull from ADB, or use your own command to extract files from images
+        ROOTDIR=/tmp/device/
+        cat /tmp/files.txt | xargs -I{} bash -c "mkdir -p $ROOTDIR`dirname {}` && adb pull {} $ROOTDIR{}"
+        # Check compatibility.
+        /mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/checkvintf --check-compat --rootdir=$ROOTDIR \
+            --property ro.product.first_api_level=`adb shell getprop ro.product.first_api_level` \
+            --property ro.boot.product.hardware.sku=`adb shell getprop ro.boot.product.hardware.sku`
+[note: usage text is printed on stderr; exit status not significant]
+
+=== checkvintf --dump-file-list --property ro.boot.product.hardware.sku=dsds ===
+/system/etc/vintf/
+/vendor/etc/vintf/
+/odm/etc/vintf/
+/product/etc/vintf/
+/system_ext/etc/vintf/
+/odm/etc/manifest.xml
+/vendor/manifest.xml
+/vendor/compatibility_matrix.xml
+/system/manifest.xml
+/system/compatibility_matrix.xml
+/odm/etc/manifest_dsds.xml

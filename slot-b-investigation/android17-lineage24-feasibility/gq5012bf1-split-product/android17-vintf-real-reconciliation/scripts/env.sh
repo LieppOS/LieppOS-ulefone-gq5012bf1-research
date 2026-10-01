@@ -1,0 +1,15 @@
+export R="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"
+export S="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product"
+export OUT="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-real-reconciliation"
+export C="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-compat-collect-20261001-010627"
+export AUD="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-checker-audit-20261001-011007"
+export SRC=/mnt/SamsungSSD/android/lineage-24.0
+export CV=/mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/checkvintf
+export PRODOUT=/mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/target/product/gq5012bf1
+export STOCK=/mnt/SamsungSSD/TIER3/phase1/extracted/mounts/run-20260718T120318Z
+export HR=/tmp/a17-vintf-hostroot
+export T="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-real-reconciliation/TERMINAL.txt"
+logrun() { echo "$ $*" >> "$T"; bash -c "$*" 2>&1 | tee -a "$T"; echo "[rc=${PIPESTATUS[0]}]" >> "$T"; }
+export WK=/tmp/a17-vintf-work
+export DM="--dirmap /system:/tmp/a17-vintf-hostroot/system --dirmap /system_ext:/tmp/a17-vintf-hostroot/system_ext --dirmap /product:/tmp/a17-vintf-hostroot/product --dirmap /vendor:/tmp/a17-vintf-hostroot/vendor --dirmap /odm:/tmp/a17-vintf-hostroot/odm --dirmap /apex:/tmp/a17-vintf-apex-empty"
+export DMA="--dirmap /system:/tmp/a17-vintf-hostroot/system --dirmap /system_ext:/tmp/a17-vintf-hostroot/system_ext --dirmap /product:/tmp/a17-vintf-hostroot/product --dirmap /vendor:/tmp/a17-vintf-hostroot/vendor --dirmap /odm:/tmp/a17-vintf-hostroot/odm --dirmap /apex:/tmp/a17-vintf-apex-vendor"

@@ -1,0 +1,152 @@
+# SELinux version / mapping reconciliation - Android 17 Slot-B framework vs Ulefone vendor policy
+
+## 0. Input provenance
+Collection did NOT include */etc/selinux. Sources used instead (all read-only):
+  framework: /mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/target/product/gq5012bf1/{system,system_ext,product}.img
+     extracted with /mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/fsck.erofs --extract (to /tmp, not the repo)
+     image sha256 == Slot-B device-side readback (android17-b-staging-verify-20260930-233617/readback.sha256):
+       d71f720c5edc727249e22a00021e2eb58871555f843f6464a67b267e841b2eef  system.img
+       e72441c57fb2727dffce3a3a4626b9716828456a9c3e472fe650fe07f38f51a4  system_ext.img
+       e7490f3204b936af49889d8b03e89a87cabbdd7c8e8a55c970920eb041201fde  product.img
+     extracted VINTF files are byte-identical to the collection's root/{system,system_ext,product} (verified).
+  vendor   : /mnt/SamsungSSD/TIER3/phase1/extracted/mounts/run-20260718T120318Z/vendor/etc/selinux (untouched stock V15 extraction)
+     ro.vendor.build.fingerprint (stock build.prop) == live getprop: Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys
+     51/52 vendor VINTF files byte-identical to live collection (only fingerprint-example.xml differs, see README).
+     LIMITATION: live /vendor/etc/selinux was not collected; identity is inferred from identical vendor fingerprint.
+  odm      : /odm is vendor/odm on this device (no odm partition; only odm_dlkm mounted). vendor/odm/etc has NO selinux/ dir
+             => no odm_sepolicy.cil, no odm precompiled policy.
+
+## 1. Versions
+vendor/etc/selinux/plat_sepolicy_vers.txt      : 34.0
+vendor manifest <sepolicy><version>             : 34.0
+vendor plat_pub_versioned.cil type suffix       : _34_0 (17899 occurrences, no other version suffix)
+vendor genfs_labels_version.txt                 : ABSENT => libgenfslabelsversion default 202404
+Android 17 PLATFORM_SEPOLICY_VERSION            : 202604   (soong.lineage_gq5012bf1.variables PlatformSepolicyVersion)
+Android 17 BOARD_SEPOLICY_VERS (device build)   : 202604   (only relevant to a LieppOS-built vendor, not to the Ulefone vendor)
+Android 17 PLATFORM_SEPOLICY_COMPAT_VERSIONS     : 31.0 32.0 33.0 34.0 202404 202504   (build/make/core/config.mk:917)
+
+## 2. Mapping files actually present in the Slot-B images
+--- system/system/etc/selinux/mapping/
+   202404.cil               167343 bytes  sha256=af4552504d575dcb
+   202404.compat.cil           572 bytes  sha256=801ad38741a5a078
+   202504.cil               170261 bytes  sha256=12a33727f2997d6f
+   202504.compat.cil          1742 bytes  sha256=0d64f42958274091
+   202604.cil               234191 bytes  sha256=34f9db1571f43aab
+   31.0.cil                 142432 bytes  sha256=96964df1ab17c132
+   31.0.compat.cil             347 bytes  sha256=59f29c2cd0e88141
+   32.0.cil                 142540 bytes  sha256=359821c575470295
+   32.0.compat.cil             347 bytes  sha256=6a178d504d5557ad
+   33.0.cil                 150420 bytes  sha256=00386bfc0a027ad3
+   33.0.compat.cil            1090 bytes  sha256=e159029a974f2d97
+   34.0.cil                 156771 bytes  sha256=2e5ef02efbe4cea3
+   34.0.compat.cil            1317 bytes  sha256=36eaa39c02638f9c
+--- system_ext/etc/selinux/mapping/
+   202404.cil                    0 bytes  sha256=e3b0c44298fc1c14
+   202404.compat.cil             0 bytes  sha256=e3b0c44298fc1c14
+   202504.cil                    0 bytes  sha256=e3b0c44298fc1c14
+   202504.compat.cil             0 bytes  sha256=e3b0c44298fc1c14
+   202604.cil                  732 bytes  sha256=46005781e47208e7
+   31.0.cil                      0 bytes  sha256=e3b0c44298fc1c14
+   31.0.compat.cil               0 bytes  sha256=e3b0c44298fc1c14
+   32.0.cil                      0 bytes  sha256=e3b0c44298fc1c14
+   32.0.compat.cil               0 bytes  sha256=e3b0c44298fc1c14
+   33.0.cil                      0 bytes  sha256=e3b0c44298fc1c14
+   33.0.compat.cil               0 bytes  sha256=e3b0c44298fc1c14
+   34.0.cil                      0 bytes  sha256=e3b0c44298fc1c14
+   34.0.compat.cil               0 bytes  sha256=e3b0c44298fc1c14
+--- product/etc/selinux/mapping/
+   202404.cil                    0 bytes  sha256=e3b0c44298fc1c14
+   202504.cil                    0 bytes  sha256=e3b0c44298fc1c14
+   202604.cil                    1 bytes  sha256=01ba4719c80b6fe9
+   31.0.cil                      0 bytes  sha256=e3b0c44298fc1c14
+   32.0.cil                      0 bytes  sha256=e3b0c44298fc1c14
+   33.0.cil                      0 bytes  sha256=e3b0c44298fc1c14
+   34.0.cil                      0 bytes  sha256=e3b0c44298fc1c14
+
+Required for vendor 34.0 (system/core/init/selinux.cpp LoadSplitPolicy):
+   PRESENT  /system/etc/selinux/mapping/34.0.cil
+   PRESENT  /system/etc/selinux/mapping/34.0.compat.cil
+   PRESENT  /system_ext/etc/selinux/mapping/34.0.cil
+   PRESENT  /system_ext/etc/selinux/mapping/34.0.compat.cil
+   PRESENT  /product/etc/selinux/mapping/34.0.cil
+202404/202504/202604 mappings: PRESENT in system, system_ext, product (see list above) - not needed by this vendor (34.0).
+plat_sepolicy_genfs_*.cil present: plat_sepolicy_genfs_202504.cil plat_sepolicy_genfs_202604.cil plat_sepolicy_genfs_202704.cil 
+   vendor genfs version 202404 => /system/etc/selinux/plat_sepolicy_genfs_202404.cil absent => init logs 'Missing ...; skipping'
+   (fatal only when vendor genfs version >= 202504; selinux.cpp:338-344) => LEGAL for this vendor.
+
+## 3. VINTF sepolicy check (libvintf, real checkvintf)
+Framework matrix <sepolicy> comes ONLY from system/etc/vintf/compatibility_matrix.device.xml (FCM 7/8/2024xx/2025xx/2026xx contain no <sepolicy>):
+   396:    <sepolicy>
+   397-        <kernel-sepolicy-version>30</kernel-sepolicy-version>
+   398-        <sepolicy-version>31.0</sepolicy-version>
+   399-        <sepolicy-version>32.0</sepolicy-version>
+   400-        <sepolicy-version>33.0</sepolicy-version>
+   401-        <sepolicy-version>34.0</sepolicy-version>
+   402-        <sepolicy-version>202404</sepolicy-version>
+   403-        <sepolicy-version>202504</sepolicy-version>
+   404-        <sepolicy-version>202604</sepolicy-version>
+   405-    </sepolicy>
+   406-    <avb>
+HalManifest::checkCompatibility: SepolicyVersionRange 34.0 supportedBy vendor 34.0 => PASS (runs C-G COMPATIBLE).
+Negative control N2 (device FCM removed) => 'Sepolicy version 34.0 doesn't satisify the requirements.' i.e. the check is live,
+and 34.0 is accepted because the Android 17 build generated 34.0 from PLATFORM_SEPOLICY_COMPAT_VERSIONS - backed by real mapping files above.
+kernel-sepolicy-version >= 30: NOT evaluated on host (check_vintf StaticRuntimeInfo sets POLICYVERS=SIZE_MAX).
+   Linux 6.1 POLICYDB_VERSION_MAX = 33 >= 30 => expected PASS; on-device /sys/fs/selinux/policyvers was not collected.
+
+## 4. Precompiled policy usability
+vendor precompiled_sepolicy.plat_sepolicy_and_mapping.sha256       = 53f5f99e123b79fc249c70188463f03249b0447a847d45d11fcebedae91b056b
+A17 /system/etc/selinux/plat_sepolicy_and_mapping.sha256           = dd48a3e5ad83d195cfc7adc6fdc34fbc9eaafb23666cfb8707603dbc6cfb7655
+vendor precompiled_sepolicy.system_ext_sepolicy_and_mapping.sha256 = 80c66fa92aa34a89ea5e6936f842ff5669af5b2fceb35a52344d4b44f5034897
+A17 /system_ext/etc/selinux/system_ext_sepolicy_and_mapping.sha256 = 19afb785aaa699459b109b72bb9fe059d663ffbf5fc742f5b82dc54be59c0999
+vendor precompiled_sepolicy.product_sepolicy_and_mapping.sha256    = (absent)
+A17 /product/etc/selinux/product_sepolicy_and_mapping.sha256       = 75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070
+=> hashes differ => init will NOT use vendor precompiled_sepolicy; it compiles split policy on-device with /system/bin/secilc.
+   (Expected and normal for any framework replacement.)
+
+## 5. REAL split-policy compile (exact replica of init LoadSplitPolicy argument order, host secilc from the same A17 out dir)
+secilc sha256: 039830a303cb380f04da871797bc9bf5ab911b3c9162a29d5fbe906680d37d74
+command:
+   /mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/secilc /tmp/a17-vintf-imgx/system/system/etc/selinux/plat_sepolicy.cil -m -M true -G -N -v -c 30 /tmp/a17-vintf-imgx/system/system/etc/selinux/mapping/34.0.cil -o /tmp/a17-vintf-work/sepolicy/compiled_sepolicy -f /dev/null /tmp/a17-vintf-imgx/system/system/etc/selinux/mapping/34.0.compat.cil /tmp/a17-vintf-imgx/system_ext/etc/selinux/system_ext_sepolicy.cil /tmp/a17-vintf-imgx/system_ext/etc/selinux/mapping/34.0.cil /tmp/a17-vintf-imgx/system_ext/etc/selinux/mapping/34.0.compat.cil /tmp/a17-vintf-imgx/product/etc/selinux/product_sepolicy.cil /tmp/a17-vintf-imgx/product/etc/selinux/mapping/34.0.cil /mnt/SamsungSSD/TIER3/phase1/extracted/mounts/run-20260718T120318Z/vendor/etc/selinux/plat_pub_versioned.cil /mnt/SamsungSSD/TIER3/phase1/extracted/mounts/run-20260718T120318Z/vendor/etc/selinux/vendor_sepolicy.cil
+(init passes -f /sys/fs/selinux/null; /dev/null used on host. No odm_sepolicy.cil; no genfs cil for 202404; non-userdebug plat policy.)
+stdout+stderr:
+exit status: SECILC_EXIT=0
+compiled policy: 1375833 bytes sha256=6418e19c810bfba8b31adfe0a540cbb32cd717edfe3307d421fbdf1f5270460d
+=> SPLIT POLICY COMPILE: PASS. The Android 17 framework CAN legally and technically consume Ulefone vendor policy 34.0.
+
+## 6. Informational: same compile WITHOUT -N (neverallow enforcement - init never does this at boot)
+SECILC_NEVERALLOW_EXIT=255
+Classification (full detail in selinux-compile/neverallow-classified.txt):
+   TOTAL neverallow violations reported by secilc (without -N): 161
+   
+   neverallow-origin | offending-allow-origin | involves userdebug 'su' | count
+   VENDOR-plat_pub_versioned(34.0 frozen neverallow) | PLATFORM-A17 | su=False | 85
+   PLATFORM-A17 neverallow | VENDOR | su=False | 31
+   VENDOR-plat_pub_versioned(34.0 frozen neverallow) | PLATFORM-A17 | su=True | 17
+   PLATFORM-A17 neverallow | PLATFORM-A17,VENDOR | su=False | 8
+   VENDOR-plat_pub_versioned(34.0 frozen neverallow) | PLATFORM-A17,VENDOR | su=False | 7
+   PLATFORM-A17 neverallow | PLATFORM-A17 | su=False | 5
+   VENDOR-vendor_sepolicy | PLATFORM-A17 | su=True | 3
+   VENDOR-plat_pub_versioned(34.0 frozen neverallow) | SYSTEM_EXT-A17 | su=False | 2
+   VENDOR-plat_pub_versioned(34.0 frozen neverallow) | VENDOR | su=False | 2
+   VENDOR-vendor_sepolicy | PLATFORM-A17 | su=False | 1
+   
+   ==== DETAILS ====
+   
+   [VENDOR-vendor_sepolicy] <- allow from [PLATFORM-A17] su=False
+     neverallow @ vendor_sepolicy.cil:13100: (neverallow base_typeattr_692_34_0 mobicore_app (process (ptrace)))
+       allow @ llkd.te:22: (allow llkd base_typeattr_854 (process (ptrace)))
+   
+Interpretation:
+ - 'VENDOR-plat_pub_versioned(34.0 frozen neverallow) <- PLATFORM-A17': Android 14 platform neverallows frozen into the vendor image are
+   violated by NEW Android 17 platform allow rules (apexd, aconfigd, overlay_remounter, crosvm, ...). Normal across a framework-only upgrade.
+ - su=True rows: userdebug 'su' domain rules; disappear in a user build.
+ - 'PLATFORM-A17 neverallow <- VENDOR': MediaTek/Ulefone vendor_sepolicy.cil rules that would violate Android 17 platform neverallows.
+   These are CTS/VTS (sepolicy_tests / neverallow CTS) compliance issues of the vendor blob policy, NOT boot blockers, because init compiles with -N.
+
+## 7. Verdict
+SELINUX_VINTF_CHECK=PASS (vendor 34.0 in framework <sepolicy-version> list)
+SELINUX_MAPPING_PRESENT=YES (system/system_ext/product mapping/34.0.cil + 34.0.compat.cil)
+SELINUX_SPLIT_COMPILE=PASS (secilc exit 0)
+SELINUX_ACTUAL_INCOMPATIBILITY=NONE at policy-load level.
+Residual (runtime, not VINTF): AVC denials for A17-new services/props against MTK vendor domains can only be observed on a real boot;
+     and the A17 build is currently missing hwservicemanager/hidl allocator (see README section 'Beyond checkvintf').

@@ -1,0 +1,251 @@
+CHECKVINTF_RESULT=COMPATIBLE
+
+Checker : /mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/checkvintf
+          sha256 cd1b1f52a06d0aad06c7ee7e4ce75d0f0e699910196389c2f13ce701a5421f23, libvintf android-17.0.0_r1 (df89ad73)
+Framework: Slot-B Android 17 system / system_ext / product VINTF (collection, == flashed images)
+Vendor   : existing Ulefone vendor + ODM VINTF (live collection, unmodified; no invented A17 vendor metadata)
+Kernel   : 6.1.115-android14-11-g6b18f0b574ab-ab12901745 + collected kernel.config
+
+==============================================================================
+PRIMARY RESULT = run C (requested property set; actual ro.boot.product.hardware.sku is EMPTY on the live device,
+                 so --property ro.boot.product.hardware.sku was omitted exactly as the live system would resolve it)
+==============================================================================
+$ /mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/checkvintf --check-compat --dirmap /system:/tmp/a17-vintf-hostroot/system --dirmap /system_ext:/tmp/a17-vintf-hostroot/system_ext --dirmap /product:/tmp/a17-vintf-hostroot/product --dirmap /vendor:/tmp/a17-vintf-hostroot/vendor --dirmap /odm:/tmp/a17-vintf-hostroot/odm --dirmap /apex:/tmp/a17-vintf-apex-empty --property ro.product.first_api_level=35 --property ro.vendor.api_level=34 --property ro.vndk.version=34 --kernel 6.1.115:/tmp/a17-vintf-work/kernel.config
+exit status: 0
+stderr (complete, 0 lines):
+stdout final line: COMPATIBLE
+
+==============================================================================
+WHY NOT THE LITERAL '--rootdir=' COMMAND: android-17.0.0_r1 checkvintf defect (reproduced, runs A and B)
+==============================================================================
+run A: --rootdir=<HOST_ROOT>   -> exit 64: 'ERROR: Missing --rootdir or --dirmap option.'
+       check_vintf.cpp:557 computes 'dirmap' from DIR_MAP args BEFORE line 583 converts --rootdir into a DIR_MAP arg;
+       the converted value is never read, so dirmap.empty() is true at line 595.
+run B: --dirmap /:<HOST_ROOT>  -> exit 70: 'Cannot resolve path /system/etc/vintf/...'
+       HostFileSystem.cpp:74 resolve() tests StartsWith(path, prefix + "/") => prefix "/" needs "//"; a root mapping never matches.
+Working form (used for every real run): one --dirmap per partition (/system /system_ext /product /vendor /odm /apex).
+/apex must be mapped too; an unmapped path returns UNKNOWN_ERROR (check_vintf.cpp:394 HostFileSystem(dirmap, UNKNOWN_ERROR)) and aborts manifest assembly.
+
+==============================================================================
+ALL RUNS
+==============================================================================
+RUN     EXIT   RESULT        DESCRIPTION
+A       64     TOOL-ERROR    literal --rootdir (tool defect)
+B       70     TOOL-ERROR    --dirmap /:root (tool defect)
+C       0      COMPATIBLE    PRIMARY: per-partition dirmap, no APEX, sku unset (live), kernel 6.1.115:config
+D       0      COMPATIBLE    C + vendor APEX widevine VINTF (apex-info-list VENDOR)
+E       0      COMPATIBLE    D + ro.boot.product.hardware.sku=dsds (loads odm/etc/vintf/manifest_dsds.xml)
+F       0      COMPATIBLE    E with full GKI release string (kernel level 8 from 'android14' instead of target-level)
+F_ss    0      COMPATIBLE    F with sku=ss (single-SIM ODM manifest)
+F_tsts  65     INCOMPATIBLE  F with sku=tsts - NOT this hardware (triple-SIM)
+F_qsqs  65     INCOMPATIBLE  F with sku=qsqs - NOT this hardware (quad-SIM)
+G       0      COMPATIBLE    F with STOCK vendor fingerprint-example.xml (IFingerprint/virtual) instead of live stub
+N1      65     INCOMPATIBLE  NEGATIVE CONTROL: F with CONFIG_ANDROID_BINDER_IPC deleted from kernel.config
+N2      65     INCOMPATIBLE  NEGATIVE CONTROL: F without system/etc/vintf/compatibility_matrix.device.xml
+
+Properties actually consulted by the Android 17 checker (from [INFO] Sysprop lines): apex.all.ready (host default true),
+ro.boot.product.hardware.sku, ro.boot.product.vendor.sku. ro.product.first_api_level / ro.vendor.api_level / ro.vndk.version
+were supplied but are never read by checkvintf 17. No further properties are required.
+
+What was checked in the COMPATIBLE runs (VintfObject::checkCompatibility + checkAllFiles):
+  [PASS] device manifest vs combined FCM (level 8 + 202404/202504/202604 optional + device FCM + Lineage FCM): sepolicy 34.0
+  [PASS] framework manifest vs Ulefone DCM: vendor-ndk 34, system-sdk (none required)
+  [PASS] runtime info vs FCM: kernel 6.1.115 >= 6.1.0, kernel FCM level 8, all 282 applicable CONFIG requirements
+  [PASS] checkDeprecation: NO_DEPRECATED_HALS
+  [PASS] checkUnusedHals: all 151 device-manifest instances declared by a framework matrix
+  [SKIP by checker design] AVB (CheckFlags::DEFAULT = DISABLE_AVB_CHECK), kernel-sepolicy-version (host POLICYVERS=SIZE_MAX)
+
+FATAL INCOMPATIBILITIES (for the real device configuration, sku empty or dsds): 0
+
+Non-device-SKU and control failures (complete error output preserved in checkvintf-runs/):
+----- runF_tsts stderr (first 12 lines; full file checkvintf-runs/runF_tsts.stderr.txt) -----
+ERROR: files are incompatible: The following instances are in the device manifest but not specified in framework compatibility matrix: 
+    android.hardware.radio.modem.IRadioModem/imsSlot3 (@2)
+    android.hardware.radio.modem.IRadioModem/se3 (@2)
+    android.hardware.radio.network.IRadioNetwork/imsSlot3 (@2)
+    android.hardware.radio.sim.IRadioSim/imsSlot3 (@2)
+    android.hardware.radio.sim.IRadioSim/se3 (@2)
+    android.hardware.radio.voice.IRadioVoice/imsSlot3 (@2)
+    vendor.mediatek.hardware.mtkradioex.data.IMtkRadioExData/slot3 (@2)
+    vendor.mediatek.hardware.mtkradioex.dch.IMtkRadioExDc/slot3 (@1)
+    vendor.mediatek.hardware.mtkradioex.ims.IMtkRadioExIms/slot3 (@1)
+    vendor.mediatek.hardware.mtkradioex.messaging.IMtkRadioExMessaging/slot3 (@1)
+    vendor.mediatek.hardware.mtkradioex.modem.IMtkRadioExModem/slot3 (@2)
+----- runN1 stderr (first 12 lines; full file checkvintf-runs/runN1.stderr.txt) -----
+ERROR: files are incompatible: Runtime info and framework compatibility matrix are incompatible: No compatible kernel requirement found (kernel FCM version = 8).
+For kernel requirements at matrix level 8, Kernel config errors:
+    Missing config CONFIG_ANDROID_BINDER_IPC
+: Success
+----- runN2 stderr (first 12 lines; full file checkvintf-runs/runN2.stderr.txt) -----
+ERROR: files are incompatible: Device manifest and framework compatibility matrix are incompatible: Sepolicy version 34.0 doesn't satisify the requirements.
+The following instances are in the device manifest but not specified in framework compatibility matrix: 
+    android.hardware.radio.modem.IRadioModem/imsSlot1 (@2)
+    android.hardware.radio.modem.IRadioModem/imsSlot2 (@2)
+    android.hardware.radio.modem.IRadioModem/se1 (@2)
+    android.hardware.radio.modem.IRadioModem/se2 (@2)
+    android.hardware.radio.network.IRadioNetwork/imsSlot1 (@2)
+    android.hardware.radio.network.IRadioNetwork/imsSlot2 (@2)
+    android.hardware.radio.sim.IRadioSim/imsSlot1 (@2)
+    android.hardware.radio.sim.IRadioSim/imsSlot2 (@2)
+    android.hardware.radio.sim.IRadioSim/se1 (@2)
+    android.hardware.radio.sim.IRadioSim/se2 (@2)
+
+==============================================================================
+APPENDIX: complete stdout of primary run C
+==============================================================================
+[INFO] "6.1.115" is not a mainline kernel.
+[INFO] Successfully parsed "6.1.115"
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Get modified time '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] getFrameworkHalManifest: Reading VINTF information.
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest.xml': OK
+[INFO] List '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest/': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest/manifest_services_android.frameworks.vibrator.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest/manifest_services_android.frameworks.location.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest/manifest_services_android.frameworks.devicestate.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest/manifest_media_c2_software.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest/manifest_android.frameworks.cameraservice.service.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest/android.system.vold-service.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest/android.system.suspend-service.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest/android.system.net.netd-service.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest/android.system.keystore2-service.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest/android.frameworks.stats-service.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/product/etc/vintf/manifest.xml': NAME_NOT_FOUND
+[INFO] List '/tmp/a17-vintf-hostroot/product/etc/vintf/manifest/': NAME_NOT_FOUND
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system_ext/etc/vintf/manifest.xml': OK
+[INFO] List '/tmp/a17-vintf-hostroot/system_ext/etc/vintf/manifest/': NAME_NOT_FOUND
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Fetch '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Get modified time '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] getDeviceHalManifest: Reading VINTF information.
+[INFO] Sysprop ro.boot.product.vendor.sku is missing, default to ''
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest.xml': OK
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Fetch '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] List '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/vibrator-mtk-default.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/thermal-mediatek.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/sensorcali_manifest_v2.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/sensorcali_manifest_v1.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/power-mediatek.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/nfc-service-st.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/mtkpower_applist-mtk-default.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/mtkgnss-batching.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/mtk_lbs_service.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/memtrack-mediatek.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/mapper.mediatek.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/manifest_tinylcd.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/manifest_obtain_vendor.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/manifest_mmlpq.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/manifest_media_c2_V1_2_default.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/manifest_isphal.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/manifest_hwcomposer.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/manifest_gesturewake.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/manifest_changenode.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/manifest_cameraprovider.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/manifest_apuware_utils_aidl.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/manifest_apuware_apusys_aidl.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/manifest_allocator.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/lights-mtk-default.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/gnss-mtk.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/gnss-default.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/fingerprint-example.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/face-default.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/em_hal_service.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/bluetooth_audio.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/arm.mali.platform-mediatek.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.wifi.supplicant.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.wifi.hostapd.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.wifi-service.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.usb.gadget-aidl-service.mediatek.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.usb-aidl-service.mediatek.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.tetheroffload-V1-service.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.sensors-multihal.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.security.sharedsecret-service.trustkernel.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.security.secureclock-service.trustkernel.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.security.keymint@3.0-service.trustkernel.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.neuralnetworks-shim-service-mtk.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.ir-service.example.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.health-service.example.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.gatekeeper-service.trustkernel.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.drm-service.clearkey.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.cas-service.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.boot-service.mtk.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/android.hardware.bluetooth-service-mediatek.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/manifest/CommandService.xml': OK
+[INFO] Sysprop ro.boot.product.hardware.sku is missing, default to ''
+[INFO] Fetch '/tmp/a17-vintf-hostroot/odm/etc/vintf/manifest.xml': NAME_NOT_FOUND
+[INFO] Fetch '/tmp/a17-vintf-hostroot/odm/etc/manifest.xml': NAME_NOT_FOUND
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Fetch '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] List '/tmp/a17-vintf-hostroot/odm/etc/vintf/manifest/': NAME_NOT_FOUND
+[INFO] getDeviceHalManifest: Successfully processed VINTF information
+[INFO] getFrameworkHalManifest: Successfully processed VINTF information
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Get modified time '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Get modified time '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] fetched kernel level from RuntimeInfo ''
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Get modified time '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] getFrameworkCompatibilityMatrix: Reading VINTF information.
+[INFO] List '/tmp/a17-vintf-hostroot/system/etc/vintf/': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.device.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.8.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.7.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.202604.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.202504.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.202404.xml': OK
+[INFO] List '/tmp/a17-vintf-hostroot/system_ext/etc/vintf/': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system_ext/etc/vintf/manifest.xml': OK
+[INFO] List '/tmp/a17-vintf-hostroot/product/etc/vintf/': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/product/etc/vintf/compatibility_matrix.lineage.xml': OK
+[INFO] getFrameworkCompatibilityMatrix: Successfully processed VINTF information
+[INFO] getDeviceCompatibilityMatrix: Reading VINTF information.
+[INFO] Fetch '/tmp/a17-vintf-hostroot/vendor/etc/vintf/compatibility_matrix.xml': OK
+[INFO] getDeviceCompatibilityMatrix: Successfully processed VINTF information
+[INFO] fetched kernel version 6.1.115
+[INFO] read kernel configs from /tmp/a17-vintf-work/kernel.config
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Get modified time '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Get modified time '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Get modified time '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Get modified time '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] List '/tmp/a17-vintf-hostroot/system/etc/vintf/': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.device.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.8.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.7.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.202604.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.202504.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.202404.xml': OK
+[INFO] List '/tmp/a17-vintf-hostroot/system_ext/etc/vintf/': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system_ext/etc/vintf/manifest.xml': OK
+[INFO] List '/tmp/a17-vintf-hostroot/product/etc/vintf/': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/product/etc/vintf/compatibility_matrix.lineage.xml': OK
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Get modified time '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] List '/tmp/a17-vintf-hostroot/system/etc/vintf/': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/manifest.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.device.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.8.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.7.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.202604.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.202504.xml': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system/etc/vintf/compatibility_matrix.202404.xml': OK
+[INFO] List '/tmp/a17-vintf-hostroot/system_ext/etc/vintf/': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/system_ext/etc/vintf/manifest.xml': OK
+[INFO] List '/tmp/a17-vintf-hostroot/product/etc/vintf/': OK
+[INFO] Fetch '/tmp/a17-vintf-hostroot/product/etc/vintf/compatibility_matrix.lineage.xml': OK
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Get modified time '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Get modified time '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+[INFO] Sysprop apex.all.ready is missing, default to ''
+[INFO] Get modified time '/tmp/a17-vintf-apex-empty/apex-info-list.xml': NAME_NOT_FOUND
+COMPATIBLE

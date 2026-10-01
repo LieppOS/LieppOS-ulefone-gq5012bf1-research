@@ -1,0 +1,86 @@
+# VNDK / vendor API / system SDK reconciliation
+
+## 1. Live vendor properties (collection live-getprop.txt)
+   [ro.board.first_api_level]: [34]
+   [ro.llndk.api_level]: [202504]
+   [ro.product.first_api_level]: [35]
+   [ro.treble.enabled]: [true]
+   [ro.vendor.api_level]: [34]
+   [ro.vendor.build.version.sdk]: [34]
+   [ro.vndk.version]: [34]
+   NOTE: ro.llndk.api_level=202504 above is a framework-side property of the currently running Slot-A (Android 16) system.
+
+## 2. VINTF <vendor-ndk> check (libvintf HalManifest::checkCompatibility, framework manifest vs vendor DCM)
+vendor/etc/vintf/compatibility_matrix.xml (Ulefone DCM):
+   41:    <vendor-ndk>
+   42-        <version>34</version>
+   43-    </vendor-ndk>
+system_ext/etc/vintf/manifest.xml (A17 framework):
+   17:    <vendor-ndk>
+   18-        <version>34</version>
+   19-    </vendor-ndk>
+checkVendorNdkCompatibility: DCM version 34 == framework vendor-ndk 34; DCM lists no <library> => no library diff => PASS.
+Real checkvintf (runs C-G): no 'Vndk version ... is not supported' error => PASS.
+
+## 3. VINTF <system-sdk> check
+Ulefone DCM <system-sdk>: 0 blocks (none => nothing required)
+A17 framework manifest provides system-sdk: 29 30 31 32 33 34 35 36 37
+=> PASS
+
+## 4. Is the VNDK v34 runtime that backs <vendor-ndk>34 actually shipped?
+   -rw-r--r-- 1 armol armol 42340352 Sep 28 17:12 /tmp/a17-vintf-imgx/system_ext/apex/com.android.vndk.v34.apex
+   sha256=a314ef69b9f5dd1fb63eddad289e823d1875f3857989287ef1e8d912e428fe24
+   soong ExtraVndkVersions = ['34']
+   Previous ELF audit (../VNDK-REQUIREMENTS.tsv): 1183 vendor ELF files, 71 external DT_NEEDED sonames resolved by VNDK 34; no v31/v32/v33 dependency.
+   /system/etc/llndk.libraries.txt present: YES
+
+## 5. vendor target-level=8 and vendor API level 34 under Android 17
+ - Android 17 still ships compatibility_matrix.7.xml and .8.xml (hardware/interfaces/compatibility_matrices/Android.bp SYSTEM_MATRIX_DEPS_A17).
+   FCM 7 is the oldest supported => target-level 8 is inside the supported window. libvintf combines 8 + 202404/202504/202604(optional).
+ - Framework manifest HALs with max-level="8" (hidl.manager, hidl.token, hidl.memory, sensorservice@1.0, media.c2@1.2 software)
+   remain advertised for a level-8 device; max-level="7" HALs (netd@1.1, wifi.keystore, cameraservice@2.2) are dropped (not needed by FCM 8).
+ - ro.vendor.api_level=34 (== ro.board.first_api_level=34): the property is NOT consulted by checkvintf 17 (only apex.all.ready,
+   ro.boot.product.hardware.sku, ro.boot.product.vendor.sku were queried; see CHECKVINTF-RESULT.txt). Its compatibility is expressed
+   via <vendor-ndk>34 (PASS), sepolicy 34.0 (PASS) and target-level 8 (PASS).
+ - ro.product.first_api_level=35 likewise not consulted by checkvintf (kernel level comes from the GKI release / target-level).
+
+## 6. Framework HAL services the vendor DCM requires (NOT checked by libvintf 17 - runtime only)
+   FRAMEWORK MANIFEST vs ULEFONE DEVICE COMPATIBILITY MATRIX (vendor/etc/vintf/compatibility_matrix.xml)
+   NOT evaluated by libvintf for HALs (only vendor-ndk/system-sdk). Runtime relevance only.
+   ==============================================================================================================
+   NOT PROVIDED by A17 framework manifest   aidl  vendor.mediatek.framework.mtksf_ext@2::IMtkSF_ext/default optional=true
+   NOT PROVIDED by A17 framework manifest   aidl  vendor.mediatek.hardware.mbrainj@1::IMBrainJava/default optional=true
+   PROVIDED                                 hidl  android.frameworks.sensorservice@1.0::(any)/(any) optional=false  <- system/etc/vintf/manifest.xml android.frameworks.sensorservice@1.0::ISensorManager/default
+   NOT PROVIDED by A17 framework manifest   hidl  android.hidl.allocator@1.0::(any)/(any) optional=false
+   PROVIDED                                 hidl  android.hidl.manager@1.0::(any)/(any) optional=false  <- system_ext/etc/vintf/manifest.xml android.hidl.manager@1.2::IServiceManager/default
+   PROVIDED                                 hidl  android.hidl.memory@1.0::(any)/(any) optional=false  <- system/etc/vintf/manifest.xml android.hidl.memory@1.0::IMapper/ashmem
+   PROVIDED                                 hidl  android.hidl.token@1.0::(any)/(any) optional=false  <- system_ext/etc/vintf/manifest.xml android.hidl.token@1.0::ITokenManager/default
+
+   Binary presence in the Slot-B images (fsck.erofs extraction of the exact flashed images):
+   SYMLINK  /system/bin/hwservicemanager -> /system/system_ext/bin/hwservicemanager  (target exists in image: NO)
+   ABSENT   /system_ext/bin/hwservicemanager
+   ABSENT   /system/bin/hw/android.hidl.allocator@1.0-service
+   ABSENT   /system_ext/bin/hw/android.hidl.allocator@1.0-service
+   ABSENT   /system/lib64/hw/android.hidl.memory@1.0-impl.so
+   ABSENT   /system_ext/lib64/hw/android.hidl.memory@1.0-impl.so
+   ABSENT   /system_ext/etc/init/hwservicemanager.rc
+   ABSENT   /system/etc/init/hwservicemanager.rc
+   Root cause: build/make/target/product/base_system_ext.mk:
+      30:PRODUCT_PACKAGES_SHIPPING_API_LEVEL_34 += \
+      31-    hwservicemanager \
+      32-    android.hidl.allocator@1.0-service \
+      33-    android.hidl.memory@1.0-impl \
+      34-
+      build/make/core/main.mk:1007 installs that list only if PRODUCT_SHIPPING_API_LEVEL <= 34;
+      device/ulefone/gq5012bf1/device.mk:11 sets PRODUCT_SHIPPING_API_LEVEL := 35 (Soong Shipping_api_level=35).
+   Effect: the static VINTF still advertises android.hidl.manager@1.2 / hidl.token / hidl.memory (max-level=8) so checkvintf is
+   COMPATIBLE, but init.rc 'start hwservicemanager' has no service => the 13 Ulefone/MTK hwbinder HIDL instances
+   (audio@7.1, audio.effect@7.0, bluetooth@1.1, media.c2@1.2, mtk aee@1.1 x2, mtk bluetooth.audio@2.2, yft changenode/gesturewake/
+   obtainvendor/sensorcali@1.0+2.0/tinylcd) cannot register, and libaudiohal@7.x EffectBufferHalHidl
+   (IAllocator::getService("ashmem")) has no allocator. This is a DEVICE-TREE/FRAMEWORK fix, not a vendor fix.
+
+## 7. Verdict
+VNDK_VINTF_CHECK=PASS (vendor-ndk 34 provided; com.android.vndk.v34.apex shipped in system_ext)
+VENDOR_API_LEVEL_34=USABLE (no checkvintf failure; no property gate in libvintf 17)
+OLD_VNDK_CHECKVINTF_FAILURE=NONE
+RUNTIME_GAP=hwservicemanager + android.hidl.allocator@1.0-service + android.hidl.memory@1.0-impl missing from the Slot-B build

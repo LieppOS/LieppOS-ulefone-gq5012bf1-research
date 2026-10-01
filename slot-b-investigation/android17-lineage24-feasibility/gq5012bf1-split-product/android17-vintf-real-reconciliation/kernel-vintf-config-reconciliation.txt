@@ -1,0 +1,427 @@
+# Kernel VINTF config reconciliation - Android 17 FCM level 8, kernel 6.1
+#
+# matrix  : system/etc/vintf/compatibility_matrix.8.xml
+# kernel  : 6.1.115-android14-11-g6b18f0b574ab-ab12901745
+# config  : collection kernel.config (sha256 d27b34f4418bc4430207c70737b0d9abf266190edf73d8a9e8b2bf506881dc4c), 2161 set CONFIG_ keys
+# semantics: libvintf android-17.0.0_r1 KernelConfigParser(processComments=false) + KernelConfigTypedValue::matchValue
+#            '# CONFIG_X is not set' is treated as ABSENT; required tristate 'n' matches ABSENT.
+#            A conditional block applies only if ALL its <conditions> match (KernelInfo.cpp:222).
+#
+# Kernel FCM level selection (KernelInfo::getMatchedKernelRequirements):
+#   GKI release 'android14' -> Level 8 (RuntimeInfo::gkiAndroidReleaseToLevel); vendor target-level=8 gives the same.
+#   For kernel level >= S only matrix level == kernel level is checked => ONLY the level-8 6.1.0 blocks below apply.
+#   compatibility_matrix.7.xml (4.14..5.15 @7), 202404 (6.6), 202504 (6.12), 202604 (6.18) are filtered out by x.y or level.
+#   Minimum LTS 6.1.0 <= actual 6.1.115 : PASS
+
+Number of <kernel version="6.1.0" level="8"> blocks in compatibility_matrix.8.xml: 11
+
+====================================================================================================
+BLOCK #1  <kernel version="6.1.0" level="8">  UNCONDITIONAL  (263 config requirements)
+   BLOCK APPLIES: YES
+====================================================================================================
+CONFIG                                                     TYPE      REQUIRED           ACTUAL             RESULT
+CONFIG_ADVISE_SYSCALLS                                     tristate  y                  y                  PASS
+CONFIG_AIO                                                 tristate  y                  y                  PASS
+CONFIG_ANDROID_BINDERFS                                    tristate  y                  y                  PASS
+CONFIG_ANDROID_BINDER_DEVICES                              string    binder,hwbinder,vndbinder "binder,hwbinder,vndbinder" PASS
+CONFIG_ANDROID_BINDER_IPC                                  tristate  y                  y                  PASS
+CONFIG_ANDROID_LOW_MEMORY_KILLER                           tristate  n                  (absent)           PASS
+CONFIG_ANDROID_PARANOID_NETWORK                            tristate  n                  (absent)           PASS
+CONFIG_ASHMEM                                              tristate  y                  y                  PASS
+CONFIG_AS_IS_LLVM                                          tristate  y                  y                  PASS
+CONFIG_AUDIT                                               tristate  y                  y                  PASS
+CONFIG_BINFMT_ELF                                          tristate  y                  y                  PASS
+CONFIG_BINFMT_SCRIPT                                       tristate  y                  y                  PASS
+CONFIG_BLK_DEV_INITRD                                      tristate  y                  y                  PASS
+CONFIG_BLK_DEV_LOOP                                        tristate  y                  y                  PASS
+CONFIG_BLK_INLINE_ENCRYPTION                               tristate  y                  y                  PASS
+CONFIG_BLOCK                                               tristate  y                  y                  PASS
+CONFIG_BPFILTER                                            tristate  n                  (absent)           PASS
+CONFIG_BPF_JIT                                             tristate  y                  y                  PASS
+CONFIG_BPF_SYSCALL                                         tristate  y                  y                  PASS
+CONFIG_CC_IS_CLANG                                         tristate  y                  y                  PASS
+CONFIG_CGROUPS                                             tristate  y                  y                  PASS
+CONFIG_CGROUP_BPF                                          tristate  y                  y                  PASS
+CONFIG_CGROUP_CPUACCT                                      tristate  y                  y                  PASS
+CONFIG_CGROUP_FREEZER                                      tristate  y                  y                  PASS
+CONFIG_CGROUP_SCHED                                        tristate  y                  y                  PASS
+CONFIG_CPU_FREQ                                            tristate  y                  y                  PASS
+CONFIG_CPU_FREQ_STAT                                       tristate  y                  y                  PASS
+CONFIG_CPU_FREQ_TIMES                                      tristate  y                  y                  PASS
+CONFIG_CROSS_MEMORY_ATTACH                                 tristate  y                  y                  PASS
+CONFIG_CRYPTO_AES                                          tristate  y                  y                  PASS
+CONFIG_CRYPTO_CBC                                          tristate  y                  y                  PASS
+CONFIG_CRYPTO_CHACHA20POLY1305                             tristate  y                  y                  PASS
+CONFIG_CRYPTO_CMAC                                         tristate  y                  y                  PASS
+CONFIG_CRYPTO_CTR                                          tristate  y                  y                  PASS
+CONFIG_CRYPTO_ECB                                          tristate  y                  y                  PASS
+CONFIG_CRYPTO_GCM                                          tristate  y                  y                  PASS
+CONFIG_CRYPTO_HMAC                                         tristate  y                  y                  PASS
+CONFIG_CRYPTO_MD5                                          tristate  y                  y                  PASS
+CONFIG_CRYPTO_NULL                                         tristate  y                  y                  PASS
+CONFIG_CRYPTO_SHA1                                         tristate  y                  y                  PASS
+CONFIG_CRYPTO_SHA256                                       tristate  y                  y                  PASS
+CONFIG_CRYPTO_SHA512                                       tristate  y                  y                  PASS
+CONFIG_CRYPTO_XCBC                                         tristate  y                  y                  PASS
+CONFIG_DEBUG_LIST                                          tristate  y                  y                  PASS
+CONFIG_DEFAULT_SECURITY_SELINUX                            tristate  y                  y                  PASS
+CONFIG_DEVMEM                                              tristate  n                  (absent)           PASS
+CONFIG_DM_DEFAULT_KEY                                      tristate  y                  y                  PASS
+CONFIG_DM_SNAPSHOT                                         tristate  y                  y                  PASS
+CONFIG_DM_VERITY                                           tristate  y                  y                  PASS
+CONFIG_DUMMY                                               tristate  y                  y                  PASS
+CONFIG_EMBEDDED                                            tristate  y                  y                  PASS
+CONFIG_EPOLL                                               tristate  y                  y                  PASS
+CONFIG_EVENTFD                                             tristate  y                  y                  PASS
+CONFIG_FHANDLE                                             tristate  n                  (absent)           PASS
+CONFIG_FILE_LOCKING                                        tristate  y                  y                  PASS
+CONFIG_FS_ENCRYPTION                                       tristate  y                  y                  PASS
+CONFIG_FS_ENCRYPTION_INLINE_CRYPT                          tristate  y                  y                  PASS
+CONFIG_FS_VERITY                                           tristate  y                  y                  PASS
+CONFIG_FS_VERITY_BUILTIN_SIGNATURES                        tristate  y                  y                  PASS
+CONFIG_FUSE_FS                                             tristate  y                  y                  PASS
+CONFIG_FUTEX                                               tristate  y                  y                  PASS
+CONFIG_FW_CACHE                                            tristate  n                  (absent)           PASS
+CONFIG_HARDENED_USERCOPY                                   tristate  y                  y                  PASS
+CONFIG_HIDRAW                                              tristate  y                  y                  PASS
+CONFIG_HID_GENERIC                                         tristate  y                  y                  PASS
+CONFIG_HID_PLAYSTATION                                     tristate  y                  y                  PASS
+CONFIG_HID_SONY                                            tristate  y                  y                  PASS
+CONFIG_HIGH_RES_TIMERS                                     tristate  y                  y                  PASS
+CONFIG_IFB                                                 tristate  y                  y                  PASS
+CONFIG_IKCONFIG                                            tristate  y                  y                  PASS
+CONFIG_IKCONFIG_PROC                                       tristate  y                  y                  PASS
+CONFIG_INET                                                tristate  y                  y                  PASS
+CONFIG_INET6_ESP                                           tristate  y                  y                  PASS
+CONFIG_INET6_IPCOMP                                        tristate  y                  y                  PASS
+CONFIG_INET_DIAG_DESTROY                                   tristate  y                  y                  PASS
+CONFIG_INET_ESP                                            tristate  y                  y                  PASS
+CONFIG_INET_UDP_DIAG                                       tristate  y                  y                  PASS
+CONFIG_INOTIFY_USER                                        tristate  y                  y                  PASS
+CONFIG_INPUT                                               tristate  y                  y                  PASS
+CONFIG_INPUT_EVDEV                                         tristate  y                  y                  PASS
+CONFIG_INPUT_JOYSTICK                                      tristate  y                  y                  PASS
+CONFIG_IP6_NF_FILTER                                       tristate  y                  y                  PASS
+CONFIG_IP6_NF_IPTABLES                                     tristate  y                  y                  PASS
+CONFIG_IP6_NF_MANGLE                                       tristate  y                  y                  PASS
+CONFIG_IP6_NF_MATCH_RPFILTER                               tristate  y                  y                  PASS
+CONFIG_IP6_NF_NAT                                          tristate  n                  (absent)           PASS
+CONFIG_IP6_NF_RAW                                          tristate  y                  y                  PASS
+CONFIG_IP6_NF_TARGET_REJECT                                tristate  y                  y                  PASS
+CONFIG_IPV6                                                tristate  y                  y                  PASS
+CONFIG_IPV6_MIP6                                           tristate  y                  y                  PASS
+CONFIG_IPV6_MULTIPLE_TABLES                                tristate  y                  y                  PASS
+CONFIG_IPV6_OPTIMISTIC_DAD                                 tristate  y                  y                  PASS
+CONFIG_IPV6_ROUTER_PREF                                    tristate  y                  y                  PASS
+CONFIG_IPV6_ROUTE_INFO                                     tristate  y                  y                  PASS
+CONFIG_IPV6_VTI                                            tristate  y                  y                  PASS
+CONFIG_IP_ADVANCED_ROUTER                                  tristate  y                  y                  PASS
+CONFIG_IP_MULTICAST                                        tristate  y                  y                  PASS
+CONFIG_IP_MULTIPLE_TABLES                                  tristate  y                  y                  PASS
+CONFIG_IP_NF_ARPFILTER                                     tristate  y                  y                  PASS
+CONFIG_IP_NF_ARPTABLES                                     tristate  y                  y                  PASS
+CONFIG_IP_NF_ARP_MANGLE                                    tristate  y                  y                  PASS
+CONFIG_IP_NF_FILTER                                        tristate  y                  y                  PASS
+CONFIG_IP_NF_IPTABLES                                      tristate  y                  y                  PASS
+CONFIG_IP_NF_MANGLE                                        tristate  y                  y                  PASS
+CONFIG_IP_NF_MATCH_ECN                                     tristate  y                  y                  PASS
+CONFIG_IP_NF_MATCH_TTL                                     tristate  y                  y                  PASS
+CONFIG_IP_NF_NAT                                           tristate  y                  y                  PASS
+CONFIG_IP_NF_RAW                                           tristate  y                  y                  PASS
+CONFIG_IP_NF_SECURITY                                      tristate  y                  y                  PASS
+CONFIG_IP_NF_TARGET_MASQUERADE                             tristate  y                  y                  PASS
+CONFIG_IP_NF_TARGET_NETMAP                                 tristate  y                  y                  PASS
+CONFIG_IP_NF_TARGET_REDIRECT                               tristate  y                  y                  PASS
+CONFIG_IP_NF_TARGET_REJECT                                 tristate  y                  y                  PASS
+CONFIG_JOYSTICK_XPAD                                       tristate  y                  y                  PASS
+CONFIG_LD_IS_LLD                                           tristate  y                  y                  PASS
+CONFIG_MAGIC_SYSRQ                                         tristate  y                  y                  PASS
+CONFIG_MD                                                  tristate  y                  y                  PASS
+CONFIG_MEMBARRIER                                          tristate  y                  y                  PASS
+CONFIG_MMU                                                 tristate  y                  y                  PASS
+CONFIG_MODULES                                             tristate  y                  y                  PASS
+CONFIG_MODULE_FORCE_UNLOAD                                 tristate  n                  (absent)           PASS
+CONFIG_MODULE_UNLOAD                                       tristate  y                  y                  PASS
+CONFIG_MODVERSIONS                                         tristate  y                  y                  PASS
+CONFIG_MULTIUSER                                           tristate  y                  y                  PASS
+CONFIG_NAMESPACES                                          tristate  y                  y                  PASS
+CONFIG_NET                                                 tristate  y                  y                  PASS
+CONFIG_NETDEVICES                                          tristate  y                  y                  PASS
+CONFIG_NETFILTER                                           tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_BPF                              tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_COMMENT                          tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_CONNLIMIT                        tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_CONNMARK                         tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_CONNTRACK                        tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_HASHLIMIT                        tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_HELPER                           tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_IPRANGE                          tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_LENGTH                           tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_LIMIT                            tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_MAC                              tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_MARK                             tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_OWNER                            tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_PKTTYPE                          tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_POLICY                           tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_QUOTA                            tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_QUOTA2                           tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_QUOTA2_LOG                       tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_SOCKET                           tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_STATE                            tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_STATISTIC                        tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_STRING                           tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_TIME                             tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_MATCH_U32                              tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_TARGET_CLASSIFY                        tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_TARGET_CONNMARK                        tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_TARGET_CONNSECMARK                     tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_TARGET_CT                              tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_TARGET_IDLETIMER                       tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_TARGET_MARK                            tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_TARGET_NFLOG                           tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_TARGET_NFQUEUE                         tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_TARGET_SECMARK                         tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_TARGET_TCPMSS                          tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_TARGET_TPROXY                          tristate  y                  y                  PASS
+CONFIG_NETFILTER_XT_TARGET_TRACE                           tristate  y                  y                  PASS
+CONFIG_NET_ACT_BPF                                         tristate  y                  y                  PASS
+CONFIG_NET_ACT_POLICE                                      tristate  y                  y                  PASS
+CONFIG_NET_CLS_ACT                                         tristate  y                  y                  PASS
+CONFIG_NET_CLS_BPF                                         tristate  y                  y                  PASS
+CONFIG_NET_CLS_MATCHALL                                    tristate  y                  y                  PASS
+CONFIG_NET_CLS_U32                                         tristate  y                  y                  PASS
+CONFIG_NET_EMATCH                                          tristate  y                  y                  PASS
+CONFIG_NET_EMATCH_U32                                      tristate  y                  y                  PASS
+CONFIG_NET_IPGRE_DEMUX                                     tristate  y                  y                  PASS
+CONFIG_NET_IPVTI                                           tristate  y                  y                  PASS
+CONFIG_NET_KEY                                             tristate  y                  y                  PASS
+CONFIG_NET_NS                                              tristate  y                  y                  PASS
+CONFIG_NET_SCHED                                           tristate  y                  y                  PASS
+CONFIG_NET_SCH_HTB                                         tristate  y                  y                  PASS
+CONFIG_NET_SCH_INGRESS                                     tristate  y                  y                  PASS
+CONFIG_NET_SCH_TBF                                         tristate  y                  y                  PASS
+CONFIG_NFSD                                                tristate  n                  (absent)           PASS
+CONFIG_NFS_FS                                              tristate  n                  (absent)           PASS
+CONFIG_NF_CONNTRACK                                        tristate  y                  y                  PASS
+CONFIG_NF_CONNTRACK_AMANDA                                 tristate  y                  y                  PASS
+CONFIG_NF_CONNTRACK_EVENTS                                 tristate  y                  y                  PASS
+CONFIG_NF_CONNTRACK_FTP                                    tristate  y                  y                  PASS
+CONFIG_NF_CONNTRACK_H323                                   tristate  y                  y                  PASS
+CONFIG_NF_CONNTRACK_IRC                                    tristate  y                  y                  PASS
+CONFIG_NF_CONNTRACK_NETBIOS_NS                             tristate  y                  y                  PASS
+CONFIG_NF_CONNTRACK_PPTP                                   tristate  y                  y                  PASS
+CONFIG_NF_CONNTRACK_SANE                                   tristate  y                  y                  PASS
+CONFIG_NF_CONNTRACK_SECMARK                                tristate  y                  y                  PASS
+CONFIG_NF_CONNTRACK_TFTP                                   tristate  y                  y                  PASS
+CONFIG_NF_CT_NETLINK                                       tristate  y                  y                  PASS
+CONFIG_NF_CT_PROTO_DCCP                                    tristate  y                  y                  PASS
+CONFIG_NF_CT_PROTO_SCTP                                    tristate  y                  y                  PASS
+CONFIG_NF_CT_PROTO_UDPLITE                                 tristate  y                  y                  PASS
+CONFIG_NF_NAT                                              tristate  y                  y                  PASS
+CONFIG_NF_SOCKET_IPV4                                      tristate  y                  y                  PASS
+CONFIG_NF_SOCKET_IPV6                                      tristate  y                  y                  PASS
+CONFIG_NO_HZ                                               tristate  y                  y                  PASS
+CONFIG_PACKET                                              tristate  y                  y                  PASS
+CONFIG_PLAYSTATION_FF                                      tristate  y                  y                  PASS
+CONFIG_PM_AUTOSLEEP                                        tristate  n                  (absent)           PASS
+CONFIG_PM_WAKELOCKS                                        tristate  y                  y                  PASS
+CONFIG_POSIX_TIMERS                                        tristate  y                  y                  PASS
+CONFIG_PREEMPT                                             tristate  y                  y                  PASS
+CONFIG_PROC_FS                                             tristate  y                  y                  PASS
+CONFIG_PROFILING                                           tristate  y                  y                  PASS
+CONFIG_PSI                                                 tristate  y                  y                  PASS
+CONFIG_QFMT_V2                                             tristate  y                  y                  PASS
+CONFIG_QUOTA                                               tristate  y                  y                  PASS
+CONFIG_QUOTACTL                                            tristate  y                  y                  PASS
+CONFIG_RD_LZ4                                              tristate  y                  y                  PASS
+CONFIG_RTC_CLASS                                           tristate  y                  y                  PASS
+CONFIG_RT_GROUP_SCHED                                      tristate  n                  (absent)           PASS
+CONFIG_SCHED_DEBUG                                         tristate  y                  y                  PASS
+CONFIG_SECCOMP                                             tristate  y                  y                  PASS
+CONFIG_SECCOMP_FILTER                                      tristate  y                  y                  PASS
+CONFIG_SECURITY                                            tristate  y                  y                  PASS
+CONFIG_SECURITY_NETWORK                                    tristate  y                  y                  PASS
+CONFIG_SECURITY_SELINUX                                    tristate  y                  y                  PASS
+CONFIG_SHMEM                                               tristate  y                  y                  PASS
+CONFIG_SIGNALFD                                            tristate  y                  y                  PASS
+CONFIG_SND                                                 tristate  y                  y                  PASS
+CONFIG_SONY_FF                                             tristate  y                  y                  PASS
+CONFIG_SOUND                                               tristate  y                  y                  PASS
+CONFIG_STACKPROTECTOR                                      tristate  y                  y                  PASS
+CONFIG_STACKPROTECTOR_STRONG                               tristate  y                  y                  PASS
+CONFIG_STAGING                                             tristate  y                  y                  PASS
+CONFIG_STATIC_USERMODEHELPER                               tristate  y                  y                  PASS
+CONFIG_STRICT_KERNEL_RWX                                   tristate  y                  y                  PASS
+CONFIG_STRICT_MODULE_RWX                                   tristate  y                  y                  PASS
+CONFIG_SUSPEND                                             tristate  y                  y                  PASS
+CONFIG_SYNC_FILE                                           tristate  y                  y                  PASS
+CONFIG_SYSFS                                               tristate  y                  y                  PASS
+CONFIG_SYSVIPC                                             tristate  n                  (absent)           PASS
+CONFIG_TASKSTATS                                           tristate  y                  y                  PASS
+CONFIG_TASK_IO_ACCOUNTING                                  tristate  y                  y                  PASS
+CONFIG_TASK_XACCT                                          tristate  y                  y                  PASS
+CONFIG_TIMERFD                                             tristate  y                  y                  PASS
+CONFIG_TRACE_GPU_MEM                                       tristate  y                  y                  PASS
+CONFIG_TTY                                                 tristate  y                  y                  PASS
+CONFIG_TUN                                                 tristate  y                  y                  PASS
+CONFIG_UHID                                                tristate  y                  y                  PASS
+CONFIG_UID_SYS_STATS                                       tristate  y                  y                  PASS
+CONFIG_UNIX                                                tristate  y                  y                  PASS
+CONFIG_USB                                                 tristate  y                  y                  PASS
+CONFIG_USB_CONFIGFS                                        tristate  y                  y                  PASS
+CONFIG_USB_CONFIGFS_F_ACC                                  tristate  y                  y                  PASS
+CONFIG_USB_CONFIGFS_F_AUDIO_SRC                            tristate  y                  y                  PASS
+CONFIG_USB_CONFIGFS_F_FS                                   tristate  y                  y                  PASS
+CONFIG_USB_CONFIGFS_F_MIDI                                 tristate  y                  y                  PASS
+CONFIG_USB_CONFIGFS_UEVENT                                 tristate  y                  y                  PASS
+CONFIG_USB_GADGET                                          tristate  y                  y                  PASS
+CONFIG_USB_SUPPORT                                         tristate  y                  y                  PASS
+CONFIG_USELIB                                              tristate  n                  (absent)           PASS
+CONFIG_UTS_NS                                              tristate  y                  y                  PASS
+CONFIG_VETH                                                tristate  y                  y                  PASS
+CONFIG_XFRM_INTERFACE                                      tristate  y                  y                  PASS
+CONFIG_XFRM_MIGRATE                                        tristate  y                  y                  PASS
+CONFIG_XFRM_STATISTICS                                     tristate  y                  y                  PASS
+CONFIG_XFRM_USER                                           tristate  y                  y                  PASS
+-- block #1: 263 PASS / 0 FAIL
+
+====================================================================================================
+BLOCK #2  <kernel version="6.1.0" level="8">  CONDITIONAL  (3 config requirements)
+   condition: CONFIG_ARM == y (tristate) ; actual = (absent) -> NOT MET
+   BLOCK APPLIES: NO (conditions not met -> requirements not enforced by libvintf)
+====================================================================================================
+CONFIG                                                     TYPE      REQUIRED           ACTUAL             RESULT
+CONFIG_AEABI                                               tristate  y                  (absent)           FAIL (not enforced)  Missing config
+CONFIG_DEVKMEM                                             tristate  n                  (absent)           PASS
+CONFIG_OABI_COMPAT                                         tristate  n                  (absent)           PASS
+-- block #2: 2 PASS / 1 FAIL (block not applicable)
+
+====================================================================================================
+BLOCK #3  <kernel version="6.1.0" level="8">  CONDITIONAL  (14 config requirements)
+   condition: CONFIG_ARM64 == y (tristate) ; actual = y -> MET
+   BLOCK APPLIES: YES
+====================================================================================================
+CONFIG                                                     TYPE      REQUIRED           ACTUAL             RESULT
+CONFIG_ARM64_PAN                                           tristate  y                  y                  PASS
+CONFIG_ARM64_SW_TTBR0_PAN                                  tristate  y                  y                  PASS
+CONFIG_ARMV8_DEPRECATED                                    tristate  y                  y                  PASS
+CONFIG_COMPAT                                              tristate  y                  y                  PASS
+CONFIG_CP15_BARRIER_EMULATION                              tristate  y                  y                  PASS
+CONFIG_RANDOMIZE_BASE                                      tristate  y                  y                  PASS
+CONFIG_SETEND_EMULATION                                    tristate  y                  y                  PASS
+CONFIG_SHADOW_CALL_STACK                                   tristate  y                  y                  PASS
+CONFIG_SWP_EMULATION                                       tristate  y                  y                  PASS
+CONFIG_BPF_JIT_ALWAYS_ON                                   tristate  y                  y                  PASS
+CONFIG_HAVE_MOVE_PMD                                       tristate  y                  y                  PASS
+CONFIG_HAVE_MOVE_PUD                                       tristate  y                  y                  PASS
+CONFIG_KFENCE                                              tristate  y                  y                  PASS
+CONFIG_USERFAULTFD                                         tristate  y                  y                  PASS
+-- block #3: 14 PASS / 0 FAIL
+
+====================================================================================================
+BLOCK #4  <kernel version="6.1.0" level="8">  CONDITIONAL  (8 config requirements)
+   condition: CONFIG_X86 == y (tristate) ; actual = (absent) -> NOT MET
+   BLOCK APPLIES: NO (conditions not met -> requirements not enforced by libvintf)
+====================================================================================================
+CONFIG                                                     TYPE      REQUIRED           ACTUAL             RESULT
+CONFIG_DEVKMEM                                             tristate  n                  (absent)           PASS
+CONFIG_KFENCE                                              tristate  y                  y                  PASS
+CONFIG_PAGE_TABLE_ISOLATION                                tristate  y                  (absent)           FAIL (not enforced)  Missing config
+CONFIG_RETPOLINE                                           tristate  y                  (absent)           FAIL (not enforced)  Missing config
+CONFIG_HAVE_MOVE_PMD                                       tristate  y                  y                  PASS
+CONFIG_HAVE_MOVE_PUD                                       tristate  y                  y                  PASS
+CONFIG_RANDOMIZE_BASE                                      tristate  y                  y                  PASS
+CONFIG_USERFAULTFD                                         tristate  y                  y                  PASS
+-- block #4: 6 PASS / 2 FAIL (block not applicable)
+
+====================================================================================================
+BLOCK #5  <kernel version="6.1.0" level="8">  CONDITIONAL  (1 config requirements)
+   condition: CONFIG_X86_64 == y (tristate) ; actual = (absent) -> NOT MET
+   BLOCK APPLIES: NO (conditions not met -> requirements not enforced by libvintf)
+====================================================================================================
+CONFIG                                                     TYPE      REQUIRED           ACTUAL             RESULT
+CONFIG_BPF_JIT_ALWAYS_ON                                   tristate  y                  y                  PASS
+-- block #5: 1 PASS / 0 FAIL (block not applicable)
+
+====================================================================================================
+BLOCK #6  <kernel version="6.1.0" level="8">  CONDITIONAL  (1 config requirements)
+   condition: CONFIG_ACPI == n (tristate) ; actual = (absent) -> MET
+   BLOCK APPLIES: YES
+====================================================================================================
+CONFIG                                                     TYPE      REQUIRED           ACTUAL             RESULT
+CONFIG_OF                                                  tristate  y                  y                  PASS
+-- block #6: 1 PASS / 0 FAIL
+
+====================================================================================================
+BLOCK #7  <kernel version="6.1.0" level="8">  CONDITIONAL  (1 config requirements)
+   condition: CONFIG_OF == n (tristate) ; actual = y -> NOT MET
+   BLOCK APPLIES: NO (conditions not met -> requirements not enforced by libvintf)
+====================================================================================================
+CONFIG                                                     TYPE      REQUIRED           ACTUAL             RESULT
+CONFIG_ACPI                                                tristate  y                  (absent)           FAIL (not enforced)  Missing config
+-- block #7: 0 PASS / 1 FAIL (block not applicable)
+
+====================================================================================================
+BLOCK #8  <kernel version="6.1.0" level="8">  CONDITIONAL  (1 config requirements)
+   condition: CONFIG_EXT4_FS == y (tristate) ; actual = y -> MET
+   BLOCK APPLIES: YES
+====================================================================================================
+CONFIG                                                     TYPE      REQUIRED           ACTUAL             RESULT
+CONFIG_EXT4_FS_POSIX_ACL                                   tristate  y                  y                  PASS
+-- block #8: 1 PASS / 0 FAIL
+
+====================================================================================================
+BLOCK #9  <kernel version="6.1.0" level="8">  CONDITIONAL  (1 config requirements)
+   condition: CONFIG_F2FS_FS == y (tristate) ; actual = y -> MET
+   BLOCK APPLIES: YES
+====================================================================================================
+CONFIG                                                     TYPE      REQUIRED           ACTUAL             RESULT
+CONFIG_F2FS_FS_POSIX_ACL                                   tristate  y                  y                  PASS
+-- block #9: 1 PASS / 0 FAIL
+
+====================================================================================================
+BLOCK #10  <kernel version="6.1.0" level="8">  CONDITIONAL  (1 config requirements)
+   condition: CONFIG_HAVE_ARCH_VMAP_STACK == y (tristate) ; actual = y -> MET
+   condition: CONFIG_KASAN_SW_TAGS == n (tristate) ; actual = (absent) -> MET
+   BLOCK APPLIES: YES
+====================================================================================================
+CONFIG                                                     TYPE      REQUIRED           ACTUAL             RESULT
+CONFIG_VMAP_STACK                                          tristate  y                  y                  PASS
+-- block #10: 1 PASS / 0 FAIL
+
+====================================================================================================
+BLOCK #11  <kernel version="6.1.0" level="8">  CONDITIONAL  (1 config requirements)
+   condition: CONFIG_CC_HAS_AUTO_VAR_INIT_ZERO == y (tristate) ; actual = y -> MET
+   BLOCK APPLIES: YES
+====================================================================================================
+CONFIG                                                     TYPE      REQUIRED           ACTUAL             RESULT
+CONFIG_INIT_STACK_ALL_ZERO                                 tristate  y                  y                  PASS
+-- block #11: 1 PASS / 0 FAIL
+
+====================================================================================================
+SUMMARY PER BLOCK
+====================================================================================================
+# 1 UNCONDITIONAL applies=YES reqs=263 PASS=263 FAIL= 0  conditions: -
+# 2 CONDITIONAL   applies=NO  reqs=  3 PASS=  2 FAIL= 1  conditions: CONFIG_ARM=y
+# 3 CONDITIONAL   applies=YES reqs= 14 PASS= 14 FAIL= 0  conditions: CONFIG_ARM64=y
+# 4 CONDITIONAL   applies=NO  reqs=  8 PASS=  6 FAIL= 2  conditions: CONFIG_X86=y
+# 5 CONDITIONAL   applies=NO  reqs=  1 PASS=  1 FAIL= 0  conditions: CONFIG_X86_64=y
+# 6 CONDITIONAL   applies=YES reqs=  1 PASS=  1 FAIL= 0  conditions: CONFIG_ACPI=n
+# 7 CONDITIONAL   applies=NO  reqs=  1 PASS=  0 FAIL= 1  conditions: CONFIG_OF=n
+# 8 CONDITIONAL   applies=YES reqs=  1 PASS=  1 FAIL= 0  conditions: CONFIG_EXT4_FS=y
+# 9 CONDITIONAL   applies=YES reqs=  1 PASS=  1 FAIL= 0  conditions: CONFIG_F2FS_FS=y
+#10 CONDITIONAL   applies=YES reqs=  1 PASS=  1 FAIL= 0  conditions: CONFIG_HAVE_ARCH_VMAP_STACK=y; CONFIG_KASAN_SW_TAGS=n
+#11 CONDITIONAL   applies=YES reqs=  1 PASS=  1 FAIL= 0  conditions: CONFIG_CC_HAS_AUTO_VAR_INIT_ZERO=y
+
+Applicable requirements evaluated: 282
+Applicable requirements FAILED   : 0
+Requirements inside NON-applicable conditional blocks that would fail if the condition were enabled: 4
+   block #2: CONFIG_AEABI required y actual (absent)
+   block #4: CONFIG_PAGE_TABLE_ISOLATION required y actual (absent)
+   block #4: CONFIG_RETPOLINE required y actual (absent)
+   block #7: CONFIG_ACPI required y actual (absent)
+
+KERNEL_VINTF_RESULT=PASS
+Cross-check: real checkvintf runs C/D/E/F (this config) => COMPATIBLE; negative control N1 (CONFIG_ANDROID_BINDER_IPC removed)
+            => 'No compatible kernel requirement found (kernel FCM version = 8) ... Missing config CONFIG_ANDROID_BINDER_IPC'.
+            The kernel check is therefore genuinely active in the real checker, and it passes.
