@@ -1,0 +1,66 @@
+===== _Z29BackToFactoryLoaderIfPossiblePv @0x237f0 (range to 0x23900) =====
+   237f0: stp      x29, x30, [sp, #-0x20]!
+   237f4: stp      x20, x19, [sp, #0x10]
+   237f8: mov      x29, sp
+   237fc: adrp     x20, 0x26000
+   23800: ldr      x20, [x20, #0x2a8]
+   23804: adrp     x8, 0x26000
+   23808: ldr      x8, [x8, #0x620]
+   2380c: ldrb     w9, [x20]
+   23810: ldrb     w10, [x8]
+   23814: and      w8, w9, #0xf
+   23818: cbz      w10, 0x238ac <_Z29BackToFactoryLoaderIfPossiblePv+0xbc>
+   2381c: mov      x19, x0
+   23820: cmp      w8, #0x3
+   23824: b.lo     0x23848 <_Z29BackToFactoryLoaderIfPossiblePv+0x58>
+   23828: nop      
+   2382c: adr      x1, 0x75c0
+   23830: adrp     x2, 0x7000   ; "%s - Send APDU_EXIT_LOAD_MODE_CMD"
+   23834: add      x2, x2, #0xc0e
+   23838: adrp     x3, 0x5000   ; "SendExitLoadMode"
+   2383c: add      x3, x3, #0xa0e
+   23840: mov      w0, #0x3
+   23844: bl       0x25440 <__android_log_print@plt>   ; -> _Z15AuthCheckUnloadv+0xf0
+   23848: nop      
+   2384c: adr      x1, 0x8be0
+   23850: mov      x0, x19
+   23854: mov      w2, #0x9
+   23858: mov      w3, #0xbb8
+   2385c: bl       0x259b0 <_Z22HalSendDownstreamTimerPvPKhmj@plt>   ; -> _Z15AuthCheckUnloadv+0x660
+   23860: tbnz     w0, #0x0, 0x23890 <_Z29BackToFactoryLoaderIfPossiblePv+0xa0>
+   23864: ldrb     w8, [x20]
+   23868: tst      w8, #0xf
+   2386c: b.eq     0x23890 <_Z29BackToFactoryLoaderIfPossiblePv+0xa0>
+   23870: nop      
+   23874: adr      x1, 0x75c0
+   23878: adrp     x2, 0x5000   ; "%s - SendDownstream failed"
+   2387c: add      x2, x2, #0xf49
+   23880: adrp     x3, 0x5000   ; "SendExitLoadMode"
+   23884: add      x3, x3, #0xa0e
+   23888: mov      w0, #0x6
+   2388c: bl       0x25440 <__android_log_print@plt>   ; -> _Z15AuthCheckUnloadv+0xf0
+   23890: adrp     x8, 0x26000
+   23894: ldr      x8, [x8, #0x6b8]
+   23898: mov      w9, #0x8
+   2389c: str      w9, [x8]
+   238a0: ldp      x20, x19, [sp, #0x10]
+   238a4: ldp      x29, x30, [sp], #0x20
+   238a8: ret      
+   238ac: cmp      w8, #0x3
+   238b0: b.lo     0x238d4 <_Z29BackToFactoryLoaderIfPossiblePv+0xe4>
+   238b4: nop      
+   238b8: adr      x1, 0x75c0
+   238bc: adrp     x2, 0x6000   ; "%s - Reset to factory loader"
+   238c0: add      x2, x2, #0x17c
+   238c4: adrp     x3, 0x7000   ; "BackToFactoryLoaderIfPossible"
+   238c8: add      x3, x3, #0xdc7
+   238cc: mov      w0, #0x3
+   238d0: bl       0x25440 <__android_log_print@plt>   ; -> _Z15AuthCheckUnloadv+0xf0
+   238d4: mov      w0, #0x1
+   238d8: bl       0x25bd0 <_Z21hal_wrapper_set_state19hal_wrapper_state_e@plt>   ; -> _Z15AuthCheckUnloadv+0x880
+   238dc: adrp     x8, 0x26000
+   238e0: ldr      x8, [x8, #0x6b8]
+   238e4: str      wzr, [x8]
+   238e8: ldp      x20, x19, [sp, #0x10]
+   238ec: ldp      x29, x30, [sp], #0x20
+   238f0: b        0x258e0 <_Z11I2cRecoveryv@plt>   ; -> _Z15AuthCheckUnloadv+0x590
