@@ -1,0 +1,14 @@
+--- imgsensor-build/adaptor.h	2026-10-02 03:24:27.727942044 +0300
++++ imgsensor-recon/adaptor.h	2026-10-02 03:27:17.405284492 +0300
+@@ -147,6 +147,11 @@
+ 	struct pinctrl_state *state[STATE_MAXCNT];
+ 	struct adaptor_hw_ops hw_ops[HW_ID_MAXCNT];
+ 
++	/* GQ5012BF1 stock delta (PROVEN by offset shift 0x908->0x940 and by
++	 * set_custom_ldo/unset_custom_ldo loading ctx+0x900+4*hw_id):
++	 * DT "custom_<rail>" -> custom-ldo channel map, one per regulator id. */
++	int custom_ldo_ch[REGULATOR_MAXCNT];
++
+ 	/* seninf info */
+ 	int seninf_idx;
+ 
