@@ -1,0 +1,80 @@
+            0x0000ca18      fd7bbea9       stp x29, x30, [sp, -0x20]!
+            0x0000ca1c      f44f01a9       stp x20, x19, [sp, 0x10]
+            0x0000ca20      fd030091       mov x29, sp
+            0x0000ca24      1e260094       bl 0x1629c
+            0x0000ca28      081c0012       and w8, w0, 0xff
+            0x0000ca2c      1f1d0071       cmp w8, 7
+        ┌─< 0x0000ca30      c8000054       b.hi 0xca48
+        │   0x0000ca34      29008052       mov w9, 1
+        │   0x0000ca38      2821c81a       lsl w8, w9, w8
+        │   0x0000ca3c      49128052       mov w9, 0x92
+        │   0x0000ca40      1f01096a       tst w8, w9
+       ┌──< 0x0000ca44      01010054       b.ne 0xca64
+       │└─> 0x0000ca48      8ec40094       bl 0x3dc80
+       │    0x0000ca4c      081c0012       and w8, w0, 0xff
+       │    0x0000ca50      1f090071       cmp w8, 2
+       │┌─< 0x0000ca54      60000054       b.eq 0xca60
+       ││   0x0000ca58      b32f0094       bl 0x18924
+      ┌───< 0x0000ca5c      e0000036       tbz w0, 0, 0xca78
+      ││└─> 0x0000ca60      40008052       mov w0, 2
+    ┌┌─└┌─> 0x0000ca64      a8060090       adrp x8, 0xe0000
+    ╎╎│ ╎   0x0000ca68      00412b39       strb w0, [x8, 0xad0]
+  ┌┌───┌──> 0x0000ca6c      f44f41a9       ldp x20, x19, [sp, 0x10]
+  ╎╎╎╎│╎╎   0x0000ca70      fd7bc2a8       ldp x29, x30, [sp], 0x20
+  ╎╎╎╎│╎╎   0x0000ca74      c0035fd6       ret
+  ╎╎╎╎└───> 0x0000ca78      82c40094       bl 0x3dc80
+  ╎╎╎╎ ╎╎   0x0000ca7c      081c0012       and w8, w0, 0xff
+  ╎╎╎╎ ╎╎   0x0000ca80      1f0d0071       cmp w8, 3
+  ╎╎╎╎┌───< 0x0000ca84      61000054       b.ne 0xca90
+  ╎╎╎╎│╎╎   0x0000ca88      600c8052       mov w0, 0x63                ; 'c'
+  ╎╎└─────< 0x0000ca8c      f6ffff17       b 0xca64
+  ╎╎ ╎└───> 0x0000ca90      20008052       mov w0, 1
+  ╎╎ ╎ ╎╎   0x0000ca94      1d4d0094       bl 0x1ff08
+  ╎╎ ╎┌───< 0x0000ca98      60000036       tbz w0, 0, 0xcaa4
+  ╎╎ ╎│╎╎   0x0000ca9c      80008052       mov w0, 4
+  ╎╎ └────< 0x0000caa0      f1ffff17       b 0xca64
+  ╎╎  └───> 0x0000caa4      c0008052       mov w0, 6
+  ╎╎   ╎╎   0x0000caa8      184d0094       bl 0x1ff08
+  ╎╎  ┌───< 0x0000caac      60000036       tbz w0, 0, 0xcab8
+  ╎╎  │╎╎   0x0000cab0      ef010094       bl 0xd26c
+  ╎╎  │╎└─< 0x0000cab4      ecffff17       b 0xca64
+  ╎╎  └───> 0x0000cab8      f6250094       bl 0x16290
+  ╎╎   ╎    0x0000cabc      f403002a       mov w20, w0
+  ╎╎   ╎    0x0000cac0      ae310094       bl 0x19178
+  ────────< 0x0000cac4      40fdff34       cbz w0, 0xca6c
+  ╎╎   ╎    0x0000cac8      a5ffff97       bl 0xc95c
+  ╎╎   ╎    0x0000cacc      f303002a       mov w19, w0
+  ╎╎   ╎    0x0000cad0      a00500b0       adrp x0, 0xc1000
+  ╎╎   ╎    0x0000cad4      00180991       add x0, x0, 0x246
+  ╎╎   ╎    0x0000cad8      01050090       adrp x1, 0xac000
+  ╎╎   ╎    0x0000cadc      21080c91       add x1, x1, 0x302
+  ╎╎   ╎    0x0000cae0      e203132a       mov w2, w19
+  ╎╎   ╎    0x0000cae4      cd880194       bl 0x6ee18
+  ╎╎   ╎    0x0000cae8      1f2003d5       nop
+  ╎╎   ╎    0x0000caec      e8686010       adr x8, 0xcd808
+  ╎╎   ╎    0x0000caf0      090140b9       ldr w9, [x8]
+  ╎╎   ╎    0x0000caf4      9f02096b       cmp w20, w9
+  └───────< 0x0000caf8      a0fbff54       b.eq 0xca6c
+   ╎   ╎    0x0000cafc      090540b9       ldr w9, [x8, 4]
+   ╎   ╎    0x0000cb00      9f02096b       cmp w20, w9
+   └──────< 0x0000cb04      40fbff54       b.eq 0xca6c
+       ╎    0x0000cb08      090940b9       ldr w9, [x8, 8]
+       ╎    0x0000cb0c      9f02096b       cmp w20, w9
+       └──< 0x0000cb10      e0faff54       b.eq 0xca6c
+            0x0000cb14      090d40b9       ldr w9, [x8, 0xc]
+            0x0000cb18      9f02096b       cmp w20, w9
+            0x0000cb1c      80faff54       b.eq 0xca6c
+            0x0000cb20      091140b9       ldr w9, [x8, 0x10]
+            0x0000cb24      9f02096b       cmp w20, w9
+            0x0000cb28      20faff54       b.eq 0xca6c
+            0x0000cb2c      091540b9       ldr w9, [x8, 0x14]
+            0x0000cb30      9f02096b       cmp w20, w9
+            0x0000cb34      c0f9ff54       b.eq 0xca6c
+            0x0000cb38      091940b9       ldr w9, [x8, 0x18]
+            0x0000cb3c      9f02096b       cmp w20, w9
+            0x0000cb40      60f9ff54       b.eq 0xca6c
+            0x0000cb44      091d40b9       ldr w9, [x8, 0x1c]
+            0x0000cb48      9f02096b       cmp w20, w9
+            0x0000cb4c      00f9ff54       b.eq 0xca6c
+            0x0000cb50      092140b9       ldr w9, [x8, 0x20]
+            0x0000cb54      9f02096b       cmp w20, w9

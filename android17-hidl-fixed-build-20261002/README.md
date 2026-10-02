@@ -428,3 +428,30 @@ without consuming another Slot-B boot attempt.
 The live LK partition identities were also recorded read-only to establish
 whether the factory V15 LK being reversed matches the currently installed
 bootloader.
+
+## LK RECOVERY_BOOT predicates localized
+
+Static ARM64 analysis recovered the MediaTek LK boot-mode global:
+
+    g_boot_mode = 0xe0ad0
+
+The boot-mode initializer beginning near 0xca18 contains two explicit paths
+which assign RECOVERY_BOOT (value 2):
+
+1. function 0x3dc80 returns value 2
+2. function 0x18924 returns a value with bit 0 set
+
+Both converge on:
+
+    mov w0, 2
+    strb w0, [g_boot_mode]
+
+The second predicate is located in the same region as the LK recovery_check
+misc/BCB handling and is therefore expected to represent the BCB recovery
+request path. The controlled Slot-B experiment had an empty BCB immediately
+before boot, making the first predicate at 0x3dc80 the higher-priority target.
+
+The force_normal_boot omission and recovery-image selection previously
+observed are downstream consumers of this already-selected boot mode.
+
+No device or boot-control write was performed.
