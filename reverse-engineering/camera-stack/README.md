@@ -158,9 +158,9 @@ triage against NothingOSS MT6878; parity builds only where stated):
 | `dw9781c` | **EXACT** (§0.4) |
 | `imgsensor` | framework near-exact (507/532 shared fns byte-identical with 1-line struct delta); sensor TUs: imx989 donor exact family, ov64b donor older revision, 7 TUs without public v4l2-common source |
 | `custom-ldo`, `custom-ldo-wl2868`, `aw365xx` | reconstructed in earlier phase-4 work |
-| `mtk-cam-isp7sp` | 1019/1044 function names in `mtkcam/camsys/isp7sp/cam` (STRONG donor; not parity-built) |
+| `mtk-cam-isp7sp` | **EXACT** — 1220/1220 functions, 579/579 data objects (mtkcam commit 41c1a96) |
 | `mtk_imgsys_*`, `mtk_hcp`, `mtk_aie*`, `camera_dpe_isp7sp`, `pda_drv_mt6878`, `mtk_ccuv`, `ccd_rpmsg`, `mtk_ccd_remoteproc`, `mtk-ipesys-me`, vmm | 97–100% name coverage in Nothing mtkcam / device_modules (STRONG; not parity-built) |
-| `camera_eeprom_v4l2` | 63/113 — custom layouts missing (CAMERA-EEPROMS track) |
+| `camera_eeprom_v4l2` | **EXACT** — 126/126 functions, 127/127 data objects (mtkcam commit 133c6c1; stock `cam_cal_format.h` ABI: 24-byte part number, `sensorID` @0x20, no `FuseId`; all 37 layout tables + ODM 2A/LSC/PDAF parsers restored) |
 
 `imgsensor.ko` stock-only functions (36) and what they prove:
 

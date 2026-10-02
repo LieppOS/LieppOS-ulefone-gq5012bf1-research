@@ -22,7 +22,8 @@ ThermoVue excluded. EEPROM/VCM internals belong to other tracks.
 | **imgsensor.ko (framework + 9 sub-drivers)** | **reconstructed to source** (`reconstruction/imgsensor/`): 618/619 functions and 394/394 data objects byte-identical; modversions, KCFI, modinfo, symtab identical; whole stripped file differs in 70 bytes (one function, explained in `binary-analysis/README.md`) | **yes — done (parity build)** |
 | custom-LDO / WL2864C, AW365xx flash | reconstructed earlier (DONE/PARTIAL tracks) | yes |
 | DW9781C OIS | exact | yes |
-| camsys/seninf, imgsys P2, HCP, CCU rproc, AIE, DPE, PDA | 97–100% identifier coverage in NothingOSS MT6878 mtkcam; not parity-built | likely (STRONG) |
+| **camsys/ISP kernel modules** — `mtk-cam-isp7sp` (1220/1220 fn, 579/579 data), `mtk_imgsys_v4l2` (185/185, 139/139), `mtk_imgsys_isp7sp` (85/85, 119/119), `mtk_imgsys_cmdq` (165/165, 171/171), `mtk_hcp` (169/169, 53/53), `mtk_ccuv` (45/45, 22/22), `ccd_rpmsg` (29/29, 13/13), `mtk_ccd_remoteproc` (25/25, 13/13), `mtk_aie` (135/135, 116/116) + `mtk_aie_debug_7sp_2`, `camera_dpe_isp7sp` (96/96, 118/118), `mtk-ipesys-me` (14/14, 8/8), `mtk_c2ps` (106/106, 144/144), `c2ps_perf_ioctl`, `imgsensor-glue` | **reconstructed to source, every function and data object byte-identical** (`kernel-isp-imgsys/binary-analysis/per-module/*.tsv`; tree: `gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam`) | **yes — done (parity build)** |
+| **`camera_eeprom_v4l2.ko`** (cam_cal / OTP) | **126/126 functions, 127/127 data byte-identical**: stock `cam_cal_format.h` ABI (24-byte part number, `sensorID` @0x20, no `FuseId`), all 37 layout tables/config records decoded from relocations, ODM 2A/LSC/PDAF parsers for imx989(cts)/ov64b/s5kjn1*/hi847/s5khp2sp/s5khp3sp*/imx616/ova0b40* restored, `camera_otp` sysfs class probe path | **yes — done (parity build)** |
 | CCU firmware `ccu.img` | proprietary binary | no |
 | CameraProvider AIDL + mtkcam pipeline/feature/3A/ISP userspace (774 ELFs) | proprietary blobs only | no (reuse blobs) |
 | tuning (`*_tuning.so`, `*_IdxMgr.so`, `ISP_param.db`, `ISP_mapping.db`, NVRAM libs) | proprietary data | no (reuse) |
@@ -58,9 +59,10 @@ the parity build):
 
 ## Next highest-value camera task
 
-imgsensor.ko is done to parity. Next parity-build targets in the same kernel
-layer: the ISP/camsys modules (`mtk-cam-isp7sp`, seninf, imgsys P2, CCU rproc)
-from the NothingOSS MT6878 mtkcam tree, using the same tooling
-(`scripts/imgsensor_parity.py`, `abi_parity.py`, `gen_sensor_data.py`).
-Optionally: on-device A/B of the CORRECTED build for modes HAL can select
+The whole camera kernel layer (imgsensor, camsys/ISP, imgsys P2, HCP, CCU
+rproc, AIE, DPE, ME, C2PS, cam_cal EEPROM) is now rebuilt from source with
+byte-identical functions and data; the only residual is the documented
+`yft_ctrl_nightled_by_idx` in imgsensor. Nothing more is reconstructable
+offline in the kernel camera stack. Remaining work is on-device: boot the
+parity-built modules and confirm they enumerate. Optionally: on-device A/B of the CORRECTED build for modes HAL can select
 (IMX989 3/4/5/13, JN1 hs/slim).
