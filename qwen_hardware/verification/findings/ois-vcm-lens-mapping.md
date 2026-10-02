@@ -57,3 +57,20 @@ The DW9781C sits on i2c-4 together with sensor1/sensor4, **not** on i2c-7 with s
   `oisen_on/off`; the bound OIS actuator shares `i2c-4` with sensor1 + sensor4 while `main_vcm`/sensor0 sit
   on `i2c-7`. Bus sharing alone cannot decide which optical module carries the gimbal, so the physical
   assignment stays **UNKNOWN / TEARDOWN_REQUIRED**.
+
+## Correction (2026-10-02, camera-stack pass)
+
+* The second-pass DT properties quoted above for `camera-ois-main@e`
+  (`camreg`, `dw9781c,VDD/ACCURACY/HALL1VDD…`, `rvdd_max`, `reset-gpios 146`,
+  `pwdn-gpios 148`) and `ois-en-gpios = <133>` on the WL2864C node are **not
+  present** in the live DT tarball (`snapshots/live-stock-adb-20260831-115649/
+  devicetree.tar`): the OIS node has only `compatible, name, reg, rst-supply,
+  port/endpoint`; `pmu@wl2864c` has only `compatible, reg, reset-gpios, id_reg,
+  id_val, id_reg_2868c, id_val_2868c, name`. Treat those lines as unsupported.
+* New PROVEN facts: stock `dw9781c.ko` = NothingOSS MT6878 `dw9781c.c`
+  unmodified (byte-exact code/data); the driver talks to **0x0A** on i2c-4
+  (`client->addr = 0x14>>1`), uses regulators `vdd` (dummy) and `rst`
+  (`camera-common-dovdd`), has no firmware download, and the stock HAL lens
+  table `libcameracustom.lens.so` has only `Dummy` in every `ois_list_N` —
+  the reason OIS is never exposed. See
+  `reverse-engineering/camera-stack/notes/dw9781c-ois.md`.

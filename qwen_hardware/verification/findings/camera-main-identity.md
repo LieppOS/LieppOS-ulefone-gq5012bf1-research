@@ -58,3 +58,12 @@ name together with an 8160x6144 array **and** the main camera's 13.107 x 9.830 m
 publishes a JN1 die size with a 50 MP array; and `android.lens.aperture` / `android.lens.focalLength` are
 absent from all four blocks. Verdict unchanged and reinforced: **IMX989 on this unit (runtime-probed),
 S5KGN1SP/S5KGM2SP documented alternates of the same slot, OEM literature describes the GN1 alternate.**
+
+## Update (2026-10-02, camera-stack pass)
+
+Stock `imgsensor.ko` disassembly: `imx989_mipi_raw` `get_imgsensor_id` reads
+0x0016/0x0017 at write-ID 0x34 and binds only on value 0x0989 (with
+`is_yft_cts_board()==0`); `s5kgn1sp` requires 0x08E1, `s5kgm2sp` 0x08D2.
+The runtime bind of `SENSOR_DRVNAME_IMX989_MIPI_RAW` therefore proves the
+fitted die answered chip-ID 0x0989 — upgraded to **PROVEN (chip-ID register
+level)** for this unit. See `reverse-engineering/camera-stack/notes/imx989.md`.
