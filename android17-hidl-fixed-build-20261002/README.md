@@ -329,3 +329,22 @@ occurred after recovery/fastbootd had already started.
 A read-only investigation of misc/BCB, MediaTek para state, current normal-A
 boot mode, chosen DT boot tags, and retained LK logging was therefore captured
 before any further Slot-B attempt.
+
+## Normal-A versus recovery-B boot-mode distinction
+
+Further analysis established that the post-/metadata-fix Slot-B attempt was
+not merely interpreted as recovery by Android userspace.
+
+The failed B boot exposed MediaTek bootmode 2 / boottype 2, while the
+known-good Slot-A LK log reports boot mode 0. MediaTek boot-mode definitions
+identify value 0 as NORMAL_BOOT and value 2 as RECOVERY_BOOT.
+
+The current Slot-A `/chosen/atag,boot` data was therefore decoded explicitly,
+and the complete `/proc/bootconfig` was captured to determine whether LK adds
+`androidboot.force_normal_boot=1` during a known-good normal boot.
+
+The misc BCB was also captured before any new Slot-B activation. A BCB observed
+after recovery cannot by itself establish its pre-boot value because Android
+recovery can clear the bootloader message while returning to normal boot.
+
+No Slot-B boot was attempted in this step.
