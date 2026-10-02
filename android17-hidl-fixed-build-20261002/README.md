@@ -510,3 +510,32 @@ The remaining proof requirement is to bind the DT node's exact offset, mask,
 and parent syscon physical base to `0x1c00a024`.
 
 No phone state was modified during this investigation.
+
+## Recovery reboot-mode path — proven end to end
+
+The GQ5012BF1 recovery reboot-mode mechanism is now statically and live-DT
+validated end to end.
+
+Confirmed contract:
+
+- watchdog/syscon base: `0x1c00a000`
+- reboot-mode register offset: `0x24`
+- resulting physical register: `0x1c00a024`
+- field mask: `0x0f`
+- recovery magic: `0x02`
+- bootloader magic: `0x03`
+
+The generic Linux reboot-mode framework resolves the reboot command to its
+`mode-*` DT value. `syscon-reboot-mode` then calls `regmap_update_bits()` with
+the parent watchdog syscon, DT offset and DT mask.
+
+LK function `0x3dc5c` accesses the same physical register and writes the
+reboot-mode value after preserving the upper register bits. LK's recovery
+consumer subsequently reads the same low-nibble field.
+
+This establishes the Linux -> MTK WDT NONRST register -> LK recovery-mode
+handoff.
+
+This does not by itself establish which component caused the failed
+experimental Slot-B boot to request recovery. That causal question remains
+separate and is the next investigation target.
