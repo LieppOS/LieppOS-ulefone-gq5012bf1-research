@@ -176,3 +176,23 @@ remaining unsuccessful, preserving the retry/fallback mechanism.
 
 The metadata-encryption key invariant remained unchanged immediately before
 the reboot.
+
+## First real Android 17 Slot-B boot result
+
+The first fully gated Android 17 Slot-B boot did not complete.
+
+Observed physical behavior:
+
+1. Slot B displayed the boot logo.
+2. The display briefly went black.
+3. The device rebooted.
+4. Slot B was attempted again.
+5. After the bootloader retry budget was exhausted, the device automatically
+   fell back to the known-good Slot A.
+
+The fallback confirms that B remained unsuccessful and that the A/B retry
+mechanism protected the working Slot A as intended.
+
+No additional Slot-B activation should be performed until the retained
+pstore/ramoops, boot-reason and MediaTek crash evidence from this attempt has
+been analyzed.
