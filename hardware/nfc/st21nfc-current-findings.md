@@ -271,6 +271,20 @@ This does **NOT** prove any of the following:
 
 Those require separate low-level proof.
 
+**Update 2026-10-02 — the emulation question is now split, not unresolved.**
+ST documents MIFARE Classic card emulation on this controller family as an
+**off-host** feature *"through SWP-CLT"*: the CLF relays listen-direction
+14443-A/MIFARE traffic to a secure element, and the emulation state machine plus
+MIFARE keys live in the SE. So "no `NFA_CeT2t*` functions" only disproves the
+**host** path. Host MIFARE CE: **NOT POSSIBLE (architectural)**. SE-side MIFARE
+CE over SWP-CLT: **OPEN** — the transports exist on this board (`0x81`/`0x83`
+UICC + `0x82` eSE, `OFF_HOST_ESE_PIPE_ID=0x5E`,
+`UICC_LISTEN_TECH_MASK=0x07`), and off-host CE plumbing is already proven by the
+runtime-proven T4T-NFCEE emulation; what is missing is an SE-side MIFARE
+applet with NXP-provisioned keys plus a technology-level SE listen route
+(`seTechMask[0]=0x00` today). Details, per-path verdicts and read-only
+experiments: `mifare-ce-offhost-se-path.md`.
+
 ---
 
 ## 9. ST proprietary firmware configuration — PROVEN
@@ -340,7 +354,9 @@ This is a useful future reverse-engineering path for mapping runtime secure-elem
 | screen-off card emulation | **CONFIGURED** |
 | switched-off card emulation | **CONFIGURED, NOT TESTED** |
 | MIFARE protocol support | **PROVEN in ST stack** |
-| MIFARE card emulation path | **UNKNOWN** |
+| MIFARE Classic reader (POLL) | **PROVEN** |
+| MIFARE card emulation via Android host | **NOT POSSIBLE (architectural)** |
+| MIFARE card emulation via SWP-CLT (off-host SE) | **OPEN — needs SE-side applet + MIFARE keys** |
 | arbitrary fixed UID emulation | **UNKNOWN below HCE; not provided by normal Android HCE** |
 | low-level ST proprietary CE control | **RESEARCH TARGET** |
 

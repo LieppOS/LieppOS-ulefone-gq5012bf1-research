@@ -6,6 +6,19 @@
 **Method**: Strict static reverse engineering of JNI HAL (`libnfc_nci_jni.so`), ST21 HAL (`nfc_nci.st21nfc.st.so`), and firmware blob (`st21nfc_fw7.bin`).
 **Conclusion**: **MIFARE Classic PICC/card emulation is NOT supported** on this platform. The Android NFC stack (NFA_CE module) has no T2T listen mode infrastructure, and no vendor-specific path exists to enable it via static configuration.
 
+> **Scope correction (2026-10-02).** The conclusion above is valid for the
+> **Android host** path only, which is the only path this report examined. ST
+> defines MIFARE Classic card emulation for this controller family as an
+> **off-host** feature — "MIFARE Classic through SWP-CLT" — i.e. emulated inside
+> a secure element, not by `NFA_CE`. This report never evaluated that transport
+> (it contains no mention of SWP, CLT, UICC or off-host routing anywhere), so it
+> does **not** establish that MIFARE emulation is impossible on this hardware.
+> See `../../mifare-ce-offhost-se-path.md` for the SE-side analysis, the runtime
+> SE evidence (`0x81`/`0x83` UICC, `0x82` eSE, `OFF_HOST_ESE_PIPE_ID=0x5E`,
+> `UICC_LISTEN_TECH_MASK=0x07`, `seTechMask[0]=0x00`) and the remaining
+> read-only experiments. Host-path findings §2–§5, §8.1–§8.2, §10.1–§10.3 stand
+> unchanged.
+
 ---
 
 ## 1. Evidence Matrix
@@ -439,6 +452,10 @@ This is not a case of "the feature exists but is disabled." The entire T2T card 
 - No vendor-specific T2T listen mode in HAL
 
 The Android NFC stack was compiled without T2T card emulation support for this device.
+
+This is a statement about the **host** card-emulation stack. It does not cover
+SE-transported (SWP-CLT) MIFARE emulation, which involves none of these NFA_CE
+code paths — see the scope correction at the top of this report.
 
 ---
 
