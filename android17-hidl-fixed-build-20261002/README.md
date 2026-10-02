@@ -146,3 +146,33 @@ original read-only vendor_b mapping.
 vendor_dlkm_b, system_dlkm_b and odm_dlkm_b retained their expected hashes.
 Slot A remained active, the metadata-encryption key invariant remained
 unchanged, and the temporary alias was deleted after verification.
+
+## Android 17 Slot-B first real boot armed
+
+After restoring vendor_b to the archived compact Phase-4 baseline, the entire
+experimental Slot-B stack passed a final hash gate.
+
+The final first-boot stack is:
+
+- factory boot_b
+- clean branch-generated Android 17 init_boot_b
+- factory V15 vendor_boot_b
+- preserved factory-compatible DTBO
+- preserved vbmeta stack
+- Android 17 system_b
+- Android 17 system_ext_b
+- Android 17 product_b
+- restored compact Phase-4 vendor_b
+- preserved vendor_dlkm_b
+- preserved system_dlkm_b
+- preserved odm_dlkm_b
+
+Any remaining known temporary LieppOS writable DM aliases were first verified
+against their canonical read-only mappings and then removed.
+
+Slot A remained bootable and successful. Slot B's historical success state was
+cleared, B was re-enabled as bootable and selected for the next boot while
+remaining unsuccessful, preserving the retry/fallback mechanism.
+
+The metadata-encryption key invariant remained unchanged immediately before
+the reboot.
