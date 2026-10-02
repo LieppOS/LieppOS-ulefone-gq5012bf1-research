@@ -98,3 +98,25 @@ generic init_boot:
 
 Only the physical init_boot_b partition was written. The metadata-encryption
 key invariant remained unchanged.
+
+## Slot B vendor_boot provenance and factory restoration
+
+The unexpected Slot B vendor_boot hash:
+
+- fb748f23058c5189ca1a6ec7954d30e4174a3b15c2054c52385f48bf863d3a03
+
+was identified exactly as the previously generated
+`slot-b-investigation/boot-chain-compare/vendor-a-on-b-control/vendor_boot_b.vendor-a.fixed.img`.
+
+It was therefore a leftover vendor-A-on-B control image, not unexplained
+partition corruption.
+
+A verified V15 factory vendor_boot was located in the original firmware set:
+
+- size: 67,108,864 bytes
+- SHA-256: c8953d16b7a47976362aa23b53d0a08dde451f25cab4c552fa70c43e56ee0756
+
+Slot B vendor_boot was restored to that factory-exact image while Slot A
+remained active. vendor_boot_a was hash-checked before and after and remained
+unchanged. The metadata-encryption key invariant also remained unchanged.
+No boot-control state was modified and no reboot was performed.
