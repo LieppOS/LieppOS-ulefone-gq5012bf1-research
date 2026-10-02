@@ -25,3 +25,11 @@ Result:
 - SYSTEM_EXT_FITS=1
 - PRODUCT_FITS=1
 - no super resize required
+
+## Post-HIDL offline validation
+
+- Android 17 checkvintf: COMPATIBLE (exit 0)
+- Tested exact newly built system/system_ext/product images
+- Stock Ulefone vendor/ODM inputs retained
+- HIDL allocator manifest successfully parsed from system_ext
+- secilc exit: 255
