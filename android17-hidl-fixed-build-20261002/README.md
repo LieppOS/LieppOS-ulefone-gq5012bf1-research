@@ -33,3 +33,12 @@ Result:
 - Stock Ulefone vendor/ODM inputs retained
 - HIDL allocator manifest successfully parsed from system_ext
 - secilc exit: 255
+
+## Corrected split-SELinux verification
+
+- stock vendor hash gate: PASS
+- stock plat_pub_versioned.cil: bd4c019a2f2faeaf7b682be718e416f83ca22c6ff5e0754280693ae212bcd352
+- stock vendor_sepolicy.cil: 282b405b13cdb830999a9f932dbbd78cf6adbe7c15a11c769f548c8d65fb04fd
+- vendor policy mapping version: 34.0
+- secilc exit: 0
+- SELinux split-policy result: PASS
