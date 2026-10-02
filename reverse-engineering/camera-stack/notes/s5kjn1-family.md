@@ -56,9 +56,22 @@ data level); the HAL stream tables for cams 1/2 do not offer 120/240 fps.
 0x563242 @0x6C, default MTK tuning DB template), `s5kgn1sp`/`s5kgm2sp`
 (alternate main dies). All recovered by the oracle.
 
+## imgsensor reconstruction (2026-10-02)
+
+`s5kjn1`, `s5kjn1cts`, `s5kjn1main2` now exist as C
+(`reconstruction/imgsensor/src/common/*`, generator `tools/mk_s5kjn1.py`);
+every function byte-identical to stock. Recovered logic: ID probe reads the
+two chip-ID registers in both byte orders per retry; `s5kjn1cts` reports
+chip-ID − 1 (0x38E0) and binds only when `is_yft_cts_board()==1`;
+`s5kjn1main2` adds 1 to the low byte (0x38E2) — the "main2" ID is a driver
+convention, not silicon. sensor_init (inlined into `open`) is identical for
+all three. 4-cell XTC/PDXTC/SW-GGC data is read from EEPROM 0xA0 at
+0x0D4F/0x1AFD/0x1DFD/0x2D9D (9490 B). hs/slim TG windows are wrong in stock
+(VC/registers 1920×1080 / 640×480, TG 4080×3072); fixed only in the
+CORRECTED headers.
+
 ## Remaining
 
-C source for the three JN1 TUs (data + inline init fully recovered;
-logic is framework `common_*`); tuning proprietary
+~~C source for the three JN1 TUs~~ (done, see above); tuning proprietary
 (`s5kjn1_mipi_raw_tuning.so`, `s5kjn1main2_mipi_raw_tuning.so`,
 ISP_param.db 2.5 MB / 5.4 MB).

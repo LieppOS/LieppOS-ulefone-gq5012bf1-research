@@ -1,0 +1,216 @@
+From 8dc07d27fcc2facfd26110e445a349756b17c384 Mon Sep 17 00:00:00 2001
+From: re <re@local>
+Date: Fri, 2 Oct 2026 09:47:32 +0300
+Subject: [PATCH 02/10] framework: MTK-base logi/margin (Volla mt6878 donor),
+ CTS-gated common_get_imgsensor_id, yft_set_camera_device_used, line-number
+ placeholders
+
+---
+ adaptor-common-ctrl.c | 49 ++++++++++++++++++++++++++++++-------------
+ adaptor-ctrls.c       |  4 ++--
+ adaptor-fsync-ctrls.c | 12 +++++++++++
+ adaptor-subdrv-ctrl.c | 15 +++++++++++--
+ adaptor-subdrv.h      |  3 +++
+ 5 files changed, 65 insertions(+), 18 deletions(-)
+
+diff --git a/adaptor-common-ctrl.c b/adaptor-common-ctrl.c
+index e1192e3..41735dd 100644
+--- a/adaptor-common-ctrl.c
++++ b/adaptor-common-ctrl.c
+@@ -152,6 +152,8 @@ u32 g_sensor_margin(struct adaptor_ctx *ctx, unsigned int scenario)
+ 	struct mtk_stagger_info info = {0};
+ 	u32 len = 0;
+ 	u32 mode_exp_cnt = 1;
++	const struct subdrv_mode_struct *mode_st = NULL;
++
+ 	// para.u64[0] = ctx->cur_mode->id;
+ 	para.u64[0] = scenario;
+ 	para.u64[1] = 0;
+@@ -160,19 +162,38 @@ u32 g_sensor_margin(struct adaptor_ctx *ctx, unsigned int scenario)
+ 		    SENSOR_FEATURE_GET_FRAME_CTRL_INFO_BY_SCENARIO,
+ 		    para.u8, &len);
+ 	info.scenario_id = SENSOR_SCENARIO_ID_NONE;
+-	/* get the mode's const pointer of the scenario_id */
+-
+-	// if (!g_stagger_info(ctx, ctx->cur_mode->id, &info))
+-	if (!g_stagger_info(ctx, scenario, &info))
+-		mode_exp_cnt = info.count;
+-
+-	/* no vc info case, it is 1 exposure */
+-	if (mode_exp_cnt == 0)
+-		mode_exp_cnt = 1;
+ 
+-	// XXX: para.u64[2] is single line and single exp based
+-	// convert to multi line and multi exp based
+-	return para.u64[2];
++	/* get the mode's const pointer of the scenario_id */
++	mode_st = &ctx->subctx.s_ctx.mode[scenario];
++
++	switch (mode_st->hdr_mode) {
++	case HDR_RAW_STAGGER:
++		// if (!g_stagger_info(ctx, ctx->cur_mode->id, &info))
++		if (!g_stagger_info(ctx, scenario, &info))
++			mode_exp_cnt = info.count;
++
++		/* no vc info case, it is 1 exposure */
++		if (mode_exp_cnt == 0)
++			mode_exp_cnt = 1;
++
++		// XXX: para.u64[2] is single line and single exp based
++		// convert to multi line and multi exp based
++		return (para.u64[2] * mode_exp_cnt * mode_exp_cnt);
++	case HDR_RAW_LBMF:
++		// if (!g_stagger_info(ctx, ctx->cur_mode->id, &info))
++		if (!g_stagger_info(ctx, scenario, &info))
++			mode_exp_cnt = info.count;
++
++		/* no vc info case, it is 1 exposure */
++		if (mode_exp_cnt == 0)
++			mode_exp_cnt = 1;
++
++		// XXX: para.u64[2] is single line and single exp based
++		// convert to single line and multi exp based
++		return (para.u64[2] * mode_exp_cnt);
++	default:
++		return para.u64[2];
++	}
+ }
+ 
+ int g_sensor_fine_integ_line(struct adaptor_ctx *ctx,
+@@ -199,7 +220,7 @@ u32 g_sensor_dcg_property(struct adaptor_ctx *ctx, const int scenario_id)
+ 	const struct subdrv_mode_struct *mode_st = NULL;
+ 
+ 	if (unlikely(scenario_id >= ctx->subctx.s_ctx.sensor_mode_num)) {
+-		adaptor_logd(ctx,
++		adaptor_logi(ctx,
+ 			"invalid scenario_id:%u, sensor_mode_num:%u\n",
+ 			scenario_id, ctx->subctx.s_ctx.sensor_mode_num);
+ 		return 0;
+@@ -220,7 +241,7 @@ u32 g_sensor_lbmf_property(struct adaptor_ctx *ctx, const int scenario_id,
+ 	const struct subdrv_mode_struct *mode_st = NULL;
+ 
+ 	if (unlikely(scenario_id >= ctx->subctx.s_ctx.sensor_mode_num)) {
+-		adaptor_logd(ctx,
++		adaptor_logi(ctx,
+ 			"invalid scenario_id:%u, sensor_mode_num:%u\n",
+ 			scenario_id, ctx->subctx.s_ctx.sensor_mode_num);
+ 		return 0;
+diff --git a/adaptor-ctrls.c b/adaptor-ctrls.c
+index ef83473..c8b6f6f 100644
+--- a/adaptor-ctrls.c
++++ b/adaptor-ctrls.c
+@@ -137,7 +137,7 @@ static void dump_perframe_info(struct adaptor_ctx *ctx, struct mtk_hdr_ae *ae_ct
+ 	}
+ 	mutex_unlock(&ctx->ebd_lock);
+ 
+-	adaptor_logd(ctx,
++	adaptor_logi(ctx,
+ 		"X! [inf:%d] idx:%d, req_no:%u, sub_sof_no:%u, req_id:%d, [LLLE->SSSE] 64bit s(%llu/%llu/%llu/%llu/%llu) g(%d/%d/%d/%d/%d), w(%llu/%llu/%llu/%llu/%llu,%d/%d/%d/%d/%d) sub_tag:%u, ctx:(fl:(%u,lut:%u/%u/%u)/RG:(%u,%u/%u/%u/%u/%u), min_fl:%u, flick_en:%u, fsync(%d):(%u,%u/%u/%u/%u/%u), mode:(line_time:%u, margin:%u, scen:%u; STG:(rout_l:%u, r_margin:%u, ext_fl:%u)), fast_mode:%u), sys_ts:(%llu->%llu/%llu(+%u)/%llu(+%u))%s\n",
+ 		ctx->seninf_idx,
+ 		ctx->idx,
+@@ -1816,7 +1816,7 @@ static int imgsensor_set_ctrl(struct v4l2_ctrl *ctrl)
+ 			adaptor_hw_power_on(ctx);
+ 		else {
+ 			adaptor_hw_power_off(ctx);
+-			yft_ctrl_nightled_by_idx(ctx, ctrl->val);
++			yft_ctrl_nightled_by_idx(ctx, 0);
+ 		}
+ 		break;
+ 	case V4L2_CID_MTK_MSTREAM_MODE:
+diff --git a/adaptor-fsync-ctrls.c b/adaptor-fsync-ctrls.c
+index 6767012..8954151 100644
+--- a/adaptor-fsync-ctrls.c
++++ b/adaptor-fsync-ctrls.c
+@@ -3,6 +3,7 @@
+  * Copyright (c) 2020 MediaTek Inc.
+  */
+ 
++#include <linux/vmalloc.h>
+ #include <linux/atomic.h>
+ #include <linux/spinlock.h>
+ #include <linux/delay.h>
+@@ -1423,6 +1424,8 @@ void notify_fsync_mgr_clear_fl_restore_info_if_needed(struct adaptor_ctx *ctx)
+ /*******************************************************************************
+  * init Frame-Sync Mgr / get all function calls
+  ******************************************************************************/
++extern int yft_set_camera_device_used(char *name, int used);	/* yft_devinfo.ko */
++
+ int notify_fsync_mgr(struct adaptor_ctx *ctx, const int on)
+ {
+ 	struct device_node *seninf_np;
+@@ -1501,5 +1504,14 @@ int notify_fsync_mgr(struct adaptor_ctx *ctx, const int on)
+ 		ctx->idx, seninf_port, ctx->seninf_idx,
+ 		is_fsync_ts_src_type_tsrec);
+ 
++	/* GQ5012BF1 (YFT): report the bound sensor to yft_devinfo */
++	{
++		char *sensor_name = vmalloc(strlen(ctx->subdrv->name) + 1);
++
++		memcpy(sensor_name, ctx->subdrv->name, strlen(ctx->subdrv->name) + 1);
++		yft_set_camera_device_used(sensor_name, ctx->idx + 1);
++		vfree(sensor_name);
++	}
++
+ 	return 0;
+ }
+diff --git a/adaptor-subdrv-ctrl.c b/adaptor-subdrv-ctrl.c
+index 7eba52e..fe76960 100644
+--- a/adaptor-subdrv-ctrl.c
++++ b/adaptor-subdrv-ctrl.c
+@@ -43,6 +43,8 @@ void check_current_scenario_id_bound(struct subdrv_ctx *ctx)
+ 	}
+ }
+ 
++/* GQ5012BF1: stock source is 2 lines longer above dump_i2c_buf() (__LINE__
++ * 82/104 vs 80/102); content not recoverable, codegen unaffected. */
+ void i2c_table_write(struct subdrv_ctx *ctx, u16 *list, u32 len)
+ {
+ 	switch (ctx->s_ctx.i2c_transfer_data_type) {
+@@ -2710,6 +2712,15 @@ void get_dcg_ratio_group_by_scenario(struct subdrv_ctx *ctx,
+ 		sizeof(u32)*IMGSENSOR_EXPOSURE_CNT);
+ }
+ 
++/*
++ * GQ5012BF1 (YFT/Ulefone): a sensor only binds when its ID matches AND the
++ * board is not a CTS board (yft_devinfo is_yft_cts_board()); CTS boards are
++ * served by the *cts sub-drivers.  The stock file is 11 lines longer than the
++ * MediaTek base before common_get_frame_desc() (fortify __LINE__ 3727 vs
++ * 3716); 2 of those lines are above dump_i2c_buf(), the other 9 are
++ * (line-count placeholder)
++ * represented by this comment.
++ */
+ int common_get_imgsensor_id(struct subdrv_ctx *ctx, u32 *sensor_id)
+ {
+ 	u8 i = 0;
+@@ -2727,14 +2738,14 @@ int common_get_imgsensor_id(struct subdrv_ctx *ctx, u32 *sensor_id)
+ 				*sensor_id = ((*sensor_id) << 8) | subdrv_i2c_rd_u8(ctx, addr_ll);
+ 			DRV_LOG(ctx, "i2c_write_id:0x%x sensor_id(cur/exp):0x%x/0x%x\n",
+ 				ctx->i2c_write_id, *sensor_id, ctx->s_ctx.sensor_id);
+-			if (*sensor_id == ctx->s_ctx.sensor_id)
++			if (*sensor_id == ctx->s_ctx.sensor_id && !is_yft_cts_board())
+ 				return ERROR_NONE;
+ 			retry--;
+ 		} while (retry > 0);
+ 		i++;
+ 		retry = 2;
+ 	}
+-	if (*sensor_id != ctx->s_ctx.sensor_id) {
++	if (*sensor_id != ctx->s_ctx.sensor_id || is_yft_cts_board()) {
+ 		*sensor_id = 0xFFFFFFFF;
+ 		return ERROR_SENSOR_CONNECT_FAIL;
+ 	}
+diff --git a/adaptor-subdrv.h b/adaptor-subdrv.h
+index 50a0c58..5d7a766 100644
+--- a/adaptor-subdrv.h
++++ b/adaptor-subdrv.h
+@@ -649,4 +649,7 @@ struct subdrv_entry {
+ 	val; \
+ })
+ 
++/* GQ5012BF1 (YFT): CTS board strap, yft_devinfo.ko */
++extern int is_yft_cts_board(void);
++
+ #endif
+-- 
+2.55.0
+

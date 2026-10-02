@@ -1,0 +1,455 @@
+From f3e2e74a130c2080546f46f62537a2a405590e6d Mon Sep 17 00:00:00 2001
+From: re <re@local>
+Date: Fri, 2 Oct 2026 09:41:16 +0300
+Subject: [PATCH 01/10] adaptor-hw/drv/i2c/ctrls: YFT custom-LDO, HV-charger,
+ reg8 i2c, night-LED; drop Nothing-only edits
+
+---
+ adaptor-ctrls.c | 29 ++++++++++++++-
+ adaptor-drv.c   | 64 +++++++++++++++++++++-----------
+ adaptor-hw.c    | 99 ++++++++++++++++++++++++++++++++++++++++++++++++-
+ adaptor-hw.h    |  4 ++
+ adaptor-i2c.c   | 59 +++++++++++++++++++++++++++++
+ adaptor-i2c.h   |  6 +++
+ 6 files changed, 236 insertions(+), 25 deletions(-)
+
+diff --git a/adaptor-ctrls.c b/adaptor-ctrls.c
+index 6b3ae8b..ef83473 100644
+--- a/adaptor-ctrls.c
++++ b/adaptor-ctrls.c
+@@ -1377,6 +1377,27 @@ static void proc_debug_cmd(struct adaptor_ctx *ctx, char *text)
+ #endif
+ 
+ 
++/* GQ5012BF1 (YFT): night-vision IR LED follows camera idx 4 (OV64B) */
++extern int flashlight_drvctrl(int cmd);	/* flashlight.ko */
++static bool nightled_is_open;
++
++static void yft_ctrl_nightled_by_idx(struct adaptor_ctx *ctx, int state)
++{
++	if (ctx->idx == 4) {
++		printk("lanny! %s, ctx->idx=%d, name:%s, state:%d\n",
++			__func__, ctx->idx, ctx->subdrv->name, state);
++		if (state && nightled_is_open != state) {
++			flashlight_drvctrl(1);
++			flashlight_drvctrl(11);
++			nightled_is_open = state;
++		} else if (!state && nightled_is_open) {
++			flashlight_drvctrl(0);
++			flashlight_drvctrl(10);
++			nightled_is_open = state;
++		}
++	}
++}
++
+ static int imgsensor_set_ctrl(struct v4l2_ctrl *ctrl)
+ {
+ 	struct adaptor_ctx *ctx = ctrl_to_ctx(ctrl);
+@@ -1793,8 +1814,10 @@ static int imgsensor_set_ctrl(struct v4l2_ctrl *ctrl)
+ 		}
+ 		if (ctrl->val)
+ 			adaptor_hw_power_on(ctx);
+-		else
++		else {
+ 			adaptor_hw_power_off(ctx);
++			yft_ctrl_nightled_by_idx(ctx, ctrl->val);
++		}
+ 		break;
+ 	case V4L2_CID_MTK_MSTREAM_MODE:
+ 		adaptor_logi(ctx,
+@@ -1860,8 +1883,10 @@ static int imgsensor_set_ctrl(struct v4l2_ctrl *ctrl)
+ 		break;
+ 	case V4L2_CID_MTK_SENSOR_INIT:
+ 		adaptor_logd(ctx, "E! [V4L2_CID_MTK_SENSOR_INIT] val:%d\n", ctrl->val);
+-		if (ctrl->val)
++		if (ctrl->val) {
++			yft_ctrl_nightled_by_idx(ctx, 1);
+ 			adaptor_sensor_init(ctx);
++		}
+ 		break;
+ 	case V4L2_CID_MTK_SENSOR_RESET_S_STREAM:
+ 		_sensor_reset_s_stream(ctrl);
+diff --git a/adaptor-drv.c b/adaptor-drv.c
+index 86540f7..e1e0ea8 100644
+--- a/adaptor-drv.c
++++ b/adaptor-drv.c
+@@ -10,6 +10,8 @@
+ #include <linux/of.h>
+ #include <linux/of_graph.h>
+ #include <linux/thermal.h>
++#include <linux/power_supply.h>
++#include <linux/vmalloc.h>
+ 
+ #include "kd_imgsensor_define_v4l2.h"
+ 
+@@ -35,14 +37,16 @@ EXTERN_IMGSENSOR_SUBDRVS;
+ 
+ #undef E
+ #define E(__x__) (&__x__##_entry)
++/* GQ5012BF1 (YFT) externals */
++extern bool yft_cam_open_flag;			/* mtk_charger_framework.ko */
++extern int yft_camera_device_add(char *name, int used);	/* yft_devinfo.ko */
++extern int yft_set_camera_device_used(char *name, int used);
++
+ static struct subdrv_entry *imgsensor_subdrvs[] = {
+ #ifdef IMGSENSOR_SUBDRVS
+ 	IMGSENSOR_SUBDRVS
+ #endif
+ };
+-extern char main_camera[32];
+-extern char sub_front_camera[32];
+-extern char depth_camera[32];
+ 
+ module_param(sensor_debug, uint, 0644);
+ module_param(set_ctrl_unlock, uint, 0644);
+@@ -455,6 +459,12 @@ static int search_sensor(struct adaptor_ctx *ctx)
+ 		subdrvs = of_subdrvs;
+ 		subdrvs_cnt = 0;
+ 		for (i = 0; i < of_sensor_names_cnt; i++) {
++			char *sensor_name = vmalloc(strlen(of_sensor_names[i]) + 1);
++
++			strcpy(sensor_name, of_sensor_names[i]);
++			if (strlen(sensor_name))
++				yft_camera_device_add(sensor_name, 0);
++			vfree(sensor_name);
+ #if IMGSENSOR_LOG_MORE
+ 			dev_info(ctx->dev,
+ 				"[%s] sensor_name:%s\n",
+@@ -535,6 +545,34 @@ static int search_sensor(struct adaptor_ctx *ctx)
+ 	return -EIO;
+ }
+ 
++/* GQ5012BF1 (YFT): suspend high-voltage charging while a camera is open */
++static void imgsensor_high_voltage_supply(int enable_hv)
++{
++	static struct power_supply *chg_psy;
++	union power_supply_propval propval = {0};
++
++	if (chg_psy == NULL) {
++		chg_psy = power_supply_get_by_name("mtk-master-charger");
++		if (IS_ERR_OR_NULL(chg_psy)) {
++			printk("%s: fail to get usb_psy\n", __func__);
++			return;
++		}
++	}
++
++	if (IS_ERR(chg_psy)) {
++		printk("%s: Couldn't get chg_psy\n", __func__);
++	} else {
++		propval.intval = enable_hv;
++		power_supply_set_property(chg_psy,
++			POWER_SUPPLY_PROP_VOLTAGE_MAX, &propval);
++		printk("%s: enable_hv:%d\n", __func__, propval.intval);
++		power_supply_changed(chg_psy);
++	}
++
++	yft_cam_open_flag = !enable_hv;
++	printk("%s: yft_cam_open_flag:%d\n", __func__, yft_cam_open_flag);
++}
++
+ static int imgsensor_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+ {
+ 	struct adaptor_ctx *ctx = to_ctx(sd);
+@@ -543,6 +581,7 @@ static int imgsensor_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+ #if IMGSENSOR_LOG_MORE
+ 	adaptor_logd(ctx, "E!\n");
+ #endif
++	imgsensor_high_voltage_supply(0);
+ 	mutex_lock(&ctx->mutex);
+ 
+ 	ctx->open_refcnt++;
+@@ -578,6 +617,7 @@ static int imgsensor_close(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+ #if IMGSENSOR_LOG_MORE
+ 	adaptor_logd(ctx, "E!\n");
+ #endif
++	imgsensor_high_voltage_supply(1);
+ 	mutex_lock(&ctx->mutex);
+ 
+ #ifdef POWERON_ONCE_OPENED
+@@ -1455,12 +1495,6 @@ static int imgsensor_probe(struct i2c_client *client)
+ 	struct device_node *platform_node = NULL;
+ 
+ 	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
+-
+-	if (!ctx) {
+-		dev_info(dev, "kcalloc memory faill %d", __LINE__);
+-		ctx = vmalloc(sizeof(*ctx));
+-	}
+-
+ 	if (!ctx)
+ 		return -ENOMEM;
+ 
+@@ -1627,18 +1661,6 @@ static int imgsensor_probe(struct i2c_client *client)
+ 
+ 	notify_fsync_mgr(ctx, 1);
+ 
+-	if(ctx->idx == 0){
+-		sprintf(main_camera, "%s", ctx->subdrv->name);
+-	}
+-
+-	if(ctx->idx == 1){
+-		sprintf(sub_front_camera, "%s", ctx->subdrv->name);
+-	}
+-
+-	if(ctx->idx == 2){
+-		sprintf(depth_camera, "%s", ctx->subdrv->name);
+-	}
+-
+ 	ret = device_create_file(dev, &dev_attr_debug_i2c_ops);
+ 	if (ret)
+ 		dev_info(dev, "failed to create sysfs debug_i2c_ops\n");
+diff --git a/adaptor-hw.c b/adaptor-hw.c
+index 1c21513..91f9603 100644
+--- a/adaptor-hw.c
++++ b/adaptor-hw.c
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0
+ // Copyright (c) 2019 MediaTek Inc.
+ 
+-#define DEBUG
++//#define DEBUG
+ 
+ #include <linux/delay.h>
+ #include <linux/module.h>
+@@ -38,6 +38,23 @@ static const char * const state_names[] = {
+ 	ADAPTOR_STATE_NAMES
+ };
+ 
++static const char * const custom_ldo_names[] = {
++	"custom_avdd",
++	"custom_dvdd",
++	"custom_dovdd",
++	"custom_afvdd",
++	"custom_afvdd1",
++	"custom_avdd1",
++	"custom_avdd2",
++	"custom_avdd3",
++	"custom_avdd4",
++	"custom_dvdd1",
++	"custom_dvdd2",
++	"custom_oisvdd",
++	"custom_oisen",
++	"custom_rst",
++};
++
+ static struct clk *get_clk_by_idx_freq(struct adaptor_ctx *ctx,
+ 				unsigned long long idx, int freq)
+ {
+@@ -69,6 +86,9 @@ static struct clk *get_clk_by_idx_freq(struct adaptor_ctx *ctx,
+ 		case 19:
+ 			return ctx->clk[CLK1_19_2M];
+ 		case 24:
++			if (ctx->aov_mclk_ulposc_flag)
++				return ctx->clk[CLK1_26M_ULPOSC];
++			else
+ 				return ctx->clk[CLK1_24M];
+ 		case 26:
+ 			if (ctx->aov_mclk_ulposc_flag)
+@@ -264,6 +284,42 @@ static int unset_state_mipi_switch(struct adaptor_ctx *ctx, void *data,
+ 	return set_state(ctx, (void *)STATE_MIPI_SWITCH_OFF, 0);
+ }
+ 
++static int set_custom_ldo(struct adaptor_ctx *ctx, void *data, int val)
++{
++	unsigned long long ret, idx;
++
++	idx = (unsigned long long)data;
++
++	adaptor_logd(ctx, "E! idx(%llu),val(%d)\n", idx, val);
++
++	ret = custom_ldo_vout(ctx->custom_ldo_ch[idx], val);
++	adaptor_logd(ctx,
++		"custom_ldo_set_voltage(%s) ,num(%d) ,val(%d),ret(%llu)\n",
++		custom_ldo_names[idx], ctx->custom_ldo_ch[idx], val, ret);
++
++	custom_ldo_en(ctx->custom_ldo_ch[idx], 1);
++
++	return 0;
++}
++
++static int unset_custom_ldo(struct adaptor_ctx *ctx, void *data, int val)
++{
++	unsigned long long ret, idx;
++
++	idx = (unsigned long long)data;
++
++	adaptor_logd(ctx, "E! idx(%llu),val(%d)\n", idx, val);
++
++	ret = custom_ldo_vout(ctx->custom_ldo_ch[idx], val);
++	adaptor_logd(ctx,
++		"custom_ldo_set_voltage(%s) ,num(%d) ,val(%d),ret(%llu)\n",
++		custom_ldo_names[idx], ctx->custom_ldo_ch[idx], val, ret);
++
++	custom_ldo_en(ctx->custom_ldo_ch[idx], 0);
++
++	return 0;
++}
++
+ static int reinit_pinctrl(struct adaptor_ctx *ctx)
+ {
+ 	int i;
+@@ -307,7 +363,7 @@ int do_hw_power_on(struct adaptor_ctx *ctx)
+ 	struct subdrv_ctx *subctx;
+ 	u64 time_boot_begin = 0;
+ 
+-	adaptor_logd(ctx, "wtdd E!\n");
++	adaptor_logd(ctx, "E!\n");
+ 	if (!ctx || !(ctx->subdrv)) {
+ 		pr_info("[%s] ctx might be null!\n", __func__);
+ 		return -EINVAL;
+@@ -560,6 +616,16 @@ int adaptor_hw_init(struct adaptor_ctx *ctx)
+ 		}
+ 	}
+ 
++	/* custom ldo channels */
++	for (i = 0; i < REGULATOR_MAXCNT; i++) {
++		if (of_property_read_u32(dev->of_node, custom_ldo_names[i],
++					 &ctx->custom_ldo_ch[i]) < 0 ||
++		    ctx->custom_ldo_ch[i] <= 0) {
++			ctx->custom_ldo_ch[i] = 0;
++			dev_err(dev, "[%s] no custom ldo11 %s\n", __func__, custom_ldo_names[i]);
++		}
++	}
++
+ 	/* install operations */
+ 
+ 	INST_OPS(ctx, clk, CLK_MCLK, HW_ID_MCLK, set_mclk, unset_mclk);
+@@ -687,6 +753,35 @@ int adaptor_hw_init(struct adaptor_ctx *ctx)
+ 		ctx->pinctrl = NULL;
+ 	}
+ 
++	INST_OPS(ctx, custom_ldo_ch, REGULATOR_AVDD, HW_ID_AVDD,
++			set_custom_ldo, unset_custom_ldo);
++	INST_OPS(ctx, custom_ldo_ch, REGULATOR_DVDD, HW_ID_DVDD,
++			set_custom_ldo, unset_custom_ldo);
++	INST_OPS(ctx, custom_ldo_ch, REGULATOR_DOVDD, HW_ID_DOVDD,
++			set_custom_ldo, unset_custom_ldo);
++	INST_OPS(ctx, custom_ldo_ch, REGULATOR_AFVDD, HW_ID_AFVDD,
++			set_custom_ldo, unset_custom_ldo);
++	INST_OPS(ctx, custom_ldo_ch, REGULATOR_AFVDD1, HW_ID_AFVDD1,
++			set_custom_ldo, unset_custom_ldo);
++	INST_OPS(ctx, custom_ldo_ch, REGULATOR_AVDD1, HW_ID_AVDD1,
++			set_custom_ldo, unset_custom_ldo);
++	INST_OPS(ctx, custom_ldo_ch, REGULATOR_AVDD2, HW_ID_AVDD2,
++			set_custom_ldo, unset_custom_ldo);
++	INST_OPS(ctx, custom_ldo_ch, REGULATOR_AVDD3, HW_ID_AVDD3,
++			set_custom_ldo, unset_custom_ldo);
++	INST_OPS(ctx, custom_ldo_ch, REGULATOR_AVDD4, HW_ID_AVDD4,
++			set_custom_ldo, unset_custom_ldo);
++	INST_OPS(ctx, custom_ldo_ch, REGULATOR_DVDD1, HW_ID_DVDD1,
++			set_custom_ldo, unset_custom_ldo);
++	INST_OPS(ctx, custom_ldo_ch, REGULATOR_DVDD2, HW_ID_DVDD2,
++			set_custom_ldo, unset_custom_ldo);
++	INST_OPS(ctx, custom_ldo_ch, REGULATOR_OISVDD, HW_ID_OISVDD,
++			set_custom_ldo, unset_custom_ldo);
++	INST_OPS(ctx, custom_ldo_ch, REGULATOR_OISEN, HW_ID_OISEN,
++			set_custom_ldo, unset_custom_ldo);
++	INST_OPS(ctx, custom_ldo_ch, REGULATOR_RST, HW_ID_RST,
++			set_custom_ldo, unset_custom_ldo);
++
+ 	adaptor_logd(ctx, "X!\n");
+ 
+ 	return 0;
+diff --git a/adaptor-hw.h b/adaptor-hw.h
+index 0979074..d8c33a7 100644
+--- a/adaptor-hw.h
++++ b/adaptor-hw.h
+@@ -10,4 +10,8 @@ int adaptor_hw_init(struct adaptor_ctx *ctx);
+ int adaptor_hw_sensor_reset(struct adaptor_ctx *ctx);
+ 
+ 
++/* GQ5012BF1: WL2864C/WL2868C camera LDO (custom_ldo.ko, CUSTOM-LDO track) */
++int custom_ldo_vout(int ldo_num, int value);
++int custom_ldo_en(int ldo_num, int enable);
++
+ #endif
+diff --git a/adaptor-i2c.c b/adaptor-i2c.c
+index 855dc09..f9e6362 100644
+--- a/adaptor-i2c.c
++++ b/adaptor-i2c.c
+@@ -22,6 +22,65 @@ struct cache_wr_regs_u16 {
+ 	struct i2c_msg msg[MAX_MSG_NUM_U16];
+ };
+ 
++/* GQ5012BF1 (YFT): 8-bit register address variants (no in-module users) */
++int adaptor_i2c_reg8_rd_u8(struct i2c_client *i2c_client,
++		u16 addr, u16 reg, u8 *val)
++{
++	int ret;
++	u8 buf[2];
++	struct i2c_msg msg[2];
++
++	if (i2c_client == NULL)
++		return -ENODEV;
++
++	buf[0] = reg;
++
++	msg[0].addr = addr;
++	msg[0].flags = i2c_client->flags;
++	msg[0].buf = buf;
++	msg[0].len = 1;
++
++	msg[1].addr = addr;
++	msg[1].flags = i2c_client->flags | I2C_M_RD;
++	msg[1].buf = buf;
++	msg[1].len = 1;
++
++	ret = i2c_transfer(i2c_client->adapter, msg, 2);
++	if (ret < 0) {
++		dev_info(&i2c_client->dev, "i2c transfer failed (%d)\n", ret);
++		return ret;
++	}
++
++	*val = buf[0];
++
++	return 0;
++}
++
++int adaptor_i2c_reg8_wr_u8(struct i2c_client *i2c_client,
++		u16 addr, u16 reg, u8 val)
++{
++	int ret;
++	u8 buf[3];
++	struct i2c_msg msg;
++
++	if (i2c_client == NULL)
++		return -ENODEV;
++
++	buf[0] = reg;
++	buf[1] = val;
++
++	msg.addr = addr;
++	msg.flags = i2c_client->flags;
++	msg.buf = buf;
++	msg.len = 2;
++
++	ret = i2c_transfer(i2c_client->adapter, &msg, 1);
++	if (ret < 0)
++		dev_info(&i2c_client->dev, "i2c transfer failed (%d)\n", ret);
++
++	return ret;
++}
++
+ int adaptor_i2c_rd_u8(struct i2c_client *i2c_client,
+ 		u16 addr, u16 reg, u8 *val)
+ {
+diff --git a/adaptor-i2c.h b/adaptor-i2c.h
+index 4f69fa0..5fb369a 100644
+--- a/adaptor-i2c.h
++++ b/adaptor-i2c.h
+@@ -4,6 +4,12 @@
+ #ifndef __ADAPTOR_I2C_H__
+ #define __ADAPTOR_I2C_H__
+ 
++int adaptor_i2c_reg8_rd_u8(struct i2c_client *i2c_client,
++		u16 addr, u16 reg, u8 *val);
++
++int adaptor_i2c_reg8_wr_u8(struct i2c_client *i2c_client,
++		u16 addr, u16 reg, u8 val);
++
+ int adaptor_i2c_rd_u8(struct i2c_client *i2c_client,
+ 		u16 addr, u16 reg, u8 *val);
+ 
+-- 
+2.55.0
+

@@ -16,6 +16,13 @@ signals), **INFERRED** (one signal or naming), **UNKNOWN**.
 
 ## 0. Headline results
 
+0. **(update) `imgsensor.ko` rebuilt from source to stock parity.**
+   `reconstruction/imgsensor/` holds the framework + all 9 sub-drivers;
+   618/619 functions and 394/394 data objects byte-identical, modversions /
+   KCFI / modinfo identical, stripped module differs in 70 bytes (one
+   explained function). Reports: `binary-analysis/`. Stock geometry defects
+   are kept in the parity build and fixed only in a separate CORRECTED
+   build (`-DGQ5012BF1_CAM_CORRECTED`).
 1. **Stock `imgsensor.ko` fully decoded.** A dependency-free ELF/RELA walker
    (`scripts/imgsensor_oracle.py`) using struct layouts recovered by DWARF
    from the Nothing MT6878 headers (sizes verified against the stock objects:

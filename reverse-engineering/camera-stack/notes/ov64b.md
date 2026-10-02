@@ -49,6 +49,13 @@ stream 0x0100; pw_seq MCLK24, PDN0, RST0, AVDD 2.8, AFVDD 2.8, DVDD 1.1,
 DOVDD 1.8, MCLK 8 mA, PDN1, RST1 (donor additionally had OISVDD/OISEN 3.1 V
 steps — removed). custom-LDO avdd=4, afvdd=5, dvdd=1, dovdd=7.
 
+## imgsensor reconstruction (2026-10-02)
+
+Rebuilt byte-identically from the older NothingOSS revision + stock data:
+3-byte ID probe with CTS gate, `open` without QSC, seamless switch and QSC
+calibration removed (stock has neither). hs/slim VC 4624×2604 vs programmed
+1920×1080 fixed only in the CORRECTED header.
+
 ## Unknowns
 
 Source text for the stock register revision (data is fully recovered in

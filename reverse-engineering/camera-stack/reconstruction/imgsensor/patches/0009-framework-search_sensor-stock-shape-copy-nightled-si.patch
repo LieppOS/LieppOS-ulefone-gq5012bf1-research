@@ -1,0 +1,67 @@
+From f6851acf325860387cd2a91c4767450f763a7c54 Mon Sep 17 00:00:00 2001
+From: re <re@local>
+Date: Fri, 2 Oct 2026 13:50:05 +0300
+Subject: [PATCH 09/10] framework: search_sensor stock-shape copy; nightled
+ single-store layout (172B); 618/619 functions exact
+
+---
+ adaptor-ctrls.c | 13 ++++++++++---
+ adaptor-drv.c   |  8 ++++++--
+ 2 files changed, 16 insertions(+), 5 deletions(-)
+
+diff --git a/adaptor-ctrls.c b/adaptor-ctrls.c
+index c8b6f6f..8ccf5e4 100644
+--- a/adaptor-ctrls.c
++++ b/adaptor-ctrls.c
+@@ -1381,6 +1381,13 @@ static void proc_debug_cmd(struct adaptor_ctx *ctx, char *text)
+ extern int flashlight_drvctrl(int cmd);	/* flashlight.ko */
+ static bool nightled_is_open;
+ 
++/*
++ * GQ5012BF1 (YFT): night-LED follows sensor idx 4 power/init.
++ * Single store after the if/else chain reproduces the stock 172-byte layout.
++ * Residual: stock compares nightled_is_open against the full int `state`
++ * (ccmp w8, w19); this build's clang narrows `state` to {0,1} from the two
++ * constant call sites and emits `cmp w8, #1`.  Behaviour is identical.
++ */
+ static void yft_ctrl_nightled_by_idx(struct adaptor_ctx *ctx, int state)
+ {
+ 	if (ctx->idx == 4) {
+@@ -1389,12 +1396,12 @@ static void yft_ctrl_nightled_by_idx(struct adaptor_ctx *ctx, int state)
+ 		if (state && nightled_is_open != state) {
+ 			flashlight_drvctrl(1);
+ 			flashlight_drvctrl(11);
+-			nightled_is_open = state;
+ 		} else if (!state && nightled_is_open) {
+ 			flashlight_drvctrl(0);
+ 			flashlight_drvctrl(10);
+-			nightled_is_open = state;
+-		}
++		} else
++			return;
++		nightled_is_open = state;
+ 	}
+ }
+ 
+diff --git a/adaptor-drv.c b/adaptor-drv.c
+index e1e0ea8..2d529b1 100644
+--- a/adaptor-drv.c
++++ b/adaptor-drv.c
+@@ -461,8 +461,12 @@ static int search_sensor(struct adaptor_ctx *ctx)
+ 		for (i = 0; i < of_sensor_names_cnt; i++) {
+ 			char *sensor_name = vmalloc(strlen(of_sensor_names[i]) + 1);
+ 
+-			strcpy(sensor_name, of_sensor_names[i]);
+-			if (strlen(sensor_name))
++			/*
++			 * Stock codegen is strlen+vmalloc+strlen+memcpy and tests the
++			 * *source* first byte (FORTIFY strcpy shape); reproduced here.
++			 */
++			memcpy(sensor_name, of_sensor_names[i], strlen(of_sensor_names[i]) + 1);
++			if (strlen(of_sensor_names[i]))
+ 				yft_camera_device_add(sensor_name, 0);
+ 			vfree(sensor_name);
+ #if IMGSENSOR_LOG_MORE
+-- 
+2.55.0
+
