@@ -84,3 +84,17 @@ Corrected init_boot:
 - kernel: absent
 - snapuserd: present
 - KernelSU/Magisk contamination: absent
+
+## Android 17 init_boot_b replacement
+
+The contaminated KernelSU init_boot_b image:
+
+- 23560214615cdff7b890bcf62eb43ba913dc352d1004d41c25281164e49a45b5
+
+was replaced while Slot A remained active with the validated Android 17
+generic init_boot:
+
+- a205b1e432194e2ef077801974296a367b7a165e4ac2028b2ba9a6d75ec1c13f
+
+Only the physical init_boot_b partition was written. The metadata-encryption
+key invariant remained unchanged.
