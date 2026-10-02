@@ -1,0 +1,921 @@
+============================================================
+GQ5012BF1 RECOVERY REBOOT-MODE END-TO-END PROOF
+============================================================
+
+===== SAFETY =====
+slot=_a
+boot_completed=1
+current_slot=0
+
+============================================================
+1. LK LOW-NIBBLE WRITER 0x3dc5c
+============================================================
+            ; CALL XREFS from fcn.00008938 @ 0x8d18(x), 0x8e0c(x)
+            ; CALL XREF from fcn.00054a78 @ 0x54b40(x)
+┌ 36: fcn.0003dc5c (int64_t arg1);
+│ `- args(x0)
+│           0x0003dc5c      880494d2       mov x8, 0xa024
+│           0x0003dc60      091c0012       and w9, w0, 0xff            ; arg1
+│           0x0003dc64      0880a3f2       movk x8, 0x1c00, lsl 16
+│           0x0003dc68      e8fffff2       movk x8, 0xffff, lsl 48
+│           0x0003dc6c      0a0140b9       ldr w10, [x8]
+│           0x0003dc70      4a6d1c12       and w10, w10, 0xfffffff0
+│           0x0003dc74      4901092a       orr w9, w10, w9
+│           0x0003dc78      090100b9       str w9, [x8]
+└           0x0003dc7c      c0035fd6       ret
+fcn.00008938 0x8d18 [CALL:--x] bl fcn.0003dc5c
+fcn.00008938 0x8e0c [CALL:--x] bl fcn.0003dc5c
+fcn.00054a78 0x54b40 [CALL:--x] bl fcn.0003dc5c
+
+===== CALLERS OF 0x3dc5c =====
+fcn.00008938 0x8d18 [CALL:--x] bl fcn.0003dc5c
+fcn.00008938 0x8e0c [CALL:--x] bl fcn.0003dc5c
+fcn.00054a78 0x54b40 [CALL:--x] bl fcn.0003dc5c
+
+===== CALL-SITE CONTEXT =====
+
+------------------------------------------------------------
+XREF=0x54b40
+------------------------------------------------------------
+            0x00054ad0      216d0094       bl 0x6ff54
+        ┌─< 0x00054ad4      40010035       cbnz w0, 0x54afc
+        │   0x00054ad8      000300b0       adrp x0, 0xb5000
+        │   0x00054adc      00d41591       add x0, x0, 0x575
+        │   0x00054ae0      ce680094       bl 0x6ee18
+        │   0x00054ae4      600300b0       adrp x0, 0xc1000
+        │   0x00054ae8      00ec3491       add x0, x0, 0xd3b
+        │   0x00054aec      14ccfe97       bl 0x7b3c
+        │   0x00054af0      e0031f2a       mov w0, wzr
+        │   0x00054af4      722d0194       bl 0xa00bc
+       ┌──< 0x00054af8      0b000014       b 0x54b24
+       │└─> 0x00054afc      572d0194       bl 0xa0058
+       │    0x00054b00      880200d0       adrp x8, 0xa6000
+       │    0x00054b04      08210291       add x8, x8, 0x88
+       │    0x00054b08      a9020090       adrp x9, 0xa8000
+       │    0x00054b0c      29291f91       add x9, x9, 0x7ca
+       │    0x00054b10      1f000071       cmp w0, 0
+       │    0x00054b14      e00200b0       adrp x0, 0xb1000
+       │    0x00054b18      00601091       add x0, x0, 0x418
+       │    0x00054b1c      2101889a       csel x1, x9, x8, eq
+       │    0x00054b20      be680094       bl 0x6ee18
+       └──> 0x00054b24      800200d0       adrp x0, 0xa6000
+            0x00054b28      009c0291       add x0, x0, 0xa7
+            0x00054b2c      4d680094       bl 0x6ec60
+            0x00054b30      a00200f0       adrp x0, 0xab000
+            0x00054b34      00280c91       add x0, x0, 0x30a
+            0x00054b38      35ccfe97       bl 0x7c0c
+            0x00054b3c      e0031f2a       mov w0, wzr
+            0x00054b40      47a4ff97       bl 0x3dc5c
+            0x00054b44      20008052       mov w0, 1
+            0x00054b48      e1008052       mov w1, 7
+            0x00054b4c      9116ff97       bl 0x1a590
+            0x00054b50      fd7bbea9       stp x29, x30, [sp, -0x20]!
+            0x00054b54      f30b00f9       str x19, [sp, 0x10]
+            0x00054b58      fd030091       mov x29, sp
+            0x00054b5c      21030090       adrp x1, 0xb8000
+            0x00054b60      21083191       add x1, x1, 0xc42
+            0x00054b64      42008052       mov w2, 2
+            0x00054b68      f30300aa       mov x19, x0
+            0x00054b6c      fa6c0094       bl 0x6ff54
+        ┌─< 0x00054b70      60010034       cbz w0, 0x54b9c
+        │   0x00054b74      210300f0       adrp x1, 0xbb000
+        │   0x00054b78      21b43191       add x1, x1, 0xc6d
+        │   0x00054b7c      e00313aa       mov x0, x19
+        │   0x00054b80      42008052       mov w2, 2
+        │   0x00054b84      f46c0094       bl 0x6ff54
+       ┌──< 0x00054b88      80010034       cbz w0, 0x54bb8
+       ││   0x00054b8c      200300b0       adrp x0, 0xb9000
+       ││   0x00054b90      00641f91       add x0, x0, 0x7d9
+       ││   0x00054b94      eacbfe97       bl 0x7b3c
+      ┌───< 0x00054b98      0e000014       b 0x54bd0
+      ││└─> 0x00054b9c      20008052       mov w0, 1
+      ││    0x00054ba0      5711ff97       bl 0x190fc
+      ││    0x00054ba4      400300b0       adrp x0, 0xbd000
+      ││    0x00054ba8      00343c91       add x0, x0, 0xf0d
+      ││    0x00054bac      810200f0       adrp x1, 0xa7000
+      ││    0x00054bb0      21880f91       add x1, x1, 0x3e2
+      ││┌─< 0x00054bb4      06000014       b 0x54bcc
+      │└──> 0x00054bb8      5111ff97       bl 0x190fc
+      │ │   0x00054bbc      400300b0       adrp x0, 0xbd000
+      │ │   0x00054bc0      00343c91       add x0, x0, 0xf0d
+      │ │   0x00054bc4      610200f0       adrp x1, 0xa3000
+      │ │   0x00054bc8      21000c91       add x1, x1, 0x300
+      │ └─> 0x00054bcc      5dcbfe97       bl 0x7940
+      └───> 0x00054bd0      a00200f0       adrp x0, 0xab000
+            0x00054bd4      00280c91       add x0, x0, 0x30a
+            0x00054bd8      f30b40f9       ldr x19, [sp, 0x10]
+            0x00054bdc      fd7bc2a8       ldp x29, x30, [sp], 0x20
+            0x00054be0      0bccfe17       b 0x7c0c
+            0x00054be4      ff8304d1       sub sp, sp, 0x120
+            0x00054be8      fd7b10a9       stp x29, x30, [sp, 0x100]
+            0x00054bec      fc8b00f9       str x28, [sp, 0x110]
+
+------------------------------------------------------------
+XREF=0x8d18
+------------------------------------------------------------
+       ┌──< 0x00008ca8      e1000054       b.ne 0x8cc4
+       │╎   0x00008cac      000500f0       adrp x0, 0xab000
+       │╎   0x00008cb0      00280c91       add x0, x0, 0x30a
+       │╎   0x00008cb4      f44f46a9       ldp x20, x19, [sp, 0x60]
+       │╎   0x00008cb8      fd7b45a9       ldp x29, x30, [sp, 0x50]
+       │╎   0x00008cbc      ffc30191       add sp, sp, 0x70
+       │└─< 0x00008cc0      d3fbff17       b 0x7c0c
+       └──> 0x00008cc4      6fab0094       bl 0x33a80
+            0x00008cc8      fd7bbfa9       stp x29, x30, [sp, -0x10]!
+            0x00008ccc      fd030091       mov x29, sp
+            0x00008cd0      a00500b0       adrp x0, 0xbd000
+            0x00008cd4      00f00091       add x0, x0, 0x3c
+            0x00008cd8      e2970194       bl 0x6ec60
+            0x00008cdc      000500f0       adrp x0, 0xab000
+            0x00008ce0      00280c91       add x0, x0, 0x30a
+            0x00008ce4      cafbff97       bl 0x7c0c
+            0x00008ce8      20008052       mov w0, 1
+            0x00008cec      21008052       mov w1, 1
+            0x00008cf0      28460094       bl 0x1a590
+            0x00008cf4      fd7bbfa9       stp x29, x30, [sp, -0x10]!
+            0x00008cf8      fd030091       mov x29, sp
+            0x00008cfc      400500b0       adrp x0, 0xb1000
+            0x00008d00      00f82791       add x0, x0, 0x9fe
+            0x00008d04      d7970194       bl 0x6ec60
+            0x00008d08      000500f0       adrp x0, 0xab000
+            0x00008d0c      00280c91       add x0, x0, 0x30a
+            0x00008d10      bffbff97       bl 0x7c0c
+            0x00008d14      60008052       mov w0, 3
+            0x00008d18      d1d30094       bl 0x3dc5c
+            0x00008d1c      20008052       mov w0, 1
+            0x00008d20      e1008052       mov w1, 7
+            0x00008d24      1b460094       bl 0x1a590
+            0x00008d28      e00400d0       adrp x0, 0xa6000
+            0x00008d2c      00581591       add x0, x0, 0x556
+        ┌─< 0x00008d30      01000014       b 0x8d34
+        └─> 0x00008d34      fd7bbda9       stp x29, x30, [sp, -0x30]!
+            0x00008d38      f50b00f9       str x21, [sp, 0x10]
+            0x00008d3c      f44f02a9       stp x20, x19, [sp, 0x20]
+            0x00008d40      fd030091       mov x29, sp
+            0x00008d44      f40300aa       mov x20, x0
+            0x00008d48      000500b0       adrp x0, 0xa9000
+            0x00008d4c      00901391       add x0, x0, 0x4e4
+            0x00008d50      bc900194       bl 0x6d040
+        ┌─< 0x00008d54      800300b4       cbz x0, 0x8dc4
+        │   0x00008d58      f30300aa       mov x19, x0
+        │   0x00008d5c      20008052       mov w0, 1
+        │   0x00008d60      01008152       mov w1, 0x800
+        │   0x00008d64      b5950194       bl 0x6e438
+       ┌──< 0x00008d68      a00300b4       cbz x0, 0x8ddc
+       ││   0x00008d6c      f50300aa       mov x21, x0
+       ││   0x00008d70      e00314aa       mov x0, x20
+       ││   0x00008d74      409c0194       bl 0x6fe74
+       ││   0x00008d78      e20300aa       mov x2, x0
+       ││   0x00008d7c      e00315aa       mov x0, x21
+       ││   0x00008d80      e10314aa       mov x1, x20
+       ││   0x00008d84      4f9c0194       bl 0x6fec0
+       ││   0x00008d88      e00313aa       mov x0, x19
+       ││   0x00008d8c      e10315aa       mov x1, x21
+       ││   0x00008d90      e2031faa       mov x2, xzr
+       ││   0x00008d94      03008152       mov w3, 0x800
+       ││   0x00008d98      e9900194       bl 0x6d13c
+       ││   0x00008d9c      f40300aa       mov x20, x0
+       ││   0x00008da0      e00313aa       mov x0, x19
+       ││   0x00008da4      8b900194       bl 0x6cfd0
+       ││   0x00008da8      e00315aa       mov x0, x21
+       ││   0x00008dac      ce950194       bl 0x6e4e4
+       ││   0x00008db0      9f0200f1       cmp x20, 0
+       ││   0x00008db4      4c020054       b.gt 0x8dfc
+       ││   0x00008db8      c00400d0       adrp x0, 0xa2000
+       ││   0x00008dbc      00c40091       add x0, x0, 0x31
+       ││   0x00008dc0      03000014       b 0x8dcc
+       │└─> 0x00008dc4      a00500b0       adrp x0, 0xbd000
+
+------------------------------------------------------------
+XREF=0x8e0c
+------------------------------------------------------------
+       ╎╎   0x00008d9c      f40300aa       mov x20, x0
+       ╎╎   0x00008da0      e00313aa       mov x0, x19
+       ╎╎   0x00008da4      8b900194       bl 0x6cfd0
+       ╎╎   0x00008da8      e00315aa       mov x0, x21
+       ╎╎   0x00008dac      ce950194       bl 0x6e4e4
+       ╎╎   0x00008db0      9f0200f1       cmp x20, 0
+      ┌───< 0x00008db4      4c020054       b.gt 0x8dfc
+      │╎╎   0x00008db8      c00400d0       adrp x0, 0xa2000
+      │╎╎   0x00008dbc      00c40091       add x0, x0, 0x31
+     ┌────< 0x00008dc0      03000014       b 0x8dcc
+     ││╎╎   0x00008dc4      a00500b0       adrp x0, 0xbd000
+     ││╎╎   0x00008dc8      00b40091       add x0, x0, 0x2d
+     └────> 0x00008dcc      f44f42a9       ldp x20, x19, [sp, 0x20]
+      │╎╎   0x00008dd0      f50b40f9       ldr x21, [sp, 0x10]
+      │╎╎   0x00008dd4      fd7bc3a8       ldp x29, x30, [sp], 0x30
+      │╎└─< 0x00008dd8      81fbff17       b 0x7bdc
+      │╎    0x00008ddc      c0050090       adrp x0, 0xc0000
+      │╎    0x00008de0      00bc0491       add x0, x0, 0x12f
+      │╎    0x00008de4      7efbff97       bl 0x7bdc
+      │╎    0x00008de8      e00313aa       mov x0, x19
+      │╎    0x00008dec      f44f42a9       ldp x20, x19, [sp, 0x20]
+      │╎    0x00008df0      f50b40f9       ldr x21, [sp, 0x10]
+      │╎    0x00008df4      fd7bc3a8       ldp x29, x30, [sp], 0x30
+      │╎┌─< 0x00008df8      76900114       b 0x6cfd0
+      └───> 0x00008dfc      000500f0       adrp x0, 0xab000
+       ╎│   0x00008e00      00280c91       add x0, x0, 0x30a
+       ╎│   0x00008e04      82fbff97       bl 0x7c0c
+       ╎│   0x00008e08      40008052       mov w0, 2
+       ╎│   0x00008e0c      94d30094       bl 0x3dc5c
+       ╎│   0x00008e10      20008052       mov w0, 1
+       ╎│   0x00008e14      e1008052       mov w1, 7
+       ╎│   0x00008e18      de450094       bl 0x1a590
+       ╎│   0x00008e1c      e00400f0       adrp x0, 0xa7000
+       ╎│   0x00008e20      00900f91       add x0, x0, 0x3e4
+       └──< 0x00008e24      c4ffff17       b 0x8d34
+        │   0x00008e28      fd7bbea9       stp x29, x30, [sp, -0x20]!
+        │   0x00008e2c      f30b00f9       str x19, [sp, 0x10]
+        │   0x00008e30      fd030091       mov x29, sp
+        │   0x00008e34      610500d0       adrp x1, 0xb6000
+        │   0x00008e38      21c42591       add x1, x1, 0x971
+        │   0x00008e3c      f30300aa       mov x19, x0
+        │   0x00008e40      b59b0194       bl 0x6fd14
+       ┌──< 0x00008e44      20010034       cbz w0, 0x8e68
+       ││   0x00008e48      e1040090       adrp x1, 0xa4000
+       ││   0x00008e4c      212c1191       add x1, x1, 0x44b
+       ││   0x00008e50      e00313aa       mov x0, x19
+       ││   0x00008e54      b09b0194       bl 0x6fd14
+      ┌───< 0x00008e58      60010034       cbz w0, 0x8e84
+      │││   0x00008e5c      c00400d0       adrp x0, 0xa2000
+      │││   0x00008e60      003c0091       add x0, x0, 0xf
+     ┌────< 0x00008e64      0e000014       b 0x8e9c
+     ││└──> 0x00008e68      e0040090       adrp x0, 0xa4000
+     ││ │   0x00008e6c      00201191       add x0, x0, 0x448
+     ││ │   0x00008e70      183e0094       bl 0x186d0
+     ││┌──< 0x00008e74      a0010034       cbz w0, 0x8ea8
+     ││││   0x00008e78      e00400d0       adrp x0, 0xa6000
+     ││││   0x00008e7c      00901591       add x0, x0, 0x564
+    ┌─────< 0x00008e80      07000014       b 0x8e9c
+    ││└───> 0x00008e84      60050090       adrp x0, 0xb4000
+    ││ ││   0x00008e88      00302391       add x0, x0, 0x8cc
+    ││ ││   0x00008e8c      113e0094       bl 0x186d0
+    ││┌───< 0x00008e90      c0000034       cbz w0, 0x8ea8
+    │││││   0x00008e94      20050090       adrp x0, 0xac000
+    │││││   0x00008e98      00940a91       add x0, x0, 0x2a5
+    └└────> 0x00008e9c      f30b40f9       ldr x19, [sp, 0x10]
+      │││   0x00008ea0      fd7bc2a8       ldp x29, x30, [sp], 0x20
+      │││   0x00008ea4      4efbff17       b 0x7bdc
+      └└──> 0x00008ea8      000500f0       adrp x0, 0xab000
+        │   0x00008eac      00280c91       add x0, x0, 0x30a
+        │   0x00008eb0      f30b40f9       ldr x19, [sp, 0x10]
+        │   0x00008eb4      fd7bc2a8       ldp x29, x30, [sp], 0x20
+        │   0x00008eb8      55fbff17       b 0x7c0c
+
+============================================================
+2. EXACT GQ5012BF1 REBOOT-MODE DT NODE
+============================================================
+========================================================================
+REBOOT MODE NODE #1 line=8045
+========================================================================
+  8025: 			cap-sd-highspeed;
+  8026: 			sd-uhs-sdr12;
+  8027: 			sd-uhs-sdr25;
+  8028: 			sd-uhs-sdr50;
+  8029: 			sd-uhs-sdr104;
+  8030: 			sd-uhs-ddr50;
+  8031: 			cd-debounce-delay-ms = <0x00>;
+  8032: 			cd-gpios = <0x89 0x0e 0x00>;
+  8033: 			vmmc-supply = <0xde>;
+  8034: 			vqmmc-supply = <0xdf>;
+  8035: 			no-mmc;
+  8036: 			no-sdio;
+  8037: 			phandle = <0x240>;
+  8038: 		};
+  8039: 
+  8040: 		watchdog@1c00a000 {
+  8041: 			compatible = "mediatek,mt6878-wdt", "mediatek,mt6589-wdt", "syscon", "simple-mfd";
+  8042: 			reg = <0x00 0x1c00a000 0x00 0x100>;
+  8043: 			phandle = <0x241>;
+  8044: 
+  8045: 			reboot-mode {
+  8046: 				compatible = "syscon-reboot-mode";
+  8047: 				offset = <0x24>;
+  8048: 				mask = <0x0f>;
+  8049: 				mode-charger = <0x01>;
+  8050: 				mode-recovery = <0x02>;
+  8051: 				mode-bootloader = <0x03>;
+  8052: 				mode-dm-verity-dev-corrupt = <0x04>;
+  8053: 				mode-kpoc = <0x05>;
+  8054: 				mode-ddr-reserve = <0x06>;
+  8055: 				mode-meta = <0x07>;
+  8056: 				mode-rpmbpk = <0x08>;
+  8057: 			};
+  8058: 		};
+  8059: 
+  8060: 		systimer@1cc10000 {
+  8061: 			compatible = "mediatek,mt6878-timer", "mediatek,mt6765-timer";
+  8062: 			reg = <0x00 0x1cc10000 0x00 0x1000>;
+  8063: 			interrupts = <0x00 0xf9 0x04 0x00>;
+  8064: 			clocks = <0xe0>;
+  8065: 			phandle = <0x242>;
+  8066: 		};
+  8067: 
+  8068: 		i2c@11c20000 {
+  8069: 			compatible = "mediatek,mt6989-i2c";
+  8070: 			reg = <0x00 0x11c20000 0x00 0x1000 0x00 0x11300200 0x00 0x80>;
+  8071: 			interrupts = <0x00 0x190 0x04 0x00>;
+  8072: 			clocks = <0x3a 0x00 0x3f 0x11>;
+  8073: 			clock-names = "main", "dma";
+  8074: 			clock-div = <0x01>;
+
+===== IMPORTANT DT PROPERTIES =====
+8037-			phandle = <0x240>;
+8038-		};
+8039-
+8040-		watchdog@1c00a000 {
+8041-			compatible = "mediatek,mt6878-wdt", "mediatek,mt6589-wdt", "syscon", "simple-mfd";
+8042-			reg = <0x00 0x1c00a000 0x00 0x100>;
+8043-			phandle = <0x241>;
+8044-
+8045:			reboot-mode {
+8046-				compatible = "syscon-reboot-mode";
+8047-				offset = <0x24>;
+8048-				mask = <0x0f>;
+8049-				mode-charger = <0x01>;
+8050-				mode-recovery = <0x02>;
+8051-				mode-bootloader = <0x03>;
+8052-				mode-dm-verity-dev-corrupt = <0x04>;
+8053-				mode-kpoc = <0x05>;
+8054-				mode-ddr-reserve = <0x06>;
+8055-				mode-meta = <0x07>;
+8056-				mode-rpmbpk = <0x08>;
+8057-			};
+8058-		};
+8059-
+8060-		systimer@1cc10000 {
+
+===== OFFSET / MASK / MODES =====
+24:  8045: 			reboot-mode {
+25:  8046: 				compatible = "syscon-reboot-mode";
+26:  8047: 				offset = <0x24>;
+27:  8048: 				mask = <0x0f>;
+28:  8049: 				mode-charger = <0x01>;
+29:  8050: 				mode-recovery = <0x02>;
+30:  8051: 				mode-bootloader = <0x03>;
+31:  8052: 				mode-dm-verity-dev-corrupt = <0x04>;
+32:  8053: 				mode-kpoc = <0x05>;
+33:  8054: 				mode-ddr-reserve = <0x06>;
+34:  8055: 				mode-meta = <0x07>;
+35:  8056: 				mode-rpmbpk = <0x08>;
+
+============================================================
+3. RESOLVE REBOOT-MODE PARENT SYSCON
+============================================================
+REBOOT_NODE_LINE=8045
+ANCESTORS:
+  depth=0 line=3 node=/
+  depth=1 line=3443 node=soc
+  depth=2 line=8040 node=watchdog@1c00a000
+  depth=3 line=8045 node=reboot-mode
+
+ANCESTOR_CONTEXT:
+  8035: 			no-mmc;
+  8036: 			no-sdio;
+  8037: 			phandle = <0x240>;
+  8038: 		};
+  8039: 
+  8040: 		watchdog@1c00a000 {
+  8041: 			compatible = "mediatek,mt6878-wdt", "mediatek,mt6589-wdt", "syscon", "simple-mfd";
+  8042: 			reg = <0x00 0x1c00a000 0x00 0x100>;
+  8043: 			phandle = <0x241>;
+  8044: 
+  8045: 			reboot-mode {
+  8046: 				compatible = "syscon-reboot-mode";
+  8047: 				offset = <0x24>;
+  8048: 				mask = <0x0f>;
+  8049: 				mode-charger = <0x01>;
+  8050: 				mode-recovery = <0x02>;
+  8051: 				mode-bootloader = <0x03>;
+  8052: 				mode-dm-verity-dev-corrupt = <0x04>;
+  8053: 				mode-kpoc = <0x05>;
+  8054: 				mode-ddr-reserve = <0x06>;
+  8055: 				mode-meta = <0x07>;
+  8056: 				mode-rpmbpk = <0x08>;
+  8057: 			};
+  8058: 		};
+  8059: 
+  8060: 		systimer@1cc10000 {
+  8061: 			compatible = "mediatek,mt6878-timer", "mediatek,mt6765-timer";
+  8062: 			reg = <0x00 0x1cc10000 0x00 0x1000>;
+  8063: 			interrupts = <0x00 0xf9 0x04 0x00>;
+  8064: 			clocks = <0xe0>;
+
+
+============================================================
+4. LOCAL KERNEL REBOOT-MODE IMPLEMENTATION
+============================================================
+
+------------------------------------------------------------
+FILE=/home/armol/androido_dalykai/LieppOS custom ROM/kernel-research/android-common-gq5012bf1/drivers/power/reset/reboot-mode.c
+------------------------------------------------------------
+// SPDX-License-Identifier: GPL-2.0-or-later
+/*
+ * Copyright (c) 2016, Fuzhou Rockchip Electronics Co., Ltd
+ */
+
+#include <linux/device.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/reboot.h>
+#include <linux/reboot-mode.h>
+
+#define PREFIX "mode-"
+
+struct mode_info {
+	const char *mode;
+	u32 magic;
+	struct list_head list;
+};
+
+static unsigned int get_reboot_mode_magic(struct reboot_mode_driver *reboot,
+					  const char *cmd)
+{
+	const char *normal = "normal";
+	int magic = 0;
+	struct mode_info *info;
+
+	if (!cmd)
+		cmd = normal;
+
+	list_for_each_entry(info, &reboot->head, list) {
+		if (!strcmp(info->mode, cmd)) {
+			magic = info->magic;
+			break;
+		}
+	}
+
+	return magic;
+}
+
+static int reboot_mode_notify(struct notifier_block *this,
+			      unsigned long mode, void *cmd)
+{
+	struct reboot_mode_driver *reboot;
+	unsigned int magic;
+
+	reboot = container_of(this, struct reboot_mode_driver, reboot_notifier);
+	magic = get_reboot_mode_magic(reboot, cmd);
+	if (magic)
+		reboot->write(reboot, magic);
+
+	return NOTIFY_DONE;
+}
+
+/**
+ * reboot_mode_register - register a reboot mode driver
+ * @reboot: reboot mode driver
+ *
+ * Returns: 0 on success or a negative error code on failure.
+ */
+int reboot_mode_register(struct reboot_mode_driver *reboot)
+{
+	struct mode_info *info;
+	struct property *prop;
+	struct device_node *np = reboot->dev->of_node;
+	size_t len = strlen(PREFIX);
+	int ret;
+
+	INIT_LIST_HEAD(&reboot->head);
+
+	for_each_property_of_node(np, prop) {
+		if (strncmp(prop->name, PREFIX, len))
+			continue;
+
+		info = devm_kzalloc(reboot->dev, sizeof(*info), GFP_KERNEL);
+		if (!info) {
+			ret = -ENOMEM;
+			goto error;
+		}
+
+		if (of_property_read_u32(np, prop->name, &info->magic)) {
+			dev_err(reboot->dev, "reboot mode %s without magic number\n",
+				info->mode);
+			devm_kfree(reboot->dev, info);
+			continue;
+		}
+
+		info->mode = kstrdup_const(prop->name + len, GFP_KERNEL);
+		if (!info->mode) {
+			ret =  -ENOMEM;
+			goto error;
+		} else if (info->mode[0] == '\0') {
+			kfree_const(info->mode);
+			ret = -EINVAL;
+			dev_err(reboot->dev, "invalid mode name(%s): too short!\n",
+				prop->name);
+			goto error;
+		}
+
+		list_add_tail(&info->list, &reboot->head);
+	}
+
+	reboot->reboot_notifier.notifier_call = reboot_mode_notify;
+	register_reboot_notifier(&reboot->reboot_notifier);
+
+	return 0;
+
+error:
+	list_for_each_entry(info, &reboot->head, list)
+		kfree_const(info->mode);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(reboot_mode_register);
+
+/**
+ * reboot_mode_unregister - unregister a reboot mode driver
+ * @reboot: reboot mode driver
+ */
+int reboot_mode_unregister(struct reboot_mode_driver *reboot)
+{
+	struct mode_info *info;
+
+	unregister_reboot_notifier(&reboot->reboot_notifier);
+
+	list_for_each_entry(info, &reboot->head, list)
+		kfree_const(info->mode);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(reboot_mode_unregister);
+
+static void devm_reboot_mode_release(struct device *dev, void *res)
+{
+	reboot_mode_unregister(*(struct reboot_mode_driver **)res);
+}
+
+/**
+ * devm_reboot_mode_register() - resource managed reboot_mode_register()
+ * @dev: device to associate this resource with
+ * @reboot: reboot mode driver
+ *
+ * Returns: 0 on success or a negative error code on failure.
+ */
+int devm_reboot_mode_register(struct device *dev,
+			      struct reboot_mode_driver *reboot)
+{
+	struct reboot_mode_driver **dr;
+	int rc;
+
+	dr = devres_alloc(devm_reboot_mode_release, sizeof(*dr), GFP_KERNEL);
+	if (!dr)
+		return -ENOMEM;
+
+	rc = reboot_mode_register(reboot);
+	if (rc) {
+		devres_free(dr);
+		return rc;
+	}
+
+	*dr = reboot;
+	devres_add(dev, dr);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(devm_reboot_mode_register);
+
+static int devm_reboot_mode_match(struct device *dev, void *res, void *data)
+{
+	struct reboot_mode_driver **p = res;
+
+	if (WARN_ON(!p || !*p))
+		return 0;
+
+	return *p == data;
+}
+
+/**
+ * devm_reboot_mode_unregister() - resource managed reboot_mode_unregister()
+ * @dev: device to associate this resource with
+ * @reboot: reboot mode driver
+ */
+void devm_reboot_mode_unregister(struct device *dev,
+				 struct reboot_mode_driver *reboot)
+{
+	WARN_ON(devres_release(dev,
+			       devm_reboot_mode_release,
+			       devm_reboot_mode_match, reboot));
+}
+EXPORT_SYMBOL_GPL(devm_reboot_mode_unregister);
+
+MODULE_AUTHOR("Andy Yan <andy.yan@rock-chips.com>");
+MODULE_DESCRIPTION("System reboot mode core library");
+MODULE_LICENSE("GPL v2");
+
+------------------------------------------------------------
+FILE=/home/armol/androido_dalykai/LieppOS custom ROM/kernel-research/android-common-gq5012bf1/drivers/power/reset/syscon-reboot-mode.c
+------------------------------------------------------------
+// SPDX-License-Identifier: GPL-2.0-or-later
+/*
+ * Copyright (c) 2016, Fuzhou Rockchip Electronics Co., Ltd
+ */
+
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/reboot.h>
+#include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
+#include <linux/reboot-mode.h>
+
+struct syscon_reboot_mode {
+	struct regmap *map;
+	struct reboot_mode_driver reboot;
+	u32 offset;
+	u32 mask;
+};
+
+static int syscon_reboot_mode_write(struct reboot_mode_driver *reboot,
+				    unsigned int magic)
+{
+	struct syscon_reboot_mode *syscon_rbm;
+	int ret;
+
+	syscon_rbm = container_of(reboot, struct syscon_reboot_mode, reboot);
+
+	ret = regmap_update_bits(syscon_rbm->map, syscon_rbm->offset,
+				 syscon_rbm->mask, magic);
+	if (ret < 0)
+		dev_err(reboot->dev, "update reboot mode bits failed\n");
+
+	return ret;
+}
+
+static int syscon_reboot_mode_probe(struct platform_device *pdev)
+{
+	int ret;
+	struct syscon_reboot_mode *syscon_rbm;
+
+	syscon_rbm = devm_kzalloc(&pdev->dev, sizeof(*syscon_rbm), GFP_KERNEL);
+	if (!syscon_rbm)
+		return -ENOMEM;
+
+	syscon_rbm->reboot.dev = &pdev->dev;
+	syscon_rbm->reboot.write = syscon_reboot_mode_write;
+	syscon_rbm->mask = 0xffffffff;
+
+	syscon_rbm->map = syscon_node_to_regmap(pdev->dev.parent->of_node);
+	if (IS_ERR(syscon_rbm->map))
+		return PTR_ERR(syscon_rbm->map);
+
+	if (of_property_read_u32(pdev->dev.of_node, "offset",
+	    &syscon_rbm->offset))
+		return -EINVAL;
+
+	of_property_read_u32(pdev->dev.of_node, "mask", &syscon_rbm->mask);
+
+	ret = devm_reboot_mode_register(&pdev->dev, &syscon_rbm->reboot);
+	if (ret)
+		dev_err(&pdev->dev, "can't register reboot mode\n");
+
+	return ret;
+}
+
+static const struct of_device_id syscon_reboot_mode_of_match[] = {
+	{ .compatible = "syscon-reboot-mode" },
+	{}
+};
+MODULE_DEVICE_TABLE(of, syscon_reboot_mode_of_match);
+
+static struct platform_driver syscon_reboot_mode_driver = {
+	.probe = syscon_reboot_mode_probe,
+	.driver = {
+		.name = "syscon-reboot-mode",
+		.of_match_table = syscon_reboot_mode_of_match,
+	},
+};
+module_platform_driver(syscon_reboot_mode_driver);
+
+MODULE_AUTHOR("Andy Yan <andy.yan@rock-chips.com");
+MODULE_DESCRIPTION("SYSCON reboot mode driver");
+MODULE_LICENSE("GPL v2");
+
+===== ESSENTIAL IMPLEMENTATION LINES =====
+22:	u32 magic;
+26:static unsigned int get_reboot_mode_magic(struct reboot_mode_driver *reboot,
+27:					  const char *cmd)
+30:	int magic = 0;
+33:	if (!cmd)
+34:		cmd = normal;
+37:		if (!strcmp(info->mode, cmd)) {
+38:			magic = info->magic;
+43:	return magic;
+46:static int reboot_mode_notify(struct notifier_block *this,
+47:			      unsigned long mode, void *cmd)
+50:	unsigned int magic;
+53:	magic = get_reboot_mode_magic(reboot, cmd);
+54:	if (magic)
+55:		reboot->write(reboot, magic);
+86:		if (of_property_read_u32(np, prop->name, &info->magic)) {
+87:			dev_err(reboot->dev, "reboot mode %s without magic number\n",
+108:	reboot->reboot_notifier.notifier_call = reboot_mode_notify;
+144: * devm_reboot_mode_register() - resource managed reboot_mode_register()
+150:int devm_reboot_mode_register(struct device *dev,
+171:EXPORT_SYMBOL_GPL(devm_reboot_mode_register);
+222:	u32 offset;
+223:	u32 mask;
+226:static int syscon_reboot_mode_write(struct reboot_mode_driver *reboot,
+227:				    unsigned int magic)
+234:	ret = regmap_update_bits(syscon_rbm->map, syscon_rbm->offset,
+235:				 syscon_rbm->mask, magic);
+252:	syscon_rbm->reboot.write = syscon_reboot_mode_write;
+253:	syscon_rbm->mask = 0xffffffff;
+259:	if (of_property_read_u32(pdev->dev.of_node, "offset",
+260:	    &syscon_rbm->offset))
+263:	of_property_read_u32(pdev->dev.of_node, "mask", &syscon_rbm->mask);
+265:	ret = devm_reboot_mode_register(&pdev->dev, &syscon_rbm->reboot);
+
+============================================================
+5. LIVE REBOOT-MODE MODULE STATE
+============================================================
+syscon_reboot_mode 20480 0 - Live 0x0000000000000000 (E)
+reboot_mode 20480 1 syscon_reboot_mode, Live 0x0000000000000000 (E)
+
+===== DRIVER SYSFS =====
+/sys/bus/platform/drivers/syscon-reboot-mode
+/sys/bus/platform/drivers/syscon-reboot-mode/1c00a000.watchdog:reboot-mode
+/sys/bus/platform/drivers/syscon-reboot
+
+============================================================
+6. LIVE DEVICE-TREE REBOOT-MODE NODE
+============================================================
+/sys/firmware/devicetree/base/soc/watchdog@1c00a000/reboot-mode
+
+============================================================
+NODE=/sys/firmware/devicetree/base/soc/watchdog@1c00a000/reboot-mode
+============================================================
+
+--- compatible ---
+syscon-reboot-mode
+
+--- offset ---
+    24000000
+
+--- mask ---
+    0f000000
+
+--- mode-recovery ---
+    02000000
+
+--- mode-bootloader ---
+    03000000
+
+--- mode-charger ---
+    01000000
+
+===== ANCESTOR REG / COMPATIBLE =====
+--- level=1 path=/sys/firmware/devicetree/base/soc/watchdog@1c00a000 ---
+compatible:
+mediatek,mt6878-wdt
+mediatek,mt6589-wdt
+syscon
+simple-mfd
+reg:
+    00000000    00a0001c    00000000    00010000
+--- level=2 path=/sys/firmware/devicetree/base/soc ---
+compatible:
+simple-bus
+--- level=3 path=/sys/firmware/devicetree/base ---
+compatible:
+mediatek,MT6878
+
+============================================================
+7. CHECK PACKAGED MODULES
+============================================================
+
+------------------------------------------------------------
+MODULE=/home/armol/androido_dalykai/LieppOS custom ROM/vendor_ulefone_gq5012bf1/proprietary/vendor_dlkm/lib/modules/reboot-mode.ko
+------------------------------------------------------------
+313dc3182a1806334923562ca01dd1d6c43ebcc5a4fb38953f04ddf23b477883  /home/armol/androido_dalykai/LieppOS custom ROM/vendor_ulefone_gq5012bf1/proprietary/vendor_dlkm/lib/modules/reboot-mode.ko
+/home/armol/androido_dalykai/LieppOS custom ROM/vendor_ulefone_gq5012bf1/proprietary/vendor_dlkm/lib/modules/reboot-mode.ko: ELF 64-bit LSB relocatable, ARM aarch64, version 1 (SYSV), BuildID[sha1]=bdf8d3161b447fb3c12574fb53038d42603ec1ab, not stripped
+--- strings ---
+reboot_mode_register
+devm_reboot_mode_unregister
+reboot_mode_unregister
+devm_reboot_mode_register
+drivers/power/reset/reboot-mode.c
+devm_reboot_mode_release
+reboot mode %s without magic number
+description=System reboot mode core library
+name=reboot_mode
+reboot_mode
+.rela___ksymtab_gpl+reboot_mode_register
+reboot_mode_notify
+__kstrtabns_reboot_mode_unregister
+__kstrtabns_devm_reboot_mode_unregister
+__crc_devm_reboot_mode_unregister
+__kstrtab_devm_reboot_mode_unregister
+__ksymtab_devm_reboot_mode_unregister
+__crc_reboot_mode_unregister
+__kstrtab_reboot_mode_unregister
+__ksymtab_reboot_mode_unregister
+__kstrtabns_reboot_mode_register
+__kstrtabns_devm_reboot_mode_register
+__crc_devm_reboot_mode_register
+__kstrtab_devm_reboot_mode_register
+__ksymtab_devm_reboot_mode_register
+__crc_reboot_mode_register
+__kstrtab_reboot_mode_register
+__ksymtab_reboot_mode_register
+devm_reboot_mode_match
+devm_reboot_mode_release
+reboot_mode_driver
+reboot_mode_register
+reboot_mode_notify
+reboot_mode_unregister
+devm_reboot_mode_register
+devm_reboot_mode_release
+devm_reboot_mode_unregister
+devm_reboot_mode_match
+--- symbols ---
+     1: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT   14 __kstrtab_reboot_mode_register
+     3: 0000000000000015     0 NOTYPE  LOCAL  DEFAULT   14 __kstrtabns_reboot_mode_register
+     4: 0000000000000018     0 NOTYPE  LOCAL  DEFAULT    1 __ksymtab_reboot_mode_register
+     6: 0000000000000032     0 NOTYPE  LOCAL  DEFAULT   14 __kstrtab_reboot_mode_unregister
+     7: 0000000000000015     0 NOTYPE  LOCAL  DEFAULT   14 __kstrtabns_reboot_mode_unregister
+     8: 0000000000000024     0 NOTYPE  LOCAL  DEFAULT    1 __ksymtab_reboot_mode_unregister
+    10: 0000000000000049     0 NOTYPE  LOCAL  DEFAULT   14 __kstrtab_devm_reboot_mode_register
+    11: 0000000000000015     0 NOTYPE  LOCAL  DEFAULT   14 __kstrtabns_devm_reboot_mode_register
+    12: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT    1 __ksymtab_devm_reboot_mode_register
+    14: 0000000000000016     0 NOTYPE  LOCAL  DEFAULT   14 __kstrtab_devm_reboot_mode_unregister
+    15: 0000000000000015     0 NOTYPE  LOCAL  DEFAULT   14 __kstrtabns_devm_reboot_mode_unregister
+    16: 000000000000000c     0 NOTYPE  LOCAL  DEFAULT    1 __ksymtab_devm_reboot_mode_unregister
+    20: 0000000000000198   156 FUNC    LOCAL  DEFAULT   12 reboot_mode_notify
+    27: 0000000000000320    76 FUNC    LOCAL  DEFAULT   12 devm_reboot_mode_release
+    32: 00000000000003b0    36 FUNC    LOCAL  DEFAULT   12 devm_reboot_mode_match
+    53: 0000000000000008     0 NOTYPE  LOCAL  DEFAULT    2 __crc_reboot_mode_register
+    55: 000000000000000c     0 NOTYPE  LOCAL  DEFAULT    2 __crc_reboot_mode_unregister
+    57: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT    2 __crc_devm_reboot_mode_register
+    59: 0000000000000004     0 NOTYPE  LOCAL  DEFAULT    2 __crc_devm_reboot_mode_unregister
+    82: 0000000000000004   400 FUNC    GLOBAL DEFAULT   12 reboot_mode_register
+    83: 0000000000000238    80 FUNC    GLOBAL DEFAULT   12 reboot_mode_unregister
+    84: 000000000000028c   144 FUNC    GLOBAL DEFAULT   12 devm_reboot_mode_register
+    85: 0000000000000370    60 FUNC    GLOBAL DEFAULT   12 devm_reboot_mode_unregister
+    93: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND register_reboot_notifier
+    96: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND unregister_reboot_notifier
+
+------------------------------------------------------------
+MODULE=/home/armol/androido_dalykai/LieppOS custom ROM/vendor_ulefone_gq5012bf1/proprietary/vendor_dlkm/lib/modules/syscon-reboot-mode.ko
+------------------------------------------------------------
+9d695c0ebe5013be215848ab0c096762b5be63ff28a42e9923ab50d4bf0e4721  /home/armol/androido_dalykai/LieppOS custom ROM/vendor_ulefone_gq5012bf1/proprietary/vendor_dlkm/lib/modules/syscon-reboot-mode.ko
+/home/armol/androido_dalykai/LieppOS custom ROM/vendor_ulefone_gq5012bf1/proprietary/vendor_dlkm/lib/modules/syscon-reboot-mode.ko: ELF 64-bit LSB relocatable, ARM aarch64, version 1 (SYSV), BuildID[sha1]=9d3190aa303203211d43ead457913b110796d883, not stripped
+--- strings ---
+syscon-reboot-mode
+description=SYSCON reboot mode driver
+name=syscon_reboot_mode
+depends=reboot-mode
+alias=of:N*T*Csyscon-reboot-mode
+alias=of:N*T*Csyscon-reboot-modeC*
+offset
+mask
+update reboot mode bits failed
+syscon-reboot-mode
+can't register reboot mode
+syscon_reboot_mode
+syscon_node_to_regmap
+devm_reboot_mode_register
+syscon_reboot_mode_driver
+devm_reboot_mode_register
+syscon_node_to_regmap
+syscon_reboot_mode_of_match
+syscon_reboot_mode_write
+__mod_of__syscon_reboot_mode_of_match_device_table
+syscon_reboot_mode_probe
+syscon_reboot_mode
+reboot_mode_driver
+syscon_reboot_mode_probe
+syscon_reboot_mode_write
+--- symbols ---
+     3: 0000000000000000   248 OBJECT  LOCAL  DEFAULT   21 syscon_reboot_mode_driver
+     6: 0000000000000004   260 FUNC    LOCAL  DEFAULT    9 syscon_reboot_mode_probe
+     9: 000000000000010c    96 FUNC    LOCAL  DEFAULT    9 syscon_reboot_mode_write
+    12: 0000000000000000   400 OBJECT  LOCAL  DEFAULT   15 syscon_reboot_mode_of_match
+    62: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND syscon_node_to_regmap
+    64: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND devm_reboot_mode_register
+    66: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND regmap_update_bits_base
+    67: 0000000000000000   400 OBJECT  GLOBAL DEFAULT   15 __mod_of__syscon_reboot_mode_of_match_device_table
+
+============================================================
+8. AUTOMATED CAUSAL CHECK
+============================================================
+
+  File "<stdin>", line 1
+    tee "$OUT/causal-check.txt"
+        ^^^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: invalid syntax
+============================================================
+9. RESEARCH NOTE
+============================================================
+
+============================================================
+10. README CORRECTION
+============================================================
+
+============================================================
+11. COMMIT RESEARCH
+============================================================

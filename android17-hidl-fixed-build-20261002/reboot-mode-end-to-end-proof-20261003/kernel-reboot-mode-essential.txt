@@ -1,0 +1,33 @@
+22:	u32 magic;
+26:static unsigned int get_reboot_mode_magic(struct reboot_mode_driver *reboot,
+27:					  const char *cmd)
+30:	int magic = 0;
+33:	if (!cmd)
+34:		cmd = normal;
+37:		if (!strcmp(info->mode, cmd)) {
+38:			magic = info->magic;
+43:	return magic;
+46:static int reboot_mode_notify(struct notifier_block *this,
+47:			      unsigned long mode, void *cmd)
+50:	unsigned int magic;
+53:	magic = get_reboot_mode_magic(reboot, cmd);
+54:	if (magic)
+55:		reboot->write(reboot, magic);
+86:		if (of_property_read_u32(np, prop->name, &info->magic)) {
+87:			dev_err(reboot->dev, "reboot mode %s without magic number\n",
+108:	reboot->reboot_notifier.notifier_call = reboot_mode_notify;
+144: * devm_reboot_mode_register() - resource managed reboot_mode_register()
+150:int devm_reboot_mode_register(struct device *dev,
+171:EXPORT_SYMBOL_GPL(devm_reboot_mode_register);
+222:	u32 offset;
+223:	u32 mask;
+226:static int syscon_reboot_mode_write(struct reboot_mode_driver *reboot,
+227:				    unsigned int magic)
+234:	ret = regmap_update_bits(syscon_rbm->map, syscon_rbm->offset,
+235:				 syscon_rbm->mask, magic);
+252:	syscon_rbm->reboot.write = syscon_reboot_mode_write;
+253:	syscon_rbm->mask = 0xffffffff;
+259:	if (of_property_read_u32(pdev->dev.of_node, "offset",
+260:	    &syscon_rbm->offset))
+263:	of_property_read_u32(pdev->dev.of_node, "mask", &syscon_rbm->mask);
+265:	ret = devm_reboot_mode_register(&pdev->dev, &syscon_rbm->reboot);

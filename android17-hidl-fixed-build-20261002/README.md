@@ -488,3 +488,25 @@ at `0x3dcb8` and `0x3dcdc`, followed by their call sites and the corresponding
 kernel/restart writer.
 
 No phone partition or boot-control state was modified by this investigation.
+
+## Recovery reboot-mode kernel bridge
+
+A follow-up to the LK WDT helper investigation corrected the earlier static
+target classification:
+
+- `0x3dcdc` is a getter for `MTK_WDT_NONRST_REG2[10:4]`.
+- `0x3dcb8` is the corresponding writer for bits `[10:4]`.
+- the adjacent function at `0x3dc5c` is the low-nibble writer candidate and
+  directly accesses `0x1c00a024` while preserving the upper 28 bits.
+
+Independent DT evidence from the GQ5012BF1 vendor device tree shows an enabled
+`syscon-reboot-mode` description with `mode-recovery = <0x02>`, exactly equal
+to the recovery value consumed by LK.
+
+The vendor module set contains both `reboot-mode.ko` and
+`syscon-reboot-mode.ko`.
+
+The remaining proof requirement is to bind the DT node's exact offset, mask,
+and parent syscon physical base to `0x1c00a024`.
+
+No phone state was modified during this investigation.
