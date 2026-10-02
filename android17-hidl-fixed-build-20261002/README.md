@@ -348,3 +348,17 @@ after recovery cannot by itself establish its pre-boot value because Android
 recovery can clear the bootloader message while returning to normal boot.
 
 No Slot-B boot was attempted in this step.
+
+## Instrumented Slot-B boot rescue
+
+The first live boot-mode capture did not observe a usable ADB transport within
+its bounded capture window and therefore aborted before executing its automatic
+Slot-A recovery stage.
+
+A follow-up transport-aware rescue recorded the currently exposed USB mode.
+When an ADB environment was available it captured bootconfig, MTK atag boot
+data, LK logs and the live BCB before recovery. When fastboot was available it
+captured bootloader slot state before selecting the known-good Slot A.
+
+The phone was returned to Slot A without modifying Android 17 partitions.
+Retained pstore evidence from the B attempt was copied after recovery.
