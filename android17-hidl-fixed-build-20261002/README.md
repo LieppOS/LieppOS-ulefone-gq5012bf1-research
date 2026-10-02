@@ -120,3 +120,29 @@ Slot B vendor_boot was restored to that factory-exact image while Slot A
 remained active. vendor_boot_a was hash-checked before and after and remained
 unchanged. The metadata-encryption key invariant also remained unchanged.
 No boot-control state was modified and no reboot was performed.
+
+## Restore compact Phase-4 vendor_b for Android 17 bring-up
+
+The V21 userdebug experimental vendor image:
+
+- SHA-256: e76e5c2e7076d900155d1f80f01565dcfec6e602a655e697a774edd977220c2a
+
+was replaced with the archived compact Phase-4 Lineage vendor baseline:
+
+- size: 816349184 bytes
+- SHA-256: 9f3dfe3fe5ef025b667b8181bddfedaf6b08dace4b7cd6c4e05a4fde0d16aa98
+
+The restore did not modify super metadata. A temporary writable device-mapper
+alias was created over the exact existing vendor_b physical extent:
+
+- underlying block device: /dev/block/sdc75 (259:59)
+- physical start sector: 17098384
+- sector count: 1594432
+
+The alias was verified byte-identical to vendor_b before writing. After the
+write, the target hash was verified through both the writable alias and the
+original read-only vendor_b mapping.
+
+vendor_dlkm_b, system_dlkm_b and odm_dlkm_b retained their expected hashes.
+Slot A remained active, the metadata-encryption key invariant remained
+unchanged, and the temporary alias was deleted after verification.
