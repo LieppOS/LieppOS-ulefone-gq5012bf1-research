@@ -42,3 +42,23 @@ Result:
 - vendor policy mapping version: 34.0
 - secilc exit: 0
 - SELinux split-policy result: PASS
+
+## HIDL-fixed Android 17 Slot-B write completed
+
+The HIDL-fixed Android 17 userspace image set was successfully written to
+the existing inactive Slot-B logical extents through temporary writable
+device-mapper aliases.
+
+Verified final hashes:
+
+- system_b: 8a3d844f35c6d4f5039878a7e72a65c664ded243b9e749d49390bc4118bc2030
+- system_ext_b: 4187b58a47ad36cd5b4e58f87c642ac4a73c617d241d796cdff53f451d41d84b
+- product_b: e2130d8fda18ffe2cb2b94a16659acd28b160127175547afee4a876539b6135a
+
+The first system_b verification raced the still-running remote dd process.
+A later read after dd completion matched the expected system_b hash exactly.
+The completion procedure therefore waits for remote dd termination before
+syncing and hashing subsequent partitions.
+
+Slot A remained active throughout and the metadata-encryption key invariant
+remained unchanged.
