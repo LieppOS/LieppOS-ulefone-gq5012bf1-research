@@ -1,0 +1,397 @@
+
+===== PRODUCT INHERITANCE =====
+5-# Build the canonical Android generic first-stage ramdisk for init_boot.
+6-# This supplies init_first_stage, snapuserd_ramdisk, ramdisk-build.prop
+7-# and toolbox_ramdisk. The kernel and vendor boot stack remain external.
+8:$(call inherit-product, $(SRC_TARGET_DIR)/product/generic_ramdisk.mk)
+9-
+10:$(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
+11-$(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
+12-
+13-PRODUCT_USE_DYNAMIC_PARTITIONS := true
+14-PRODUCT_FULL_TREBLE_OVERRIDE := true
+15-PRODUCT_ENFORCE_VINTF_MANIFEST := true
+16-PRODUCT_SHIPPING_API_LEVEL := 35
+17-
+18-# Required declarations for the exact vendor-specific and non-standard
+
+===== RESOLVED INIT_BOOT CONFIG =====
+PRODUCT_BUILD_INIT_BOOT_IMAGE              = true
+BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE       = 8388608
+BOARD_BOOT_HEADER_VERSION                  = 4
+BOARD_INIT_BOOT_HEADER_VERSION             = 4
+BOARD_MKBOOTIMG_INIT_ARGS                  = --header_version 4
+BOARD_USES_GENERIC_KERNEL_IMAGE            = true
+TARGET_NO_KERNEL                           = true
+
+===== REBUILD INIT_BOOT =====
+Running product configuration...
+============================================
+PLATFORM_VERSION_CODENAME=REL
+PLATFORM_VERSION=17
+LINEAGE_VERSION=24.0-20261002-UNOFFICIAL-gq5012bf1
+PRODUCT_SOURCE_ROOT_DIRS=-kernel/platform -prebuilts/misc/protobuf_vendorcompat
+TARGET_PRODUCT=lineage_gq5012bf1
+TARGET_BUILD_VARIANT=userdebug
+TARGET_ARCH=arm64
+TARGET_ARCH_VARIANT=armv8-a
+TARGET_CPU_VARIANT=generic
+TARGET_2ND_ARCH=arm
+TARGET_2ND_ARCH_VARIANT=armv7-a-neon
+TARGET_2ND_CPU_VARIANT=cortex-a15
+HOST_OS=linux
+HOST_OS_EXTRA=Linux-7.2.3-cachyos-dist-x86_64-Gentoo-Linux
+HOST_CROSS_OS=windows
+BUILD_ID=CP2A.260605.016
+OUT_DIR=out
+PRODUCT_SOONG_NAMESPACES=device/ulefone/gq5012bf1
+SOONG_ONLY=false
+SOONG_INCREMENTAL_ANALYSIS=true
+============================================
+[100% 1/1] bootstrap blueprint
+Running globs...
+ninja: 
+ninja: SISO_EXPERIMENTS=fallback-on-exec-error enabled
+SISO_EXPERIMENTS=ignore-missing-out-in-depfile enabled
+
+ninja: ignore missing out error in depfile 
+
+[100% 2/2] analyzing Android.bp files and generating ninja file at out/soong/build.lineage_gq5012bf1.ninja
+ninja: 2m30.96s Build Succeeded: 1 steps - 0.01/s
+
+device/ulefone/gq5012bf1/device.mk was modified, regenerating...
+Adding CUSTOM_LOCALES [ast_ES ckb_IQ ckb_IR gd_GB cy_GB fur_IT nn_NO] to PRODUCT_LOCALES [en_US en_US af_ZA am_ET ar_EG ar_XB as_IN az_AZ be_BY bg_BG bn_BD bs_BA ca_ES cs_CZ da_DK de_DE el_GR en_AU en_CA en_GB en_IN en_XA es_ES es_US et_EE eu_ES fa_IR fi_FI fr_CA fr_FR gl_ES gu_IN hi_IN hr_HR hu_HU hy_AM in_ID is_IS it_IT iw_IL ja_JP ka_GE kk_KZ km_KH kn_IN ko_KR ky_KG lo_LA lt_LT lv_LV mk_MK ml_IN mn_MN mr_IN ms_MY my_MM nb_NO ne_NP nl_NL or_IN pa_IN pl_PL pt_BR pt_PT ro_RO ru_RU si_LK sk_SK sl_SI sq_AL sr_Latn_RS sr_RS sv_SE sw_TZ ta_IN te_IN th_TH tl_PH tr_TR uk_UA ur_PK uz_UZ vi_VN zh_CN zh_HK zh_TW zu_ZA en_XC]
+device/ulefone/gq5012bf1/device.mk was modified, regenerating...
+[100% 3/3] initializing Make module parser
+Adding CUSTOM_LOCALES [ast_ES ckb_IQ ckb_IR gd_GB cy_GB fur_IT nn_NO] to PRODUCT_LOCALES [en_US en_US af_ZA am_ET ar_EG ar_XB as_IN az_AZ be_BY bg_BG bn_BD bs_BA ca_ES cs_CZ da_DK de_DE el_GR en_AU en_CA en_GB en_IN en_XA es_ES es_US et_EE eu_ES fa_IR fi_FI fr_CA fr_FR gl_ES gu_IN hi_IN hr_HR hu_HU hy_AM in_ID is_IS it_IT iw_IL ja_JP ka_GE kk_KZ km_KH kn_IN ko_KR ky_KG lo_LA lt_LT lv_LV mk_MK ml_IN mn_MN mr_IN ms_MY my_MM nb_NO ne_NP nl_NL or_IN pa_IN pl_PL pt_BR pt_PT ro_RO ru_RU si_LK sk_SK sl_SI sq_AL sr_Latn_RS sr_RS sv_SE sw_TZ ta_IN te_IN th_TH tl_PH tr_TR uk_UA ur_PK uz_UZ vi_VN zh_CN zh_HK zh_TW zu_ZA en_XC]
+[ 36% 4/11] including out/soong/installs-lineage_gq5012bf1.mk
+[ 45% 5/11] including out/soong/Android-lineage_gq5012bf1.mk
+[ 54% 6/11] including build/make/target/board/android-info.mk
+[ 63% 7/11] including bootable/deprecated-ota/updater/Android.mk
+[ 72% 8/11] including hardware/broadcom/wlan/bcmdhd/Android.mk
+[ 81% 9/11] including hardware/qcom/Android.mk
+[ 90% 10/11] including hardware/synaptics/wlan/synadhd/Android.mk
+[100% 11/11] including out/soong/late-lineage_gq5012bf1.mk
+[100% 12/12] finishing Make module rules
+[100% 13/13] finishing Make module rules: Adding module dependencies
+[100% 14/14] finishing Make packaging rules
+build/make/core/Makefile:5662: warning: Neither INSTALLED_KERNEL_TARGET nor INSTALLED_BOOTIMAGE_TARGET is defined when PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS  is true. Information about the updated kernel cannot be built into OTA update package. You can fix this by: (1) setting TARGET_NO_KERNEL to false and installing the built kernel to out/target/product/gq5012bf1/kernel, so that kernel information will be extracted from the built kernel; or (2) Add a prebuilt boot image and specify it in BOARD_PREBUILT_BOOTIMAGE; or (3) extracting kernel configuration and defining BOARD_KERNEL_CONFIG_FILE and BOARD_KERNEL_VERSION manually; or (4) unsetting PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS manually.
+[ 42% 15/35] including build/make/core/tasks/art.mk
+[ 45% 16/35] including build/make/core/tasks/build_custom_images.mk
+[ 48% 17/35] including build/make/core/tasks/dex_preopt_check.mk
+[ 51% 18/35] including build/make/core/tasks/find-shareduid-violation.mk
+[ 54% 19/35] including build/make/core/tasks/fontchain_lint.mk
+[ 57% 20/35] including build/make/core/tasks/host_init_verifier.mk
+[ 60% 21/35] including build/make/core/tasks/meta-lic.mk
+[ 62% 22/35] including build/make/core/tasks/module-info.mk
+[ 65% 23/35] including build/make/core/tasks/oem_image.mk
+[ 68% 24/35] including build/make/core/tasks/offline-sdk-docs.mk
+[ 71% 25/35] including build/make/core/tasks/platform_availability_check.mk
+[ 74% 26/35] including build/make/core/tasks/sdv.mk
+[ 77% 27/35] including build/make/core/tasks/vendor_module_check.mk
+[ 80% 28/35] including build/make/core/tasks/with-license.mk
+[ 82% 29/35] including vendor/lineage/build/tasks/bacon.mk
+[ 85% 30/35] including vendor/lineage/build/tasks/build-manifest_xml.mk
+[ 88% 31/35] including vendor/lineage/build/tasks/dt_image.mk
+[ 91% 32/35] including vendor/lineage/build/tasks/generate_lineage_sdk_coverage.mk
+[ 94% 33/35] including vendor/lineage/build/tasks/kernel.mk
+[ 97% 34/35] including device/generic/goldfish/build/tasks/combine_initramfs.mk
+[100% 35/35] finishing Make packaging rules
+[100% 36/36] finishing Make packaging rules: Adding phony targets
+[100% 37/37] finishing Make packaging rules: Checking licensing and SBOM
+[100% 38/38] writing make module actions
+No need to regenerate ninja file
+Starting ninja...
+ninja: 
+ninja: SISO_EXPERIMENTS=allow-unexpected-rsp-remove enabled
+SISO_EXPERIMENTS=ignore-missing-out-in-depfile enabled
+SISO_EXPERIMENTS=oom-score-adj enabled
+
+ninja: ignore missing out error in depfile 
+
+[  1% 39/2697] //system/core/toolbox:toolbox_ramdisk raw librustlibs.a.soong_deps
+[  1% 40/2216] //system/fs/fs_mgr/libsnapshot/snapuserd:snapuserd_ramdisk raw librustlibs.a.soong_deps
+[  1% 41/2134] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd_client static link libsnapuserd_client.a
+[  2% 42/2075] //system/core/toolbox:toolbox_ramdisk raw librustlibs.rs
+[  2% 43/1767] //system/extras/ext4_utils:libext4_utils static link libext4_utils.a
+[  2% 44/1658] //system/fs/fs_mgr/libsnapshot/snapuserd:snapuserd_ramdisk raw librustlibs.rs
+[  3% 45/1171] //external/liburing:liburing clang src/syscall.c
+[ 17% 46/263] //system/core/toolbox:toolbox_ramdisk clang toolbox.c
+[ 23% 47/198] //system/core/libcutils:libcutils_sockets static link libcutils_sockets.a
+[ 26% 48/182] //system/fs/fs_mgr/libdm:libdm static link libdm.a
+[ 26% 49/182] Install: out/target/product/gq5012bf1/ramdisk/system/etc/init/snapuserd.rc
+[ 27% 50/179] //system/core/property_service/libpropertyinfoparser:libpropertyinfoparser clang++ property_info_parser.cpp
+[ 37% 51/137] //external/liburing:liburing clang src/register.c
+[ 37% 52/137] //external/liburing:liburing clang src/queue.c
+[ 38% 53/136] //system/core/property_service/libpropertyinfoparser:libpropertyinfoparser static link libpropertyinfoparser.a
+[ 40% 54/135] //external/liburing:liburing clang src/setup.c
+[ 42% 55/129] //external/ublksrv:libublksrv clang lib/ublksrv_cmd.c
+[ 44% 56/126] //external/ublksrv:libublksrv clang lib/utils.c
+[ 45% 57/126] //external/liburing:liburing static link liburing.a
+[ 46% 58/126] //external/ublksrv:libublksrv clang lib/ublksrv_aio.c
+[ 46% 59/126] //system/core/toolbox:toolbox_ramdisk clang getevent.c
+[ 47% 60/126] //build/soong:product_config building product_config.json
+stderr:
+Duplicate key 'BoardPlatform' with identical values found.
+Duplicate key 'ProductModel' with identical values found.
+[ 48% 61/126] //external/ublksrv:libublksrv clang lib/ublksrv.c
+[ 49% 62/126] //system/core/libprocessgroup/util:libprocessgroup_util clang++ cgroup_controller.cpp
+[ 50% 63/126] //system/core/libprocessgroup/util:libprocessgroup_util clang++ cgroup_descriptor.cpp
+[ 50% 64/126] //build/soong:ramdisk-build.prop generating build.prop[common]
+[ 51% 65/126] Install: out/target/product/gq5012bf1/ramdisk/system/etc/ramdisk/build.prop
+[ 52% 66/126] //system/update_engine/liburing_cpp:liburing_cpp clang++ src/IoUringSQE.cpp
+[ 53% 67/126] //system/core/toolbox:toolbox_ramdisk rustc generated_rust_staticlib/librustlibs.rs
+[ 53% 68/126] //system/core/libprocessgroup:libprocessgroup clang++ sched_policy.cpp
+[ 54% 69/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ dm_user_block_server.cpp
+[ 55% 70/126] //system/fs/fs_mgr/libsnapshot/snapuserd:snapuserd_ramdisk rustc generated_rust_staticlib/librustlibs.rs
+[ 56% 71/126] //system/fs/fs_mgr:libfs_mgr_file_wait clang++ file_wait.cpp
+[ 57% 72/126] //system/fs/fs_mgr:libfs_mgr_file_wait static link libfs_mgr_file_wait.a
+[ 57% 73/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ capabilities.cpp
+[ 58% 74/126] //system/core/toolbox:toolbox_ramdisk clang++ start.cpp
+[ 59% 75/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ utility.cpp
+[ 60% 76/126] //system/core/toolbox:toolbox_ramdisk clang++ getprop.cpp
+[ 61% 77/126] //external/jsoncpp:libjsoncpp clang++ src/lib_json/json_writer.cpp
+[ 61% 78/126] //system/core/toolbox:toolbox_ramdisk clang++ setprop.cpp
+[ 62% 79/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/snapuserd_verify.cpp
+[ 63% 80/126] //system/core/libprocessgroup/util:libprocessgroup_util clang++ util.cpp
+[ 64% 81/126] //system/update_engine/liburing_cpp:liburing_cpp clang++ src/IoUring.cpp
+[ 65% 82/126] //external/gflags:libgflags clang++ src/gflags_reporting.cc
+[ 65% 83/126] //system/core/libprocessgroup/util:libprocessgroup_util static link libprocessgroup_util.a
+[ 66% 84/126] //external/gflags:libgflags clang++ src/gflags_completions.cc
+[ 67% 85/126] //system/update_engine/liburing_cpp:liburing_cpp static link liburing_cpp.a
+[ 68% 86/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/worker.cpp
+[ 69% 87/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ snapuserd_buffer.cpp
+[ 69% 88/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/snapuserd_transitions.cpp
+[ 70% 89/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ ublk_block_server.cpp
+[ 71% 90/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/snapuserd_readahead.cpp
+[ 72% 91/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/snapuserd_core.cpp
+[ 73% 92/126] //system/core/toolbox:toolbox_ramdisk clang++ modprobe.cpp
+[ 73% 93/126] //external/jsoncpp:libjsoncpp clang++ src/lib_json/json_reader.cpp
+[ 74% 94/126] //system/fs/fs_mgr/libsnapshot/snapuserd:snapuserd_ramdisk clang++ snapuserd_daemon.cpp
+[ 75% 95/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/read_worker.cpp
+[ 76% 96/126] //external/jsoncpp:libjsoncpp clang++ src/lib_json/json_value.cpp
+[ 76% 97/126] //external/jsoncpp:libjsoncpp static link libjsoncpp.a
+[ 77% 98/126] //system/core/libprocessgroup:libprocessgroup clang++ processgroup.cpp
+stderr:
+system/core/libprocessgroup/processgroup.cpp:664:42: warning: 'UsePerAppMemcg' is deprecated: Unsupported in memcg v2 [-Wdeprecated-declarations]
+  664 |         if (isMemoryCgroupSupported() && UsePerAppMemcg()) {
+      |                                          ^
+system/core/libprocessgroup/include/processgroup/processgroup.h:58:3: note: 'UsePerAppMemcg' has been explicitly marked deprecated here
+   58 | [[deprecated("Unsupported in memcg v2")]]
+      |   ^
+system/core/libprocessgroup/processgroup.cpp:747:24: warning: 'UsePerAppMemcg' is deprecated: Unsupported in memcg v2 [-Wdeprecated-declarations]
+  747 |     if (memControl && !UsePerAppMemcg()) {
+      |                        ^
+system/core/libprocessgroup/include/processgroup/processgroup.h:58:3: note: 'UsePerAppMemcg' has been explicitly marked deprecated here
+   58 | [[deprecated("Unsupported in memcg v2")]]
+      |   ^
+system/core/libprocessgroup/processgroup.cpp:753:38: warning: 'UsePerAppMemcg' is deprecated: Unsupported in memcg v2 [-Wdeprecated-declarations]
+  753 |         isMemoryCgroupSupported() && UsePerAppMemcg() && CgroupGetMemcgAppsPath(&memcg_apps_path)) {
+      |                                      ^
+system/core/libprocessgroup/include/processgroup/processgroup.h:58:3: note: 'UsePerAppMemcg' has been explicitly marked deprecated here
+   58 | [[deprecated("Unsupported in memcg v2")]]
+      |   ^
+3 warnings generated.
+[ 78% 99/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/merge_worker.cpp
+[ 79% 100/126] //system/core/libprocessgroup:libprocessgroup clang++ cgroup_map.cpp
+[ 80% 101/126] //system/core/libprocessgroup:libprocessgroup clang++ task_profiles.cpp
+[ 80% 102/126] //system/core/libprocessgroup:libprocessgroup static link libprocessgroup.a
+[ 81% 103/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/handler_manager.cpp
+[ 82% 104/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd static link libsnapuserd.a
+[ 83% 105/126] //system/core/toolbox:toolbox_ramdisk link toolbox_ramdisk
+[ 84% 106/126] //system/core/toolbox:toolbox_ramdisk strip toolbox_ramdisk
+[ 84% 107/126] //external/gflags:libgflags clang++ src/gflags.cc
+[ 85% 108/126] Install: out/target/product/gq5012bf1/ramdisk/system/bin/toolbox_ramdisk
+[ 86% 109/126] Symlink: out/target/product/gq5012bf1/ramdisk/system/bin/stop
+[ 87% 110/126] Symlink: out/target/product/gq5012bf1/ramdisk/system/bin/modprobe
+[ 88% 111/126] Symlink: out/target/product/gq5012bf1/ramdisk/system/bin/setprop
+[ 88% 112/126] Symlink: out/target/product/gq5012bf1/ramdisk/system/bin/getevent
+[ 89% 113/126] Symlink: out/target/product/gq5012bf1/ramdisk/system/bin/start
+[ 90% 114/126] Symlink: out/target/product/gq5012bf1/ramdisk/system/bin/getprop
+[ 91% 115/126] //external/gflags:libgflags static link libgflags.a
+[ 92% 116/126] //system/fs/fs_mgr/libsnapshot/snapuserd:snapuserd_ramdisk clang++ user-space-merge/snapuserd_server.cpp
+[ 92% 117/126] //external/ublksrv:libublksrv clang++ lib/ublksrv_json.cpp
+[ 93% 118/126] //external/ublksrv:libublksrv static link libublksrv.a
+[ 94% 119/126] //system/fs/fs_mgr/libsnapshot/snapuserd:snapuserd_ramdisk link snapuserd_ramdisk
+[ 95% 120/126] //system/fs/fs_mgr/libsnapshot/snapuserd:snapuserd_ramdisk strip snapuserd_ramdisk
+[ 96% 121/126] Install: out/target/product/gq5012bf1/ramdisk/system/bin/snapuserd_ramdisk
+[ 96% 122/126] Symlink: out/target/product/gq5012bf1/ramdisk/system/bin/snapuserd
+[ 97% 123/126] Installed file list: out/target/product/gq5012bf1/installed-files-ramdisk.txt
+[ 98% 124/126] Target ramdisk: out/target/product/gq5012bf1/ramdisk.img
+[ 99% 125/126] Target init_boot image: out/target/product/gq5012bf1/init_boot.img
+ninja: 19.47s Build Succeeded: 87 steps - 4.47/s
+
+
+[0;32m#### build completed successfully (06:26 (mm:ss)) ####
+[00m
+build_rc=0
+
+===== IMAGE =====
+path=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/init_boot.img
+bytes=8388608
+sha256=a205b1e432194e2ef077801974296a367b7a165e4ac2028b2ba9a6d75ec1c13f
+
+===== INSTALLED RAMDISK FILE LIST =====
+     3339488  /ramdisk/init
+     1257120  /ramdisk/system/bin/snapuserd_ramdisk
+      966816  /ramdisk/system/bin/e2fsck
+      784736  /ramdisk/system/bin/toolbox_ramdisk
+         968  /ramdisk/system/etc/ramdisk/build.prop
+         537  /ramdisk/system/etc/init/snapuserd.rc
+          17  /ramdisk/system/bin/snapuserd
+
+===== PARSE INIT_BOOT =====
+kernel_size=0
+ramdisk_size=3483198
+header_size=1584
+header_version=4
+ramdisk_start=4096
+ramdisk_end=3487294
+ramdisk_magic=1f8b080000000000
+decompressed_ramdisk_bytes=7720960
+cpio_entries=41
+debug_ramdisk
+dev
+dev/console
+dev/kmsg
+dev/null
+dev/urandom
+first_stage_ramdisk
+first_stage_ramdisk/debug_ramdisk
+first_stage_ramdisk/dev
+first_stage_ramdisk/metadata
+first_stage_ramdisk/mnt
+first_stage_ramdisk/proc
+first_stage_ramdisk/second_stage_resources
+first_stage_ramdisk/sys
+init
+metadata
+mnt
+proc
+second_stage_resources
+sys
+system
+system/bin
+system/bin/e2fsck
+system/bin/getevent
+system/bin/getprop
+system/bin/modprobe
+system/bin/setprop
+system/bin/snapuserd
+system/bin/snapuserd_ramdisk
+system/bin/start
+system/bin/stop
+system/bin/toolbox_ramdisk
+system/etc
+system/etc/init
+system/etc/init/snapuserd.rc
+system/etc/ramdisk
+system/etc/ramdisk/build.prop
+system/lib64
+system/lib64/ld-android.so
+system/lib64/libc.so
+system/lib64/libdl.so
+required=init actual=init bytes=3339488 sha256=c6143efccd49a91aca414256dc8ce878afe00661e0734170c4fd8e186d2678be
+required=system/bin/snapuserd actual=system/bin/snapuserd bytes=17 sha256=1807bcb1c9080b455472f1cb9933b8176cb776e2141262c071009b5e7f2f779f
+KERNELSU_MAGISK_CONTAMINATION=NONE
+
+===== KNOWN BAD KSU COMPARISON =====
+known_bad_sha256=23560214615cdff7b890bcf62eb43ba913dc352d1004d41c25281164e49a45b5
+new_clean_sha256=a205b1e432194e2ef077801974296a367b7a165e4ac2028b2ba9a6d75ec1c13f
+
+===== OLD INCOMPLETE A17 IMAGE =====
+previous_without_generic_ramdisk=6c230b0223a3c19f7494348cd633355c88cd5130c1c194301f494ac04006b74d
+
+============================================================
+ANDROID17_INIT_BOOT_GENERIC_RAMDISK=PASS
+SIZE_8M=PASS
+HEADER_V4=PASS
+NO_KERNEL=PASS
+GZIP_RAMDISK=PASS
+SNAPUSERD_PRESENT=PASS
+KERNELSU_MAGISK_CONTAMINATION=NONE
+NEW_INIT_BOOT_SHA256=a205b1e432194e2ef077801974296a367b7a165e4ac2028b2ba9a6d75ec1c13f
+PHONE_NOT_TOUCHED=YES
+============================================================
+
+===== BUILD LOG TAIL =====
+[ 56% 71/126] //system/fs/fs_mgr:libfs_mgr_file_wait clang++ file_wait.cpp
+[ 57% 72/126] //system/fs/fs_mgr:libfs_mgr_file_wait static link libfs_mgr_file_wait.a
+[ 57% 73/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ capabilities.cpp
+[ 58% 74/126] //system/core/toolbox:toolbox_ramdisk clang++ start.cpp
+[ 59% 75/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ utility.cpp
+[ 60% 76/126] //system/core/toolbox:toolbox_ramdisk clang++ getprop.cpp
+[ 61% 77/126] //external/jsoncpp:libjsoncpp clang++ src/lib_json/json_writer.cpp
+[ 61% 78/126] //system/core/toolbox:toolbox_ramdisk clang++ setprop.cpp
+[ 62% 79/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/snapuserd_verify.cpp
+[ 63% 80/126] //system/core/libprocessgroup/util:libprocessgroup_util clang++ util.cpp
+[ 64% 81/126] //system/update_engine/liburing_cpp:liburing_cpp clang++ src/IoUring.cpp
+[ 65% 82/126] //external/gflags:libgflags clang++ src/gflags_reporting.cc
+[ 65% 83/126] //system/core/libprocessgroup/util:libprocessgroup_util static link libprocessgroup_util.a
+[ 66% 84/126] //external/gflags:libgflags clang++ src/gflags_completions.cc
+[ 67% 85/126] //system/update_engine/liburing_cpp:liburing_cpp static link liburing_cpp.a
+[ 68% 86/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/worker.cpp
+[ 69% 87/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ snapuserd_buffer.cpp
+[ 69% 88/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/snapuserd_transitions.cpp
+[ 70% 89/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ ublk_block_server.cpp
+[ 71% 90/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/snapuserd_readahead.cpp
+[ 72% 91/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/snapuserd_core.cpp
+[ 73% 92/126] //system/core/toolbox:toolbox_ramdisk clang++ modprobe.cpp
+[ 73% 93/126] //external/jsoncpp:libjsoncpp clang++ src/lib_json/json_reader.cpp
+[ 74% 94/126] //system/fs/fs_mgr/libsnapshot/snapuserd:snapuserd_ramdisk clang++ snapuserd_daemon.cpp
+[ 75% 95/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/read_worker.cpp
+[ 76% 96/126] //external/jsoncpp:libjsoncpp clang++ src/lib_json/json_value.cpp
+[ 76% 97/126] //external/jsoncpp:libjsoncpp static link libjsoncpp.a
+[ 77% 98/126] //system/core/libprocessgroup:libprocessgroup clang++ processgroup.cpp
+stderr:
+system/core/libprocessgroup/processgroup.cpp:664:42: warning: 'UsePerAppMemcg' is deprecated: Unsupported in memcg v2 [-Wdeprecated-declarations]
+  664 |         if (isMemoryCgroupSupported() && UsePerAppMemcg()) {
+      |                                          ^
+system/core/libprocessgroup/include/processgroup/processgroup.h:58:3: note: 'UsePerAppMemcg' has been explicitly marked deprecated here
+   58 | [[deprecated("Unsupported in memcg v2")]]
+      |   ^
+system/core/libprocessgroup/processgroup.cpp:747:24: warning: 'UsePerAppMemcg' is deprecated: Unsupported in memcg v2 [-Wdeprecated-declarations]
+  747 |     if (memControl && !UsePerAppMemcg()) {
+      |                        ^
+system/core/libprocessgroup/include/processgroup/processgroup.h:58:3: note: 'UsePerAppMemcg' has been explicitly marked deprecated here
+   58 | [[deprecated("Unsupported in memcg v2")]]
+      |   ^
+system/core/libprocessgroup/processgroup.cpp:753:38: warning: 'UsePerAppMemcg' is deprecated: Unsupported in memcg v2 [-Wdeprecated-declarations]
+  753 |         isMemoryCgroupSupported() && UsePerAppMemcg() && CgroupGetMemcgAppsPath(&memcg_apps_path)) {
+      |                                      ^
+system/core/libprocessgroup/include/processgroup/processgroup.h:58:3: note: 'UsePerAppMemcg' has been explicitly marked deprecated here
+   58 | [[deprecated("Unsupported in memcg v2")]]
+      |   ^
+3 warnings generated.
+[ 78% 99/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/merge_worker.cpp
+[ 79% 100/126] //system/core/libprocessgroup:libprocessgroup clang++ cgroup_map.cpp
+[ 80% 101/126] //system/core/libprocessgroup:libprocessgroup clang++ task_profiles.cpp
+[ 80% 102/126] //system/core/libprocessgroup:libprocessgroup static link libprocessgroup.a
+[ 81% 103/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd clang++ user-space-merge/handler_manager.cpp
+[ 82% 104/126] //system/fs/fs_mgr/libsnapshot/snapuserd:libsnapuserd static link libsnapuserd.a
+[ 83% 105/126] //system/core/toolbox:toolbox_ramdisk link toolbox_ramdisk
+[ 84% 106/126] //system/core/toolbox:toolbox_ramdisk strip toolbox_ramdisk
+[ 84% 107/126] //external/gflags:libgflags clang++ src/gflags.cc
+[ 85% 108/126] Install: out/target/product/gq5012bf1/ramdisk/system/bin/toolbox_ramdisk
+[ 86% 109/126] Symlink: out/target/product/gq5012bf1/ramdisk/system/bin/stop
+[ 87% 110/126] Symlink: out/target/product/gq5012bf1/ramdisk/system/bin/modprobe
+[ 88% 111/126] Symlink: out/target/product/gq5012bf1/ramdisk/system/bin/setprop
+[ 88% 112/126] Symlink: out/target/product/gq5012bf1/ramdisk/system/bin/getevent
+[ 89% 113/126] Symlink: out/target/product/gq5012bf1/ramdisk/system/bin/start
+[ 90% 114/126] Symlink: out/target/product/gq5012bf1/ramdisk/system/bin/getprop
+[ 91% 115/126] //external/gflags:libgflags static link libgflags.a
+[ 92% 116/126] //system/fs/fs_mgr/libsnapshot/snapuserd:snapuserd_ramdisk clang++ user-space-merge/snapuserd_server.cpp
+[ 92% 117/126] //external/ublksrv:libublksrv clang++ lib/ublksrv_json.cpp
+[ 93% 118/126] //external/ublksrv:libublksrv static link libublksrv.a
+[ 94% 119/126] //system/fs/fs_mgr/libsnapshot/snapuserd:snapuserd_ramdisk link snapuserd_ramdisk
+[ 95% 120/126] //system/fs/fs_mgr/libsnapshot/snapuserd:snapuserd_ramdisk strip snapuserd_ramdisk
+[ 96% 121/126] Install: out/target/product/gq5012bf1/ramdisk/system/bin/snapuserd_ramdisk
+[ 96% 122/126] Symlink: out/target/product/gq5012bf1/ramdisk/system/bin/snapuserd
+[ 97% 123/126] Installed file list: out/target/product/gq5012bf1/installed-files-ramdisk.txt
+[ 98% 124/126] Target ramdisk: out/target/product/gq5012bf1/ramdisk.img
+[ 99% 125/126] Target init_boot image: out/target/product/gq5012bf1/init_boot.img
+ninja: 19.47s Build Succeeded: 87 steps - 4.47/s
+
+
+[0;32m#### build completed successfully (06:26 (mm:ss)) ####
+[00m

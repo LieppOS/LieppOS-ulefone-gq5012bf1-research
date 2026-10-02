@@ -1,0 +1,14 @@
+--- device.mk.before
++++ device.mk.after
+@@ -2,6 +2,11 @@
+ 
+ DEVICE_PATH := device/ulefone/gq5012bf1
+ 
++# Build the canonical Android generic first-stage ramdisk for init_boot.
++# This supplies init_first_stage, snapuserd_ramdisk, ramdisk-build.prop
++# and toolbox_ramdisk. The kernel and vendor boot stack remain external.
++$(call inherit-product, $(SRC_TARGET_DIR)/product/generic_ramdisk.mk)
++
+ $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
+ $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
+ 

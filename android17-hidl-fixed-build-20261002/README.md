@@ -62,3 +62,25 @@ syncing and hashing subsequent partitions.
 
 Slot A remained active throughout and the metadata-encryption key invariant
 remained unchanged.
+
+## Android 17 generic init_boot correction
+
+The first successfully generated Android 17 init_boot image had a valid
+8 MiB header-v4 generic ramdisk but lacked snapuserd.
+
+Root cause: the GQ5012BF1 product enabled init_boot generation but did not
+inherit AOSP target/product/generic_ramdisk.mk. Merely setting
+BOARD_USES_GENERIC_KERNEL_IMAGE does not populate the generic ramdisk.
+
+The product now inherits generic_ramdisk.mk, which supplies the canonical
+first-stage ramdisk package set including snapuserd_ramdisk.
+
+Corrected init_boot:
+
+- path: /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/init_boot.img
+- size: 8388608
+- SHA-256: a205b1e432194e2ef077801974296a367b7a165e4ac2028b2ba9a6d75ec1c13f
+- header: v4
+- kernel: absent
+- snapuserd: present
+- KernelSU/Magisk contamination: absent
