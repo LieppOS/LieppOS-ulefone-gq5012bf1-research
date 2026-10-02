@@ -1,0 +1,1113 @@
+============================================================
+ANDROID 17 FIRST-STAGE MOUNT CONTRACT ANALYSIS
+============================================================
+
+===== DEVICE SAFETY =====
+slot=_a
+boot_completed=1
+current_slot=0
+
+===== B BOOT STATE =====
+slot0.bootable=1
+slot0.successful=1
+slot1.bootable=0
+slot1.successful=0
+
+===== FACTORY VENDOR_BOOT SOURCE =====
+path=/home/armol/androido_dalykai/Ulefone_Armor_29_Thermal/Ka as turiu/m170b-gq-gq5012-512g16g-fhdp-V0-bom103-cts-eu_GQ5012BF1_EEA_V15_user_20251022/vendor_boot.img bytes=67108864
+c8953d16b7a47976362aa23b53d0a08dde451f25cab4c552fa70c43e56ee0756  /home/armol/androido_dalykai/Ulefone_Armor_29_Thermal/Ka as turiu/m170b-gq-gq5012-512g16g-fhdp-V0-bom103-cts-eu_GQ5012BF1_EEA_V15_user_20251022/vendor_boot.img
+
+===== UNPACK FACTORY VENDOR_BOOT =====
+unpacker=/mnt/SamsungSSD/android/lineage-24.0/system/tools/mkbootimg/unpack_bootimg.py
+boot magic: VNDRBOOT
+vendor boot image header version: 4
+page size: 0x00001000
+kernel load address: 0x40000000
+ramdisk load address: 0x66f00000
+vendor ramdisk total size: 33474373
+vendor command line args: bootopt=64S3,32N2,64N2
+kernel tags load address: 0x47c80000
+product name: 
+vendor boot image header size: 2128
+dtb size: 342395
+dtb address: 0x0000000047c80000
+vendor ramdisk table size: 216
+vendor ramdisk table: [
+    vendor_ramdisk00: {
+        size: 28759822
+        offset: 0
+        type: 0x1
+        name: 
+        board_id: [
+            0x00000000, 0x00000000, 0x00000000, 0x00000000,
+            0x00000000, 0x00000000, 0x00000000, 0x00000000,
+            0x00000000, 0x00000000, 0x00000000, 0x00000000,
+            0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        ]
+    }
+    vendor_ramdisk01: {
+        size: 4714551
+        offset: 28759822
+        type: 0x2
+        name: recovery
+        board_id: [
+            0x00000000, 0x00000000, 0x00000000, 0x00000000,
+            0x00000000, 0x00000000, 0x00000000, 0x00000000,
+            0x00000000, 0x00000000, 0x00000000, 0x00000000,
+            0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        ]
+    }
+]
+vendor bootconfig size: 0
+bootconfig 0
+dtb 342395
+vendor_ramdisk00 28759822
+vendor_ramdisk01 4714551
+
+===== EXTRACT VENDOR RAMDISK FRAGMENTS =====
+
+--- fragment 1 ---
+file=/tmp/gq5012-a17-first-stage-contract/unpack/vendor_ramdisk00
+/tmp/gq5012-a17-first-stage-contract/unpack/vendor_ramdisk00: LZ4 compressed data (v0.1-v0.9)
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878
+
+--- fragment 2 ---
+file=/tmp/gq5012-a17-first-stage-contract/unpack/vendor_ramdisk01
+/tmp/gq5012-a17-first-stage-contract/unpack/vendor_ramdisk01: LZ4 compressed data (v0.1-v0.9)
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc
+
+===== FACTORY FIRST-STAGE FSTAB =====
+fstab_count=2
+
+################################################################
+FSTAB=/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878
+################################################################
+# 1 "vendor/mediatek/proprietary/hardware/fstab/mt6878/fstab.in.mt6878"
+# 1 "<built-in>" 1
+# 1 "<built-in>" 3
+# 374 "<built-in>" 3
+# 1 "<command line>" 1
+# 1 "<built-in>" 2
+# 1 "vendor/mediatek/proprietary/hardware/fstab/mt6878/fstab.in.mt6878" 2
+# 130 "vendor/mediatek/proprietary/hardware/fstab/mt6878/fstab.in.mt6878"
+system /system erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system /system ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system_ext /system_ext erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system_ext /system_ext ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+
+vendor /vendor erofs ro wait,slotselect,avb,logical,first_stage_mount
+vendor /vendor ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+product /product erofs ro wait,slotselect,avb,logical,first_stage_mount
+product /product ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+
+
+
+
+vendor_dlkm /vendor_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+vendor_dlkm /vendor_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+odm_dlkm /odm_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+odm_dlkm /odm_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+system_dlkm /system_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+system_dlkm /system_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+/dev/block/by-name/metadata /metadata f2fs noatime,nosuid,nodev,discard wait,check,formattable,first_stage_mount
+
+/dev/block/by-name/userdata /data f2fs noatime,nosuid,nodev,discard,noflush_merge,fsync_mode=nobarrier,reserve_root=134217,resgid=1065,inlinecrypt wait,check,formattable,quota,latemount,resize,reservedsize=128m,checkpoint=fs,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption,fsverity
+
+
+
+/dev/block/by-name/protect1 /mnt/vendor/protect_f ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/protect2 /mnt/vendor/protect_s ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/nvdata /mnt/vendor/nvdata ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/nvcfg /mnt/vendor/nvcfg ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+
+
+/dev/block/by-name/persist /mnt/vendor/persist ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+
+
+
+
+
+/devices/platform/soc/11240000.mmc* auto auto defaults voldmanaged=sdcard1:auto,encryptable=userdata
+
+/devices/platform/usb_xhci* auto vfat defaults voldmanaged=usbotg:auto
+/devices/platform/soc/11201000.usb0/11200000.xhci* auto vfat defaults voldmanaged=usbotg:auto
+/devices/platform/soc/11211000.usb1/11210000.xhci* auto vfat defaults voldmanaged=usbotg:auto
+
+/dev/block/by-name/frp /persistent emmc defaults defaults
+
+/dev/block/by-name/nvram /nvram emmc defaults defaults
+/dev/block/by-name/proinfo /proinfo emmc defaults defaults
+/dev/block/by-name/lk1 /lk1 emmc defaults defaults
+/dev/block/by-name/bootloader2 /bootloader2 emmc defaults defaults
+/dev/block/by-name/para /para emmc defaults defaults
+/dev/block/by-name/misc /misc emmc defaults defaults
+/dev/block/by-name/init_boot /init_boot emmc defaults defaults
+
+
+
+
+/dev/block/by-name/boot /boot emmc defaults first_stage_mount,nofail,slotselect
+
+
+
+
+
+/dev/block/by-name/vbmeta_vendor /vbmeta_vendor emmc defaults first_stage_mount,nofail,slotselect
+/dev/block/by-name/vbmeta_system /vbmeta_system emmc defaults first_stage_mount,nofail,slotselect,avb=vbmeta
+
+/dev/block/by-name/logo /logo emmc defaults defaults
+/dev/block/by-name/expdb /expdb emmc defaults defaults
+/dev/block/by-name/seccfg /seccfg emmc defaults defaults
+
+/dev/block/by-name/tee1 /tee1 emmc defaults defaults
+/dev/block/by-name/tee2 /tee2 emmc defaults defaults
+
+
+/dev/block/by-name/scp1 /scp1 emmc defaults defaults
+/dev/block/by-name/scp2 /scp2 emmc defaults defaults
+
+
+/dev/block/by-name/sspm1 /sspm1 emmc defaults defaults
+/dev/block/by-name/sspm2 /sspm2 emmc defaults defaults
+
+
+/dev/block/by-name/dpm1 /dpm1 emmc defaults defaults
+/dev/block/by-name/dpm2 /dpm2 emmc defaults defaults
+
+/dev/block/by-name/mcupm1 /mcupm1 emmc defaults defaults
+/dev/block/by-name/mcupm2 /mcupm2 emmc defaults defaults
+
+
+
+/dev/block/by-name/modem /modem emmc defaults defaults
+/dev/block/by-name/md1dsp /md1dsp emmc defaults defaults
+/dev/block/by-name/md1arm7 /md1arm7 emmc defaults defaults
+/dev/block/by-name/md3img /md3img emmc defaults defaults
+
+
+
+
+
+/dev/block/by-name/gz1 /gz1 emmc defaults defaults
+/dev/block/by-name/gz2 /gz2 emmc defaults defaults
+/dev/block/by-name/ccu /ccu emmc defaults defaults
+/dev/block/by-name/vcp /vcp emmc defaults defaults
+/dev/block/by-name/gpueb /gpueb emmc defaults defaults
+/dev/block/by-name/mcf_ota /mcf_ota emmc defaults defaults
+/dev/block/by-name/vendor_boot /vendor_boot emmc defaults defaults
+/dev/block/by-name/mvpu_algo1 /mvpu_algo1 emmc defaults defaults
+/dev/block/by-name/mvpu_algo2 /mvpu_algo2 emmc defaults defaults
+/dev/block/by-name/apusys1 /apusys1 emmc defaults defaults
+/dev/block/by-name/apusys2 /apusys2 emmc defaults defaults
+
+/dev/block/by-name/spmfw /spmfw emmc defaults defaults
+
+
+
+
+
+
+
+/dev/block/by-name/pi_img /pi_img emmc defaults defaults
+/dev/block/by-name/boot_para /boot_para emmc defaults defaults
+/dev/block/by-name/odmdtbo /odmdtbo emmc defaults defaults
+/dev/block/by-name/dtbo /dtbo emmc defaults defaults
+/dev/block/by-name/connsys_wifi /connsys_wifi emmc defaults defaults
+/dev/block/by-name/connsys_bt /connsys_bt emmc defaults defaults
+
+/dev/block/by-name/otp /otp emmc defaults defaults
+
+
+/dev/block/by-name/vbmeta /vbmeta emmc defaults defaults
+
+--- first_stage_mount entries ---
+system /system erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system /system ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system_ext /system_ext erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system_ext /system_ext ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+vendor /vendor erofs ro wait,slotselect,avb,logical,first_stage_mount
+vendor /vendor ext4 ro wait,slotselect,avb,logical,first_stage_mount
+product /product erofs ro wait,slotselect,avb,logical,first_stage_mount
+product /product ext4 ro wait,slotselect,avb,logical,first_stage_mount
+vendor_dlkm /vendor_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+vendor_dlkm /vendor_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+odm_dlkm /odm_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+odm_dlkm /odm_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+system_dlkm /system_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+system_dlkm /system_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+/dev/block/by-name/metadata /metadata f2fs noatime,nosuid,nodev,discard wait,check,formattable,first_stage_mount
+/dev/block/by-name/boot /boot emmc defaults first_stage_mount,nofail,slotselect
+/dev/block/by-name/vbmeta_vendor /vbmeta_vendor emmc defaults first_stage_mount,nofail,slotselect
+/dev/block/by-name/vbmeta_system /vbmeta_system emmc defaults first_stage_mount,nofail,slotselect,avb=vbmeta
+
+################################################################
+FSTAB=/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc
+################################################################
+# 1 "vendor/mediatek/proprietary/hardware/fstab/mt6878/fstab.in.emmc"
+# 1 "<built-in>" 1
+# 1 "<built-in>" 3
+# 374 "<built-in>" 3
+# 1 "<command line>" 1
+# 1 "<built-in>" 2
+# 1 "vendor/mediatek/proprietary/hardware/fstab/mt6878/fstab.in.emmc" 2
+# 130 "vendor/mediatek/proprietary/hardware/fstab/mt6878/fstab.in.emmc"
+system /system erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system /system ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system_ext /system_ext erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system_ext /system_ext ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+
+vendor /vendor erofs ro wait,slotselect,avb,logical,first_stage_mount
+vendor /vendor ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+product /product erofs ro wait,slotselect,avb,logical,first_stage_mount
+product /product ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+
+
+
+
+vendor_dlkm /vendor_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+vendor_dlkm /vendor_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+odm_dlkm /odm_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+odm_dlkm /odm_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+system_dlkm /system_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+system_dlkm /system_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+
+
+/dev/block/by-name/metadata /metadata f2fs noatime,nosuid,nodev,discard wait,check,formattable,first_stage_mount
+
+/dev/block/by-name/userdata /data f2fs noatime,nosuid,nodev,discard,noflush_merge,fsync_mode=nobarrier,reserve_root=134217,resgid=1065,inlinecrypt wait,check,formattable,quota,latemount,resize,reservedsize=128m,checkpoint=fs,fileencryption=aes-256-xts:aes-256-cts:v2,keydirectory=/metadata/vold/metadata_encryption,fsverity
+
+
+
+/dev/block/by-name/protect1 /mnt/vendor/protect_f ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/protect2 /mnt/vendor/protect_s ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/nvdata /mnt/vendor/nvdata ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+/dev/block/by-name/nvcfg /mnt/vendor/nvcfg ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+
+
+/dev/block/by-name/persist /mnt/vendor/persist ext4 noatime,nosuid,nodev,noauto_da_alloc,commit=1,nodelalloc wait,check,formattable
+
+
+
+
+
+/devices/platform/soc/11240000.mmc* auto auto defaults voldmanaged=sdcard1:auto,encryptable=userdata
+
+/devices/platform/usb_xhci* auto vfat defaults voldmanaged=usbotg:auto
+/devices/platform/soc/11201000.usb0/11200000.xhci* auto vfat defaults voldmanaged=usbotg:auto
+/devices/platform/soc/11211000.usb1/11210000.xhci* auto vfat defaults voldmanaged=usbotg:auto
+
+/dev/block/by-name/frp /persistent emmc defaults defaults
+
+/dev/block/by-name/nvram /nvram emmc defaults defaults
+/dev/block/by-name/proinfo /proinfo emmc defaults defaults
+/dev/block/by-name/lk /bootloader emmc defaults defaults
+/dev/block/by-name/lk2 /bootloader2 emmc defaults defaults
+/dev/block/by-name/para /para emmc defaults defaults
+/dev/block/by-name/misc /misc emmc defaults defaults
+
+
+
+
+/dev/block/by-name/boot /boot emmc defaults first_stage_mount,nofail,slotselect
+
+
+
+
+
+/dev/block/by-name/vbmeta_vendor /vbmeta_vendor emmc defaults first_stage_mount,nofail,slotselect
+/dev/block/by-name/vbmeta_system /vbmeta_system emmc defaults first_stage_mount,nofail,slotselect,avb=vbmeta
+
+/dev/block/by-name/logo /logo emmc defaults defaults
+/dev/block/by-name/expdb /expdb emmc defaults defaults
+/dev/block/by-name/seccfg /seccfg emmc defaults defaults
+
+/dev/block/by-name/tee1 /tee1 emmc defaults defaults
+/dev/block/by-name/tee2 /tee2 emmc defaults defaults
+
+
+/dev/block/by-name/scp1 /scp1 emmc defaults defaults
+/dev/block/by-name/scp2 /scp2 emmc defaults defaults
+
+
+/dev/block/by-name/sspm_1 /sspm_1 emmc defaults defaults
+/dev/block/by-name/sspm_2 /sspm_2 emmc defaults defaults
+
+
+/dev/block/by-name/dpm_1 /dpm_1 emmc defaults defaults
+/dev/block/by-name/dpm_2 /dpm_2 emmc defaults defaults
+
+/dev/block/by-name/mcupm_1 /mcupm_1 emmc defaults defaults
+/dev/block/by-name/mcupm_2 /mcupm_2 emmc defaults defaults
+
+
+
+/dev/block/by-name/modem /modem emmc defaults defaults
+/dev/block/by-name/md1dsp /md1dsp emmc defaults defaults
+/dev/block/by-name/md1arm7 /md1arm7 emmc defaults defaults
+/dev/block/by-name/md3img /md3img emmc defaults defaults
+
+
+
+
+
+/dev/block/by-name/gz1 /gz1 emmc defaults defaults
+/dev/block/by-name/gz2 /gz2 emmc defaults defaults
+
+/dev/block/by-name/spmfw /spmfw emmc defaults defaults
+
+
+
+
+
+
+
+/dev/block/by-name/pi_img /pi_img emmc defaults defaults
+/dev/block/by-name/boot_para /boot_para emmc defaults defaults
+/dev/block/by-name/odmdtbo /odmdtbo emmc defaults defaults
+/dev/block/by-name/dtbo /dtbo emmc defaults defaults
+
+/dev/block/by-name/otp /otp emmc defaults defaults
+
+
+/dev/block/by-name/vbmeta /vbmeta emmc defaults defaults
+
+--- first_stage_mount entries ---
+system /system erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system /system ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system_ext /system_ext erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+system_ext /system_ext ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+vendor /vendor erofs ro wait,slotselect,avb,logical,first_stage_mount
+vendor /vendor ext4 ro wait,slotselect,avb,logical,first_stage_mount
+product /product erofs ro wait,slotselect,avb,logical,first_stage_mount
+product /product ext4 ro wait,slotselect,avb,logical,first_stage_mount
+vendor_dlkm /vendor_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+vendor_dlkm /vendor_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+odm_dlkm /odm_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+odm_dlkm /odm_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+system_dlkm /system_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+system_dlkm /system_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+/dev/block/by-name/metadata /metadata f2fs noatime,nosuid,nodev,discard wait,check,formattable,first_stage_mount
+/dev/block/by-name/boot /boot emmc defaults first_stage_mount,nofail,slotselect
+/dev/block/by-name/vbmeta_vendor /vbmeta_vendor emmc defaults first_stage_mount,nofail,slotselect
+/dev/block/by-name/vbmeta_system /vbmeta_system emmc defaults first_stage_mount,nofail,slotselect,avb=vbmeta
+
+===== FIRST-STAGE ORDER ONLY =====
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: system /system erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: system /system ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: system_ext /system_ext erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: system_ext /system_ext ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: vendor /vendor erofs ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: vendor /vendor ext4 ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: product /product erofs ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: product /product ext4 ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: vendor_dlkm /vendor_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: vendor_dlkm /vendor_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: odm_dlkm /odm_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: odm_dlkm /odm_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: system_dlkm /system_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: system_dlkm /system_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: /dev/block/by-name/metadata /metadata f2fs noatime,nosuid,nodev,discard wait,check,formattable,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: /dev/block/by-name/boot /boot emmc defaults first_stage_mount,nofail,slotselect
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: /dev/block/by-name/vbmeta_vendor /vbmeta_vendor emmc defaults first_stage_mount,nofail,slotselect
+/tmp/gq5012-a17-first-stage-contract/ramdisk-1/first_stage_ramdisk/fstab.mt6878 :: /dev/block/by-name/vbmeta_system /vbmeta_system emmc defaults first_stage_mount,nofail,slotselect,avb=vbmeta
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: system /system erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: system /system ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: system_ext /system_ext erofs ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: system_ext /system_ext ext4 ro wait,slotselect,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: vendor /vendor erofs ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: vendor /vendor ext4 ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: product /product erofs ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: product /product ext4 ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: vendor_dlkm /vendor_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: vendor_dlkm /vendor_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: odm_dlkm /odm_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: odm_dlkm /odm_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: system_dlkm /system_dlkm erofs ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: system_dlkm /system_dlkm ext4 ro wait,slotselect,avb,logical,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: /dev/block/by-name/metadata /metadata f2fs noatime,nosuid,nodev,discard wait,check,formattable,first_stage_mount
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: /dev/block/by-name/boot /boot emmc defaults first_stage_mount,nofail,slotselect
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: /dev/block/by-name/vbmeta_vendor /vbmeta_vendor emmc defaults first_stage_mount,nofail,slotselect
+/tmp/gq5012-a17-first-stage-contract/ramdisk-2/first_stage_ramdisk/fstab.emmc :: /dev/block/by-name/vbmeta_system /vbmeta_system emmc defaults first_stage_mount,nofail,slotselect,avb=vbmeta
+
+===== LIVE SLOT-B LOGICAL IDENTITIES =====
+
+--- system_b ---
+mapper=/dev/block/mapper/system_b
+real=/dev/block/dm-5
+bytes=665391104
+ro=1
+Targets in the device-mapper table for system_b:
+0-58208: linear, 259:59 6301696
+58208-731424: linear, 259:59 14474368
+731424-1299592: linear, 259:59 15154088
+8a3d844f35c6d4f5039878a7e72a65c664ded243b9e749d49390bc4118bc2030  /dev/block/mapper/system_b
+
+--- system_ext_b ---
+mapper=/dev/block/mapper/system_ext_b
+real=/dev/block/dm-9
+bytes=366891008
+ro=1
+Targets in the device-mapper table for system_ext_b:
+0-716584: linear, 259:59 15722256
+4187b58a47ad36cd5b4e58f87c642ac4a73c617d241d796cdff53f451d41d84b  /dev/block/mapper/system_ext_b
+
+--- product_b ---
+mapper=/dev/block/mapper/product_b
+real=/dev/block/dm-3
+bytes=337686528
+ro=1
+Targets in the device-mapper table for product_b:
+0-659544: linear, 259:59 16438840
+e2130d8fda18ffe2cb2b94a16659acd28b160127175547afee4a876539b6135a  /dev/block/mapper/product_b
+
+--- vendor_b ---
+mapper=/dev/block/mapper/vendor_b
+real=/dev/block/dm-11
+bytes=816349184
+ro=1
+Targets in the device-mapper table for vendor_b:
+0-1594432: linear, 259:59 17098384
+9f3dfe3fe5ef025b667b8181bddfedaf6b08dace4b7cd6c4e05a4fde0d16aa98  /dev/block/mapper/vendor_b
+
+--- vendor_dlkm_b ---
+mapper=/dev/block/mapper/vendor_dlkm_b
+real=/dev/block/dm-13
+bytes=17534976
+ro=1
+Targets in the device-mapper table for vendor_dlkm_b:
+0-34248: linear, 259:59 18692816
+fce7acfb64956126a03929f085050ab1b300272333e84abf27b9e708aaa40297  /dev/block/mapper/vendor_dlkm_b
+
+--- system_dlkm_b ---
+mapper=/dev/block/mapper/system_dlkm_b
+real=/dev/block/dm-7
+bytes=7471104
+ro=1
+Targets in the device-mapper table for system_dlkm_b:
+0-14592: linear, 259:59 18727064
+300f24c5550be110d0161583fa56d3c36ae61b8b2da4b44c128350c6e22b9f2a  /dev/block/mapper/system_dlkm_b
+
+--- odm_dlkm_b ---
+mapper=/dev/block/mapper/odm_dlkm_b
+real=/dev/block/dm-1
+bytes=348160
+ro=1
+Targets in the device-mapper table for odm_dlkm_b:
+0-680: linear, 259:59 18741656
+74a34a9dd8cd7854f2efba584e75e949160b81d6c390ff2ef87744f3e3a58e9a  /dev/block/mapper/odm_dlkm_b
+
+===== READ-ONLY FILESYSTEM MOUNT PROBES =====
+
+--- system_b ---
+mount_rc=0
+READ_ONLY_MOUNT=PASS
+total 136
+drwxr-xr-x 26 root   root     663 2026-10-02 15:49 .
+drwxr-xr-x 20 root   system   420 2026-10-02 22:29 ..
+lrw-r--r--  1 root   root      30 2026-10-02 15:46 adb_keys -> /product/etc/security/adb_keys
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 apex
+lrw-r--r--  1 root   root      11 2026-10-02 15:46 bin -> /system/bin
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 bootstrap-apex
+lrw-r--r--  1 root   root      50 2026-10-02 15:46 bugreports -> /data/user_de/0/com.android.shell/files/bugreports
+lrw-r--r--  1 root   root      11 2026-10-02 15:46 cache -> /data/cache
+dr-xr-xr-x  2 root   root      27 2026-10-02 15:46 config
+lrw-r--r--  1 root   root      17 2026-10-02 15:46 d -> /sys/kernel/debug
+drwxrwx--x  2 system system    27 2026-10-02 15:46 data
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 data_mirror
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 debug_ramdisk
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 dev
+lrw-r--r--  1 root   root      11 2026-10-02 15:46 etc -> /system/etc
+lrwxr-x---  1 root   shell     16 2026-10-02 15:46 init -> /system/bin/init
+-rwxr-x---  1 root   shell    621 2026-10-02 15:46 init.environ.rc
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 linkerconfig
+drwxr-xr-x  2 root   system    27 2026-10-02 15:46 mnt
+drwxr-xr-x  2 root   root     215 2026-10-02 15:46 odm
+drwxr-xr-x  2 root   root      42 2026-10-02 15:46 odm_dlkm
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 oem
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 postinstall
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 proc
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 product
+lrw-r--r--  1 root   root      21 2026-10-02 15:46 sdcard -> /storage/self/primary
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 second_stage_resources
+drwxr-x--x  2 root   sdcard_r  27 2026-10-02 15:46 storage
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 sys
+drwxr-xr-x 15 root   root     332 2026-10-02 15:49 system
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 system_dlkm
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 system_ext
+drwxr-xr-x  2 root   root      27 2026-10-02 15:46 tmp
+drwxr-xr-x  2 root   shell     27 2026-10-02 15:46 vendor
+drwxr-xr-x  2 root   root      42 2026-10-02 15:46 vendor_dlkm
+-rwxr-xr-x 1 root shell 2708448 2026-08-30 04:56 /mnt/liepp_probe_system_b/bin/init
+-rw-r--r-- 1 root root  3146828 2026-08-30 04:57 /mnt/liepp_probe_system_b/etc/selinux/plat_sepolicy.cil
+
+--- system_ext_b ---
+mount_rc=0
+READ_ONLY_MOUNT=PASS
+total 40
+drwxr-xr-x 11 root root   176 2026-10-02 15:52 .
+drwxr-xr-x 20 root system 420 2026-10-02 22:29 ..
+drwxr-xr-x  2 root root   132 2026-10-02 15:52 apex
+drwxr-xr-x  7 root root   165 2026-10-02 15:52 app
+drwxr-x--x  3 root shell  297 2026-10-02 15:52 bin
+drwxr-xr-x 13 root root   530 2026-10-02 15:52 etc
+drwxr-xr-x  3 root root   154 2026-10-02 15:52 framework
+drwxr-xr-x  3 root root    41 2026-10-02 15:52 lib
+drwxr-xr-x  3 root root    66 2026-10-02 15:52 lib64
+drwxr-xr-x 19 root root   455 2026-10-02 15:52 priv-app
+drwxr-xr-x  3 root root    44 2026-10-02 15:52 usr
+
+--- product_b ---
+mount_rc=0
+READ_ONLY_MOUNT=PASS
+total 48
+drwxr-xr-x 13 root root   225 2026-10-02 15:52 .
+drwxr-xr-x 20 root system 420 2026-10-02 22:29 ..
+drwxr-xr-x 19 root root   389 2026-10-02 15:52 app
+drwxr-x--x  2 root shell  132 2026-10-02 15:52 bin
+drwxr-xr-x 11 root root   540 2026-10-02 15:52 etc
+drwxr-xr-x  2 root root    65 2026-10-02 15:52 fonts
+drwxr-xr-x  2 root root   109 2026-10-02 15:52 lib
+drwxr-xr-x  2 root root   270 2026-10-02 15:52 lib64
+drwxr-xr-x  3 root root   107 2026-10-02 15:52 media
+drwxr-xr-x 14 root root   686 2026-10-02 15:52 overlay
+drwxr-xr-x  6 root root   130 2026-10-02 15:52 priv-app
+drwxr-xr-x  2 root root    71 2026-10-02 15:52 product_fake_packages
+drwxr-xr-x  3 root root    48 2026-10-02 15:52 usr
+
+--- vendor_b ---
+mount_rc=0
+READ_ONLY_MOUNT=PASS
+total 60
+drwxr-xr-x  9 root shell    162 2026-08-12 02:07 .
+drwxr-xr-x 20 root system   420 2026-10-02 22:29 ..
+drwxr-xr-x  2 root shell     68 2026-08-12 02:07 apex
+drwxr-x--x  5 root shell   5405 2026-08-12 02:07 bin
+-rw-------  1 root root    3243 2026-07-19 20:05 build.prop
+drwxr-xr-x 13 root shell   1525 2026-08-12 02:07 etc
+drwxr-xr-x  2 root shell   1158 2026-08-12 02:07 firmware
+drwxr-xr-x  7 root shell   1247 2026-08-12 02:07 lib
+drwxr-xr-x  8 root shell  24534 2026-08-12 02:07 lib64
+drwxr-xr-x  3 root shell     42 2026-08-12 02:07 odm
+-rw------- 1 root root   3243 2026-07-19 20:05 /mnt/liepp_probe_vendor_b/build.prop
+-rw-r--r-- 1 root root 162475 2026-07-19 19:44 /mnt/liepp_probe_vendor_b/etc/selinux/vendor_sepolicy.cil
+-rw-r--r-- 1 root root   8186 2026-07-19 20:04 /mnt/liepp_probe_vendor_b/etc/vintf/manifest.xml
+
+===== CAPTURE B VBMETA IMAGES =====
+capturing=vbmeta_b
+/tmp/gq5012-a17-first-stage-contract/vbmeta_b.img 8388608
+a9d8cd21860631400069d86b745193edb8ff6c416004bd79b17e3b6e63d2f5b1  /tmp/gq5012-a17-first-stage-contract/vbmeta_b.img
+capturing=vbmeta_system_b
+/tmp/gq5012-a17-first-stage-contract/vbmeta_system_b.img 8388608
+ade9348006da6360901766e9101365c2eec28919d8312b101cd3e53d713366e5  /tmp/gq5012-a17-first-stage-contract/vbmeta_system_b.img
+capturing=vbmeta_vendor_b
+/tmp/gq5012-a17-first-stage-contract/vbmeta_vendor_b.img 8388608
+514734a0c1ebc8db80b2c756c3041ef5a7237b523bb0472741e46e1b66a5735f  /tmp/gq5012-a17-first-stage-contract/vbmeta_vendor_b.img
+
+===== AVBTOOL =====
+avbtool=/mnt/SamsungSSD/android/lineage-24.0/out/host/linux-x86/bin/avbtool
+
+===== CURRENT B VBMETA DESCRIPTORS =====
+
+################################################################
+IMAGE=/tmp/gq5012-a17-first-stage-contract/vbmeta_b.img
+################################################################
+Minimum libavb version:   1.0
+Header Block:             256 bytes
+Authentication Block:     320 bytes
+Auxiliary Block:          6272 bytes
+Public key (sha1):        d6b1afef32b1fce5c47f537df3d7ec167ae2b469
+Algorithm:                SHA256_RSA2048
+Rollback Index:           0
+Flags:                    3
+Rollback Index Location:  0
+Release String:           'avbtool 1.3.0'
+Descriptors:
+    Chain Partition descriptor:
+      Partition Name:          boot
+      Rollback Index Location: 3
+      Public key (sha1):       9d808b0995768d0677fccb1efcddb7cf9e153d99
+      Flags:                   0
+    Chain Partition descriptor:
+      Partition Name:          vbmeta_system
+      Rollback Index Location: 2
+      Public key (sha1):       579a140d204d847f0c74332c73996baf1ed6a5fc
+      Flags:                   0
+    Chain Partition descriptor:
+      Partition Name:          vbmeta_vendor
+      Rollback Index Location: 4
+      Public key (sha1):       664998c1c258771293715a829bd8caeae5d5626b
+      Flags:                   0
+    Prop: com.android.build.init_boot.os_version -> '14'
+    Prop: com.android.build.init_boot.fingerprint -> 'Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys'
+    Prop: com.android.build.init_boot.security_patch -> '2024-04-05'
+    Prop: com.android.build.vendor_boot.fingerprint -> 'Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys'
+    Prop: com.android.build.dtbo.fingerprint -> 'Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys'
+    Prop: com.android.build.product.os_version -> '15'
+    Prop: com.android.build.product.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.product.security_patch -> '2026-07-01'
+    Prop: com.android.build.system_ext.os_version -> '15'
+    Prop: com.android.build.system_ext.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.system_ext.security_patch -> '2026-07-01'
+    Prop: com.android.build.vendor_dlkm.os_version -> '14'
+    Prop: com.android.build.vendor_dlkm.fingerprint -> 'Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys'
+    Prop: com.android.build.system_dlkm.os_version -> '14'
+    Prop: com.android.build.system_dlkm.fingerprint -> 'Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys'
+    Prop: com.android.build.odm_dlkm.os_version -> '14'
+    Prop: com.android.build.odm_dlkm.fingerprint -> 'Ulefone/GQ5012BF1_EEA/GQ5012BF1:15/AP3A.240905.015.A2/1761131274:user/release-keys'
+    Hash descriptor:
+      Image Size:            48320 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        dtbo
+      Salt:                  9c02741721a24549180ce75e774265e894e30f7442167b91ef7b06dec913b654
+      Digest:                b14ed1243ef1b47bd4d93cab9244121bc4c2435321c89a5ab0955e4ef5949958
+      Flags:                 0
+    Hash descriptor:
+      Image Size:            2162688 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        init_boot
+      Salt:                  9c02741721a24549180ce75e774265e894e30f7442167b91ef7b06dec913b654
+      Digest:                5380b2128d27bc45ffcb36a6739b6be5527fafc14c32837011970c1449949c7d
+      Flags:                 0
+    Hash descriptor:
+      Image Size:            33828864 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        vendor_boot
+      Salt:                  9c02741721a24549180ce75e774265e894e30f7442167b91ef7b06dec913b654
+      Digest:                2dd35dbc5697256c8379f1e3ebb7c99ef209b4022cfc8b62736204f76b20cd53
+      Flags:                 0
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            57344 bytes
+      Tree Offset:           57344
+      Tree Size:             4096 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            61440
+      FEC size:              8192 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        odm_dlkm
+      Salt:                  9c02741721a24549180ce75e774265e894e30f7442167b91ef7b06dec913b654
+      Root Digest:           54d68478a49b7ccbc3509414f1e546a1b7c6709c46e9a31b7c1503c793cc8934
+      Flags:                 0
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            331276288 bytes
+      Tree Offset:           331276288
+      Tree Size:             2613248 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            333889536
+      FEC size:              2646016 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        product
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           1dbbbb4ed375f4c52921a5dfbe69cbd9cea7c345
+      Flags:                 0
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            7241728 bytes
+      Tree Offset:           7241728
+      Tree Size:             61440 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            7303168
+      FEC size:              65536 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        system_dlkm
+      Salt:                  9c02741721a24549180ce75e774265e894e30f7442167b91ef7b06dec913b654
+      Root Digest:           6eb178d7de3a9ff47578fcbde7d9e3280c5e4fffe28ce39698fbd2eeb57a8a95
+      Flags:                 0
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            359931904 bytes
+      Tree Offset:           359931904
+      Tree Size:             2842624 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            362774528
+      FEC size:              2875392 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        system_ext
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           46988ddf233c2ab42b3711085da86dcd45cdaefb
+      Flags:                 0
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            17125376 bytes
+      Tree Offset:           17125376
+      Tree Size:             139264 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            17264640
+      FEC size:              139264 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        vendor_dlkm
+      Salt:                  9c02741721a24549180ce75e774265e894e30f7442167b91ef7b06dec913b654
+      Root Digest:           dfa8ca21eae3ff84a2090d793955d07c07aa9b16f7c37a08e0aa9e5b9d35645b
+      Flags:                 0
+
+################################################################
+IMAGE=/tmp/gq5012-a17-first-stage-contract/vbmeta_system_b.img
+################################################################
+Minimum libavb version:   1.0
+Header Block:             256 bytes
+Authentication Block:     320 bytes
+Auxiliary Block:          1088 bytes
+Public key (sha1):        579a140d204d847f0c74332c73996baf1ed6a5fc
+Algorithm:                SHA256_RSA2048
+Rollback Index:           0
+Flags:                    0
+Rollback Index Location:  0
+Release String:           'avbtool 1.3.0'
+Descriptors:
+    Prop: com.android.build.system.os_version -> '16'
+    Prop: com.android.build.system.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.system.security_patch -> '2026-06-01'
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            652840960 bytes
+      Tree Offset:           652840960
+      Tree Size:             5148672 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            657989632
+      FEC size:              5201920 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        system
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           aa57361b018f99c0985c15b2e29934192849adeb
+      Flags:                 0
+
+################################################################
+IMAGE=/tmp/gq5012-a17-first-stage-contract/vbmeta_vendor_b.img
+################################################################
+Minimum libavb version:   1.0
+Header Block:             256 bytes
+Authentication Block:     320 bytes
+Auxiliary Block:          1024 bytes
+Public key (sha1):        664998c1c258771293715a829bd8caeae5d5626b
+Algorithm:                SHA256_RSA2048
+Rollback Index:           0
+Flags:                    0
+Rollback Index Location:  0
+Release String:           'avbtool 1.3.0'
+Descriptors:
+    Prop: com.android.build.vendor.os_version -> '15'
+    Prop: com.android.build.vendor.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            800985088 bytes
+      Tree Offset:           800985088
+      Tree Size:             6311936 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            807297024
+      FEC size:              6389760 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        vendor
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           4353ab7b9127bbf23907745aa9c593871c09badb
+      Flags:                 0
+
+===== LOGICAL IMAGE AVB FOOTERS =====
+
+################################################################
+IMAGE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system.img
+################################################################
+bytes=665391104
+8a3d844f35c6d4f5039878a7e72a65c664ded243b9e749d49390bc4118bc2030  /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system.img
+Footer version:           1.0
+Image size:               665391104 bytes
+Original image size:      625762304 bytes
+VBMeta offset:            635686912
+VBMeta size:              832 bytes
+--
+Minimum libavb version:   1.0
+Header Block:             256 bytes
+Authentication Block:     0 bytes
+Auxiliary Block:          576 bytes
+Algorithm:                NONE
+Rollback Index:           0
+Flags:                    0
+Rollback Index Location:  0
+Release String:           'avbtool 1.4.0'
+Descriptors:
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            625762304 bytes
+      Tree Offset:           625762304
+      Tree Size:             4935680 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            630697984
+      FEC size:              4988928 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        system
+      Salt:                  edc881fce9cb7d94f2ec9a44619c77df432235b7ffcbbc2f5f6d3f9f3a00e70c
+      Root Digest:           81e8793fa91e1f0d53e0676a22af63eef2eeffc4878a828fe3a59d5ab96f86f2
+      Flags:                 0
+    Prop: com.android.build.system.os_version -> '17'
+    Prop: com.android.build.system.fingerprint -> 'Ulefone/lineage_gq5012bf1/gq5012bf1:17/CP2A.260605.016/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.system.security_patch -> '2026-09-01'
+
+################################################################
+IMAGE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system_ext.img
+################################################################
+bytes=366891008
+4187b58a47ad36cd5b4e58f87c642ac4a73c617d241d796cdff53f451d41d84b  /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system_ext.img
+Footer version:           1.0
+Image size:               366891008 bytes
+Original image size:      235405312 bytes
+VBMeta offset:            239140864
+VBMeta size:              896 bytes
+--
+Minimum libavb version:   1.0
+Header Block:             256 bytes
+Authentication Block:     0 bytes
+Auxiliary Block:          640 bytes
+Algorithm:                NONE
+Rollback Index:           0
+Flags:                    0
+Rollback Index Location:  0
+Release String:           'avbtool 1.4.0'
+Descriptors:
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            235405312 bytes
+      Tree Offset:           235405312
+      Tree Size:             1859584 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            237264896
+      FEC size:              1875968 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        system_ext
+      Salt:                  edc881fce9cb7d94f2ec9a44619c77df432235b7ffcbbc2f5f6d3f9f3a00e70c
+      Root Digest:           bccd0626cc2583c5c1c4fa7553bf6209b8a371f06c4db6ea2019dd548bfd22d3
+      Flags:                 0
+    Prop: com.android.build.system_ext.os_version -> '17'
+    Prop: com.android.build.system_ext.fingerprint -> 'Ulefone/lineage_gq5012bf1/gq5012bf1:17/CP2A.260605.016/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.system_ext.security_patch -> '2026-09-01'
+
+################################################################
+IMAGE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/product.img
+################################################################
+bytes=337686528
+e2130d8fda18ffe2cb2b94a16659acd28b160127175547afee4a876539b6135a  /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/product.img
+Footer version:           1.0
+Image size:               337686528 bytes
+Original image size:      291459072 bytes
+VBMeta offset:            296087552
+VBMeta size:              832 bytes
+--
+Minimum libavb version:   1.0
+Header Block:             256 bytes
+Authentication Block:     0 bytes
+Auxiliary Block:          576 bytes
+Algorithm:                NONE
+Rollback Index:           0
+Flags:                    0
+Rollback Index Location:  0
+Release String:           'avbtool 1.4.0'
+Descriptors:
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            291459072 bytes
+      Tree Offset:           291459072
+      Tree Size:             2301952 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            293761024
+      FEC size:              2326528 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        product
+      Salt:                  edc881fce9cb7d94f2ec9a44619c77df432235b7ffcbbc2f5f6d3f9f3a00e70c
+      Root Digest:           2e411e3b0eebde32bc56725d2e429f88d702cb80c259210dbd3f2ed019302100
+      Flags:                 0
+    Prop: com.android.build.product.os_version -> '17'
+    Prop: com.android.build.product.fingerprint -> 'Ulefone/lineage_gq5012bf1/gq5012bf1:17/CP2A.260605.016/eng.armol:userdebug/test-keys'
+    Prop: com.android.build.product.security_patch -> '2026-09-01'
+
+################################################################
+IMAGE=/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/current-b-logical-dumps/vendor_b.img
+################################################################
+bytes=816349184
+9f3dfe3fe5ef025b667b8181bddfedaf6b08dace4b7cd6c4e05a4fde0d16aa98  /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/current-b-logical-dumps/vendor_b.img
+Footer version:           1.0
+Image size:               816349184 bytes
+Original image size:      800976896 bytes
+VBMeta offset:            813678592
+VBMeta size:              768 bytes
+--
+Minimum libavb version:   1.0
+Header Block:             256 bytes
+Authentication Block:     0 bytes
+Auxiliary Block:          512 bytes
+Algorithm:                NONE
+Rollback Index:           0
+Flags:                    0
+Rollback Index Location:  0
+Release String:           'avbtool 1.3.0'
+Descriptors:
+    Hashtree descriptor:
+      Version of dm-verity:  1
+      Image Size:            800976896 bytes
+      Tree Offset:           800976896
+      Tree Size:             6311936 bytes
+      Data Block Size:       4096 bytes
+      Hash Block Size:       4096 bytes
+      FEC num roots:         2
+      FEC offset:            807288832
+      FEC size:              6389760 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        vendor
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           8740ffe9618882f976a71da4f743b19b3b9a01d4
+      Flags:                 0
+    Prop: com.android.build.vendor.os_version -> '15'
+    Prop: com.android.build.vendor.fingerprint -> 'Ulefone/lineage_armol/armol:15/BP1A.250505.005/eng.armol:userdebug/test-keys'
+
+===== AVB VERIFY LOGICAL IMAGES =====
+
+--- verify /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system.img ---
+Verifying image /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system.img using embedded public key
+vbmeta: Successfully verified footer and NONE vbmeta struct in /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system.img
+system: Successfully verified sha256 hashtree of /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system.img for image of 625762304 bytes
+verify_rc=0
+
+--- verify /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system_ext.img ---
+Verifying image /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system_ext.img using embedded public key
+vbmeta: Successfully verified footer and NONE vbmeta struct in /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system_ext.img
+system_ext: Successfully verified sha256 hashtree of /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system_ext.img for image of 235405312 bytes
+verify_rc=0
+
+--- verify /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/product.img ---
+Verifying image /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/product.img using embedded public key
+vbmeta: Successfully verified footer and NONE vbmeta struct in /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/product.img
+product: Successfully verified sha256 hashtree of /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/product.img for image of 291459072 bytes
+verify_rc=0
+
+--- verify /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/current-b-logical-dumps/vendor_b.img ---
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/mnt/SamsungSSD/android/lineage-24.0/out/host/linux-x86/bin/avbtool/__main__.py", line 52, in <module>
+  File "/mnt/SamsungSSD/android/lineage-24.0/out/host/linux-x86/bin/avbtool/__main__.py", line 46, in _soong_main
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "avbtool.py", line 5958, in <module>
+  File "avbtool.py", line 5703, in run
+  File "avbtool.py", line 5865, in verify_image
+  File "avbtool.py", line 3032, in verify_image
+  File "avbtool.py", line 1953, in verify
+  File "avbtool.py", line 1194, in __init__
+  File "avbtool.py", line 1209, in _read_header
+FileNotFoundError: [Errno 2] No such file or directory: '/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/current-b-logical-dumps/vendor.img'
+Verifying image /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/current-b-logical-dumps/vendor_b.img using embedded public key
+vbmeta: Successfully verified footer and NONE vbmeta struct in /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/current-b-logical-dumps/vendor_b.img
+verify_rc=1
+
+===== IMPORTANT DESCRIPTOR LINES =====
+
+--- /tmp/gq5012-a17-first-stage-contract/vbmeta_system_b.img ---
+Algorithm:                SHA256_RSA2048
+Rollback Index:           0
+Flags:                    0
+      Image Size:            652840960 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        system
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           aa57361b018f99c0985c15b2e29934192849adeb
+      Flags:                 0
+
+--- /tmp/gq5012-a17-first-stage-contract/vbmeta_vendor_b.img ---
+Algorithm:                SHA256_RSA2048
+Rollback Index:           0
+Flags:                    0
+      Image Size:            800985088 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        vendor
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           4353ab7b9127bbf23907745aa9c593871c09badb
+      Flags:                 0
+
+--- /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system.img ---
+Algorithm:                NONE
+Rollback Index:           0
+Flags:                    0
+      Image Size:            625762304 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        system
+      Salt:                  edc881fce9cb7d94f2ec9a44619c77df432235b7ffcbbc2f5f6d3f9f3a00e70c
+      Root Digest:           81e8793fa91e1f0d53e0676a22af63eef2eeffc4878a828fe3a59d5ab96f86f2
+      Flags:                 0
+
+--- /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system_ext.img ---
+Algorithm:                NONE
+Rollback Index:           0
+Flags:                    0
+      Image Size:            235405312 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        system_ext
+      Salt:                  edc881fce9cb7d94f2ec9a44619c77df432235b7ffcbbc2f5f6d3f9f3a00e70c
+      Root Digest:           bccd0626cc2583c5c1c4fa7553bf6209b8a371f06c4db6ea2019dd548bfd22d3
+      Flags:                 0
+
+--- /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/product.img ---
+Algorithm:                NONE
+Rollback Index:           0
+Flags:                    0
+      Image Size:            291459072 bytes
+      Hash Algorithm:        sha256
+      Partition Name:        product
+      Salt:                  edc881fce9cb7d94f2ec9a44619c77df432235b7ffcbbc2f5f6d3f9f3a00e70c
+      Root Digest:           2e411e3b0eebde32bc56725d2e429f88d702cb80c259210dbd3f2ed019302100
+      Flags:                 0
+
+--- /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/current-b-logical-dumps/vendor_b.img ---
+Algorithm:                NONE
+Rollback Index:           0
+Flags:                    0
+      Image Size:            800976896 bytes
+      Hash Algorithm:        sha1
+      Partition Name:        vendor
+      Salt:                  b6497d667c35b54999e4eee6d8c57a3e606fe5bf5d1c2e4919e201e5fb624aa6
+      Root Digest:           8740ffe9618882f976a71da4f743b19b3b9a01d4
+      Flags:                 0
+
+============================================================
+FIRST_STAGE_FSTAB_CAPTURED=YES
+B_FILESYSTEMS_PROBED_READ_ONLY=YES
+B_VBMETA_DESCRIPTORS_CAPTURED=YES
+PHONE_PARTITION_WRITE_PERFORMED=NO
+BOOT_CONTROL_WRITE_PERFORMED=NO
+SLOT_B_REACTIVATED=NO
+============================================================

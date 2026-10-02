@@ -218,3 +218,19 @@ region and explicitly searched for:
 - kernel panic/oops/call-trace signatures
 
 No additional Slot-B boot was attempted during this analysis.
+
+## Android 17 failed boot — first-stage mount contract analysis
+
+The first Android 17 Slot-B attempt was narrowed to an orderly init fatal
+reboot immediately after the first observed EROFS logical-partition mount.
+
+A read-only follow-up therefore captured:
+
+- the exact factory vendor_boot first-stage fstab and mount order,
+- live Slot-B logical device-mapper mappings,
+- read-only mountability of system/system_ext/product/vendor,
+- current Slot-B vbmeta descriptors,
+- AVB metadata from the Android 17 system images and archived Phase-4 vendor.
+
+This step did not reactivate Slot B and performed no partition or boot-control
+writes.
