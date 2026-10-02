@@ -196,3 +196,25 @@ mechanism protected the working Slot A as intended.
 No additional Slot-B activation should be performed until the retained
 pstore/ramoops, boot-reason and MediaTek crash evidence from this attempt has
 been analyzed.
+
+## First failed Android 17 boot — ramoops deep analysis
+
+The automatic Slot-A fallback preserved a `console-ramoops-0` record from the
+failed Slot-B attempt.
+
+Initial inspection showed that the failed boot reached Android first-stage
+init and loaded the expected MediaTek early kernel modules. No kernel
+panic/oops was visible in the initial filtered forensic output.
+
+A second host-side analysis therefore captured the complete late-console
+region and explicitly searched for:
+
+- first-stage and second-stage init transitions
+- fs_mgr and logical-partition mounting
+- AVB / dm-verity
+- SELinux policy loading
+- snapuserd / snapshot setup
+- watchdog and reboot paths
+- kernel panic/oops/call-trace signatures
+
+No additional Slot-B boot was attempted during this analysis.
