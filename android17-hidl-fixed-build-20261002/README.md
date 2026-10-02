@@ -265,3 +265,29 @@ Image size remains exactly:
 which matches the existing system_b logical-partition capacity.
 
 No phone partition or boot-control write was performed.
+
+## Android 17 /metadata fix installed for isolated Slot-B retest
+
+The rebuilt Android 17 system image containing the required root /metadata
+mountpoint was installed to system_b as the only changed Slot-B partition.
+
+Previous system_b SHA-256:
+
+    8a3d844f35c6d4f5039878a7e72a65c664ded243b9e749d49390bc4118bc2030
+
+Corrected system_b SHA-256:
+
+    d8bcd2ea2d842c02c23572cf60a55b81f5403e15cf20b3f53a208769d700d3f0
+
+The corrected image was verified through the canonical read-only system_b
+mapping and mounted read-only after installation. The flashed root contains
+both /metadata and /system/bin/init.
+
+All other physical and logical Slot-B partition hashes remained unchanged.
+
+Slot B's exhausted retry state was cleared and B was selected for the next
+boot while remaining unsuccessful. Slot A remained active and successful
+before reboot, and the metadata-encryption key invariant remained unchanged.
+
+This retest therefore isolates BOARD_USES_METADATA_PARTITION /
+root-/metadata creation as the experimental variable.
