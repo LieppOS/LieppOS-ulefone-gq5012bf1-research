@@ -362,3 +362,23 @@ captured bootloader slot state before selecting the known-good Slot A.
 
 The phone was returned to Slot A without modifying Android 17 partitions.
 Retained pstore evidence from the B attempt was copied after recovery.
+
+## Static LK investigation after repeated recovery-mode Slot-B boots
+
+The live Slot-B capture attempt missed the short B transport window and the
+device automatically returned to known-good Slot A.
+
+The preboot BCB had been empty and the corrected Android 17 system_b was still
+installed. After fallback, Slot A again reported normal MediaTek boot mode 0,
+force_normal_boot=1 and an empty BCB.
+
+Because the recovery classification is therefore being made before normal
+Android userspace, the next investigation moved offline into the exact
+factory V15 LK image.
+
+The factory LK and live LK-like partitions were identified read-only and the
+bootloader binary was searched for MediaTek recovery selectors, RTC recovery
+handling, interrupted-recovery detection, key detection, A/B retry logic and
+force_normal_boot handling.
+
+No new Slot-B boot was attempted.
