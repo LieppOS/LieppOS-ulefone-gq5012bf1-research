@@ -539,3 +539,20 @@ handoff.
 This does not by itself establish which component caused the failed
 experimental Slot-B boot to request recovery. That causal question remains
 separate and is the next investigation target.
+
+## LK reboot-mode dispatcher follow-up
+
+After proving the Linux -> WDT NONRST -> LK recovery-mode contract, the next
+target is LK function `0x8938`.
+
+This function contains direct calls to the low reboot-mode writer `0x3dc5c`
+using both:
+
+- `3`, matching the DT `mode-bootloader` value
+- `2`, matching the DT `mode-recovery` value
+
+A dedicated host-only investigation now captures the complete function,
+control flow, referenced strings, call graph, and post-write reset path in
+order to identify the exact LK-side conditions that select these modes.
+
+No phone state is modified by this investigation.
