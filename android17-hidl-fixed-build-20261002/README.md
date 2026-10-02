@@ -307,3 +307,25 @@ rebooted back to the known-good Slot A.
 This behavioral change strongly supports the missing root /metadata mountpoint
 as the first-stage blocker. The next investigation therefore moves later in
 the Android boot sequence rather than reverting that fix.
+
+## Android 17 reached recovery userspace after metadata fix
+
+The corrected system_b eliminated the previous first-stage fatal reboot.
+
+The subsequent Slot-B attempt reached:
+
+- SELinux policy loading and enforcing mode
+- Android init second stage
+- servicemanager
+- USB gadget initialization
+
+The boot was not a normal Android userspace boot, however. MediaTek runtime
+evidence reported bootmode 0x2 / boottype 0x2, corresponding to RECOVERY_BOOT.
+Recovery userspace then started and later entered fastbootd.
+
+The later fastboot set_active:a and reboot commands were the manual rescue and
+occurred after recovery/fastbootd had already started.
+
+A read-only investigation of misc/BCB, MediaTek para state, current normal-A
+boot mode, chosen DT boot tags, and retained LK logging was therefore captured
+before any further Slot-B attempt.
