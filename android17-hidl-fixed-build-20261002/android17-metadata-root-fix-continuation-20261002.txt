@@ -1,0 +1,261 @@
+============================================================
+CONTINUE ANDROID 17 /metadata ROOT FIX
+============================================================
+
+===== VERIFY BOARD CONFIG EDIT SURVIVED =====
+92:BOARD_USES_METADATA_PARTITION := true
+active_definition_count=1
+boardconfig_value=true
+
+===== SHOW BOARD CONFIG TAIL =====
+BOARD_MAIN_SIZE := 9661579264
+BOARD_MAIN_PARTITION_LIST := \
+    system \
+    system_ext \
+    product
+BOARD_BUILD_SUPER_IMAGE_BY_DEFAULT := false
+
+# AVB stays enabled with verity and FEC. A host test key signs build artifacts;
+# it is not a phone acceptance key and these files are not flash packages.
+BOARD_AVB_ENABLE := true
+BOARD_AVB_ROLLBACK_INDEX := 0
+BOARD_AVB_VBMETA_SYSTEM := system
+BOARD_AVB_VBMETA_SYSTEM_KEY_PATH := external/avb/test/data/testkey_rsa2048.pem
+BOARD_AVB_VBMETA_SYSTEM_ALGORITHM := SHA256_RSA2048
+BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
+BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX_LOCATION := 1
+BOARD_AVB_SYSTEM_ADD_HASHTREE_FOOTER_ARGS += --hash_algorithm sha256
+BOARD_AVB_SYSTEM_EXT_ADD_HASHTREE_FOOTER_ARGS += --hash_algorithm sha256
+BOARD_AVB_PRODUCT_ADD_HASHTREE_FOOTER_ARGS += --hash_algorithm sha256
+
+# Stock/current B descriptor ownership: system belongs to vbmeta_system;
+# product and system_ext descriptors belong to root vbmeta.
+
+# Metadata partition mountpoint required by first-stage init before SwitchRoot.
+BOARD_USES_METADATA_PARTITION := true
+
+===== FIND ACTUAL ANDROID 17 CONSUMERS =====
+/mnt/SamsungSSD/android/lineage-24.0/build/make/target/board/BoardConfigGsiCommon.mk:43:BOARD_USES_METADATA_PARTITION := true
+/mnt/SamsungSSD/android/lineage-24.0/build/make/target/board/BoardConfigMainlineCommon.mk:23:BOARD_USES_METADATA_PARTITION := true
+/mnt/SamsungSSD/android/lineage-24.0/build/target/board/BoardConfigGsiCommon.mk:43:BOARD_USES_METADATA_PARTITION := true
+/mnt/SamsungSSD/android/lineage-24.0/build/target/board/BoardConfigMainlineCommon.mk:23:BOARD_USES_METADATA_PARTITION := true
+/mnt/SamsungSSD/android/lineage-24.0/system/core/rootdir/create_root_structure.mk:72:ifdef BOARD_USES_METADATA_PARTITION
+
+===== RESOLVE BUILD VARIABLE =====
+BOARD_USES_METADATA_PARTITION=true
+
+===== PREBUILD STATE =====
+root_metadata_before_build=NO
+old_system_bytes=665391104
+old_system_sha256=8a3d844f35c6d4f5039878a7e72a65c664ded243b9e749d49390bc4118bc2030
+
+===== INCREMENTAL SYSTEMIMAGE BUILD =====
+Running product configuration...
+============================================
+PLATFORM_VERSION_CODENAME=REL
+PLATFORM_VERSION=17
+LINEAGE_VERSION=24.0-20261002-UNOFFICIAL-gq5012bf1
+PRODUCT_SOURCE_ROOT_DIRS=-kernel/platform -prebuilts/misc/protobuf_vendorcompat
+TARGET_PRODUCT=lineage_gq5012bf1
+TARGET_BUILD_VARIANT=userdebug
+TARGET_ARCH=arm64
+TARGET_ARCH_VARIANT=armv8-a
+TARGET_CPU_VARIANT=generic
+TARGET_2ND_ARCH=arm
+TARGET_2ND_ARCH_VARIANT=armv7-a-neon
+TARGET_2ND_CPU_VARIANT=cortex-a15
+HOST_OS=linux
+HOST_OS_EXTRA=Linux-7.2.3-cachyos-dist-x86_64-Gentoo-Linux
+HOST_CROSS_OS=windows
+BUILD_ID=CP2A.260605.016
+OUT_DIR=out
+PRODUCT_SOONG_NAMESPACES=device/ulefone/gq5012bf1
+SOONG_ONLY=false
+SOONG_INCREMENTAL_ANALYSIS=true
+============================================
+[100% 1/1] bootstrap blueprint
+Running globs...
+ninja: 
+ninja: SISO_EXPERIMENTS=fallback-on-exec-error enabled
+SISO_EXPERIMENTS=ignore-missing-out-in-depfile enabled
+
+ninja: ignore missing out error in depfile 
+
+ninja:  0.34s Build Succeeded: 0 steps - 0.00/s
+
+out/soong/release-config/release_config-lineage_gq5012bf1-cp2a.vars was modified, regenerating...
+Adding CUSTOM_LOCALES [ast_ES ckb_IQ ckb_IR gd_GB cy_GB fur_IT nn_NO] to PRODUCT_LOCALES [en_US en_US af_ZA am_ET ar_EG ar_XB as_IN az_AZ be_BY bg_BG bn_BD bs_BA ca_ES cs_CZ da_DK de_DE el_GR en_AU en_CA en_GB en_IN en_XA es_ES es_US et_EE eu_ES fa_IR fi_FI fr_CA fr_FR gl_ES gu_IN hi_IN hr_HR hu_HU hy_AM in_ID is_IS it_IT iw_IL ja_JP ka_GE kk_KZ km_KH kn_IN ko_KR ky_KG lo_LA lt_LT lv_LV mk_MK ml_IN mn_MN mr_IN ms_MY my_MM nb_NO ne_NP nl_NL or_IN pa_IN pl_PL pt_BR pt_PT ro_RO ru_RU si_LK sk_SK sl_SI sq_AL sr_Latn_RS sr_RS sv_SE sw_TZ ta_IN te_IN th_TH tl_PH tr_TR uk_UA ur_PK uz_UZ vi_VN zh_CN zh_HK zh_TW zu_ZA en_XC]
+device/ulefone/gq5012bf1/BoardConfig.mk was modified, regenerating...
+[100% 2/2] initializing Make module parser
+Adding CUSTOM_LOCALES [ast_ES ckb_IQ ckb_IR gd_GB cy_GB fur_IT nn_NO] to PRODUCT_LOCALES [en_US en_US af_ZA am_ET ar_EG ar_XB as_IN az_AZ be_BY bg_BG bn_BD bs_BA ca_ES cs_CZ da_DK de_DE el_GR en_AU en_CA en_GB en_IN en_XA es_ES es_US et_EE eu_ES fa_IR fi_FI fr_CA fr_FR gl_ES gu_IN hi_IN hr_HR hu_HU hy_AM in_ID is_IS it_IT iw_IL ja_JP ka_GE kk_KZ km_KH kn_IN ko_KR ky_KG lo_LA lt_LT lv_LV mk_MK ml_IN mn_MN mr_IN ms_MY my_MM nb_NO ne_NP nl_NL or_IN pa_IN pl_PL pt_BR pt_PT ro_RO ru_RU si_LK sk_SK sl_SI sq_AL sr_Latn_RS sr_RS sv_SE sw_TZ ta_IN te_IN th_TH tl_PH tr_TR uk_UA ur_PK uz_UZ vi_VN zh_CN zh_HK zh_TW zu_ZA en_XC]
+[ 30% 3/10] including out/soong/installs-lineage_gq5012bf1.mk
+[ 40% 4/10] including out/soong/Android-lineage_gq5012bf1.mk
+[ 50% 5/10] including build/make/target/board/android-info.mk
+[ 60% 6/10] including bootable/deprecated-ota/updater/Android.mk
+[ 70% 7/10] including hardware/broadcom/wlan/bcmdhd/Android.mk
+[ 80% 8/10] including hardware/qcom/Android.mk
+[ 90% 9/10] including hardware/synaptics/wlan/synadhd/Android.mk
+[100% 10/10] including out/soong/late-lineage_gq5012bf1.mk
+[100% 11/11] finishing Make module rules
+[100% 12/12] finishing Make module rules: Adding module dependencies
+[100% 13/13] finishing Make packaging rules
+build/make/core/Makefile:5662: warning: Neither INSTALLED_KERNEL_TARGET nor INSTALLED_BOOTIMAGE_TARGET is defined when PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS  is true. Information about the updated kernel cannot be built into OTA update package. You can fix this by: (1) setting TARGET_NO_KERNEL to false and installing the built kernel to out/target/product/gq5012bf1/kernel, so that kernel information will be extracted from the built kernel; or (2) Add a prebuilt boot image and specify it in BOARD_PREBUILT_BOOTIMAGE; or (3) extracting kernel configuration and defining BOARD_KERNEL_CONFIG_FILE and BOARD_KERNEL_VERSION manually; or (4) unsetting PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS manually.
+[ 41% 14/34] including build/make/core/tasks/art.mk
+[ 44% 15/34] including build/make/core/tasks/build_custom_images.mk
+[ 47% 16/34] including build/make/core/tasks/dex_preopt_check.mk
+[ 50% 17/34] including build/make/core/tasks/find-shareduid-violation.mk
+[ 52% 18/34] including build/make/core/tasks/fontchain_lint.mk
+[ 55% 19/34] including build/make/core/tasks/host_init_verifier.mk
+[ 58% 20/34] including build/make/core/tasks/meta-lic.mk
+[ 61% 21/34] including build/make/core/tasks/module-info.mk
+[ 64% 22/34] including build/make/core/tasks/oem_image.mk
+[ 67% 23/34] including build/make/core/tasks/offline-sdk-docs.mk
+[ 70% 24/34] including build/make/core/tasks/platform_availability_check.mk
+[ 73% 25/34] including build/make/core/tasks/sdv.mk
+[ 76% 26/34] including build/make/core/tasks/vendor_module_check.mk
+[ 79% 27/34] including build/make/core/tasks/with-license.mk
+[ 82% 28/34] including vendor/lineage/build/tasks/bacon.mk
+[ 85% 29/34] including vendor/lineage/build/tasks/build-manifest_xml.mk
+[ 88% 30/34] including vendor/lineage/build/tasks/dt_image.mk
+[ 91% 31/34] including vendor/lineage/build/tasks/generate_lineage_sdk_coverage.mk
+[ 94% 32/34] including vendor/lineage/build/tasks/kernel.mk
+[ 97% 33/34] including device/generic/goldfish/build/tasks/combine_initramfs.mk
+[100% 34/34] finishing Make packaging rules
+[100% 35/35] finishing Make packaging rules: Adding phony targets
+[100% 36/36] finishing Make packaging rules: Checking licensing and SBOM
+[100% 37/37] writing make module actions
+No need to regenerate ninja file
+Starting ninja...
+ninja: 
+ninja: SISO_EXPERIMENTS=allow-unexpected-rsp-remove enabled
+SISO_EXPERIMENTS=ignore-missing-out-in-depfile enabled
+SISO_EXPERIMENTS=oom-score-adj enabled
+
+ninja: ignore missing out error in depfile 
+
+[  0% 38/15766] raw product_packages.txt
+[  0% 39/15054] build out/soong/compliance-metadata/lineage_gq5012bf1/make_modules.csv
+[  0% 40/10177] //packages/apps/KeyChain:KeyChain dexpreopt product_packages[common]
+[  0% 41/10008] //packages/providers/DownloadProvider:DownloadProvider dexpreopt product_packages[common]
+[  0% 42/9998] //frameworks/base/packages/WallpaperBackup:WallpaperBackup dexpreopt product_packages[common]
+[  0% 43/9997] //packages/apps/PrivateSpace:PrivateSpace dexpreopt product_packages[common]
+[  0% 44/9994] //frameworks/base/packages/SharedStorageBackup:SharedStorageBackup dexpreopt product_packages[common]
+[  0% 45/9989] //packages/services/AlternativeNetworkAccess:ONS dexpreopt product_packages[common]
+[  0% 46/9986] //packages/services/BuiltInPrintService:BuiltInPrintService dexpreopt product_packages[common]
+[  0% 47/9960] //packages/providers/ContactsProvider:ContactsProvider dexpreopt product_packages[common]
+[  0% 48/9957] //frameworks/base/packages/VpnDialogs:VpnDialogs dexpreopt product_packages[common]
+[  0% 49/9949] //frameworks/base/packages/services/Proxy:ProxyHandler dexpreopt product_packages[common]
+[  0% 50/9946] //frameworks/base/packages/InputDevices:InputDevices dexpreopt product_packages[common]
+[  0% 51/9929] //frameworks/base/packages/CarrierDefaultApp:CarrierDefaultApp dexpreopt product_packages[common]
+[  0% 52/9774] //packages/apps/Stk:Stk dexpreopt product_packages[common]
+[  0% 53/9774] //packages/apps/DocumentsUI:DocumentsUI dexpreopt product_packages[common]
+[  0% 54/9774] //frameworks/base/packages/EasterEgg:EasterEgg dexpreopt product_packages[common]
+[  0% 55/9773] //packages/wallpapers/LivePicker:LiveWallpapersPicker dexpreopt product_packages[common]
+[  0% 56/9773] //packages/apps/SecureElement:SecureElement dexpreopt product_packages[common]
+[  0% 57/9773] //packages/providers/CallLogProvider:CallLogBackup dexpreopt product_packages[common]
+[  0% 58/9773] //packages/providers/TelephonyProvider:TelephonyProvider dexpreopt product_packages[common]
+[  0% 59/9773] //frameworks/base/test-runner:android.test.runner.impl dexpreopt product_packages[common]
+[  0% 60/9709] //frameworks/base/packages/SimAppDialog:SimAppDialog dexpreopt product_packages[common]
+[  0% 61/9706] //packages/services/DeviceAsWebcam/impl:DeviceAsWebcam dexpreopt product_packages[common]
+[  0% 62/9702] //packages/apps/DeviceDiagnostics/app/src/main:DeviceDiagnostics dexpreopt product_packages[common]
+[  0% 63/9693] //frameworks/base/packages/services/CameraExtensionsProxy:CameraExtensionsProxy dexpreopt product_packages[common]
+[  0% 64/9689] //frameworks/base/packages/SettingsProvider:SettingsProvider dexpreopt product_packages[common]
+[  0% 65/9681] //packages/services/Mtp:MtpService dexpreopt product_packages[common]
+[  0% 66/9283] //packages/providers/BookmarkProvider:BookmarkProvider dexpreopt product_packages[common]
+[  0% 67/9283] //frameworks/base/packages/DynamicSystemInstallationService:DynamicSystemInstallationService dexpreopt product_packages[common]
+[  0% 68/9283] //frameworks/base/packages/ExtShared:ExtShared dexpreopt product_packages[common]
+[  0% 69/9280] //packages/providers/ContactsKeysProvider:E2eeContactKeysProvider dexpreopt product_packages[common]
+[  0% 70/9280] //packages/apps/CellBroadcastReceiver/legacy:CellBroadcastLegacyApp dexpreopt product_packages[common]
+[  0% 71/9246] //packages/services/Telephony:TeleService dexpreopt product_packages[common]
+[  0% 72/9226] //frameworks/base/packages/LocalTransport:LocalTransport dexpreopt product_packages[common]
+[  0% 73/9171] //frameworks/base/media/packages/BluetoothMidiService:BluetoothMidiService dexpreopt product_packages[common]
+[  0% 74/9156] //frameworks/base/packages/PrintSpooler:PrintSpooler dexpreopt product_packages[common]
+[  0% 75/9143] //frameworks/base/packages/PrintRecommendationService:PrintRecommendationService dexpreopt product_packages[common]
+[  0% 76/9132] //frameworks/base/packages/CredentialManager:CredentialManager dexpreopt product_packages[common]
+[  0% 77/9132] //packages/apps/EyeDropper:EyeDropper dexpreopt product_packages[common]
+[  0% 78/9118] //packages/apps/ManagedProvisioning:ManagedProvisioning dexpreopt product_packages[common]
+[  0% 79/9116] //packages/apps/HTMLViewer:HTMLViewer dexpreopt product_packages[common]
+[  0% 80/9116] //packages/apps/CertInstaller:CertInstaller dexpreopt product_packages[common]
+[  0% 81/9110] //packages/apps/ContactsPicker:ContactsPicker dexpreopt product_packages[common]
+[  0% 82/9110] //packages/providers/CalendarProvider:CalendarProvider dexpreopt product_packages[common]
+[  0% 83/9108] //frameworks/base/packages/services/PacProcessor:PacProcessor dexpreopt product_packages[common]
+[  0% 84/9108] //frameworks/base/packages/SoundPicker:SoundPicker dexpreopt product_packages[common]
+[  0% 85/9108] //packages/modules/IntentResolver:IntentResolver dexpreopt product_packages[common]
+[  0% 86/9108] //packages/services/Telecomm:TelecomShim dexpreopt product_packages[common]
+[  0% 87/9108] //packages/modules/CaptivePortalLogin:CaptivePortalLogin dexpreopt product_packages[common]
+[  0% 88/9071] //frameworks/base/packages/ExternalStorageProvider:ExternalStorageProvider dexpreopt product_packages[common]
+[  0% 89/9061] //frameworks/base/packages/CompanionDeviceManager:CompanionDeviceManager dexpreopt product_packages[common]
+[  1% 90/8694] //packages/screensavers/Basic:BasicDreams dexpreopt product_packages[common]
+[  1% 91/8682] //packages/modules/NetworkStack:NetworkStack dexpreopt product_packages[common]
+[  1% 92/8670] //frameworks/base/packages/Shell:Shell dexpreopt product_packages[common]
+[  1% 93/8658] //frameworks/base/packages/FusedLocation:FusedLocation dexpreopt product_packages[common]
+[  1% 94/8654] //packages/providers/DownloadProvider/ui:DownloadProviderUi dexpreopt product_packages[common]
+[  1% 95/8646] //frameworks/base/packages/PackageInstaller:PackageInstaller dexpreopt product_packages[common]
+[  1% 96/8639] //packages/providers/BlockedNumberProvider:BlockedNumberProvider dexpreopt product_packages[common]
+[  1% 97/8636] //packages/services/Mms:MmsService dexpreopt product_packages[common]
+[  1% 98/8622] //frameworks/base/packages/BackupRestoreConfirmation:BackupRestoreConfirmation dexpreopt product_packages[common]
+[  1% 99/8613] //packages/providers/UserDictionaryProvider:UserDictionaryProvider dexpreopt product_packages[common]
+[  1% 100/8512] //frameworks/base/cmds/uiautomator/cmds/uiautomator:uiautomator dexpreopt product_packages[common]
+[  1% 101/7510] out/host/linux-x86/bin/release-config-internal --top . --quiet `prebuilts/build-tools/path/linux-x86/cat out/soong/release-config/args-lineage_gq5012bf1.txt` --out_dir out/soong/.intermediates/build/soong/aconfig/build_flags/my_release_config/android_common --container
+[  4% 102/2318] build out/soong/compliance-metadata/lineage_gq5012bf1/make_metadata.csv
+[ 36% 103/282] Install: out/target/product/gq5012bf1/root/init.environ.rc
+[ 83% 104/125] Installed file list: out/target/product/gq5012bf1/installed-files-root.txt
+[ 89% 105/117] //build/soong:system_dlkm-build.prop generating build.prop[common]
+[ 90% 106/117] //build/soong:system-build.prop generating build.prop[common]
+[ 91% 107/117] Install: out/target/product/gq5012bf1/system/system_dlkm/etc/build.prop
+[ 92% 108/117] Install: out/target/product/gq5012bf1/system/build.prop
+[ 93% 109/117] raw modules.csv
+[ 94% 110/117] rm -rf out/soong/compliance-metadata/lineage_gq5012bf1/compliance-metadata.db && cat out/soong/compliance-metadata/lineage_gq5012bf1/compliance-metadata.db.rsp | tr ' ' '\n' | while read -r file || [ -n "$file" ]; do out/host/linux-x86/bin/sqlite3_noicu out/soong/compliance-metadata/lineage_gq5012bf1/compliance-metadata.db ".import --csv ${file} $(basename ${file} .csv)"; done
+[ 94% 111/117] rm -rf out/soong/.intermediates/build/soong/compliance/notice_xml_system/android_arm64_armv8-a/NOTICE.xml.gz && out/host/linux-x86/bin/gen_notice_xml --output_file out/soong/.intermediates/build/soong/compliance/notice_xml_system/android_arm64_armv8-a/NOTICE.xml.gz --metadata out/soong/compliance-metadata/lineage_gq5012bf1/compliance-metadata.db --partition system --product_out out/target/product/gq5012bf1 --soong_out out/soong
+[ 95% 112/117] Install: out/target/product/gq5012bf1/system/etc/NOTICE.xml.gz
+[ 96% 113/117] Creating linker config: out/target/product/gq5012bf1/system/etc/linker.config.pb
+[ 97% 114/117] Installed file list: out/target/product/gq5012bf1/installed-files.txt
+[ 98% 115/117] Target system fs image: out/target/product/gq5012bf1/obj/PACKAGING/system_intermediates/system.img
+[ 99% 116/117] Install system fs image: out/target/product/gq5012bf1/system.img
+stdout:
+WARNING: out/target/product/gq5012bf1/system.img approaching size limit (665391104 now; limit 665391104)
+ninja: 1m33.90s Build Succeeded: 79 steps - 0.84/s
+
+
+[0;32m#### build completed successfully (05:26 (mm:ss)) ####
+[00m
+
+===== VERIFY GENERATED ROOT =====
+drwxr-xr-x 2 armol armol 4096 Oct  2 22:42 /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/root/metadata
+ROOT_METADATA_AFTER=YES
+
+===== VERIFY NEW SYSTEM IMAGE =====
+new_system_bytes=665391104
+new_system_sha256=d8bcd2ea2d842c02c23572cf60a55b81f5403e15cf20b3f53a208769d700d3f0
+old_system_sha256=8a3d844f35c6d4f5039878a7e72a65c664ded243b9e749d49390bc4118bc2030
+
+===== ROOT / INIT SANITY =====
+drwxr-xr-x 27 armol armol 4096 Oct  2 22:42 /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/root
+drwxr-xr-x  2 armol armol 4096 Oct  2 22:42 /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/root/metadata
+lrwxrwxrwx 1 armol armol 16 Oct  2 22:42 /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/root/init -> /system/bin/init
+
+===== AVB FOOTER SANITY =====
+Image size:               665391104 bytes
+Original image size:      625762304 bytes
+Algorithm:                NONE
+Flags:                    0
+      Hash Algorithm:        sha256
+      Partition Name:        system
+      Root Digest:           89b884947eeac852ced6ed2a46846d7a962efd775aa426b42132b00ec95aa01b
+      Flags:                 0
+    Prop: com.android.build.system.os_version -> '17'
+    Prop: com.android.build.system.fingerprint -> 'Ulefone/lineage_gq5012bf1/gq5012bf1:17/CP2A.260605.016/eng.armol:userdebug/test-keys'
+
+Verifying image /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system.img using embedded public key
+vbmeta: Successfully verified footer and NONE vbmeta struct in /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system.img
+system: Successfully verified sha256 hashtree of /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system.img for image of 625762304 bytes
+
+============================================================
+METADATA_BUILD_FLAG=PASS
+ROOT_METADATA_MOUNTPOINT=PASS
+SYSTEM_IMAGE_REBUILT=PASS
+SYSTEM_IMAGE_SIZE=665391104
+SYSTEM_IMAGE_SHA256=d8bcd2ea2d842c02c23572cf60a55b81f5403e15cf20b3f53a208769d700d3f0
+PHONE_WRITE_PERFORMED=NO
+BOOT_CONTROL_WRITE_PERFORMED=NO
+============================================================

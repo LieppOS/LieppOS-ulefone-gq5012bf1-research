@@ -234,3 +234,34 @@ A read-only follow-up therefore captured:
 
 This step did not reactivate Slot B and performed no partition or boot-control
 writes.
+
+## Android 17 metadata mountpoint fix completed
+
+The initial metadata-root repair script successfully modified BoardConfig.mk
+but aborted before rebuilding because the device directory was not itself a
+Git repository.
+
+The continuation verified the effective build configuration:
+
+    BOARD_USES_METADATA_PARTITION := true
+
+The Android build configuration resolves that variable as true.
+
+An incremental systemimage build was then completed and the generated root
+contains the required /metadata directory.
+
+Previous Android 17 system image:
+
+    8a3d844f35c6d4f5039878a7e72a65c664ded243b9e749d49390bc4118bc2030
+
+Corrected Android 17 system image:
+
+    d8bcd2ea2d842c02c23572cf60a55b81f5403e15cf20b3f53a208769d700d3f0
+
+Image size remains exactly:
+
+    665391104 bytes
+
+which matches the existing system_b logical-partition capacity.
+
+No phone partition or boot-control write was performed.
