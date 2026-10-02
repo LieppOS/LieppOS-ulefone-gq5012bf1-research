@@ -455,3 +455,36 @@ The force_normal_boot omission and recovery-image selection previously
 observed are downstream consumers of this already-selected boot mode.
 
 No device or boot-control write was performed.
+
+## LK recovery mode traced to MTK_WDT_NONRST_REG2
+
+The V15 LK recovery path has now been traced below the generic boot-mode
+initializer.
+
+Function `0x3dc80` accesses physical address `0x1c00a024`, which is
+`MTK_WDT_NONRST_REG2` at TOPRGU/WDT base `0x1c00a000 + 0x24`.
+
+On first invocation, LK:
+
+1. reads `MTK_WDT_NONRST_REG2`;
+2. extracts bits `[3:0]`;
+3. caches that nibble;
+4. clears bits `[3:0]` in the hardware register; and
+5. returns the cached value.
+
+The boot-mode initializer subsequently treats value `2` as `RECOVERY_BOOT`.
+
+Consequently, an earlier writer which leaves:
+
+    MTK_WDT_NONRST_REG2[3:0] = 2
+
+can force recovery independently of the misc/BCB recovery command.
+
+This is consistent with the controlled Slot-B observation in which the BCB was
+empty but LK still selected recovery.
+
+The next static target is the family of adjacent WDT helper routines beginning
+at `0x3dcb8` and `0x3dcdc`, followed by their call sites and the corresponding
+kernel/restart writer.
+
+No phone partition or boot-control state was modified by this investigation.

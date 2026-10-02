@@ -1,0 +1,33 @@
+MT6878 / Ulefone GQ5012BF1 V15 LK
+
+Confirmed static result:
+
+WDT/TOPRGU base:
+    0x1c00a000
+
+MTK_WDT_NONRST_REG2:
+    offset 0x24
+    physical 0x1c00a024
+
+LK getter:
+    0x3dc80
+
+Behavior:
+
+    if cached_byte == 0x0f:
+        reg = *(u32 *)0x1c00a024
+        cached_byte = reg & 0x0f
+        reg &= 0xfffffff0
+        *(u32 *)0x1c00a024 = reg
+
+    return cached_byte
+
+The LK boot-mode initializer interprets returned value 2 as RECOVERY_BOOT.
+
+Therefore:
+
+    WDT_NONRST_REG2[3:0] == 2
+
+is sufficient to force LK into recovery without a misc/BCB recovery command.
+
+The low nibble is consumed and cleared by LK on first access.
