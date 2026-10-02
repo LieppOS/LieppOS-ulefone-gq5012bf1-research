@@ -402,3 +402,29 @@ handling, interrupted-recovery detection, key detection, A/B retry logic and
 force_normal_boot handling.
 
 No new Slot-B boot was attempted.
+
+## LK recovery-mode control-flow localization
+
+The factory V15 LK image is an ARM64 MediaTek bootloader container rather than
+a directly analyzable ELF image.
+
+Static string analysis established that it contains:
+
+- androidboot.force_normal_boot=1
+- boot-recovery / reboot-recovery
+- recovery_check misc handling
+- recovery image loading
+- hardware recovery-key handling
+- MediaTek boot-mode DT propagation
+- A/B slot retry handling
+
+The next offline step parsed the MTK 0x58881688 container, extracted the main
+LK payload, and searched ARM64 ADR / ADRP+ADD references to the key recovery
+and normal-boot strings.
+
+This localizes the actual code regions responsible for deciding recovery mode
+without consuming another Slot-B boot attempt.
+
+The live LK partition identities were also recorded read-only to establish
+whether the factory V15 LK being reversed matches the currently installed
+bootloader.
