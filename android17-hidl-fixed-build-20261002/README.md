@@ -291,3 +291,19 @@ before reboot, and the metadata-encryption key invariant remained unchanged.
 
 This retest therefore isolates BOARD_USES_METADATA_PARTITION /
 root-/metadata creation as the experimental variable.
+
+## Android 17 /metadata fix boot result
+
+The isolated Slot-B retest with only the corrected system_b changed produced
+materially different behavior.
+
+Before the fix, Slot B reached first-stage system mounting and immediately
+entered init's fatal reboot-to-bootloader path.
+
+After adding the required root /metadata mountpoint, Slot B no longer performed
+that immediate reboot. Instead, it remained at the boot logo until manually
+rebooted back to the known-good Slot A.
+
+This behavioral change strongly supports the missing root /metadata mountpoint
+as the first-stage blocker. The next investigation therefore moves later in
+the Android boot sequence rather than reverting that fix.
