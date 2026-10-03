@@ -1,0 +1,16 @@
+table	owner_function	entries	payload_bytes	notes	parity
+init	lcm_panel_init	46 write statements (44 executed per boot: the three 0x6C variants are mutually exclusive)	288 declared / 287 transmitted per path	full DDIC bring-up incl. DSC PPS	all 46 static arrays byte-identical in .rodata; executed byte stream hashed per fps (see parity/)
+mode-select (60 Hz)	lcm_panel_init	1	2	0x6C 0x00	byte-identical (.rodata d.42)
+mode-select (90 Hz)	lcm_panel_init	1	2	0x6C 0x01	byte-identical (.rodata d.41)
+mode-select (120 Hz)	lcm_panel_init	1	2	0x6C 0x02	byte-identical (.rodata d.40)
+dsc-pps	lcm_panel_init (0x70)	1	95	DSC 1.1 PPS, 8bpc, 8bpp, 1080x2400, slice 540x12	byte-identical (.rodata d.44, 95 bytes)
+sleep-out	lcm_panel_init	1 (0x11) + msleep(120)	1	MIPI_DCS_EXIT_SLEEP_MODE	byte-identical
+display-on	lcm_panel_init	1 (0x29) + msleep(50)	1	MIPI_DCS_SET_DISPLAY_ON	byte-identical
+brightness (boot)	lcm_panel_init	1 (0x51)	3	bl_tb0 = {0x51, hi4, lo8} from current_backlight	codegen artifact only (constant placement)
+display-off	lcm_unprepare	1	1	MIPI_DCS_SET_DISPLAY_OFF + msleep(20)	byte-identical
+sleep-in	lcm_unprepare	1	1	MIPI_DCS_ENTER_SLEEP_MODE + msleep(200)	byte-identical
+brightness (runtime)	lcm_setbacklight_cmdq	1	3	0x51, level>>8 & 0xF, level & 0xFF (12-bit)	instruction-scheduling artifact only
+hbm	sethbm_cmdq	1	3	0x51 0x0F 0xFF (on) / 0x51 0x03 0xFF (off) - no vendor HBM register	constant-placement artifact only
+fingerprint-hbm (sysfs)	set_hbm_backlight_store	1	3	via ddic_dsi_send_cmd_for_fp()	register-allocation artifact only
+esd-check	ext_params.lcm_esd_check_table[0]	1	cmd 0x0A, count 1, expect 0x9C	custom ESD read	byte-identical inside the 66328-byte ext_params blobs
+dfps switch	ext_params*.dfps_cmd_table0	2	2	0x6C <code>, cmd_num = 2	byte-identical

@@ -60,7 +60,7 @@ fingerprint/HBM block**.
 
 | axis | result |
 |---|---|
-| functions | 12/12 present, 12/12 size-identical, **11/12 byte-identical** |
+| functions | 12/12 present, 12/12 size-identical, **12/12 byte-identical** |
 | data objects | **13/13 byte-identical** |
 | imports | **6/6** names + modversion CRCs |
 | exports | 1/1, 9 exported symbols |
@@ -83,7 +83,27 @@ module from 11/16-vs-12 with 4 surplus functions to an exact function/data/
 import/export match. This is consistent with the device having a side-mounted
 capacitive fingerprint reader, not an under-display one.
 
-### Delta 2 (bounded, header layout — not yet resolved)
+### Delta 2 — RESOLVED (header layout)
+
+The two surplus donor members are **`set_backlight_pack`** (donor offset 24)
+and **`hbm_set_pack`** (donor offset 224), both `dcs_write_gce_pack` variants.
+Removing them makes `get_lcm_version` land at `0xf8` and the rebuild reaches
+**12/12 byte-identical functions**, 13/13 data, 6/6 import CRCs, identical
+`.modinfo`.
+
+The proof came from naming evidence that was not used before: stock
+`mediatek-drm-panel-drv.ko`'s 320-byte `mtk_drm_panel_ext_funcs` object fills
+30 slots with handlers named after the member they implement
+(`mtk_panel_set_bl_elvss_cmdq` @0, `mtk_panel_set_aod_light_mode` @32,
+`mtk_panel_reset` @48, `mtk_panel_hbm_set_cmdq` @208,
+`mtk_panel_get_lcm_version` @248, `mtk_panel_read_panelid` @288 …), and stock
+`panel-ky-vtdr6115-dphy-cmd.ko`'s `ext_funcs` fills two more
+(`mtk_get_res_switch_type` @80, `mtk_scaling_mode_mapping` @88). Aligning the
+two layouts member-by-member leaves exactly those two donor entries unmatched.
+See `../reconstruction/mtk_panel_ext/header-donor-to-stock.diff` and
+`../yft-vtdr6115-deltas.md` §9.
+
+### Historical statement of the bound (superseded)
 
 `mtk_panel_ext_create` is the single remaining differing function, same size
 (284 B), and the difference is **one instruction field**:
@@ -117,5 +137,5 @@ qualifying members. Resolving it properly needs either a second MTK 6.1 panel
 header from a different vendor tree or the stock `mediatek-drm.ko` call-site
 offsets (5.7 MB module, not analysed yet).
 
-Verdict: `mtk_panel_ext` is **semantically closed** but not declared
-byte-exact, so it stays PARTIAL.
+Verdict: `mtk_panel_ext` is **byte-exact** (12/12 functions, 13/13 data,
+6/6 import CRCs, identical `.modinfo`). Residual: DWARF only.
