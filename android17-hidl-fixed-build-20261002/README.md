@@ -871,3 +871,20 @@ logcat, last_kmsg, MediaTek AEE/mtklog, Android DropBox/logd and boot-reason
 history for surviving evidence of the failed B attempt.
 
 No additional Slot-B boot was performed.
+
+## October 3 Slot-B logo hang: stale DropBox data excluded
+
+Review of the post-rescue DropBox extraction showed that the available
+`SYSTEM_LAST_KMSG` records are historical October 2 logs.
+
+Those records include explicit recovery, OrangeFox and fastbootd activity and
+must not be attributed to the controlled October 3 plain-reboot Slot-B logo
+hang.
+
+No current failed-B kernel console survived in pstore or DropBox.
+
+Investigation therefore moved to a static audit of the exact Android 17
+system payload, including init/adbd, APEX, VINTF, VNDK/linker and SELinux
+contracts against the live stock vendor environment.
+
+No Slot-B boot was performed.

@@ -1,0 +1,40 @@
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/ueventd.rc:86:# apexd creates DM for downloaded APEX files, which should be readable by
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/wifi.rc:19:   restorecon_recursive /data/misc/apexdata/com.android.wifi
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/wifi.rc:22:   restorecon_recursive /data/misc_ce/0/apexdata/com.android.wifi
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/odsign.rc:12:# ensures that if odsign crashes during a module update, apexd will detect
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/servicemanager.rc:8:    onrestart restart --only-if-running apexd
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:85:    # Fix permissions before apexd reads /metadata
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:88:    # Run apexd-bootstrap so that APEXes that provide critical libraries
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:91:    exec_start apexd-bootstrap
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:739:    # Make sure that apexd is started in the default namespace
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:743:    # and start apexd
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:763:    # before starting apexd.
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:776:    # /data/apex is now available. Start apexd to scan and activate APEXes.
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:778:    # To handle userspace reboots, make sure that apexd is started cleanly here
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:779:    # (set apexd.status="") and that it is restarted if it's already running.
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:794:    setprop apexd.status ""
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:795:    restart apexd
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:865:    mkdir /data/misc/apexdata 0711 root root
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:1071:    wait_for_prop apexd.status activated
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:1114:    # Allow apexd to snapshot and restore device encrypted apex data in the case
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:1117:    # completed and apexd.status becomes "ready".
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:1118:    exec_start apexd-snapshotde
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:1318:# runtime, like per-SKU settings or sysprops. The service runs before apexd
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote32.rc:5:on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote32.rc:7:on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.no_zygote.rc:5:on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.no_zygote.rc:7:on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote64.rc:3:on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote64_32.rc:5:on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote64_32.rc:7:on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc:1:service apexd /system/bin/apexd
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc:8:    reboot_on_failure reboot,apexd-failed
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc:9:    # CAP_CHOWN, CAP_DAC_OVERRIDE, CAP_DAC_READ_SEARCH required for apexdata snapshot & restore
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc:13:service apexd-bootstrap /system/bin/apexd --bootstrap
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc:18:    reboot_on_failure reboot,bootloader,bootstrap-apexd-failed
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc:20:    # apexd-bootstrap doesn't manage apexdata snapshot & restore, hence no need for other capabilities.
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc:23:service apexd-snapshotde /system/bin/apexd --snapshotde
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc:28:    # CAP_CHOWN, CAP_DAC_OVERRIDE, CAP_DAC_READ_SEARCH required for apexdata snapshot & restore
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc:29:    # apexd-snapshotde doesn't mount APEXes, hence no need for SYS_ADMIN capability
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc:32:on property:apexd.debug.lsof=*
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc:33:    exec u:r:su:s0 root root -- /system/bin/sh /system/bin/apexd-lsof.sh ${apexd.debug.lsof}
