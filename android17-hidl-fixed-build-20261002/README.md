@@ -888,3 +888,29 @@ system payload, including init/adbd, APEX, VINTF, VNDK/linker and SELinux
 contracts against the live stock vendor environment.
 
 No Slot-B boot was performed.
+
+## Android 17 ↔ stock vendor contract reconciliation
+
+The prior static audit's claim that `com.android.vndk` was missing was a
+classifier false positive: Android 17 supplies a versioned
+`com.android.vndk.v*.apex`.
+
+The exact version was reconciled against the stock vendor
+`ro.vndk.version`.
+
+The stock vendor/ODM VINTF trees were then captured read-only from healthy
+Slot A and reconciled with the exact Android 17 system/product/system_ext
+output.
+
+Result:
+
+OLD_UNVERSIONED_VNDK_MISSING_RESULT=FALSE_POSITIVE
+VERSIONED_VNDK_APEX_PRESENT=YES
+VNDK_APEX_MATCHES_VENDOR=YES
+LIVE_DEVICE_TARGET_LEVEL=8
+MATCHING_FRAMEWORK_MATRIX=YES
+CHECKVINTF_RC=70
+FRAMEWORK_VENDOR_VINTF_COMPATIBILITY=NOT_PROVEN
+STATIC_CONTRACT_BLOCKER_FOUND=UNRESOLVED
+
+No Slot-B boot was performed.
