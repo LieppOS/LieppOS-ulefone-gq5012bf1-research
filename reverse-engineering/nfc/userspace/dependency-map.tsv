@@ -1,0 +1,15 @@
+consumer	provider	kind	note
+com.android.nfc (Nfc_st app)	libstnfc_nci_jni.so	JNI	ST fork of libnfc_nci_jni
+libstnfc_nci_jni.so	libstnfc-nci.so	shared lib	ST fork of libnfc-nci (NFA/NCI/RW)
+libstnfc_nci_jni.so	android.hardware.nfc INfc/default	AIDL V1	binder
+android.hardware.nfc-service-st	android.hardware.nfc-V1-ndk.so	shared lib	AIDL V1 stub
+android.hardware.nfc-service-st	nfc_nci.st21nfc.st.so	shared lib (hw_module NCI_HAL_MODULE)	selected by libnfc-hal-st.conf
+nfc_nci.st21nfc.st.so	/dev/st21nfc	char device	open/read/write/ioctl(0xEA..)
+nfc_nci.st21nfc.st.so	/vendor/firmware/st21nfc_fw7.bin	data file	FW patch image (STNFC_FW_BIN_NAME)
+nfc_nci.st21nfc.st.so	/vendor/etc/st21nfc_conf.txt	data file	board RF/antenna config script (STNFC_FW_CONF_NAME)
+nfc_nci.st21nfc.st.so	/vendor/etc/libnfc-hal-st.conf	config	HAL/routing/firmware keys
+libstnfc-nci.so	/vendor/etc/libnfc-nci.conf	config	NFA/NCI stack keys
+STFlashTool	/dev/st21nfc	char device	loader-mode APDU path
+STFlashTool	/vendor/firmware/st21nfc_fw*.bin, /vendor/etc/st21nfc_conf*.txt	data files	update sources
+st21nfc.ko	i2c6 0x08, GPIO 2/40/151	hardware	see hardware/topology.md
+android.hardware.secure_element@1.2-service-mediatek	ISecureElement/SIM1, /SIM2	AIDL/HIDL	UICC SE terminals, not NFC-controller eSE
