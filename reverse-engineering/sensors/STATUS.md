@@ -89,3 +89,21 @@ Details: [`notes/yft-deltas.md`](notes/yft-deltas.md).
 **DONE** for the Linux sensor stack. The parent "sensors" feature scope remains
 **PARTIAL** only because the sensing algorithms execute in proprietary SCP
 firmware that no public source reproduces.
+
+## Workspace classification (2026-10-03)
+
+Recorded in the organized workspace (`../../../Reverse Engineer - *`, indexed by
+`REVERSE-ENGINEERING-STATUS.md`):
+
+- **new:** `DONE/SENSOR-HUB-KERNEL` — this scope (source, patch, parity reports,
+  notes). DONE count 43 → 44, total 128 → 129.
+- **stays PARTIAL:** `SENSOR-HUB` — re-scoped to the SCP firmware and
+  calibration data only; its README now records the split and the two questions
+  this closure answered (no AP-direct sensor channel exists; the cross-socket
+  timestamp gap lives in `sensorhub`'s `timesync.c`).
+- **stays PARTIAL:** `ICM4N607-IMU`, `MMC5603-MAGNETOMETER`, `STK3A5X-ALS-PS`,
+  `SPL07-BAROMETER` — no Linux driver exists for any of them to reconstruct;
+  their register-level drivers run inside the SCP image.
+- **unchanged:** `YFT-DEVINFO` (ten export prototypes still unresolved) and
+  `MTK-TINYSYS-IPI` / `MTK-MBOX` / `MTK-DISP-NOTIFY`, which were not parity-
+  checked in this pass.
