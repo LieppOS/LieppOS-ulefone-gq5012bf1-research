@@ -608,3 +608,18 @@ all known LK accesses to the WDT NONRST reboot-mode register are re-audited,
 and retained command history is searched for recovery/fastboot mode writes.
 
 No phone state was modified and Slot B was not booted.
+
+## Slot-B mode-2 origin timeline continuation
+
+The mode-2 origin audit was resumed after correcting a host-side Python parser
+error.
+
+The original mode-0 Slot-B boot explicitly ends with kernel restart target
+`bootloader`, while the later metadata-fixed boot begins with MediaTek mode 2.
+Since LK clears the reboot-mode nibble after consuming it, a new value-2 write
+is required between those states.
+
+Generated init `reboot_on_failure` bootloader rules and multiline zsh command
+history were therefore correlated against the retained experiment timeline.
+
+No phone state was modified and Slot B was not booted.

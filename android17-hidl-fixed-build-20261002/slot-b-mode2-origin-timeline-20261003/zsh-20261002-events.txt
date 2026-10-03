@@ -1,0 +1,1264 @@
+========================================================================
+INDEX=0
+EPOCH=1790938168
+UTC=2026-10-02T10:49:28+00:00
+VILNIUS=2026-10-02T13:49:28+03:00
+COMMAND:
+bash <<'BASH'\
+set -eo pipefail\
+\
+SRC="/mnt/SamsungSSD/android/lineage-24.0"\
+REPO="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+BASE="$REPO/slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product"\
+\
+STAMP="$(date +%Y%m%d-%H%M%S)"\
+EVID="$BASE/android17-hidl-image-build-resume-$STAMP"\
+\
+mkdir -p "$EVID"\
+\
+echo "============================================================"\
+echo "ANDROID 17  � RESUME EXISTING BUILD ONLY"\
+echo "============================================================"\
+echo\
+echo "NO COPYING"\
+echo "NO MOVING"\
+echo "NO SYMLINK CHANGES"\
+echo "NO CLEAN"\
+echo "NO ADB"\
+echo "NO FASTBOOT"\
+echo\
+echo "SRC=$SRC"\
+echo "EVID=$EVID"\
+\
+echo\
+echo "============================================================"\
+echo "1. CURRENT DISK SPACE"\
+echo "============================================================"\
+\
+df -h "$SRC"\
+echo\
+\
+if [ -d "$SRC/out" ]; then\
+    du -sh "$SRC/out"\
+else\
+    echo "ABORT: existing out/ is missing"\
+    exit 1\
+fi\
+\
+FREE_BYTES="$(df -PB1 "$SRC/out" | awk 'NR==2 {print $4}')"\
+FREE_GIB=$((FREE_BYTES / 1024 / 1024 / 1024))\
+\
+echo\
+echo "FREE_GIB=$FREE_GIB"\
+\
+if [ "$FREE_GIB" -lt 20 ]; then\
+    echo\
+    echo "WARNING: less than 20 GiB free."\
+    echo "Build may run out of space again."\
+    echo\
+fi\
+\
+echo\
+echo "============================================================"\
+echo "2. VERIFY HIDL DEVICE.MK FIX"\
+echo "============================================================"\
+\
+DEVICE_MK="$SRC/device/ulefone/gq5012bf1/device.mk"\
+\
+test -f "$DEVICE_MK" || {\
+    echo "ABORT: device.mk missing"\
+    exit 1\
+}\
+\
+grep -n "PRODUCT_SHIPPING_API_LEVEL" "$DEVICE_MK" || true\
+\
+for P in \\
+    hwservicemanager \\
+    android.hidl.allocator@1.0-service \\
+    android.hidl.memory@1.0-impl\
+do\
+    echo\
+    echo "===== $P ====="\
+\
+    grep -nF "$P" "$DEVICE_MK" || {\
+        echo "ABORT: $P missing from device.mk"\
+        exit 1\
+    }\
+done\
+\
+echo\
+echo "HIDL_DEVICE_MK_FIX_PRESENT=1"\
+\
+echo\
+echo "============================================================"\
+echo "3. INITIALIZE BUILD"\
+echo "============================================================"\
+\
+cd "$SRC"\
+\
+set +u\
+\
+source build/envsetup.sh\
+\
+lunch lineage_gq5012bf1 cp2a userdebug\
+\
+echo\
+echo "TARGET_PRODUCT=${TARGET_PRODUCT:-}"\
+echo "TARGET_RELEASE=${TARGET_RELEASE:-}"\
+echo "TARGET_BUILD_VARIANT=${TARGET_BUILD_VARIANT:-}"\
+\
+[ "${TARGET_PRODUCT:-}" = "lineage_gq5012bf1" ]\
+[ "${TARGET_RELEASE:-}" = "cp2a" ]\
+[ "${TARGET_BUILD_VARIANT:-}" = "userdebug" ]\
+\
+PRODUCT_OUT="$(get_abs_build_var PRODUCT_OUT)"\
+\
+echo\
+echo "PRODUCT_OUT=$PRODUCT_OUT"\
+\
+test -d "$PRODUCT_OUT" || {\
+    echo "ABORT: PRODUCT_OUT missing"\
+    exit 1\
+}\
+\
+{\
+    echo "TARGET_PRODUCT=${TARGET_PRODUCT:-}"\
+    echo "TARGET_RELEASE=${TARGET_RELEASE:-}"\
+    echo "TARGET_BUILD_VARIANT=${TARGET_BUILD_VARIANT:-}"\
+    echo "PRODUCT_OUT=$PRODUCT_OUT"\
+} > "$EVID/build-identity.txt"\
+\
+echo\
+echo "============================================================"\
+echo "4. VERIFY PREVIOUS HIDL BUILD OUTPUTS"\
+echo "============================================================"\
+\
+for F in \\
+    "$PRODUCT_OUT/system_ext/bin/hwservicemanager" \\
+    "$PRODUCT_OUT/system_ext/bin/hw/android.hidl.allocator@1.0-service" \\
+    "$PRODUCT_OUT/system_ext/etc/init/hwservicemanager.rc" \\
+    "$PRODUCT_OUT/system_ext/etc/init/android.hidl.allocator@1.0-service.rc" \\
+    "$PRODUCT_OUT/system_ext/etc/vintf/manifest/android.hidl.allocator@1.0-service.xml" \\
+    "$PRODUCT_OUT/system_ext/lib64/hw/android.hidl.memory@1.0-impl.so" \\
+    "$PRODUCT_OUT/system_ext/lib/hw/android.hidl.memory@1.0-impl.so"\
+do\
+    if [ -e "$F" ] || [ -L "$F" ]; then\
+        echo "PRESENT=$F"\
+    else\
+        echo "MISSING=$F"\
+    fi\
+done | tee "$EVID/hidl-before-resume.txt"\
+\
+echo\
+echo "============================================================"\
+echo "5. RESUME BUILD"\
+echo "============================================================"\
+\
+echo "Correct targets:"\
+echo "  systemimage"\
+echo "  systemextimage"\
+echo "  productimage"\
+echo\
+\
+BUILD_LOG="$EVID/image-build.log"\
+\
+START="$(date +%s)"\
+\
+set +e\
+\
+(\
+    m -j"$(nproc)" \\
+        systemimage \\
+        systemextimage \\
+        productimage\
+) >"$BUILD_LOG" 2>&1 &\
+\
+PID=$!\
+\
+echo "BUILD_PID=$PID"\
+echo "BUILD_LOG=$BUILD_LOG"\
+\
+while kill -0 "$PID" 2>/dev/null; do\
+    NOW="$(date +%s)"\
+    ELAPSED="$((NOW - START))"\
+\
+    echo\
+    echo "------------------------------------------------------------"\
+    echo "BUILD HEARTBEAT"\
+    echo "elapsed=${ELAPSED}s"\
+    echo\
+\
+    tail -25 "$BUILD_LOG" || true\
+\
+    echo\
+    echo "===== FREE SPACE ====="\
+    df -h "$SRC"\
+\
+    echo "------------------------------------------------------------"\
+\
+    sleep 30\
+done\
+\
+wait "$PID"\
+BUILD_RC=$?\
+\
+set -e\
+\
+echo\
+echo "============================================================"\
+echo "BUILD RESULT"\
+echo "============================================================"\
+\
+echo "BUILD_RC=$BUILD_RC"\
+\
+if [ "$BUILD_RC" != "0" ]; then\
+    echo\
+    echo "===== LAST 400 LINES ====="\
+    tail -400 "$BUILD_LOG"\
+\
+    echo\
+    echo "===== ERROR SUMMARY ====="\
+\
+    grep -Ein \\
+        'no space left|ENOSPC|FAILED:|error:|fatal:|ninja.*failed|build stopped|unknown target' \\
+        "$BUILD_LOG" |\
+        tail -200 ||\
+        true\
+\
+    cat > "$EVID/README.md" <<EOF\
+# Android 17 image build resume\
+\
+Existing build state in \`$SRC/out\` was reused directly.\
+\
+No build output was copied, moved, cleaned, or relocated.\
+\
+Build command:\
+\
+\`\`\`\
+lunch lineage_gq5012bf1 cp2a userdebug\
+m systemimage systemextimage productimage\
+\`\`\`\
+\
+BUILD_RC=$BUILD_RC\
+\
+PHONE_MODIFIED=0\
+EOF\
+\
+    REL="${EVID#"$REPO/"}"\
+\
+    git -C "$REPO" add -- "$REL"\
+\
+    git -C "$REPO" diff --cached --quiet || \\
+        git -C "$REPO" commit \\
+            -m "research: record resumed Android 17 build failure"\
+\
+    echo\
+    echo "RESEARCH_HEAD=$(git -C "$REPO" rev-parse HEAD)"\
+    echo "EVIDENCE=$EVID"\
+\
+    exit "$BUILD_RC"\
+fi\
+\
+echo\
+echo "IMAGE_BUILD_PASS=1"\
+\
+echo\
+echo "============================================================"\
+echo "6. VERIFY GENERATED IMAGES"\
+echo "============================================================"\
+\
+SYSTEM_IMG="$PRODUCT_OUT/system.img"\
+SYSTEM_EXT_IMG="$PRODUCT_OUT/system_ext.img"\
+PRODUCT_IMG="$PRODUCT_OUT/product.img"\
+\
+for IMG in \\
+    "$SYSTEM_IMG" \\
+    "$SYSTEM_EXT_IMG" \\
+    "$PRODUCT_IMG"\
+do\
+    echo\
+    echo "===== $IMG ====="\
+\
+    test -f "$IMG" || {\
+        echo "ABORT: image missing"\
+        exit 1\
+    }\
+\
+    stat -c 'SIZE=%s PATH=%n' "$IMG"\
+    sha256sum "$IMG"\
+done\
+\
+{\
+    echo "SYSTEM_IMG=$SYSTEM_IMG"\
+    echo "SYSTEM_EXT_IMG=$SYSTEM_EXT_IMG"\
+    echo "PRODUCT_IMG=$PRODUCT_IMG"\
+\
+    echo\
+\
+    stat -c 'SYSTEM_SIZE=%s' "$SYSTEM_IMG"\
+    stat -c 'SYSTEM_EXT_SIZE=%s' "$SYSTEM_EXT_IMG"\
+    stat -c 'PRODUCT_SIZE=%s' "$PRODUCT_IMG"\
+\
+    echo\
+\
+    sha256sum \\
+        "$SYSTEM_IMG" \\
+        "$SYSTEM_EXT_IMG" \\
+        "$PRODUCT_IMG"\
+} | tee "$EVID/images.txt"\
+\
+echo\
+echo "============================================================"\
+echo "7. VERIFY FINAL HIDL RUNTIME"\
+echo "============================================================"\
+\
+HIDL_PASS=1\
+\
+for F in \\
+    "$PRODUCT_OUT/system_ext/bin/hwservicemanager" \\
+    "$PRODUCT_OUT/system_ext/bin/hw/android.hidl.allocator@1.0-service" \\
+    "$PRODUCT_OUT/system_ext/etc/init/hwservicemanager.rc" \\
+    "$PRODUCT_OUT/system_ext/etc/init/android.hidl.allocator@1.0-service.rc" \\
+    "$PRODUCT_OUT/system_ext/etc/vintf/manifest/android.hidl.allocator@1.0-service.xml" \\
+    "$PRODUCT_OUT/system_ext/lib64/hw/android.hidl.memory@1.0-impl.so" \\
+    "$PRODUCT_OUT/system_ext/lib/hw/android.hidl.memory@1.0-impl.so"\
+do\
+    echo\
+    echo "===== $F ====="\
+\
+    if [ -e "$F" ] || [ -L "$F" ]; then\
+        echo "PRESENT=1"\
+        ls -l "$F"\
+    else\
+        echo "PRESENT=0"\
+        HIDL_PASS=0\
+    fi\
+done | tee "$EVID/hidl-final.txt"\
+\
+echo\
+echo "HIDL_RUNTIME_PASS=$HIDL_PASS"\
+\
+echo\
+echo "============================================================"\
+echo "8. CHECK /SYSTEM HWSERVICEMANAGER COMPAT LINK"\
+echo "============================================================"\
+\
+SYS_HSM="$PRODUCT_OUT/system/bin/hwservicemanager"\
+\
+if [ -L "$SYS_HSM" ]; then\
+    echo "SYSTEM_HWSERVICEMANAGER_SYMLINK=1"\
+    echo "TARGET=$(readlink "$SYS_HSM")"\
+    ls -l "$SYS_HSM"\
+\
+elif [ -e "$SYS_HSM" ]; then\
+    echo "SYSTEM_HWSERVICEMANAGER_PRESENT=1"\
+    ls -l "$SYS_HSM"\
+\
+else\
+    echo "SYSTEM_HWSERVICEMANAGER_PRESENT=0"\
+fi | tee "$EVID/hwservicemanager-compat.txt"\
+\
+echo\
+echo "============================================================"\
+echo "9. SLOT-B SIZE CHECK"\
+echo "============================================================"\
+\
+SYSTEM_CAP=665391104\
+SYSTEM_EXT_CAP=366891008\
+PRODUCT_CAP=337686528\
+\
+SYSTEM_SIZE="$(stat -c %s "$SYSTEM_IMG")"\
+SYSTEM_EXT_SIZE="$(stat -c %s "$SYSTEM_EXT_IMG")"\
+PRODUCT_SIZE="$(stat -c %s "$PRODUCT_IMG")"\
+\
+check_fit() {\
+    NAME="$1"\
+    SIZE="$2"\
+    CAP="$3"\
+\
+    echo "$NAME"\
+    echo "IMAGE_SIZE=$SIZE"\
+    echo "CAPACITY=$CAP"\
+    echo "REMAINING=$((CAP - SIZE))"\
+\
+    if [ "$SIZE" -le "$CAP" ]; then\
+        echo "FITS=1"\
+    else\
+        echo "FITS=0"\
+    fi\
+\
+    echo\
+}\
+\
+{\
+    check_fit SYSTEM "$SYSTEM_SIZE" "$SYSTEM_CAP"\
+    check_fit SYSTEM_EXT "$SYSTEM_EXT_SIZE" "$SYSTEM_EXT_CAP"\
+    check_fit PRODUCT "$PRODUCT_SIZE" "$PRODUCT_CAP"\
+} | tee "$EVID/capacity-check.txt"\
+\
+echo\
+echo "============================================================"\
+echo "10. FINAL STORAGE STATE"\
+echo "============================================================"\
+\
+df -h "$SRC"\
+\
+echo\
+echo "============================================================"\
+echo "11. WRITE RESEARCH SUMMARY"\
+echo "============================================================"\
+\
+cat > "$EVID/README.md" <<EOF\
+# Android 17 HIDL-fixed userspace build resume\
+\
+The previous build stopped because the build filesystem ran out of space.\
+\
+Space was freed manually by the user before this run.\
+\
+This run reused the existing Android \`out/\` directly.\
+\
+No build output was copied, relocated, moved, cleaned or recreated.\
+\
+Build:\
+\
+\`\`\`\
+lunch lineage_gq5012bf1 cp2a userdebug\
+m systemimage systemextimage productimage\
+\`\`\`\
+\
+Result:\
+\
+- BUILD_RC=$BUILD_RC\
+- IMAGE_BUILD_PASS=1\
+- HIDL_RUNTIME_PASS=$HIDL_PASS\
+\
+Images:\
+\
+- $SYSTEM_IMG\
+- $SYSTEM_EXT_IMG\
+- $PRODUCT_IMG\
+\
+Image hashes and sizes are recorded in images.txt.\
+\
+Safety:\
+\
+- PHONE_MODIFIED=0\
+- no adb\
+- no fastboot\
+- no reboot\
+- no flashing\
+- no slot changes\
+- no vbmeta changes\
+- no userdata changes\
+- no metadata changes\
+EOF\
+\
+echo\
+echo "============================================================"\
+echo "12. COMMIT RESEARCH"\
+echo "============================================================"\
+\
+REL="${EVID#"$REPO/"}"\
+\
+git -C "$REPO" add -- "$REL"\
+\
+git -C "$REPO" diff --cached --quiet || \\
+    git -C "$REPO" commit \\
+        -m "research: resume Android 17 HIDL-fixed image build"\
+\
+echo\
+echo "============================================================"\
+echo "DONE"\
+echo "============================================================"\
+\
+echo "BUILD_RC=$BUILD_RC"\
+echo "IMAGE_BUILD_PASS=1"\
+echo "HIDL_RUNTIME_PASS=$HIDL_PASS"\
+\
+echo\
+echo "SYSTEM_IMG=$SYSTEM_IMG"\
+echo "SYSTEM_EXT_IMG=$SYSTEM_EXT_IMG"\
+echo "PRODUCT_IMG=$PRODUCT_IMG"\
+\
+echo\
+echo "RESEARCH_HEAD=$(git -C "$REPO" rev-parse HEAD)"\
+echo "RESEARCH_EVIDENCE=$EVID"\
+\
+echo\
+echo "PHONE_MODIFIED=0"\
+\
+BASH
+========================================================================
+INDEX=10
+EPOCH=1790945877
+UTC=2026-10-02T12:57:57+00:00
+VILNIUS=2026-10-02T15:57:57+03:00
+COMMAND:
+REPO="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+D="$REPO/android17-hidl-fixed-build-20261002"\
+\
+mkdir -p "$D"\
+\
+{\
+  echo "# Android 17 HIDL-fixed userspace build"\
+  echo\
+  echo "Build result: SUCCESS"\
+  echo\
+  echo 'Command:'\
+  echo '`m -j48 systemimage systemextimage productimage`'\
+  echo\
+  echo "Ninja completed 46040 steps successfully."\
+  echo\
+  sha256sum \\
+    "/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system.img" \\
+    "/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system_ext.img" \\
+    "/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/product.img"\
+} > "$D/README.md"\
+\
+cd "$REPO"\
+git add android17-hidl-fixed-build-20261002\
+git commit -m "research: record successful Android 17 HIDL-fixed build"
+========================================================================
+INDEX=12
+EPOCH=1790946021
+UTC=2026-10-02T13:00:21+00:00
+VILNIUS=2026-10-02T16:00:21+03:00
+COMMAND:
+REPO="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+D="$REPO/android17-hidl-fixed-build-20261002"\
+\
+cat >> "$D/README.md" <<'EOF'\
+\
+## Slot-B capacity verification\
+\
+Exact image sizes match the already-established Slot-B logical partition sizes byte-for-byte:\
+\
+- system.img: 665391104 / system_b: 665391104\
+- system_ext.img: 366891008 / system_ext_b: 366891008\
+- product.img: 337686528 / product_b: 337686528\
+\
+Result:\
+\
+- SYSTEM_FITS=1\
+- SYSTEM_EXT_FITS=1\
+- PRODUCT_FITS=1\
+- no super resize required\
+EOF\
+\
+cd "$REPO"\
+git add android17-hidl-fixed-build-20261002/README.md\
+git commit -m "research: verify Android 17 images fit Slot B exactly"
+========================================================================
+INDEX=13
+EPOCH=1790946081
+UTC=2026-10-02T13:01:21+00:00
+VILNIUS=2026-10-02T16:01:21+03:00
+COMMAND:
+cd "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+\
+RUN="$(find . -path '*android17-vintf-real-reconciliation/scripts/run.sh' -print -quit)"\
+echo "$RUN"\
+\
+bash "$RUN"
+========================================================================
+INDEX=14
+EPOCH=1790946174
+UTC=2026-10-02T13:02:54+00:00
+VILNIUS=2026-10-02T16:02:54+03:00
+COMMAND:
+cd "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+\
+RUN="./slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-real-reconciliation/scripts/run.sh"\
+\
+bash -x "$RUN" 2>&1 | tail -100
+========================================================================
+INDEX=16
+EPOCH=1790946285
+UTC=2026-10-02T13:04:45+00:00
+VILNIUS=2026-10-02T16:04:45+03:00
+COMMAND:
+sed -i \\
+  's#/mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/checkvintf#/mnt/SamsungSSD/android/lineage-24.0/out/host/linux-x86/bin/checkvintf#' \\
+  /tmp/a17env.sh\
+\
+sed -i \\
+  's#/mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/target/product/gq5012bf1#/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1#' \\
+  /tmp/a17env.sh
+========================================================================
+INDEX=17
+EPOCH=1790946288
+UTC=2026-10-02T13:04:48+00:00
+VILNIUS=2026-10-02T16:04:48+03:00
+COMMAND:
+cd "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+\
+bash ./slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-real-reconciliation/scripts/run.sh
+========================================================================
+INDEX=20
+EPOCH=1790946686
+UTC=2026-10-02T13:11:26+00:00
+VILNIUS=2026-10-02T16:11:26+03:00
+COMMAND:
+cd "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+\
+bash ./slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-real-reconciliation/scripts/run.sh
+========================================================================
+INDEX=21
+EPOCH=1790946690
+UTC=2026-10-02T13:11:30+00:00
+VILNIUS=2026-10-02T16:11:30+03:00
+COMMAND:
+sed -n '1,220p' \\
+./slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-real-reconciliation/scripts/run.sh
+========================================================================
+INDEX=22
+EPOCH=1790946761
+UTC=2026-10-02T13:12:41+00:00
+VILNIUS=2026-10-02T16:12:41+03:00
+COMMAND:
+cd "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+\
+T="./slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-real-reconciliation/TERMINAL.txt"\
+\
+grep -nE '===== RUN|\$ .*checkvintf|--check-compat|--kernel|--dirmap' "$T" | tail -120
+========================================================================
+INDEX=23
+EPOCH=1790946925
+UTC=2026-10-02T13:15:25+00:00
+VILNIUS=2026-10-02T16:15:25+03:00
+COMMAND:
+bash <<'BASH'\
+set -e\
+\
+SRC="/mnt/SamsungSSD/android/lineage-24.0"\
+REPO="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+D="$REPO/android17-hidl-fixed-build-20261002"\
+\
+CV="$SRC/out/host/linux-x86/bin/checkvintf"\
+FSCK="$SRC/out/host/linux-x86/bin/fsck.erofs"\
+\
+SYSTEM="$SRC/out/target/product/gq5012bf1/system.img"\
+SYSTEM_EXT="$SRC/out/target/product/gq5012bf1/system_ext.img"\
+PRODUCT="$SRC/out/target/product/gq5012bf1/product.img"\
+\
+HR="/tmp/a17-vintf-hostroot"\
+KCFG="$REPO/slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-compat-collect-20261001-010627/kernel.config"\
+\
+test -x "$CV"\
+test -x "$FSCK"\
+test -f "$KCFG"\
+test -d "$HR/vendor"\
+test -d "$HR/odm"\
+\
+echo "Refreshing framework partitions from NEW images..."\
+\
+rm -rf "$HR/system" "$HR/system_ext" "$HR/product"\
+mkdir -p "$HR/system" "$HR/system_ext" "$HR/product"\
+mkdir -p /tmp/a17-vintf-apex-empty\
+\
+"$FSCK" --extract="$HR/system" "$SYSTEM" >/dev/null\
+"$FSCK" --extract="$HR/system_ext" "$SYSTEM_EXT" >/dev/null\
+"$FSCK" --extract="$HR/product" "$PRODUCT" >/dev/null\
+\
+echo\
+echo "HIDL files in refreshed system_ext:"\
+ls -l \\
+  "$HR/system_ext/bin/hwservicemanager" \\
+  "$HR/system_ext/bin/hw/android.hidl.allocator@1.0-service" \\
+  "$HR/system_ext/etc/init/hwservicemanager.rc" \\
+  "$HR/system_ext/etc/init/android.hidl.allocator@1.0-service.rc"\
+\
+echo\
+echo "Running real Android 17 checkvintf..."\
+\
+set +e\
+"$CV" \\
+  --check-compat \\
+  --dirmap /system:"$HR/system" \\
+  --dirmap /system_ext:"$HR/system_ext" \\
+  --dirmap /product:"$HR/product" \\
+  --dirmap /vendor:"$HR/vendor" \\
+  --dirmap /odm:"$HR/odm" \\
+  --dirmap /apex:/tmp/a17-vintf-apex-empty \\
+  --property ro.product.first_api_level=35 \\
+  --property ro.vendor.api_level=34 \\
+  --property ro.vndk.version=34 \\
+  --kernel 6.1.115:"$KCFG" \\
+  2>&1 | tee "$D/post-hidl-checkvintf.txt"\
+\
+RC=${PIPESTATUS[0]}\
+set -e\
+\
+echo\
+echo "CHECKVINTF_EXIT=$RC"\
+\
+if [ "$RC" -eq 0 ]; then\
+    echo "CHECKVINTF_RESULT=COMPATIBLE"\
+else\
+    echo "CHECKVINTF_RESULT=INCOMPATIBLE"\
+fi\
+\
+{\
+    echo\
+    echo "## Post-HIDL VINTF verification"\
+    echo\
+    echo "- checkvintf exit: $RC"\
+    if [ "$RC" -eq 0 ]; then\
+        echo "- result: COMPATIBLE"\
+    else\
+        echo "- result: INCOMPATIBLE"\
+    fi\
+    echo "- tested newly built HIDL-fixed system/system_ext/product images"\
+    echo "- vendor/ODM remained the previously captured stock Ulefone inputs"\
+} >> "$D/README.md"\
+\
+cd "$REPO"\
+git add \\
+  android17-hidl-fixed-build-20261002/README.md \\
+  android17-hidl-fixed-build-20261002/post-hidl-checkvintf.txt\
+\
+git commit -m "research: verify HIDL-fixed Android 17 VINTF"\
+\
+BASH
+========================================================================
+INDEX=24
+EPOCH=1790947078
+UTC=2026-10-02T13:17:58+00:00
+VILNIUS=2026-10-02T16:17:58+03:00
+COMMAND:
+bash <<'BASH'\
+set -e\
+\
+SRC="/mnt/SamsungSSD/android/lineage-24.0"\
+REPO="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+D="$REPO/android17-hidl-fixed-build-20261002"\
+\
+CV="$SRC/out/host/linux-x86/bin/checkvintf"\
+FSCK="$SRC/out/host/linux-x86/bin/fsck.erofs"\
+\
+OLD="/tmp/a17-vintf-hostroot"\
+NEW="/tmp/a17-vintf-new"\
+\
+KCFG="$REPO/slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-compat-collect-20261001-010627/kernel.config"\
+\
+rm -rf "$NEW"\
+mkdir -p "$NEW/system" "$NEW/system_ext" "$NEW/product"\
+mkdir -p /tmp/a17-vintf-apex-empty\
+\
+"$FSCK" --extract="$NEW/system" \\
+  "$SRC/out/target/product/gq5012bf1/system.img" >/dev/null\
+\
+"$FSCK" --extract="$NEW/system_ext" \\
+  "$SRC/out/target/product/gq5012bf1/system_ext.img" >/dev/null\
+\
+"$FSCK" --extract="$NEW/product" \\
+  "$SRC/out/target/product/gq5012bf1/product.img" >/dev/null\
+\
+echo "===== HIDL ====="\
+ls -l \\
+  "$NEW/system_ext/bin/hwservicemanager" \\
+  "$NEW/system_ext/bin/hw/android.hidl.allocator@1.0-service" \\
+  "$NEW/system_ext/etc/init/hwservicemanager.rc" \\
+  "$NEW/system_ext/etc/init/android.hidl.allocator@1.0-service.rc"\
+\
+echo\
+echo "===== CHECKVINTF ====="\
+\
+set +e\
+"$CV" \\
+  --check-compat \\
+  --dirmap /system:"$NEW/system" \\
+  --dirmap /system_ext:"$NEW/system_ext" \\
+  --dirmap /product:"$NEW/product" \\
+  --dirmap /vendor:"$OLD/vendor" \\
+  --dirmap /odm:"$OLD/odm" \\
+  --dirmap /apex:/tmp/a17-vintf-apex-empty \\
+  --property ro.product.first_api_level=35 \\
+  --property ro.vendor.api_level=34 \\
+  --property ro.vndk.version=34 \\
+  --kernel 6.1.115:"$KCFG" \\
+  2>&1 | tee "$D/post-hidl-checkvintf.txt"\
+\
+RC=${PIPESTATUS[0]}\
+set -e\
+\
+echo\
+echo "CHECKVINTF_EXIT=$RC"\
+\
+if [ "$RC" -eq 0 ]; then\
+    echo "CHECKVINTF_RESULT=COMPATIBLE"\
+else\
+    echo "CHECKVINTF_RESULT=INCOMPATIBLE"\
+fi\
+BASH
+========================================================================
+INDEX=25
+EPOCH=1790947179
+UTC=2026-10-02T13:19:39+00:00
+VILNIUS=2026-10-02T16:19:39+03:00
+COMMAND:
+bash <<'BASH'\
+set -e\
+\
+SRC="/mnt/SamsungSSD/android/lineage-24.0"\
+REPO="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+D="$REPO/android17-hidl-fixed-build-20261002"\
+\
+CV="$SRC/out/host/linux-x86/bin/checkvintf"\
+\
+NEW="/tmp/a17-vintf-new"\
+OLD="/tmp/a17-vintf-hostroot"\
+\
+KCFG="$REPO/slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-compat-collect-20261001-010627/kernel.config"\
+\
+echo "===== SYSTEM VINTF LOCATION ====="\
+\
+find "$NEW/system" -maxdepth 5 \\
+  \( -name 'manifest.xml' -o -name 'compatibility_matrix.8.xml' \) \\
+  -print\
+\
+if [ -d "$NEW/system/etc/vintf" ]; then\
+    SYSTEM_ROOT="$NEW/system"\
+elif [ -d "$NEW/system/system/etc/vintf" ]; then\
+    SYSTEM_ROOT="$NEW/system/system"\
+else\
+    echo "ERROR: cannot locate system/etc/vintf"\
+    exit 1\
+fi\
+\
+echo\
+echo "SYSTEM_ROOT=$SYSTEM_ROOT"\
+\
+ls -l "$SYSTEM_ROOT/etc/vintf" | head -30\
+\
+echo\
+echo "===== CHECKVINTF ====="\
+\
+set +e\
+\
+"$CV" \\
+  --check-compat \\
+  --dirmap /system:"$SYSTEM_ROOT" \\
+  --dirmap /system_ext:"$NEW/system_ext" \\
+  --dirmap /product:"$NEW/product" \\
+  --dirmap /vendor:"$OLD/vendor" \\
+  --dirmap /odm:"$OLD/odm" \\
+  --dirmap /apex:/tmp/a17-vintf-apex-empty \\
+  --property ro.product.first_api_level=35 \\
+  --property ro.vendor.api_level=34 \\
+  --property ro.vndk.version=34 \\
+  --kernel 6.1.115:"$KCFG" \\
+  2>&1 | tee "$D/post-hidl-checkvintf-v2.txt"\
+\
+RC=${PIPESTATUS[0]}\
+\
+echo\
+echo "CHECKVINTF_EXIT=$RC"\
+\
+if [ "$RC" -eq 0 ]; then\
+    echo "CHECKVINTF_RESULT=COMPATIBLE"\
+else\
+    echo "CHECKVINTF_RESULT=INCOMPATIBLE"\
+fi\
+\
+BASH
+========================================================================
+INDEX=26
+EPOCH=1790947410
+UTC=2026-10-02T13:23:30+00:00
+VILNIUS=2026-10-02T16:23:30+03:00
+COMMAND:
+bash <<'BASH'\
+set -e\
+\
+SRC="/mnt/SamsungSSD/android/lineage-24.0"\
+REPO="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+D="$REPO/android17-hidl-fixed-build-20261002"\
+\
+NEW="/tmp/a17-vintf-new"\
+OLD="/tmp/a17-vintf-hostroot"\
+\
+SYS="$NEW/system/system"\
+SEXT="$NEW/system_ext"\
+PROD="$NEW/product"\
+VENDOR="$OLD/vendor"\
+ODM="$OLD/odm"\
+\
+SECILC="$SRC/out/host/linux-x86/bin/secilc"\
+OUTPOL="/tmp/a17-hidl-fixed-sepolicy"\
+\
+test -x "$SECILC"\
+\
+ARGS=(\
+  "$SYS/etc/selinux/plat_sepolicy.cil"\
+  -m -M true -G -N\
+  -c 30\
+  "$SYS/etc/selinux/mapping/34.0.cil"\
+  -o "$OUTPOL"\
+  -f /dev/null\
+)\
+\
+[ -f "$SYS/etc/selinux/mapping/34.0.compat.cil" ] &&\
+  ARGS+=("$SYS/etc/selinux/mapping/34.0.compat.cil")\
+\
+[ -f "$SEXT/etc/selinux/system_ext_sepolicy.cil" ] &&\
+  ARGS+=("$SEXT/etc/selinux/system_ext_sepolicy.cil")\
+\
+[ -f "$SEXT/etc/selinux/mapping/34.0.cil" ] &&\
+  ARGS+=("$SEXT/etc/selinux/mapping/34.0.cil")\
+\
+[ -f "$SEXT/etc/selinux/mapping/34.0.compat.cil" ] &&\
+  ARGS+=("$SEXT/etc/selinux/mapping/34.0.compat.cil")\
+\
+[ -f "$PROD/etc/selinux/product_sepolicy.cil" ] &&\
+  ARGS+=("$PROD/etc/selinux/product_sepolicy.cil")\
+\
+[ -f "$PROD/etc/selinux/mapping/34.0.cil" ] &&\
+  ARGS+=("$PROD/etc/selinux/mapping/34.0.cil")\
+\
+ARGS+=(\
+  "$VENDOR/etc/selinux/plat_pub_versioned.cil"\
+  "$VENDOR/etc/selinux/vendor_sepolicy.cil"\
+)\
+\
+[ -f "$ODM/etc/selinux/odm_sepolicy.cil" ] &&\
+  ARGS+=("$ODM/etc/selinux/odm_sepolicy.cil")\
+\
+echo "===== SELINUX INPUTS ====="\
+printf '%s\n' "${ARGS[@]}"\
+\
+echo\
+echo "===== SECILC ====="\
+\
+set +e\
+"$SECILC" "${ARGS[@]}" \\
+  >"$D/post-hidl-secilc.stdout.txt" \\
+  2>"$D/post-hidl-secilc.stderr.txt"\
+RC=$?\
+set -e\
+\
+cat "$D/post-hidl-secilc.stderr.txt"\
+\
+echo\
+echo "SECILC_EXIT=$RC"\
+\
+if [ "$RC" -eq 0 ]; then\
+    echo "SELINUX_RESULT=PASS"\
+else\
+    echo "SELINUX_RESULT=FAIL"\
+fi\
+\
+{\
+  echo\
+  echo "## Post-HIDL offline validation"\
+  echo\
+  echo "- Android 17 checkvintf: COMPATIBLE (exit 0)"\
+  echo "- Tested exact newly built system/system_ext/product images"\
+  echo "- Stock Ulefone vendor/ODM inputs retained"\
+  echo "- HIDL allocator manifest successfully parsed from system_ext"\
+  echo "- secilc exit: $RC"\
+} >> "$D/README.md"\
+\
+cd "$REPO"\
+\
+git add \\
+  android17-hidl-fixed-build-20261002/README.md \\
+  android17-hidl-fixed-build-20261002/post-hidl-checkvintf-v2.txt \\
+  android17-hidl-fixed-build-20261002/post-hidl-secilc.stdout.txt \\
+  android17-hidl-fixed-build-20261002/post-hidl-secilc.stderr.txt\
+\
+git commit -m "research: validate final Android 17 userspace compatibility"\
+\
+BASH
+========================================================================
+INDEX=27
+EPOCH=1790947542
+UTC=2026-10-02T13:25:42+00:00
+VILNIUS=2026-10-02T16:25:42+03:00
+COMMAND:
+bash <<'BASH'\
+set -e\
+\
+SRC="/mnt/SamsungSSD/android/lineage-24.0"\
+REPO="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+D="$REPO/android17-hidl-fixed-build-20261002"\
+\
+SYS="/tmp/a17-vintf-new/system/system"\
+SEXT="/tmp/a17-vintf-new/system_ext"\
+PROD="/tmp/a17-vintf-new/product"\
+\
+VENDOR="/mnt/SamsungSSD/TIER3/phase1/extracted/mounts/run-20260718T120318Z/vendor"\
+\
+SECILC="$SRC/out/host/linux-x86/bin/secilc"\
+OUTPOL="/tmp/a17-hidl-fixed-sepolicy"\
+\
+test -x "$SECILC"\
+test -f "$VENDOR/etc/selinux/plat_pub_versioned.cil"\
+test -f "$VENDOR/etc/selinux/vendor_sepolicy.cil"\
+\
+echo "===== STOCK VENDOR POLICY ====="\
+ls -l \\
+  "$VENDOR/etc/selinux/plat_sepolicy_vers.txt" \\
+  "$VENDOR/etc/selinux/plat_pub_versioned.cil" \\
+  "$VENDOR/etc/selinux/vendor_sepolicy.cil"\
+\
+ARGS=(\
+  -m -M true -G -N\
+  -c 30\
+  "$SYS/etc/selinux/plat_sepolicy.cil"\
+  "$SYS/etc/selinux/mapping/34.0.cil"\
+)\
+\
+[ -f "$SYS/etc/selinux/mapping/34.0.compat.cil" ] &&\
+  ARGS+=("$SYS/etc/selinux/mapping/34.0.compat.cil")\
+\
+[ -f "$SEXT/etc/selinux/system_ext_sepolicy.cil" ] &&\
+  ARGS+=("$SEXT/etc/selinux/system_ext_sepolicy.cil")\
+\
+[ -f "$SEXT/etc/selinux/mapping/34.0.cil" ] &&\
+  ARGS+=("$SEXT/etc/selinux/mapping/34.0.cil")\
+\
+[ -f "$SEXT/etc/selinux/mapping/34.0.compat.cil" ] &&\
+  ARGS+=("$SEXT/etc/selinux/mapping/34.0.compat.cil")\
+\
+[ -f "$PROD/etc/selinux/product_sepolicy.cil" ] &&\
+  ARGS+=("$PROD/etc/selinux/product_sepolicy.cil")\
+\
+[ -f "$PROD/etc/selinux/mapping/34.0.cil" ] &&\
+  ARGS+=("$PROD/etc/selinux/mapping/34.0.cil")\
+\
+[ -f "$PROD/etc/selinux/mapping/34.0.compat.cil" ] &&\
+  ARGS+=("$PROD/etc/selinux/mapping/34.0.compat.cil")\
+\
+ARGS+=(\
+  "$VENDOR/etc/selinux/plat_pub_versioned.cil"\
+  "$VENDOR/etc/selinux/vendor_sepolicy.cil"\
+  -o "$OUTPOL"\
+  -f /dev/null\
+)\
+\
+echo\
+echo "===== SECILC ====="\
+\
+set +e\
+"$SECILC" "${ARGS[@]}" \\
+  >"$D/post-hidl-secilc-v2.stdout.txt" \\
+  2>"$D/post-hidl-secilc-v2.stderr.txt"\
+RC=$?\
+set -e\
+\
+cat "$D/post-hidl-secilc-v2.stderr.txt"\
+\
+echo\
+echo "SECILC_EXIT=$RC"\
+\
+if [ "$RC" -eq 0 ]; then\
+    echo "SELINUX_RESULT=PASS"\
+    ls -lh "$OUTPOL"\
+else\
+    echo "SELINUX_RESULT=FAIL"\
+fi\
+BASH
+========================================================================
+INDEX=31
+EPOCH=1790948102
+UTC=2026-10-02T13:35:02+00:00
+VILNIUS=2026-10-02T16:35:02+03:00
+COMMAND:
+bash <<'BASH'\
+set -e\
+\
+SRC="/mnt/SamsungSSD/android/lineage-24.0"\
+REPO="/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research"\
+D="$REPO/android17-hidl-fixed-build-20261002"\
+\
+SYS="/tmp/a17-vintf-new/system/system"\
+SEXT="/tmp/a17-vintf-new/system_ext"\
+PROD="/tmp/a17-vintf-new/product"\
+\
+VEN="$REPO/workspace/gq5012bf1/stock/partitions/vendor/etc/selinux"\
+\
+PUB="$VEN/plat_pub_versioned.cil"\
+VPOL="$VEN/vendor_sepolicy.cil"\
+VERS="$VEN/plat_sepolicy_vers.txt"\
+\
+SECILC="$SRC/out/host/linux-x86/bin/secilc"\
+OUTPOL="/tmp/a17-hidl-fixed-sepolicy"\
+\
+EXP_PUB="bd4c019a2f2faeaf7b682be718e416f83ca22c6ff5e0754280693ae212bcd352"\
+EXP_VPOL="282b405b13cdb830999a9f932dbbd78cf6adbe7c15a11c769f548c8d65fb04fd"\
+\
+PUB_SHA="$(sha256sum "$PUB" | awk '{print $1}')"\
+VPOL_SHA="$(sha256sum "$VPOL" | awk '{print $1}')"\
+\
+echo "PUB_SHA=$PUB_SHA"\
+echo "VPOL_SHA=$VPOL_SHA"\
+echo "VENDOR_POLICY_VERSION=$(cat "$VERS")"\
+\
+test "$PUB_SHA" = "$EXP_PUB"\
+test "$VPOL_SHA" = "$EXP_VPOL"\
+test "$(cat "$VERS")" = "34.0"\
+\
+echo "STOCK_VENDOR_HASH_GATE=PASS"\
+\
+ARGS=(\
+  -m\
+  -M true\
+  -G\
+  -N\
+  -c 30\
+  -o "$OUTPOL"\
+  -f /dev/null\
+  "$SYS/etc/selinux/plat_sepolicy.cil"\
+  "$SYS/etc/selinux/mapping/34.0.cil"\
+)\
+\
+[ -f "$SYS/etc/selinux/mapping/34.0.compat.cil" ] &&\
+  ARGS+=("$SYS/etc/selinux/mapping/34.0.compat.cil")\
+\
+[ -f "$SEXT/etc/selinux/system_ext_sepolicy.cil" ] &&\
+  ARGS+=("$SEXT/etc/selinux/system_ext_sepolicy.cil")\
+\
+[ -f "$SEXT/etc/selinux/mapping/34.0.cil" ] &&\
+  ARGS+=("$SEXT/etc/selinux/mapping/34.0.cil")\
+\
+[ -f "$SEXT/etc/selinux/mapping/34.0.compat.cil" ] &&\
+  ARGS+=("$SEXT/etc/selinux/mapping/34.0.compat.cil")\
+\
+[ -f "$PROD/etc/selinux/product_sepolicy.cil" ] &&\
+  ARGS+=("$PROD/etc/selinux/product_sepolicy.cil")\
+\
+[ -f "$PROD/etc/selinux/mapping/34.0.cil" ] &&\
+  ARGS+=("$PROD/etc/selinux/mapping/34.0.cil")\
+\
+[ -f "$PROD/etc/selinux/mapping/34.0.compat.cil" ] &&\
+  ARGS+=("$PROD/etc/selinux/mapping/34.0.compat.cil")\
+\
+ARGS+=(\
+  "$PUB"\
+  "$VPOL"\
+)\
+\
+echo\
+echo "===== SECILC ====="\
+\
+set +e\
+"$SECILC" "${ARGS[@]}" \\
+  >"$D/post-hidl-secilc-v3.stdout.txt" \\
+  2>"$D/post-hidl-secilc-v3.stderr.txt"\
+RC=$?\
+set -e\
+\
+cat "$D/post-hidl-secilc-v3.stderr.txt"\
+\
+echo\
+echo "SECILC_EXIT=$RC"\
+\
+if [ "$RC" -eq 0 ]; then\
+    echo "SELINUX_RESULT=PASS"\
+    ls -lh "$OUTPOL"\
+else\
+    echo "SELINUX_RESULT=FAIL"\
+fi\
+\
+{\
+  echo\
+  echo "## Corrected split-SELinux verification"\
+  echo\
+  echo "- stock vendor hash gate: PASS"\
+  echo "- stock plat_pub_versioned.cil: $PUB_SHA"\
+  echo "- stock vendor_sepolicy.cil: $VPOL_SHA"\
+  echo "- vendor policy mapping version: 34.0"\
+  echo "- secilc exit: $RC"\
+  if [ "$RC" -eq 0 ]; then\
+    echo "- SELinux split-policy result: PASS"\
+  else\
+    echo "- SELinux split-policy result: FAIL"\
+  fi\
+} >> "$D/README.md"\
+\
+cd "$REPO"\
+\
+git add \\
+  android17-hidl-fixed-build-20261002/README.md \\
+  android17-hidl-fixed-build-20261002/post-hidl-secilc-v3.stdout.txt \\
+  android17-hidl-fixed-build-20261002/post-hidl-secilc-v3.stderr.txt\
+\
+git commit -m "research: verify Android 17 split SELinux policy"\
+\
+BASH
+========================================================================
+INDEX=32
+EPOCH=1790948214
+UTC=2026-10-02T13:36:54+00:00
+VILNIUS=2026-10-02T16:36:54+03:00
+COMMAND:
+cd "/mnt/SamsungSSD/android/lineage-24.0"\
+\
+echo "===== FINAL ANDROID 17 SLOT-B IMAGES ====="\
+\
+sha256sum \\
+  out/target/product/gq5012bf1/system.img \\
+  out/target/product/gq5012bf1/system_ext.img \\
+  out/target/product/gq5012bf1/product.img\
+\
+echo\
+stat -c '%n %s bytes' \\
+  out/target/product/gq5012bf1/system.img \\
+  out/target/product/gq5012bf1/system_ext.img \\
+  out/target/product/gq5012bf1/product.img
+========================================================================
+INDEX=33
+EPOCH=1790948407
+UTC=2026-10-02T13:40:07+00:00
+VILNIUS=2026-10-02T16:40:07+03:00
+COMMAND:
+adb wait-for-device\
+\
+echo "===== DEVICE ====="\
+adb shell getprop ro.product.device\
+adb shell getprop ro.product.model\
+\
+echo\
+echo "===== CURRENT SLOT ====="\
+adb shell getprop ro.boot.slot_suffix\
+adb shell su -c 'bootctl get-current-slot'\
+\
+echo\
+echo "===== SLOT STATE ====="\
+adb shell su -c '\
+echo -n "A bootable:   "; bootctl is-slot-bootable 0; echo " rc=$?"\
+echo -n "A successful: "; bootctl is-slot-marked-successful 0; echo " rc=$?"\
+echo -n "B bootable:   "; bootctl is-slot-bootable 1; echo " rc=$?"\
+echo -n "B successful: "; bootctl is-slot-marked-successful 1; echo " rc=$?"\
+'\
+\
+echo\
+echo "===== AVB / UNLOCK ====="\
+adb shell getprop ro.boot.verifiedbootstate\
+adb shell getprop ro.boot.vbmeta.device_state\
+\
+echo\
+echo "===== DYNAMIC PARTITIONS ====="\
+adb shell su -c '\
+ls -l /dev/block/mapper/system_b\
+ls -l /dev/block/mapper/system_ext_b\
+ls -l /dev/block/mapper/product_b\
+blockdev --getsize64 /dev/block/mapper/system_b\
+blockdev --getsize64 /dev/block/mapper/system_ext_b\
+blockdev --getsize64 /dev/block/mapper/product_b\
+'\
+\
+echo\
+echo "===== METADATA KEY INVARIANT ====="\
+adb shell su -c '\
+sha256sum /metadata/vold/metadata_encryption/key/keymaster_key_blob\
+'
+========================================================================
+INDEX=36
+EPOCH=1790970918
+UTC=2026-10-02T19:55:18+00:00
+VILNIUS=2026-10-02T22:55:18+03:00
+COMMAND:
+fastboot set_active a\
+fastboot reboot

@@ -1,0 +1,16 @@
+SERVICES=1
+
+========================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc
+SERVICE=apexd-bootstrap
+LINE=13
+service apexd-bootstrap /system/bin/apexd --bootstrap
+    user root
+    group system
+    oneshot
+    disabled
+    reboot_on_failure reboot,bootloader,bootstrap-apexd-failed
+    # CAP_SYS_ADMIN is required to access device-mapper and to use mount syscall
+    # apexd-bootstrap doesn't manage apexdata snapshot & restore, hence no need for other capabilities.
+    capabilities SYS_ADMIN MKNOD
+

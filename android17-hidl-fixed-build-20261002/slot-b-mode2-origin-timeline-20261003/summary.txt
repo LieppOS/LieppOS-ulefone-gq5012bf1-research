@@ -1,0 +1,295 @@
+============================================================
+GQ5012BF1 SLOT-B MODE-2 ORIGIN TIMELINE
+============================================================
+
+PHONE_TOUCHED=NO
+SLOT_B_BOOTED=NO
+
+============================================================
+1. CORRECT CURRENT CAUSAL MODEL
+============================================================
+PROVEN:
+
+1. Original Slot-B Android 17 attempt reached Linux with MTK boot mode 0.
+
+2. That boot ended with:
+
+       reboot: Restarting system with command 'bootloader'
+
+3. Device-tree reboot mode values include:
+
+       recovery   = 2
+       bootloader = 3
+
+4. LK 0x3dc80 consumes WDT NONRST_REG2[3:0].
+
+5. During consumption LK performs:
+
+       old &= 0xfffffff0
+       *(0x1c00a024) = old
+
+   Therefore the consumed reboot-mode nibble is cleared before Linux starts.
+
+6. The later metadata-fixed Slot-B attempt reached Linux with MTK boot mode 2.
+
+CONSEQUENCE:
+
+An old recovery magic 2 cannot simply persist unchanged through the
+intervening LK boot(s).
+
+The later value 2 requires a NEW writer after the preceding LK clear.
+
+PRIMARY QUESTION:
+
+What host / bootloader / Android action between the first mode-0 B failure
+and the later mode-2 B attempt wrote recovery/fastboot magic 2?
+
+============================================================
+2. FIRST SLOT-B BOOT: SHUTDOWN CHRONOLOGY
+============================================================
+146-[    0.000000][    T0] CPU features: detected: GIC system register CPU interface
+147-[    0.000000][    T0] CPU features: kernel page table isolation forced ON by KASLR
+148-[    0.000000][    T0] CPU features: detected: Kernel page table isolation (KPTI)
+149-[    0.000000][    T0] CPU features: detected: ARM errata 1165522, 1319367, or 1530923
+150-[    0.000000][    T0] alternatives: applying boot alternatives
+151-[    0.000000][    T0] Built 1 zonelists, mobility grouping on.  Total pages: 4128768
+152-[    0.000000][    T0] Kernel command line: console=ttynull stack_depot_disable=on cgroup_disable=pressure kasan.page_alloc.sample=10 kasan.stacktrace=off kvm-arm.mode=protected bootconfig ioremap_guard  console=tty0 root=/dev/ram nosoftlockup 8250.nr_uarts=3 vmalloc=400M swiotlb=noforce transparent_hugepage=never cgroup.memory=nosocket,nokmem disable_dma32=on firmware_class.path=/vendor/firmware gpt=1 loop.max_part=7 ufshcd_core.poll_queues=0 mtk_printk_ctrl.disable_uart=1 usb2jtag_mode=0 root=/dev/ram bootopt=64S3,32N2,64N2 lpddr_used_name=MT512GBCAV8U31 flash_type=12 lpddr_used_index=0 PreEOLInfo = 0x1 LifeTimeEstA = 0x1 LifeTimeEstB = 0x1 lcmname=yft_vtdr6115_fhdp_dsi_cmd_hx_dphy_667_ky_lcm_drv charger_boot_switch=0 ramoops.mem_address=0x48090000 ramoops.mem_size=0xe0000 ramoops.pmsg_size=0x80000 ramoops.console_size=0x40000 bootconfig
+153-[    0.000000][    T0] cgroup: Disabling pressure control group feature
+154-[    0.000000][    T0] Unknown kernel command line parameters "PreEOLInfo = 0x1 LifeTimeEstA = 0x1 LifeTimeEstB = 0x1 vmalloc=400M usb2jtag_mode=0 bootopt=64S3,32N2,64N2 lpddr_used_name=MT512GBCAV8U31 flash_type=12 lpddr_used_index=0 lcmname=yft_vtdr6115_fhdp_dsi_cmd_hx_dphy_667_ky_lcm_drv charger_boot_switch=0", will be passed to user space.
+155-[    0.000000][    T0] Dentry cache hash table entries: 2097152 (order: 12, 16777216 bytes, linear)
+156-[    0.000000][    T0] Inode-cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+157-[    0.000000][    T0] mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+158-[    0.000000][    T0] Memory: 15543744K/16777216K available (16448K kernel code, 2018K rwdata, 11700K rodata, 4160K init, 634K bss, 1004096K reserved, 229376K cma-reserved)
+159-[    0.000000][    T0] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+160-[    0.000000][    T0] trace event string verifier disabled
+161-[    0.000000][    T0] rcu: Preemptible hierarchical RCU implementation.
+162-[    0.000000][    T0] rcu: 	RCU event tracing is enabled.
+163-[    0.000000][    T0] rcu: 	RCU restricting CPUs from NR_CPUS=32 to nr_cpu_ids=8.
+164-[    0.000000][    T0] rcu: 	RCU priority boosting: priority 1 delay 500 ms.
+165-[    0.000000][    T0] 	Trampoline variant of Tasks RCU enabled.
+166-[    0.000000][    T0] 	Tracing variant of Tasks RCU enabled.
+167-[    0.000000][    T0] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+168-[    0.000000][    T0] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=8
+169-[    0.000000][    T0] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+170-[    0.000000][    T0] GICv3: 864 SPIs implemented
+171-[    0.000000][    T0] GICv3: 0 Extended SPIs implemented
+172-[    0.000000][    T0] Root IRQ handler: gic_handle_irq
+173-[    0.000000][    T0] GICv3: GICv3 features: 16 PPIs
+174-[    0.000000][    T0] GICv3: CPU0: found redistributor 0 region 0:0x000000000c040000
+175-[    0.000000][    T0] GICv3: GIC: PPI partition interrupt-partition-0[0] { /cpus/cpu@0[0] /cpus/cpu@1[1] /cpus/cpu@2[2] /cpus/cpu@3[3] }
+176-[    0.000000][    T0] GICv3: GIC: PPI partition interrupt-partition-1[1] { /cpus/cpu@100[4] /cpus/cpu@101[5] /cpus/cpu@102[6] /cpus/cpu@103[7] }
+177-[    0.000000][    T0] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+178-[    0.000000][    T0] arch_timer: cp15 timer(s) running at 13.00MHz (virt).
+179-[    0.000000][    T0] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x2ff89eacb, max_idle_ns: 440795202429 ns
+180-[    0.000000][    T0] sched_clock: 56 bits at 13MHz, resolution 76ns, wraps every 4398046511101ns
+181-[    0.001518][    T0] kfence: initialized - using 524288 bytes for 63 objects at 0x(____ptrval____)-0x(____ptrval____)
+182-[    0.001629][    T0] Calibrating delay loop (skipped), value calculated using timer frequency.. 26.00 BogoMIPS (lpj=52000)
+183-[    0.001639][    T0] pid_max: default: 32768 minimum: 301
+184-[    0.001801][    T0] LSM: Security Framework initializing
+185-[    0.001850][    T0] SELinux:  Initializing.
+186:[    0.002068][    T0] Mount-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+187:[    0.002105][    T0] Mountpoint-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+188-[    0.003139][    T1] cacheinfo: Unable to detect cache hierarchy for CPU 0
+189-[    0.003741][    T1] cblist_init_generic: Setting adjustable number of callback queues.
+190-[    0.003744][    T1] cblist_init_generic: Setting shift to 3 and lim to 1.
+191-[    0.003835][    T1] cblist_init_generic: Setting adjustable number of callback queues.
+192-[    0.003837][    T1] cblist_init_generic: Setting shift to 3 and lim to 1.
+193-[    0.003985][    T1] rcu: Hierarchical SRCU implementation.
+194-[    0.003988][    T1] rcu: 	Max phase no-delay instances is 1000.
+195-[    0.004672][    T1] dyndbg: Ignore empty _ddebug table in a CONFIG_DYNAMIC_DEBUG_CORE build
+196-[    0.009389][    T1] EFI services will not be available.
+197-[    0.009804][    T1] smp: Bringing up secondary CPUs ...
+198-[    0.010546][    T0] Detected VIPT I-cache on CPU1
+199-[    0.010609][    T0] cacheinfo: Unable to detect cache hierarchy for CPU 1
+200-[    0.010621][    T0] GICv3: CPU1: found redistributor 100 region 0:0x000000000c060000
+201-[    0.010656][    T0] CPU1: Booted secondary processor 0x0000000100 [0x412fd050]
+202-[    0.011381][    T0] Detected VIPT I-cache on CPU2
+203-[    0.011429][    T0] cacheinfo: Unable to detect cache hierarchy for CPU 2
+204-[    0.011438][    T0] GICv3: CPU2: found redistributor 200 region 0:0x000000000c080000
+205-[    0.011457][    T0] CPU2: Booted secondary processor 0x0000000200 [0x412fd050]
+206-[    0.012211][    T0] Detected VIPT I-cache on CPU3
+207-[    0.012258][    T0] cacheinfo: Unable to detect cache hierarchy for CPU 3
+--
+1458-[    0.559809][    T1] mediatek-mml 1f000000.mmlsys-config: bound 1f001000.mml-mutex0 (ops mml_comp_ops [mtk_mml])
+1459-[    0.559900][    T1] mediatek-mml 1f000000.mmlsys-config: bound 1f003000.mml-rdma0 (ops mml_comp_ops [mtk_mml])
+1460-[    0.559987][    T1] mediatek-mml 1f000000.mmlsys-config: bound 1f000000.mmlsys-config (ops sys_comp_ops [mtk_mml])
+1461-[    0.560084][    T1] mediatek-mml 1f000000.mmlsys-config: bound 1f005000.mml-hdr0 (ops mml_comp_ops [mtk_mml])
+1462-[    0.560170][    T1] mediatek-mml 1f000000.mmlsys-config: bound 1f007000.mml-aal0 (ops mml_comp_ops [mtk_mml])
+1463-[    0.560252][    T1] mediatek-mml 1f000000.mmlsys-config: bound 1f009000.mml-rsz0 (ops mml_comp_ops [mtk_mml])
+1464-[    0.560334][    T1] mediatek-mml 1f000000.mmlsys-config: bound 1f00b000.mml-tdshp0 (ops mml_comp_ops [mtk_mml])
+1465-[    0.560414][    T1] mediatek-mml 1f000000.mmlsys-config: bound 1f000000.mmlsys-config (ops sys_comp_ops [mtk_mml])
+1466-[    0.560495][    T1] mediatek-mml 1f000000.mmlsys-config: bound 1f00f000.mml-wrot0 (ops mml_comp_ops [mtk_mml])
+1467-[    0.560575][    T1] [mml]wrot-19 (10) smi larb con 0x000000001f002388 event eof 21 sync 661/662/663
+1468-[    0.560581][    T1] [mml][err][MonitorThread] wrong idx: -18
+1469-[    0.561311][    T1] [mml_pq_core][mml][pq]mml_pq_core_init result: 0
+1470-[    0.562520][    T1] [mml]mml_topology_register_ip ip mt6878
+1471-[    0.563088][    T1] BPF: [130364] Invalid name_offset:2300878
+1472-[    0.563095][    T1] Kernel module BTF mismatch detected, BTF debug info may be unavailable for some modules
+1473-[    0.564388][    T1] get soc-release-threshold error -22, use soc limit + 1
+1474-[    0.564395][    T1] get temperature stage error -22, use 0
+1475-[    0.565206][    T1] leds_mtk mtk_leds_init(787) :init begain +++
+1476-[    0.565211][    T1] leds_mtk mtk_leds_init(796) :init end ---
+1477-[    0.587236][    T1] mediatek-drm 14000000.dispsys-config: Adding to iommu group 0
+1478-[    0.587346][    T1] [DISP]drm_mmp_init
+1479-[    0.587353][    T1] MMP: mmprofile_enable(): enable: 1
+1480-[    0.588355][    T1] MMP: mmprofile_force_start(): start: 1
+1481-[    0.588405][    T1] [DISP]MTK_DRM_OPT_STAGE 0
+1482-[    0.588410][    T1] [DISP]MTK_DRM_OPT_USE_CMDQ 1
+1483-[    0.588414][    T1] [DISP]MTK_DRM_OPT_USE_M4U 1
+1484-[    0.588417][    T1] [DISP]MTK_DRM_OPT_MMQOS_SUPPORT 1
+1485-[    0.588421][    T1] [DISP]MTK_DRM_OPT_MMDVFS_SUPPORT 1
+1486-[    0.588424][    T1] [DISP]MTK_DRM_OPT_SODI_SUPPORT 0
+1487-[    0.588428][    T1] [DISP]MTK_DRM_OPT_IDLE_MGR 1
+1488-[    0.588431][    T1] [DISP]MTK_DRM_OPT_IDLEMGR_SWTCH_DECOUPLE 0
+1489-[    0.588435][    T1] [DISP]MTK_DRM_OPT_IDLEMGR_BY_REPAINT 0
+1490-[    0.588443][    T1] [DISP]MTK_DRM_OPT_IDLEMGR_BY_WB 0
+1491-[    0.588447][    T1] [DISP]MTK_DRM_OPT_IDLEMGR_ENTER_ULPS 0
+1492-[    0.588451][    T1] [DISP]MTK_DRM_OPT_IDLEMGR_KEEP_LP11 0
+1493-[    0.588455][    T1] [DISP]MTK_DRM_OPT_DYNAMIC_RDMA_GOLDEN_SETTING 0
+1494-[    0.588459][    T1] [DISP]MTK_DRM_OPT_IDLEMGR_DISABLE_ROUTINE_IRQ 1
+1495-[    0.588462][    T1] [DISP]MTK_DRM_OPT_IDLEMGR_ASYNC 1
+1496-[    0.588466][    T1] [DISP]MTK_DRM_OPT_MET_LOG 0
+1497-[    0.588470][    T1] [DISP]MTK_DRM_OPT_USE_PQ 1
+1498:[    0.588473][    T1] [DISP]MTK_DRM_OPT_ESD_CHECK_RECOVERY 1
+1499-[    0.588478][    T1] [DISP]MTK_DRM_OPT_ESD_CHECK_SWITCH 1
+1500-[    0.588481][    T1] [DISP]MTK_DRM_OPT_PRESENT_FENCE 1
+1501-[    0.588485][    T1] [DISP]MTK_DRM_OPT_RDMA_UNDERFLOW_AEE 0
+1502-[    0.588489][    T1] [DISP]MTK_DRM_OPT_DSI_UNDERRUN_AEE 1
+1503-[    0.588492][    T1] [DISP]MTK_DRM_OPT_ODDMR_OD_AEE 0
+1504-[    0.588496][    T1] [DISP]MTK_DRM_OPT_ODDMR_DMR_AEE 0
+1505-[    0.588500][    T1] [DISP]MTK_DRM_OPT_HRT 1
+1506-[    0.588504][    T1] [DISP]MTK_DRM_OPT_HRT_MODE 0
+1507-[    0.588508][    T1] [DISP]MTK_DRM_OPT_DELAYED_TRIGGER 0
+1508-[    0.588512][    T1] [DISP]MTK_DRM_OPT_OVL_EXT_LAYER 1
+1509-[    0.588516][    T1] [DISP]MTK_DRM_OPT_AOD 1
+1510-[    0.588520][    T1] [DISP]MTK_DRM_OPT_RPO 1
+1511-[    0.588525][    T1] [DISP]MTK_DRM_OPT_DUAL_PIPE 0
+1512-[    0.588528][    T1] [DISP]MTK_DRM_OPT_DC_BY_HRT 0
+1513-[    0.588533][    T1] [DISP]MTK_DRM_OPT_OVL_WCG 0
+1514-[    0.588537][    T1] [DISP]MTK_DRM_OPT_OVL_SBCH 0
+1515-[    0.588542][    T1] [DISP]MTK_DRM_OPT_COMMIT_NO_WAIT_VBLANK 1
+1516-[    0.588547][    T1] [DISP]MTK_DRM_OPT_MET 0
+1517-[    0.588551][    T1] [DISP]MTK_DRM_OPT_REG_PARSER_RAW_DUMP 0
+1518-[    0.588555][    T1] [DISP]MTK_DRM_OPT_VP_PQ 0
+--
+2808-[    1.804660][    T1] not yet
+2809-[    1.824183][    T1] get_charger_zcv: get charger zcv failed: -95
+2810-[    1.824186][    T1] not yet
+2811-[    1.843495][    T1] not yet
+2812-[    1.855503][    T1] [PE50]pe50_check_thermal_level tbat(30,4)
+2813-[    1.855520][    T1] sc8571 11-0066: sc8571_enable_adc:1
+2814-[    1.916727][    T1] sc8571 11-0066: val[1]:49, val[0]:0
+2815-[    1.916741][    T1] sc8571 11-0066: sc8571_get_adc_data 9 36
+2816-[    1.916750][    T1] sc8571 11-0066: sc8571_enable_adc:0
+2817-[    1.917722][    T1] [PE50]pe50_check_thermal_level tdvchg(36,4)
+2818-[    1.917736][    T1] pd_adapter pd-adapter: pd_authentication not Attached.SNK
+2819-[    1.917744][    T1] [PE50]pe50_is_algo_ready yft_drv:[pe50_is_algo_ready] ta_rdy fail ret=2
+2820-[    1.924676][    T1] get_charger_zcv: get charger zcv failed: -95
+2821-[    1.924686][    T1] not yet
+2822-[    1.938791][    T1] [PE50]pe50_check_thermal_level tbat(30,4)
+2823-[    1.938805][    T1] sc8571 11-0066: sc8571_enable_adc:1
+2824-[    1.996650][    T1] sc8571 11-0066: val[1]:49, val[0]:0
+2825-[    1.996657][    T1] sc8571 11-0066: sc8571_get_adc_data 9 36
+2826-[    1.996660][    T1] sc8571 11-0066: sc8571_enable_adc:0
+2827-[    1.997529][    T1] [PE50]pe50_check_thermal_level tdvchg(36,4)
+2828-[    1.997532][    T1] pd_adapter pd-adapter: pd_authentication not Attached.SNK
+2829-[    1.997535][    T1] [PE50]pe50_is_algo_ready yft_drv:[pe50_is_algo_ready] ta_rdy fail ret=2
+2830-[    2.004418][    T1] get_charger_zcv: get charger zcv failed: -95
+2831-[    2.004429][    T1] not yet
+2832-[    2.030839][    T1] sc8571 6-0067: sc8571_check_charge_enabled:0
+2833-[    2.030849][    T1] power_supply sc-cp-slave: driver failed to report `present' property: -22
+2834-[    2.030854][    T1] synth uevent: /devices/platform/soc/11e01000.i2c/i2c-6/6-0067/power_supply/sc-cp-slave: failed to send uevent
+2835-[    2.030856][    T1] power_supply sc-cp-slave: uevent: failed to send synthetic uevent: -22
+2836-[    2.049966][  T143] sd 0:0:0:2: [sdc] Starting disk
+2837-[    2.052478][  T143] sd 0:0:0:2: [sdc] Starting disk
+2838-[    2.058274][    T1] fsck.f2fs: linker: Warning: failed to find generated linker configuration from "/linkerconfig/ld.config.txt"
+2839-[    2.058288][    T1] fsck.f2fs: WARNING: linker: Warning: failed to find generated linker configuration from "/linkerconfig/ld.config.txt"
+2840-[    2.066158][    T1] fsck.f2fs: Info: Fix the reported corruption.
+2841-[    2.066627][    T1] fsck.f2fs: Info: not exist /proc/version!
+2842-[    2.068830][    T1] fsck.f2fs: Info: MKFS version
+2843-[    2.068838][    T1] fsck.f2fs:   "6.1.115-android14-11-g6b18f0b574ab-ab12901745"
+2844-[    2.068843][    T1] fsck.f2fs: Info: FSCK version
+2845-[    2.068847][    T1] fsck.f2fs:   from "6.1.115-android14-11-g6b18f0b574ab-ab12901745"
+2846-[    2.068857][    T1] fsck.f2fs:     to "6.1.115-android14-11-g6b18f0b574ab-ab12901745"
+2847-[    2.068862][    T1] fsck.f2fs: Info: superblock features = 499 :  encrypt verity extra_attr project_quota quota_ino
+2848:[    2.075899][    T1] F2FS-fs (sdc16): Mounted with checkpoint version = 712b2fd
+2849:[    2.084529][    T1] erofs: (device dm-5): mounted with root inode @ nid 60.
+2850-[    2.085737][    T1] reboot set flag, old value 0x6c002800, 0.
+2851-[    2.085747][    T1] reboot set flag new value 0x6c002000.
+2852-[    2.086017][    T1] sd 0:0:0:2: [sdc] Synchronizing SCSI cache
+2853-[    2.092069][    T1] mtk-extcon-usb extcon-usb: shutdown
+2854-[    2.099994][    T1] ******** mtk_battery_shutdown!! car=[o:0,new:-20,diff:0 v:0]********
+2855-[    2.100104][  T341] pd_adapter pd-adapter: pd_tcp_notifier_call event = 9, idx = 0
+2856-[    2.100118][  T341] rt-pd-manager rt-pd-manager: pd_tcp_notifier_call event = 9, idx = 0
+2857-[    2.100126][  T341] rt-pd-manager rt-pd-manager: pd_tcp_notifier_call sink vbus 0mV 0mA type(0x00)
+2858-[    2.100136][  T341] pd_adapter pd-adapter: pd_tcp_notifier_call event = 8, idx = 0
+2859-[    2.100143][  T341] rt-pd-manager rt-pd-manager: pd_tcp_notifier_call event = 8, idx = 0
+2860-[    2.100149][  T341] rt-pd-manager rt-pd-manager: pd_tcp_notifier_call source vbus 0mV 0mA type(0x00)
+2861-[    2.100156][  T341] mtk-extcon-usb extcon-usb: source vbus = 0mv
+2862-[    2.100206][    T1] sc8571 11-0066: sc8571_enable_adc:0
+2863-[    2.100692][    T1] sc8571_charger_shutdown: sc8571_enable_adc
+2864-[    2.100696][    T1] [sh366003] sh_fg_shutdown(2429): [sh366003]sm fuel gauge driver shutdown!
+2865-[    2.101516][    T1] sc851x_charger_shutdown: close AUDIO_EN
+2866-[    2.101523][    T1] sc8571 6-0067: sc8571_enable_adc:0
+2867-[    2.101986][    T1] sc8571_charger_shutdown: sc8571_enable_adc
+2868-[    2.102013][    T1] regulator_vibrator vib_shutdown(295) :shutdown: enter!
+2869-[    2.104242][    T1] mt6685-rtc mt6685-rtc: pdn1 = 0x0
+2870-[    2.104245][    T1] No power-off alarm is set
+2871-[    2.106292][    T1] mtu3 11201000.usb0: mtu3_shutdown role 0
+2872-[    2.106301][    T1] [DISP]mtk_drm_shutdown status(2)
+2873-[    2.106370][    T1] [cmdq] cmdq_shutdown hwid:1 enter
+2874-[    2.106377][    T1] [cmdq] cmdq_shutdown hwid:0 enter
+2875-[    2.106379][    T1] [cmdq] cmdq_shutdown hwid:0 usage:1 idx:3 still has tasks
+2876-[    2.106390][    T1] mtk_smi_dbg_shutdown shutdown enter
+2877-[    2.106993][    T1] leds_mtk_disp led_disp_shutdown(109) :Turn off backlight
+2878:[    2.107144][    T1] reboot: Restarting system with command 'bootloader'
+
+===== FINAL 1000 LINES =====
+6:[    0.713916][    T1] xhci-mtk 11200000.xhci0: failed to get offload data
+35:[    0.718639][    T1] mt6685-tb-clkbuf: Failed to locate of_node [id: -1]
+36:[    0.718940][    T1] mt6685-audclk: Failed to locate of_node [id: -1]
+37:[    0.719171][    T1] mt6685-gps: Failed to locate of_node [id: -1]
+165:[    0.744514][   T10] mmc1:failed to get req-vcore
+238:[    0.797695][    T1] rt5133 5-0018: Failed to check vendor info [-6]
+240:[    0.798831][    T1] rt6160 5-0075: Failed to read 1: -6
+241:[    0.798836][    T1] rt6160 5-0075: Failed to init regmap (-6)
+243:[    0.799486][    T1] rt6160 6-0075: Failed to read 1: -6
+244:[    0.799490][    T1] rt6160 6-0075: Failed to init regmap (-6)
+271:[    0.829564][    T1] mt6375-chg 11280000.i2c:mt6375@34:chg: Failed to get pmic-uvlo phandle
+471:[    1.075744][  T312] get_vbus: get vbus failed: -1
+472:[    1.075750][  T312] get_charger_zcv: get charger zcv failed: -95
+475:[    1.075771][  T312] get_vbus: get vbus failed: -1
+476:[    1.075775][  T312] get_charger_zcv: get charger zcv failed: -95
+479:[    1.075791][  T312] get_vbus: get vbus failed: -1
+480:[    1.075794][  T312] get_charger_zcv: get charger zcv failed: -95
+483:[    1.075809][  T312] get_vbus: get vbus failed: -1
+484:[    1.075813][  T312] get_charger_zcv: get charger zcv failed: -95
+487:[    1.075830][  T312] get_vbus: get vbus failed: -1
+488:[    1.075833][  T312] get_charger_zcv: get charger zcv failed: -95
+492:[    1.075852][  T312] get_vbus: get vbus failed: -1
+493:[    1.075856][  T312] get_charger_zcv: get charger zcv failed: -95
+501:[    1.088124][  T312] power_supply mtk-gauge: driver failed to report `energy_empty_design' property: -22
+540:[    1.193048][  T143] power_supply sc-cp-slave: driver failed to report `present' property: -22
+557:[    1.224630][    T1] leds_mtk mt_leds_parse_dt(651) :failed to read battery percent properity, use default value
+643:[    1.233079][   T91] power_supply sc-cp-master: driver failed to report `present' property: -22
+716:[    1.330727][    T1] failed to find node @ check_fdvfs_support
+884:[    1.543085][  T128] <    1.543>TCPC-PD-ERR:pd_put_tcp_event failed0
+919:[    1.724252][    T1] get_charger_zcv: get charger zcv failed: -95
+929:[    1.804648][    T1] get_charger_zcv: get charger zcv failed: -95
+931:[    1.824183][    T1] get_charger_zcv: get charger zcv failed: -95
+942:[    1.924676][    T1] get_charger_zcv: get charger zcv failed: -95
+952:[    2.004418][    T1] get_charger_zcv: get charger zcv failed: -95
+955:[    2.030849][    T1] power_supply sc-cp-slave: driver failed to report `present' property: -22
+956:[    2.030854][    T1] synth uevent: /devices/platform/soc/11e01000.i2c/i2c-6/6-0067/power_supply/sc-cp-slave: failed to send uevent
+957:[    2.030856][    T1] power_supply sc-cp-slave: uevent: failed to send synthetic uevent: -22
+960:[    2.058274][    T1] fsck.f2fs: linker: Warning: failed to find generated linker configuration from "/linkerconfig/ld.config.txt"
+961:[    2.058288][    T1] fsck.f2fs: WARNING: linker: Warning: failed to find generated linker configuration from "/linkerconfig/ld.config.txt"
+970:[    2.075899][    T1] F2FS-fs (sdc16): Mounted with checkpoint version = 712b2fd
+971:[    2.084529][    T1] erofs: (device dm-5): mounted with root inode @ nid 60.
+1000:[    2.107144][    T1] reboot: Restarting system with command 'bootloader'
+
+============================================================
+3. FIND EVERY INIT RULE THAT CAN REBOOT TO BOOTLOADER
+============================================================
+  File "<stdin>", line 34
+SyntaxError: no binding for nonlocal 'current_service' found

@@ -1,0 +1,35 @@
+PROVEN:
+
+1. Original Slot-B Android 17 attempt reached Linux with MTK boot mode 0.
+
+2. That boot ended with:
+
+       reboot: Restarting system with command 'bootloader'
+
+3. Device-tree reboot mode values include:
+
+       recovery   = 2
+       bootloader = 3
+
+4. LK 0x3dc80 consumes WDT NONRST_REG2[3:0].
+
+5. During consumption LK performs:
+
+       old &= 0xfffffff0
+       *(0x1c00a024) = old
+
+   Therefore the consumed reboot-mode nibble is cleared before Linux starts.
+
+6. The later metadata-fixed Slot-B attempt reached Linux with MTK boot mode 2.
+
+CONSEQUENCE:
+
+An old recovery magic 2 cannot simply persist unchanged through the
+intervening LK boot(s).
+
+The later value 2 requires a NEW writer after the preceding LK clear.
+
+PRIMARY QUESTION:
+
+What host / bootloader / Android action between the first mode-0 B failure
+and the later mode-2 B attempt wrote recovery/fastboot magic 2?
