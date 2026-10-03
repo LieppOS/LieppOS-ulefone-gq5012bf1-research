@@ -42,6 +42,19 @@ Notable structure facts:
   (sensorhub, focaltech touch) and has **no dependencies** — the cheapest
   first target.
 
+## Status after the second pass (2026-10-04)
+
+- **`mtk_panel_ext` — EXACT** (12/12 functions) after the stock
+  `mtk_panel_funcs` layout was pinned: donor minus `set_backlight_pack` and
+  `hbm_set_pack`.
+- **`panel-ky-vtdr6115-dphy-cmd` — 20/24 functions byte-identical, 83/83 data
+  objects and the full 199 816-byte `.data` byte-identical, 45/45 import CRCs,
+  `.modinfo`/`vermagic` identical.** Component `VTDR6115-DISPLAY` moved
+  **BLOCKED → DONE**. See [`vtdr6115/`](vtdr6115/).
+- Reusable technique: build `Module.symvers` from the **stock** providers'
+  `__kcrctab` (`vtdr6115/source/mk_symvers.py`) instead of rebuilding
+  providers — this is what fixed the vendor-symbol CRC mismatches.
+
 ## Status after the first pass
 
 - **`mtk_disp_notify` — EXACT and moved PARTIAL → DONE** in the workspace
@@ -73,9 +86,7 @@ module — the next step is to build it in isolation (scratch Kbuild dir with
 2. ~~`mtk_panel_ext`~~ — **done bar one struct-offset field**; to finish it,
    resolve which two `struct mtk_panel_funcs` members the stock header lacks
    (needs a second MTK 6.1 panel header or `mediatek-drm.ko` call-site offsets).
-3. `panel-ky-vtdr6115-dphy-cmd` — panel command tables, power/reset sequencing,
-   modes/refresh rates, ESD recovery (existing work: `lieppos/panel-vtdr6115-recon`,
-   `panel-vtdr6115-donor-red`, `panel-vtdr6115-provider-harness`).
+3. ~~`panel-ky-vtdr6115-dphy-cmd`~~ — **done** (`VTDR6115-DISPLAY`, DONE).
 4. `focaltech_touch_spi_ft3680` — existing work: `lieppos/focaltech-ft3680-recon`
    plus two analysis scripts.
 5. `spi_tiny_co5300_lcd` (rear display) — pairs with the already-DONE
