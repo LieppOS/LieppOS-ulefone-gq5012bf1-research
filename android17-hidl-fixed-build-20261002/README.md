@@ -721,3 +721,35 @@ the recovery callback begins at `0xef24`; the table itself determines the
 true entry point.
 
 No phone state was modified and Slot B was not booted.
+
+## AEE recovery/fastboot reboot-mode path — final static proof
+
+The AEE fastboot callback table has been resolved after accounting for its
+runtime virtual-address base.
+
+Confirmed command callbacks:
+
+- `reboot` -> `0xedd0`
+- `reboot-bootloader` -> `0xedfc`
+- `reboot-fastboot` -> `0xee30`
+- `reboot-recovery` -> `0xef24`
+
+The recovery callback loads `boot-recovery` and the fastboot callback loads
+`boot-fastboot`; both enter the shared BCB engine at `0xee3c`.
+
+After a successful BCB write, that shared engine executes:
+
+    mov w0, 2
+    bl 0x2eaa0
+
+where `0x2eaa0` writes the low reboot-mode nibble of physical register
+`0x1c00a024`.
+
+Thus AEE's recovery/fastboot reboot handlers provide a complete firmware path
+for creating the value `2` later consumed by main LK as `RECOVERY_BOOT`.
+
+This establishes command semantics and register provenance. Historical
+causality for the specific failed Slot-B experiment remains a separate
+question.
+
+No phone state was modified and Slot B was not booted.
