@@ -826,3 +826,31 @@ remains unknown for this attempt.
 
 This distinguishes the experiment from the earlier immediately observable
 fastbootd/recovery path, but does not by itself prove which LK mode was used.
+
+## Controlled Slot-B logo-hang pstore classification
+
+Pstore captured after manually returning to Slot A was analyzed to classify
+the failed plain-reboot Slot-B attempt.
+
+Result:
+
+SLOT_B_MARKER=NO
+SLOT_A_MARKER=NO
+MODE0_MARKER=NO
+MODE2_MARKER=NO
+FORCE_NORMAL_BOOT=NO
+RECOVERY_OR_FASTBOOTD=NO
+LINUX_STARTED=NO
+FIRST_STAGE_INIT=NO
+SECOND_STAGE_INIT=NO
+SERVICEMANAGER_SEEN=NO
+APEXD_SEEN=NO
+ZYGOTE_SEEN=NO
+SYSTEM_SERVER_SEEN=NO
+BOOT_COMPLETED_SEEN=NO
+KERNEL_PANIC=NO
+EXPLICIT_REBOOT_SEEN=NO
+B_BOOTMODE_VERDICT=B_BOOTMODE_NOT_PROVEN_FROM_PSTORE
+DEEPEST_BOOT_STAGE=NO_LINUX_PROGRESS_PROVEN
+
+This analysis is host-only and does not perform another Slot-B boot.
