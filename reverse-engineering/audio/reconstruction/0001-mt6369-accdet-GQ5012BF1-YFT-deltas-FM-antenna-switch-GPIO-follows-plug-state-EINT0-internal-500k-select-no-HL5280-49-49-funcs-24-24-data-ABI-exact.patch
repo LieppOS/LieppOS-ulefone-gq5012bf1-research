@@ -1,0 +1,110 @@
+From 53e5711924c03b483edb780accd2dbff2b18d4fa Mon Sep 17 00:00:00 2001
+From: re <re@local>
+Date: Sat, 3 Oct 2026 13:56:33 +0300
+Subject: [PATCH] mt6369-accdet: GQ5012BF1 YFT deltas (FM antenna switch GPIO
+ follows plug state, EINT0 internal 500k select, no HL5280) - 49/49 funcs
+ 24/24 data ABI exact
+
+---
+ sound/soc/codecs/mt6369-accdet.c | 49 +++++++++++++++++++++++++++++++-
+ 1 file changed, 48 insertions(+), 1 deletion(-)
+
+diff --git a/sound/soc/codecs/mt6369-accdet.c b/sound/soc/codecs/mt6369-accdet.c
+index 71dc5d2..ed8f86c 100644
+--- a/sound/soc/codecs/mt6369-accdet.c
++++ b/sound/soc/codecs/mt6369-accdet.c
+@@ -181,8 +181,10 @@ static void recover_eint_digital_setting(void);
+ static void recover_eint_setting(u32 eintsts);
+ static void recover_moisture_setting(u32 moistureID);
+ static void send_status_event(u32 cable_type, u32 status);
++extern int g_gpio_accdet_fm_switch;
+ 
+-#if IS_ENABLED(CONFIG_AUDIO_SWITCH_HL5280)
++/* GQ5012BF1 stock was built without CONFIG_AUDIO_SWITCH_HL5280 */
++#if 0 && IS_ENABLED(CONFIG_AUDIO_SWITCH_HL5280)
+ void accdet_eint_callback_wrapper(bool plug_status)
+ {
+ 	int ret = 0;
+@@ -1096,6 +1098,9 @@ static u32 adjust_eint_analog_setting(void)
+ 			/* enable RG_EINT0CONFIGACCDET */
+ 			accdet_update_bit(RG_EINT0CONFIGACCDET_ADDR,
+ 				RG_EINT0CONFIGACCDET_SFT);
++			/* YFT: select 500k internal resistor */
++			accdet_update_bit(RG_EINT0HIRENB_ADDR,
++				RG_EINT0HIRENB_SFT);
+ 		} else if (HAS_CAP(accdet->data->caps,
+ 				ACCDET_PMIC_EINT1)) {
+ 			/* enable RG_EINT1CONFIGACCDET */
+@@ -1653,6 +1658,7 @@ static void eint_work_callback(struct work_struct *work)
+ 		accdet_init();
+ 
+ 		enable_accdet(0);
++		gpio_set_value(g_gpio_accdet_fm_switch, 1);
+ 	} else {
+ 		mutex_lock(&accdet->res_lock);
+ 		accdet->eint_sync_flag = false;
+@@ -1667,6 +1673,7 @@ static void eint_work_callback(struct work_struct *work)
+ 			ACCDET_SW_EN_SFT);
+ 		disable_accdet();
+ 		headset_plug_out();
++		gpio_set_value(g_gpio_accdet_fm_switch, 0);
+ 	}
+ 
+ 	if (HAS_CAP(accdet->data->caps, ACCDET_PMIC_EINT_IRQ)) {
+@@ -2935,6 +2942,45 @@ int mt6369_accdet_init(struct snd_soc_component *component,
+ }
+ EXPORT_SYMBOL_GPL(mt6369_accdet_init);
+ 
++int g_gpio_accdet_fm_switch;
++
++int yft_accdet_fm_switch(struct device *dev)
++{
++	struct device_node *node;
++	int ret, gpio;
++
++	pr_info("[%s] start..\n", __func__);
++	node = of_find_compatible_node(NULL, NULL, "mediatek,mt6369-accdet");
++	if (!node) {
++		printk("%s: cannot get the node: 'mediatek,pmic-accdet'.\n", __func__);
++		return -ENODEV;
++	}
++	printk("%s: node not null.\n", __func__);
++	gpio = of_get_named_gpio(node, "gpio-accdet-fm-switch", 0);
++	printk("%s: of_get_named_gpio GPIO is %d.\n", "yft_parse_dts2", gpio);
++	g_gpio_accdet_fm_switch = gpio;
++	if (gpio_is_valid(gpio))
++		pr_info("gpio number %d is valid\n", gpio);
++	if (g_gpio_accdet_fm_switch) {
++		ret = gpio_request(g_gpio_accdet_fm_switch, "gpio-accdet-fm-switch");
++		if (ret) {
++			pr_err("%s : accdet fm switch gpio_request failed\n", __func__);
++			return -ENODEV;
++		}
++		pr_info("%s : accdet fm switch GPIO = %d\n", __func__, g_gpio_accdet_fm_switch);
++		ret = gpio_direction_output(g_gpio_accdet_fm_switch, 0);
++		if (ret) {
++			pr_err("%s : accdet fm switch gpio_direction_output failed\n", __func__);
++			return -ENODEV;
++		}
++		gpio_set_value(g_gpio_accdet_fm_switch, 0);
++		pr_info("%s : accdet fm switch gpio_get_value = %d\n", __func__,
++			gpio_get_value(g_gpio_accdet_fm_switch));
++	}
++	pr_info("[%s] end..\n", __func__);
++	return 0;
++}
++
+ static int mt6369_accdet_probe(struct platform_device *pdev)
+ {
+ 	int ret = 0;
+@@ -3165,6 +3211,7 @@ static int mt6369_accdet_probe(struct platform_device *pdev)
+ 	}
+ 	atomic_set(&accdet_first, 1);
+ 	mod_timer(&accdet_init_timer, (jiffies + ACCDET_INIT_WAIT_TIMER));
++	yft_accdet_fm_switch(&pdev->dev);
+ 
+ 	return 0;
+ 
+-- 
+2.55.0
+
