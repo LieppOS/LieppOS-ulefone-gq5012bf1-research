@@ -140,11 +140,33 @@ class Gen:
         if d.tag == "DW_TAG_array_type":
             el = d.tref()
             esz = db.size(el)
-            n = db.size(toff) // esz if esz else 0
-            items = [self.value(db, el, sym, off + i * esz, indent=indent) for i in range(n)]
-            while items and self.zero(db, el, sym, off + (len(items) - 1) * esz):
-                items.pop()
-            return "{" + ", ".join(items) + "}"
+            dims = []
+            for c in d.children:
+                if c.tag == "DW_TAG_subrange_type":
+                    cnt = c.ival("DW_AT_count")
+                    if cnt is None:
+                        ub = c.ival("DW_AT_upper_bound")
+                        cnt = (ub + 1) if ub is not None else 0
+                    dims.append(cnt)
+            if not dims:
+                dims = [db.size(toff) // esz if esz else 0]
+
+            def emit(level, base):
+                # nested braces per dimension (warning-free under -Wmissing-braces)
+                stride = esz
+                for k in dims[level + 1:]:
+                    stride *= k
+                items = []
+                for i in range(dims[level]):
+                    o = base + i * stride
+                    if level + 1 < len(dims):
+                        items.append(emit(level + 1, o))
+                    else:
+                        items.append(self.value(db, el, sym, o, indent=indent))
+                while items and self.zero(db, el, sym, base + (len(items) - 1) * stride, stride):
+                    items.pop()
+                return "{" + ", ".join(items) + "}"
+            return emit(0, off)
         if d.tag in ("DW_TAG_structure_type", "DW_TAG_union_type"):
             return self.struct_init(db, d, sym, off, indent + 1)
         raise ValueError(d.tag)

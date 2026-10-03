@@ -18,6 +18,7 @@ usage: ko_parity.py <stock.ko> <rebuilt.ko> [--tsv f.tsv] [--data-tsv d.tsv] [--
 """
 import collections
 import os
+import re
 import struct
 import sys
 
@@ -44,13 +45,13 @@ class Norm:
             return f"ABS:{s.name}"
         sec = e.sections[s.shndx]
         if s.type in (1, 2) and s.name:
-            return f"{s.name}+{r.addend}"
+            return f"{keyname(s.name)}+{r.addend}"
         addr = s.value + r.addend
         if sec.flags & 0x20:
             return "S:" + repr(e.cstring_at(s.shndx, addr))
         c = e.containing(s.shndx, addr)
         if c is not None:
-            return f"{c.name}+{addr - c.value}"
+            return f"{keyname(c.name)}+{addr - c.value}"
         return f"{sec.name}+?"
 
     def sig(self, sym):
@@ -61,13 +62,23 @@ class Norm:
         return out
 
 
+LOCAL_SUFFIX = re.compile(r"\.\d+$")
+
+
+def keyname(n):
+    """clang numbers function-local statics (foo.__func___rs.84); the number
+    depends on how many such statics preceded it in the TU, so it is not
+    identity: compare by name without suffix + occurrence in address order."""
+    return LOCAL_SUFFIX.sub("", n) if "." in n else n
+
+
 def keyed(e, pred):
     cnt = collections.Counter()
     out = {}
     syms = [s for s in e.symbols if pred(s)]
     syms.sort(key=lambda s: (e.sections[s.shndx].name, s.value, s.name))
     for s in syms:
-        k = (e.sections[s.shndx].name, s.name)
+        k = (e.sections[s.shndx].name, keyname(s.name))
         out[(k[0], k[1], cnt[k])] = s
         cnt[k] += 1
     return out

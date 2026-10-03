@@ -40,6 +40,10 @@ signals), **INFERRED** (one signal or naming), **UNKNOWN**.
    (custom7/8/12/20) are a stock-only register revision**; 83/87 static_ctx
    fields identical. Ulefone changes are a mode re-mapping, a PDAF type
    change, removed OIS rail, CTS-board gating and an AWB-gain hook.
+   **Closed 2026-10-03** as `Reverse Engineer - DONE/CAMERA-IMX989/`: re-verified
+   from scratch against the shipped module — 41/41 modes (33 + 8), 174/174
+   `static_ctx` fields and **14 263/14 263 register write pairs identical**, zero
+   deltas; see `notes/imx989.md`.
 3. **Shared imgsensor framework is near-exact donor source.** Building the
    Nothing `src-v4l2` framework against exact GKI 12901745 and adding **one
    proven struct delta** (a 14-int `custom_ldo` channel array in
@@ -265,6 +269,22 @@ python3 scripts/camera_userspace_deps.py <vendor> <system> userspace
 python3 scripts/tuning_db_inventory.py <vendor> userspace/tuning-db-inventory.tsv
 python3 scripts/module_source_coverage.py <mods> <nothing-root> out.tsv <ko>...
 ```
+
+## Methodology guard (2026-10-03): two oracles, do not conflate them
+
+`imgsensor_parity.py` **cannot** run against the shipped module: it aborts with
+`cannot attribute rebuilt function set_custom_ldo`, because MTK's binary carries
+cross-module symbols that our object set does not contain. Every
+"618/619 byte-identical" style number from that harness therefore compares **two
+builds of our own tree**. Byte-identity in that comparison is expected by
+construction, so it measures how well the tree is pinned — never whether we match
+stock. Real stock parity requires `imgsensor_oracle.py` + `compare_oracles.py`
+against `vendor_dlkm/lib/modules/imgsensor.ko`.
+
+This matters because the reproducibility numbers look far more decisive than the
+semantic ones (618/619 byte-exact vs "fields identical"), and it is the weaker
+claim of the two. Any future camera closure must state which axis each number
+came from; `DONE/CAMERA-IMX989/` is written to that standard.
 
 Donor provenance: `donor-comparisons/nothing-mt6878-donor-file-hashes.txt`
 (NothingOSS MT6878 trees under `kernel-research/nothing-mt6878`, Tetris
