@@ -753,3 +753,28 @@ causality for the specific failed Slot-B experiment remains a separate
 question.
 
 No phone state was modified and Slot B was not booted.
+
+## AEE recovery mode-2 proof classifier correction
+
+The final AEE static-proof checker initially produced false FAIL results for
+the `0x2eaa0` register-writer instructions because it assumed a fixed textual
+radare2 address padding width.
+
+The corrected checker parses radare2 addresses numerically.
+
+The resulting proof covers the complete static chain:
+
+    reboot-recovery
+        -> callback 0xef24
+        -> boot-recovery
+        -> shared BCB engine 0xee3c
+        -> successful BCB write
+        -> mov w0, 2
+        -> AEE writer 0x2eaa0
+        -> MTK_WDT_NONRST_REG2[3:0] = 2
+        -> reset
+
+`reboot-fastboot` enters the same shared recovery-mode-2 transport while using
+`boot-fastboot` as the BCB command.
+
+No phone state was modified.

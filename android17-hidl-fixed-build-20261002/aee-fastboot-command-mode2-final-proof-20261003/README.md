@@ -58,3 +58,16 @@ It does not by itself prove what issued the relevant AEE command during the
 historical Slot-B experiment.
 
 No phone state was modified.
+
+## Proof-classifier correction
+
+The initial final-proof classifier incorrectly formatted five-digit radare2
+addresses by constructing textual strings such as `0x00002eaa0`, while
+radare2 displays the same file offset as `0x0002eaa0`.
+
+This caused false FAIL results for the already-disassembled
+`0x2eaa0` NONRST writer instructions.
+
+The corrected classifier parses instruction addresses numerically.
+
+The underlying static evidence was unchanged.
