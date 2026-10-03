@@ -1,5 +1,10 @@
 # GQ5012BF1 power / charging stack — source reconstruction to stock parity
 
+> **Board-specific hardware layer (2026-10-03):** SC8571 ×2 and SC8510 are now
+> source-exact (see `sc8571/`, `sc8510/`), topology/battery/reverse-charging and
+> fast-charge routing are in `hardware/` and `protocols/`, and every YFT delta is
+> indexed in `yft-power-deltas.md`. SH366003 status: `sh366003/README.md`.
+
 Status: **DONE.** All 12 charger, gauge and algorithm modules that the stock
 vendor ramdisk loads rebuild from source and match stock exactly at the
 function level, the data level and the ABI level.
