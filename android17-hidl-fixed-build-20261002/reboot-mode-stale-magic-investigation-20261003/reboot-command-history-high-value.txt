@@ -1,0 +1,648 @@
+1-REBOOT COMMAND HISTORY AUDIT
+2-========================================================================
+3-HITS=405
+4-
+5-------------------------------------------------------------------------
+6:[SYS_POWERCTL_RECOVERY] reports/ulefone-debug-pstore-rescue-report.md:289
+7-    is a *healthy* boot and ends with a deliberate reboot:
+8-    
+9-    ```text
+10-  > [  381.413669][ T350] init: Received sys.powerctl='reboot,recovery' from pid: 431 (/system/bin/reboot)
+11-    [  381.426368][   T1] init: Reboot start, reason: reboot,recovery, reboot_target: recovery
+12-    [  381.777375][   T1] reboot: Restarting system with command 'recovery'
+13-    ```
+14-
+15-------------------------------------------------------------------------
+16:[KERNEL_RESTART_RECOVERY] reports/ulefone-debug-pstore-rescue-report.md:291
+17-    ```text
+18-    [  381.413669][ T350] init: Received sys.powerctl='reboot,recovery' from pid: 431 (/system/bin/reboot)
+19-    [  381.426368][   T1] init: Reboot start, reason: reboot,recovery, reboot_target: recovery
+20-  > [  381.777375][   T1] reboot: Restarting system with command 'recovery'
+21-    ```
+22-    
+23-    Useful secondary observations in that log:
+24-
+25-------------------------------------------------------------------------
+26-[BOOT_RECOVERY] android17-hidl-fixed-build-20261002/README.md:414
+--
+51-    
+52-    The low `MTK_WDT_NONRST_REG2` writer at `0x3dc5c` has only three direct static
+53-    call sites in the analyzed LK payload. The third call supplies zero.
+54-
+55-------------------------------------------------------------------------
+56:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:21
+57-    
+58-    ===== BOOT REASONS =====
+59-    ro.boot.bootreason=reboot
+60-  > sys.boot.reason=reboot,from_fastboot
+61-    persist.sys.boot.reason=
+62-    
+63-    ===== SYSTEM_B IDENTITY =====
+64-
+65-------------------------------------------------------------------------
+66:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:215
+67-    3098:[   15.746280][   T73] [wdtk] kick watchdog
+68-    3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+69-    3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+70-  > 3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+71-    3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+72-    3141:[   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+73-    3143:[   21.550169][    T1] init: Create reboot monitor thread.
+74-
+75-------------------------------------------------------------------------
+76:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:216
+77-    3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+78-    3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+79-    3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+80-  > 3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+81-    3141:[   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+82-    3143:[   21.550169][    T1] init: Create reboot monitor thread.
+83-    3145:[   21.550808][    T1] init: Could not open '/metadata/bootstat/persist.sys.boot.reason' to persist reboot reason: No such file or directory
+84-
+85-------------------------------------------------------------------------
+86:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:217
+87-    3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+88-    3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+89-    3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+90-  > 3141:[   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+91-    3143:[   21.550169][    T1] init: Create reboot monitor thread.
+92-    3145:[   21.550808][    T1] init: Could not open '/metadata/bootstat/persist.sys.boot.reason' to persist reboot reason: No such file or directory
+93-    3146:[   21.551156][    T1] reboot set flag, old value 0x60002800, 0.
+94-
+95-------------------------------------------------------------------------
+96:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:567
+97-    [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+98-    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+99-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+100-  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+101-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+102-    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+103-    [   21.549930][    T1] init: Clear action queue and start shutdown trigger
+104-
+105-------------------------------------------------------------------------
+106:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:569
+107-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+108-    [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+109-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+110-  > [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+111-    [   21.549930][    T1] init: Clear action queue and start shutdown trigger
+112-    [   21.549938][  T319] android_work: sent uevent USB_STATE=DISCONNECTED
+113-    [   21.549988][    T1] init: Entering shutdown mode
+114-
+115-------------------------------------------------------------------------
+116:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:574
+117-    [   21.549938][  T319] android_work: sent uevent USB_STATE=DISCONNECTED
+118-    [   21.549988][    T1] init: Entering shutdown mode
+119-    [   21.550043][    T1] init: processing action (shutdown_done) from (<Builtin Action>:0)
+120-  > [   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+121-    [   21.550152][    T1] init: Shutdown timeout: 6000 ms
+122-    [   21.550169][    T1] init: Create reboot monitor thread.
+123-    [   21.550519][  T406] init: shutdown_timeout_timespec.tv_sec: 327
+124-
+125-------------------------------------------------------------------------
+126:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:819
+127-    [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+128-    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+129-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+130-  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+131-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+132-    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+133-    [   21.549930][    T1] init: Clear action queue and start shutdown trigger
+134-
+135-------------------------------------------------------------------------
+136:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:821
+137-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+138-    [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+139-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+140-  > [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+141-    [   21.549930][    T1] init: Clear action queue and start shutdown trigger
+142-    [   21.549938][  T319] android_work: sent uevent USB_STATE=DISCONNECTED
+143-    [   21.549988][    T1] init: Entering shutdown mode
+144-
+145-------------------------------------------------------------------------
+146:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:826
+147-    [   21.549938][  T319] android_work: sent uevent USB_STATE=DISCONNECTED
+148-    [   21.549988][    T1] init: Entering shutdown mode
+149-    [   21.550043][    T1] init: processing action (shutdown_done) from (<Builtin Action>:0)
+150-  > [   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+151-    [   21.550152][    T1] init: Shutdown timeout: 6000 ms
+152-    [   21.550169][    T1] init: Create reboot monitor thread.
+153-    [   21.550519][  T406] init: shutdown_timeout_timespec.tv_sec: 327
+154-
+155-------------------------------------------------------------------------
+156:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/android17-live-b-capture-rescue-20261002/live-getprop.txt:785
+157-    [persist.settings.large_screen_opt.enabled]: [true]
+158-    [persist.sys.boot.reason]: []
+159-    [persist.sys.boot.reason.history]: [reboot,shell,1790972723
+160-  > reboot,from_fastboot,1790970944
+161-    bootloader,1790967687]
+162-    [persist.sys.bt.esco_transport_unit_size]: [0]
+163-    [persist.sys.bt.unsupported.commands]: []
+164-
+165-------------------------------------------------------------------------
+166-[BOOT_FASTBOOT] android17-hidl-fixed-build-20261002/lk-recovery-mode-static-analysis-20261002/summary.txt:94
+--
+1444-    458-    - recovery_check misc handling
+1445-    459-
+1446-    460-[REBOOT_RECOVERY_REQUEST] README.md:414
+1447-
+1448-------------------------------------------------------------------------
+1449:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:2170
+1450-    1082-    3098:[   15.746280][   T73] [wdtk] kick watchdog
+1451-    1083-    3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+1452-    1084-  > 3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+1453-  > 1085-    3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1454-    1086-    3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+1455-    1087-
+1456-    1088:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:215
+1457-
+1458-------------------------------------------------------------------------
+1459:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:2171
+1460-    1083-    3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+1461-    1084-  > 3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+1462-    1085-    3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1463-  > 1086-    3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+1464-    1087-
+1465-    1088:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:215
+1466-    1089-    3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+1467-
+1468-------------------------------------------------------------------------
+1469:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:2176
+1470-    1088:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:215
+1471-    1089-    3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+1472-    1090-    3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+1473-  > 1091-  > 3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1474-    1092-    3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+1475-    1093-    3141:[   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+1476-    1094-
+1477-
+1478-------------------------------------------------------------------------
+1479:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:2177
+1480-    1089-    3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+1481-    1090-    3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+1482-    1091-  > 3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1483-  > 1092-    3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+1484-    1093-    3141:[   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+1485-    1094-
+1486-    1095:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:250
+1487-
+1488-------------------------------------------------------------------------
+1489:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:2178
+1490-    1090-    3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+1491-    1091-  > 3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1492-    1092-    3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+1493-  > 1093-    3141:[   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+1494-    1094-
+1495-    1095:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:250
+1496-    1096-    [    4.547681][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+1497-
+1498-------------------------------------------------------------------------
+1499:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:2289
+1500-    1201-    [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+1501-    1202-    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+1502-    1203-  > [   21.549267][  T403] fastbootd: Fastboot command: reboot
+1503-  > 1204-    [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1504-    1205-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+1505-    1206-
+1506-    1207:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:567
+1507-
+1508-------------------------------------------------------------------------
+1509:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:2295
+1510-    1207:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:567
+1511-    1208-    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+1512-    1209-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+1513-  > 1210-  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1514-    1211-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+1515-    1212-    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+1516-    1213-
+1517-
+1518-------------------------------------------------------------------------
+1519:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:2297
+1520-    1209-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+1521-    1210-  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1522-    1211-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+1523-  > 1212-    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+1524-    1213-
+1525-    1214:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:681
+1526-    1215-    [   13.041736][  T129] sd 0:0:0:2: [sdc] Starting disk
+1527-
+1528-------------------------------------------------------------------------
+1529:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:2401
+1530-    1313-    [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+1531-    1314-    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+1532-    1315-  > [   21.549267][  T403] fastbootd: Fastboot command: reboot
+1533-  > 1316-    [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1534-    1317-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+1535-    1318-
+1536-    1319:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:819
+1537-
+1538-------------------------------------------------------------------------
+1539:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:2407
+1540-    1319:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:819
+1541-    1320-    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+1542-    1321-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+1543-  > 1322-  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1544-    1323-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+1545-    1324-    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+1546-    1325-
+1547-
+1548-------------------------------------------------------------------------
+1549:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:2409
+1550-    1321-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+1551-    1322-  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1552-    1323-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+1553-  > 1324-    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+1554-    1325-
+1555-    1326-[INIT_FATAL] android17-metadata-fix-boot-summary-20261002.txt:920
+1556-    1327-    ============================================================
+1557-
+1558-------------------------------------------------------------------------
+1559:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:2952
+1560-    2347-    [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+1561-    2348-    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+1562-    2349-  > [   21.549267][  T403] fastbootd: Fastboot command: reboot
+1563-  > 2350-    [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1564-    2351-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+1565-    2352-
+1566-    2353:[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3130
+1567-
+1568-------------------------------------------------------------------------
+1569:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:2958
+1570-    2353:[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3130
+1571-    2354-    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+1572-    2355-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+1573-  > 2356-  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1574-    2357-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+1575-    2358-    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+1576-    2359-
+1577-
+1578-------------------------------------------------------------------------
+1579:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:2960
+1580-    2355-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+1581-    2356-  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1582-    2357-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+1583-  > 2358-    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+1584-    2359-
+1585-    2360-[INIT_FATAL] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:180
+1586-    2361-    [    0.188951][    T1] ALSA device list:
+1587-
+1588-------------------------------------------------------------------------
+1589:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:3138
+1590-    2557-    [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+1591-    2558-    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+1592-    2559-  > [   21.549267][  T403] fastbootd: Fastboot command: reboot
+1593-  > 2560-    [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1594-    2561-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+1595-    2562-
+1596-    2563:[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3134
+1597-
+1598-------------------------------------------------------------------------
+1599:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:3144
+1600-    2563:[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3134
+1601-    2564-    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+1602-    2565-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+1603-  > 2566-  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1604-    2567-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+1605-    2568-    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+1606-    2569-
+1607-
+1608-------------------------------------------------------------------------
+1609:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:3146
+1610-    2565-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+1611-    2566-  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+1612-    2567-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+1613-  > 2568-    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+1614-    2569-
+1615-    2570-[INIT_FATAL] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:443
+1616-    2571-    [    0.188511][    T1] Key type fscrypt-provisioning registered
+1617-
+1618-------------------------------------------------------------------------
+1619-[BOOT_RECOVERY] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:3247
+--
+1624-    ANDROID 17 REBOOT/RECOVERY TRIGGER SCAN
+1625-    ========================================================================
+1626-    
+1627-
+1628-------------------------------------------------------------------------
+1629:[KERNEL_RESTART_RECOVERY] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:3460
+1630-    
+1631-    DECISIVE EXISTING EVIDENCE:
+1632-    - a retained log showing B/LK mode 0 before a later B/LK mode 2;
+1633-  > - a kernel/init line such as "Restarting system with command 'recovery'";
+1634-    - sys.powerctl=reboot,recovery;
+1635-    - an init service with reboot_on_failure that can execute during early B boot.
+1636-    
+1637-
+1638-------------------------------------------------------------------------
+1639:[SYS_POWERCTL_RECOVERY] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:3461
+1640-    DECISIVE EXISTING EVIDENCE:
+1641-    - a retained log showing B/LK mode 0 before a later B/LK mode 2;
+1642-    - a kernel/init line such as "Restarting system with command 'recovery'";
+1643-  > - sys.powerctl=reboot,recovery;
+1644-    - an init service with reboot_on_failure that can execute during early B boot.
+1645-    
+1646-    NO NEW SLOT-B BOOT IS REQUIRED FOR THIS AUDIT.
+1647-
+1648-------------------------------------------------------------------------
+1649-[BOOT_RECOVERY] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:3475
+--
+2274-    458-    - recovery_check misc handling
+2275-    459-
+2276-    460-[REBOOT_RECOVERY_REQUEST] README.md:414
+2277-
+2278-------------------------------------------------------------------------
+2279:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:4473
+2280-    1082-    3098:[   15.746280][   T73] [wdtk] kick watchdog
+2281-    1083-    3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+2282-    1084-  > 3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+2283-  > 1085-    3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2284-    1086-    3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2285-    1087-
+2286-    1088:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:215
+2287-
+2288-------------------------------------------------------------------------
+2289:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:4474
+2290-    1083-    3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+2291-    1084-  > 3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+2292-    1085-    3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2293-  > 1086-    3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2294-    1087-
+2295-    1088:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:215
+2296-    1089-    3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+2297-
+2298-------------------------------------------------------------------------
+2299:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:4479
+2300-    1088:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:215
+2301-    1089-    3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+2302-    1090-    3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+2303-  > 1091-  > 3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2304-    1092-    3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2305-    1093-    3141:[   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+2306-    1094-
+2307-
+2308-------------------------------------------------------------------------
+2309:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:4480
+2310-    1089-    3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+2311-    1090-    3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+2312-    1091-  > 3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2313-  > 1092-    3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2314-    1093-    3141:[   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+2315-    1094-
+2316-    1095:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:250
+2317-
+2318-------------------------------------------------------------------------
+2319:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:4481
+2320-    1090-    3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+2321-    1091-  > 3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2322-    1092-    3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2323-  > 1093-    3141:[   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+2324-    1094-
+2325-    1095:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:250
+2326-    1096-    [    4.547681][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+2327-
+2328-------------------------------------------------------------------------
+2329:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:4592
+2330-    1201-    [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+2331-    1202-    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+2332-    1203-  > [   21.549267][  T403] fastbootd: Fastboot command: reboot
+2333-  > 1204-    [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2334-    1205-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+2335-    1206-
+2336-    1207:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:567
+2337-
+2338-------------------------------------------------------------------------
+2339:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:4598
+2340-    1207:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:567
+2341-    1208-    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+2342-    1209-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+2343-  > 1210-  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2344-    1211-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+2345-    1212-    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2346-    1213-
+2347-
+2348-------------------------------------------------------------------------
+2349:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:4600
+2350-    1209-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+2351-    1210-  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2352-    1211-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+2353-  > 1212-    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2354-    1213-
+2355-    1214:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:681
+2356-    1215-    [   13.041736][  T129] sd 0:0:0:2: [sdc] Starting disk
+2357-
+2358-------------------------------------------------------------------------
+2359:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:4704
+2360-    1313-    [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+2361-    1314-    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+2362-    1315-  > [   21.549267][  T403] fastbootd: Fastboot command: reboot
+2363-  > 1316-    [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2364-    1317-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+2365-    1318-
+2366-    1319:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:819
+2367-
+2368-------------------------------------------------------------------------
+2369:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:4710
+2370-    1319:[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:819
+2371-    1320-    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+2372-    1321-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+2373-  > 1322-  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2374-    1323-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+2375-    1324-    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2376-    1325-
+2377-
+2378-------------------------------------------------------------------------
+2379:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/summary.txt:4712
+2380-    1321-    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+2381-    1322-  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2382-    1323-    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+2383-  > 1324-    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2384-    1325-
+2385-    1326-[INIT_FATAL] android17-metadata-fix-boot-summary-20261002.txt:920
+2386-    1327-    ============================================================
+2387-
+2388-------------------------------------------------------------------------
+2389-[BOOT_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/reboot-command-strings.txt:1
+--
+2688-        - recovery_check misc handling
+2689-        - recovery image loading
+2690-    
+2691-
+2692-------------------------------------------------------------------------
+2693:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:1085
+2694-        3098:[   15.746280][   T73] [wdtk] kick watchdog
+2695-        3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+2696-      > 3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+2697-  >     3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2698-        3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2699-    
+2700-    [RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:215
+2701-
+2702-------------------------------------------------------------------------
+2703:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:1086
+2704-        3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+2705-      > 3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+2706-        3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2707-  >     3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2708-    
+2709-    [RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:215
+2710-        3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+2711-
+2712-------------------------------------------------------------------------
+2713:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:1091
+2714-    [RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:215
+2715-        3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+2716-        3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+2717-  >   > 3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2718-        3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2719-        3141:[   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+2720-    
+2721-
+2722-------------------------------------------------------------------------
+2723:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:1092
+2724-        3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+2725-        3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+2726-      > 3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2727-  >     3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2728-        3141:[   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+2729-    
+2730-    [RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:250
+2731-
+2732-------------------------------------------------------------------------
+2733:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:1093
+2734-        3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+2735-      > 3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2736-        3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2737-  >     3141:[   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+2738-    
+2739-    [RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:250
+2740-        [    4.547681][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+2741-
+2742-------------------------------------------------------------------------
+2743:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:1204
+2744-        [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+2745-        [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+2746-      > [   21.549267][  T403] fastbootd: Fastboot command: reboot
+2747-  >     [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2748-        [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+2749-    
+2750-    [RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:567
+2751-
+2752-------------------------------------------------------------------------
+2753:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:1210
+2754-    [RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:567
+2755-        [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+2756-        [   21.549267][  T403] fastbootd: Fastboot command: reboot
+2757-  >   > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2758-        [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+2759-        [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2760-    
+2761-
+2762-------------------------------------------------------------------------
+2763:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:1212
+2764-        [   21.549267][  T403] fastbootd: Fastboot command: reboot
+2765-      > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2766-        [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+2767-  >     [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2768-    
+2769-    [RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:681
+2770-        [   13.041736][  T129] sd 0:0:0:2: [sdc] Starting disk
+2771-
+2772-------------------------------------------------------------------------
+2773:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:1316
+2774-        [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+2775-        [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+2776-      > [   21.549267][  T403] fastbootd: Fastboot command: reboot
+2777-  >     [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2778-        [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+2779-    
+2780-    [RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:819
+2781-
+2782-------------------------------------------------------------------------
+2783:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:1322
+2784-    [RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:819
+2785-        [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+2786-        [   21.549267][  T403] fastbootd: Fastboot command: reboot
+2787-  >   > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2788-        [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+2789-        [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2790-    
+2791-
+2792-------------------------------------------------------------------------
+2793:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:1324
+2794-        [   21.549267][  T403] fastbootd: Fastboot command: reboot
+2795-      > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+2796-        [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+2797-  >     [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+2798-    
+2799-    [INIT_FATAL] android17-metadata-fix-boot-summary-20261002.txt:920
+2800-        ============================================================
+2801-
+2802-------------------------------------------------------------------------
+2803-[BOOT_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:1602
+--
+3078-        18079 0x00204f80 0x00204f80 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+3079-        18156 0x002057c6 0x002057c6 23   24           ascii   app/fastboot/fastboot.c
+3080-    
+3081-
+3082-------------------------------------------------------------------------
+3083:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:2350
+3084-        [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+3085-        [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+3086-      > [   21.549267][  T403] fastbootd: Fastboot command: reboot
+3087-  >     [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+3088-        [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+3089-    
+3090-    [RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3130
+3091-
+3092-------------------------------------------------------------------------
+3093:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:2356
+3094-    [RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3130
+3095-        [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+3096-        [   21.549267][  T403] fastbootd: Fastboot command: reboot
+3097-  >   > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+3098-        [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+3099-        [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+3100-    
+3101-
+3102-------------------------------------------------------------------------
+3103:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:2358
+3104-        [   21.549267][  T403] fastbootd: Fastboot command: reboot
+3105-      > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+3106-        [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+3107-  >     [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+3108-    
+3109-    [INIT_FATAL] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:180
+3110-        [    0.188951][    T1] ALSA device list:
+3111-
+3112-------------------------------------------------------------------------
+3113:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:2560
+3114-        [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+3115-        [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+3116-      > [   21.549267][  T403] fastbootd: Fastboot command: reboot
+3117-  >     [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+3118-        [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+3119-    
+3120-    [RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3134
+3121-
+3122-------------------------------------------------------------------------
+3123:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:2566
+3124-    [RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3134
+3125-        [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+3126-        [   21.549267][  T403] fastbootd: Fastboot command: reboot
+3127-  >   > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+3128-        [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+3129-        [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+3130-    
+3131-
+3132-------------------------------------------------------------------------
+3133:[FROM_FASTBOOT] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-chronology.txt:2568
+3134-        [   21.549267][  T403] fastbootd: Fastboot command: reboot
+3135-      > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+3136-        [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+3137-  >     [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+3138-    
+3139-    [INIT_FATAL] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:443
+3140-        [    0.188511][    T1] Key type fscrypt-provisioning registered
+3141-
+3142-------------------------------------------------------------------------
+3143-[BOOT_RECOVERY] android17-hidl-fixed-build-20261002/slot-b-first-boot-recovery-cause-audit-20261003/runtime-recovery-request-hits.txt:45

@@ -1,0 +1,303 @@
+------------------------------------------------------------
+FILE=/home/armol/androido_dalykai/LieppOS custom ROM/kernel-research/android-common-gq5012bf1/drivers/power/reset/reboot-mode.c
+------------------------------------------------------------
+14-#define PREFIX "mode-"
+15-
+16-struct mode_info {
+17-	const char *mode;
+18-	u32 magic;
+19-	struct list_head list;
+20-};
+21-
+22:static unsigned int get_reboot_mode_magic(struct reboot_mode_driver *reboot,
+23-					  const char *cmd)
+24-{
+25-	const char *normal = "normal";
+26-	int magic = 0;
+27-	struct mode_info *info;
+28-
+29:	if (!cmd)
+30-		cmd = normal;
+31-
+32-	list_for_each_entry(info, &reboot->head, list) {
+33-		if (!strcmp(info->mode, cmd)) {
+34-			magic = info->magic;
+35-			break;
+36-		}
+37-	}
+38-
+39-	return magic;
+40-}
+41-
+42:static int reboot_mode_notify(struct notifier_block *this,
+43-			      unsigned long mode, void *cmd)
+44-{
+45-	struct reboot_mode_driver *reboot;
+46-	unsigned int magic;
+47-
+48-	reboot = container_of(this, struct reboot_mode_driver, reboot_notifier);
+49:	magic = get_reboot_mode_magic(reboot, cmd);
+50:	if (magic)
+51:		reboot->write(reboot, magic);
+52-
+53-	return NOTIFY_DONE;
+54-}
+55-
+56-/**
+57- * reboot_mode_register - register a reboot mode driver
+58- * @reboot: reboot mode driver
+59- *
+60- * Returns: 0 on success or a negative error code on failure.
+61- */
+62-int reboot_mode_register(struct reboot_mode_driver *reboot)
+63-{
+64-	struct mode_info *info;
+65-	struct property *prop;
+66-	struct device_node *np = reboot->dev->of_node;
+67-	size_t len = strlen(PREFIX);
+68-	int ret;
+69-
+70-	INIT_LIST_HEAD(&reboot->head);
+71-
+72-	for_each_property_of_node(np, prop) {
+73-		if (strncmp(prop->name, PREFIX, len))
+74-			continue;
+75-
+76-		info = devm_kzalloc(reboot->dev, sizeof(*info), GFP_KERNEL);
+--
+96-			dev_err(reboot->dev, "invalid mode name(%s): too short!\n",
+97-				prop->name);
+98-			goto error;
+99-		}
+100-
+101-		list_add_tail(&info->list, &reboot->head);
+102-	}
+103-
+104:	reboot->reboot_notifier.notifier_call = reboot_mode_notify;
+105-	register_reboot_notifier(&reboot->reboot_notifier);
+106-
+107-	return 0;
+108-
+109-error:
+110-	list_for_each_entry(info, &reboot->head, list)
+111-		kfree_const(info->mode);
+112-
+113-	return ret;
+114-}
+115-EXPORT_SYMBOL_GPL(reboot_mode_register);
+116-
+117-/**
+118- * reboot_mode_unregister - unregister a reboot mode driver
+119- * @reboot: reboot mode driver
+120- */
+121-int reboot_mode_unregister(struct reboot_mode_driver *reboot)
+122-{
+123-	struct mode_info *info;
+124-
+125-	unregister_reboot_notifier(&reboot->reboot_notifier);
+126-
+127-	list_for_each_entry(info, &reboot->head, list)
+128-		kfree_const(info->mode);
+129-
+------------------------------------------------------------
+FILE=/home/armol/androido_dalykai/LieppOS custom ROM/kernel-research/nothing-mt6878/kernel/drivers/power/reset/reboot-mode.c
+------------------------------------------------------------
+14-#define PREFIX "mode-"
+15-
+16-struct mode_info {
+17-	const char *mode;
+18-	u32 magic;
+19-	struct list_head list;
+20-};
+21-
+22:static unsigned int get_reboot_mode_magic(struct reboot_mode_driver *reboot,
+23-					  const char *cmd)
+24-{
+25-	const char *normal = "normal";
+26-	int magic = 0;
+27-	struct mode_info *info;
+28-
+29:	if (!cmd)
+30-		cmd = normal;
+31-
+32-	list_for_each_entry(info, &reboot->head, list) {
+33-		if (!strcmp(info->mode, cmd)) {
+34-			magic = info->magic;
+35-			break;
+36-		}
+37-	}
+38-
+39-	return magic;
+40-}
+41-
+42:static int reboot_mode_notify(struct notifier_block *this,
+43-			      unsigned long mode, void *cmd)
+44-{
+45-	struct reboot_mode_driver *reboot;
+46-	unsigned int magic;
+47-
+48-	reboot = container_of(this, struct reboot_mode_driver, reboot_notifier);
+49:	magic = get_reboot_mode_magic(reboot, cmd);
+50:	if (magic)
+51:		reboot->write(reboot, magic);
+52-
+53-	return NOTIFY_DONE;
+54-}
+55-
+56-/**
+57- * reboot_mode_register - register a reboot mode driver
+58- * @reboot: reboot mode driver
+59- *
+60- * Returns: 0 on success or a negative error code on failure.
+61- */
+62-int reboot_mode_register(struct reboot_mode_driver *reboot)
+63-{
+64-	struct mode_info *info;
+65-	struct property *prop;
+66-	struct device_node *np = reboot->dev->of_node;
+67-	size_t len = strlen(PREFIX);
+68-	int ret;
+69-
+70-	INIT_LIST_HEAD(&reboot->head);
+71-
+72-	for_each_property_of_node(np, prop) {
+73-		if (strncmp(prop->name, PREFIX, len))
+74-			continue;
+75-
+76-		info = devm_kzalloc(reboot->dev, sizeof(*info), GFP_KERNEL);
+--
+96-			dev_err(reboot->dev, "invalid mode name(%s): too short!\n",
+97-				prop->name);
+98-			goto error;
+99-		}
+100-
+101-		list_add_tail(&info->list, &reboot->head);
+102-	}
+103-
+104:	reboot->reboot_notifier.notifier_call = reboot_mode_notify;
+105-	register_reboot_notifier(&reboot->reboot_notifier);
+106-
+107-	return 0;
+108-
+109-error:
+110-	list_for_each_entry(info, &reboot->head, list)
+111-		kfree_const(info->mode);
+112-
+113-	return ret;
+114-}
+115-EXPORT_SYMBOL_GPL(reboot_mode_register);
+116-
+117-/**
+118- * reboot_mode_unregister - unregister a reboot mode driver
+119- * @reboot: reboot mode driver
+120- */
+121-int reboot_mode_unregister(struct reboot_mode_driver *reboot)
+122-{
+123-	struct mode_info *info;
+124-
+125-	unregister_reboot_notifier(&reboot->reboot_notifier);
+126-
+127-	list_for_each_entry(info, &reboot->head, list)
+128-		kfree_const(info->mode);
+129-
+------------------------------------------------------------
+FILE=/home/armol/kernel-work/gki-12901745-workspace/common/drivers/power/reset/reboot-mode.c
+------------------------------------------------------------
+14-#define PREFIX "mode-"
+15-
+16-struct mode_info {
+17-	const char *mode;
+18-	u32 magic;
+19-	struct list_head list;
+20-};
+21-
+22:static unsigned int get_reboot_mode_magic(struct reboot_mode_driver *reboot,
+23-					  const char *cmd)
+24-{
+25-	const char *normal = "normal";
+26-	int magic = 0;
+27-	struct mode_info *info;
+28-
+29:	if (!cmd)
+30-		cmd = normal;
+31-
+32-	list_for_each_entry(info, &reboot->head, list) {
+33-		if (!strcmp(info->mode, cmd)) {
+34-			magic = info->magic;
+35-			break;
+36-		}
+37-	}
+38-
+39-	return magic;
+40-}
+41-
+42:static int reboot_mode_notify(struct notifier_block *this,
+43-			      unsigned long mode, void *cmd)
+44-{
+45-	struct reboot_mode_driver *reboot;
+46-	unsigned int magic;
+47-
+48-	reboot = container_of(this, struct reboot_mode_driver, reboot_notifier);
+49:	magic = get_reboot_mode_magic(reboot, cmd);
+50:	if (magic)
+51:		reboot->write(reboot, magic);
+52-
+53-	return NOTIFY_DONE;
+54-}
+55-
+56-/**
+57- * reboot_mode_register - register a reboot mode driver
+58- * @reboot: reboot mode driver
+59- *
+60- * Returns: 0 on success or a negative error code on failure.
+61- */
+62-int reboot_mode_register(struct reboot_mode_driver *reboot)
+63-{
+64-	struct mode_info *info;
+65-	struct property *prop;
+66-	struct device_node *np = reboot->dev->of_node;
+67-	size_t len = strlen(PREFIX);
+68-	int ret;
+69-
+70-	INIT_LIST_HEAD(&reboot->head);
+71-
+72-	for_each_property_of_node(np, prop) {
+73-		if (strncmp(prop->name, PREFIX, len))
+74-			continue;
+75-
+76-		info = devm_kzalloc(reboot->dev, sizeof(*info), GFP_KERNEL);
+--
+96-			dev_err(reboot->dev, "invalid mode name(%s): too short!\n",
+97-				prop->name);
+98-			goto error;
+99-		}
+100-
+101-		list_add_tail(&info->list, &reboot->head);
+102-	}
+103-
+104:	reboot->reboot_notifier.notifier_call = reboot_mode_notify;
+105-	register_reboot_notifier(&reboot->reboot_notifier);
+106-
+107-	return 0;
+108-
+109-error:
+110-	list_for_each_entry(info, &reboot->head, list)
+111-		kfree_const(info->mode);
+112-
+113-	return ret;
+114-}
+115-EXPORT_SYMBOL_GPL(reboot_mode_register);
+116-
+117-/**
+118- * reboot_mode_unregister - unregister a reboot mode driver
+119- * @reboot: reboot mode driver
+120- */
+121-int reboot_mode_unregister(struct reboot_mode_driver *reboot)
+122-{
+123-	struct mode_info *info;
+124-
+125-	unregister_reboot_notifier(&reboot->reboot_notifier);
+126-
+127-	list_for_each_entry(info, &reboot->head, list)
+128-		kfree_const(info->mode);
+129-

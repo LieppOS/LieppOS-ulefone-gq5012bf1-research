@@ -583,3 +583,28 @@ reboot_on_failure markers. Generated Android 17 init/RC configuration was also
 scanned for recovery-producing failure actions.
 
 No phone state was modified and Slot B was not booted.
+
+## Recovery-mode 0 -> 2 transition: stale reboot-mode investigation
+
+The retained runtime evidence now proves two distinct Slot-B boot states:
+
+1. the original failed Android 17 Slot-B attempt reached Linux with MediaTek
+   boot mode 0;
+2. the later metadata-fixed attempt reached Linux with MediaTek boot mode 2
+   and entered recovery userspace.
+
+The retained runtime evidence did not contain a direct Android
+`sys.powerctl=reboot,recovery` or kernel
+`Restarting system with command 'recovery'` line connecting those boots.
+Previous automated recovery-request hits were dominated by static LK strings
+and research prose and therefore did not prove causality.
+
+A new host-only investigation checks an important generic reboot-mode edge
+case: commandless reboot resolves to the `normal` reboot mode, while generic
+Linux reboot-mode implementations may skip the hardware write when the
+resolved magic value is zero. The device DT is therefore checked explicitly
+for `mode-normal`, the exact local reboot-mode implementation is inspected,
+all known LK accesses to the WDT NONRST reboot-mode register are re-audited,
+and retained command history is searched for recovery/fastboot mode writes.
+
+No phone state was modified and Slot B was not booted.
