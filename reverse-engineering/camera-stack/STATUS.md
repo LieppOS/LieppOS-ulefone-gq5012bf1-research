@@ -1,7 +1,8 @@
 # GQ5012BF1 normal camera stack — status matrix (2026-10-02)
 
 Authoritative detail: `README.md` (this directory). Workspace copy: `../../../CAMERA-STACK-STATUS.md`.
-Component folders: `Reverse Engineer - PARTIAL/{CAMERA-HAL-ISP,CAMERA-IMX989,CAMERA-OV64B,CAMERA-S5KJN1,CAMERA-S5KJN1MAIN2,DW9781C-OIS}`.
+Component folders: `Reverse Engineer - DONE/CAMERA-IMX989`, `Reverse Engineer -
+PARTIAL/{CAMERA-HAL-ISP,CAMERA-OV64B,CAMERA-S5KJN1,CAMERA-S5KJN1MAIN2,DW9781C-OIS}`.
 ThermoVue excluded. EEPROM/VCM internals belong to other tracks.
 
 ## Cameras
@@ -31,13 +32,29 @@ ThermoVue excluded. EEPROM/VCM internals belong to other tracks.
 
 ## Status changes
 
-The **kernel sensor layer is DONE** for all four cameras: their sub-drivers
-and the imgsensor framework now exist as source that rebuilds the stock
-module (618/619 functions identical, one explained residual). The component
-folders nevertheless stay **PARTIAL** because each also covers proprietary
-userspace: CAMERA-HAL-ISP (userspace/tuning), CAMERA-IMX989 / OV64B /
-S5KJN1 / S5KJN1MAIN2 (per-sensor tuning `.so`/DB remain blobs),
-DW9781C-OIS (driver exact, physical lens association still UNKNOWN).
+Two different claims were previously merged into one sentence here; they are now
+separated.
+
+* **Reproducibility** holds module-wide: all 9 compiled sub-drivers and the
+  imgsensor framework exist as source that rebuilds bit-for-bit from the tree —
+  618/619 functions, 394/394 data objects, one explained residual
+  (`yft_ctrl_nightled_by_idx`). That compares our own stock-data build with our
+  rebuild, so it certifies the tree, not agreement with MTK.
+* **Stock parity** (comparison against the shipped `imgsensor.ko`) is now proven
+  for `CAMERA-IMX989`: `imx989` `0x989` and `imx989cts` `0x988` equal on all 39
+  mode fields, 174/174 `static_ctx`, 66/66 register tables and 14 263/14 263
+  register write pairs — zero deltas. `CAMERA-IMX989` is therefore **DONE**.
+
+All 9 compiled sub-drivers exist as C with their stock payload generated, so what
+is missing for the other seven is not source but the **comparison against the
+shipped module**: `ov64b`, `s5kjn1`, `s5kjn1cts`, `s5kjn1main2`, `ov32b40`,
+`s5kgm2sp`, `s5kgn1sp` are unreconciled on that axis (OV64B's donor best-match
+crossmatch is 50/54 IDENTICAL + 4 NEAREST, i.e. the donor path alone does not
+close it). On the framework axis, stock vs recon reports 532 shared functions with
+25 byte-differing and 36 stock-only (see
+`donor-comparisons/imgsensor-stock-vs-recon-parity.txt`). Per-sensor tuning
+`.so`/DB stay blobs (`CAMERA-HAL-ISP`); DW9781C-OIS: driver exact, physical lens
+association still UNKNOWN.
 
 ## Known stock defects found
 
@@ -59,10 +76,16 @@ the parity build):
 
 ## Next highest-value camera task
 
-The whole camera kernel layer (imgsensor, camsys/ISP, imgsys P2, HCP, CCU
-rproc, AIE, DPE, ME, C2PS, cam_cal EEPROM) is now rebuilt from source with
-byte-identical functions and data; the only residual is the documented
-`yft_ctrl_nightled_by_idx` in imgsensor. Nothing more is reconstructable
-offline in the kernel camera stack. Remaining work is on-device: boot the
-parity-built modules and confirm they enumerate. Optionally: on-device A/B of the CORRECTED build for modes HAL can select
-(IMX989 3/4/5/13, JN1 hs/slim).
+Offline work that still *exists* on the parity axis: close the remaining 7 of the
+9 compiled sub-drivers against the shipped module exactly as IMX989 was closed
+(`imgsensor_oracle.py` → `compare_oracles.py`): their C and generated payload
+already exist, so this is measurement, not writing. Then the framework axis —
+25 byte-differing and 36 stock-only functions as C (custom-LDO hooks, YFT
+CTS/devinfo calls, HV charger toggle, night-LED, reg8 I2C). Source behind a
+semantic oracle is the only form of this claim the shipped binary can support.
+
+Already closed offline: the module-wide reproducibility result above (residual:
+the documented `yft_ctrl_nightled_by_idx`). Remaining work for the closed part is
+on-device — boot the rebuilt modules and confirm they enumerate; optionally
+on-device A/B of the CORRECTED build for modes HAL can select (IMX989 3/4/5/13,
+IMX989CTS 3/4/5, JN1 hs/slim).
