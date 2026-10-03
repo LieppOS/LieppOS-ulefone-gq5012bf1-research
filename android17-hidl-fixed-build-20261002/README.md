@@ -664,3 +664,22 @@ Focused disassembly was generated only around those candidate offsets to
 distinguish reads from writes and identify any value-2 recovery assignment.
 
 No phone state was modified and Slot B was not booted.
+
+## AEE has a direct NONRST_REG2 reboot-mode writer
+
+Focused static analysis corrected the earlier broad pre-LK classification.
+
+`bl2_ext` and the directly observed preloader helper modify higher
+`MTK_WDT_NONRST_REG2` fields, notably bits `[10:4]`.
+
+In contrast, `06-aee.bin` contains an exact low-field writer at `0x2eaa0`.
+It clears `NONRST_REG2[3:0]`, ORs in its argument, and writes the register
+back.
+
+This is the exact field whose value `2` causes main LK recovery boot.
+
+A dedicated direct-call scan now traces all callers of the AEE writer and
+their arguments to determine whether AEE contains an executable path that
+sets recovery value 2 before the observed LK mode-2 boot.
+
+No phone state was modified and Slot B was not booted.
