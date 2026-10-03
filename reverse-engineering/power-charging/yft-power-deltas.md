@@ -91,6 +91,10 @@ commits named.
 | 41 | `depends=yft_devinfo`: `yft_fuelgauge_device_add(driver)`, `yft_set_fuelgauge_device_used("sh366003")`, writes `fuelgauge_fw_version` (`"Vno:0x%02x-%s(%02d%02d)"`) | stock oracle |
 | 42 | AFI update gated on adapter status, SOC and boot mode (`not Update FW!! adapter_status=…`); KPOC/boot mode read from `/chosen atag,boot` | stock oracle |
 | 43 | the `primary_chg` psy is read in the monitor loop (`fg_check_charge_type`) | stock oracle |
+| 44 | before an AFI program the fallback quartet is filled as soc/**soc**/**soc**/temp (voltage and current fallbacks hold the SOC value) | stock disassembly |
+| 45 | when an update is needed and soc = volt = 0, probe forces soc 4 %, 3600 mV, 25.6 °C and `use_fallback = 1` ("maybe upgrade failed") | stock disassembly |
+| 46 | `/sys/class/3rd-gauge/soh` writes its result back into `display_soh` (100 at probe), so SOH decreases on every read | stock disassembly |
+| 47 | `fg_sh366003_log = 1` in `.data` (verbose gauge logging on in production) | stock .data |
 
 ## Device tree (board-specific values, not code)
 
