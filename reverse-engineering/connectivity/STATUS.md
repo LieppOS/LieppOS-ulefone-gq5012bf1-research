@@ -25,3 +25,25 @@ check exact**. A further 9 power_throttling dependency modules are exact (200/20
 3. FM LNA part behind GPIO 72 and its RF matching (teardown).
 4. Runtime confirmation of the LK-preloaded Wi-Fi image path (the capture had Wi-Fi off).
 5. Per-unit NVRAM/calibration content (deliberately not read).
+
+## Organized workspace (`Reverse Engineer - *`)
+
+* Moved PARTIAL → DONE: `CONNFEM` (the hand reconstruction was superseded by the exact V9.9
+  source).
+* New DONE scopes: `CONNINFRA-KERNEL`, `FM-KERNEL`, `MT6637-WIFI-KERNEL`, `MT6637-BT-KERNEL`,
+  `GNSS-KERNEL-TRANSPORT`.
+* Still PARTIAL, with updated READMEs pointing at the kernel scopes: `MT6637-WIFI`,
+  `BLUETOOTH`, `GNSS`, `FM-RADIO-HEADSET`.
+* Totals after this pass: DONE 39, PARTIAL 77, BLOCKED 6 (folder counts).
+
+## Shared KDM tree side effect (for the power workstream)
+
+Research KDM commit `05f8044` moves `drivers/misc/mediatek/power_throttling` to NothingOSS
+6df320423600: 6-level `LOW_BATTERY` enum, `LBAT_INTR_1/2`, `HPT`. This was required for connadp
+parity. It also makes 9 power modules exact: mtk_low_battery_throttling 52/52 46/46,
+pmic_lbat_service 28/28 22/22, mtk_bp_thl 17/17 18/18, mtk_battery_oc_throttling 22/22 16/16,
+mtk_dynamic_loading_throttling 10/10 12/12, mtk_md_power_throttling 8/8 6/6,
+mtk_cpu_power_throttling 27/27 32/32, mtk_gpu_power_throttling 27/27 31/31, pmic_lvsys_notify
+9/9 8/8. `mtk_bp_thl.h` is unchanged, and it already contains the audio pass's
+`BATTERY_PERCENT_PRIO_AUDIO = 9`. `pbm`, `power/supply` and `ufs` still compile. `mtk_pbm`
+stays exact at 31/31 39/39.
