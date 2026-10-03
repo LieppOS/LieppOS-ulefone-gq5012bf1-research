@@ -854,3 +854,20 @@ B_BOOTMODE_VERDICT=B_BOOTMODE_NOT_PROVEN_FROM_PSTORE
 DEEPEST_BOOT_STAGE=NO_LINUX_PROGRESS_PROVEN
 
 This analysis is host-only and does not perform another Slot-B boot.
+
+## Correction: controlled Slot-B logo-hang pstore was non-diagnostic
+
+The three pstore files recovered after the controlled plain-reboot Slot-B
+logo hang were only approximately 62-65 bytes each and did not contain the
+failed kernel console.
+
+The initial marker extraction also contained malformed grep quoting.
+
+Therefore the earlier `NO_LINUX_PROGRESS_PROVEN` label described an absence
+of evidence, not proof that Linux never started.
+
+Post-rescue investigation remained on safe Slot A and examined previous-boot
+logcat, last_kmsg, MediaTek AEE/mtklog, Android DropBox/logd and boot-reason
+history for surviving evidence of the failed B attempt.
+
+No additional Slot-B boot was performed.
