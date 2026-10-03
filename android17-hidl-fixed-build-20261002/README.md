@@ -623,3 +623,25 @@ Generated init `reboot_on_failure` bootloader rules and multiline zsh command
 history were therefore correlated against the retained experiment timeline.
 
 No phone state was modified and Slot B was not booted.
+
+## Slot-B mode-2 command reconstruction
+
+Disk zsh history contains a large gap across the relevant Slot-B experiments
+and therefore cannot by itself exclude an explicit recovery/fastboot
+transition.
+
+The stronger evidence source is the experiment transcript sequence immediately
+preceding the metadata-fixed mode-2 boot:
+
+- metadata root fix;
+- metadata root-fix continuation;
+- corrected system_b metadata-fix install.
+
+Those artifacts and all other research files created during the critical
+19:30-20:00 UTC interval were audited for adb, fastboot, bootctl, reboot,
+BCB, fastbootd and recovery commands.
+
+The first mode-0 Slot-B reboot-to-bootloader cause was also checked for an
+explicit `bootstrap-apexd-failed` marker.
+
+No phone state was modified.
