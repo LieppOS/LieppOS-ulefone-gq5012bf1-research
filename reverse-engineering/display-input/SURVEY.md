@@ -42,7 +42,17 @@ Notable structure facts:
   (sensorhub, focaltech touch) and has **no dependencies** — the cheapest
   first target.
 
-## Build-system finding (blocking the first target)
+## Status after the first pass
+
+- **`mtk_disp_notify` — EXACT and moved PARTIAL → DONE** in the workspace
+  (`MTK-DISP-NOTIFY`). See [`kernel/notes.md`](kernel/notes.md).
+- **`mtk_panel_ext` — 11/12 byte-identical**, one `ldr` immediate short; stays
+  PARTIAL. See [`kernel/notes.md`](kernel/notes.md).
+- The `dummy_drm` blocker below is **retired**: the shipped `mtk_disp_notify`
+  is the `mediatek_v2` variant, and both modules build in isolation from a
+  scratch `M=` directory.
+
+## Build-system finding (original blocker, now retired)
 
 `mtk_disp_notify.c` exists twice in the KDM tree:
 
@@ -59,9 +69,10 @@ module — the next step is to build it in isolation (scratch Kbuild dir with
 
 ## Suggested order for the next session
 
-1. `mtk_disp_notify` (14.5 KB, no deps) — unblocks the `MTK-DISP-NOTIFY`
-   PARTIAL component and is a dependency of touch and sensorhub.
-2. `mtk_panel_ext` (17.9 KB, no deps) — needed by the panel and backlight path.
+1. ~~`mtk_disp_notify`~~ — **done, exact.**
+2. ~~`mtk_panel_ext`~~ — **done bar one struct-offset field**; to finish it,
+   resolve which two `struct mtk_panel_funcs` members the stock header lacks
+   (needs a second MTK 6.1 panel header or `mediatek-drm.ko` call-site offsets).
 3. `panel-ky-vtdr6115-dphy-cmd` — panel command tables, power/reset sequencing,
    modes/refresh rates, ESD recovery (existing work: `lieppos/panel-vtdr6115-recon`,
    `panel-vtdr6115-donor-red`, `panel-vtdr6115-provider-harness`).
