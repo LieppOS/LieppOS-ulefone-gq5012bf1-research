@@ -1,0 +1,2270 @@
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/product/etc/init/init.openssh.rc
+LINE=1
+    1: on post-fs-data
+    2:     mkdir /data/ssh 0750 root shell encryption=Require
+    3:     mkdir /data/ssh/empty 0600 root shell
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/aconfigd.rc
+LINE=26
+   23:     file /dev/kmsg w
+   24:     socket aconfigd_system stream 666 system system
+   25: 
+   26: on early-init
+   27:     mkdir /metadata/aconfig 0775 root system
+   28:     mkdir /metadata/aconfig/flags 0770 root system
+   29:     mkdir /metadata/aconfig/maps 0775 root system
+   30:     mkdir /metadata/aconfig/boot 0775 root system
+   31:     exec_start early_system_aconfigd_platform_init
+   32: 
+   33: on post-fs
+   34:     mkdir /metadata/aconfig 0775 root system
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/aconfigd.rc
+LINE=33
+   30:     mkdir /metadata/aconfig/boot 0775 root system
+   31:     exec_start early_system_aconfigd_platform_init
+   32: 
+   33: on post-fs
+   34:     mkdir /metadata/aconfig 0775 root system
+   35:     mkdir /metadata/aconfig/flags 0770 root system
+   36:     mkdir /metadata/aconfig/maps 0775 root system
+   37:     mkdir /metadata/aconfig/boot 0775 root system
+   38:     exec_start system_aconfigd_platform_init
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/aisealhostservice.rc
+LINE=10
+    7:     interface aidl aiseal_host
+    8:     disabled
+    9: 
+   10: on property:sys.boot_completed=1 && property:service.aiseal.enable=1
+   11:     enable aisealhostservice
+   12: 
+   13: on property:service.aiseal.enable=0
+   14:     stop aisealhostservice
+   15: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/android.system.suspend-service.rc
+LINE=7
+    4:     group system wakelock
+    5:     capabilities BLOCK_SUSPEND
+    6: 
+    7: on init && property:ro.board.api_level=202604
+    8:     chown system system /sys/module/suspend/parameters/pm_fs_abort
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc
+LINE=1
+    1: service apexd /system/bin/apexd
+    2:     interface aidl apexservice
+    3:     class core
+    4:     user root
+    5:     group system
+    6:     oneshot
+    7:     disabled # does not start with the core class
+    8:     reboot_on_failure reboot,apexd-failed
+    9:     # CAP_CHOWN, CAP_DAC_OVERRIDE, CAP_DAC_READ_SEARCH required for apexdata snapshot & restore
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc
+LINE=13
+   10:     # CAP_SYS_ADMIN is required to access device-mapper and to use mount syscall
+   11:     capabilities CHOWN DAC_OVERRIDE DAC_READ_SEARCH FOWNER SYS_ADMIN MKNOD
+   12: 
+   13: service apexd-bootstrap /system/bin/apexd --bootstrap
+   14:     user root
+   15:     group system
+   16:     oneshot
+   17:     disabled
+   18:     reboot_on_failure reboot,bootloader,bootstrap-apexd-failed
+   19:     # CAP_SYS_ADMIN is required to access device-mapper and to use mount syscall
+   20:     # apexd-bootstrap doesn't manage apexdata snapshot & restore, hence no need for other capabilities.
+   21:     capabilities SYS_ADMIN MKNOD
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc
+LINE=23
+   20:     # apexd-bootstrap doesn't manage apexdata snapshot & restore, hence no need for other capabilities.
+   21:     capabilities SYS_ADMIN MKNOD
+   22: 
+   23: service apexd-snapshotde /system/bin/apexd --snapshotde
+   24:     user root
+   25:     group system
+   26:     oneshot
+   27:     disabled
+   28:     # CAP_CHOWN, CAP_DAC_OVERRIDE, CAP_DAC_READ_SEARCH required for apexdata snapshot & restore
+   29:     # apexd-snapshotde doesn't mount APEXes, hence no need for SYS_ADMIN capability
+   30:     capabilities CHOWN DAC_OVERRIDE DAC_READ_SEARCH FOWNER
+   31: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/atrace.rc
+LINE=3
+    1: ## Permissions to allow system-wide tracing to the kernel trace buffer.
+    2: ##
+    3: on late-init
+    4: 
+    5: # Allow writing to the kernel trace log.
+    6:     chmod 0222 /sys/kernel/debug/tracing/trace_marker
+    7:     chmod 0222 /sys/kernel/tracing/trace_marker
+    8: 
+    9: # Scheduler tracepoints require schedstats=enable
+   10:     write /proc/sys/kernel/sched_schedstats 1
+   11: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/atrace.rc
+LINE=309
+  306:     chmod 0666 /sys/kernel/tracing/events/synthetic/suspend_resume_minimal/enable
+  307:     chmod 0666 /sys/kernel/debug/tracing/events/synthetic/suspend_resume_minimal/enable
+  308: 
+  309: on late-init && property:ro.boot.fastboot.boottrace=
+  310:     write /sys/kernel/debug/tracing/tracing_on 0
+  311:     write /sys/kernel/tracing/tracing_on 0
+  312: 
+  313: # Handle hyp tracing instance
+  314: # NOTE: starting with android16-6.12 kernel hypervisor tracing instance is renamed
+  315: # from /sys/kernel/tracing/hyp to /sys/kernel/tracing/hypervisor
+  316: on late-init && property:ro.boot.hypervisor.vm.supported=1
+  317: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/atrace.rc
+LINE=316
+  313: # Handle hyp tracing instance
+  314: # NOTE: starting with android16-6.12 kernel hypervisor tracing instance is renamed
+  315: # from /sys/kernel/tracing/hyp to /sys/kernel/tracing/hypervisor
+  316: on late-init && property:ro.boot.hypervisor.vm.supported=1
+  317: 
+  318: # Hypervisor tracing instance doesn't support changing trace_clock
+  319:     chmod 0440 /sys/kernel/debug/tracing/hyp/trace_clock
+  320:     chmod 0440 /sys/kernel/tracing/hyp/trace_clock
+  321:     chmod 0440 /sys/kernel/debug/tracing/hypervisor/trace_clock
+  322:     chmod 0440 /sys/kernel/tracing/hypervisor/trace_clock
+  323: 
+  324:     chmod 0660 /sys/kernel/debug/tracing/hyp/buffer_size_kb
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/atrace.rc
+LINE=558
+  555:     chmod 0440 /sys/kernel/tracing/hypervisor/events/hypervisor/host_mem_abort/id
+  556: 
+  557: # Ensure correct permissions on GPU related events
+  558: on property:sys.boot_completed=1
+  559:     chmod 0666 /sys/kernel/debug/tracing/events/power/gpu_frequency/enable
+  560:     chmod 0666 /sys/kernel/tracing/events/power/gpu_frequency/enable
+  561:     chmod 0666 /sys/kernel/debug/tracing/events/power/gpu_work_period/enable
+  562:     chmod 0666 /sys/kernel/tracing/events/power/gpu_work_period/enable
+  563:     chmod 0666 /sys/kernel/debug/tracing/events/power/gpu_power_state/enable
+  564:     chmod 0666 /sys/kernel/tracing/events/power/gpu_power_state/enable
+  565: 
+  566: on property:persist.debug.atrace.boottrace=1
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/atrace_userdebug.rc
+LINE=7
+    4: # Grant unix world read/write permissions to enable kernel tracepoints.
+    5: # Access control to these files is now entirely in selinux policy.
+    6: 
+    7: on post-fs
+    8:     # On userdebug allow to enable any event via the generic
+    9:     # set_event interface:
+   10:     # echo sched/foo > set_event == echo 1 > events/sched/foo/enable.
+   11:     chmod 0666 /sys/kernel/tracing/set_event
+   12:     chmod 0666 /sys/kernel/debug/tracing/set_event
+   13: 
+   14:     chmod 0666 /sys/kernel/tracing/events/workqueue/enable
+   15:     chmod 0666 /sys/kernel/debug/tracing/events/workqueue/enable
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/audioserver.rc
+LINE=66
+   63:     # reset the property
+   64:     setprop sys.audio.restart.hal 0
+   65: 
+   66: on init
+   67:     mkdir /dev/socket/audioserver 0775 audioserver audioserver
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/bootanim.rc
+LINE=1
+    1: service bootanim /system/bin/bootanimation
+    2:     class core animation
+    3:     user graphics
+    4:     group graphics audio
+    5:     disabled
+    6:     oneshot
+    7:     ioprio rt 0
+    8:     task_profiles MaxPerformance
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/bootstat.rc
+LINE=6
+    3: # Mirror bootloader boot reason to system boot reason
+    4: # ro.boot.bootreason should be set by init already
+    5: # before post-fs trigger
+    6: on post-fs && property:ro.boot.bootreason=*
+    7:     setprop sys.boot.reason ${ro.boot.bootreason}
+    8: 
+    9: on post-fs-data
+   10:     mkdir /data/misc/bootstat 0700 system log
+   11:     # To deal with ota transition resulting from a change in DAC from
+   12:     # root.root to system.log, may be deleted after ota has settled.
+   13:     chown system log /data/misc/bootstat/absolute_boot_time
+   14:     chown system log /data/misc/bootstat/boot_complete
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/bootstat.rc
+LINE=9
+    6: on post-fs && property:ro.boot.bootreason=*
+    7:     setprop sys.boot.reason ${ro.boot.bootreason}
+    8: 
+    9: on post-fs-data
+   10:     mkdir /data/misc/bootstat 0700 system log
+   11:     # To deal with ota transition resulting from a change in DAC from
+   12:     # root.root to system.log, may be deleted after ota has settled.
+   13:     chown system log /data/misc/bootstat/absolute_boot_time
+   14:     chown system log /data/misc/bootstat/boot_complete
+   15:     chown system log /data/misc/bootstat/boot_complete_no_encryption
+   16:     chown system log /data/misc/bootstat/boot_reason
+   17:     chown system log /data/misc/bootstat/boottime.bootloader.1BLE
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/bootstat.rc
+LINE=67
+   64:     exec_background - system log -- /system/bin/bootstat --set_system_boot_reason
+   65: 
+   66: # Record boot complete metrics.
+   67: on property:sys.boot_completed=1 && property:sys.bootstat.first_boot_completed=0
+   68:     # Record boot_complete and related stats (decryption, etc).
+   69:     # Record the boot reason.
+   70:     # Record time since factory reset.
+   71:     # Log all boot events.
+   72:     exec_background - system log -- /system/bin/bootstat --record_boot_complete --record_boot_reason --record_time_since_factory_reset -l
+   73:     setprop sys.bootstat.first_boot_completed 1
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/clean_scratch_files.rc
+LINE=1
+    1: on post-fs-data && property:ro.debuggable=1 && property:ro.boot.dynamic_partitions=true
+    2:     exec_background - root root -- /system/bin/clean_scratch_files
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/dmesgd.rc
+LINE=4
+    1: # Copyright (C) 2022 The Android Open Source Project
+    2: 
+    3: # Fire once at boot time to collect early reports, if there are any.
+    4: on property:sys.boot_completed=1
+    5:     setprop dmesgd.start 1
+    6: 
+    7: on property:ro.product.cpu.abilist64=* && property:bootreceiver.enable=1
+    8:     mkdir /data/misc/dmesgd 0700 dmesgd system
+    9:     rm /data/misc/dmesgd/sent_reports.txt
+   10: 
+   11: # Start every time someone sets dmesgd.start=1.
+   12: on property:ro.product.cpu.abilist64=* && property:bootreceiver.enable=1 && property:dmesgd.start=1
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/dumpstate.rc
+LINE=1
+    1: on boot
+    2:     # Allow bugreports access to eMMC 5.0 stats
+    3:     chown root mount /sys/kernel/debug/mmc0/mmc0:0001/ext_csd
+    4:     chmod 0440 /sys/kernel/debug/mmc0/mmc0:0001/ext_csd
+    5: 
+    6: service dumpstate /system/bin/dumpstate -s
+    7:     class main
+    8:     socket dumpstate stream 0660 shell log
+    9:     disabled
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/flags_health_check.rc
+LINE=7
+    4:     mkdir /data/server_configurable_flags 0775 system system encryption=Require
+    5:     exec - system system -- /system/bin/flags_health_check BOOT_FAILURE
+    6: 
+    7: on property:sys.boot_completed=1
+    8:     setprop persist.device_config.attempted_boot_count 0
+    9: 
+   10: on property:sys.init.updatable_crashing=1
+   11:     exec - system system -- /system/bin/flags_health_check UPDATABLE_CRASHING
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/gsid.rc
+LINE=8
+    5:     user root
+    6:     group root system media_rw
+    7: 
+    8: on post-fs
+    9:     mkdir /metadata/gsi 0771 root system
+   10:     mkdir /metadata/gsi/dsu 0771 root system
+   11:     mkdir /metadata/gsi/ota 0771 root system
+   12:     mkdir /metadata/gsi/remount 0771 root system
+   13:     chmod 0664 /metadata/gsi/dsu/active
+   14:     chmod 0664 /metadata/gsi/dsu/booted
+   15:     chmod 0664 /metadata/gsi/dsu/lp_names
+   16: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/gsid.rc
+LINE=17
+   14:     chmod 0664 /metadata/gsi/dsu/booted
+   15:     chmod 0664 /metadata/gsi/dsu/lp_names
+   16: 
+   17: on post-fs-data
+   18:     write /data/gsi_persistent_data 0
+   19:     chown system system /data/gsi_persistent_data
+   20:     mkdir /data/gsi 0700 root root encryption=None
+   21:     mkdir /data/gsi/dsu 0700 root root
+   22:     mkdir /data/gsi/ota 0700 root root
+   23:     mkdir /data/gsi/remount 0700 root root
+   24: 
+   25: on boot
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/gsid.rc
+LINE=25
+   22:     mkdir /data/gsi/ota 0700 root root
+   23:     mkdir /data/gsi/remount 0700 root root
+   24: 
+   25: on boot
+   26:     exec_background - root root -- /system/bin/gsid run-startup-tasks
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote64_32.rc
+LINE=1
+    1: on init && property:ro.product.cpu.abilist32=*
+    2:     exec_start boringssl_self_test32
+    3: on init && property:ro.product.cpu.abilist64=*
+    4:     exec_start boringssl_self_test64
+    5: on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+    6:     exec_start boringssl_self_test_apex32
+    7: on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+    8:     exec_start boringssl_self_test_apex64
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote64_32.rc
+LINE=3
+    1: on init && property:ro.product.cpu.abilist32=*
+    2:     exec_start boringssl_self_test32
+    3: on init && property:ro.product.cpu.abilist64=*
+    4:     exec_start boringssl_self_test64
+    5: on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+    6:     exec_start boringssl_self_test_apex32
+    7: on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+    8:     exec_start boringssl_self_test_apex64
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote64_32.rc
+LINE=1
+    1: on init && property:ro.product.cpu.abilist32=*
+    2:     exec_start boringssl_self_test32
+    3: on init && property:ro.product.cpu.abilist64=*
+    4:     exec_start boringssl_self_test64
+    5: on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+    6:     exec_start boringssl_self_test_apex32
+    7: on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+    8:     exec_start boringssl_self_test_apex64
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote64_32.rc
+LINE=3
+    1: on init && property:ro.product.cpu.abilist32=*
+    2:     exec_start boringssl_self_test32
+    3: on init && property:ro.product.cpu.abilist64=*
+    4:     exec_start boringssl_self_test64
+    5: on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+    6:     exec_start boringssl_self_test_apex32
+    7: on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+    8:     exec_start boringssl_self_test_apex64
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote64.rc
+LINE=1
+    1: on init && property:ro.product.cpu.abilist64=*
+    2:     exec_start boringssl_self_test64
+    3: on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+    4:     exec_start boringssl_self_test_apex64
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote64.rc
+LINE=1
+    1: on init && property:ro.product.cpu.abilist64=*
+    2:     exec_start boringssl_self_test64
+    3: on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+    4:     exec_start boringssl_self_test_apex64
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=15
+   12: import /system/etc/init/hw/init.${ro.zygote}.rc
+   13: 
+   14: # Cgroups are mounted right before early-init using list from /etc/cgroups.json
+   15: on early-init
+   16:     # Allow bootchart to capture from the beginning of second-stage init.
+   17:     mkdir /dev/bootchart 0755 root root
+   18:     bootchart start
+   19: 
+   20:     # Disable sysrq from keyboard
+   21:     write /proc/sys/kernel/sysrq 0
+   22: 
+   23:     # Android doesn't need kernel module autoloading, and it causes SELinux
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=113
+  110:     chown shell shell /tmp
+  111:     chmod 0771 /tmp
+  112: 
+  113: on early-init && property:ro.boot.bootchart.enabled=""
+  114:     rmdir /dev/bootchart
+  115: 
+  116: on init
+  117:     sysclktz 0
+  118: 
+  119:     # Mix device-specific information into the entropy pool
+  120:     copy /proc/cmdline /dev/urandom
+  121:     copy /proc/bootconfig /dev/urandom
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=116
+  113: on early-init && property:ro.boot.bootchart.enabled=""
+  114:     rmdir /dev/bootchart
+  115: 
+  116: on init
+  117:     sysclktz 0
+  118: 
+  119:     # Mix device-specific information into the entropy pool
+  120:     copy /proc/cmdline /dev/urandom
+  121:     copy /proc/bootconfig /dev/urandom
+  122: 
+  123:     symlink /proc/self/fd/0 /dev/stdin
+  124:     symlink /proc/self/fd/1 /dev/stdout
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=513
+  510:     start lmkd
+  511: 
+  512:     # Start essential services.
+  513:     start servicemanager
+  514:     start hwservicemanager
+  515:     start vndservicemanager
+  516: 
+  517:     # Mount /mnt/vm ASAP to allow early VMs to run.
+  518:     mkdir /mnt/vm 0755 root root
+  519:     mount tmpfs tmpfs /mnt/vm nosuid nodev noexec rw
+  520:     restorecon /mnt/vm
+  521:     chown system system /mnt/vm
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=514
+  511: 
+  512:     # Start essential services.
+  513:     start servicemanager
+  514:     start hwservicemanager
+  515:     start vndservicemanager
+  516: 
+  517:     # Mount /mnt/vm ASAP to allow early VMs to run.
+  518:     mkdir /mnt/vm 0755 root root
+  519:     mount tmpfs tmpfs /mnt/vm nosuid nodev noexec rw
+  520:     restorecon /mnt/vm
+  521:     chown system system /mnt/vm
+  522:     chmod 0770 /mnt/vm
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=567
+  564:     rm /dev/.booting
+  565: 
+  566: # Mount filesystems and start core system services.
+  567: on late-init
+  568:     trigger early-fs
+  569: 
+  570:     # Mount fstab in init.{$device}.rc by mount_all command. Optional parameter
+  571:     # '--early' can be specified to skip entries with 'latemount'.
+  572:     # /system and /vendor must be mounted by the end of the fs stage,
+  573:     # while /data is optional.
+  574:     trigger fs
+  575:     trigger post-fs
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=591
+  588:     # Should be before netd, but after apex, properties and logging is available.
+  589:     trigger load-bpf-programs
+  590: 
+  591:     # Now we can start zygote.
+  592:     trigger zygote-start
+  593: 
+  594:     # Remove a file to wake up anything waiting for firmware.
+  595:     trigger firmware_mounts_complete
+  596: 
+  597:     trigger early-boot
+  598:     trigger boot
+  599: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=600
+  597:     trigger early-boot
+  598:     trigger boot
+  599: 
+  600: on early-fs
+  601:     # Once metadata has been mounted, we'll need vold to deal with userdata checkpointing
+  602:     start vold
+  603: 
+  604: on post-fs
+  605:     exec - system system -- /system/bin/vdc checkpoint markBootAttempt
+  606: 
+  607:     # Once everything is setup, no need to modify /.
+  608:     # The bind+remount combination allows this to work in containers.
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=602
+  599: 
+  600: on early-fs
+  601:     # Once metadata has been mounted, we'll need vold to deal with userdata checkpointing
+  602:     start vold
+  603: 
+  604: on post-fs
+  605:     exec - system system -- /system/bin/vdc checkpoint markBootAttempt
+  606: 
+  607:     # Once everything is setup, no need to modify /.
+  608:     # The bind+remount combination allows this to work in containers.
+  609:     mount rootfs rootfs / remount bind ro nodev
+  610: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=604
+  601:     # Once metadata has been mounted, we'll need vold to deal with userdata checkpointing
+  602:     start vold
+  603: 
+  604: on post-fs
+  605:     exec - system system -- /system/bin/vdc checkpoint markBootAttempt
+  606: 
+  607:     # Once everything is setup, no need to modify /.
+  608:     # The bind+remount combination allows this to work in containers.
+  609:     mount rootfs rootfs / remount bind ro nodev
+  610: 
+  611:     # Mount default storage into root namespace
+  612:     mount none /mnt/user/0 /storage bind rec
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=684
+  681: 
+  682:     mkdir /metadata/staged-install 0770 root system
+  683: 
+  684: on late-fs
+  685:     # Ensure that tracefs has the correct permissions.
+  686:     # This does not work correctly if it is called in post-fs.
+  687:     chmod 0755 /sys/kernel/tracing
+  688:     chmod 0755 /sys/kernel/debug/tracing
+  689: 
+  690:     # HALs required before storage encryption can get unlocked (FBE)
+  691:     class_start early_hal
+  692: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=694
+  691:     class_start early_hal
+  692: 
+  693: # Don't enable the bootreceiver tracing instance to save 10MB of memory
+  694: on late-fs
+  695:     setprop bootreceiver.enable 0
+  696: 
+  697: on property:ro.product.cpu.abilist64=* && property:bootreceiver.enable=1
+  698:     # Set up a tracing instance for system_server to monitor error_report_end events.
+  699:     # These are sent by kernel tools like KASAN and KFENCE when a memory corruption
+  700:     # is detected. This is only needed for 64-bit systems.
+  701:     mkdir /sys/kernel/tracing/instances/bootreceiver 0700 system system
+  702:     restorecon_recursive /sys/kernel/tracing/instances/bootreceiver
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=707
+  704:     write /sys/kernel/tracing/instances/bootreceiver/trace_options disable_on_free
+  705:     write /sys/kernel/tracing/instances/bootreceiver/events/error_report/error_report_end/enable 1
+  706: 
+  707: on post-fs-data
+  708: 
+  709:     # Start checkpoint before we touch data
+  710:     exec - system system -- /system/bin/vdc checkpoint prepareCheckpoint
+  711: 
+  712:     # We chown/chmod /data again so because mount is run as root + defaults
+  713:     chown system system /data
+  714:     chmod 0771 /data
+  715:     # We restorecon /data in case the userdata partition has been reset.
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=743
+  740:     enter_default_mount_ns
+  741: 
+  742:     # set up keystore directory structure first so that we can end early boot
+  743:     # and start apexd
+  744:     mkdir /data/misc 01771 system misc encryption=Require
+  745:     mkdir /data/misc/keystore 0700 keystore keystore
+  746:     # work around b/183668221
+  747:     restorecon /data/misc /data/misc/keystore
+  748: 
+  749:     # Boot level 30
+  750:     # odsign signing keys have MAX_BOOT_LEVEL=30
+  751:     # This is currently the earliest boot level, but we start at 30
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=776
+  773:     # by the 'load_persist_props' call above.
+  774:     trigger load_persist_props_action
+  775: 
+  776:     # /data/apex is now available. Start apexd to scan and activate APEXes.
+  777:     #
+  778:     # To handle userspace reboots, make sure that apexd is started cleanly here
+  779:     # (set apexd.status="") and that it is restarted if it's already running.
+  780:     #
+  781:     # /data/apex uses encryption=None because direct I/O support is needed on
+  782:     # APEX files, but some devices don't support direct I/O on encrypted files.
+  783:     # Also, APEXes are public information, similar to the system image.
+  784:     # /data/apex/decompressed and /data/apex/ota_reserved override this setting;
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1135
+ 1132: 
+ 1133: # It is recommended to put unnecessary data/ initialization from post-fs-data
+ 1134: # to start-zygote in device's init.rc to unblock zygote start.
+ 1135: on zygote-start
+ 1136:     wait_for_prop odsign.verification.done 1
+ 1137:     start statsd
+ 1138:     start zygote
+ 1139:     start zygote_secondary
+ 1140: 
+ 1141: on boot && property:ro.config.low_ram=true
+ 1142:     # Tweak background writeout
+ 1143:     write /proc/sys/vm/dirty_expire_centisecs 200
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1138
+ 1135: on zygote-start
+ 1136:     wait_for_prop odsign.verification.done 1
+ 1137:     start statsd
+ 1138:     start zygote
+ 1139:     start zygote_secondary
+ 1140: 
+ 1141: on boot && property:ro.config.low_ram=true
+ 1142:     # Tweak background writeout
+ 1143:     write /proc/sys/vm/dirty_expire_centisecs 200
+ 1144:     write /proc/sys/vm/dirty_background_ratio  5
+ 1145: 
+ 1146: on property:sys.boot_completed=1 && property:ro.config.batteryless=true
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1139
+ 1136:     wait_for_prop odsign.verification.done 1
+ 1137:     start statsd
+ 1138:     start zygote
+ 1139:     start zygote_secondary
+ 1140: 
+ 1141: on boot && property:ro.config.low_ram=true
+ 1142:     # Tweak background writeout
+ 1143:     write /proc/sys/vm/dirty_expire_centisecs 200
+ 1144:     write /proc/sys/vm/dirty_background_ratio  5
+ 1145: 
+ 1146: on property:sys.boot_completed=1 && property:ro.config.batteryless=true
+ 1147:     # Flush data and checkpoint more aggressively to prepare sudden power cuts
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1141
+ 1138:     start zygote
+ 1139:     start zygote_secondary
+ 1140: 
+ 1141: on boot && property:ro.config.low_ram=true
+ 1142:     # Tweak background writeout
+ 1143:     write /proc/sys/vm/dirty_expire_centisecs 200
+ 1144:     write /proc/sys/vm/dirty_background_ratio  5
+ 1145: 
+ 1146: on property:sys.boot_completed=1 && property:ro.config.batteryless=true
+ 1147:     # Flush data and checkpoint more aggressively to prepare sudden power cuts
+ 1148:     write /proc/sys/vm/dirty_expire_centisecs 200
+ 1149:     write /proc/sys/vm/dirty_writeback_centisecs 200
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1146
+ 1143:     write /proc/sys/vm/dirty_expire_centisecs 200
+ 1144:     write /proc/sys/vm/dirty_background_ratio  5
+ 1145: 
+ 1146: on property:sys.boot_completed=1 && property:ro.config.batteryless=true
+ 1147:     # Flush data and checkpoint more aggressively to prepare sudden power cuts
+ 1148:     write /proc/sys/vm/dirty_expire_centisecs 200
+ 1149:     write /proc/sys/vm/dirty_writeback_centisecs 200
+ 1150:     write /proc/sys/vm/dirty_background_ratio  5
+ 1151:     write /dev/sys/fs/by-name/userdata/cp_interval 2
+ 1152: 
+ 1153: on boot && property:suspend.disable_sync_on_suspend=true
+ 1154:     write /sys/power/sync_on_suspend 0
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1153
+ 1150:     write /proc/sys/vm/dirty_background_ratio  5
+ 1151:     write /dev/sys/fs/by-name/userdata/cp_interval 2
+ 1152: 
+ 1153: on boot && property:suspend.disable_sync_on_suspend=true
+ 1154:     write /sys/power/sync_on_suspend 0
+ 1155: 
+ 1156: on boot
+ 1157:     # basic network init
+ 1158:     ifup lo
+ 1159:     hostname localhost
+ 1160:     domainname localdomain
+ 1161: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1156
+ 1153: on boot && property:suspend.disable_sync_on_suspend=true
+ 1154:     write /sys/power/sync_on_suspend 0
+ 1155: 
+ 1156: on boot
+ 1157:     # basic network init
+ 1158:     ifup lo
+ 1159:     hostname localhost
+ 1160:     domainname localdomain
+ 1161: 
+ 1162:     # IPsec SA default expiration length
+ 1163:     write /proc/sys/net/core/xfrm_acq_expires 3600
+ 1164: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1267
+ 1264: 
+ 1265:     class_start core
+ 1266: 
+ 1267: on boot && property:ro.debuggable=1
+ 1268:     write /dev/sys/fs/by-name/userdata/iostat_period_ms 1000
+ 1269:     write /dev/sys/fs/by-name/userdata/iostat_enable 1
+ 1270: 
+ 1271: on nonencrypted
+ 1272:     class_start main
+ 1273:     class_start late_start
+ 1274: 
+ 1275: on property:sys.init_log_level=*
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1281
+ 1278: on charger
+ 1279:     class_start charger
+ 1280: 
+ 1281: on property:sys.boot_completed=1
+ 1282:     bootchart stop
+ 1283:     # Setup per_boot directory so other .rc could start to use it on boot_completed
+ 1284:     exec - system system -- /bin/rm -rf /data/per_boot
+ 1285:     mkdir /data/per_boot 0710 system system encryption=Require key=per_boot_ref
+ 1286: 
+ 1287: # system server cannot write to /proc/sys files,
+ 1288: # and chown/chmod does not work for /proc/sys/ entries.
+ 1289: # So proxy writes through init.
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1350
+ 1347:     # Give reads to anyone for the accessibility trace folder on debug builds.
+ 1348:     chmod 0775 /data/misc/a11ytrace
+ 1349: 
+ 1350: on init && property:ro.debuggable=1
+ 1351:     start console
+ 1352: 
+ 1353: # Allow other processes to run `snapshotctl` through `init`. This requires
+ 1354: # `set_prop` permission on `snapshotctl_prop`.
+ 1355: on property:sys.snapshotctl.map=requested
+ 1356:     # "root" is needed to talk to gsid and pass its check on uid.
+ 1357:     # "system" is needed to write to "/dev/socket/snapuserd" to talk to
+ 1358:     # snapuserd.
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=15
+   12: import /system/etc/init/hw/init.${ro.zygote}.rc
+   13: 
+   14: # Cgroups are mounted right before early-init using list from /etc/cgroups.json
+   15: on early-init
+   16:     # Allow bootchart to capture from the beginning of second-stage init.
+   17:     mkdir /dev/bootchart 0755 root root
+   18:     bootchart start
+   19: 
+   20:     # Disable sysrq from keyboard
+   21:     write /proc/sys/kernel/sysrq 0
+   22: 
+   23:     # Android doesn't need kernel module autoloading, and it causes SELinux
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=113
+  110:     chown shell shell /tmp
+  111:     chmod 0771 /tmp
+  112: 
+  113: on early-init && property:ro.boot.bootchart.enabled=""
+  114:     rmdir /dev/bootchart
+  115: 
+  116: on init
+  117:     sysclktz 0
+  118: 
+  119:     # Mix device-specific information into the entropy pool
+  120:     copy /proc/cmdline /dev/urandom
+  121:     copy /proc/bootconfig /dev/urandom
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=116
+  113: on early-init && property:ro.boot.bootchart.enabled=""
+  114:     rmdir /dev/bootchart
+  115: 
+  116: on init
+  117:     sysclktz 0
+  118: 
+  119:     # Mix device-specific information into the entropy pool
+  120:     copy /proc/cmdline /dev/urandom
+  121:     copy /proc/bootconfig /dev/urandom
+  122: 
+  123:     symlink /proc/self/fd/0 /dev/stdin
+  124:     symlink /proc/self/fd/1 /dev/stdout
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=513
+  510:     start lmkd
+  511: 
+  512:     # Start essential services.
+  513:     start servicemanager
+  514:     start hwservicemanager
+  515:     start vndservicemanager
+  516: 
+  517:     # Mount /mnt/vm ASAP to allow early VMs to run.
+  518:     mkdir /mnt/vm 0755 root root
+  519:     mount tmpfs tmpfs /mnt/vm nosuid nodev noexec rw
+  520:     restorecon /mnt/vm
+  521:     chown system system /mnt/vm
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=514
+  511: 
+  512:     # Start essential services.
+  513:     start servicemanager
+  514:     start hwservicemanager
+  515:     start vndservicemanager
+  516: 
+  517:     # Mount /mnt/vm ASAP to allow early VMs to run.
+  518:     mkdir /mnt/vm 0755 root root
+  519:     mount tmpfs tmpfs /mnt/vm nosuid nodev noexec rw
+  520:     restorecon /mnt/vm
+  521:     chown system system /mnt/vm
+  522:     chmod 0770 /mnt/vm
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=567
+  564:     rm /dev/.booting
+  565: 
+  566: # Mount filesystems and start core system services.
+  567: on late-init
+  568:     trigger early-fs
+  569: 
+  570:     # Mount fstab in init.{$device}.rc by mount_all command. Optional parameter
+  571:     # '--early' can be specified to skip entries with 'latemount'.
+  572:     # /system and /vendor must be mounted by the end of the fs stage,
+  573:     # while /data is optional.
+  574:     trigger fs
+  575:     trigger post-fs
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=591
+  588:     # Should be before netd, but after apex, properties and logging is available.
+  589:     trigger load-bpf-programs
+  590: 
+  591:     # Now we can start zygote.
+  592:     trigger zygote-start
+  593: 
+  594:     # Remove a file to wake up anything waiting for firmware.
+  595:     trigger firmware_mounts_complete
+  596: 
+  597:     trigger early-boot
+  598:     trigger boot
+  599: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=600
+  597:     trigger early-boot
+  598:     trigger boot
+  599: 
+  600: on early-fs
+  601:     # Once metadata has been mounted, we'll need vold to deal with userdata checkpointing
+  602:     start vold
+  603: 
+  604: on post-fs
+  605:     exec - system system -- /system/bin/vdc checkpoint markBootAttempt
+  606: 
+  607:     # Once everything is setup, no need to modify /.
+  608:     # The bind+remount combination allows this to work in containers.
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=602
+  599: 
+  600: on early-fs
+  601:     # Once metadata has been mounted, we'll need vold to deal with userdata checkpointing
+  602:     start vold
+  603: 
+  604: on post-fs
+  605:     exec - system system -- /system/bin/vdc checkpoint markBootAttempt
+  606: 
+  607:     # Once everything is setup, no need to modify /.
+  608:     # The bind+remount combination allows this to work in containers.
+  609:     mount rootfs rootfs / remount bind ro nodev
+  610: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=604
+  601:     # Once metadata has been mounted, we'll need vold to deal with userdata checkpointing
+  602:     start vold
+  603: 
+  604: on post-fs
+  605:     exec - system system -- /system/bin/vdc checkpoint markBootAttempt
+  606: 
+  607:     # Once everything is setup, no need to modify /.
+  608:     # The bind+remount combination allows this to work in containers.
+  609:     mount rootfs rootfs / remount bind ro nodev
+  610: 
+  611:     # Mount default storage into root namespace
+  612:     mount none /mnt/user/0 /storage bind rec
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=684
+  681: 
+  682:     mkdir /metadata/staged-install 0770 root system
+  683: 
+  684: on late-fs
+  685:     # Ensure that tracefs has the correct permissions.
+  686:     # This does not work correctly if it is called in post-fs.
+  687:     chmod 0755 /sys/kernel/tracing
+  688:     chmod 0755 /sys/kernel/debug/tracing
+  689: 
+  690:     # HALs required before storage encryption can get unlocked (FBE)
+  691:     class_start early_hal
+  692: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=694
+  691:     class_start early_hal
+  692: 
+  693: # Don't enable the bootreceiver tracing instance to save 10MB of memory
+  694: on late-fs
+  695:     setprop bootreceiver.enable 0
+  696: 
+  697: on property:ro.product.cpu.abilist64=* && property:bootreceiver.enable=1
+  698:     # Set up a tracing instance for system_server to monitor error_report_end events.
+  699:     # These are sent by kernel tools like KASAN and KFENCE when a memory corruption
+  700:     # is detected. This is only needed for 64-bit systems.
+  701:     mkdir /sys/kernel/tracing/instances/bootreceiver 0700 system system
+  702:     restorecon_recursive /sys/kernel/tracing/instances/bootreceiver
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=707
+  704:     write /sys/kernel/tracing/instances/bootreceiver/trace_options disable_on_free
+  705:     write /sys/kernel/tracing/instances/bootreceiver/events/error_report/error_report_end/enable 1
+  706: 
+  707: on post-fs-data
+  708: 
+  709:     # Start checkpoint before we touch data
+  710:     exec - system system -- /system/bin/vdc checkpoint prepareCheckpoint
+  711: 
+  712:     # We chown/chmod /data again so because mount is run as root + defaults
+  713:     chown system system /data
+  714:     chmod 0771 /data
+  715:     # We restorecon /data in case the userdata partition has been reset.
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=743
+  740:     enter_default_mount_ns
+  741: 
+  742:     # set up keystore directory structure first so that we can end early boot
+  743:     # and start apexd
+  744:     mkdir /data/misc 01771 system misc encryption=Require
+  745:     mkdir /data/misc/keystore 0700 keystore keystore
+  746:     # work around b/183668221
+  747:     restorecon /data/misc /data/misc/keystore
+  748: 
+  749:     # Boot level 30
+  750:     # odsign signing keys have MAX_BOOT_LEVEL=30
+  751:     # This is currently the earliest boot level, but we start at 30
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=776
+  773:     # by the 'load_persist_props' call above.
+  774:     trigger load_persist_props_action
+  775: 
+  776:     # /data/apex is now available. Start apexd to scan and activate APEXes.
+  777:     #
+  778:     # To handle userspace reboots, make sure that apexd is started cleanly here
+  779:     # (set apexd.status="") and that it is restarted if it's already running.
+  780:     #
+  781:     # /data/apex uses encryption=None because direct I/O support is needed on
+  782:     # APEX files, but some devices don't support direct I/O on encrypted files.
+  783:     # Also, APEXes are public information, similar to the system image.
+  784:     # /data/apex/decompressed and /data/apex/ota_reserved override this setting;
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1135
+ 1132: 
+ 1133: # It is recommended to put unnecessary data/ initialization from post-fs-data
+ 1134: # to start-zygote in device's init.rc to unblock zygote start.
+ 1135: on zygote-start
+ 1136:     wait_for_prop odsign.verification.done 1
+ 1137:     start statsd
+ 1138:     start zygote
+ 1139:     start zygote_secondary
+ 1140: 
+ 1141: on boot && property:ro.config.low_ram=true
+ 1142:     # Tweak background writeout
+ 1143:     write /proc/sys/vm/dirty_expire_centisecs 200
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1138
+ 1135: on zygote-start
+ 1136:     wait_for_prop odsign.verification.done 1
+ 1137:     start statsd
+ 1138:     start zygote
+ 1139:     start zygote_secondary
+ 1140: 
+ 1141: on boot && property:ro.config.low_ram=true
+ 1142:     # Tweak background writeout
+ 1143:     write /proc/sys/vm/dirty_expire_centisecs 200
+ 1144:     write /proc/sys/vm/dirty_background_ratio  5
+ 1145: 
+ 1146: on property:sys.boot_completed=1 && property:ro.config.batteryless=true
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1139
+ 1136:     wait_for_prop odsign.verification.done 1
+ 1137:     start statsd
+ 1138:     start zygote
+ 1139:     start zygote_secondary
+ 1140: 
+ 1141: on boot && property:ro.config.low_ram=true
+ 1142:     # Tweak background writeout
+ 1143:     write /proc/sys/vm/dirty_expire_centisecs 200
+ 1144:     write /proc/sys/vm/dirty_background_ratio  5
+ 1145: 
+ 1146: on property:sys.boot_completed=1 && property:ro.config.batteryless=true
+ 1147:     # Flush data and checkpoint more aggressively to prepare sudden power cuts
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1141
+ 1138:     start zygote
+ 1139:     start zygote_secondary
+ 1140: 
+ 1141: on boot && property:ro.config.low_ram=true
+ 1142:     # Tweak background writeout
+ 1143:     write /proc/sys/vm/dirty_expire_centisecs 200
+ 1144:     write /proc/sys/vm/dirty_background_ratio  5
+ 1145: 
+ 1146: on property:sys.boot_completed=1 && property:ro.config.batteryless=true
+ 1147:     # Flush data and checkpoint more aggressively to prepare sudden power cuts
+ 1148:     write /proc/sys/vm/dirty_expire_centisecs 200
+ 1149:     write /proc/sys/vm/dirty_writeback_centisecs 200
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1146
+ 1143:     write /proc/sys/vm/dirty_expire_centisecs 200
+ 1144:     write /proc/sys/vm/dirty_background_ratio  5
+ 1145: 
+ 1146: on property:sys.boot_completed=1 && property:ro.config.batteryless=true
+ 1147:     # Flush data and checkpoint more aggressively to prepare sudden power cuts
+ 1148:     write /proc/sys/vm/dirty_expire_centisecs 200
+ 1149:     write /proc/sys/vm/dirty_writeback_centisecs 200
+ 1150:     write /proc/sys/vm/dirty_background_ratio  5
+ 1151:     write /dev/sys/fs/by-name/userdata/cp_interval 2
+ 1152: 
+ 1153: on boot && property:suspend.disable_sync_on_suspend=true
+ 1154:     write /sys/power/sync_on_suspend 0
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1153
+ 1150:     write /proc/sys/vm/dirty_background_ratio  5
+ 1151:     write /dev/sys/fs/by-name/userdata/cp_interval 2
+ 1152: 
+ 1153: on boot && property:suspend.disable_sync_on_suspend=true
+ 1154:     write /sys/power/sync_on_suspend 0
+ 1155: 
+ 1156: on boot
+ 1157:     # basic network init
+ 1158:     ifup lo
+ 1159:     hostname localhost
+ 1160:     domainname localdomain
+ 1161: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1156
+ 1153: on boot && property:suspend.disable_sync_on_suspend=true
+ 1154:     write /sys/power/sync_on_suspend 0
+ 1155: 
+ 1156: on boot
+ 1157:     # basic network init
+ 1158:     ifup lo
+ 1159:     hostname localhost
+ 1160:     domainname localdomain
+ 1161: 
+ 1162:     # IPsec SA default expiration length
+ 1163:     write /proc/sys/net/core/xfrm_acq_expires 3600
+ 1164: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1267
+ 1264: 
+ 1265:     class_start core
+ 1266: 
+ 1267: on boot && property:ro.debuggable=1
+ 1268:     write /dev/sys/fs/by-name/userdata/iostat_period_ms 1000
+ 1269:     write /dev/sys/fs/by-name/userdata/iostat_enable 1
+ 1270: 
+ 1271: on nonencrypted
+ 1272:     class_start main
+ 1273:     class_start late_start
+ 1274: 
+ 1275: on property:sys.init_log_level=*
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1281
+ 1278: on charger
+ 1279:     class_start charger
+ 1280: 
+ 1281: on property:sys.boot_completed=1
+ 1282:     bootchart stop
+ 1283:     # Setup per_boot directory so other .rc could start to use it on boot_completed
+ 1284:     exec - system system -- /bin/rm -rf /data/per_boot
+ 1285:     mkdir /data/per_boot 0710 system system encryption=Require key=per_boot_ref
+ 1286: 
+ 1287: # system server cannot write to /proc/sys files,
+ 1288: # and chown/chmod does not work for /proc/sys/ entries.
+ 1289: # So proxy writes through init.
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1350
+ 1347:     # Give reads to anyone for the accessibility trace folder on debug builds.
+ 1348:     chmod 0775 /data/misc/a11ytrace
+ 1349: 
+ 1350: on init && property:ro.debuggable=1
+ 1351:     start console
+ 1352: 
+ 1353: # Allow other processes to run `snapshotctl` through `init`. This requires
+ 1354: # `set_prop` permission on `snapshotctl_prop`.
+ 1355: on property:sys.snapshotctl.map=requested
+ 1356:     # "root" is needed to talk to gsid and pass its check on uid.
+ 1357:     # "system" is needed to write to "/dev/socket/snapuserd" to talk to
+ 1358:     # snapuserd.
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=18
+   15:     setprop sys.usb.ffs.ready 0
+   16: 
+   17: on property:sys.usb.config=adb && property:sys.usb.configfs=1
+   18:     start adbd
+   19: 
+   20: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=adb && property:sys.usb.configfs=1
+   21:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "adb"
+   22:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1
+   23:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+   24:     setprop sys.usb.state ${sys.usb.config}
+   25: 
+   26: on property:sys.usb.config=mtp && property:sys.usb.configfs=1
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=33
+   30:     setprop sys.usb.state ${sys.usb.config}
+   31: 
+   32: on property:sys.usb.config=mtp,adb && property:sys.usb.configfs=1
+   33:     start adbd
+   34: 
+   35: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=mtp,adb && property:sys.usb.configfs=1
+   36:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "mtp_adb"
+   37:     symlink /config/usb_gadget/g1/functions/mtp.gs0 /config/usb_gadget/g1/configs/b.1/f1
+   38:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f2
+   39:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+   40:     setprop sys.usb.state ${sys.usb.config}
+   41: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=49
+   46:     setprop sys.usb.state ${sys.usb.config}
+   47: 
+   48: on property:sys.usb.config=ptp,adb && property:sys.usb.configfs=1
+   49:     start adbd
+   50: 
+   51: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=ptp,adb && property:sys.usb.configfs=1
+   52:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "ptp_adb"
+   53:     symlink /config/usb_gadget/g1/functions/ptp.gs1 /config/usb_gadget/g1/configs/b.1/f1
+   54:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f2
+   55:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+   56:     setprop sys.usb.state ${sys.usb.config}
+   57: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=65
+   62:     setprop sys.usb.state ${sys.usb.config}
+   63: 
+   64: on property:sys.usb.config=accessory,adb && property:sys.usb.configfs=1
+   65:     start adbd
+   66: 
+   67: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=accessory,adb && property:sys.usb.configfs=1
+   68:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "accessory_adb"
+   69:     symlink /config/usb_gadget/g1/functions/accessory.gs2 /config/usb_gadget/g1/configs/b.1/f1
+   70:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f2
+   71:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+   72:     setprop sys.usb.state ${sys.usb.config}
+   73: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=81
+   78:     setprop sys.usb.state ${sys.usb.config}
+   79: 
+   80: on property:sys.usb.config=audio_source,adb && property:sys.usb.configfs=1
+   81:     start adbd
+   82: 
+   83: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=audio_source,adb && property:sys.usb.configfs=1
+   84:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "audiosource_adb"
+   85:     symlink /config/usb_gadget/g1/functions/audio_source.gs3 /config/usb_gadget/g1/configs/b.1/f1
+   86:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f2
+   87:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+   88:     setprop sys.usb.state ${sys.usb.config}
+   89: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=98
+   95:     setprop sys.usb.state ${sys.usb.config}
+   96: 
+   97: on property:sys.usb.config=accessory,audio_source,adb && property:sys.usb.configfs=1
+   98:     start adbd
+   99: 
+  100: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=accessory,audio_source,adb && property:sys.usb.configfs=1
+  101:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "accessory_audiosource_adb"
+  102:     symlink /config/usb_gadget/g1/functions/accessory.gs2 /config/usb_gadget/g1/configs/b.1/f1
+  103:     symlink /config/usb_gadget/g1/functions/audio_source.gs3 /config/usb_gadget/g1/configs/b.1/f2
+  104:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f3
+  105:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+  106:     setprop sys.usb.state ${sys.usb.config}
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=115
+  112:     setprop sys.usb.state ${sys.usb.config}
+  113: 
+  114: on property:sys.usb.config=midi,adb && property:sys.usb.configfs=1
+  115:     start adbd
+  116: 
+  117: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=midi,adb && property:sys.usb.configfs=1
+  118:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "midi_adb"
+  119:     symlink /config/usb_gadget/g1/functions/midi.gs5 /config/usb_gadget/g1/configs/b.1/f1
+  120:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f2
+  121:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+  122:     setprop sys.usb.state ${sys.usb.config}
+  123: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=132
+  129:     setprop sys.usb.state ${sys.usb.config}
+  130: 
+  131: on property:sys.usb.config=rndis,adb && property:sys.usb.configfs=1
+  132:     start adbd
+  133: 
+  134: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=rndis,adb && property:sys.usb.configfs=1
+  135:     mkdir /config/usb_gadget/g1/functions/rndis.gs4
+  136:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "rndis_adb"
+  137:     symlink /config/usb_gadget/g1/functions/rndis.gs4 /config/usb_gadget/g1/configs/b.1/f1
+  138:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f2
+  139:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+  140:     setprop sys.usb.state ${sys.usb.config}
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=18
+   15:     setprop sys.usb.ffs.ready 0
+   16: 
+   17: on property:sys.usb.config=adb && property:sys.usb.configfs=1
+   18:     start adbd
+   19: 
+   20: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=adb && property:sys.usb.configfs=1
+   21:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "adb"
+   22:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1
+   23:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+   24:     setprop sys.usb.state ${sys.usb.config}
+   25: 
+   26: on property:sys.usb.config=mtp && property:sys.usb.configfs=1
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=33
+   30:     setprop sys.usb.state ${sys.usb.config}
+   31: 
+   32: on property:sys.usb.config=mtp,adb && property:sys.usb.configfs=1
+   33:     start adbd
+   34: 
+   35: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=mtp,adb && property:sys.usb.configfs=1
+   36:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "mtp_adb"
+   37:     symlink /config/usb_gadget/g1/functions/mtp.gs0 /config/usb_gadget/g1/configs/b.1/f1
+   38:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f2
+   39:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+   40:     setprop sys.usb.state ${sys.usb.config}
+   41: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=49
+   46:     setprop sys.usb.state ${sys.usb.config}
+   47: 
+   48: on property:sys.usb.config=ptp,adb && property:sys.usb.configfs=1
+   49:     start adbd
+   50: 
+   51: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=ptp,adb && property:sys.usb.configfs=1
+   52:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "ptp_adb"
+   53:     symlink /config/usb_gadget/g1/functions/ptp.gs1 /config/usb_gadget/g1/configs/b.1/f1
+   54:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f2
+   55:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+   56:     setprop sys.usb.state ${sys.usb.config}
+   57: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=65
+   62:     setprop sys.usb.state ${sys.usb.config}
+   63: 
+   64: on property:sys.usb.config=accessory,adb && property:sys.usb.configfs=1
+   65:     start adbd
+   66: 
+   67: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=accessory,adb && property:sys.usb.configfs=1
+   68:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "accessory_adb"
+   69:     symlink /config/usb_gadget/g1/functions/accessory.gs2 /config/usb_gadget/g1/configs/b.1/f1
+   70:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f2
+   71:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+   72:     setprop sys.usb.state ${sys.usb.config}
+   73: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=81
+   78:     setprop sys.usb.state ${sys.usb.config}
+   79: 
+   80: on property:sys.usb.config=audio_source,adb && property:sys.usb.configfs=1
+   81:     start adbd
+   82: 
+   83: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=audio_source,adb && property:sys.usb.configfs=1
+   84:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "audiosource_adb"
+   85:     symlink /config/usb_gadget/g1/functions/audio_source.gs3 /config/usb_gadget/g1/configs/b.1/f1
+   86:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f2
+   87:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+   88:     setprop sys.usb.state ${sys.usb.config}
+   89: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=98
+   95:     setprop sys.usb.state ${sys.usb.config}
+   96: 
+   97: on property:sys.usb.config=accessory,audio_source,adb && property:sys.usb.configfs=1
+   98:     start adbd
+   99: 
+  100: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=accessory,audio_source,adb && property:sys.usb.configfs=1
+  101:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "accessory_audiosource_adb"
+  102:     symlink /config/usb_gadget/g1/functions/accessory.gs2 /config/usb_gadget/g1/configs/b.1/f1
+  103:     symlink /config/usb_gadget/g1/functions/audio_source.gs3 /config/usb_gadget/g1/configs/b.1/f2
+  104:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f3
+  105:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+  106:     setprop sys.usb.state ${sys.usb.config}
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=115
+  112:     setprop sys.usb.state ${sys.usb.config}
+  113: 
+  114: on property:sys.usb.config=midi,adb && property:sys.usb.configfs=1
+  115:     start adbd
+  116: 
+  117: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=midi,adb && property:sys.usb.configfs=1
+  118:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "midi_adb"
+  119:     symlink /config/usb_gadget/g1/functions/midi.gs5 /config/usb_gadget/g1/configs/b.1/f1
+  120:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f2
+  121:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+  122:     setprop sys.usb.state ${sys.usb.config}
+  123: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.configfs.rc
+LINE=132
+  129:     setprop sys.usb.state ${sys.usb.config}
+  130: 
+  131: on property:sys.usb.config=rndis,adb && property:sys.usb.configfs=1
+  132:     start adbd
+  133: 
+  134: on property:sys.usb.ffs.ready=1 && property:sys.usb.config=rndis,adb && property:sys.usb.configfs=1
+  135:     mkdir /config/usb_gadget/g1/functions/rndis.gs4
+  136:     write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "rndis_adb"
+  137:     symlink /config/usb_gadget/g1/functions/rndis.gs4 /config/usb_gadget/g1/configs/b.1/f1
+  138:     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f2
+  139:     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+  140:     setprop sys.usb.state ${sys.usb.config}
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.rc
+LINE=6
+    3: # USB configuration common for all android devices
+    4: #
+    5: 
+    6: on post-fs-data
+    7:     chown system system /sys/class/android_usb/android0/f_mass_storage/lun/file
+    8:     chmod 0660 /sys/class/android_usb/android0/f_mass_storage/lun/file
+    9:     chown system system /sys/class/android_usb/android0/f_rndis/ethaddr
+   10:     chmod 0660 /sys/class/android_usb/android0/f_rndis/ethaddr
+   11:     mkdir /data/misc/adb 02750 system shell
+   12:     mkdir /data/adb 0700 root root encryption=Require
+   13: 
+   14: # adbd is controlled via property triggers in init.<platform>.usb.rc
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.rc
+LINE=15
+   12:     mkdir /data/adb 0700 root root encryption=Require
+   13: 
+   14: # adbd is controlled via property triggers in init.<platform>.usb.rc
+   15: service adbd /system/bin/adbd --root_seclabel=u:r:su:s0
+   16:     class core
+   17:     socket adbd seqpacket 660 system system
+   18:     disabled
+   19:     updatable
+   20:     seclabel u:r:adbd:s0
+   21:     user root
+   22: 
+   23: on property:vendor.sys.usb.adb.disabled=*
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.rc
+LINE=42
+   39:     write /sys/class/android_usb/android0/idProduct 4EE7
+   40:     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+   41:     write /sys/class/android_usb/android0/enable 1
+   42:     start adbd
+   43:     setprop sys.usb.state ${sys.usb.config}
+   44: 
+   45: # USB accessory configuration
+   46: on property:sys.usb.config=accessory && property:sys.usb.configfs=0
+   47:     write /sys/class/android_usb/android0/enable 0
+   48:     write /sys/class/android_usb/android0/idVendor 18d1
+   49:     write /sys/class/android_usb/android0/idProduct 2d00
+   50:     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.rc
+LINE=61
+   58:     write /sys/class/android_usb/android0/idProduct 2d01
+   59:     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+   60:     write /sys/class/android_usb/android0/enable 1
+   61:     start adbd
+   62:     setprop sys.usb.state ${sys.usb.config}
+   63: 
+   64: # audio accessory configuration
+   65: on property:sys.usb.config=audio_source && property:sys.usb.configfs=0
+   66:     write /sys/class/android_usb/android0/enable 0
+   67:     write /sys/class/android_usb/android0/idVendor 18d1
+   68:     write /sys/class/android_usb/android0/idProduct 2d02
+   69:     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.rc
+LINE=80
+   77:     write /sys/class/android_usb/android0/idProduct 2d03
+   78:     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+   79:     write /sys/class/android_usb/android0/enable 1
+   80:     start adbd
+   81:     setprop sys.usb.state ${sys.usb.config}
+   82: 
+   83: # USB and audio accessory configuration
+   84: on property:sys.usb.config=accessory,audio_source && property:sys.usb.configfs=0
+   85:     write /sys/class/android_usb/android0/enable 0
+   86:     write /sys/class/android_usb/android0/idVendor 18d1
+   87:     write /sys/class/android_usb/android0/idProduct 2d04
+   88:     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.rc
+LINE=99
+   96:     write /sys/class/android_usb/android0/idProduct 2d05
+   97:     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+   98:     write /sys/class/android_usb/android0/enable 1
+   99:     start adbd
+  100:     setprop sys.usb.state ${sys.usb.config}
+  101: 
+  102: # Used to set USB configuration at boot and to switch the configuration
+  103: # when changing the default configuration
+  104: on boot && property:persist.sys.usb.config=*
+  105:     setprop sys.usb.config ${persist.sys.usb.config}
+  106: 
+  107: #
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.rc
+LINE=104
+  101: 
+  102: # Used to set USB configuration at boot and to switch the configuration
+  103: # when changing the default configuration
+  104: on boot && property:persist.sys.usb.config=*
+  105:     setprop sys.usb.config ${persist.sys.usb.config}
+  106: 
+  107: #
+  108: # USB type C
+  109: #
+  110: 
+  111: # USB mode changes
+  112: on property:sys.usb.typec.mode=dfp
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.rc
+LINE=6
+    3: # USB configuration common for all android devices
+    4: #
+    5: 
+    6: on post-fs-data
+    7:     chown system system /sys/class/android_usb/android0/f_mass_storage/lun/file
+    8:     chmod 0660 /sys/class/android_usb/android0/f_mass_storage/lun/file
+    9:     chown system system /sys/class/android_usb/android0/f_rndis/ethaddr
+   10:     chmod 0660 /sys/class/android_usb/android0/f_rndis/ethaddr
+   11:     mkdir /data/misc/adb 02750 system shell
+   12:     mkdir /data/adb 0700 root root encryption=Require
+   13: 
+   14: # adbd is controlled via property triggers in init.<platform>.usb.rc
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.rc
+LINE=15
+   12:     mkdir /data/adb 0700 root root encryption=Require
+   13: 
+   14: # adbd is controlled via property triggers in init.<platform>.usb.rc
+   15: service adbd /system/bin/adbd --root_seclabel=u:r:su:s0
+   16:     class core
+   17:     socket adbd seqpacket 660 system system
+   18:     disabled
+   19:     updatable
+   20:     seclabel u:r:adbd:s0
+   21:     user root
+   22: 
+   23: on property:vendor.sys.usb.adb.disabled=*
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.rc
+LINE=42
+   39:     write /sys/class/android_usb/android0/idProduct 4EE7
+   40:     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+   41:     write /sys/class/android_usb/android0/enable 1
+   42:     start adbd
+   43:     setprop sys.usb.state ${sys.usb.config}
+   44: 
+   45: # USB accessory configuration
+   46: on property:sys.usb.config=accessory && property:sys.usb.configfs=0
+   47:     write /sys/class/android_usb/android0/enable 0
+   48:     write /sys/class/android_usb/android0/idVendor 18d1
+   49:     write /sys/class/android_usb/android0/idProduct 2d00
+   50:     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.rc
+LINE=61
+   58:     write /sys/class/android_usb/android0/idProduct 2d01
+   59:     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+   60:     write /sys/class/android_usb/android0/enable 1
+   61:     start adbd
+   62:     setprop sys.usb.state ${sys.usb.config}
+   63: 
+   64: # audio accessory configuration
+   65: on property:sys.usb.config=audio_source && property:sys.usb.configfs=0
+   66:     write /sys/class/android_usb/android0/enable 0
+   67:     write /sys/class/android_usb/android0/idVendor 18d1
+   68:     write /sys/class/android_usb/android0/idProduct 2d02
+   69:     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.rc
+LINE=80
+   77:     write /sys/class/android_usb/android0/idProduct 2d03
+   78:     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+   79:     write /sys/class/android_usb/android0/enable 1
+   80:     start adbd
+   81:     setprop sys.usb.state ${sys.usb.config}
+   82: 
+   83: # USB and audio accessory configuration
+   84: on property:sys.usb.config=accessory,audio_source && property:sys.usb.configfs=0
+   85:     write /sys/class/android_usb/android0/enable 0
+   86:     write /sys/class/android_usb/android0/idVendor 18d1
+   87:     write /sys/class/android_usb/android0/idProduct 2d04
+   88:     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.rc
+LINE=99
+   96:     write /sys/class/android_usb/android0/idProduct 2d05
+   97:     write /sys/class/android_usb/android0/functions ${sys.usb.config}
+   98:     write /sys/class/android_usb/android0/enable 1
+   99:     start adbd
+  100:     setprop sys.usb.state ${sys.usb.config}
+  101: 
+  102: # Used to set USB configuration at boot and to switch the configuration
+  103: # when changing the default configuration
+  104: on boot && property:persist.sys.usb.config=*
+  105:     setprop sys.usb.config ${persist.sys.usb.config}
+  106: 
+  107: #
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.usb.rc
+LINE=104
+  101: 
+  102: # Used to set USB configuration at boot and to switch the configuration
+  103: # when changing the default configuration
+  104: on boot && property:persist.sys.usb.config=*
+  105:     setprop sys.usb.config ${persist.sys.usb.config}
+  106: 
+  107: #
+  108: # USB type C
+  109: #
+  110: 
+  111: # USB mode changes
+  112: on property:sys.usb.typec.mode=dfp
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote32.rc
+LINE=1
+    1: service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-system-server
+    2:     class main
+    3:     priority -20
+    4:     user root
+    5:     group root readproc reserved_disk
+    6:     socket zygote stream 660 root system
+    7:     socket usap_pool_primary stream 660 root system
+    8:     onrestart exec_background - system system -- /system/bin/vdc volume abort_fuse
+    9:     onrestart write /sys/power/state on
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote32.rc
+LINE=1
+    1: service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-system-server
+    2:     class main
+    3:     priority -20
+    4:     user root
+    5:     group root readproc reserved_disk
+    6:     socket zygote stream 660 root system
+    7:     socket usap_pool_primary stream 660 root system
+    8:     onrestart exec_background - system system -- /system/bin/vdc volume abort_fuse
+    9:     onrestart write /sys/power/state on
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote64_32.rc
+LINE=3
+    1: import /system/etc/init/hw/init.zygote64.rc
+    2: 
+    3: service zygote_secondary /system/bin/app_process32 -Xzygote /system/bin --zygote --socket-name=zygote_secondary --enable-lazy-preload
+    4:     class main
+    5:     priority -20
+    6:     user root
+    7:     group root readproc reserved_disk
+    8:     socket zygote_secondary stream 660 root system
+    9:     socket usap_pool_secondary stream 660 root system
+   10:     onrestart restart zygote
+   11:     task_profiles ProcessCapacityHigh MaxPerformance
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote64_32.rc
+LINE=3
+    1: import /system/etc/init/hw/init.zygote64.rc
+    2: 
+    3: service zygote_secondary /system/bin/app_process32 -Xzygote /system/bin --zygote --socket-name=zygote_secondary --enable-lazy-preload
+    4:     class main
+    5:     priority -20
+    6:     user root
+    7:     group root readproc reserved_disk
+    8:     socket zygote_secondary stream 660 root system
+    9:     socket usap_pool_secondary stream 660 root system
+   10:     onrestart restart zygote
+   11:     task_profiles ProcessCapacityHigh MaxPerformance
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote64.rc
+LINE=1
+    1: service zygote /system/bin/app_process64 -Xzygote /system/bin --zygote --start-system-server --socket-name=zygote
+    2:     class main
+    3:     priority -20
+    4:     user root
+    5:     group root readproc reserved_disk
+    6:     socket zygote stream 660 root system
+    7:     socket usap_pool_primary stream 660 root system
+    8:     onrestart exec_background - system system -- /system/bin/vdc volume abort_fuse
+    9:     onrestart write /sys/power/state on
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote64.rc
+LINE=1
+    1: service zygote /system/bin/app_process64 -Xzygote /system/bin --zygote --start-system-server --socket-name=zygote
+    2:     class main
+    3:     priority -20
+    4:     user root
+    5:     group root readproc reserved_disk
+    6:     socket zygote stream 660 root system
+    7:     socket usap_pool_primary stream 660 root system
+    8:     onrestart exec_background - system system -- /system/bin/vdc volume abort_fuse
+    9:     onrestart write /sys/power/state on
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/incidentd.rc
+LINE=21
+   18:     group incidentd log readproc
+   19:     capabilities KILL SYS_PTRACE
+   20: 
+   21: on post-fs-data
+   22:     # Create directory for incidentd
+   23:     mkdir /data/misc/incidents 0770 incidentd incidentd
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/init-debug.rc
+LINE=10
+    7: on property:persist.mmc.cache_size=*
+    8:     write /sys/block/mmcblk0/cache_size ${persist.mmc.cache_size}
+    9: 
+   10: on early-init && property:ro.product.debugfs_restrictions.enabled=true
+   11:     mount debugfs debugfs /sys/kernel/debug
+   12:     chmod 0755 /sys/kernel/debug
+   13: 
+   14: on property:sys.boot_completed=1 && property:ro.product.debugfs_restrictions.enabled=true && \
+   15:    property:persist.dbg.keep_debugfs_mounted=""
+   16:    umount /sys/kernel/debug
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/init-debug.rc
+LINE=14
+   11:     mount debugfs debugfs /sys/kernel/debug
+   12:     chmod 0755 /sys/kernel/debug
+   13: 
+   14: on property:sys.boot_completed=1 && property:ro.product.debugfs_restrictions.enabled=true && \
+   15:    property:persist.dbg.keep_debugfs_mounted=""
+   16:    umount /sys/kernel/debug
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/kcmdlinemodprobe.rc
+LINE=16
+   13: # limitations under the License.
+   14: 
+   15: # modprobe modules that have been enabled via kcmdlinectrl
+   16: on early-init
+   17:   exec -- /system/bin/kcmdlinemodprobe
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/lmkd.rc
+LINE=13
+   10: on property:lmkd.reinit=1
+   11:     exec_background /system/bin/lmkd --reinit
+   12: 
+   13: on property:sys.boot_completed=1
+   14:     exec_background /system/bin/lmkd --boot_completed
+   15: 
+   16: # reinitialize lmkd after device finished booting if experiments set any flags during boot
+   17: on property:sys.boot_completed=1 && property:lmkd.reinit=0
+   18:     setprop lmkd.reinit 1
+   19: 
+   20: # properties most likely to be used in experiments
+   21: # setting persist.device_config.* property either triggers immediate lmkd re-initialization
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/lmkd.rc
+LINE=17
+   14:     exec_background /system/bin/lmkd --boot_completed
+   15: 
+   16: # reinitialize lmkd after device finished booting if experiments set any flags during boot
+   17: on property:sys.boot_completed=1 && property:lmkd.reinit=0
+   18:     setprop lmkd.reinit 1
+   19: 
+   20: # properties most likely to be used in experiments
+   21: # setting persist.device_config.* property either triggers immediate lmkd re-initialization
+   22: # if the device finished booting or sets lmkd.reinit=0 to re-initialize lmkd after boot completes
+   23: on property:persist.device_config.lmkd_native.debug=*
+   24:     setprop lmkd.reinit ${sys.boot_completed:-0}
+   25: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/logd.rc
+LINE=29
+   26:     group logd
+   27:     capabilities AUDIT_CONTROL
+   28: 
+   29: on fs
+   30:     write /dev/event-log-tags "# content owned by logd
+   31: "
+   32:     chown logd logd /dev/event-log-tags
+   33:     chmod 0644 /dev/event-log-tags
+   34: 
+   35: on property:sys.boot_completed=1
+   36:     start logd-auditctl
+   37: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/logd.rc
+LINE=35
+   32:     chown logd logd /dev/event-log-tags
+   33:     chmod 0644 /dev/event-log-tags
+   34: 
+   35: on property:sys.boot_completed=1
+   36:     start logd-auditctl
+   37: 
+   38: on property:persist.logd.audit.rate=*
+   39:     start logd-auditctl
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/logtagd.rc
+LINE=4
+    1: #
+    2: # logtagd event log tag service (debug only)
+    3: #
+    4: on post-fs-data
+    5:     mkdir /data/misc/logd 0750 logd log
+    6:     write /data/misc/logd/event-log-tags ""
+    7:     chown logd log /data/misc/logd/event-log-tags
+    8:     chmod 0600 /data/misc/logd/event-log-tags
+    9:     restorecon /data/misc/logd/event-log-tags
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/mmd.rc
+LINE=20
+   17:     oneshot
+   18:     disabled
+   19: 
+   20: on property:sys.boot_completed=1
+   21:     # Copy AConfig flag value to "mmd.enabled_aconfig" system property because
+   22:     # AConfig flag does not support init "on property" trigger.
+   23:     # mmd service starts only if AConfig flag is enabled when boot_completed.
+   24:     # Copying the value on boot_completed once is enough because AConfig is
+   25:     # static during a device lifetime.
+   26:     exec /system/bin/mmd --set-property
+   27: 
+   28: on property:mmd.enabled_aconfig=true
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/perfetto.rc
+LINE=104
+  101:     start traced_probes
+  102: 
+  103: # Reset the Perfetto guard rail state on boot:
+  104: on post-fs-data
+  105:     rm /data/misc/perfetto-traces/.guardraildata
+  106: 
+  107: #############################################################################
+  108: #  perfetto_trace_on_boot - Starts a perfetto trace on boot
+  109: #############################################################################
+  110: #
+  111: # There are two separate actions (a trigger action and a start action) to make
+  112: # sure that perfetto_trace_on_boot is started only once on boot (otherwise,
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/perfetto.rc
+LINE=143
+  140: # To use this, add a trigger with mode STOP_TRACING in the configuration used in perfetto_trace_on_boot.
+  141: # Then create a new config which contains `activate_triggers: <trigger name>` where <trigger name> is
+  142: # the name specified in configuration used in perfetto_trace_on_boot.
+  143: on property:sys.boot_completed=1 && property:init.svc.perfetto_trace_on_boot=running
+  144:     exec -- /system/bin/perfetto -c /data/misc/perfetto-configs/stopboottracetrigger.pbtxt --txt
+  145: 
+  146: # Forcefully enable select userspace (atrace) tracing categories early into the
+  147: # userspace boot. This is primarily for capturing zygote events without waiting
+  148: # for perfetto daemons or the /data partition.
+  149: on late-init && property:ro.boot.fastboot.boottrace=enabled
+  150:     setprop debug.atrace.tags.enableflags 802922
+  151: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/perfetto.rc
+LINE=149
+  146: # Forcefully enable select userspace (atrace) tracing categories early into the
+  147: # userspace boot. This is primarily for capturing zygote events without waiting
+  148: # for perfetto daemons or the /data partition.
+  149: on late-init && property:ro.boot.fastboot.boottrace=enabled
+  150:     setprop debug.atrace.tags.enableflags 802922
+  151: 
+  152: # disable on boot complete when using textual ftrace tracing without perfetto.
+  153: on property:sys.boot_completed=1 && property:ro.boot.fastboot.boottrace=enabled && property:init.svc.perfetto_trace_on_boot=
+  154:     setprop debug.atrace.tags.enableflags 0
+  155:     write /sys/kernel/debug/tracing/tracing_on 0
+  156:     write /sys/kernel/tracing/tracing_on 0
+  157: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/perfetto.rc
+LINE=153
+  150:     setprop debug.atrace.tags.enableflags 802922
+  151: 
+  152: # disable on boot complete when using textual ftrace tracing without perfetto.
+  153: on property:sys.boot_completed=1 && property:ro.boot.fastboot.boottrace=enabled && property:init.svc.perfetto_trace_on_boot=
+  154:     setprop debug.atrace.tags.enableflags 0
+  155:     write /sys/kernel/debug/tracing/tracing_on 0
+  156:     write /sys/kernel/tracing/tracing_on 0
+  157: 
+  158: # These must be set as soon as possible for processes guarded by
+  159: # android.sdk_sysprop_guard to find and cache the memory locations of
+  160: # where these sysprops are stored, particularly SurfaceFlinger which starts
+  161: # very early.
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/perfetto.rc
+LINE=163
+  160: # where these sysprops are stored, particularly SurfaceFlinger which starts
+  161: # very early.
+  162: # TODO(b/281329340): remove this when no longer needed.
+  163: on init
+  164:     setprop debug.perfetto.sdk_sysprop_guard_generation 0
+  165:     setprop debug.hwui.skia_tracing_enabled false
+  166:     setprop debug.hwui.skia_use_perfetto_track_events false
+  167:     setprop debug.renderengine.skia_tracing_enabled false
+  168:     setprop debug.renderengine.skia_use_perfetto_track_events false
+  169: 
+  170: ##############################################################################
+  171: #  perfetto_persistent_sysui_tracing_for_bugreport - Keeps a persistent active
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/pmgd.rc
+LINE=23
+   20:     group system readproc misc
+   21:     disabled
+   22: 
+   23: on property:sys.boot_completed=1
+   24:     # The pmgd service always starts but it will suspend forever if the feature
+   25:     # flag is disabled.
+   26:     enable pmgd
+   27: 
+   28: on post-fs-data
+   29:     mkdir /data/misc/pmgd 0770 system system
+   30: 
+   31:     write /data/misc/pmgd/history.json "{}"
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/pmgd.rc
+LINE=28
+   25:     # flag is disabled.
+   26:     enable pmgd
+   27: 
+   28: on post-fs-data
+   29:     mkdir /data/misc/pmgd 0770 system system
+   30: 
+   31:     write /data/misc/pmgd/history.json "{}"
+   32: 
+   33:     chmod 0660 /data/misc/pmgd/history.json
+   34:     chown system system /data/misc/pmgd/history.json
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/prng_seeder.rc
+LINE=5
+    2: #
+    3: # Start PRNG seeder daemon from early-init
+    4: 
+    5: on early-init
+    6:     start prng_seeder
+    7: 
+    8: service prng_seeder /system/bin/prng_seeder
+    9:     user prng_seeder
+   10:     group prng_seeder
+   11:     stdio_to_kmsg
+   12:     socket prng_seeder stream+listen 0666 prng_seeder prng_seeder
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/profcollectd.rc
+LINE=23
+   20:     disabled
+   21:     oneshot
+   22: 
+   23: on post-fs-data
+   24:     # Create directory for profcollectd.
+   25:     mkdir /data/misc/profcollectd 0770 shell shell
+   26:     mkdir /data/misc/profcollectd/trace 0770 shell shell
+   27:     mkdir /data/misc/profcollectd/output 0770 shell shell
+   28:     mkdir /data/misc/profcollectd/report 0770 shell shell
+   29: 
+   30: on property:sys.boot_completed=1
+   31:     # Sync device configs to system properties. This is a workaround for b/433651427,
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/profcollectd.rc
+LINE=30
+   27:     mkdir /data/misc/profcollectd/output 0770 shell shell
+   28:     mkdir /data/misc/profcollectd/report 0770 shell shell
+   29: 
+   30: on property:sys.boot_completed=1
+   31:     # Sync device configs to system properties. This is a workaround for b/433651427,
+   32:     # where device configs for profcollect_native_boot may not be synced to system
+   33:     # properties on some devices due to a race condition.
+   34:     start profcollectctl_set_property
+   35: 
+   36: on property:persist.profcollectd.enabled=true
+   37:     start profcollectd
+   38: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/recovery-persist.rc
+LINE=1
+    1: on post-fs-data
+    2:     mkdir /data/misc/recovery 0770 system log
+    3:     exec_background - system log -- /system/bin/recovery-persist
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/recovery-refresh.rc
+LINE=1
+    1: on post-fs
+    2:     exec_background - system log -- /system/bin/recovery-refresh
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/servicemanager.rc
+LINE=1
+    1: service servicemanager /system/bin/servicemanager
+    2:     class core animation
+    3:     user system
+    4:     group system readproc
+    5:     critical
+    6:     file /dev/kmsg w
+    7:     onrestart setprop servicemanager.ready false
+    8:     onrestart restart --only-if-running apexd
+    9:     onrestart restart audioserver
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/simpleperf.rc
+LINE=5
+    2: # (or SIGTERM+200ms+SIGKILL with gentle_kill), and simpleperf
+    3: # needs more than 200ms to clean up.
+    4: 
+    5: on early-init && property:ro.boot.simpleperf.boot_record=*
+    6:   exec_background u:r:su:s0 root root -- /system/bin/simpleperf record -a -g --exclude-perf -o /tmp/boot_perf.data
+    7: 
+    8: on property:sys.boot_completed=1 && property:ro.boot.simpleperf.boot_record=*
+    9:   exec u:r:su:s0 root root -- /system/bin/killall simpleperf
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/simpleperf.rc
+LINE=8
+    5: on early-init && property:ro.boot.simpleperf.boot_record=*
+    6:   exec_background u:r:su:s0 root root -- /system/bin/simpleperf record -a -g --exclude-perf -o /tmp/boot_perf.data
+    7: 
+    8: on property:sys.boot_completed=1 && property:ro.boot.simpleperf.boot_record=*
+    9:   exec u:r:su:s0 root root -- /system/bin/killall simpleperf
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/surfaceflinger.rc
+LINE=1
+    1: service surfaceflinger /system/bin/surfaceflinger
+    2:     class core animation
+    3:     user system
+    4:     group graphics drmrpc readproc
+    5:     capabilities SYS_NICE
+    6:     onrestart restart --only-if-running zygote
+    7:     task_profiles HighPerformance
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/vold.rc
+LINE=1
+    1: service vold /system/bin/vold \
+    2:         --blkid_context=u:r:blkid:s0 --blkid_untrusted_context=u:r:blkid_untrusted:s0 \
+    3:         --fsck_context=u:r:fsck:s0 --fsck_untrusted_context=u:r:fsck_untrusted:s0
+    4:     class core
+    5:     ioprio be 2
+    6:     task_profiles ProcessCapacityHigh
+    7:     shutdown critical
+    8:     group root reserved_disk
+    9:     user root
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/wifi.rc
+LINE=18
+   15: #
+   16: 
+   17: # These are needed for migration of data to wifi apex directory.
+   18: on post-fs-data
+   19:    restorecon_recursive /data/misc/apexdata/com.android.wifi
+   20: 
+   21: on property:sys.user.0.ce_available=true
+   22:    restorecon_recursive /data/misc_ce/0/apexdata/com.android.wifi
+   23: 
+   24: # Below are for kernel tracing related stuff.
+   25: on fs
+   26:    setprop sys.wifitracing.started 0
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/wifi.rc
+LINE=21
+   18: on post-fs-data
+   19:    restorecon_recursive /data/misc/apexdata/com.android.wifi
+   20: 
+   21: on property:sys.user.0.ce_available=true
+   22:    restorecon_recursive /data/misc_ce/0/apexdata/com.android.wifi
+   23: 
+   24: # Below are for kernel tracing related stuff.
+   25: on fs
+   26:    setprop sys.wifitracing.started 0
+   27: 
+   28: on property:sys.boot_completed=1 && property:sys.wifitracing.started=0
+   29:    # Create trace buffer, and set basic configuration.
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/wifi.rc
+LINE=25
+   22:    restorecon_recursive /data/misc_ce/0/apexdata/com.android.wifi
+   23: 
+   24: # Below are for kernel tracing related stuff.
+   25: on fs
+   26:    setprop sys.wifitracing.started 0
+   27: 
+   28: on property:sys.boot_completed=1 && property:sys.wifitracing.started=0
+   29:    # Create trace buffer, and set basic configuration.
+   30:    mkdir /sys/kernel/tracing/instances/wifi 711
+   31:    restorecon_recursive /sys/kernel/tracing/instances/wifi
+   32:    write /sys/kernel/tracing/instances/wifi/tracing_on 0
+   33:    write /sys/kernel/tracing/instances/wifi/buffer_size_kb 1
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/wifi.rc
+LINE=28
+   25: on fs
+   26:    setprop sys.wifitracing.started 0
+   27: 
+   28: on property:sys.boot_completed=1 && property:sys.wifitracing.started=0
+   29:    # Create trace buffer, and set basic configuration.
+   30:    mkdir /sys/kernel/tracing/instances/wifi 711
+   31:    restorecon_recursive /sys/kernel/tracing/instances/wifi
+   32:    write /sys/kernel/tracing/instances/wifi/tracing_on 0
+   33:    write /sys/kernel/tracing/instances/wifi/buffer_size_kb 1
+   34:    write /sys/kernel/tracing/instances/wifi/trace_options disable_on_free
+   35: 
+   36:    # Enable cfg80211 events for connection and key management events.
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/wifi.rc
+LINE=70
+   67:    chmod 600 /sys/kernel/tracing/instances/wifi/trace
+   68:    setprop sys.wifitracing.started 1
+   69: 
+   70: on property:sys.boot_completed=1 && property:wifi.interface=* && property:sys.wifitracing.started=1
+   71:    # Override default value.
+   72:    write /sys/kernel/tracing/instances/wifi/events/net/filter name==${wifi.interface}
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/zygote_next.rc
+LINE=1
+    1: service zygote_next /system/bin/zygote_next --name zygote_next --species android-native-app --log-level INFO --arg-buf-padding xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    2:     user root
+    3:     group root
+    4:     priority -20
+    5:     socket zygote_next seqpacket 660 root system
+    6:     disabled
+    7:     onrestart setprop zygote.zygote_next.server_ready false
+    8: 
+    9: on boot && property:persist.zygote.zygote_next.start_on_boot=true
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/zygote_next.rc
+LINE=9
+    6:     disabled
+    7:     onrestart setprop zygote.zygote_next.server_ready false
+    8: 
+    9: on boot && property:persist.zygote.zygote_next.start_on_boot=true
+   10:     start zygote_next
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/zygote_next.rc
+LINE=10
+    7:     onrestart setprop zygote.zygote_next.server_ready false
+    8: 
+    9: on boot && property:persist.zygote.zygote_next.start_on_boot=true
+   10:     start zygote_next
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system_ext/etc/init/adb_root.rc
+LINE=6
+    3:     user root
+    4:     group root
+    5: 
+    6: on post-fs-data
+    7:     mkdir /data/adbroot 0700 root root
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system_ext/etc/init/hwservicemanager.rc
+LINE=1
+    1: service hwservicemanager /system/system_ext/bin/hwservicemanager
+    2:     user system
+    3:     disabled
+    4:     group system readproc
+    5:     critical
+    6:     onrestart setprop hwservicemanager.ready false
+    7:     onrestart class_restart --only-enabled main
+    8:     onrestart class_restart --only-enabled hal
+    9:     onrestart class_restart --only-enabled early_hal
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system_ext/etc/init/init.lineage-system_ext.rc
+LINE=2
+    1: # LineageOS core functionality
+    2: on init
+    3:     export TERMINFO /system_ext/etc/terminfo
+    4: 
+    5: # bugreport is triggered by holding down volume down, volume up and power
+    6: service lineage-bugreport /system/bin/dumpstate -d -p -z
+    7:     socket dumpstate stream 0660 shell log
+    8:     class main
+    9:     user root
+   10:     disabled
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system_ext/etc/init/init.lineage-updater.rc
+LINE=1
+    1: on post-fs-data
+    2:     # Create an additional OTA package directory that unlike /data/ota_package
+    3:     # will not be touched by GmsCore.
+    4:     mkdir /data/lineageos_updates 0770 system cache encryption=Require

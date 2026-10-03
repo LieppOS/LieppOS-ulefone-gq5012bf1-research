@@ -1,0 +1,108 @@
+===== ZYGOTE PROPERTY =====
+
+===== ZYGOTE SERVICE FILES =====
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote64_32.rc
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote64.rc
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote32.rc
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote64_32.rc
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote64.rc
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/zygote_next.rc
+
+===== ZYGOTE CONTENT =====
+
+################################################################
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote64_32.rc
+import /system/etc/init/hw/init.zygote64.rc
+
+service zygote_secondary /system/bin/app_process32 -Xzygote /system/bin --zygote --socket-name=zygote_secondary --enable-lazy-preload
+    class main
+    priority -20
+    user root
+    group root readproc reserved_disk
+    socket zygote_secondary stream 660 root system
+    socket usap_pool_secondary stream 660 root system
+    onrestart restart zygote
+    task_profiles ProcessCapacityHigh MaxPerformance
+    # The stdio implementation for arm32/x86 stores fds in a short.
+    # This is part of the ABI, so 32Ki is the max for nofile for ilp32.
+    rlimit nofile 32768 32768
+
+################################################################
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote64.rc
+service zygote /system/bin/app_process64 -Xzygote /system/bin --zygote --start-system-server --socket-name=zygote
+    class main
+    priority -20
+    user root
+    group root readproc reserved_disk
+    socket zygote stream 660 root system
+    socket usap_pool_primary stream 660 root system
+    onrestart exec_background - system system -- /system/bin/vdc volume abort_fuse
+    onrestart write /sys/power/state on
+    # NOTE: If the wakelock name here is changed, then also
+    # update it in SystemSuspend.cpp
+    onrestart write /sys/power/wake_lock zygote_kwl
+    onrestart restart audioserver
+    onrestart restart cameraserver
+    onrestart restart media
+    onrestart restart --only-if-running media.tuner
+    onrestart restart netd
+    onrestart restart wificond
+    task_profiles ProcessCapacityHigh MaxPerformance
+    critical window=${zygote.critical_window.minute:-off} target=zygote-fatal
+
+################################################################
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote32.rc
+service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-system-server
+    class main
+    priority -20
+    user root
+    group root readproc reserved_disk
+    socket zygote stream 660 root system
+    socket usap_pool_primary stream 660 root system
+    onrestart exec_background - system system -- /system/bin/vdc volume abort_fuse
+    onrestart write /sys/power/state on
+    # NOTE: If the wakelock name here is changed, then also
+    # update it in SystemSuspend.cpp
+    onrestart write /sys/power/wake_lock zygote_kwl
+    onrestart restart audioserver
+    onrestart restart cameraserver
+    onrestart restart media
+    onrestart restart --only-if-running media.tuner
+    onrestart restart netd
+    onrestart restart wificond
+    task_profiles ProcessCapacityHigh MaxPerformance
+    critical window=${zygote.critical_window.minute:-off} target=zygote-fatal
+    # The stdio implementation for arm32/x86 stores fds in a short.
+    # This is part of the ABI, so 32Ki is the max for nofile for ilp32.
+    rlimit nofile 32768 32768
+
+################################################################
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote64.rc
+on init && property:ro.product.cpu.abilist64=*
+    exec_start boringssl_self_test64
+on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+    exec_start boringssl_self_test_apex64
+
+################################################################
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.boringssl.zygote64_32.rc
+on init && property:ro.product.cpu.abilist32=*
+    exec_start boringssl_self_test32
+on init && property:ro.product.cpu.abilist64=*
+    exec_start boringssl_self_test64
+on property:apexd.status=ready && property:ro.product.cpu.abilist32=*
+    exec_start boringssl_self_test_apex32
+on property:apexd.status=ready && property:ro.product.cpu.abilist64=*
+    exec_start boringssl_self_test_apex64
+
+################################################################
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/zygote_next.rc
+service zygote_next /system/bin/zygote_next --name zygote_next --species android-native-app --log-level INFO --arg-buf-padding xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    user root
+    group root
+    priority -20
+    socket zygote_next seqpacket 660 root system
+    disabled
+    onrestart setprop zygote.zygote_next.server_ready false
+
+on boot && property:persist.zygote.zygote_next.start_on_boot=true
+    start zygote_next

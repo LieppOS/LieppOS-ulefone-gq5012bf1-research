@@ -914,3 +914,30 @@ FRAMEWORK_VENDOR_VINTF_COMPATIBILITY=NOT_PROVEN
 STATIC_CONTRACT_BLOCKER_FOUND=UNRESOLVED
 
 No Slot-B boot was performed.
+
+## Android 17 Slot-B logo hang — VINTF/VNDK/kernel FCM cleared
+
+The Android 17 framework and the stock Ulefone vendor contract were
+reconciled again after the controlled Slot-B graphical-logo hang.
+
+The earlier exact checker result remains authoritative:
+
+- device target FCM level 8;
+- Android 17 has matching FCM level 8;
+- kernel 6.1 is accepted by that selected matrix;
+- stock kernel 6.1.115 and the captured kernel configuration pass;
+- versioned VNDK compatibility APEX v34 is present;
+- stock vendor VNDK level is 34;
+- exact framework/vendor checkvintf result is COMPATIBLE.
+
+The later checkvintf status 70 was caused only by a missing host-side `/apex`
+directory mapping.
+
+VINTF, VNDK and kernel FCM are therefore removed from the primary blocker
+list.
+
+The active investigation target is now the second-stage boot chain:
+userdata/FBE, APEX activation, zygote, system_server and display/framework
+bring-up.
+
+No Slot-B boot was performed during this pass.
