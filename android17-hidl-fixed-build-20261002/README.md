@@ -705,3 +705,19 @@ handler regions to identify the exact command capable of creating the
 mode-2 handoff observed on the failed Slot-B experiment.
 
 No phone state was modified and Slot B was not booted.
+
+## AEE fastboot callback table resolution
+
+The AEE fastboot command-registration block uses four distinct callback slots
+for `reboot`, `reboot-bootloader`, `reboot-fastboot`, and
+`reboot-recovery`.
+
+A previous callback-resolution attempt stopped before analysis because of a
+host-side Python/heredoc pipe error.
+
+The continuation directly dumps and resolves the callback slots and
+disassembles only the resulting function addresses. It does not assume that
+the recovery callback begins at `0xef24`; the table itself determines the
+true entry point.
+
+No phone state was modified and Slot B was not booted.
