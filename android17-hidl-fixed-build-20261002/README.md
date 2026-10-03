@@ -970,3 +970,24 @@ NEXT_FOCUS=RESOLVE_CRITICAL_SERVICE_EXEC_PATH
 
 This pass is host/static plus read-only Slot-A inspection. Slot B was not
 booted.
+
+## Android 17 / stock-vendor static compatibility boundary
+
+A focused boundary audit corrected the earlier unversioned
+`com.android.vndk` classifier and checked the Android 17
+framework against the retained stock vendor contract.
+
+    VNDK_V34_PACKAGED=NO
+    PREVIOUS_VNDK_MISSING_CLASSIFICATION=UNRESOLVED
+    SYSTEM_LINKER32=NO
+    SYSTEM_LINKER64=NO
+    SYSTEM_LIBC32=NO
+    SYSTEM_LIBC64=NO
+    FRAMEWORK_MATRIX_HAS_KERNEL_6_1=YES
+    FRAMEWORK_MATRIX_HAS_KERNEL_6_6=YES
+    CHECKVINTF=FAIL_OR_INCOMPLETE
+    LIVE_HEALTH_EXAMPLE_PROCESS=YES
+    LIVE_VENDOR_HEALTH_PROVIDER_PROVEN=NO
+    BASIC_VENDOR_RUNTIME_BRIDGE=INCOMPLETE
+
+No Slot-B boot or partition write was performed.
