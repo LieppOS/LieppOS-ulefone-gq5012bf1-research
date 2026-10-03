@@ -683,3 +683,25 @@ their arguments to determine whether AEE contains an executable path that
 sets recovery value 2 before the observed LK mode-2 boot.
 
 No phone state was modified and Slot B was not booted.
+
+## AEE contains an explicit recovery-magic writer invocation
+
+The AEE low-nibble writer has three direct callers.
+
+One caller immediately supplies value `3`, one immediately supplies value
+`2`, and one supplies zero.
+
+The recovery path is explicit:
+
+    mov w0, 2
+    bl 0x2eaa0
+
+where `0x2eaa0` writes `MTK_WDT_NONRST_REG2[3:0]`.
+
+The same path is associated with the retained AEE `boot-recovery` string.
+
+A follow-up maps AEE fastboot/reboot command strings directly to these
+handler regions to identify the exact command capable of creating the
+mode-2 handoff observed on the failed Slot-B experiment.
+
+No phone state was modified and Slot B was not booted.

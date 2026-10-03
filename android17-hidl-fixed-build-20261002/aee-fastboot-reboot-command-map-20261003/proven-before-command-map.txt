@@ -1,0 +1,24 @@
+REGISTER_PHYS=0x1c00a024
+FIELD=bits_3_0
+
+AEE_WRITER=0x2eaa0
+
+MODE3_SITE:
+    0xee1c  mov w0,3
+    0xee20  bl 0x2eaa0
+
+MODE2_SITE:
+    0xef10  mov w0,2
+    0xef14  bl 0x2eaa0
+
+MODE0_SITE:
+    0x43800 mov w0,wzr
+    0x43804 bl 0x2eaa0
+
+The mode-2 path subsequently resolves the retained AEE string
+`boot-recovery`.
+
+Therefore AEE contains an explicit executable recovery-mode writer path.
+
+What remains to establish is the command/dispatcher entry that invokes
+that mode-2 path during bootloader operation.
