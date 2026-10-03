@@ -1,0 +1,13 @@
+#!/bin/bash
+# build_dm.sh "<subdir/> [subdir/ ...]" [extra make args]  -- builds DM subdirs with M=../kernel_device_modules-6.1
+. /tmp/ispenv.sh; KOA=$G/lieppos/audio/kout
+export PATH=$G/prebuilts/clang/host/linux-x86/clang-r487747c/bin:$PATH
+T=$1; shift
+OFF="CONFIG_DEVICE_MODULES_CHARGER_MT6360= CONFIG_BATTERY_MT6359P= CONFIG_MTK_HVBP_SUPPORT= CONFIG_MTK_PUMP_EXPRESS_PLUS_20_SUPPORT= CONFIG_MTK_PUMP_EXPRESS_45_SUPPORT= CONFIG_MTK_PUMP_EXPRESS_50_PLUS_SUPPORT= CONFIG_CHARGER_RT9759= CONFIG_CHARGER_RT9490= CONFIG_CHARGER_RT9758= CONFIG_CHARGER_SC8541= CONFIG_CHARGER_UPM6720= CONFIG_CHARGER_NT= CONFIG_NT_USB_TS= CONFIG_GAUGE_BQ28Z610= CONFIG_CHARGER_MT6985_ALPHA_SUPPORT= $DM_OFF"
+EXTRA=${PWR_EXTRA:-$G/lieppos/camera-isp/stock-ext.symvers}
+cd $G/common
+make O=$KOA M=../kernel_device_modules-6.1 ARCH=arm64 LLVM=1 LLVM_IAS=1 \
+  KCONFIG_EXT_PREFIX=../kernel_device_modules-6.1/ DEVICE_MODULES_REL_DIR=../kernel_device_modules-6.1 \
+  'DEVICE_MODULES_PATH=$(srctree)/$(DEVICE_MODULES_REL_DIR)' 'DEVCIE_MODULES_INCLUDE=-I$(DEVICE_MODULES_PATH)/include' \
+  KBUILD_MODPOST_WARN=1 module_scmversion= KCFLAGS="-faddrsig" LIEPPOS_ONLY="$T" \
+  $OFF KBUILD_EXTRA_SYMBOLS="$EXTRA" -j16 "$@" modules
