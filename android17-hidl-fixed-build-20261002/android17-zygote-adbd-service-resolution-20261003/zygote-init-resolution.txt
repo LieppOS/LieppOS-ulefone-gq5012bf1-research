@@ -1,0 +1,121 @@
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=12
+    8: import /system/etc/init/hw/init.usb.rc
+    9: import /init.${ro.hardware}.rc
+   10: import /vendor/etc/init/hw/init.${ro.hardware}.rc
+   11: import /system/etc/init/hw/init.usb.configfs.rc
+   12: import /system/etc/init/hw/init.${ro.zygote}.rc
+   13: 
+   14: # Cgroups are mounted right before early-init using list from /etc/cgroups.json
+   15: on early-init
+   16:     # Allow bootchart to capture from the beginning of second-stage init.
+   17:     mkdir /dev/bootchart 0755 root root
+   18:     bootchart start
+   19: 
+   20:     # Disable sysrq from keyboard
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=526
+  522:     chmod 0770 /mnt/vm
+  523:     mkdir /mnt/vm/early 0770 system system
+  524: 
+  525: # Run boringssl self test for each ABI.  Any failures trigger reboot to firmware.
+  526: import /system/etc/init/hw/init.boringssl.${ro.zygote}.rc
+  527: 
+  528: service boringssl_self_test32 /system/bin/boringssl_self_test32
+  529:     reboot_on_failure reboot,boringssl-self-check-failed
+  530:     stdio_to_kmsg
+  531:     # Explicitly specify that boringssl_self_test32 doesn't require any capabilities
+  532:     capabilities
+  533:     user nobody
+  534: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=591
+  587: 
+  588:     # Should be before netd, but after apex, properties and logging is available.
+  589:     trigger load-bpf-programs
+  590: 
+  591:     # Now we can start zygote.
+  592:     trigger zygote-start
+  593: 
+  594:     # Remove a file to wake up anything waiting for firmware.
+  595:     trigger firmware_mounts_complete
+  596: 
+  597:     trigger early-boot
+  598:     trigger boot
+  599: 
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc
+LINE=1138
+ 1134: # to start-zygote in device's init.rc to unblock zygote start.
+ 1135: on zygote-start
+ 1136:     wait_for_prop odsign.verification.done 1
+ 1137:     start statsd
+ 1138:     start zygote
+ 1139:     start zygote_secondary
+ 1140: 
+ 1141: on boot && property:ro.config.low_ram=true
+ 1142:     # Tweak background writeout
+ 1143:     write /proc/sys/vm/dirty_expire_centisecs 200
+ 1144:     write /proc/sys/vm/dirty_background_ratio  5
+ 1145: 
+ 1146: on property:sys.boot_completed=1 && property:ro.config.batteryless=true
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote64_32.rc
+LINE=1
+    1: import /system/etc/init/hw/init.zygote64.rc
+    2: 
+    3: service zygote_secondary /system/bin/app_process32 -Xzygote /system/bin --zygote --socket-name=zygote_secondary --enable-lazy-preload
+    4:     class main
+    5:     priority -20
+    6:     user root
+    7:     group root readproc reserved_disk
+    8:     socket zygote_secondary stream 660 root system
+    9:     socket usap_pool_secondary stream 660 root system
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote64_32.rc
+LINE=3
+    1: import /system/etc/init/hw/init.zygote64.rc
+    2: 
+    3: service zygote_secondary /system/bin/app_process32 -Xzygote /system/bin --zygote --socket-name=zygote_secondary --enable-lazy-preload
+    4:     class main
+    5:     priority -20
+    6:     user root
+    7:     group root readproc reserved_disk
+    8:     socket zygote_secondary stream 660 root system
+    9:     socket usap_pool_secondary stream 660 root system
+   10:     onrestart restart zygote
+   11:     task_profiles ProcessCapacityHigh MaxPerformance
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote64.rc
+LINE=1
+    1: service zygote /system/bin/app_process64 -Xzygote /system/bin --zygote --start-system-server --socket-name=zygote
+    2:     class main
+    3:     priority -20
+    4:     user root
+    5:     group root readproc reserved_disk
+    6:     socket zygote stream 660 root system
+    7:     socket usap_pool_primary stream 660 root system
+    8:     onrestart exec_background - system system -- /system/bin/vdc volume abort_fuse
+    9:     onrestart write /sys/power/state on
+
+==============================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.zygote32.rc
+LINE=1
+    1: service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-system-server
+    2:     class main
+    3:     priority -20
+    4:     user root
+    5:     group root readproc reserved_disk
+    6:     socket zygote stream 660 root system
+    7:     socket usap_pool_primary stream 660 root system
+    8:     onrestart exec_background - system system -- /system/bin/vdc volume abort_fuse
+    9:     onrestart write /sys/power/state on

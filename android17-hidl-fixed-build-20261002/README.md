@@ -941,3 +941,32 @@ userdata/FBE, APEX activation, zygote, system_server and display/framework
 bring-up.
 
 No Slot-B boot was performed during this pass.
+
+## Android 17 critical-service path correction
+
+The previous second-stage audit's fixed `/system/bin` presence test was
+revisited because modern Android may place legacy HIDL service binaries in
+system_ext and adbd in the com.android.adbd APEX.
+
+The zygote property/import chain was also resolved explicitly because the
+earlier audit printed an empty `ro.zygote` result while zygote rc variants
+were present.
+
+Result:
+
+STATIC_RO_ZYGOTE_FOUND=NO
+LIVE_A_RO_ZYGOTE_FOUND=YES
+ZYGOTE_DYNAMIC_IMPORT_PRESENT=YES
+ZYGOTE_SELECTED_RC_RESOLVES=YES
+ZYGOTE_CHAIN_STATUS=PROPERTY_SOURCE_OUTSIDE_SCANNED_SYSTEM_PROPS
+HWSERVICEMANAGER_BINARY_FOUND=YES
+HWSERVICEMANAGER_SERVICE_RESOLVES=NO
+VNDSERVICEMANAGER_SERVICE_DEFINED=NO
+VNDSERVICEMANAGER_BINARY_FOUND=NO
+ADBD_APEX_PRESENT=YES
+ADBD_MODULE_CONTRACT_FOUND=YES
+OLD_SYSTEM_BIN_MISSING_CLASSIFIER=NOT_FULLY_CLEARED
+NEXT_FOCUS=RESOLVE_CRITICAL_SERVICE_EXEC_PATH
+
+This pass is host/static plus read-only Slot-A inspection. Slot B was not
+booted.
