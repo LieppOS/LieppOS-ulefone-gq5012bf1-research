@@ -92,6 +92,20 @@ relocations, control flow).
    `getConfig` layout → `t4tNfceeEnable` is always 0, so the controller-resident
    Type-4 NDEF NFCEE (0x10) is discarded even when `NDEF_NFCEE_ENABLE=1`.
 
+## Workspace classification (2026-10-03)
+
+Recorded in the organized workspace (`../../../Reverse Engineer - *`, indexed by
+`REVERSE-ENGINEERING-STATUS.md` and `COPY-MANIFEST.tsv`):
+
+- **moved PARTIAL → DONE:** `ST21NFC` — kernel/device scope, now carrying the
+  reconstructed source, the reconstruction patch, the parity report, the
+  verification tool and the hardware/ABI/recovery/firmware/delta notes.
+  DONE count 44 → 45, PARTIAL 79 → 78, total unchanged at 129.
+- **stays PARTIAL:** `NFC-SECURE-ELEMENT` — re-scoped to the proprietary
+  remainder (ST NCI HAL, ST firmware images, `STFlashTool`, MediaTek UICC SE
+  HAL, applet/access-control behaviour). Its README records the split and the
+  proven NFCEE map.
+
 ## Scope state
 
 **Kernel/device scope: closed** (`ST21NFC`). The NFC *ecosystem* remains
