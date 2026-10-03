@@ -778,3 +778,20 @@ The resulting proof covers the complete static chain:
 `boot-fastboot` as the BCB command.
 
 No phone state was modified.
+
+## Slot-B mode-2 historical-trigger audit
+
+With the AEE recovery/fastboot mode-2 mechanism proven, investigation moved
+to the final unresolved historical question: what command actually invoked
+that mechanism during the failed Slot-B workflow.
+
+The on-disk zsh history is known to be incomplete across the experiment
+window. Live shell history, git history, install-transcript provenance and
+retained scripts were therefore searched for explicit:
+
+- `adb reboot fastboot`
+- `adb reboot recovery`
+- `fastboot reboot fastboot`
+- `fastboot reboot recovery`
+
+No phone state was modified and Slot B was not booted.
