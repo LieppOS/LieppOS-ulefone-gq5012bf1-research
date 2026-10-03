@@ -1,0 +1,165 @@
+From d2a74be0868a952c387f523a4a5015dac628a523 Mon Sep 17 00:00:00 2001
+From: re <re@local>
+Date: Sat, 3 Oct 2026 02:00:13 +0300
+Subject: [PATCH 3/6] mtk_pep/mtk_pd_charging: GQ5012BF1 deltas (3rd-gauge
+ uisoc, PE+ on CDP, PE icl/cc arg fix, PD algo on WO_APDO TA,
+ waiver-before-limit) - both exact
+
+---
+ drivers/power/supply/mtk_pd.c     |  8 ++++----
+ drivers/power/supply/mtk_pd_hal.c | 28 ++++++----------------------
+ drivers/power/supply/mtk_pe.c     | 11 +++++++----
+ drivers/power/supply/mtk_pe_hal.c | 27 +++++----------------------
+ 4 files changed, 22 insertions(+), 52 deletions(-)
+
+diff --git a/drivers/power/supply/mtk_pd.c b/drivers/power/supply/mtk_pd.c
+index 300285c..ae3892e 100644
+--- a/drivers/power/supply/mtk_pd.c
++++ b/drivers/power/supply/mtk_pd.c
+@@ -167,14 +167,14 @@ static int _pd_is_algo_ready(struct chg_alg_device *alg)
+ 		ret_value = pd_hal_is_adapter_ready(alg);
+ 		if (ret_value == ALG_READY) {
+ 			uisoc = pd_hal_get_uisoc(alg);
+-			if (pd->input_current_limit1 != -1 ||
++			if (uisoc >= pd->pd_stop_battery_soc ||
++				(uisoc == -1 && pd->ref_vbat > pd->vbat_threshold))
++				ret_value = ALG_WAIVER;
++			else if (pd->input_current_limit1 != -1 ||
+ 				pd->charging_current_limit1 != -1 ||
+ 				pd->input_current_limit2 != -1 ||
+ 				pd->charging_current_limit2 != -1)
+ 				ret_value = ALG_NOT_READY;
+-			else if (uisoc >= pd->pd_stop_battery_soc ||
+-				(uisoc == -1 && pd->ref_vbat > pd->vbat_threshold))
+-				ret_value = ALG_WAIVER;
+ 		} else if (ret_value == ALG_TA_NOT_SUPPORT)
+ 			pd->state = PD_TA_NOT_SUPPORT;
+ 		else if (ret_value == ALG_TA_CHECKING)
+diff --git a/drivers/power/supply/mtk_pd_hal.c b/drivers/power/supply/mtk_pd_hal.c
+index d71a554..4fb6caa 100644
+--- a/drivers/power/supply/mtk_pd_hal.c
++++ b/drivers/power/supply/mtk_pd_hal.c
+@@ -140,7 +140,8 @@ int pd_hal_is_adapter_ready(struct chg_alg_device *alg)
+ 	if (info->select_adapter) {
+ 		pd_dbg("%s ta_cap:%d\n", __func__, info->ta_capability);
+ 		hal->adapter = info->select_adapter;
+-		if (info->ta_capability == APDO_TA)
++		if (info->ta_capability == APDO_TA ||
++		    info->ta_capability == WO_APDO_TA)
+ 			return ALG_READY;
+ 		else
+ 			return ALG_TA_NOT_SUPPORT;
+@@ -630,28 +631,11 @@ int pd_hal_get_uisoc(struct chg_alg_device *alg)
+ 	union power_supply_propval prop = {0};
+ 	struct power_supply *bat_psy = NULL;
+ 	int ret;
+-	struct mtk_pd *pd;
+-
+-	if (alg == NULL)
+-		return -EINVAL;
+-
+-	pd = dev_get_drvdata(&alg->dev);
+-	bat_psy = pd->bat_psy;
+-
+-	if (bat_psy == NULL) {
+-		pr_notice("%s retry to get bat_psy\n", __func__);
+-		bat_psy = devm_power_supply_get_by_phandle(&pd->pdev->dev, "gauge");
+-		pd->bat_psy = bat_psy;
+-	}
+ 
+-	if (bat_psy == NULL) {
+-		pd_err("%s Couldn't get bat_psy\n", __func__);
+-		ret = 50;
+-	} else {
+-		ret = power_supply_get_property(bat_psy,
+-			POWER_SUPPLY_PROP_CAPACITY, &prop);
+-		ret = prop.intval;
+-	}
++	bat_psy = power_supply_get_by_name("3rd-gauge");
++	ret = power_supply_get_property(bat_psy,
++		POWER_SUPPLY_PROP_CAPACITY, &prop);
++	ret = prop.intval;
+ 
+ 	pd_dbg("%s:%d\n", __func__,
+ 		ret);
+diff --git a/drivers/power/supply/mtk_pe.c b/drivers/power/supply/mtk_pe.c
+index e6b4083..cec1794 100644
+--- a/drivers/power/supply/mtk_pe.c
++++ b/drivers/power/supply/mtk_pe.c
+@@ -307,7 +307,8 @@ int __pe_check_charger(struct chg_alg_device *alg)
+ 		pe->ta_stop_battery_soc,
+ 		pe_hal_get_charger_type(alg));
+ 
+-	if (pe_hal_get_charger_type(alg) != POWER_SUPPLY_TYPE_USB_DCP) {
++	if (pe_hal_get_charger_type(alg) != POWER_SUPPLY_TYPE_USB_DCP &&
++	    pe_hal_get_charger_type(alg) != POWER_SUPPLY_TYPE_USB_CDP) {
+ 		ret_value = ALG_TA_NOT_SUPPORT;
+ 		goto out;
+ 	}
+@@ -386,9 +387,9 @@ int mtk_pe_set_charging_current(struct chg_alg_device *alg)
+ 		pe->input_current = pe->input_current_limit;
+ 
+ 	pe_hal_set_charging_current(alg,
+-		CHG1, pe->input_current);
+-	pe_hal_set_input_current(alg,
+ 		CHG1, pe->charging_current);
++	pe_hal_set_input_current(alg,
++		CHG1, pe->input_current);
+ 	pe_hal_set_cv(alg,
+ 		CHG1, pe->cv);
+ 
+@@ -454,7 +455,9 @@ static int _pe_is_algo_ready(struct chg_alg_device *alg)
+ 	case PE_HW_READY:
+ 		uisoc = pe_hal_get_uisoc(alg);
+ 		if (pe_hal_get_charger_type(alg) !=
+-			POWER_SUPPLY_TYPE_USB_DCP) {
++			POWER_SUPPLY_TYPE_USB_DCP &&
++			pe_hal_get_charger_type(alg) !=
++			POWER_SUPPLY_TYPE_USB_CDP) {
+ 			ret_value = ALG_TA_NOT_SUPPORT;
+ 		} else if ((uisoc < pe->ta_start_battery_soc &&
+ 			    pe->ref_vbat > pe->vbat_threshold) ||
+diff --git a/drivers/power/supply/mtk_pe_hal.c b/drivers/power/supply/mtk_pe_hal.c
+index b4fcd5b..2cfb151 100644
+--- a/drivers/power/supply/mtk_pe_hal.c
++++ b/drivers/power/supply/mtk_pe_hal.c
+@@ -240,31 +240,14 @@ int pe_hal_set_mivr(struct chg_alg_device *alg, enum chg_idx chgidx, int uV)
+ 
+ int pe_hal_get_uisoc(struct chg_alg_device *alg)
+ {
+-	union power_supply_propval prop;
++	union power_supply_propval prop = {0};
+ 	struct power_supply *bat_psy = NULL;
+ 	int ret;
+-	struct mtk_pe *pe;
+-
+-	if (alg == NULL)
+-		return -EINVAL;
+-
+-	pe = dev_get_drvdata(&alg->dev);
+-	bat_psy = pe->bat_psy;
+-
+-	if (bat_psy == NULL || IS_ERR(bat_psy)) {
+-		pr_notice("%s retry to get pe->bat_psy\n", __func__);
+-		bat_psy = devm_power_supply_get_by_phandle(&pe->pdev->dev, "gauge");
+-		pe->bat_psy = bat_psy;
+-	}
+ 
+-	if (bat_psy == NULL || IS_ERR(bat_psy)) {
+-		pr_notice("%s Couldn't get bat_psy\n", __func__);
+-		ret = 50;
+-	} else {
+-		ret = power_supply_get_property(bat_psy,
+-			POWER_SUPPLY_PROP_CAPACITY, &prop);
+-		ret = prop.intval;
+-	}
++	bat_psy = power_supply_get_by_name("3rd-gauge");
++	ret = power_supply_get_property(bat_psy,
++		POWER_SUPPLY_PROP_CAPACITY, &prop);
++	ret = prop.intval;
+ 
+ 	pe_dbg("%s:%d\n", __func__,
+ 		ret);
+-- 
+2.55.0
+

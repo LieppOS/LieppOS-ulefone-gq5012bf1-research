@@ -1,0 +1,636 @@
+From 9647e3ec61c37132b3e895e5a0d0e387463c0c5d Mon Sep 17 00:00:00 2001
+From: re <re@local>
+Date: Sat, 3 Oct 2026 10:52:08 +0300
+Subject: [PATCH 6/6] mtk_pep50: GQ5012BF1 YFT deltas (3rd-gauge SOC, KPOC ADC
+ ta_cap, LCD-on 2.5A ITA cap, dual-dvchg ITA curlmt x2, slave vbatovp/ibatocp,
+ IBATOCP 250%, EOC 2200mA, VBUS cali 350mV, pca_*/fast_charging sysfs, disp
+ notifier) - 98/98 exact, ABI exact
+
+---
+ drivers/power/supply/mtk_pe5.c     | 325 +++++++++++++++++++++--------
+ drivers/power/supply/mtk_pe5.h     |   3 +
+ drivers/power/supply/mtk_pe5_hal.c |   6 +-
+ 3 files changed, 244 insertions(+), 90 deletions(-)
+
+diff --git a/drivers/power/supply/mtk_pe5.c b/drivers/power/supply/mtk_pe5.c
+index cc5ecab..b88d8cf 100644
+--- a/drivers/power/supply/mtk_pe5.c
++++ b/drivers/power/supply/mtk_pe5.c
+@@ -15,6 +15,10 @@
+ #include <linux/wait.h>
+ #include "mtk_charger_algorithm_class.h"
+ #include "mtk_pe5.h"
++#include "../../gpu/drm/mediatek/mediatek_v2/mtk_disp_notify.h"
++
++#define KERNEL_POWER_OFF_CHARGING_BOOT	8
++#define LOW_POWER_OFF_CHARGING_BOOT	9
+ 
+ static int log_level = PE50_INFO_LEVEL;
+ module_param(log_level, int, 0644);
+@@ -22,6 +26,12 @@ module_param(log_level, int, 0644);
+ static bool algo_waiver_test;
+ module_param(algo_waiver_test, bool, 0644);
+ 
++int pe50_algo_running;
++static struct pe50_algo_info *pinfo;
++static int pca_master_ibus;
++static int pca_slave_ibus;
++static int pca_input_voltage;
++
+ int pe50_get_log_level(void)
+ {
+ 	return log_level;
+@@ -42,10 +52,10 @@ int pe50_get_log_level(void)
+ #define PE50_VBUSOVP_RATIO	110
+ #define PE50_IBUSOCP_RATIO	110
+ #define PE50_VBATOVP_RATIO	110
+-#define PE50_IBATOCP_RATIO	110
++#define PE50_IBATOCP_RATIO	250
+ #define PE50_ITAOCP_RATIO	110
+ #define PE50_IBUSUCPF_RECHECK		250	/* mA */
+-#define PE50_VBUS_CALI_THRESHOLD	150	/* mV */
++#define PE50_VBUS_CALI_THRESHOLD	350	/* mV */
+ #define PE50_CV_LOWER_BOUND_GAP		50	/* mV */
+ #define PE50_INIT_POLLING_INTERVAL	0	/* ms */
+ #define PE50_CV_POLLING_INTERVAL	500	/* ms */
+@@ -56,6 +66,7 @@ int pe50_get_log_level(void)
+ #define PE50_VSYS_UPPER_BOUND_GAP        40      /* mV */
+ #define PE50_START_SOC_MAX_GAP		4	/* % */
+ #define PE50_WHILE_LOOP_ITERATION_MAX	50
++#define PE50_IEOC_CURR			2200	/* mA */
+ 
+ 
+ #define PE50_HWERR_NOTIFY \
+@@ -80,7 +91,7 @@ static const struct pe50_algo_desc algo_desc_defval = {
+ 	.vbat_cv = 4350,
+ 	.start_soc_min = 5,
+ 	.start_soc_max = 80,
+-	.stop_soc_max = 99,
++	.stop_soc_max = 85,
+ 	.vbat_max_gap = 30,
+ 	.idvchg_term = 500,
+ 	.idvchg_step = 50,
+@@ -239,10 +250,38 @@ static inline u32 pe50_vta_add_gap(struct pe50_algo_info *info, u32 vta)
+  * Get output current and voltage measured by TA
+  * and updates measured data
+  */
++static int pe50_get_adc(struct pe50_algo_info *info, enum pe50_adc_channel chan,
++			int *val);
++
++static inline bool pe50_is_kpoc_cc_cv(struct pe50_algo_data *data)
++{
++	return data->state == PE50_ALGO_CC_CV &&
++	       (data->boot_mode == KERNEL_POWER_OFF_CHARGING_BOOT ||
++		data->boot_mode == LOW_POWER_OFF_CHARGING_BOOT);
++}
++
+ static inline int pe50_get_ta_cap(struct pe50_algo_info *info)
+ {
++	int ret;
++	int vbus = 0, ibus = 0;
+ 	struct pe50_algo_data *data = info->data;
+ 
++	if (pe50_is_kpoc_cc_cv(data)) {
++		PE50_ERR("%s in kpoc mode\n", __func__);
++		ret = pe50_get_adc(info, PE50_ADCCHAN_VBUS, &vbus);
++		if (ret < 0) {
++			PE50_ERR("get vbus fail(%d)\n", ret);
++			return ret;
++		}
++		ret = pe50_get_adc(info, PE50_ADCCHAN_IBUS, &ibus);
++		if (ret < 0) {
++			PE50_ERR("get vbus fail(%d)\n", ret);
++			return ret;
++		}
++		data->vta_measure = vbus;
++		data->ita_measure = ibus;
++		return 0;
++	}
+ 	return pe50_hal_get_ta_output(info->alg, &data->vta_measure,
+ 				      &data->ita_measure);
+ }
+@@ -259,7 +298,9 @@ static inline int pe50_get_ta_cap_by_supportive(struct pe50_algo_info *info,
+ 	struct pe50_algo_data *data = info->data;
+ 	struct pe50_ta_auth_data *auth_data = &data->ta_auth_data;
+ 
+-	if (auth_data->support_meas_cap) {
++	if (pe50_is_kpoc_cc_cv(data))
++		PE50_ERR("%s in kpoc mode\n", __func__);
++	else if (auth_data->support_meas_cap) {
+ 		ret = pe50_get_ta_cap(info);
+ 		if (ret < 0) {
+ 			PE50_ERR("get ta cap fail(%d)\n", ret);
+@@ -723,14 +764,22 @@ static inline int pe50_get_ita_lmt(struct pe50_algo_info *info)
+ 		ita = min(ita, data->input_current_limit);
+ 	if (data->ita_pwr_lmt > 0)
+ 		ita = min(ita, (int)data->ita_pwr_lmt);
+-	ita = min(ita, ita_lmt - desc->tta_curlmt[data->tta_level]);
+-	ita = min(ita, ita_lmt - desc->tbat_curlmt[data->tbat_level]);
+-	ita = min(ita, ita_lmt - desc->tdvchg_curlmt[data->tdvchg_level]);
+-	PE50_INFO("ita(org,tta,tbat,tdvchg,prlmt,throt)=%d(%d,%d,%d,%d,%d,%d)\n",
++	if (data->tried_dual_dvchg) {
++		ita = min(ita, ita_lmt - 2 * desc->tta_curlmt[data->tta_level]);
++		ita = min(ita, ita_lmt - 2 * desc->tbat_curlmt[data->tbat_level]);
++		ita = min(ita, ita_lmt - 2 * desc->tdvchg_curlmt[data->tdvchg_level]);
++	} else {
++		ita = min(ita, ita_lmt - desc->tta_curlmt[data->tta_level]);
++		ita = min(ita, ita_lmt - desc->tbat_curlmt[data->tbat_level]);
++		ita = min(ita, ita_lmt - desc->tdvchg_curlmt[data->tdvchg_level]);
++	}
++	if (data->lcd_on)
++		ita = min(ita, 2500);
++	PE50_INFO("ita(org,tta,tbat,tdvchg,prlmt,throt),lcd=%d(%d,%d,%d,%d,%d,%d),%d\n",
+ 		 ita, ita_lmt, desc->tta_curlmt[data->tta_level],
+ 		 desc->tbat_curlmt[data->tbat_level],
+ 		 desc->tdvchg_curlmt[data->tdvchg_level], data->ita_pwr_lmt,
+-		 data->input_current_limit);
++		 data->input_current_limit, data->lcd_on);
+ 	mutex_unlock(&data->ext_lock);
+ 	return ita < 0 ? 0 : ita;
+ }
+@@ -782,7 +831,9 @@ static u32 pe50_get_dvchg_ibusocp(struct pe50_algo_info *info, u32 ita)
+ 		ibus = precise_div(ibus, 2);
+ 		ratio += 10;
+ 	}
+-	ibus = max(ibus, desc->idvchg_term);
++	PE50_INFO("%s: ibus = %d. idvchg_term = %d.idvchg_cc=%d \n", __func__,
++		  ibus, desc->idvchg_term, data->idvchg_cc);
++	ibus = max(ibus, data->idvchg_cc);
+ 	return percent(ibus, ratio);
+ }
+ 
+@@ -871,14 +922,31 @@ static int pe50_set_dvchg_protection(struct pe50_algo_info *info)
+ 		PE50_ERR("set vbatovp fail(%d)\n", ret);
+ 		return ret;
+ 	}
++	if (data->is_dvchg_exist[PE50_DVCHG_SLAVE]) {
++		ret = pe50_hal_set_vbatovp(info->alg, DVCHG2, vbatovp);
++		if (ret < 0) {
++			PE50_ERR("set vbatovp fail(%d)\n", ret);
++			return ret;
++		}
++	}
+ 
+ 	/* IBATOCP */
+ 	ibatocp = pe50_get_ibatocp(info, ita_lmt);
++	PE50_INFO("before. ita_lmt = %d. ibatocp = %d. \n", ita_lmt, ibatocp);
++	if (data->is_dvchg_exist[PE50_DVCHG_SLAVE])
++		ibatocp = min(ibatocp * 2, 24000U);
+ 	ret = pe50_hal_set_ibatocp(info->alg, DVCHG1, ibatocp);
+ 	if (ret < 0) {
+ 		PE50_ERR("set ibatocp fail(%d)\n", ret);
+ 		return ret;
+ 	}
++	if (data->is_dvchg_exist[PE50_DVCHG_SLAVE]) {
++		ret = pe50_hal_set_ibatocp(info->alg, DVCHG2, ibatocp);
++		if (ret < 0) {
++			PE50_ERR("set slave ibatocp fail(%d)\n", ret);
++			return ret;
++		}
++	}
+ 	PE50_INFO("vbusovp,ibusocp,vbatovp,ibatocp = (%d,%d,%d,%d)\n",
+ 		 vbusovp, ibusocp, vbatovp, ibatocp);
+ 	return 0;
+@@ -1084,6 +1152,45 @@ static int pe50_send_notification(struct pe50_algo_info *info,
+ }
+ 
+ /* Stop PE5.0 charging and reset parameter */
++/*
++ * GQ5012BF1 (YFT): boot mode from DT, same as log_store
++ */
++struct tag_bootmode {
++	u32 size;
++	u32 tag;
++	u32 bootmode;
++	u32 boottype;
++};
++
++static unsigned int get_boot_mode_from_dts(void)
++{
++	struct device_node *np_chosen = NULL;
++	struct tag_bootmode *tag = NULL;
++
++	np_chosen = of_find_node_by_path("/chosen");
++	if (!np_chosen) {
++		pr_notice("log_store: warning: not find node: '/chosen'\n");
++
++		np_chosen = of_find_node_by_path("/chosen@0");
++		if (!np_chosen) {
++			pr_notice("log_store: warning: not find node: '/chosen@0'\n");
++			return 0;
++		}
++	}
++
++	tag = (struct tag_bootmode *)
++			of_get_property(np_chosen, "atag,boot", NULL);
++	if (!tag) {
++		pr_notice("log_store: error: not find tag: 'atag,boot';\n");
++		return 0;
++	}
++
++	pr_notice("log_store: bootmode: 0x%x boottype: 0x%x.\n",
++		tag->bootmode, tag->boottype);
++
++	return tag->bootmode;
++}
++
+ static int pe50_stop(struct pe50_algo_info *info, struct pe50_stop_info *sinfo)
+ {
+ 	int ret = 0;
+@@ -1109,10 +1216,13 @@ static int pe50_stop(struct pe50_algo_info *info, struct pe50_stop_info *sinfo)
+ 	atomic_set(&data->stop_algo, 0);
+ 	alarm_cancel(&data->timer);
+ 
+-	ret = pe50_enable_dvchg_charging(info, PE50_DVCHG_SLAVE, false);
+-	if (ret < 0) {
+-		PE50_ERR("disable slave dvchg fail(%d)\n", ret);
+-		return ret;
++	PE50_ERR("[blithe] %s:%d, pe50 slave dvchg is exist (%d)\n", __func__, __LINE__, data->is_dvchg_en[PE50_DVCHG_SLAVE]);
++	if (data->is_dvchg_en[PE50_DVCHG_SLAVE]) {
++		ret = pe50_enable_dvchg_charging(info, PE50_DVCHG_SLAVE, false);
++		if (ret < 0) {
++			PE50_ERR("disable slave dvchg fail(%d)\n", ret);
++			return ret;
++		}
+ 	}
+ 	ret = pe50_set_dvchg_charging(info, false);
+ 	if (ret < 0) {
+@@ -2093,27 +2203,6 @@ static int pe50_algo_measure_r(struct pe50_algo_info *info)
+ 	       pe50_algo_measure_r_with_ta_cv(info);
+ }
+ 
+-static int pe50_check_slave_dvchg_off(struct pe50_algo_info *info)
+-{
+-	int ret;
+-	struct pe50_algo_data *data = info->data;
+-	struct pe50_algo_desc *desc = info->desc;
+-
+-	data->idvchg_term = desc->idvchg_term;
+-	data->idvchg_cc = desc->ita_level[PE50_RCABLE_NORMAL] -
+-			  desc->swchg_aicr;
+-	ret = pe50_enable_dvchg_charging(info, PE50_DVCHG_SLAVE, false);
+-	if (ret < 0) {
+-		PE50_ERR("disable slave dvchg fail(%d)\n", ret);
+-		return ret;
+-	}
+-	ret = pe50_select_ita_lmt_by_r(info, false);
+-	if (ret < 0) {
+-		PE50_ERR("select dvchg ita lmt fail(%d)\n", ret);
+-		return ret;
+-	}
+-	return 0;
+-}
+ 
+ static int pe50_force_ta_cv(struct pe50_algo_info *info,
+ 			    struct pe50_stop_info *sinfo)
+@@ -2206,13 +2295,9 @@ static int pe50_algo_ss_dvchg_with_ta_cc(struct pe50_algo_info *info)
+ 	PE50_INFO("vbat(%d), ita(%d)\n", vbat, data->ita_measure);
+ 	if (vbat >= data->vbat_cv) {
+ 		if (data->ita_measure < data->idvchg_term &&
+-		    data->is_dvchg_en[PE50_DVCHG_SLAVE]) {
+-			ret = pe50_check_slave_dvchg_off(info);
+-			if (ret < 0) {
+-				PE50_INFO("slave off fail(%d)\n", ret);
+-				goto err;
+-			}
+-		}
++		    data->is_dvchg_en[PE50_DVCHG_SLAVE])
++			PE50_DBG("yft_drv_2: vbat(%d), ita(%d), idvchg_term=%d\n",
++				 vbat, data->ita_measure, data->idvchg_term);
+ 		idvchg_lmt = pe50_get_idvchg_lmt(info);
+ 		ita = min(data->ita_setting - desc->idvchg_ss_step, idvchg_lmt);
+ 		data->state = PE50_ALGO_CC_CV;
+@@ -2301,7 +2386,7 @@ static int pe50_algo_ss_dvchg_with_ta_cv(struct pe50_algo_info *info)
+ 	/* Turn on slave dvchg if ita_measure >= idvchg_ss_init */
+ 	if (data->is_dvchg_exist[PE50_DVCHG_SLAVE] && !data->tried_dual_dvchg &&
+ 	    data->ita_measure >= desc->idvchg_ss_init &&
+-	    data->idvchg_cc <= pe50_get_ita_lmt(info)) {
++	    data->idvchg_cc - 1000 <= pe50_get_ita_lmt(info)) {
+ 		PE50_INFO("try dual dvchg\n");
+ 		data->tried_dual_dvchg = true;
+ 		data->idvchg_term = 2 * desc->idvchg_term;
+@@ -2312,12 +2397,6 @@ static int pe50_algo_ss_dvchg_with_ta_cv(struct pe50_algo_info *info)
+ 			PE50_ERR("select dual dvchg ita lmt fail(%d)\n", ret);
+ 			goto single_dvchg_select_ita;
+ 		}
+-		ret = pe50_enable_dvchg_charging(info, PE50_DVCHG_MASTER,
+-						 false);
+-		if (ret < 0) {
+-			PE50_ERR("disable master dvchg fail(%d)\n", ret);
+-			goto single_dvchg_restart;
+-		}
+ 		data->ignore_ibusucpf = true;
+ 		ret = pe50_enable_dvchg_charging(info, PE50_DVCHG_SLAVE, true);
+ 		if (ret < 0) {
+@@ -2365,13 +2444,9 @@ static int pe50_algo_ss_dvchg_with_ta_cv(struct pe50_algo_info *info)
+ 	PE50_INFO("vbat(%d), ita(%d)\n", vbat, data->ita_measure);
+ 	if (vbat >= data->vbat_cv) {
+ 		if (data->ita_measure < data->idvchg_term &&
+-		    data->is_dvchg_en[PE50_DVCHG_SLAVE]) {
+-			ret = pe50_check_slave_dvchg_off(info);
+-			if (ret < 0) {
+-				PE50_INFO("slave off fail(%d)\n", ret);
+-				goto out;
+-			}
+-		}
++		    data->is_dvchg_en[PE50_DVCHG_SLAVE])
++			PE50_DBG("yft_drv_3: vbat(%d), ita(%d), idvchg_term=%d\n",
++				 vbat, data->ita_measure, data->idvchg_term);
+ 		vta -= auth_data->vta_step;
+ 		ita -= ita_gap_per_vstep;
+ 		data->state = PE50_ALGO_CC_CV;
+@@ -2563,13 +2638,9 @@ static int pe50_algo_cc_cv_with_ta_cc(struct pe50_algo_info *info)
+ 	}
+ 
+ 	if (data->ita_measure < data->idvchg_term &&
+-	    data->is_dvchg_en[PE50_DVCHG_SLAVE]) {
+-		ret = pe50_check_slave_dvchg_off(info);
+-		if (ret < 0) {
+-			PE50_INFO("slave off fail(%d)\n", ret);
+-			goto err;
+-		}
+-	}
++	    data->is_dvchg_en[PE50_DVCHG_SLAVE])
++		PE50_DBG("yft_drv_4: vbat(%d), ita(%d), idvchg_term=%d\n",
++			 vbat, data->ita_measure, data->idvchg_term);
+ 
+ 	ita_lmt = pe50_get_ita_lmt(info);
+ 	/* Consider AICR is decreased */
+@@ -2639,11 +2710,8 @@ static int pe50_algo_cc_cv_with_ta_cv(struct pe50_algo_info *info)
+ 	}
+ 	if (data->ita_measure < data->idvchg_term &&
+ 	    data->is_dvchg_en[PE50_DVCHG_SLAVE]) {
+-		ret = pe50_check_slave_dvchg_off(info);
+-		if (ret < 0) {
+-			PE50_INFO("slave off fail(%d)\n", ret);
+-			goto out;
+-		}
++		PE50_DBG("yft_drv_5 : ita(%d), idvchg_term=%d\n",
++			 data->ita_measure, data->idvchg_term);
+ 		ret = pe50_get_ta_cap_by_supportive(info,
+ 						    &data->vta_measure,
+ 						    &data->ita_measure);
+@@ -2756,7 +2824,7 @@ static bool pe50_check_eoc(struct pe50_algo_info *info,
+ 	struct pe50_algo_data *data = info->data;
+ 	struct pe50_algo_desc *desc = info->desc;
+ 	int ret = 0, vbat = 0, ibat = 0;
+-	u32 soc = 0, ita_lmt = 0;
++	u32 soc = 0;
+ 	bool algo_running = !(data->state == PE50_ALGO_STOP);
+ 
+ 	ret = pe50_hal_get_soc(info->alg, &soc);
+@@ -2771,20 +2839,12 @@ static bool pe50_check_eoc(struct pe50_algo_info *info,
+ 
+ 	if (soc >= desc->stop_soc_max &&
+ 	    vbat > (data->vbat_cv - desc->vbat_max_gap) &&
+-	    ibat < (data->idvchg_term * 2)) {
++	    ibat < PE50_IEOC_CURR) {
+ 		if (algo_running)
+ 			data->start_soc_max = desc->start_soc_max -
+ 					      PE50_START_SOC_MAX_GAP;
+-		return false;
+-	}
+-
+-	ita_lmt = pe50_get_ita_lmt(info);
+-	/* Consider AICR is decreased */
+-	ita_lmt = min(ita_lmt, data->is_swchg_en ?
+-		      (data->idvchg_cc + data->aicr_setting) : data->idvchg_cc);
+-	if (ita_lmt < data->idvchg_term) {
+-		PE50_INFO("ita_lmt(%d) < idvchg_term(%d)\n", ita_lmt,
+-			 data->idvchg_term);
++		PE50_INFO("soc:%d,vbat=%d,ita=%d,ibat=%d trigger eoc, finish pe50!!\n",
++			  soc, vbat, data->ita_measure, ibat);
+ 		return false;
+ 	}
+ 
+@@ -3193,7 +3253,7 @@ struct pe50_safety_check_fn_desc {
+ 	bool check_during_running;
+ };
+ 
+-static struct pe50_safety_check_fn_desc fn_descs[] = {
++static const struct pe50_safety_check_fn_desc fn_descs[] = {
+ 	{pe50_check_charging_time, true},
+ 	{pe50_check_ta_status, true},
+ 	{pe50_check_ta_ibusocp, true},
+@@ -3205,7 +3265,7 @@ static struct pe50_safety_check_fn_desc fn_descs[] = {
+ 	{pe50_check_tta_level, false},
+ 	{pe50_check_tdvchg_level, false},
+ 	{pe50_check_tswchg_level, true},
+-	{pe50_check_eoc, false},
++	{pe50_check_eoc, true},
+ };
+ 
+ static bool pe50_algo_safety_check(struct pe50_algo_info *info)
+@@ -3227,6 +3287,7 @@ static bool pe50_algo_safety_check(struct pe50_algo_info *info)
+ 	}
+ 	return true;
+ err:
++	PE50_DBG("++ goto err  i=%d\n", i);
+ 	pe50_stop(info, &sinfo);
+ 	return false;
+ }
+@@ -3299,6 +3360,9 @@ static inline int __pe50_plugout_reset(struct pe50_algo_info *info,
+ 	data->ta_ready = false;
+ 	memset(auth_data, 0, sizeof(*auth_data));
+ 	pe50_algo_data_partial_reset(info);
++	pca_master_ibus = 0;
++	pca_slave_ibus = 0;
++	pca_input_voltage = 0;
+ 	return pe50_stop(info, sinfo);
+ }
+ 
+@@ -3538,6 +3602,10 @@ static int pe50_dump_charging_info(struct pe50_algo_info *info)
+ 	if (ret < 0)
+ 		PE50_ERR("get SOC fail\n");
+ 
++	pca_master_ibus = ibus[PE50_DVCHG_MASTER];
++	pca_slave_ibus = ibus[PE50_DVCHG_SLAVE];
++	pca_input_voltage = vbus;
++
+ 	PE50_INFO("vbus,ibus(master,slave,sw),vbat,ibat=%d,(%d,%d,%d),%d,%d\n",
+ 		 vbus, ibus[PE50_DVCHG_MASTER], ibus[PE50_DVCHG_SLAVE],
+ 		 ibus_swchg, vbat, ibat);
+@@ -3663,6 +3731,74 @@ static int pe50_init_algo(struct chg_alg_device *alg)
+ 	return ret;
+ }
+ 
++/*
++ * GQ5012BF1 (YFT) additions, reconstructed from the stock mtk_pep50.ko:
++ *  - pca_master / pca_slave / pca_voltage: last master/slave dvchg IBUS
++ *    and VBUS sampled by pe50_dump_charging_info()
++ *  - fast_charging: 3 while the PE5.0 algo is running, else 0
++ *  - display notifier: tracks LCD on/off; while the screen is on
++ *    pe50_get_ita_lmt() caps ITA at 2500mA
++ * __LINE__ values printed below match stock (3788/3791), as does the
++ * [blithe] __LINE__ in pe50_stop() (1219).
++ */
++static ssize_t show_pca_master(struct device *dev,
++			       struct device_attribute *attr, char *buf)
++{
++	PE50_INFO("%s() ibus = %d\n", __func__, pca_master_ibus);
++	return sprintf(buf, "%d\n", pca_master_ibus);
++}
++static DEVICE_ATTR(pca_master, 0444, show_pca_master, NULL);
++
++static ssize_t show_pca_slave(struct device *dev,
++			      struct device_attribute *attr, char *buf)
++{
++	PE50_INFO("%s() ibus = %d\n", __func__, pca_slave_ibus);
++	return sprintf(buf, "%d\n", pca_slave_ibus);
++}
++static DEVICE_ATTR(pca_slave, 0444, show_pca_slave, NULL);
++
++static ssize_t show_fast_charging(struct device *dev,
++				  struct device_attribute *attr, char *buf)
++{
++	PE50_INFO("%s() pe50_algo_running = %d\n", __func__,
++		  pe50_algo_running);
++	return sprintf(buf, "%d\n", pe50_algo_running ? 3 : 0);
++}
++static DEVICE_ATTR(fast_charging, 0444, show_fast_charging, NULL);
++
++static ssize_t show_pca_voltage(struct device *dev,
++				struct device_attribute *attr, char *buf)
++{
++	PE50_INFO("%s() vbus = %d\n", __func__, pca_input_voltage);
++	return sprintf(buf, "%d\n", pca_input_voltage);
++}
++static DEVICE_ATTR(pca_voltage, 0444, show_pca_voltage, NULL);
++
++static int pe50_fb_notifier_callback(struct notifier_block *nb,
++				     unsigned long event, void *v)
++{
++	int *blank = (int *)v;
++
++	pr_info("%s-111\n", __func__);
++	if (event != MTK_DISP_EVENT_BLANK)
++		return 0;
++
++	pr_info("%s+\n", __func__);
++	if (*blank == MTK_DISP_BLANK_UNBLANK) {
++		pr_info("#@# %s(%d) SCREEN ON\n", __func__, __LINE__);
++		pinfo->data->lcd_on = true;
++	} else if (*blank == MTK_DISP_BLANK_POWERDOWN) {
++		pr_info("#@# %s(%d) SCREEN OFF\n", __func__, __LINE__);
++		pinfo->data->lcd_on = false;
++	}
++	pr_info("%s-\n", __func__);
++	return 0;
++}
++
++static struct notifier_block pe50_fb_notifier = {
++	.notifier_call = pe50_fb_notifier_callback,
++};
++
+ static bool pe50_is_algo_running(struct chg_alg_device *alg)
+ {
+ 	struct pe50_algo_info *info = chg_alg_dev_get_drvdata(alg);
+@@ -3676,6 +3812,7 @@ static bool pe50_is_algo_running(struct chg_alg_device *alg)
+ 		goto out_unlock;
+ 	}
+ 	running = !(data->state == PE50_ALGO_STOP);
++	pe50_algo_running = running;
+ 	PE50_DBG("running = %d\n", running);
+ out_unlock:
+ 	mutex_unlock(&data->lock);
+@@ -3741,7 +3878,8 @@ static int pe50_is_algo_ready(struct chg_alg_device *alg)
+ 	}
+ 
+ 	if (!pe50_is_ta_rdy(info)) {
+-		ret = pe50_hal_is_adapter_ready(alg);
++		ret = ALG_TA_NOT_SUPPORT;
++		PE50_INFO("yft_drv:[%s] ta_rdy fail ret=%d\n", __func__, ret);
+ 		goto out;
+ 	}
+ 	ret = ALG_READY;
+@@ -3771,6 +3909,7 @@ static int pe50_start_algo(struct chg_alg_device *alg)
+ 		PE50_ERR("start PE5.0 algo fail\n");
+ 		ret = ALG_INIT_FAIL;
+ 	}
++	pe50_algo_running = 1;
+ out:
+ 	mutex_unlock(&data->lock);
+ 	return ret;
+@@ -3867,7 +4006,7 @@ static int pe50_set_current_limit(struct chg_alg_device *alg,
+ 
+ 	mutex_lock(&data->ext_lock);
+ 	if (data->cv_limit != cv || data->input_current_limit != ic) {
+-		data->cv_limit = cv;
++		data->cv_limit = cv * 2;
+ 		data->input_current_limit = ic;
+ 		PE50_INFO("ic = %d, cv = %d\n", ic, cv);
+ 		pe50_wakeup_algo_thread(data);
+@@ -4088,7 +4227,7 @@ static int pe50_parse_dt(struct pe50_algo_info *info)
+ 	}
+ 
+ 	desc->allow_not_check_ta_status =
+-		of_property_read_bool(np, "allow_not_check_ta_status");
++		of_property_read_bool(np, "allow-not-check-ta-status");
+ 	pe50_parse_dt_u32(np, (void *)desc, pe50_dtprops_u32,
+ 			  ARRAY_SIZE(pe50_dtprops_u32));
+ 	pe50_parse_dt_u32_arr(np, (void *)desc, pe50_dtprops_u32_array,
+@@ -4163,6 +4302,22 @@ static int pe50_probe(struct platform_device *pdev)
+ 	}
+ 	chg_alg_dev_set_drvdata(info->alg, info);
+ 
++	device_create_file(info->dev, &dev_attr_pca_master);
++	device_create_file(info->dev, &dev_attr_pca_slave);
++	device_create_file(info->dev, &dev_attr_fast_charging);
++	device_create_file(info->dev, &dev_attr_pca_voltage);
++
++	pinfo = info;
++	ret = mtk_disp_notifier_register("mtk_pe50", &pe50_fb_notifier);
++	if (ret) {
++		PE50_ERR("FAILED TO REGISTER FB CLIENT (%d)\n", ret);
++		return ret;
++	}
++
++	data->boot_mode = get_boot_mode_from_dts();
++	dev_info(info->dev, "%s: probe boot_mode=%d.\n", __func__,
++		 data->boot_mode);
++
+ 	dev_info(info->dev, "%s successfully\n", __func__);
+ 	return 0;
+ err:
+diff --git a/drivers/power/supply/mtk_pe5.h b/drivers/power/supply/mtk_pe5.h
+index ace049d..7aba518 100644
+--- a/drivers/power/supply/mtk_pe5.h
++++ b/drivers/power/supply/mtk_pe5.h
+@@ -177,6 +177,8 @@ struct pe50_algo_data {
+ 	int input_current_limit;
+ 	int cv_limit;
+ 	u32 start_soc_max;		/* algo start soc upper bound */
++	bool lcd_on;
++	int boot_mode;
+ };
+ 
+ /* Setting from dtsi */
+@@ -236,6 +238,7 @@ struct pe50_algo_info {
+ 	struct chg_alg_device *alg;
+ 	struct pe50_algo_desc *desc;
+ 	struct pe50_algo_data *data;
++	struct notifier_block fb_notif;
+ };
+ 
+ static inline u32 precise_div(u64 dividend, u64 divisor)
+diff --git a/drivers/power/supply/mtk_pe5_hal.c b/drivers/power/supply/mtk_pe5_hal.c
+index 038e171..3e6534e 100644
+--- a/drivers/power/supply/mtk_pe5_hal.c
++++ b/drivers/power/supply/mtk_pe5_hal.c
+@@ -491,12 +491,8 @@ int pe50_hal_get_soc(struct chg_alg_device *alg, u32 *soc)
+ {
+ 	int ret = -EOPNOTSUPP;
+ 	union power_supply_propval val = {0,};
+-	struct pe50_hal *hal = chg_alg_dev_get_drv_hal_data(alg);
+ 
+-	if (IS_ERR_OR_NULL(hal->bat_psy))
+-		goto out;
+-
+-	ret = power_supply_get_property(hal->bat_psy,
++	ret = power_supply_get_property(power_supply_get_by_name("3rd-gauge"),
+ 					POWER_SUPPLY_PROP_CAPACITY, &val);
+ 	if (ret < 0) {
+ 		PE50_ERR("get soc fail(%d)\n", ret);
+-- 
+2.55.0
+

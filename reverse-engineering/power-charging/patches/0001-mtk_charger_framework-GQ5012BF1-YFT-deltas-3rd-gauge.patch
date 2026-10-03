@@ -1,0 +1,343 @@
+From 86d9fd1bd73438939613bfd1a307b237c627591d Mon Sep 17 00:00:00 2001
+From: re <re@local>
+Date: Sat, 3 Oct 2026 01:57:38 +0300
+Subject: [PATCH 1/6] mtk_charger_framework: GQ5012BF1 YFT deltas (3rd-gauge
+ uisoc, yft_cam_open_flag HV gate, yft_charging_current/gftk_charger_type
+ sysfs, charger_boot_switch KPOC, Rp-3A 1.9/2.1A, BAT_LOW_TEMP_PROTECT) -
+ 130/130
+
+---
+ drivers/power/supply/mtk_basic_charger.c |  44 +++++++-
+ drivers/power/supply/mtk_charger.c       | 125 +++++++++++++++++++++--
+ drivers/power/supply/mtk_charger.h       |   1 +
+ drivers/power/supply/mtk_charger_intf.c  |  22 +---
+ 4 files changed, 165 insertions(+), 27 deletions(-)
+
+diff --git a/drivers/power/supply/mtk_basic_charger.c b/drivers/power/supply/mtk_basic_charger.c
+index ae1cd49..6ae6a4b 100644
+--- a/drivers/power/supply/mtk_basic_charger.c
++++ b/drivers/power/supply/mtk_basic_charger.c
+@@ -59,6 +59,8 @@
+ 
+ #include "mtk_charger.h"
+ 
++extern bool yft_cam_open_flag;
++
+ static int _uA_to_mA(int uA)
+ {
+ 	if (uA == -1)
+@@ -197,6 +199,18 @@ static bool select_charging_current_limit(struct mtk_charger *info,
+ 				pdata->input_current_limit;
+ 			pdata2->charging_current_limit = 2000000;
+ 		}
++		if (yft_cam_open_flag) {
++			chr_err("%s  yft_cam_open_flag=%d\n", __func__,
++				yft_cam_open_flag);
++			pdata->input_current_limit = 1550000;
++		}
++		chr_err(" carrot chg1:%d,%d,\n",
++			_uA_to_mA(pdata->input_current_limit),
++			_uA_to_mA(pdata->charging_current_limit));
++		if (get_battery_temperature(info) < 0) {
++			pdata->input_current_limit = 900000;
++			pdata->charging_current_limit = 900000;
++		}
+ 	} else if (info->chr_type == POWER_SUPPLY_TYPE_USB &&
+ 	    info->usb_type == POWER_SUPPLY_USB_TYPE_DCP) {
+ 		/* NONSTANDARD_CHARGER */
+@@ -232,8 +246,8 @@ static bool select_charging_current_limit(struct mtk_charger *info,
+ 			if (adapter_dev_get_property(info->adapter_dev[PD]
+ 			, TYPEC_RP_LEVEL)
+ 				== 3000) {
+-				pdata->input_current_limit = 3000000;
+-				pdata->charging_current_limit = 3000000;
++				pdata->input_current_limit = 1900000;
++				pdata->charging_current_limit = 2100000;
+ 			} else if (adapter_dev_get_property(info->adapter_dev[PD],
+ 				TYPEC_RP_LEVEL) == 1500) {
+ 				pdata->input_current_limit = 1500000;
+@@ -365,6 +379,28 @@ static bool select_charging_current_limit(struct mtk_charger *info,
+ 	return is_basic;
+ }
+ 
++static void high_voltage_supply_enable(void)
++{
++	static struct power_supply *chg_psy;
++	union power_supply_propval val = {0};
++
++	if (IS_ERR_OR_NULL(chg_psy)) {
++		chg_psy = power_supply_get_by_name("mtk-master-charger");
++		if (IS_ERR_OR_NULL(chg_psy)) {
++			chr_err("fail to get usb_psy\n");
++			return;
++		}
++	}
++	if (IS_ERR(chg_psy)) {
++		chr_err("%s Couldn't get chg_psy\n", __func__);
++	} else {
++		power_supply_set_property(chg_psy,
++			POWER_SUPPLY_PROP_VOLTAGE_MAX, &val);
++		chr_err("%s enable_hv:%d\n", __func__, val.intval);
++		power_supply_changed(chg_psy);
++	}
++}
++
+ static int do_algorithm(struct mtk_charger *info)
+ {
+ 	struct chg_alg_device *alg;
+@@ -462,6 +498,10 @@ static int do_algorithm(struct mtk_charger *info)
+ 				}
+ 				break;
+ 			} else if (ret == ALG_READY || ret == ALG_RUNNING) {
++				if (yft_cam_open_flag) {
++					high_voltage_supply_enable();
++					break;
++				}
+ 				is_basic = false;
+ 				if (info->alg_new_arbitration && !info->alg_unchangeable &&
+ 					(lst_rnd_alg_idx > -1)) {
+diff --git a/drivers/power/supply/mtk_charger.c b/drivers/power/supply/mtk_charger.c
+index 720f811..5bac320 100644
+--- a/drivers/power/supply/mtk_charger.c
++++ b/drivers/power/supply/mtk_charger.c
+@@ -106,6 +106,12 @@ const char *chg_get_cmd(void)
+ }
+ #endif
+ 
++int yft_long_charger_flag __read_mostly = 0x1234;
++bool yft_cam_open_flag __read_mostly;
++EXPORT_SYMBOL_GPL(yft_cam_open_flag);
++EXPORT_SYMBOL_GPL(yft_long_charger_flag);
++static int gftk_charger_type;
++
+ int chr_get_debug_level(void)
+ {
+ 	struct power_supply *psy;
+@@ -1265,15 +1271,25 @@ static ssize_t input_current_store(struct device *dev,
+ 				   const char *buf, size_t size)
+ {
+ 	struct mtk_charger *pinfo = dev->driver_data;
+-	struct charger_data *chg_data;
+-	signed int temp;
++	signed int temp = 0;
+ 
+-	chg_data = &pinfo->chg_data[CHG1_SETTING];
+ 	if (kstrtoint(buf, 10, &temp) == 0) {
+-		if (temp < 0)
+-			chg_data->thermal_input_current_limit = 0;
+-		else
+-			chg_data->thermal_input_current_limit = temp;
++		chr_err("%s: temp=0x%x\n", __func__, temp);
++		yft_long_charger_flag = temp;
++		switch (temp) {
++		case 0:
++			pinfo->chg_data[CHG1_SETTING].thermal_input_current_limit = 0;
++			pinfo->fast_charging_indicator = 5;
++			break;
++		case 0x1234:
++			pinfo->chg_data[CHG1_SETTING].thermal_input_current_limit = -1;
++			pinfo->fast_charging_indicator = 0x15;
++			break;
++		default:
++			chr_err("%s: format error! temp=%d\n", __func__, temp);
++			break;
++		}
++		_wake_up_charger(pinfo);
+ 	} else {
+ 		chr_err("%s: format error!\n", __func__);
+ 	}
+@@ -2156,6 +2172,69 @@ static ssize_t enable_power_path_store(
+ }
+ static DEVICE_ATTR_RW(enable_power_path);
+ 
++static ssize_t show_gftk_charger_type(struct device *dev,
++				      struct device_attribute *attr, char *buf)
++{
++	struct mtk_charger *pinfo = dev->driver_data;
++
++	switch (adapter_dev_get_property(pinfo->select_adapter, CAP_TYPE)) {
++	case MTK_PD:
++	case MTK_PD_APDO:
++		gftk_charger_type = 3;
++		break;
++	case MTK_UFCS:
++	case MTK_CAP_TYPE_UNKNOWN:
++		gftk_charger_type = 0;
++		break;
++	default:
++		break;
++	}
++	chr_err("%s: gftk_charger_type=%d\n", __func__, gftk_charger_type);
++	return sprintf(buf, "%d\n", gftk_charger_type);
++}
++static DEVICE_ATTR(gftk_charger_type, 0444, show_gftk_charger_type, NULL);
++
++static ssize_t yft_charging_current_show(struct device *dev,
++					 struct device_attribute *attr, char *buf)
++{
++	struct mtk_charger *pinfo = dev->driver_data;
++	int val = pinfo->chg_data[CHG1_SETTING].thermal_charging_current_limit;
++
++	chr_err("%s: %d\n", __func__, val);
++	return sprintf(buf, "%d\n", val);
++}
++
++static ssize_t yft_charging_current_store(struct device *dev,
++					  struct device_attribute *attr,
++					  const char *buf, size_t size)
++{
++	struct mtk_charger *pinfo = dev->driver_data;
++	signed int temp = 0;
++
++	if (kstrtoint(buf, 10, &temp) == 0) {
++		chr_err("%s: temp=0x%x\n", __func__, temp);
++		yft_long_charger_flag = temp;
++		switch (temp) {
++		case 0:
++			pinfo->chg_data[CHG1_SETTING].thermal_charging_current_limit = 0;
++			pinfo->fast_charging_indicator = 5;
++			break;
++		case 0x1234:
++			pinfo->chg_data[CHG1_SETTING].thermal_charging_current_limit = -1;
++			pinfo->fast_charging_indicator = 0x15;
++			break;
++		default:
++			chr_err("%s: format error! temp=%d\n", __func__, temp);
++			break;
++		}
++		_wake_up_charger(pinfo);
++	} else {
++		chr_err("%s: format error!\n", __func__);
++	}
++	return size;
++}
++static DEVICE_ATTR_RW(yft_charging_current);
++
+ int mtk_chg_enable_vbus_ovp(bool enable)
+ {
+ 	static struct mtk_charger *pinfo;
+@@ -2784,6 +2863,9 @@ static int mtk_charger_plug_out(struct mtk_charger *info)
+ 		charger_dev_enable_6pin_battery_charging(info->chg1_dev, false);
+ 
+ 	mtk_adapter_protocol_init(info);
++	gftk_charger_type = 0;
++	pdata1->thermal_input_current_limit = -1;
++	info->fast_charging_indicator = 0x15;
+ 	return 0;
+ }
+ 
+@@ -2826,6 +2908,7 @@ static int mtk_charger_plug_in(struct mtk_charger *info,
+ 
+ 	charger_dev_plug_in(info->chg1_dev);
+ 	mtk_charger_force_disable_power_path(info, CHG1_SETTING, false);
++	gftk_charger_type = 1;
+ 
+ 	return 0;
+ }
+@@ -2878,6 +2961,24 @@ static void charger_send_kpoc_uevent(struct mtk_charger *info)
+ 	}
+ }
+ 
++static int kpoc_get_charger_boot_switch(void)
++{
++	struct device_node *np;
++	const char *bootargs;
++	char *p;
++
++	np = of_find_node_by_path("/chosen");
++	if (!np)
++		return 0;
++	bootargs = of_get_property(np, "bootargs", NULL);
++	p = strstr(bootargs, "charger_boot_switch=");
++	if (!p) {
++		printk("[%s]  bootargs is null\n", __func__);
++		return -1;
++	}
++	return simple_strtol(p + strlen("charger_boot_switch="), NULL, 10);
++}
++
+ static void kpoc_power_off_check(struct mtk_charger *info)
+ {
+ 	unsigned int boot_mode = info->bootmode;
+@@ -2907,6 +3008,11 @@ static void kpoc_power_off_check(struct mtk_charger *info)
+ 				counter++;
+ 			}
+ 		}
++		if (kpoc_get_charger_boot_switch() == 1 && get_uisoc(info) >= 5) {
++			chr_err("%s, charger_boot_switch=%d, soc=%d\n", __func__,
++				kpoc_get_charger_boot_switch(), get_uisoc(info));
++			kernel_power_off();
++		}
+ 		charger_send_kpoc_uevent(info);
+ 	}
+ }
+@@ -3249,6 +3355,9 @@ static int mtk_charger_setup_files(struct platform_device *pdev)
+ 	if (ret)
+ 		goto _out;
+ 
++	ret = device_create_file(&(pdev->dev), &dev_attr_gftk_charger_type);
++	ret = device_create_file(&(pdev->dev), &dev_attr_yft_charging_current);
++
+ 	battery_dir = proc_mkdir("mtk_battery_cmd", NULL);
+ 	if (!battery_dir) {
+ 		chr_err("%s: mkdir /proc/mtk_battery_cmd failed\n", __func__);
+@@ -3966,7 +4075,7 @@ static int mtk_charger_probe(struct platform_device *pdev)
+ 	sc_init(&info->sc);
+ 	info->chg_alg_nb.notifier_call = chg_alg_event;
+ 
+-	info->fast_charging_indicator = 0;
++	info->fast_charging_indicator = 0x15;
+ 	info->enable_meta_current_limit = 1;
+ 
+ 	info->is_charging = false;
+diff --git a/drivers/power/supply/mtk_charger.h b/drivers/power/supply/mtk_charger.h
+index bfcee5c..2bd7a78 100644
+--- a/drivers/power/supply/mtk_charger.h
++++ b/drivers/power/supply/mtk_charger.h
+@@ -69,6 +69,7 @@ struct charger_data;
+ /* battery warning */
+ #define BATTERY_NOTIFY_CASE_0001_VCHARGER
+ #define BATTERY_NOTIFY_CASE_0002_VBATTEMP
++#define BAT_LOW_TEMP_PROTECT_ENABLE	/* GQ5012BF1 (YFT) */
+ 
+ /* charging abnormal status */
+ #define CHG_VBUS_OV_STATUS	(1 << 0)
+diff --git a/drivers/power/supply/mtk_charger_intf.c b/drivers/power/supply/mtk_charger_intf.c
+index fc66d04..efe70f6 100644
+--- a/drivers/power/supply/mtk_charger_intf.c
++++ b/drivers/power/supply/mtk_charger_intf.c
+@@ -64,26 +64,14 @@
+ 
+ int get_uisoc(struct mtk_charger *info)
+ {
+-	union power_supply_propval prop;
++	union power_supply_propval prop = {0};
+ 	struct power_supply *bat_psy = NULL;
+ 	int ret;
+ 
+-	bat_psy = info->bat_psy;
+-
+-	if (bat_psy == NULL || IS_ERR(bat_psy)) {
+-		chr_err("%s retry to get bat_psy\n", __func__);
+-		bat_psy = devm_power_supply_get_by_phandle(&info->pdev->dev, "gauge");
+-		info->bat_psy = bat_psy;
+-	}
+-
+-	if (bat_psy == NULL || IS_ERR(bat_psy)) {
+-		chr_err("%s Couldn't get bat_psy\n", __func__);
+-		ret = 50;
+-	} else {
+-		ret = power_supply_get_property(bat_psy,
+-			POWER_SUPPLY_PROP_CAPACITY, &prop);
+-		ret = prop.intval;
+-	}
++	bat_psy = power_supply_get_by_name("3rd-gauge");
++	ret = power_supply_get_property(bat_psy,
++		POWER_SUPPLY_PROP_CAPACITY, &prop);
++	ret = prop.intval;
+ 
+ 	chr_debug("%s:%d\n", __func__,
+ 		ret);
+-- 
+2.55.0
+
