@@ -812,3 +812,17 @@ retained scripts were therefore searched for explicit:
 - `fastboot reboot recovery`
 
 No phone state was modified and Slot B was not booted.
+
+## Controlled plain Slot-B reboot produced logo hang
+
+A controlled plain A -> B transition was performed with an empty BCB and no
+targeted recovery/fastboot reboot command.
+
+The resulting B attempt remained at the boot logo and exposed neither ADB nor
+fastboot during the 120-second observation period.
+
+Because no B-side log was captured before rescue, the B-side LK boot mode
+remains unknown for this attempt.
+
+This distinguishes the experiment from the earlier immediately observable
+fastbootd/recovery path, but does not by itself prove which LK mode was used.
