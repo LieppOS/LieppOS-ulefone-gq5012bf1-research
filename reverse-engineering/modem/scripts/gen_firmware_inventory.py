@@ -23,7 +23,7 @@ while off + 0x200 <= len(img):
     rows.append((f'  {name}', f'modem.img @0x{off:x}', 'sub-image', dsz, h(body), 'LK', 'cert-covered', cons.get(name, cons.get(key, 'filter variant'))))
     off = (off + hsz + dsz + 15) & ~15
 mo = (FW/'mcf_ota.img').read_bytes()
-rows.append(('mcf_ota_a/mcf_ota_b', 'firmware/mcf_ota.img', 'ext4', len(mo), h(mo), 'ccci_mdinit/MD MCF (modem configuration framework) over ccci_fs', 'not signed (filesystem); contents MD-parsed', 'MCF: MTK_OTA*.mcfota, MTK_OPOTA_SBPID_*.mcfopota (49), MTK_NWOTA_SBPID_*.mcfnwota (28), HW_CONFIG_SAR_Type0_Set1_MMRF.mcfrawota; custom/ empty'))
+rows.append(('mcf_ota_a/mcf_ota_b', 'firmware/mcf_ota.img', 'ext4', len(mo), h(mo), 'ccci_mdinit/MD MCF (modem configuration framework) over ccci_fs', 'no AVB footer; platform verification unknown; contents MD-parsed', 'MCF: MTK_OTA*.mcfota, MTK_OPOTA_SBPID_*.mcfopota (49), MTK_NWOTA_SBPID_*.mcfnwota (28), HW_CONFIG_SAR_Type0_Set1_MMRF.mcfrawota; custom/ empty'))
 for sub in ('md', 'mdota'):
     d = V/'etc'/sub
     files = sorted(p for p in d.rglob('*') if p.is_file())
