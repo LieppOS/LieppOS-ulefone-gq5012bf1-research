@@ -1,0 +1,197 @@
+diff --git a/wlan/core/gen4m/common/wlan_oid.c b/wlan/core/gen4m/common/wlan_oid.c
+index 54b1d45..b83a496 100644
+--- a/wlan/core/gen4m/common/wlan_oid.c
++++ b/wlan/core/gen4m/common/wlan_oid.c
+@@ -15567,7 +15567,7 @@ uint32_t wlanoidFwEventIT(struct ADAPTER *prAdapter, void *pvBuffer,
+ 			aisGetTargetBssDesc(prAdapter, ucBssIndex);
+ 
+ 		/* Check roaming FSM and CSA states*/
+-		if (!roamingFsmInDecision(prAdapter, ucBssIndex)) {
++		if (!roamingFsmInDecision(prAdapter, FALSE, ucBssIndex)) {
+ 			DBGLOG(OID, WARN,
+ 				"Ignore FW-EVENT Roaming if not in decision or in CSA.\n");
+ 			return WLAN_STATUS_SUCCESS;
+diff --git a/wlan/core/gen4m/include/mgmt/roaming_fsm.h b/wlan/core/gen4m/include/mgmt/roaming_fsm.h
+index 6bc63c4..7ac67cf 100644
+--- a/wlan/core/gen4m/include/mgmt/roaming_fsm.h
++++ b/wlan/core/gen4m/include/mgmt/roaming_fsm.h
+@@ -233,7 +233,8 @@ void roamingFsmSetRecoverBitmap(struct ADAPTER *prAdapter,
+ 
+ void roamingFsmDoRecover(struct ADAPTER *prAdapter, uint8_t ucBssIndex);
+ 
+-uint8_t roamingFsmInDecision(struct ADAPTER *prAdapter, uint8_t ucBssIndex);
++uint8_t roamingFsmInDecision(struct ADAPTER *prAdapter,
++	u_int8_t fgIgnorePolicy, uint8_t ucBssIndex);
+ 
+ void roamingFsmRunEventRxFtAction(struct ADAPTER *prAdapter,
+ 			  struct SW_RFB *prSwRfb);
+diff --git a/wlan/core/gen4m/mgmt/ais_fsm.c b/wlan/core/gen4m/mgmt/ais_fsm.c
+index 0528225..48d07c3 100644
+--- a/wlan/core/gen4m/mgmt/ais_fsm.c
++++ b/wlan/core/gen4m/mgmt/ais_fsm.c
+@@ -3040,6 +3040,10 @@ void aisFsmSteps(struct ADAPTER *prAdapter,
+ 			prAisFsmInfo->u4SleepInterval =
+ 			    AIS_BG_SCAN_INTERVAL_MSEC;
+ 
++#if (CFG_SUPPORT_802_11BE_MLO == 1)
++			prAisFsmInfo->ucMlProbeSendCount = 0;
++#endif
++
+ #if (CFG_WOW_SUPPORT == 1)
+ 			if (prAdapter->fgWowLinkDownPendFlag == TRUE) {
+ 				prAdapter->fgWowLinkDownPendFlag = FALSE;
+@@ -3270,6 +3274,10 @@ send_msg:
+ 
+ 			prConnSettings->u2LinkIdBitmap = 0xFFFF;
+ 
++#if (CFG_SUPPORT_802_11BE_MLO == 1)
++			prAisFsmInfo->ucMlProbeSendCount = 0;
++#endif
++
+ 			break;
+ 
+ 		case AIS_STATE_DISCONNECTING:
+@@ -3878,7 +3886,7 @@ void aisFsmRunEventAbort(struct ADAPTER *prAdapter,
+ 		struct BSS_DESC *prBssDesc =
+ 			aisGetTargetBssDesc(prAdapter, ucBssIndex);
+ 
+-		if (!roamingFsmInDecision(prAdapter, ucBssIndex)) {
++		if (!roamingFsmInDecision(prAdapter, TRUE, ucBssIndex)) {
+ 			DBGLOG(AIS, STATE,
+ 				"Ignore roaming request if unable to roam\n");
+ 
+@@ -7090,9 +7098,9 @@ uint8_t aisBeaconTimeoutFilterPolicy(struct ADAPTER *prAdapter,
+ 	ais = aisGetAisFsmInfo(prAdapter, ucBssIndex);
+ 	rssi = prAdapter->rLinkQuality.rLq[ucBssIndex].cRssi;
+ #if (CFG_EXT_ROAMING == 1)
+-	if (roamingFsmInDecision(prAdapter, ucBssIndex) && rssi > -83)
++	if (roamingFsmInDecision(prAdapter, FALSE, ucBssIndex) && rssi > -83)
+ #else
+-	if (roamingFsmInDecision(prAdapter, ucBssIndex) && rssi > -70)
++	if (roamingFsmInDecision(prAdapter, FALSE, ucBssIndex) && rssi > -70)
+ #endif
+ 	{
+ 		/* Good rssi but beacon timeout happened => PER */
+@@ -7369,7 +7377,7 @@ uint8_t aisCheckNeedDriverRoaming(
+ 	/*
+ 	 * try to select AP only when roaming is enabled and rssi is bad
+ 	 */
+-	if (roamingFsmInDecision(prAdapter, ucBssIndex) &&
++	if (roamingFsmInDecision(prAdapter, FALSE, ucBssIndex) &&
+ 	    ais->eCurrentState == AIS_STATE_ONLINE_SCAN &&
+ 	    CHECK_FOR_TIMEOUT(roam->rRoamingDiscoveryUpdateTime,
+ 		      roam->rRoamingLastDecisionTime,
+@@ -10245,6 +10253,13 @@ static uint32_t aisScanGenMlScanReq(struct ADAPTER *prAdapter,
+ 		prScanReqMsg->u2IELenMl = (uint16_t)u4ScanIELen;
+ 	}
+ 
++#if (CFG_SUPPORT_802_11BE_MLO == 1)
++	/* MLO probe should only be sent once
++	 * in one scan process.
++	 */
++	prAisFsmInfo->ucMlProbeEnable = FALSE;
++#endif
++
+ 	return WLAN_STATUS_SUCCESS;
+ }
+ 
+diff --git a/wlan/core/gen4m/mgmt/roaming_fsm.c b/wlan/core/gen4m/mgmt/roaming_fsm.c
+index b72a10a..93abdbc 100644
+--- a/wlan/core/gen4m/mgmt/roaming_fsm.c
++++ b/wlan/core/gen4m/mgmt/roaming_fsm.c
+@@ -1382,7 +1382,7 @@ uint32_t roamingFsmProcessEvent(struct ADAPTER *prAdapter,
+ 			(struct CMD_ROAMING_TRANSIT *) &rTransit);
+ 
+ 		/* fail when roaming is ongoing or during CSA*/
+-		if (!roamingFsmInDecision(prAdapter, ucBssIndex)) {
++		if (!roamingFsmInDecision(prAdapter, FALSE, ucBssIndex)) {
+ 			DBGLOG(ROAMING, EVENT,
+ 				"There's ongoing roaming/CSA - ignore bssidx:%d\n",
+ 				ucBssIndex);
+@@ -1409,7 +1409,8 @@ uint32_t roamingFsmProcessEvent(struct ADAPTER *prAdapter,
+ 	return WLAN_STATUS_SUCCESS;
+ }
+ 
+-uint8_t roamingFsmInDecision(struct ADAPTER *prAdapter, uint8_t ucBssIndex)
++uint8_t roamingFsmInDecision(struct ADAPTER *prAdapter,
++	u_int8_t fgIgnorePolicy, uint8_t ucBssIndex)
+ {
+ 	struct AIS_FSM_INFO *ais;
+ 	struct ROAMING_INFO *roam;
+@@ -1431,8 +1432,7 @@ uint8_t roamingFsmInDecision(struct ADAPTER *prAdapter, uint8_t ucBssIndex)
+ 	       !aisFsmIsSwitchChannel(prAdapter, ais) &&
+ #endif
+ 	       !prAdapter->rWifiVar.fgDisRoaming &&
+-	       policy != CONNECT_BY_BSSID ?
+-	       TRUE : FALSE;
++	       (policy != CONNECT_BY_BSSID || fgIgnorePolicy);
+ }
+ 
+ u_int8_t roamingFsmCheckIfRoaming(struct ADAPTER *prAdapter,
+diff --git a/wlan/core/gen4m/nic/que_mgt.c b/wlan/core/gen4m/nic/que_mgt.c
+index 3e1d6ca..1f53911 100644
+--- a/wlan/core/gen4m/nic/que_mgt.c
++++ b/wlan/core/gen4m/nic/que_mgt.c
+@@ -5466,6 +5466,11 @@ void qmPopOutDueToFallAhead(struct ADAPTER *prAdapter,
+ 			QUEUE_REMOVE_HEAD(prReorderQue, prReorderedSwRfb,
+ 					struct SW_RFB *);
+ 
++			if (prReorderedSwRfb == NULL) {
++				DBGLOG(RX, ERROR, "Reordered SwRfb is Null");
++				break;
++			}
++
+ 			qmPopOutReorderPkt(prAdapter, prReorderQueParm,
+ 				prReorderedSwRfb, prReturnedQue,
+ 				RX_DATA_REORDER_AHEAD_COUNT);
+diff --git a/wlan/core/gen4m/os/linux/gl_kal.c b/wlan/core/gen4m/os/linux/gl_kal.c
+index 3795177..da10e07 100644
+--- a/wlan/core/gen4m/os/linux/gl_kal.c
++++ b/wlan/core/gen4m/os/linux/gl_kal.c
+@@ -13656,24 +13656,23 @@ int kalNapiPoll(struct napi_struct *napi, int budget)
+ #endif
+ 	static int32_t i4UserCnt;
+ 
++	if (HAL_IS_RX_DIRECT(prGlueInfo->prAdapter)) {
+ #if CFG_QUEUE_RX_IF_CONN_NOT_READY
+-	if (HAL_IS_RX_DIRECT(prAdapter))
+ 		nicRxDequeuePendingQueue(prAdapter);
+ #endif /* CFG_QUEUE_RX_IF_CONN_NOT_READY */
+-
+-	/* Added in qmHandleReorderBubbleTimeout */
+-	while (prReorderQueParm =
++		/* Added in qmHandleReorderBubbleTimeout */
++		while (prReorderQueParm =
+ 			getReorderQueParm(&prAdapter->rTimeoutRxBaEntry,
+ 				prAdapter, SPIN_LOCK_RX_FLUSH_TIMEOUT))
+-		qmFlushTimeoutReorderBubble(prAdapter, prReorderQueParm);
++			qmFlushTimeoutReorderBubble(prAdapter,
++				prReorderQueParm);
+ 
+-	/* Added in qmDelRxBaEntry */
+-	while (prReorderQueParm =
++		/* Added in qmDelRxBaEntry */
++		while (prReorderQueParm =
+ 			getReorderQueParm(&prAdapter->rFlushRxBaEntry,
+ 				prAdapter, SPIN_LOCK_RX_FLUSH_BA))
+-		qmFlushDeletedBaReorder(prAdapter, prReorderQueParm);
++			qmFlushDeletedBaReorder(prAdapter, prReorderQueParm);
+ 
+-	if (HAL_IS_RX_DIRECT(prGlueInfo->prAdapter)) {
+ 		/* Handle SwRFBs under RX-direct mode */
+ 		return TRACE(kalNapiPollSwRfb(napi, budget),
+ 			"kalNapiPollSwRfb");
+diff --git a/wlan/core/gen4m/os/linux/gl_p2p_kal.c b/wlan/core/gen4m/os/linux/gl_p2p_kal.c
+index fb7b44d..2581c37 100644
+--- a/wlan/core/gen4m/os/linux/gl_p2p_kal.c
++++ b/wlan/core/gen4m/os/linux/gl_p2p_kal.c
+@@ -193,7 +193,8 @@ kalP2PUpdateAssocInfo(struct GLUE_INFO *prGlueInfo,
+ 	else
+ 		prNetdevice = prGlueInfo->prP2PInfo
+ 			[prBssInfo->u4PrivateData]->aprRoleHandler;
+-
++	if (!prNetdevice)
++		return;
+ 	/* Send event to user space */
+ 	wireless_send_event(prNetdevice, IWEVASSOCREQIE, &wrqu, pucExtraInfo);
+ }
