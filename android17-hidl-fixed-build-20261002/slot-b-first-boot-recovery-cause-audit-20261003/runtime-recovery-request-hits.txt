@@ -1,0 +1,809 @@
+2-========================================================================
+3-
+4-FILES WITH MARKERS
+5-------------------------------------------------------------------------
+6-README.md
+7:  classes=BCB_RECOVERY,FORCE_NORMAL,INIT_FATAL,REBOOT_RECOVERY_REQUEST,RECOVERY_USERSPACE,WATCHDOG_RESET
+8-android17-clean-initboot-build-20261002.txt
+9-  classes=INIT_FATAL
+10-android17-live-b-capture-rescue-20261002/live-bootconfig.txt
+11-  classes=FORCE_NORMAL
+12-android17-live-b-capture-rescue-20261002/live-pl_lk.txt
+13-  classes=NORMAL_LK,WATCHDOG_RESET
+14-android17-live-b-capture-rescue-20261002/summary.txt
+15-  classes=FORCE_NORMAL,NORMAL_LK
+16-android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0
+17-  classes=INIT_FATAL,RECOVERY_LK,RECOVERY_USERSPACE
+18-android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt
+19-  classes=INIT_FATAL,RECOVERY_LK,RECOVERY_USERSPACE
+--
+50-lk-recovery-mode-static-analysis-20261002/current-a-pl_lk.txt
+51-  classes=NORMAL_LK,WATCHDOG_RESET
+52-lk-recovery-mode-static-analysis-20261002/lk-ab-strings.txt
+53-  classes=FORCE_NORMAL,INIT_FATAL
+54-lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt
+55:  classes=BCB_RECOVERY,REBOOT_RECOVERY_REQUEST
+56-lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt
+57:  classes=BCB_FASTBOOT,BCB_RECOVERY,FORCE_NORMAL,REBOOT_RECOVERY_REQUEST
+58-lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt
+59:  classes=BCB_FASTBOOT,BCB_RECOVERY,REBOOT_RECOVERY_REQUEST
+60-lk-recovery-mode-static-analysis-20261002/summary.txt
+61:  classes=BCB_FASTBOOT,BCB_RECOVERY,FORCE_NORMAL,INIT_FATAL,NORMAL_LK,REBOOT_RECOVERY_REQUEST
+62-vendor-b-v21-provenance-20261002.txt
+63-  classes=INIT_FATAL
+64-
+65-FILES CONTAINING BOTH NORMAL AND RECOVERY EVIDENCE
+66-------------------------------------------------------------------------
+67-android17-normal-boot-reference-20261002/summary.txt
+68-
+69-POTENTIAL REBOOT-TO-RECOVERY REQUESTS
+70-------------------------------------------------------------------------
+71-
+72:[REBOOT_RECOVERY_REQUEST] README.md:414
+73-    
+74-    - androidboot.force_normal_boot=1
+75-  > - boot-recovery / reboot-recovery
+76-    - recovery_check misc handling
+77-    - recovery image loading
+78-
+79:[BCB_RECOVERY] README.md:414
+80-    
+81-    - androidboot.force_normal_boot=1
+82-  > - boot-recovery / reboot-recovery
+83-    - recovery_check misc handling
+84-    - recovery image loading
+85-
+86:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:100
+87-      a7408 recovery_b
+88-      a75c3 wait_for_enter_fastboot
+89-  >   a75e4 boot-recovery
+90-      a7846 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+91-      a79cf [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d
+92-
+93:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:176
+94-      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+95-      bbd9e notify_enter_fastboot
+96-  >   bbdb4 reboot-recovery
+97-      bbdc4 slot-retry-count:a
+98-      bbdd7 slot-retry-count:b
+99-
+100:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:176
+101-      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+102-      bbd9e notify_enter_fastboot
+103-  >   bbdb4 reboot-recovery
+104-      bbdc4 slot-retry-count:a
+105-      bbdd7 slot-retry-count:b
+106-
+107:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:263
+108-     204b8a recovery_b
+109-     204edd wait_for_enter_fastboot
+110-  >  204efe boot-recovery
+111-     204f80 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+112-     2057c6 app/fastboot/fastboot.c
+113-
+114:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:320
+115-     211da6  => FASTBOOT mode...
+116-     2125be fastboot mode idle for a while. Trigger system reboot now...
+117-  >  2125fb reboot-recovery
+118-     21260b slot-retry-count:a
+119-     21261e slot-retry-count:b
+120-
+121:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:320
+122-     211da6  => FASTBOOT mode...
+123-     2125be fastboot mode idle for a while. Trigger system reboot now...
+124-  >  2125fb reboot-recovery
+125-     21260b slot-retry-count:a
+126-     21261e slot-retry-count:b
+127-
+128:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:422
+129-      a47d0  => FASTBOOT MODE
+130-      a6756 boot-fastboot
+131-  >   a75e4 boot-recovery
+132-      a96e4 misc
+133-      aa58f boot_mode_cmdline
+134-
+135:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:434
+136-      bb075  => FASTBOOT mode...
+137-      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+138-  >   bbdb4 reboot-recovery
+139-      bc069 %s:%d: [LK_AB] open misc fail
+140-      bd22d open misc fail
+141-
+142:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:434
+143-      bb075  => FASTBOOT mode...
+144-      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+145-  >   bbdb4 reboot-recovery
+146-      bc069 %s:%d: [LK_AB] open misc fail
+147-      bd22d open misc fail
+148-
+149:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:451
+150-     202473 kedump: WARN: invalid dram data [%d/%d] found in misc pt_note
+151-     2044f1 boot-fastboot
+152-  >  204efe boot-recovery
+153-     206603 kedump: miscs[%p], size %lx
+154-     206670 misc
+155-
+156:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:462
+157-     211da6  => FASTBOOT mode...
+158-     2125be fastboot mode idle for a while. Trigger system reboot now...
+159-  >  2125fb reboot-recovery
+160-     212705 %s:%d: [LK_AB] open misc fail
+161-     2133ff open misc fail
+162-
+163:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:462
+164-     211da6  => FASTBOOT mode...
+165-     2125be fastboot mode idle for a while. Trigger system reboot now...
+166-  >  2125fb reboot-recovery
+167-     212705 %s:%d: [LK_AB] open misc fail
+168-     2133ff open misc fail
+169-
+170:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2044
+171-      a7408 recovery_b
+172-      a74fc [AVB] persist offset = 0x%llx
+173-  >   a75e4 boot-recovery
+174-      a8d15 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+175-      a90ff [FASTBOOT] Enable USB2JTAG
+176-
+177:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2086
+178-      b9a38 [AVB] img_auth_required = %d
+179-      ba8f0 [AVB] Failed to clear dm verity status
+180-  >   bbdb4 reboot-recovery
+181-      bcad4 [AVB] Fail To Get Verification Disabled Bit
+182-      bd4d5 [recovery_check] open misc partition fail
+183-
+184:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2086
+185-      b9a38 [AVB] img_auth_required = %d
+186-      ba8f0 [AVB] Failed to clear dm verity status
+187-  >   bbdb4 reboot-recovery
+188-      bcad4 [AVB] Fail To Get Verification Disabled Bit
+189-      bd4d5 [recovery_check] open misc partition fail
+190-
+191:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2115
+192-     204031 [FASTBOOT] USB2JTAG Done!
+193-     204b8a recovery_b
+194-  >  204efe boot-recovery
+195-     205d98 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+196-     2060ca [FASTBOOT] Enable USB2JTAG
+197-
+198:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2129
+199-     20e3e9 [RTC]RG_SEQ_OFF write fail.
+200-     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+201-  >  2125fb reboot-recovery
+202-     214356 [FASTBOOT] oem printk-ratelimit on!
+203-     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+204-
+205:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2129
+206-     20e3e9 [RTC]RG_SEQ_OFF write fail.
+207-     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+208-  >  2125fb reboot-recovery
+209-     214356 [FASTBOOT] oem printk-ratelimit on!
+210-     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+211-
+212:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2285
+213-    3974  0x000a7408 0x000a7408 10   11           ascii   recovery_b
+214-    3995  0x000a75c3 0x000a75c3 23   24           ascii   wait_for_enter_fastboot
+215-  > 3997  0x000a75e4 0x000a75e4 13   14           ascii   boot-recovery
+216-    4017  0x000a7846 0x000a7846 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+217-    4033  0x000a79cf 0x000a79cf 46   47           ascii   [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d\n
+218-
+219:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2355
+220-    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+221-    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+222-  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+223-    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+224-    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+225-
+226:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2355
+227-    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+228-    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+229-  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+230-    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+231-    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+232-
+233:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2423
+234-    18039 0x00204b8a 0x00204b8a 10   11           ascii   recovery_b
+235-    18072 0x00204edd 0x00204edd 23   24           ascii   wait_for_enter_fastboot
+236-  > 18074 0x00204efe 0x00204efe 13   14           ascii   boot-recovery
+237-    18079 0x00204f80 0x00204f80 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+238-    18156 0x002057c6 0x002057c6 23   24           ascii   app/fastboot/fastboot.c
+239-
+240:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2478
+241-    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+242-    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+243-  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+244-    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+245-    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+246-
+247:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2478
+248-    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+249-    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+250-  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+251-    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+252-    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+253-
+254:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:22
+255-      a7408 recovery_b
+256-      a75c3 wait_for_enter_fastboot
+257-  >   a75e4 boot-recovery
+258-      a7846 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+259-      a79cf [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d
+260-
+261:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:98
+262-      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+263-      bbd9e notify_enter_fastboot
+264-  >   bbdb4 reboot-recovery
+265-      bbdc4 slot-retry-count:a
+266-      bbdd7 slot-retry-count:b
+267-
+268:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:98
+269-      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+270-      bbd9e notify_enter_fastboot
+271-  >   bbdb4 reboot-recovery
+272-      bbdc4 slot-retry-count:a
+273-      bbdd7 slot-retry-count:b
+274-
+275:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:185
+276-     204b8a recovery_b
+277-     204edd wait_for_enter_fastboot
+278-  >  204efe boot-recovery
+279-     204f80 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+280-     2057c6 app/fastboot/fastboot.c
+281-
+282:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:242
+283-     211da6  => FASTBOOT mode...
+284-     2125be fastboot mode idle for a while. Trigger system reboot now...
+285-  >  2125fb reboot-recovery
+286-     21260b slot-retry-count:a
+287-     21261e slot-retry-count:b
+288-
+289:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:242
+290-     211da6  => FASTBOOT mode...
+291-     2125be fastboot mode idle for a while. Trigger system reboot now...
+292-  >  2125fb reboot-recovery
+293-     21260b slot-retry-count:a
+294-     21261e slot-retry-count:b
+295-
+296:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:13
+297-      a7408 recovery_b
+298-      a74fc [AVB] persist offset = 0x%llx
+299-  >   a75e4 boot-recovery
+300-      a8d15 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+301-      a90ff [FASTBOOT] Enable USB2JTAG
+302-
+303:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:55
+304-      b9a38 [AVB] img_auth_required = %d
+305-      ba8f0 [AVB] Failed to clear dm verity status
+306-  >   bbdb4 reboot-recovery
+307-      bcad4 [AVB] Fail To Get Verification Disabled Bit
+308-      bd4d5 [recovery_check] open misc partition fail
+309-
+310:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:55
+311-      b9a38 [AVB] img_auth_required = %d
+312-      ba8f0 [AVB] Failed to clear dm verity status
+313-  >   bbdb4 reboot-recovery
+314-      bcad4 [AVB] Fail To Get Verification Disabled Bit
+315-      bd4d5 [recovery_check] open misc partition fail
+316-
+317:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:84
+318-     204031 [FASTBOOT] USB2JTAG Done!
+319-     204b8a recovery_b
+320-  >  204efe boot-recovery
+321-     205d98 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+322-     2060ca [FASTBOOT] Enable USB2JTAG
+323-
+324:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:98
+325-     20e3e9 [RTC]RG_SEQ_OFF write fail.
+326-     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+327-  >  2125fb reboot-recovery
+328-     214356 [FASTBOOT] oem printk-ratelimit on!
+329-     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+330-
+331:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:98
+332-     20e3e9 [RTC]RG_SEQ_OFF write fail.
+333-     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+334-  >  2125fb reboot-recovery
+335-     214356 [FASTBOOT] oem printk-ratelimit on!
+336-     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+337-
+338:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:21
+339-    3974  0x000a7408 0x000a7408 10   11           ascii   recovery_b
+340-    3995  0x000a75c3 0x000a75c3 23   24           ascii   wait_for_enter_fastboot
+341-  > 3997  0x000a75e4 0x000a75e4 13   14           ascii   boot-recovery
+342-    4017  0x000a7846 0x000a7846 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+343-    4033  0x000a79cf 0x000a79cf 46   47           ascii   [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d\n
+344-
+345:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:91
+346-    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+347-    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+348-  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+349-    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+350-    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+351-
+352:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:91
+353-    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+354-    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+355-  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+356-    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+357-    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+358-
+359:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:159
+360-    18039 0x00204b8a 0x00204b8a 10   11           ascii   recovery_b
+361-    18072 0x00204edd 0x00204edd 23   24           ascii   wait_for_enter_fastboot
+362-  > 18074 0x00204efe 0x00204efe 13   14           ascii   boot-recovery
+363-    18079 0x00204f80 0x00204f80 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+364-    18156 0x002057c6 0x002057c6 23   24           ascii   app/fastboot/fastboot.c
+365-
+366:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:214
+367-    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+368-    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+369-  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+370-    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+371-    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+372-
+373:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:214
+374-    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+375-    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+376-  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+377-    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+378-    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+379-
+380-ALL HIGH-VALUE MARKERS
+381-------------------------------------------------------------------------
+382-
+383-[INIT_FATAL] README.md:205
+384-    failed Slot-B attempt.
+385-    
+--
+455-    
+456-  > - androidboot.force_normal_boot=1
+457-    - boot-recovery / reboot-recovery
+458-    - recovery_check misc handling
+459-
+460:[REBOOT_RECOVERY_REQUEST] README.md:414
+461-    
+462-    - androidboot.force_normal_boot=1
+463-  > - boot-recovery / reboot-recovery
+464-    - recovery_check misc handling
+465-    - recovery image loading
+466-
+467:[BCB_RECOVERY] README.md:414
+468-    
+469-    - androidboot.force_normal_boot=1
+470-  > - boot-recovery / reboot-recovery
+471-    - recovery_check misc handling
+472-    - recovery image loading
+473-
+474-[RECOVERY_USERSPACE] fastbootd-logical-partition-preflight-20261002.txt:1
+475-  > ===== FASTBOOTD MODE =====
+476-    is-userspace: yes
+477-    Finished. Total time: 0.001s
+478-
+479-[RECOVERY_USERSPACE] fastbootd-mapper-diagnosis-20261002.txt:13
+--
+1601-      a62a7 [FASTBOOT] USB2JTAG Done!
+1602-  >   a6756 boot-fastboot
+1603-      a6764 set slot a failed!
+1604-      a67d9 Lock the device successfully! Will return to fastboot in 3s
+1605-
+1606:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:100
+1607-      a7408 recovery_b
+1608-      a75c3 wait_for_enter_fastboot
+1609-  >   a75e4 boot-recovery
+1610-      a7846 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+1611-      a79cf [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d
+1612-
+1613:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:176
+1614-      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+1615-      bbd9e notify_enter_fastboot
+1616-  >   bbdb4 reboot-recovery
+1617-      bbdc4 slot-retry-count:a
+1618-      bbdd7 slot-retry-count:b
+1619-
+1620:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:176
+1621-      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+1622-      bbd9e notify_enter_fastboot
+1623-  >   bbdb4 reboot-recovery
+1624-      bbdc4 slot-retry-count:a
+1625-      bbdd7 slot-retry-count:b
+1626-
+1627-[FORCE_NORMAL] lk-recovery-mode-static-analysis-20261002/summary.txt:192
+1628-      bcbff : Read incorrect number of bytes.
+1629-      bd22d open misc fail
+1630-  >   bd332 androidboot.force_normal_boot=1
+1631-      bd4a6 %s:%d: [LK_AB] unknown slot suffix
+1632-      bd4d5 [recovery_check] open misc partition fail
+--
+1643-     204031 [FASTBOOT] USB2JTAG Done!
+1644-  >  2044f1 boot-fastboot
+1645-     2044ff set slot a failed!
+1646-     204574 Lock the device successfully! Will return to fastboot in 3s
+1647-
+1648:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:263
+1649-     204b8a recovery_b
+1650-     204edd wait_for_enter_fastboot
+1651-  >  204efe boot-recovery
+1652-     204f80 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+1653-     2057c6 app/fastboot/fastboot.c
+1654-
+1655:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:320
+1656-     211da6  => FASTBOOT mode...
+1657-     2125be fastboot mode idle for a while. Trigger system reboot now...
+1658-  >  2125fb reboot-recovery
+1659-     21260b slot-retry-count:a
+1660-     21261e slot-retry-count:b
+1661-
+1662:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:320
+1663-     211da6  => FASTBOOT mode...
+1664-     2125be fastboot mode idle for a while. Trigger system reboot now...
+1665-  >  2125fb reboot-recovery
+1666-     21260b slot-retry-count:a
+1667-     21261e slot-retry-count:b
+1668-
+1669-[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:333
+1670-     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+1671-     214733 mt6685_rtc_read
+1672-  >  214873 reboot-fastboot
+1673-     2149e2 platform_pl_boottags_boot_mode_hook
+1674-     214c86 [RTC]MT6685_RGDCXO_AAC_ELR_1 write fail.
+--
+1678-      a47d0  => FASTBOOT MODE
+1679-  >   a6756 boot-fastboot
+1680-      a75e4 boot-recovery
+1681-      a96e4 misc
+1682-
+1683:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:422
+1684-      a47d0  => FASTBOOT MODE
+1685-      a6756 boot-fastboot
+1686-  >   a75e4 boot-recovery
+1687-      a96e4 misc
+1688-      aa58f boot_mode_cmdline
+1689-
+1690:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:434
+1691-      bb075  => FASTBOOT mode...
+1692-      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+1693-  >   bbdb4 reboot-recovery
+1694-      bc069 %s:%d: [LK_AB] open misc fail
+1695-      bd22d open misc fail
+1696-
+1697:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:434
+1698-      bb075  => FASTBOOT mode...
+1699-      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+1700-  >   bbdb4 reboot-recovery
+1701-      bc069 %s:%d: [LK_AB] open misc fail
+1702-      bd22d open misc fail
+1703-
+1704-[FORCE_NORMAL] lk-recovery-mode-static-analysis-20261002/summary.txt:437
+1705-      bc069 %s:%d: [LK_AB] open misc fail
+1706-      bd22d open misc fail
+1707-  >   bd332 androidboot.force_normal_boot=1
+1708-      bd4d5 [recovery_check] open misc partition fail
+1709-      bd8b9 %s, no plt_dfd_misc_decode function
+--
+1720-     202473 kedump: WARN: invalid dram data [%d/%d] found in misc pt_note
+1721-  >  2044f1 boot-fastboot
+1722-     204efe boot-recovery
+1723-     206603 kedump: miscs[%p], size %lx
+1724-
+1725:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:451
+1726-     202473 kedump: WARN: invalid dram data [%d/%d] found in misc pt_note
+1727-     2044f1 boot-fastboot
+1728-  >  204efe boot-recovery
+1729-     206603 kedump: miscs[%p], size %lx
+1730-     206670 misc
+1731-
+1732:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:462
+1733-     211da6  => FASTBOOT mode...
+1734-     2125be fastboot mode idle for a while. Trigger system reboot now...
+1735-  >  2125fb reboot-recovery
+1736-     212705 %s:%d: [LK_AB] open misc fail
+1737-     2133ff open misc fail
+1738-
+1739:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:462
+1740-     211da6  => FASTBOOT mode...
+1741-     2125be fastboot mode idle for a while. Trigger system reboot now...
+1742-  >  2125fb reboot-recovery
+1743-     212705 %s:%d: [LK_AB] open misc fail
+1744-     2133ff open misc fail
+1745-
+1746-[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:466
+1747-     2133ff open misc fail
+1748-     213691 %s, no plt_dfd_misc_decode function
+1749-  >  214873 reboot-fastboot
+1750-     2149e2 platform_pl_boottags_boot_mode_hook
+1751-     215241 kedump: misc[%p] %llx@%llx
+--
+1769-     162dfb log_store_buf_map
+1770-  >  162e35 [GZ_INIT][PART] %s: '%s' vmm_alloc_physical failed
+1771-     16308f [SPI][ERR]: failed to malloc mtk_spi_bus[%d]
+1772-     16317e TFA: vmm_alloc_physical failed
+1773-
+1774:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2044
+1775-      a7408 recovery_b
+1776-      a74fc [AVB] persist offset = 0x%llx
+1777-  >   a75e4 boot-recovery
+1778-      a8d15 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+1779-      a90ff [FASTBOOT] Enable USB2JTAG
+1780-
+1781:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2086
+1782-      b9a38 [AVB] img_auth_required = %d
+1783-      ba8f0 [AVB] Failed to clear dm verity status
+1784-  >   bbdb4 reboot-recovery
+1785-      bcad4 [AVB] Fail To Get Verification Disabled Bit
+1786-      bd4d5 [recovery_check] open misc partition fail
+1787-
+1788:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2086
+1789-      b9a38 [AVB] img_auth_required = %d
+1790-      ba8f0 [AVB] Failed to clear dm verity status
+1791-  >   bbdb4 reboot-recovery
+1792-      bcad4 [AVB] Fail To Get Verification Disabled Bit
+1793-      bd4d5 [recovery_check] open misc partition fail
+1794-
+1795:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2115
+1796-     204031 [FASTBOOT] USB2JTAG Done!
+1797-     204b8a recovery_b
+1798-  >  204efe boot-recovery
+1799-     205d98 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+1800-     2060ca [FASTBOOT] Enable USB2JTAG
+1801-
+1802:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2129
+1803-     20e3e9 [RTC]RG_SEQ_OFF write fail.
+1804-     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+1805-  >  2125fb reboot-recovery
+1806-     214356 [FASTBOOT] oem printk-ratelimit on!
+1807-     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+1808-
+1809:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2129
+1810-     20e3e9 [RTC]RG_SEQ_OFF write fail.
+1811-     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+1812-  >  2125fb reboot-recovery
+1813-     214356 [FASTBOOT] oem printk-ratelimit on!
+1814-     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+1815-
+1816-[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:2279
+1817-    3800  0x000a628f 0x000a628f 23   24           ascii   [FASTBOOT] oem p2u off!
+1818-    3801  0x000a62a7 0x000a62a7 25   26           ascii   [FASTBOOT] USB2JTAG Done!
+1819-  > 3843  0x000a6756 0x000a6756 13   14           ascii   boot-fastboot
+1820-    3844  0x000a6764 0x000a6764 18   19           ascii   set slot a failed!
+1821-    3849  0x000a67d9 0x000a67d9 60   61           ascii   Lock the device successfully! Will return to fastboot in 3s\n
+1822-
+1823:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2285
+1824-    3974  0x000a7408 0x000a7408 10   11           ascii   recovery_b
+1825-    3995  0x000a75c3 0x000a75c3 23   24           ascii   wait_for_enter_fastboot
+1826-  > 3997  0x000a75e4 0x000a75e4 13   14           ascii   boot-recovery
+1827-    4017  0x000a7846 0x000a7846 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+1828-    4033  0x000a79cf 0x000a79cf 46   47           ascii   [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d\n
+1829-
+1830:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2355
+1831-    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+1832-    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+1833-  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+1834-    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+1835-    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+1836-
+1837:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2355
+1838-    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+1839-    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+1840-  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+1841-    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+1842-    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+1843-
+1844-[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:2369
+1845-    7306  0x000bf1e2 0x000bf1e2 64   65           ascii   [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d\n
+1846-    7307  0x000bf223 0x000bf223 15   16           ascii   mt6685_rtc_read
+1847-  > 7310  0x000bf24f 0x000bf24f 15   16           ascii   reboot-fastboot
+1848-    7335  0x000bf53e 0x000bf53e 35   36           ascii   platform_pl_boottags_boot_mode_hook
+1849-    7387  0x000bfb55 0x000bfb55 41   42           ascii   [RTC]MT6685_RGDCXO_AAC_ELR_1 write fail.\n
+--
+1853-    17923 0x00204031 0x00204031 25   26           ascii   [FASTBOOT] USB2JTAG Done!
+1854-  > 17961 0x002044f1 0x002044f1 13   14           ascii   boot-fastboot
+1855-    17962 0x002044ff 0x002044ff 18   19           ascii   set slot a failed!
+1856-    17967 0x00204574 0x00204574 60   61           ascii   Lock the device successfully! Will return to fastboot in 3s\n
+1857-
+1858:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2423
+1859-    18039 0x00204b8a 0x00204b8a 10   11           ascii   recovery_b
+1860-    18072 0x00204edd 0x00204edd 23   24           ascii   wait_for_enter_fastboot
+1861-  > 18074 0x00204efe 0x00204efe 13   14           ascii   boot-recovery
+1862-    18079 0x00204f80 0x00204f80 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+1863-    18156 0x002057c6 0x002057c6 23   24           ascii   app/fastboot/fastboot.c
+1864-
+1865:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2478
+1866-    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+1867-    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+1868-  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+1869-    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+1870-    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+1871-
+1872:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2478
+1873-    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+1874-    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+1875-  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+1876-    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+1877-    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+1878-
+1879-[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:2491
+1880-    20271 0x002146f2 0x002146f2 64   65           ascii   [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d\n
+1881-    20272 0x00214733 0x00214733 15   16           ascii   mt6685_rtc_read
+1882-  > 20285 0x00214873 0x00214873 15   16           ascii   reboot-fastboot
+1883-    20299 0x002149e2 0x002149e2 35   36           ascii   platform_pl_boottags_boot_mode_hook
+1884-    20324 0x00214c86 0x00214c86 41   42           ascii   [RTC]MT6685_RGDCXO_AAC_ELR_1 write fail.\n
+--
+1902-      a62a7 [FASTBOOT] USB2JTAG Done!
+1903-  >   a6756 boot-fastboot
+1904-      a6764 set slot a failed!
+1905-      a67d9 Lock the device successfully! Will return to fastboot in 3s
+1906-
+1907:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:22
+1908-      a7408 recovery_b
+1909-      a75c3 wait_for_enter_fastboot
+1910-  >   a75e4 boot-recovery
+1911-      a7846 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+1912-      a79cf [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d
+1913-
+1914:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:98
+1915-      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+1916-      bbd9e notify_enter_fastboot
+1917-  >   bbdb4 reboot-recovery
+1918-      bbdc4 slot-retry-count:a
+1919-      bbdd7 slot-retry-count:b
+1920-
+1921:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:98
+1922-      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+1923-      bbd9e notify_enter_fastboot
+1924-  >   bbdb4 reboot-recovery
+1925-      bbdc4 slot-retry-count:a
+1926-      bbdd7 slot-retry-count:b
+1927-
+1928-[FORCE_NORMAL] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:114
+1929-      bcbff : Read incorrect number of bytes.
+1930-      bd22d open misc fail
+1931-  >   bd332 androidboot.force_normal_boot=1
+1932-      bd4a6 %s:%d: [LK_AB] unknown slot suffix
+1933-      bd4d5 [recovery_check] open misc partition fail
+--
+1944-     204031 [FASTBOOT] USB2JTAG Done!
+1945-  >  2044f1 boot-fastboot
+1946-     2044ff set slot a failed!
+1947-     204574 Lock the device successfully! Will return to fastboot in 3s
+1948-
+1949:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:185
+1950-     204b8a recovery_b
+1951-     204edd wait_for_enter_fastboot
+1952-  >  204efe boot-recovery
+1953-     204f80 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+1954-     2057c6 app/fastboot/fastboot.c
+1955-
+1956:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:242
+1957-     211da6  => FASTBOOT mode...
+1958-     2125be fastboot mode idle for a while. Trigger system reboot now...
+1959-  >  2125fb reboot-recovery
+1960-     21260b slot-retry-count:a
+1961-     21261e slot-retry-count:b
+1962-
+1963:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:242
+1964-     211da6  => FASTBOOT mode...
+1965-     2125be fastboot mode idle for a while. Trigger system reboot now...
+1966-  >  2125fb reboot-recovery
+1967-     21260b slot-retry-count:a
+1968-     21261e slot-retry-count:b
+1969-
+1970-[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:255
+1971-     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+1972-     214733 mt6685_rtc_read
+1973-  >  214873 reboot-fastboot
+1974-     2149e2 platform_pl_boottags_boot_mode_hook
+1975-     214c86 [RTC]MT6685_RGDCXO_AAC_ELR_1 write fail.
+--
+1993-     162dfb log_store_buf_map
+1994-  >  162e35 [GZ_INIT][PART] %s: '%s' vmm_alloc_physical failed
+1995-     16308f [SPI][ERR]: failed to malloc mtk_spi_bus[%d]
+1996-     16317e TFA: vmm_alloc_physical failed
+1997-
+1998:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:13
+1999-      a7408 recovery_b
+2000-      a74fc [AVB] persist offset = 0x%llx
+2001-  >   a75e4 boot-recovery
+2002-      a8d15 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+2003-      a90ff [FASTBOOT] Enable USB2JTAG
+2004-
+2005:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:55
+2006-      b9a38 [AVB] img_auth_required = %d
+2007-      ba8f0 [AVB] Failed to clear dm verity status
+2008-  >   bbdb4 reboot-recovery
+2009-      bcad4 [AVB] Fail To Get Verification Disabled Bit
+2010-      bd4d5 [recovery_check] open misc partition fail
+2011-
+2012:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:55
+2013-      b9a38 [AVB] img_auth_required = %d
+2014-      ba8f0 [AVB] Failed to clear dm verity status
+2015-  >   bbdb4 reboot-recovery
+2016-      bcad4 [AVB] Fail To Get Verification Disabled Bit
+2017-      bd4d5 [recovery_check] open misc partition fail
+2018-
+2019:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:84
+2020-     204031 [FASTBOOT] USB2JTAG Done!
+2021-     204b8a recovery_b
+2022-  >  204efe boot-recovery
+2023-     205d98 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+2024-     2060ca [FASTBOOT] Enable USB2JTAG
+2025-
+2026:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:98
+2027-     20e3e9 [RTC]RG_SEQ_OFF write fail.
+2028-     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+2029-  >  2125fb reboot-recovery
+2030-     214356 [FASTBOOT] oem printk-ratelimit on!
+2031-     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+2032-
+2033:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:98
+2034-     20e3e9 [RTC]RG_SEQ_OFF write fail.
+2035-     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+2036-  >  2125fb reboot-recovery
+2037-     214356 [FASTBOOT] oem printk-ratelimit on!
+2038-     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+2039-
+2040-[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:15
+2041-    3800  0x000a628f 0x000a628f 23   24           ascii   [FASTBOOT] oem p2u off!
+2042-    3801  0x000a62a7 0x000a62a7 25   26           ascii   [FASTBOOT] USB2JTAG Done!
+2043-  > 3843  0x000a6756 0x000a6756 13   14           ascii   boot-fastboot
+2044-    3844  0x000a6764 0x000a6764 18   19           ascii   set slot a failed!
+2045-    3849  0x000a67d9 0x000a67d9 60   61           ascii   Lock the device successfully! Will return to fastboot in 3s\n
+2046-
+2047:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:21
+2048-    3974  0x000a7408 0x000a7408 10   11           ascii   recovery_b
+2049-    3995  0x000a75c3 0x000a75c3 23   24           ascii   wait_for_enter_fastboot
+2050-  > 3997  0x000a75e4 0x000a75e4 13   14           ascii   boot-recovery
+2051-    4017  0x000a7846 0x000a7846 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+2052-    4033  0x000a79cf 0x000a79cf 46   47           ascii   [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d\n
+2053-
+2054:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:91
+2055-    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+2056-    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+2057-  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+2058-    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+2059-    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+2060-
+2061:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:91
+2062-    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+2063-    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+2064-  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+2065-    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+2066-    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+2067-
+2068-[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:105
+2069-    7306  0x000bf1e2 0x000bf1e2 64   65           ascii   [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d\n
+2070-    7307  0x000bf223 0x000bf223 15   16           ascii   mt6685_rtc_read
+2071-  > 7310  0x000bf24f 0x000bf24f 15   16           ascii   reboot-fastboot
+2072-    7335  0x000bf53e 0x000bf53e 35   36           ascii   platform_pl_boottags_boot_mode_hook
+2073-    7387  0x000bfb55 0x000bfb55 41   42           ascii   [RTC]MT6685_RGDCXO_AAC_ELR_1 write fail.\n
+--
+2077-    17923 0x00204031 0x00204031 25   26           ascii   [FASTBOOT] USB2JTAG Done!
+2078-  > 17961 0x002044f1 0x002044f1 13   14           ascii   boot-fastboot
+2079-    17962 0x002044ff 0x002044ff 18   19           ascii   set slot a failed!
+2080-    17967 0x00204574 0x00204574 60   61           ascii   Lock the device successfully! Will return to fastboot in 3s\n
+2081-
+2082:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:159
+2083-    18039 0x00204b8a 0x00204b8a 10   11           ascii   recovery_b
+2084-    18072 0x00204edd 0x00204edd 23   24           ascii   wait_for_enter_fastboot
+2085-  > 18074 0x00204efe 0x00204efe 13   14           ascii   boot-recovery
+2086-    18079 0x00204f80 0x00204f80 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+2087-    18156 0x002057c6 0x002057c6 23   24           ascii   app/fastboot/fastboot.c
+2088-
+2089:[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:214
+2090-    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+2091-    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+2092-  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+2093-    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+2094-    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+2095-
+2096:[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:214
+2097-    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+2098-    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+2099-  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+2100-    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+2101-    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+2102-
+2103-[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:227
+2104-    20271 0x002146f2 0x002146f2 64   65           ascii   [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d\n
+2105-    20272 0x00214733 0x00214733 15   16           ascii   mt6685_rtc_read
+2106-  > 20285 0x00214873 0x00214873 15   16           ascii   reboot-fastboot
+2107-    20299 0x002149e2 0x002149e2 35   36           ascii   platform_pl_boottags_boot_mode_hook
+2108-    20324 0x00214c86 0x00214c86 41   42           ascii   [RTC]MT6685_RGDCXO_AAC_ELR_1 write fail.\n

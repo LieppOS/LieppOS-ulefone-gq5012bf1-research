@@ -1,0 +1,95 @@
+ANDROID 17 REBOOT/RECOVERY TRIGGER SCAN
+========================================================================
+
+ROOTS:
+  /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/root
+  /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system
+  /mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system_ext
+  /mnt/SamsungSSD/android/lineage-24.0/device/ulefone
+
+HITS=9
+
+------------------------------------------------------------------------
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/netbpfload.rc:68
+        disabled # started on demand via trigger
+        user root
+        oneshot
+  >     reboot_on_failure reboot,netbpfload-missing
+        updatable
+
+------------------------------------------------------------------------
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/netd.rc:13
+        updatable
+        # these two only apply to 'netd1shot'
+        oneshot
+  >     reboot_on_failure reboot,netd1shot-fail
+    
+    # Keep in sync with 'netd1shot' above.
+    service netd /system/bin/netd
+
+------------------------------------------------------------------------
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/vold.rc:10
+        shutdown critical
+        group root reserved_disk
+        user root
+  >     reboot_on_failure reboot,vold-failed
+
+------------------------------------------------------------------------
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc:8
+        group system
+        oneshot
+        disabled # does not start with the core class
+  >     reboot_on_failure reboot,apexd-failed
+        # CAP_CHOWN, CAP_DAC_OVERRIDE, CAP_DAC_READ_SEARCH required for apexdata snapshot & restore
+        # CAP_SYS_ADMIN is required to access device-mapper and to use mount syscall
+        capabilities CHOWN DAC_OVERRIDE DAC_READ_SEARCH FOWNER SYS_ADMIN MKNOD
+
+------------------------------------------------------------------------
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc:18
+        group system
+        oneshot
+        disabled
+  >     reboot_on_failure reboot,bootloader,bootstrap-apexd-failed
+        # CAP_SYS_ADMIN is required to access device-mapper and to use mount syscall
+        # apexd-bootstrap doesn't manage apexdata snapshot & restore, hence no need for other capabilities.
+        capabilities SYS_ADMIN MKNOD
+
+------------------------------------------------------------------------
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:529
+    import /system/etc/init/hw/init.boringssl.${ro.zygote}.rc
+    
+    service boringssl_self_test32 /system/bin/boringssl_self_test32
+  >     reboot_on_failure reboot,boringssl-self-check-failed
+        stdio_to_kmsg
+        # Explicitly specify that boringssl_self_test32 doesn't require any capabilities
+        capabilities
+
+------------------------------------------------------------------------
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:536
+        user nobody
+    
+    service boringssl_self_test64 /system/bin/boringssl_self_test64
+  >     reboot_on_failure reboot,boringssl-self-check-failed
+        stdio_to_kmsg
+        # Explicitly specify that boringssl_self_test64 doesn't require any capabilities
+        capabilities
+
+------------------------------------------------------------------------
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:543
+        user nobody
+    
+    service boringssl_self_test_apex32 /apex/com.android.conscrypt/bin/boringssl_self_test32
+  >     reboot_on_failure reboot,boringssl-self-check-failed
+        stdio_to_kmsg
+        # Explicitly specify that boringssl_self_test_apex32 doesn't require any capabilities
+        capabilities
+
+------------------------------------------------------------------------
+/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/hw/init.rc:550
+        user nobody
+    
+    service boringssl_self_test_apex64 /apex/com.android.conscrypt/bin/boringssl_self_test64
+  >     reboot_on_failure reboot,boringssl-self-check-failed
+        stdio_to_kmsg
+        # Explicitly specify that boringssl_self_test_apex64 doesn't require any capabilities
+        capabilities

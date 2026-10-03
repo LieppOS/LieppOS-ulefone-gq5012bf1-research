@@ -1,0 +1,23 @@
+PROVEN:
+- Linux recovery reboot mode is stored in WDT NONRST_REG2[3:0].
+- recovery value is 2.
+- LK consumes and clears that value on the next boot.
+- LK low-field writer is 0x3dc5c.
+- Static direct xrefs to 0x3dc5c are limited to three call sites:
+    * mode 3 reboot/bootloader command path
+    * mode 2 recovery/fastboot command path
+    * mode 0 path at 0x54b40
+- The mode 2/3 code is adjacent reboot-command machinery, not the
+  normal LK boot-mode-selection routine.
+
+PRIMARY OPEN QUESTION:
+Did the first Slot-B Android boot request a recovery reboot before the
+captured subsequent LK invocation reported boot mode 2?
+
+DECISIVE EXISTING EVIDENCE:
+- a retained log showing B/LK mode 0 before a later B/LK mode 2;
+- a kernel/init line such as "Restarting system with command 'recovery'";
+- sys.powerctl=reboot,recovery;
+- an init service with reboot_on_failure that can execute during early B boot.
+
+NO NEW SLOT-B BOOT IS REQUIRED FOR THIS AUDIT.

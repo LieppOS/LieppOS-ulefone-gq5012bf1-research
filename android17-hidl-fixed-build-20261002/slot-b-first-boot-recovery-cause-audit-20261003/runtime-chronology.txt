@@ -1,0 +1,2666 @@
+SLOT-B RUNTIME CHRONOLOGY / MARKER AUDIT
+========================================================================
+
+FILES WITH MARKERS
+------------------------------------------------------------------------
+README.md
+  classes=BCB_RECOVERY,FORCE_NORMAL,INIT_FATAL,REBOOT_RECOVERY_REQUEST,RECOVERY_USERSPACE,WATCHDOG_RESET
+android17-clean-initboot-build-20261002.txt
+  classes=INIT_FATAL
+android17-live-b-capture-rescue-20261002/live-bootconfig.txt
+  classes=FORCE_NORMAL
+android17-live-b-capture-rescue-20261002/live-pl_lk.txt
+  classes=NORMAL_LK,WATCHDOG_RESET
+android17-live-b-capture-rescue-20261002/summary.txt
+  classes=FORCE_NORMAL,NORMAL_LK
+android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0
+  classes=INIT_FATAL,RECOVERY_LK,RECOVERY_USERSPACE
+android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt
+  classes=INIT_FATAL,RECOVERY_LK,RECOVERY_USERSPACE
+android17-metadata-fix-boot-summary-20261002.txt
+  classes=INIT_FATAL,RECOVERY_LK,RECOVERY_USERSPACE
+android17-normal-boot-reference-20261002/a-bootconfig.txt
+  classes=FORCE_NORMAL
+android17-normal-boot-reference-20261002/a-pl_lk.txt
+  classes=NORMAL_LK,WATCHDOG_RESET
+android17-normal-boot-reference-20261002/summary.txt
+  classes=FORCE_NORMAL,NORMAL_LK,RECOVERY_LK,WATCHDOG_RESET
+android17-recovery-bootmode-source-20261002/current-a-pl_lk.txt
+  classes=NORMAL_LK,WATCHDOG_RESET
+android17-recovery-bootmode-source-20261002/summary.txt
+  classes=NORMAL_LK
+android17-slot-b-first-failure-deep-analysis-20261002.txt
+  classes=INIT_FATAL,NORMAL_LK
+android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0
+  classes=INIT_FATAL,NORMAL_LK
+android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0.sanitized.txt
+  classes=INIT_FATAL,NORMAL_LK
+android17-slot-b-first-failure-summary-20261002.txt
+  classes=FORCE_NORMAL,INIT_FATAL
+android17-slot-b-first-fatal-path-20261002.txt
+  classes=INIT_FATAL
+factory-vendorboot-locator-20261002.txt
+  classes=RECOVERY_USERSPACE
+fastbootd-logical-partition-preflight-20261002.txt
+  classes=RECOVERY_USERSPACE
+fastbootd-mapper-diagnosis-20261002.txt
+  classes=RECOVERY_USERSPACE
+lk-recovery-mode-static-analysis-20261002/current-a-pl_lk-signals.txt
+  classes=NORMAL_LK
+lk-recovery-mode-static-analysis-20261002/current-a-pl_lk.txt
+  classes=NORMAL_LK,WATCHDOG_RESET
+lk-recovery-mode-static-analysis-20261002/lk-ab-strings.txt
+  classes=FORCE_NORMAL,INIT_FATAL
+lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt
+  classes=BCB_RECOVERY,REBOOT_RECOVERY_REQUEST
+lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt
+  classes=BCB_FASTBOOT,BCB_RECOVERY,FORCE_NORMAL,REBOOT_RECOVERY_REQUEST
+lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt
+  classes=BCB_FASTBOOT,BCB_RECOVERY,REBOOT_RECOVERY_REQUEST
+lk-recovery-mode-static-analysis-20261002/summary.txt
+  classes=BCB_FASTBOOT,BCB_RECOVERY,FORCE_NORMAL,INIT_FATAL,NORMAL_LK,REBOOT_RECOVERY_REQUEST
+vendor-b-v21-provenance-20261002.txt
+  classes=INIT_FATAL
+
+FILES CONTAINING BOTH NORMAL AND RECOVERY EVIDENCE
+------------------------------------------------------------------------
+android17-normal-boot-reference-20261002/summary.txt
+
+POTENTIAL REBOOT-TO-RECOVERY REQUESTS
+------------------------------------------------------------------------
+
+[REBOOT_RECOVERY_REQUEST] README.md:414
+    
+    - androidboot.force_normal_boot=1
+  > - boot-recovery / reboot-recovery
+    - recovery_check misc handling
+    - recovery image loading
+
+[BCB_RECOVERY] README.md:414
+    
+    - androidboot.force_normal_boot=1
+  > - boot-recovery / reboot-recovery
+    - recovery_check misc handling
+    - recovery image loading
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:100
+      a7408 recovery_b
+      a75c3 wait_for_enter_fastboot
+  >   a75e4 boot-recovery
+      a7846 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+      a79cf [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:176
+      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+      bbd9e notify_enter_fastboot
+  >   bbdb4 reboot-recovery
+      bbdc4 slot-retry-count:a
+      bbdd7 slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:176
+      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+      bbd9e notify_enter_fastboot
+  >   bbdb4 reboot-recovery
+      bbdc4 slot-retry-count:a
+      bbdd7 slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:263
+     204b8a recovery_b
+     204edd wait_for_enter_fastboot
+  >  204efe boot-recovery
+     204f80 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+     2057c6 app/fastboot/fastboot.c
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:320
+     211da6  => FASTBOOT mode...
+     2125be fastboot mode idle for a while. Trigger system reboot now...
+  >  2125fb reboot-recovery
+     21260b slot-retry-count:a
+     21261e slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:320
+     211da6  => FASTBOOT mode...
+     2125be fastboot mode idle for a while. Trigger system reboot now...
+  >  2125fb reboot-recovery
+     21260b slot-retry-count:a
+     21261e slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:422
+      a47d0  => FASTBOOT MODE
+      a6756 boot-fastboot
+  >   a75e4 boot-recovery
+      a96e4 misc
+      aa58f boot_mode_cmdline
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:434
+      bb075  => FASTBOOT mode...
+      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+  >   bbdb4 reboot-recovery
+      bc069 %s:%d: [LK_AB] open misc fail
+      bd22d open misc fail
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:434
+      bb075  => FASTBOOT mode...
+      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+  >   bbdb4 reboot-recovery
+      bc069 %s:%d: [LK_AB] open misc fail
+      bd22d open misc fail
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:451
+     202473 kedump: WARN: invalid dram data [%d/%d] found in misc pt_note
+     2044f1 boot-fastboot
+  >  204efe boot-recovery
+     206603 kedump: miscs[%p], size %lx
+     206670 misc
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:462
+     211da6  => FASTBOOT mode...
+     2125be fastboot mode idle for a while. Trigger system reboot now...
+  >  2125fb reboot-recovery
+     212705 %s:%d: [LK_AB] open misc fail
+     2133ff open misc fail
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:462
+     211da6  => FASTBOOT mode...
+     2125be fastboot mode idle for a while. Trigger system reboot now...
+  >  2125fb reboot-recovery
+     212705 %s:%d: [LK_AB] open misc fail
+     2133ff open misc fail
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2044
+      a7408 recovery_b
+      a74fc [AVB] persist offset = 0x%llx
+  >   a75e4 boot-recovery
+      a8d15 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+      a90ff [FASTBOOT] Enable USB2JTAG
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2086
+      b9a38 [AVB] img_auth_required = %d
+      ba8f0 [AVB] Failed to clear dm verity status
+  >   bbdb4 reboot-recovery
+      bcad4 [AVB] Fail To Get Verification Disabled Bit
+      bd4d5 [recovery_check] open misc partition fail
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2086
+      b9a38 [AVB] img_auth_required = %d
+      ba8f0 [AVB] Failed to clear dm verity status
+  >   bbdb4 reboot-recovery
+      bcad4 [AVB] Fail To Get Verification Disabled Bit
+      bd4d5 [recovery_check] open misc partition fail
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2115
+     204031 [FASTBOOT] USB2JTAG Done!
+     204b8a recovery_b
+  >  204efe boot-recovery
+     205d98 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+     2060ca [FASTBOOT] Enable USB2JTAG
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2129
+     20e3e9 [RTC]RG_SEQ_OFF write fail.
+     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+  >  2125fb reboot-recovery
+     214356 [FASTBOOT] oem printk-ratelimit on!
+     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2129
+     20e3e9 [RTC]RG_SEQ_OFF write fail.
+     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+  >  2125fb reboot-recovery
+     214356 [FASTBOOT] oem printk-ratelimit on!
+     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2285
+    3974  0x000a7408 0x000a7408 10   11           ascii   recovery_b
+    3995  0x000a75c3 0x000a75c3 23   24           ascii   wait_for_enter_fastboot
+  > 3997  0x000a75e4 0x000a75e4 13   14           ascii   boot-recovery
+    4017  0x000a7846 0x000a7846 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+    4033  0x000a79cf 0x000a79cf 46   47           ascii   [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d\n
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2355
+    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2355
+    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2423
+    18039 0x00204b8a 0x00204b8a 10   11           ascii   recovery_b
+    18072 0x00204edd 0x00204edd 23   24           ascii   wait_for_enter_fastboot
+  > 18074 0x00204efe 0x00204efe 13   14           ascii   boot-recovery
+    18079 0x00204f80 0x00204f80 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+    18156 0x002057c6 0x002057c6 23   24           ascii   app/fastboot/fastboot.c
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2478
+    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2478
+    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:22
+      a7408 recovery_b
+      a75c3 wait_for_enter_fastboot
+  >   a75e4 boot-recovery
+      a7846 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+      a79cf [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:98
+      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+      bbd9e notify_enter_fastboot
+  >   bbdb4 reboot-recovery
+      bbdc4 slot-retry-count:a
+      bbdd7 slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:98
+      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+      bbd9e notify_enter_fastboot
+  >   bbdb4 reboot-recovery
+      bbdc4 slot-retry-count:a
+      bbdd7 slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:185
+     204b8a recovery_b
+     204edd wait_for_enter_fastboot
+  >  204efe boot-recovery
+     204f80 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+     2057c6 app/fastboot/fastboot.c
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:242
+     211da6  => FASTBOOT mode...
+     2125be fastboot mode idle for a while. Trigger system reboot now...
+  >  2125fb reboot-recovery
+     21260b slot-retry-count:a
+     21261e slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:242
+     211da6  => FASTBOOT mode...
+     2125be fastboot mode idle for a while. Trigger system reboot now...
+  >  2125fb reboot-recovery
+     21260b slot-retry-count:a
+     21261e slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:13
+      a7408 recovery_b
+      a74fc [AVB] persist offset = 0x%llx
+  >   a75e4 boot-recovery
+      a8d15 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+      a90ff [FASTBOOT] Enable USB2JTAG
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:55
+      b9a38 [AVB] img_auth_required = %d
+      ba8f0 [AVB] Failed to clear dm verity status
+  >   bbdb4 reboot-recovery
+      bcad4 [AVB] Fail To Get Verification Disabled Bit
+      bd4d5 [recovery_check] open misc partition fail
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:55
+      b9a38 [AVB] img_auth_required = %d
+      ba8f0 [AVB] Failed to clear dm verity status
+  >   bbdb4 reboot-recovery
+      bcad4 [AVB] Fail To Get Verification Disabled Bit
+      bd4d5 [recovery_check] open misc partition fail
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:84
+     204031 [FASTBOOT] USB2JTAG Done!
+     204b8a recovery_b
+  >  204efe boot-recovery
+     205d98 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+     2060ca [FASTBOOT] Enable USB2JTAG
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:98
+     20e3e9 [RTC]RG_SEQ_OFF write fail.
+     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+  >  2125fb reboot-recovery
+     214356 [FASTBOOT] oem printk-ratelimit on!
+     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:98
+     20e3e9 [RTC]RG_SEQ_OFF write fail.
+     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+  >  2125fb reboot-recovery
+     214356 [FASTBOOT] oem printk-ratelimit on!
+     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:21
+    3974  0x000a7408 0x000a7408 10   11           ascii   recovery_b
+    3995  0x000a75c3 0x000a75c3 23   24           ascii   wait_for_enter_fastboot
+  > 3997  0x000a75e4 0x000a75e4 13   14           ascii   boot-recovery
+    4017  0x000a7846 0x000a7846 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+    4033  0x000a79cf 0x000a79cf 46   47           ascii   [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d\n
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:91
+    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:91
+    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:159
+    18039 0x00204b8a 0x00204b8a 10   11           ascii   recovery_b
+    18072 0x00204edd 0x00204edd 23   24           ascii   wait_for_enter_fastboot
+  > 18074 0x00204efe 0x00204efe 13   14           ascii   boot-recovery
+    18079 0x00204f80 0x00204f80 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+    18156 0x002057c6 0x002057c6 23   24           ascii   app/fastboot/fastboot.c
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:214
+    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:214
+    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+
+ALL HIGH-VALUE MARKERS
+------------------------------------------------------------------------
+
+[INIT_FATAL] README.md:205
+    failed Slot-B attempt.
+    
+  > Initial inspection showed that the failed boot reached Android first-stage
+    init and loaded the expected MediaTek early kernel modules. No kernel
+    panic/oops was visible in the initial filtered forensic output.
+
+[WATCHDOG_RESET] README.md:217
+    - SELinux policy loading
+    - snapuserd / snapshot setup
+  > - watchdog and reboot paths
+    - kernel panic/oops/call-trace signatures
+    
+
+[INIT_FATAL] README.md:224
+    ## Android 17 failed boot — first-stage mount contract analysis
+    
+  > The first Android 17 Slot-B attempt was narrowed to an orderly init fatal
+    reboot immediately after the first observed EROFS logical-partition mount.
+    
+
+[INIT_FATAL] README.md:301
+    
+    Before the fix, Slot B reached first-stage system mounting and immediately
+  > entered init's fatal reboot-to-bootloader path.
+    
+    After adding the required root /metadata mountpoint, Slot B no longer performed
+
+[INIT_FATAL] README.md:313
+    ## Android 17 reached recovery userspace after metadata fix
+    
+  > The corrected system_b eliminated the previous first-stage fatal reboot.
+    
+    The subsequent Slot-B attempt reached:
+
+[RECOVERY_USERSPACE] README.md:324
+    The boot was not a normal Android userspace boot, however. MediaTek runtime
+    evidence reported bootmode 0x2 / boottype 0x2, corresponding to RECOVERY_BOOT.
+  > Recovery userspace then started and later entered fastbootd.
+    
+    The later fastboot set_active:a and reboot commands were the manual rescue and
+
+[RECOVERY_USERSPACE] README.md:327
+    
+    The later fastboot set_active:a and reboot commands were the manual rescue and
+  > occurred after recovery/fastbootd had already started.
+    
+    A read-only investigation of misc/BCB, MediaTek para state, current normal-A
+
+[FORCE_NORMAL] README.md:344
+    The current Slot-A `/chosen/atag,boot` data was therefore decoded explicitly,
+    and the complete `/proc/bootconfig` was captured to determine whether LK adds
+  > `androidboot.force_normal_boot=1` during a known-good normal boot.
+    
+    The misc BCB was also captured before any new Slot-B activation. A BCB observed
+
+[FORCE_NORMAL] README.md:373
+    The preboot BCB had been empty and the corrected Android 17 system_b was still
+    installed. After fallback, Slot A again reported normal MediaTek boot mode 0,
+  > force_normal_boot=1 and an empty BCB.
+    
+    Because the recovery classification is therefore being made before normal
+
+[FORCE_NORMAL] README.md:393
+    The preboot BCB had been empty and the corrected Android 17 system_b was still
+    installed. After fallback, Slot A again reported normal MediaTek boot mode 0,
+  > force_normal_boot=1 and an empty BCB.
+    
+    Because the recovery classification is therefore being made before normal
+
+[FORCE_NORMAL] README.md:413
+    Static string analysis established that it contains:
+    
+  > - androidboot.force_normal_boot=1
+    - boot-recovery / reboot-recovery
+    - recovery_check misc handling
+
+[REBOOT_RECOVERY_REQUEST] README.md:414
+    
+    - androidboot.force_normal_boot=1
+  > - boot-recovery / reboot-recovery
+    - recovery_check misc handling
+    - recovery image loading
+
+[BCB_RECOVERY] README.md:414
+    
+    - androidboot.force_normal_boot=1
+  > - boot-recovery / reboot-recovery
+    - recovery_check misc handling
+    - recovery image loading
+
+[RECOVERY_USERSPACE] fastbootd-logical-partition-preflight-20261002.txt:1
+  > ===== FASTBOOTD MODE =====
+    is-userspace: yes
+    Finished. Total time: 0.001s
+
+[RECOVERY_USERSPACE] fastbootd-mapper-diagnosis-20261002.txt:13
+    Finished. Total time: 0.001s
+    
+  > ===== ADB IN FASTBOOTD =====
+    List of devices attached
+    
+
+[RECOVERY_USERSPACE] fastbootd-mapper-diagnosis-20261002.txt:17
+    
+    
+  > ===== FASTBOOTD PROPERTIES =====
+    adb: no devices/emulators found
+    adb: no devices/emulators found
+
+[RECOVERY_USERSPACE] fastbootd-mapper-diagnosis-20261002.txt:65
+    ===== EXACT MOUNT CHECK =====
+    
+  > ===== FASTBOOTD LOGS =====
+
+[INIT_FATAL] android17-clean-initboot-build-20261002.txt:62
+    [00m
+    build_rc=1
+  > FATAL: initbootimage build failed
+
+[RECOVERY_USERSPACE] factory-vendorboot-locator-20261002.txt:30
+    FACTORY_VENDOR_BOOT_SIZE=67108864
+    fb748f23058c5189ca1a6ec7954d30e4174a3b15c2054c52385f48bf863d3a03  /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/boot-chain-compare/vendor-a-on-b-control/vendor_boot_b.vendor-a.fixed.img
+  > 43e838073c3153e263173ad5fa8523b847cc5595fe7c1d2b1c3811b582b3e08b  /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/fastbootd-regression/vendor-boot-compare-20260930-131100/vendor_boot_a.current.img
+    
+    ===== RESULT =====
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:976
+    The V17 regeneration build completed successfully with BUILD_RC=0.
+    
+  > The initial artifact-copy step failed because Android envsetup/lunch overwrote the
+    shell variable named OUT, changing it from vendor/etc/selinux to PRODUCT_OUT.
+    
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:2350
+    # V20 type-layout follow-up
+    
+  > V20 decisively reproduced the pre-early-init failure.
+    
+    The V20 control added only one unused bare vendor SELinux type relative
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:2379
+    # V20 type-order clarification
+    
+  > V20 decisively reproduced the pre-early-init failure, but its generated
+    vendor policy changed in two separable ways relative to the historical V17 policy artifact:
+    
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:3059
+    1443-(allow vendor_init_202404 vendor_camera_remapid_prop (property_service (set)))
+    1444-(allow vendor_init_202404 vendor_camera_remapid_prop (file (read getattr map open)))
+  > 1445-(allow vendor_init_202404 vendor_camera_skip_failed_ids_prop (property_service (set)))
+    1446-(allow vendor_init_202404 vendor_camera_skip_failed_ids_prop (file (read getattr map open)))
+    1447-(typetransition hal_wifi_supplicant_default wifi_data_file_202404 dir "sockets" wpa_socket)
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:3060
+    1444-(allow vendor_init_202404 vendor_camera_remapid_prop (file (read getattr map open)))
+    1445-(allow vendor_init_202404 vendor_camera_skip_failed_ids_prop (property_service (set)))
+  > 1446-(allow vendor_init_202404 vendor_camera_skip_failed_ids_prop (file (read getattr map open)))
+    1447-(typetransition hal_wifi_supplicant_default wifi_data_file_202404 dir "sockets" wpa_socket)
+    1448-(typeattribute base_typeattr_245_202404)
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:3137
+    7441-(allow vendor_init property_socket (sock_file (write)))
+    7442-(allow vendor_init init (unix_stream_socket (connectto)))
+  > 7443-(allow vendor_init vendor_camera_skip_failed_ids_prop (property_service (set)))
+    ===== TYPE TAIL FROM CURRENT CIL =====
+    
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:3216
+    1432-(allow vendor_init_202404 vendor_camera_remapid_prop (property_service (set)))
+    1433-(allow vendor_init_202404 vendor_camera_remapid_prop (file (read getattr map open)))
+  > 1434-(allow vendor_init_202404 vendor_camera_skip_failed_ids_prop (property_service (set)))
+    1435-(allow vendor_init_202404 vendor_camera_skip_failed_ids_prop (file (read getattr map open)))
+    1436-(typetransition hal_wifi_supplicant_default wifi_data_file_202404 dir "sockets" wpa_socket)
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:3217
+    1433-(allow vendor_init_202404 vendor_camera_remapid_prop (file (read getattr map open)))
+    1434-(allow vendor_init_202404 vendor_camera_skip_failed_ids_prop (property_service (set)))
+  > 1435-(allow vendor_init_202404 vendor_camera_skip_failed_ids_prop (file (read getattr map open)))
+    1436-(typetransition hal_wifi_supplicant_default wifi_data_file_202404 dir "sockets" wpa_socket)
+    1437-(typeattribute base_typeattr_244_202404)
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:3322
+    7418-(allow vendor_init property_socket (sock_file (write)))
+    7419-(allow vendor_init init (unix_stream_socket (connectto)))
+  > 7420-(allow vendor_init vendor_camera_skip_failed_ids_prop (property_service (set)))
+    7421-(allow vendor_init vendor_camera_skip_failed_ids_prop (file (read getattr map open)))
+    7422-(typetransition hal_wifi_supplicant_default wifi_data_file dir "sockets" wpa_socket)
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:3323
+    7419-(allow vendor_init init (unix_stream_socket (connectto)))
+    7420-(allow vendor_init vendor_camera_skip_failed_ids_prop (property_service (set)))
+  > 7421-(allow vendor_init vendor_camera_skip_failed_ids_prop (file (read getattr map open)))
+    7422-(typetransition hal_wifi_supplicant_default wifi_data_file dir "sockets" wpa_socket)
+    7423-(typeattribute base_typeattr_244)
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:3628
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight/v17-v20-type-order-audit.txt:10:ONLY_V20_TYPES=lieppos_v20_dummy_type
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight/V20-TYPE-LAYOUT-FOLLOWUP.md:1:# V20 type-layout follow-up
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight/V20-TYPE-LAYOUT-FOLLOWUP.md:3:V20 decisively reproduced the pre-early-init failure.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight/V20-TYPE-LAYOUT-FOLLOWUP.md:5:The V20 control added only one unused bare vendor SELinux type relative
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight/V20-TYPE-LAYOUT-FOLLOWUP.md:6:to the V17-working vendor policy.
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:3634
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight/v20-shifted-type-source-origin.txt:22:===== GENERATED INTERMEDIATES CONTAINING V20 DUMMY =====
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight/V20-TYPE-ORDER-CLARIFICATION.md:1:# V20 type-order clarification
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight/V20-TYPE-ORDER-CLARIFICATION.md:3:V20 decisively reproduced the pre-early-init failure, but its generated
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight/V20-TYPE-ORDER-CLARIFICATION.md:4:vendor policy changed in two separable ways relative to working V17:
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight/V20-TYPE-ORDER-CLARIFICATION.md:7:- the V20 dummy type was inserted at ordinal 155;
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:3694
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight/V21-PREFLASH-VERDICT.md:43:V20_DUMMY_PRESENT=0
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight/V21-PREFLASH-VERDICT.md:62:If V21 boots while V20 fails, the isolated evidence points toward the V20
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/untouched-b-early-boot-forensics/slot-b-write-preflight/V21-PREFLASH-VERDICT.md:65:If V21 reproduces the same pre-early-init failure while V17 ordinals 1..181
+    
+    ===== CURRENT RESEARCH HEAD =====
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:3759
+    - dummy ordinal: 155
+    - 27 existing types shifted
+  > - reproduced the pre-early-init failure
+    
+    ## V21
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:3799
+    renumbering of existing vendor SELinux types being required for that failure.
+    
+  > If V21 reproduces the same pre-early-init failure while V17 ordinals 1..181
+    remain identical, existing-type renumbering is not required. Investigation
+    should move toward type-table growth, policy serialization/layout, or another
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:3939
+    ===== V21 SLOT-B BOOT RESULT =====
+    DATE=2026-09-24T03:37:57+03:00
+  > OBSERVED_RESULT=V21_REPRODUCED_PRE_EARLY_INIT_FAILURE_AND_REBOOTED_BACK
+    
+    BOOT_COMPLETED=1
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:4757
+    [   24.545494] console name: ttynull, status 0x4.
+    [   24.545852] KernelSU: hook_manager: unmark 3090 exec /vendor/bin/frs
+  > [   24.545952] init: Command 'write /proc/mtprintk ${persist.vendor.uartconsole.enable}' action=sys.boot_completed=1 (/vendor/etc/init/mtklog.rc:10) took 0ms and failed: property 'persist.vendor.uartconsole.enable' doesn't exist while expanding '${persist.vendor.uartconsole.enable}'
+    [   24.545978] init: processing action (sys.boot_completed=1) from (/vendor/etc/init/vendor.mediatek.hardware.mtkpower@1.0-init.rc:1)
+    [   24.546685] init: processing action (vendor.usb.config=*) from (/vendor/etc/init/hw/init.mt6878.usb.rc:905)
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:4761
+    [   24.546685] init: processing action (vendor.usb.config=*) from (/vendor/etc/init/hw/init.mt6878.usb.rc:905)
+    [   24.547147] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0) from (/vendor/etc/init/hw/init.mt6878.usb.rc:179)
+  > [   24.547879] init: Command 'symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0 (/vendor/etc/init/hw/init.mt6878.usb.rc:182) took 0ms and failed: symlink() failed: File exists
+    [   24.548175] mtu3 11201000.usb0: gadget (high-speed) pullup D+
+    [   24.549421] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1) from (/system/etc/init/hw/init.usb.configfs.rc:20)
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:4764
+    [   24.548175] mtu3 11201000.usb0: gadget (high-speed) pullup D+
+    [   24.549421] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1) from (/system/etc/init/hw/init.usb.configfs.rc:20)
+  > [   24.549783] init: Command 'symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/system/etc/init/hw/init.usb.configfs.rc:22) took 0ms and failed: symlink() failed: Invalid argument
+    [   24.549910] init: Command 'write /config/usb_gadget/g1/UDC ${sys.usb.controller}' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/system/etc/init/hw/init.usb.configfs.rc:23) took 0ms and failed: Unable to write to file '/config/usb_gadget/g1/UDC': Unable to write file contents: Device or resource busy
+    [   24.550357] init: processing action (bootreceiver.enable=1 && dmesgd.start=1 && ro.product.cpu.abilist64=*) from (/system/etc/init/dmesgd.rc:12)
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:4765
+    [   24.549421] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1) from (/system/etc/init/hw/init.usb.configfs.rc:20)
+    [   24.549783] init: Command 'symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/system/etc/init/hw/init.usb.configfs.rc:22) took 0ms and failed: symlink() failed: Invalid argument
+  > [   24.549910] init: Command 'write /config/usb_gadget/g1/UDC ${sys.usb.controller}' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/system/etc/init/hw/init.usb.configfs.rc:23) took 0ms and failed: Unable to write to file '/config/usb_gadget/g1/UDC': Unable to write file contents: Device or resource busy
+    [   24.550357] init: processing action (bootreceiver.enable=1 && dmesgd.start=1 && ro.product.cpu.abilist64=*) from (/system/etc/init/dmesgd.rc:12)
+    [   24.550541] init: starting service 'dmesgd'...
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:4772
+    [   24.555050] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && vendor.usb.acm_cnt=0) from (/vendor/etc/init/hw/init.mt6878.usb.rc:156)
+    [   24.555445] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0) from (/vendor/etc/init/hw/init.mt6878.usb.rc:179)
+  > [   24.556278] init: Command 'symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0 (/vendor/etc/init/hw/init.mt6878.usb.rc:182) took 0ms and failed: symlink() failed: Invalid argument
+    [   24.556558] init: Command 'write /config/usb_gadget/g1/UDC ${vendor.usb.controller}' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0 (/vendor/etc/init/hw/init.mt6878.usb.rc:183) took 0ms and failed: Unable to write to file '/config/usb_gadget/g1/UDC': Unable to write file contents: Device or resource busy
+    [   24.556947] init: processing action (sys.usb.config=adb && sys.usb.configfs=1) from (/system/etc/init/hw/init.usb.configfs.rc:17)
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:4773
+    [   24.555445] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0) from (/vendor/etc/init/hw/init.mt6878.usb.rc:179)
+    [   24.556278] init: Command 'symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0 (/vendor/etc/init/hw/init.mt6878.usb.rc:182) took 0ms and failed: symlink() failed: Invalid argument
+  > [   24.556558] init: Command 'write /config/usb_gadget/g1/UDC ${vendor.usb.controller}' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0 (/vendor/etc/init/hw/init.mt6878.usb.rc:183) took 0ms and failed: Unable to write to file '/config/usb_gadget/g1/UDC': Unable to write file contents: Device or resource busy
+    [   24.556947] init: processing action (sys.usb.config=adb && sys.usb.configfs=1) from (/system/etc/init/hw/init.usb.configfs.rc:17)
+    [   24.556979] init: service 'adbd' requested start, but it is already running (flags: 132, pid: 1651, started 10842ms ago)
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:4777
+    [   24.556979] init: service 'adbd' requested start, but it is already running (flags: 132, pid: 1651, started 10842ms ago)
+    [   24.556999] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1) from (/system/etc/init/hw/init.usb.configfs.rc:20)
+  > [   24.557374] init: Command 'symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/system/etc/init/hw/init.usb.configfs.rc:22) took 0ms and failed: symlink() failed: Invalid argument
+    [   24.557489] KernelSU: hook_manager: unmark 3092 exec /system/bin/dmesgd
+    [   24.557509] init: Command 'write /config/usb_gadget/g1/UDC ${sys.usb.controller}' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/system/etc/init/hw/init.usb.configfs.rc:23) took 0ms and failed: Unable to write to file '/config/usb_gadget/g1/UDC': Unable to write file contents: Device or resource busy
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:4779
+    [   24.557374] init: Command 'symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/system/etc/init/hw/init.usb.configfs.rc:22) took 0ms and failed: symlink() failed: Invalid argument
+    [   24.557489] KernelSU: hook_manager: unmark 3092 exec /system/bin/dmesgd
+  > [   24.557509] init: Command 'write /config/usb_gadget/g1/UDC ${sys.usb.controller}' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/system/etc/init/hw/init.usb.configfs.rc:23) took 0ms and failed: Unable to write to file '/config/usb_gadget/g1/UDC': Unable to write file contents: Device or resource busy
+    [   24.557995] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && vendor.usb.acm_cnt=0) from (/vendor/etc/init/hw/init.mt6878.usb.rc:156)
+    [   24.558406] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0) from (/vendor/etc/init/hw/init.mt6878.usb.rc:179)
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:4782
+    [   24.557995] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && vendor.usb.acm_cnt=0) from (/vendor/etc/init/hw/init.mt6878.usb.rc:156)
+    [   24.558406] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0) from (/vendor/etc/init/hw/init.mt6878.usb.rc:179)
+  > [   24.562191] init: Command 'symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0 (/vendor/etc/init/hw/init.mt6878.usb.rc:182) took 0ms and failed: symlink() failed: Invalid argument
+    [   24.563347] init: Command 'write /config/usb_gadget/g1/UDC ${vendor.usb.controller}' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0 (/vendor/etc/init/hw/init.mt6878.usb.rc:183) took 0ms and failed: Unable to write to file '/config/usb_gadget/g1/UDC': Unable to write file contents: Device or resource busy
+    [   24.564958] init: processing action (sys.usb.config=adb && sys.usb.configfs=1) from (/system/etc/init/hw/init.usb.configfs.rc:17)
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:4783
+    [   24.558406] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0) from (/vendor/etc/init/hw/init.mt6878.usb.rc:179)
+    [   24.562191] init: Command 'symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0 (/vendor/etc/init/hw/init.mt6878.usb.rc:182) took 0ms and failed: symlink() failed: Invalid argument
+  > [   24.563347] init: Command 'write /config/usb_gadget/g1/UDC ${vendor.usb.controller}' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 && vendor.usb.acm_enable=0 (/vendor/etc/init/hw/init.mt6878.usb.rc:183) took 0ms and failed: Unable to write to file '/config/usb_gadget/g1/UDC': Unable to write file contents: Device or resource busy
+    [   24.564958] init: processing action (sys.usb.config=adb && sys.usb.configfs=1) from (/system/etc/init/hw/init.usb.configfs.rc:17)
+    [   24.565062] init: service 'adbd' requested start, but it is already running (flags: 132, pid: 1651, started 10850ms ago)
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:4787
+    [   24.565062] init: service 'adbd' requested start, but it is already running (flags: 132, pid: 1651, started 10850ms ago)
+    [   24.565152] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1) from (/system/etc/init/hw/init.usb.configfs.rc:20)
+  > [   24.567355] init: Command 'symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/system/etc/init/hw/init.usb.configfs.rc:22) took 0ms and failed: symlink() failed: Invalid argument
+    [   24.568779] init: Command 'write /config/usb_gadget/g1/UDC ${sys.usb.controller}' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/system/etc/init/hw/init.usb.configfs.rc:23) took 1ms and failed: Unable to write to file '/config/usb_gadget/g1/UDC': Unable to write file contents: Device or resource busy
+    [   24.571599] instant_current: cic_idx:0
+
+[INIT_FATAL] vendor-b-v21-provenance-20261002.txt:4788
+    [   24.565152] init: processing action (sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1) from (/system/etc/init/hw/init.usb.configfs.rc:20)
+    [   24.567355] init: Command 'symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/system/etc/init/hw/init.usb.configfs.rc:22) took 0ms and failed: symlink() failed: Invalid argument
+  > [   24.568779] init: Command 'write /config/usb_gadget/g1/UDC ${sys.usb.controller}' action=sys.usb.config=adb && sys.usb.configfs=1 && sys.usb.ffs.ready=1 (/system/etc/init/hw/init.usb.configfs.rc:23) took 1ms and failed: Unable to write to file '/config/usb_gadget/g1/UDC': Unable to write file contents: Device or resource busy
+    [   24.571599] instant_current: cic_idx:0
+    [   24.651586] init: Service 'dmesgd' (pid 3092) exited with status 0 oneshot service took 0.099000 seconds in background
+
+[FORCE_NORMAL] android17-slot-b-first-failure-summary-20261002.txt:32
+    androidboot.boot_devices = "bootdevice", "soc/112b0000.ufshci", "112b0000.ufshci"
+    androidboot.verifiedbootstate = "orange"
+  > androidboot.force_normal_boot = "1"
+    androidboot.atm = "disabled"
+    androidboot.slot_suffix = "_a"
+
+[INIT_FATAL] android17-slot-b-first-failure-summary-20261002.txt:65
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:255:[    0.048644][    T1] ramoops: using 0xe0000@0x48090000, ecc: 0
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:401:[    0.155155][    T1] device-mapper: ioctl: 4.47.0-ioctl (2022-07-28) initialised: dm-devel@redhat.com
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:443:[    0.189354][   T74] rootfs image is not initramfs (Decoding failed); looks like an initrd
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:450:[    0.222672][    T1] init: init first stage started!
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:451:[    0.225649][    T1] init: softdep lines in modules.softdep must have at least 4 entries
+
+[INIT_FATAL] android17-slot-b-first-failure-summary-20261002.txt:98
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:806:[    0.426100][    T1] pd-chk-mt6878 pdchk: error -ENXIO: IRQ hwv_irq not found
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:808:[    0.426108][    T1] pd-chk-mt6878 pdchk: error -ENXIO: IRQ hfrp_hwv_irq not found
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:1000:[    0.460976][  T166] [mmdvfs][err]mmdvfs_ccu_init_thread: get ccu phandle failed
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:1005:[    0.465589][    T1] mtk-mmdvfs-debug mmdvfs-debug: supply vdisp-pmic not found, using dummy regulator
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:1134:[    0.525507][    T1] [cmdq] dump_buf_size 1 error irq 0 cmdq_proc_debug_off:0 cmdq_tfa_read_dbg:1
+
+[INIT_FATAL] android17-slot-b-first-failure-deep-analysis-20261002.txt:165
+    348:[    0.098707][    T1] iommu: DMA domain TLB invalidation policy: strict mode 
+    
+  > ===== INIT FATAL / REBOOT PATHS =====
+    152:[    0.000000][    T0] Kernel command line: console=ttynull stack_depot_disable=on cgroup_disable=pressure kasan.page_alloc.sample=10 kasan.stacktrace=off kvm-arm.mode=protected bootconfig ioremap_guard  console=tty0 root=/dev/ram nosoftlockup 8250.nr_uarts=3 vmalloc=400M swiotlb=noforce transparent_hugepage=never cgroup.memory=nosocket,nokmem disable_dma32=on firmware_class.path=/vendor/firmware gpt=1 loop.max_part=7 ufshcd_core.poll_queues=0 mtk_printk_ctrl.disable_uart=1 usb2jtag_mode=0 root=/dev/ram bootopt=64S3,32N2,64N2 lpddr_used_name=MT512GBCAV8U31 flash_type=12 lpddr_used_index=0 PreEOLInfo = 0x1 LifeTimeEstA = 0x1 LifeTimeEstB = 0x1 lcmname=yft_vtdr6115_fhdp_dsi_cmd_hx_dphy_667_ky_lcm_drv charger_boot_switch=0 ramoops.mem_address=0x48090000 ramoops.mem_size=0xe0000 ramoops.pmsg_size=0x80000 ramoops.console_size=0x40000 bootconfig
+    157:[    0.000000][    T0] mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+
+[INIT_FATAL] android17-slot-b-first-failure-deep-analysis-20261002.txt:186
+    321:[    0.090563][    T1] Call trace:
+    388:[    0.142638][   T20] cacheinfo: Unable to detect cache hierarchy for CPU 0
+  > 443:[    0.189354][   T74] rootfs image is not initramfs (Decoding failed); looks like an initrd
+    450:[    0.222672][    T1] init: init first stage started!
+    451:[    0.225649][    T1] init: softdep lines in modules.softdep must have at least 4 entries
+
+[INIT_FATAL] android17-slot-b-first-failure-deep-analysis-20261002.txt:225
+    806:[    0.426100][    T1] pd-chk-mt6878 pdchk: error -ENXIO: IRQ hwv_irq not found
+    808:[    0.426108][    T1] pd-chk-mt6878 pdchk: error -ENXIO: IRQ hfrp_hwv_irq not found
+  > 1000:[    0.460976][  T166] [mmdvfs][err]mmdvfs_ccu_init_thread: get ccu phandle failed
+    1005:[    0.465589][    T1] mtk-mmdvfs-debug mmdvfs-debug: supply vdisp-pmic not found, using dummy regulator
+    1134:[    0.525507][    T1] [cmdq] dump_buf_size 1 error irq 0 cmdq_proc_debug_off:0 cmdq_tfa_read_dbg:1
+
+[NORMAL_LK] android17-slot-b-first-failure-deep-analysis-20261002.txt:482
+    [    1.056570][    T1] pd_adapter pd-adapter: mtk_pd_adapter_probe successfully
+    [    1.058827][    T1] mtk_charger_probe: starts
+  > [    1.058836][    T1] mtk_charger_parse_dt: size:0x10 tag:0x41000802 bootmode:0x0 boottype:0x2
+    [    1.058841][    T1] found Basic
+    [    1.058859][    T1] enable_vbat_mon:0
+
+[NORMAL_LK] android17-slot-b-first-failure-deep-analysis-20261002.txt:493
+    [    1.062481][    T1] [PE50]pe50_parse_dt support ta(pd_adapter)
+    [    1.062693][    T1] [DISP][mtk_disp_notifier_register line:18]:mtk_pe50
+  > [    1.062700][    T1] log_store: bootmode: 0x0 boottype: 0x2.
+    [    1.062707][    T1] pe5 pe5: pe50_probe: probe boot_mode=0.
+    [    1.062711][    T1] pe5 pe5: pe50_probe successfully
+
+[NORMAL_LK] android17-slot-b-first-failure-deep-analysis-20261002.txt:511
+    [    1.073523][    T1] mt6685-rtc mt6685-rtc: rtc_field_read: rg:0x54, val:0x20
+    [    1.073603][    T1] mt6685-rtc mt6685-rtc: rtc_field_read: rg:0x56, val:0x9e
+  > [    1.073611][    T1] fg_check_bootmode: size:0x10 tag:0x41000802 bootmode:0x0 boottype:0x2
+    [    1.073616][    T1] fg_swocv_v prop == NULL, len=0
+    [    1.073620][    T1] fg_swocv_i prop == NULL, len=0
+
+[NORMAL_LK] android17-slot-b-first-failure-deep-analysis-20261002.txt:878
+    [    1.344003][    T1] aw2013_probe -1: chip-enable-gpio = (484) gpio_state = (1)  end. 
+    [    1.344007][    T1] aw2013_probe -2: chip-enable-gpio = (484) gpio_state = (1)  end. 
+  > [    1.345040][    T1] log_store: bootmode: 0x0 boottype: 0x2.
+    [    1.345045][    T1] leds-rgb-aw2013[led_aw2103_control]  led_aw2103_boot_mode=0
+    [    1.346742][    T1] input: yft-gpio-keys as /devices/platform/yft-gpio-keys/input/input2
+
+[INIT_FATAL] android17-slot-b-first-failure-deep-analysis-20261002.txt:1081
+    186:[    0.002068][    T0] Mount-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+    187:[    0.002105][    T0] Mountpoint-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+  > 443:[    0.189354][   T74] rootfs image is not initramfs (Decoding failed); looks like an initrd
+    450:[    0.222672][    T1] init: init first stage started!
+    451:[    0.225649][    T1] init: softdep lines in modules.softdep must have at least 4 entries
+
+[INIT_FATAL] android17-slot-b-first-failure-deep-analysis-20261002.txt:1114
+    806:[    0.426100][    T1] pd-chk-mt6878 pdchk: error -ENXIO: IRQ hwv_irq not found
+    808:[    0.426108][    T1] pd-chk-mt6878 pdchk: error -ENXIO: IRQ hfrp_hwv_irq not found
+  > 1000:[    0.460976][  T166] [mmdvfs][err]mmdvfs_ccu_init_thread: get ccu phandle failed
+    1134:[    0.525507][    T1] [cmdq] dump_buf_size 1 error irq 0 cmdq_proc_debug_off:0 cmdq_tfa_read_dbg:1
+    1183:[    0.525967][    T1] [cmdq][err] debugfs_create_dir cmdq failed @cmdq_proc_create,1113
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:2
+    ============================================================
+  > ANDROID 17 SLOT-B FIRST-STAGE FATAL PATH
+    ============================================================
+    
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:18
+    bytes=237069
+    
+  > ===== FIRST-STAGE / FS_MGR / FATAL SIGNALS =====
+    173-[    0.000000][    T0] GICv3: GICv3 features: 16 PPIs
+    174-[    0.000000][    T0] GICv3: CPU0: found redistributor 0 region 0:0x000000000c040000
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:50
+    441-[    0.188511][    T1] Key type fscrypt-provisioning registered
+    442-[    0.188682][    T1] pstore: Using crash dump compression: deflate
+  > 443-[    0.189354][   T74] rootfs image is not initramfs (Decoding failed); looks like an initrd
+    444-[    0.190247][    T1] clk: Disabling unused clocks
+    445-[    0.190269][    T1] ALSA device list:
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:174
+    441-[    0.188511][    T1] Key type fscrypt-provisioning registered
+    442-[    0.188682][    T1] pstore: Using crash dump compression: deflate
+  > 443-[    0.189354][   T74] rootfs image is not initramfs (Decoding failed); looks like an initrd
+    444-[    0.190247][    T1] clk: Disabling unused clocks
+    445-[    0.190269][    T1] ALSA device list:
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:529
+    [    0.158255][    T1] ashmem: initialized
+    [    0.184420][    T1] Initializing XFRM netlink socket
+  > [    0.189354][   T74] rootfs image is not initramfs (Decoding failed); looks like an initrd
+    [    0.211782][   T74] Freeing initrd memory: 36088K
+    [    0.212972][    T1] Run /init as init process
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:638
+    [    0.435608][    T1] mtk-smi-larb 1401f000.smi-larb1: mtk_smi_larb_probe: init power on
+    [    0.448666][    T1] BOOTPROF:       448.665770:initcall: init_module [mtk_smi]    17.245000ms
+  > [    0.460976][  T166] [mmdvfs][err]mmdvfs_ccu_init_thread: get ccu phandle failed
+    [    0.473158][    T1] mtk_iommu: secure mtk_iommu_sec_init+
+    [    0.510425][    T1] mtk_iommu: secure mtk_iommu_sec_init-
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:881
+    1375cc767 ashmem_test: Add tests related to memfd's size file seals
+    
+  > ===== LOCAL FIRST_STAGE_INIT FATAL PATH =====
+    539-            fsm = CreateFirstStageMount(cmdline);
+    540-        }
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:895
+    550-
+    551:        if (!fsm->DoFirstStageMount()) {
+  > 552-            LOG(FATAL) << "Failed to mount required partitions early ...";
+    553-        }
+    554-    }
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:989
+    145-}
+    146-
+  > 147:void __attribute__((noreturn)) InitFatalReboot(int signal_number) {
+    148-    auto pid = fork();
+    149-
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:994
+    150-    if (pid == -1) {
+    151-        // Couldn't fork, don't even try to backtrace, just reboot.
+  > 152-        RebootSystem(ANDROID_RB_RESTART2, init_fatal_reboot_target);
+    153-    } else if (pid == 0) {
+    154-        // Fork a child for safety, since we always want to shut down if something goes wrong, but
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1000
+    156-        // does work despite not being async-signal-safe.
+    157-        sleep(5);
+  > 158-        RebootSystem(ANDROID_RB_RESTART2, init_fatal_reboot_target);
+    159-    }
+    160-
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1013
+    169-        LOG(ERROR) << unwinder.FormatFrame(frame);
+    170-    }
+  > 171-    if (init_fatal_panic) {
+    172-        LOG(ERROR) << __FUNCTION__ << ": Trigger crash";
+    173-        android::base::WriteStringToFile("c", PROC_SYSRQ);
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1019
+    175-        _exit(signal_number);
+    176-    }
+  > 177-    RebootSystem(ANDROID_RB_RESTART2, init_fatal_reboot_target);
+    178-}
+    179-
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1041
+    197-        // and probably good enough given this is already an error case and only enabled for
+    198-        // development builds.
+  > 199:        InitFatalReboot(signal);
+    200-    };
+    201-    action.sa_flags = SA_RESTART;
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1066
+    39-namespace init {
+    40-
+  > 41:[[clang::no_destroy]] static std::string init_fatal_reboot_target = "bootloader";
+    42-static bool init_fatal_panic = false;
+    43-
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1067
+    40-
+    41:[[clang::no_destroy]] static std::string init_fatal_reboot_target = "bootloader";
+  > 42-static bool init_fatal_panic = false;
+    43-
+    44-// this needs to read the /proc/* files directly because it is called before
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1076
+    49-    cmdline = android::base::Trim(cmdline);
+    50-
+  > 51-    const std::string kInitFatalPanicParamString = "androidboot.init_fatal_panic";
+    52-    if (cmdline.find(kInitFatalPanicParamString) == std::string::npos) {
+    53-        std::string value;
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1077
+    50-
+    51-    const std::string kInitFatalPanicParamString = "androidboot.init_fatal_panic";
+  > 52-    if (cmdline.find(kInitFatalPanicParamString) == std::string::npos) {
+    53-        std::string value;
+    54-        init_fatal_panic = (android::fs_mgr::GetBootconfig(kInitFatalPanicParamString, &value) &&
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1079
+    52-    if (cmdline.find(kInitFatalPanicParamString) == std::string::npos) {
+    53-        std::string value;
+  > 54-        init_fatal_panic = (android::fs_mgr::GetBootconfig(kInitFatalPanicParamString, &value) &&
+    55-                            value == "true");
+    56-    } else {
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1082
+    55-                            value == "true");
+    56-    } else {
+  > 57-        const std::string kInitFatalPanicString = kInitFatalPanicParamString + "=true";
+    58-        init_fatal_panic = cmdline.find(kInitFatalPanicString) != std::string::npos;
+    59-    }
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1083
+    56-    } else {
+    57-        const std::string kInitFatalPanicString = kInitFatalPanicParamString + "=true";
+  > 58-        init_fatal_panic = cmdline.find(kInitFatalPanicString) != std::string::npos;
+    59-    }
+    60-
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1087
+    60-
+    61-    if (reboot_target) {
+  > 62:        init_fatal_reboot_target = *reboot_target;
+    63-        return;
+    64-    }
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1091
+    64-    }
+    65-
+  > 66:    const std::string kRebootTargetString = "androidboot.init_fatal_reboot_target";
+    67-    auto start_pos = cmdline.find(kRebootTargetString);
+    68-    if (start_pos == std::string::npos) {
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1094
+    67-    auto start_pos = cmdline.find(kRebootTargetString);
+    68-    if (start_pos == std::string::npos) {
+  > 69:        android::fs_mgr::GetBootconfig(kRebootTargetString, &init_fatal_reboot_target);
+    70-        // We already default to bootloader if no setting is provided.
+    71-    } else {
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1104
+    77-        // entry, and -1 is a valid size for string::substr();
+    78-        auto size = end_pos == std::string::npos ? -1 : end_pos - start_pos;
+  > 79:        init_fatal_reboot_target = cmdline.substr(start_pos, size);
+    80-    }
+    81-}
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1129
+    145-}
+    146-
+  > 147-void __attribute__((noreturn)) InitFatalReboot(int signal_number) {
+    148-    auto pid = fork();
+    149-
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1134
+    150-    if (pid == -1) {
+    151-        // Couldn't fork, don't even try to backtrace, just reboot.
+  > 152:        RebootSystem(ANDROID_RB_RESTART2, init_fatal_reboot_target);
+    153-    } else if (pid == 0) {
+    154-        // Fork a child for safety, since we always want to shut down if something goes wrong, but
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1140
+    156-        // does work despite not being async-signal-safe.
+    157-        sleep(5);
+  > 158:        RebootSystem(ANDROID_RB_RESTART2, init_fatal_reboot_target);
+    159-    }
+    160-
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1153
+    169-        LOG(ERROR) << unwinder.FormatFrame(frame);
+    170-    }
+  > 171-    if (init_fatal_panic) {
+    172-        LOG(ERROR) << __FUNCTION__ << ": Trigger crash";
+    173-        android::base::WriteStringToFile("c", PROC_SYSRQ);
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1159
+    175-        _exit(signal_number);
+    176-    }
+  > 177:    RebootSystem(ANDROID_RB_RESTART2, init_fatal_reboot_target);
+    178-}
+    179-
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1186
+    ORDERLY_KERNEL_SHUTDOWN=YES
+    REBOOT_TARGET=bootloader
+  > LIKELY_FAILURE_DOMAIN=ANDROID_FIRST_STAGE_INIT_FATAL_PATH
+    PHONE_WRITE_PERFORMED=NO
+    BOOT_CONTROL_WRITE_PERFORMED=NO
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1190
+    BOOT_CONTROL_WRITE_PERFORMED=NO
+    SLOT_B_REACTIVATED=NO
+  > [master 5c5781c] research: isolate Android 17 first-stage fatal reboot
+     2 files changed, 4071 insertions(+)
+     create mode 100644 android17-hidl-fixed-build-20261002/android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0.sanitized.txt
+
+[INIT_FATAL] android17-slot-b-first-fatal-path-20261002.txt:1196
+    
+    ===== RESEARCH COMMIT =====
+  > 5c5781c research: isolate Android 17 first-stage fatal reboot
+
+[INIT_FATAL] android17-metadata-fix-boot-summary-20261002.txt:96
+    52:[    0.090165][    T1] sysfs: cannot create duplicate filename '/bus/platform/devices/1f00a000.mdp-rsz1'
+    122:[    0.141897][   T20] cacheinfo: Unable to detect cache hierarchy for CPU 0
+  > 180:[    0.197381][   T74] rootfs image is not initramfs (Decoding failed); looks like an initrd
+    188:[    0.234076][    T1] bootprof: module verification failed: signature and/or required key missing - tainting kernel
+    212:[    0.237594][    T1] hangdet_init: compatible node found: watchdog
+
+[INIT_FATAL] android17-metadata-fix-boot-summary-20261002.txt:111
+    461:[    0.387636][    T1] spmi-mtk 1cc04000.spmi: Failed to get spmi_p_nack_irq, ret = -6
+    462:[    0.387640][    T1] spmi-mtk 1cc04000.spmi: Failed to request reg from SPMI node
+  > 674:[    0.454326][  T166] [mmdvfs][err]mmdvfs_ccu_init_thread: get ccu phandle failed
+    679:[    0.458915][    T1] mtk-mmdvfs-debug mmdvfs-debug: supply vdisp-pmic not found, using dummy regulator
+    857:[    0.519399][    T1] [cmdq][err] debugfs_create_dir cmdq failed @cmdq_proc_create,1113
+
+[INIT_FATAL] android17-metadata-fix-boot-summary-20261002.txt:172
+    2606:[    2.143773][    T1] power_supply sc-cp-slave: uevent: failed to send synthetic uevent: -22
+    2610:[    2.175258][    T1] init: [libfs_mgr] Warning: unknown flag: resize
+  > 2611:[    2.175877][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+    2613:[    2.175969][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+    2615:[    2.176047][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+
+[INIT_FATAL] android17-metadata-fix-boot-summary-20261002.txt:173
+    2610:[    2.175258][    T1] init: [libfs_mgr] Warning: unknown flag: resize
+    2611:[    2.175877][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+  > 2613:[    2.175969][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+    2615:[    2.176047][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+    2617:[    2.176122][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+
+[INIT_FATAL] android17-metadata-fix-boot-summary-20261002.txt:174
+    2611:[    2.175877][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+    2613:[    2.175969][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+  > 2615:[    2.176047][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+    2617:[    2.176122][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+    2647:[    2.375978][    T1] init: Init cannot set 'ro.boot.serialno' to '5012BF3010001335': Read-only property was already set
+
+[INIT_FATAL] android17-metadata-fix-boot-summary-20261002.txt:175
+    2613:[    2.175969][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+    2615:[    2.176047][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+  > 2617:[    2.176122][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+    2647:[    2.375978][    T1] init: Init cannot set 'ro.boot.serialno' to '5012BF3010001335': Read-only property was already set
+    2648:[    2.421537][   T64] audit: type=1400 audit(1790970898.112:4): avc:  denied  { sys_nice } for  pid=362 comm="ueventd" capability=23  scontext=u:r:ueventd:s0 tcontext=u:r:ueventd:s0 tclass=capability permissive=0
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:208
+    3013:[   13.157116][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+    3014:[   13.160792][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+  > 3027:[   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+    3034:[   14.135538][  T403] fastbootd: [libfs_mgr] Warning: unknown flag: resize
+    3035:[   14.136030][  T403] fastbootd: [libfs_mgr] unknown volume for path [/cache]
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:209
+    3014:[   13.160792][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+    3027:[   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+  > 3034:[   14.135538][  T403] fastbootd: [libfs_mgr] Warning: unknown flag: resize
+    3035:[   14.136030][  T403] fastbootd: [libfs_mgr] unknown volume for path [/cache]
+    3038:[   14.147444][  T373] recovery: [libfs_mgr] Warning: unknown flag: resize
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:210
+    3027:[   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+    3034:[   14.135538][  T403] fastbootd: [libfs_mgr] Warning: unknown flag: resize
+  > 3035:[   14.136030][  T403] fastbootd: [libfs_mgr] unknown volume for path [/cache]
+    3038:[   14.147444][  T373] recovery: [libfs_mgr] Warning: unknown flag: resize
+    3098:[   15.746280][   T73] [wdtk] kick watchdog
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:214
+    3098:[   15.746280][   T73] [wdtk] kick watchdog
+    3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+  > 3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+    3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+    3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:215
+    3129:[   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+    3133:[   21.549267][  T403] fastbootd: Fastboot command: reboot
+  > 3134:[   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+    3136:[   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+    3141:[   21.550121][    T1] init: Reboot start, reason: reboot,from_fastboot, reboot_target: from_fastboot
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:250
+    [    4.547681][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [    4.750287][  T373] [DISP]mtk_crtc_update_ddp_state frame:0 correct invalid hrt to:456,mode:0->0,bpp:4,w:456
+  > [    4.757740][  T373] recovery: Starting recovery (pid 373) on Fri Oct  2 19:54:59 2026
+    [    4.757750][  T373] recovery: 
+    [    4.757763][  T373] recovery: locale is [en-US]
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:429
+    [   13.041736][  T129] sd 0:0:0:2: [sdc] Starting disk
+    [   13.041945][  T129] sd 0:0:0:2: [sdc] Starting disk
+  > [   13.043902][  T373] recovery: Entering fastboot
+    [   13.044343][    T1] init: processing action (sys.usb.config=none && sys.usb.configfs=1) from (/system/etc/init/hw/init.rc:162)
+    [   13.044735][    T1] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:438
+    [   13.112276][    T1] init: Service 'adbd' (pid 388) received signal 9
+    [   13.113716][    T1] init: processing action (sys.usb.config=fastboot) from (/system/etc/init/hw/init.rc:134)
+  > [   13.113825][    T1] init: starting service 'fastbootd'...
+    [   13.118109][    T1] libprocessgroup: Failed to find NormalIoPriority process profile
+    [   13.118787][    T1] init: ... started service 'fastbootd' has pid 403
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:440
+    [   13.113825][    T1] init: starting service 'fastbootd'...
+    [   13.118109][    T1] libprocessgroup: Failed to find NormalIoPriority process profile
+  > [   13.118787][    T1] init: ... started service 'fastbootd' has pid 403
+    [   13.132352][  T403] cutils-trace: Error opening trace file: No such file or directory (2)
+    [   13.132737][  T372] servicemanager: Found android.hardware.boot.IBootControl/default in recovery VINTF manifest.
+
+[RECOVERY_LK] android17-metadata-fix-boot-summary-20261002.txt:451
+    [   13.161771][  T372] servicemanager: Found android.hardware.boot.IBootControl/default in recovery VINTF manifest.
+    [   13.161869][  T405] android.hardware.boot-service.mtk_recovery: IBootControl AIDL service running...
+  > [   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    [   13.283659][  T319] [sh366003] fg_update_workfunc(2185): [sh366003]not Update FW!! adapter_status=2, soc=32, boot_mode=2
+    [   13.763659][  T165] [mmdvfs][dbg]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:457
+    [   14.133223][  T403] ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 0. Are binder threads started and available?)
+    [   14.133434][  T372] BpBinder: onLastStrongRef automatically unlinking death recipients: 
+  > [   14.133559][  T403] fastbootd: Using AIDL version of IBootControl
+    [   14.133712][  T372] servicemanager: Found android.hardware.health.IHealth/default in recovery VINTF manifest.
+    [   14.134032][  T372] servicemanager: Could not find android.hardware.fastboot.IFastboot/default in the VINTF manifest.
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:460
+    [   14.133712][  T372] servicemanager: Found android.hardware.health.IHealth/default in recovery VINTF manifest.
+    [   14.134032][  T372] servicemanager: Could not find android.hardware.fastboot.IFastboot/default in the VINTF manifest.
+  > [   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+    [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:461
+    [   14.134032][  T372] servicemanager: Could not find android.hardware.fastboot.IFastboot/default in the VINTF manifest.
+    [   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+  > [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+    [   14.134492][  T403] fastbootd: initializing functionfs
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:462
+    [   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+    [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+  > [   14.134482][  T403] fastbootd: Using aio for usb ffs
+    [   14.134492][  T403] fastbootd: initializing functionfs
+    [   14.134499][  T403] fastbootd: opening control endpoint /dev/usb-ffs/fastboot/ep0
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:463
+    [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+  > [   14.134492][  T403] fastbootd: initializing functionfs
+    [   14.134499][  T403] fastbootd: opening control endpoint /dev/usb-ffs/fastboot/ep0
+    [   14.134533][  T403] read descriptors
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:464
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+    [   14.134492][  T403] fastbootd: initializing functionfs
+  > [   14.134499][  T403] fastbootd: opening control endpoint /dev/usb-ffs/fastboot/ep0
+    [   14.134533][  T403] read descriptors
+    [   14.134538][  T403] read strings
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:467
+    [   14.134533][  T403] read descriptors
+    [   14.134538][  T403] read strings
+  > [   14.135538][  T403] fastbootd: [libfs_mgr] Warning: unknown flag: resize
+    [   14.136030][  T403] fastbootd: [libfs_mgr] unknown volume for path [/cache]
+    [   14.137674][    T1] mtu3 11201000.usb0: gadget (high-speed) pullup D+
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:468
+    [   14.134538][  T403] read strings
+    [   14.135538][  T403] fastbootd: [libfs_mgr] Warning: unknown flag: resize
+  > [   14.136030][  T403] fastbootd: [libfs_mgr] unknown volume for path [/cache]
+    [   14.137674][    T1] mtu3 11201000.usb0: gadget (high-speed) pullup D+
+    [   14.140458][  T373] [DISP]mtk_crtc_update_ddp_state frame:0 correct invalid hrt to:456,mode:0->0,bpp:4,w:456
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:560
+    [   20.931653][  T165] [mmdvfs][dbg]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [   20.931664][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+  > [   21.528491][  T403] fastbootd: Fastboot command: getvar:slot-count
+    [   21.529182][  T403] fastbootd: Fastboot command: set_active:a
+    [   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:561
+    [   20.931664][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [   21.528491][  T403] fastbootd: Fastboot command: getvar:slot-count
+  > [   21.529182][  T403] fastbootd: Fastboot command: set_active:a
+    [   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+    [   21.538468][  T143] sd 0:0:0:2: [sdc] Starting disk
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:566
+    [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+  > [   21.549267][  T403] fastbootd: Fastboot command: reboot
+    [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:567
+    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:681
+    [   13.041736][  T129] sd 0:0:0:2: [sdc] Starting disk
+    [   13.041945][  T129] sd 0:0:0:2: [sdc] Starting disk
+  > [   13.043902][  T373] recovery: Entering fastboot
+    [   13.044343][    T1] init: processing action (sys.usb.config=none && sys.usb.configfs=1) from (/system/etc/init/hw/init.rc:162)
+    [   13.044735][    T1] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:690
+    [   13.112276][    T1] init: Service 'adbd' (pid 388) received signal 9
+    [   13.113716][    T1] init: processing action (sys.usb.config=fastboot) from (/system/etc/init/hw/init.rc:134)
+  > [   13.113825][    T1] init: starting service 'fastbootd'...
+    [   13.118109][    T1] libprocessgroup: Failed to find NormalIoPriority process profile
+    [   13.118787][    T1] init: ... started service 'fastbootd' has pid 403
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:692
+    [   13.113825][    T1] init: starting service 'fastbootd'...
+    [   13.118109][    T1] libprocessgroup: Failed to find NormalIoPriority process profile
+  > [   13.118787][    T1] init: ... started service 'fastbootd' has pid 403
+    [   13.132352][  T403] cutils-trace: Error opening trace file: No such file or directory (2)
+    [   13.132737][  T372] servicemanager: Found android.hardware.boot.IBootControl/default in recovery VINTF manifest.
+
+[RECOVERY_LK] android17-metadata-fix-boot-summary-20261002.txt:703
+    [   13.161771][  T372] servicemanager: Found android.hardware.boot.IBootControl/default in recovery VINTF manifest.
+    [   13.161869][  T405] android.hardware.boot-service.mtk_recovery: IBootControl AIDL service running...
+  > [   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    [   13.283659][  T319] [sh366003] fg_update_workfunc(2185): [sh366003]not Update FW!! adapter_status=2, soc=32, boot_mode=2
+    [   13.763659][  T165] [mmdvfs][dbg]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:709
+    [   14.133223][  T403] ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 0. Are binder threads started and available?)
+    [   14.133434][  T372] BpBinder: onLastStrongRef automatically unlinking death recipients: 
+  > [   14.133559][  T403] fastbootd: Using AIDL version of IBootControl
+    [   14.133712][  T372] servicemanager: Found android.hardware.health.IHealth/default in recovery VINTF manifest.
+    [   14.134032][  T372] servicemanager: Could not find android.hardware.fastboot.IFastboot/default in the VINTF manifest.
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:712
+    [   14.133712][  T372] servicemanager: Found android.hardware.health.IHealth/default in recovery VINTF manifest.
+    [   14.134032][  T372] servicemanager: Could not find android.hardware.fastboot.IFastboot/default in the VINTF manifest.
+  > [   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+    [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:713
+    [   14.134032][  T372] servicemanager: Could not find android.hardware.fastboot.IFastboot/default in the VINTF manifest.
+    [   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+  > [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+    [   14.134492][  T403] fastbootd: initializing functionfs
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:714
+    [   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+    [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+  > [   14.134482][  T403] fastbootd: Using aio for usb ffs
+    [   14.134492][  T403] fastbootd: initializing functionfs
+    [   14.134499][  T403] fastbootd: opening control endpoint /dev/usb-ffs/fastboot/ep0
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:715
+    [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+  > [   14.134492][  T403] fastbootd: initializing functionfs
+    [   14.134499][  T403] fastbootd: opening control endpoint /dev/usb-ffs/fastboot/ep0
+    [   14.134533][  T403] read descriptors
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:716
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+    [   14.134492][  T403] fastbootd: initializing functionfs
+  > [   14.134499][  T403] fastbootd: opening control endpoint /dev/usb-ffs/fastboot/ep0
+    [   14.134533][  T403] read descriptors
+    [   14.134538][  T403] read strings
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:719
+    [   14.134533][  T403] read descriptors
+    [   14.134538][  T403] read strings
+  > [   14.135538][  T403] fastbootd: [libfs_mgr] Warning: unknown flag: resize
+    [   14.136030][  T403] fastbootd: [libfs_mgr] unknown volume for path [/cache]
+    [   14.137674][    T1] mtu3 11201000.usb0: gadget (high-speed) pullup D+
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:720
+    [   14.134538][  T403] read strings
+    [   14.135538][  T403] fastbootd: [libfs_mgr] Warning: unknown flag: resize
+  > [   14.136030][  T403] fastbootd: [libfs_mgr] unknown volume for path [/cache]
+    [   14.137674][    T1] mtu3 11201000.usb0: gadget (high-speed) pullup D+
+    [   14.140458][  T373] [DISP]mtk_crtc_update_ddp_state frame:0 correct invalid hrt to:456,mode:0->0,bpp:4,w:456
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:812
+    [   20.931653][  T165] [mmdvfs][dbg]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [   20.931664][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+  > [   21.528491][  T403] fastbootd: Fastboot command: getvar:slot-count
+    [   21.529182][  T403] fastbootd: Fastboot command: set_active:a
+    [   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:813
+    [   20.931664][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [   21.528491][  T403] fastbootd: Fastboot command: getvar:slot-count
+  > [   21.529182][  T403] fastbootd: Fastboot command: set_active:a
+    [   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+    [   21.538468][  T143] sd 0:0:0:2: [sdc] Starting disk
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:818
+    [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+  > [   21.549267][  T403] fastbootd: Fastboot command: reboot
+    [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-summary-20261002.txt:819
+    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+
+[INIT_FATAL] android17-metadata-fix-boot-summary-20261002.txt:920
+    ============================================================
+    METADATA_FIX_BEHAVIOR_CHANGED=YES
+  > OLD_RESULT=FIRST_STAGE_FATAL_REBOOT_TO_BOOTLOADER
+    NEW_RESULT=STUCK_AT_BOOT_LOGO_UNTIL_MANUAL_REBOOT
+    PHONE_WRITE_PERFORMED=NO
+
+[NORMAL_LK] android17-recovery-bootmode-source-20261002/summary.txt:388
+    1297:metadata.slot_info[0].priority = 15, 14
+    1298:metadata.slot_info[0].retry = 6, 4
+  > 1418:BOOT_MODE: 0
+    1667:pl_boottags_gz_para_hook:892: [CCCI]mtee.base_addr: 0x0, 0x0
+    1668:mboot_params_info init hook: 0x11d000, 0x800, 0x2, 0xec0
+
+[NORMAL_LK] android17-recovery-bootmode-source-20261002/summary.txt:467
+    3240:mrdump_params_fdt_init:316: Set aee,encrypt_enable=no
+    3241:mrdump_params_fdt_init:327: ddr reserve status(0).
+  > 3366:boot_linux_fdt:619: lk boot mode = 0
+    
+    ===== INTERPRET BCB =====
+
+[WATCHDOG_RESET] android17-recovery-bootmode-source-20261002/current-a-pl_lk.txt:53
+    [RGU] mtk_wdt_mode_config mode value=34, tmp:22000034
+    [RGU] mtk_wdt_mode_config mode value=7D, tmp:2200007D
+  > [RGU] mtk_wdt_reset_deglitch_enable: MTK_WDT_RSTDEG_EN1(0), MTK_WDT_RSTDEG_EN2(0)
+    [RGU] rgu_update_reg: 0, bits: 0xC000, addr: 0x1C00A040, val: 0x0
+    [RGU] rgu_update_reg: 0, bits: 0x300, addr: 0x1C00A0A0, val: 0x0
+
+[WATCHDOG_RESET] android17-recovery-bootmode-source-20261002/current-a-pl_lk.txt:662
+    #T#check Boot status-PMIC=0
+    [RTC](O)RTC_2SEC_REBOOT_ENABLE
+  > [PLFM] WDT reboot bypass power key!
+    #T#check Boot status=0
+    [RTC]rtc_bbpu_power_on done
+
+[NORMAL_LK] android17-recovery-bootmode-source-20261002/current-a-pl_lk.txt:1418
+    BOOT_TAG_VERSION: 1
+    BOOT_REASON: 4
+  > BOOT_MODE: 0
+    META_COM TYPE: 0
+    META_COM ID: 0
+
+[NORMAL_LK] android17-recovery-bootmode-source-20261002/current-a-pl_lk.txt:3366
+    [PROFILE] ::: hyp_unmap2() takes 611 ms
+    boot_linux_fdt:618: booting linux @ 0x40000000, ramdisk @ 0x66f00000 (64898270) dtb @ 0x47c80000 (400988)
+  > boot_linux_fdt:619: lk boot mode = 0
+    boot_linux_fdt:621: lk finished --> jump to linux kernel 64Bit
+    
+
+[FORCE_NORMAL] android17-normal-boot-reference-20261002/summary.txt:14
+    androidboot.boot_devices = "bootdevice", "soc/112b0000.ufshci", "112b0000.ufshci"
+    androidboot.verifiedbootstate = "orange"
+  > androidboot.force_normal_boot = "1"
+    androidboot.atm = "disabled"
+    androidboot.slot_suffix = "_a"
+
+[FORCE_NORMAL] android17-normal-boot-reference-20261002/summary.txt:26
+    ===== NORMAL-BOOT KEY =====
+    3:androidboot.verifiedbootstate = "orange"
+  > 4:androidboot.force_normal_boot = "1"
+    6:androidboot.slot_suffix = "_a"
+    11:androidboot.bootreason = "reboot"
+
+[WATCHDOG_RESET] android17-normal-boot-reference-20261002/summary.txt:105
+    659:#T#check Boot status-RTC=1
+    661:[RTC](O)RTC_2SEC_REBOOT_ENABLE
+  > 662:[PLFM] WDT reboot bypass power key!
+    664:[RTC]rtc_bbpu_power_on done
+    665:#T#rtc_bbpu_power_on=1
+
+[NORMAL_LK] android17-normal-boot-reference-20261002/summary.txt:111
+    1304:[ufshcd_authensss_wcnt_read_rsp_check]: RPMB Fail in checking result : Authentication Key not yet programmed 
+    1306:[ufs_rpmb_get_setkey_flag_region1]: setkey_flag=1, ret=-2
+  > 1418:BOOT_MODE: 0
+    1584:PLAT_DBG_INFO key: 0xD8A3
+    1587:PLAT_DBG_INFO key: 0xE31C
+
+[NORMAL_LK] android17-normal-boot-reference-20261002/summary.txt:132
+    3233:mrdump_key_fdt_init:151: mode = IRQ
+    3234:mrdump_key_fdt_init:164: Error: no interrupts attribute
+  > 3366:boot_linux_fdt:619: lk boot mode = 0
+    
+    ===== HISTORICAL LOCAL SEARCH =====
+
+[FORCE_NORMAL] android17-normal-boot-reference-20261002/summary.txt:135
+    
+    ===== HISTORICAL LOCAL SEARCH =====
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-slot-b-first-failure-summary-20261002.txt:32:androidboot.force_normal_boot = "1"
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:270:[    0.244530][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:1977:[    1.086202][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+
+[RECOVERY_LK] android17-normal-boot-reference-20261002/summary.txt:136
+    ===== HISTORICAL LOCAL SEARCH =====
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-slot-b-first-failure-summary-20261002.txt:32:androidboot.force_normal_boot = "1"
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:270:[    0.244530][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:1977:[    1.086202][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:2452:[    1.467989][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+
+[RECOVERY_LK] android17-normal-boot-reference-20261002/summary.txt:137
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-slot-b-first-failure-summary-20261002.txt:32:androidboot.force_normal_boot = "1"
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:270:[    0.244530][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:1977:[    1.086202][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:2452:[    1.467989][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3014:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+
+[RECOVERY_LK] android17-normal-boot-reference-20261002/summary.txt:138
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:270:[    0.244530][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:1977:[    1.086202][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:2452:[    1.467989][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3014:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:270:[    0.244530][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+
+[RECOVERY_LK] android17-normal-boot-reference-20261002/summary.txt:139
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:1977:[    1.086202][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:2452:[    1.467989][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3014:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:270:[    0.244530][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:1981:[    1.086202][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+
+[RECOVERY_LK] android17-normal-boot-reference-20261002/summary.txt:140
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:2452:[    1.467989][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3014:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:270:[    0.244530][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:1981:[    1.086202][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2456:[    1.467989][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+
+[RECOVERY_LK] android17-normal-boot-reference-20261002/summary.txt:141
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3014:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:270:[    0.244530][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:1981:[    1.086202][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2456:[    1.467989][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3018:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+
+[RECOVERY_LK] android17-normal-boot-reference-20261002/summary.txt:142
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:270:[    0.244530][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:1981:[    1.086202][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2456:[    1.467989][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3018:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:451:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+
+[RECOVERY_LK] android17-normal-boot-reference-20261002/summary.txt:143
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:1981:[    1.086202][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2456:[    1.467989][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3018:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:451:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:703:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+
+[RECOVERY_LK] android17-normal-boot-reference-20261002/summary.txt:144
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2456:[    1.467989][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3018:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:451:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:703:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-normal-boot-reference-20261002/summary.txt:14:androidboot.force_normal_boot = "1"
+
+[RECOVERY_LK] android17-normal-boot-reference-20261002/summary.txt:145
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3018:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:451:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:703:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-normal-boot-reference-20261002/summary.txt:14:androidboot.force_normal_boot = "1"
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-normal-boot-reference-20261002/summary.txt:26:4:androidboot.force_normal_boot = "1"
+
+[FORCE_NORMAL] android17-normal-boot-reference-20261002/summary.txt:146
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:451:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:703:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-normal-boot-reference-20261002/summary.txt:14:androidboot.force_normal_boot = "1"
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-normal-boot-reference-20261002/summary.txt:26:4:androidboot.force_normal_boot = "1"
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-normal-boot-reference-20261002/a-bootconfig.txt:4:androidboot.force_normal_boot = "1"
+
+[FORCE_NORMAL] android17-normal-boot-reference-20261002/summary.txt:147
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-metadata-fix-boot-summary-20261002.txt:703:[   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-normal-boot-reference-20261002/summary.txt:14:androidboot.force_normal_boot = "1"
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-normal-boot-reference-20261002/summary.txt:26:4:androidboot.force_normal_boot = "1"
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-normal-boot-reference-20261002/a-bootconfig.txt:4:androidboot.force_normal_boot = "1"
+    
+
+[FORCE_NORMAL] android17-normal-boot-reference-20261002/summary.txt:148
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-normal-boot-reference-20261002/summary.txt:14:androidboot.force_normal_boot = "1"
+    /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-normal-boot-reference-20261002/summary.txt:26:4:androidboot.force_normal_boot = "1"
+  > /home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/android17-hidl-fixed-build-20261002/android17-normal-boot-reference-20261002/a-bootconfig.txt:4:androidboot.force_normal_boot = "1"
+    
+    ============================================================
+
+[FORCE_NORMAL] android17-normal-boot-reference-20261002/a-bootconfig.txt:4
+    androidboot.boot_devices = "bootdevice", "soc/112b0000.ufshci", "112b0000.ufshci"
+    androidboot.verifiedbootstate = "orange"
+  > androidboot.force_normal_boot = "1"
+    androidboot.atm = "disabled"
+    androidboot.slot_suffix = "_a"
+
+[WATCHDOG_RESET] android17-normal-boot-reference-20261002/a-pl_lk.txt:53
+    [RGU] mtk_wdt_mode_config mode value=34, tmp:22000034
+    [RGU] mtk_wdt_mode_config mode value=7D, tmp:2200007D
+  > [RGU] mtk_wdt_reset_deglitch_enable: MTK_WDT_RSTDEG_EN1(0), MTK_WDT_RSTDEG_EN2(0)
+    [RGU] rgu_update_reg: 0, bits: 0xC000, addr: 0x1C00A040, val: 0x0
+    [RGU] rgu_update_reg: 0, bits: 0x300, addr: 0x1C00A0A0, val: 0x0
+
+[WATCHDOG_RESET] android17-normal-boot-reference-20261002/a-pl_lk.txt:662
+    #T#check Boot status-PMIC=0
+    [RTC](O)RTC_2SEC_REBOOT_ENABLE
+  > [PLFM] WDT reboot bypass power key!
+    #T#check Boot status=0
+    [RTC]rtc_bbpu_power_on done
+
+[NORMAL_LK] android17-normal-boot-reference-20261002/a-pl_lk.txt:1418
+    BOOT_TAG_VERSION: 1
+    BOOT_REASON: 4
+  > BOOT_MODE: 0
+    META_COM TYPE: 0
+    META_COM ID: 0
+
+[NORMAL_LK] android17-normal-boot-reference-20261002/a-pl_lk.txt:3366
+    [PROFILE] ::: hyp_unmap2() takes 611 ms
+    boot_linux_fdt:618: booting linux @ 0x40000000, ramdisk @ 0x66f00000 (64898270) dtb @ 0x47c80000 (400988)
+  > boot_linux_fdt:619: lk boot mode = 0
+    boot_linux_fdt:621: lk finished --> jump to linux kernel 64Bit
+    
+
+[FORCE_NORMAL] android17-live-b-capture-rescue-20261002/summary.txt:25
+    ===== LIVE BOOTCONFIG KEYS =====
+    3:androidboot.verifiedbootstate = "orange"
+  > 4:androidboot.force_normal_boot = "1"
+    6:androidboot.slot_suffix = "_a"
+    11:androidboot.bootreason = "reboot"
+
+[NORMAL_LK] android17-live-b-capture-rescue-20261002/summary.txt:50
+    1304:metadata.slot_info[0].priority = 7, 6
+    1305:metadata.slot_info[0].retry = 6, 4
+  > 1448:BOOT_MODE: 0
+    2384:Succeeded to eable DDR_RSV_MODE in normal-boot mode
+    2416:[DCM][INFO] MP_MISC_DCM_CFG0              (0xffff00000c53a518): 0x0000007a
+
+[NORMAL_LK] android17-live-b-capture-rescue-20261002/summary.txt:81
+    2991:ccci_apply_md_bank4_remap_by_slot:61: [CCCI][ccci_apply_md_bank4_remap_by_slot] addr: 0x90000000
+    2992:ccci_apply_md_bank4_remap_by_slot:72: [CCCI]BANK4_MAP(7) value:0x48
+  > 3398:boot_linux_fdt:619: lk boot mode = 0
+    
+    DEVICE_ALREADY_RECOVERED_TO_A=YES
+
+[FORCE_NORMAL] android17-live-b-capture-rescue-20261002/live-bootconfig.txt:4
+    androidboot.boot_devices = "bootdevice", "soc/112b0000.ufshci", "112b0000.ufshci"
+    androidboot.verifiedbootstate = "orange"
+  > androidboot.force_normal_boot = "1"
+    androidboot.atm = "disabled"
+    androidboot.slot_suffix = "_a"
+
+[WATCHDOG_RESET] android17-live-b-capture-rescue-20261002/live-pl_lk.txt:52
+    [RGU] mtk_wdt_mode_config mode value=34, tmp:22000034
+    [RGU] mtk_wdt_mode_config mode value=7D, tmp:2200007D
+  > [RGU] mtk_wdt_reset_deglitch_enable: MTK_WDT_RSTDEG_EN1(0), MTK_WDT_RSTDEG_EN2(0)
+    [RGU] rgu_update_reg: 0, bits: 0xC000, addr: 0x1C00A040, val: 0x0
+    [RGU] rgu_update_reg: 0, bits: 0x300, addr: 0x1C00A0A0, val: 0x0
+
+[WATCHDOG_RESET] android17-live-b-capture-rescue-20261002/live-pl_lk.txt:666
+    [RGU] PMIC full rst: true
+    [RGU] PMIC full rst: true
+  > [PLFM] WDT reboot bypass power key!
+    #T#check Boot status=1
+    [RTC]rtc_bbpu_power_on done
+
+[NORMAL_LK] android17-live-b-capture-rescue-20261002/live-pl_lk.txt:1448
+    BOOT_TAG_VERSION: 1
+    BOOT_REASON: 4
+  > BOOT_MODE: 0
+    META_COM TYPE: 0
+    META_COM ID: 0
+
+[NORMAL_LK] android17-live-b-capture-rescue-20261002/live-pl_lk.txt:3398
+    [PROFILE] ::: hyp_unmap2() takes 609 ms
+    boot_linux_fdt:618: booting linux @ 0x40000000, ramdisk @ 0x66f00000 (64898270) dtb @ 0x47c80000 (400988)
+  > boot_linux_fdt:619: lk boot mode = 0
+    boot_linux_fdt:621: lk finished --> jump to linux kernel 64Bit
+    
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:94
+      a628f [FASTBOOT] oem p2u off!
+      a62a7 [FASTBOOT] USB2JTAG Done!
+  >   a6756 boot-fastboot
+      a6764 set slot a failed!
+      a67d9 Lock the device successfully! Will return to fastboot in 3s
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:100
+      a7408 recovery_b
+      a75c3 wait_for_enter_fastboot
+  >   a75e4 boot-recovery
+      a7846 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+      a79cf [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:176
+      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+      bbd9e notify_enter_fastboot
+  >   bbdb4 reboot-recovery
+      bbdc4 slot-retry-count:a
+      bbdd7 slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:176
+      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+      bbd9e notify_enter_fastboot
+  >   bbdb4 reboot-recovery
+      bbdc4 slot-retry-count:a
+      bbdd7 slot-retry-count:b
+
+[FORCE_NORMAL] lk-recovery-mode-static-analysis-20261002/summary.txt:192
+      bcbff : Read incorrect number of bytes.
+      bd22d open misc fail
+  >   bd332 androidboot.force_normal_boot=1
+      bd4a6 %s:%d: [LK_AB] unknown slot suffix
+      bd4d5 [recovery_check] open misc partition fail
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:201
+      bf1e2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+      bf223 mt6685_rtc_read
+  >   bf24f reboot-fastboot
+      bf53e platform_pl_boottags_boot_mode_hook
+      bfb55 [RTC]MT6685_RGDCXO_AAC_ELR_1 write fail.
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:257
+     204019 [FASTBOOT] oem p2u off!
+     204031 [FASTBOOT] USB2JTAG Done!
+  >  2044f1 boot-fastboot
+     2044ff set slot a failed!
+     204574 Lock the device successfully! Will return to fastboot in 3s
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:263
+     204b8a recovery_b
+     204edd wait_for_enter_fastboot
+  >  204efe boot-recovery
+     204f80 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+     2057c6 app/fastboot/fastboot.c
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:320
+     211da6  => FASTBOOT mode...
+     2125be fastboot mode idle for a while. Trigger system reboot now...
+  >  2125fb reboot-recovery
+     21260b slot-retry-count:a
+     21261e slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:320
+     211da6  => FASTBOOT mode...
+     2125be fastboot mode idle for a while. Trigger system reboot now...
+  >  2125fb reboot-recovery
+     21260b slot-retry-count:a
+     21261e slot-retry-count:b
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:333
+     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+     214733 mt6685_rtc_read
+  >  214873 reboot-fastboot
+     2149e2 platform_pl_boottags_boot_mode_hook
+     214c86 [RTC]MT6685_RGDCXO_AAC_ELR_1 write fail.
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:421
+      a35d9 %s:%d: Boot mode:%s is selected!
+      a47d0  => FASTBOOT MODE
+  >   a6756 boot-fastboot
+      a75e4 boot-recovery
+      a96e4 misc
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:422
+      a47d0  => FASTBOOT MODE
+      a6756 boot-fastboot
+  >   a75e4 boot-recovery
+      a96e4 misc
+      aa58f boot_mode_cmdline
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:434
+      bb075  => FASTBOOT mode...
+      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+  >   bbdb4 reboot-recovery
+      bc069 %s:%d: [LK_AB] open misc fail
+      bd22d open misc fail
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:434
+      bb075  => FASTBOOT mode...
+      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+  >   bbdb4 reboot-recovery
+      bc069 %s:%d: [LK_AB] open misc fail
+      bd22d open misc fail
+
+[FORCE_NORMAL] lk-recovery-mode-static-analysis-20261002/summary.txt:437
+      bc069 %s:%d: [LK_AB] open misc fail
+      bd22d open misc fail
+  >   bd332 androidboot.force_normal_boot=1
+      bd4d5 [recovery_check] open misc partition fail
+      bd8b9 %s, no plt_dfd_misc_decode function
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:440
+      bd4d5 [recovery_check] open misc partition fail
+      bd8b9 %s, no plt_dfd_misc_decode function
+  >   bf24f reboot-fastboot
+      bf53e platform_pl_boottags_boot_mode_hook
+      c032f allocate misc msg fail
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:450
+     202458 kedump: invalid misc size
+     202473 kedump: WARN: invalid dram data [%d/%d] found in misc pt_note
+  >  2044f1 boot-fastboot
+     204efe boot-recovery
+     206603 kedump: miscs[%p], size %lx
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:451
+     202473 kedump: WARN: invalid dram data [%d/%d] found in misc pt_note
+     2044f1 boot-fastboot
+  >  204efe boot-recovery
+     206603 kedump: miscs[%p], size %lx
+     206670 misc
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:462
+     211da6  => FASTBOOT mode...
+     2125be fastboot mode idle for a while. Trigger system reboot now...
+  >  2125fb reboot-recovery
+     212705 %s:%d: [LK_AB] open misc fail
+     2133ff open misc fail
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:462
+     211da6  => FASTBOOT mode...
+     2125be fastboot mode idle for a while. Trigger system reboot now...
+  >  2125fb reboot-recovery
+     212705 %s:%d: [LK_AB] open misc fail
+     2133ff open misc fail
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:466
+     2133ff open misc fail
+     213691 %s, no plt_dfd_misc_decode function
+  >  214873 reboot-fastboot
+     2149e2 platform_pl_boottags_boot_mode_hook
+     215241 kedump: misc[%p] %llx@%llx
+
+[FORCE_NORMAL] lk-recovery-mode-static-analysis-20261002/summary.txt:928
+      bcfb8 LTC_ARGCHK '%s' failure on line %d of file %s
+      bd09e COMBO_BOOT
+  >   bd332 androidboot.force_normal_boot=1
+      bd4a6 %s:%d: [LK_AB] unknown slot suffix
+      bd655 ccci_get_1st_sub_mem_blk
+
+[INIT_FATAL] lk-recovery-mode-static-analysis-20261002/summary.txt:1141
+     15e1f5 LK_AUTH_GET_CERT_SOCID_FAIL
+     15e211 LK_SEC_ENABLE_AUTH_PASS
+  >  15e230 [GZ_INIT] gz_config_push_jump_addr: failed, err=%d
+     15e6c1 lvts_configure_polling_speed_and_filter
+     15e97b ufdt_install_blob
+
+[INIT_FATAL] lk-recovery-mode-static-analysis-20261002/summary.txt:1201
+     162d7b fill_rect_with_content_by_16bit_rgb565
+     162dfb log_store_buf_map
+  >  162e35 [GZ_INIT][PART] %s: '%s' vmm_alloc_physical failed
+     16308f [SPI][ERR]: failed to malloc mtk_spi_bus[%d]
+     16317e TFA: vmm_alloc_physical failed
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2044
+      a7408 recovery_b
+      a74fc [AVB] persist offset = 0x%llx
+  >   a75e4 boot-recovery
+      a8d15 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+      a90ff [FASTBOOT] Enable USB2JTAG
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2086
+      b9a38 [AVB] img_auth_required = %d
+      ba8f0 [AVB] Failed to clear dm verity status
+  >   bbdb4 reboot-recovery
+      bcad4 [AVB] Fail To Get Verification Disabled Bit
+      bd4d5 [recovery_check] open misc partition fail
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2086
+      b9a38 [AVB] img_auth_required = %d
+      ba8f0 [AVB] Failed to clear dm verity status
+  >   bbdb4 reboot-recovery
+      bcad4 [AVB] Fail To Get Verification Disabled Bit
+      bd4d5 [recovery_check] open misc partition fail
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2115
+     204031 [FASTBOOT] USB2JTAG Done!
+     204b8a recovery_b
+  >  204efe boot-recovery
+     205d98 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+     2060ca [FASTBOOT] Enable USB2JTAG
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2129
+     20e3e9 [RTC]RG_SEQ_OFF write fail.
+     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+  >  2125fb reboot-recovery
+     214356 [FASTBOOT] oem printk-ratelimit on!
+     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2129
+     20e3e9 [RTC]RG_SEQ_OFF write fail.
+     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+  >  2125fb reboot-recovery
+     214356 [FASTBOOT] oem printk-ratelimit on!
+     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:2279
+    3800  0x000a628f 0x000a628f 23   24           ascii   [FASTBOOT] oem p2u off!
+    3801  0x000a62a7 0x000a62a7 25   26           ascii   [FASTBOOT] USB2JTAG Done!
+  > 3843  0x000a6756 0x000a6756 13   14           ascii   boot-fastboot
+    3844  0x000a6764 0x000a6764 18   19           ascii   set slot a failed!
+    3849  0x000a67d9 0x000a67d9 60   61           ascii   Lock the device successfully! Will return to fastboot in 3s\n
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2285
+    3974  0x000a7408 0x000a7408 10   11           ascii   recovery_b
+    3995  0x000a75c3 0x000a75c3 23   24           ascii   wait_for_enter_fastboot
+  > 3997  0x000a75e4 0x000a75e4 13   14           ascii   boot-recovery
+    4017  0x000a7846 0x000a7846 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+    4033  0x000a79cf 0x000a79cf 46   47           ascii   [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d\n
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2355
+    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2355
+    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:2369
+    7306  0x000bf1e2 0x000bf1e2 64   65           ascii   [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d\n
+    7307  0x000bf223 0x000bf223 15   16           ascii   mt6685_rtc_read
+  > 7310  0x000bf24f 0x000bf24f 15   16           ascii   reboot-fastboot
+    7335  0x000bf53e 0x000bf53e 35   36           ascii   platform_pl_boottags_boot_mode_hook
+    7387  0x000bfb55 0x000bfb55 41   42           ascii   [RTC]MT6685_RGDCXO_AAC_ELR_1 write fail.\n
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:2417
+    17922 0x00204019 0x00204019 23   24           ascii   [FASTBOOT] oem p2u off!
+    17923 0x00204031 0x00204031 25   26           ascii   [FASTBOOT] USB2JTAG Done!
+  > 17961 0x002044f1 0x002044f1 13   14           ascii   boot-fastboot
+    17962 0x002044ff 0x002044ff 18   19           ascii   set slot a failed!
+    17967 0x00204574 0x00204574 60   61           ascii   Lock the device successfully! Will return to fastboot in 3s\n
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2423
+    18039 0x00204b8a 0x00204b8a 10   11           ascii   recovery_b
+    18072 0x00204edd 0x00204edd 23   24           ascii   wait_for_enter_fastboot
+  > 18074 0x00204efe 0x00204efe 13   14           ascii   boot-recovery
+    18079 0x00204f80 0x00204f80 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+    18156 0x002057c6 0x002057c6 23   24           ascii   app/fastboot/fastboot.c
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/summary.txt:2478
+    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/summary.txt:2478
+    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/summary.txt:2491
+    20271 0x002146f2 0x002146f2 64   65           ascii   [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d\n
+    20272 0x00214733 0x00214733 15   16           ascii   mt6685_rtc_read
+  > 20285 0x00214873 0x00214873 15   16           ascii   reboot-fastboot
+    20299 0x002149e2 0x002149e2 35   36           ascii   platform_pl_boottags_boot_mode_hook
+    20324 0x00214c86 0x00214c86 41   42           ascii   [RTC]MT6685_RGDCXO_AAC_ELR_1 write fail.\n
+
+[NORMAL_LK] lk-recovery-mode-static-analysis-20261002/summary.txt:2608
+    1304:metadata.slot_info[0].priority = 7, 6
+    1305:metadata.slot_info[0].retry = 6, 4
+  > 1448:BOOT_MODE: 0
+    1786:get_suffix:212: [LK_AB] boot_ctrl magic number is match, compare priority 7, 6
+    1787:get_suffix:212: [LK_AB] boot_ctrl magic number is match, compare priority 7, 6
+
+[NORMAL_LK] lk-recovery-mode-static-analysis-20261002/summary.txt:2699
+    3137:get_suffix:212: [LK_AB] boot_ctrl magic number is match, compare priority 7, 6
+    3261:set_fdt:34: runs set_fdt_avb_cmdline hook function
+  > 3398:boot_linux_fdt:619: lk boot mode = 0
+    
+    ===== CLASSIFICATION =====
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:16
+      a628f [FASTBOOT] oem p2u off!
+      a62a7 [FASTBOOT] USB2JTAG Done!
+  >   a6756 boot-fastboot
+      a6764 set slot a failed!
+      a67d9 Lock the device successfully! Will return to fastboot in 3s
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:22
+      a7408 recovery_b
+      a75c3 wait_for_enter_fastboot
+  >   a75e4 boot-recovery
+      a7846 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+      a79cf [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:98
+      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+      bbd9e notify_enter_fastboot
+  >   bbdb4 reboot-recovery
+      bbdc4 slot-retry-count:a
+      bbdd7 slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:98
+      bbd61 fastboot mode idle for a while. Trigger system reboot now...
+      bbd9e notify_enter_fastboot
+  >   bbdb4 reboot-recovery
+      bbdc4 slot-retry-count:a
+      bbdd7 slot-retry-count:b
+
+[FORCE_NORMAL] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:114
+      bcbff : Read incorrect number of bytes.
+      bd22d open misc fail
+  >   bd332 androidboot.force_normal_boot=1
+      bd4a6 %s:%d: [LK_AB] unknown slot suffix
+      bd4d5 [recovery_check] open misc partition fail
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:123
+      bf1e2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+      bf223 mt6685_rtc_read
+  >   bf24f reboot-fastboot
+      bf53e platform_pl_boottags_boot_mode_hook
+      bfb55 [RTC]MT6685_RGDCXO_AAC_ELR_1 write fail.
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:179
+     204019 [FASTBOOT] oem p2u off!
+     204031 [FASTBOOT] USB2JTAG Done!
+  >  2044f1 boot-fastboot
+     2044ff set slot a failed!
+     204574 Lock the device successfully! Will return to fastboot in 3s
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:185
+     204b8a recovery_b
+     204edd wait_for_enter_fastboot
+  >  204efe boot-recovery
+     204f80 %s:%d: [LK_AB] set to slot %d fail, ret 0x%x
+     2057c6 app/fastboot/fastboot.c
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:242
+     211da6  => FASTBOOT mode...
+     2125be fastboot mode idle for a while. Trigger system reboot now...
+  >  2125fb reboot-recovery
+     21260b slot-retry-count:a
+     21261e slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:242
+     211da6  => FASTBOOT mode...
+     2125be fastboot mode idle for a while. Trigger system reboot now...
+  >  2125fb reboot-recovery
+     21260b slot-retry-count:a
+     21261e slot-retry-count:b
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/lk-recovery-strings.txt:255
+     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+     214733 mt6685_rtc_read
+  >  214873 reboot-fastboot
+     2149e2 platform_pl_boottags_boot_mode_hook
+     214c86 [RTC]MT6685_RGDCXO_AAC_ELR_1 write fail.
+
+[FORCE_NORMAL] lk-recovery-mode-static-analysis-20261002/lk-ab-strings.txt:439
+      bcfb8 LTC_ARGCHK '%s' failure on line %d of file %s
+      bd09e COMBO_BOOT
+  >   bd332 androidboot.force_normal_boot=1
+      bd4a6 %s:%d: [LK_AB] unknown slot suffix
+      bd655 ccci_get_1st_sub_mem_blk
+
+[INIT_FATAL] lk-recovery-mode-static-analysis-20261002/lk-ab-strings.txt:652
+     15e1f5 LK_AUTH_GET_CERT_SOCID_FAIL
+     15e211 LK_SEC_ENABLE_AUTH_PASS
+  >  15e230 [GZ_INIT] gz_config_push_jump_addr: failed, err=%d
+     15e6c1 lvts_configure_polling_speed_and_filter
+     15e97b ufdt_install_blob
+
+[INIT_FATAL] lk-recovery-mode-static-analysis-20261002/lk-ab-strings.txt:712
+     162d7b fill_rect_with_content_by_16bit_rgb565
+     162dfb log_store_buf_map
+  >  162e35 [GZ_INIT][PART] %s: '%s' vmm_alloc_physical failed
+     16308f [SPI][ERR]: failed to malloc mtk_spi_bus[%d]
+     16317e TFA: vmm_alloc_physical failed
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:13
+      a7408 recovery_b
+      a74fc [AVB] persist offset = 0x%llx
+  >   a75e4 boot-recovery
+      a8d15 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+      a90ff [FASTBOOT] Enable USB2JTAG
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:55
+      b9a38 [AVB] img_auth_required = %d
+      ba8f0 [AVB] Failed to clear dm verity status
+  >   bbdb4 reboot-recovery
+      bcad4 [AVB] Fail To Get Verification Disabled Bit
+      bd4d5 [recovery_check] open misc partition fail
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:55
+      b9a38 [AVB] img_auth_required = %d
+      ba8f0 [AVB] Failed to clear dm verity status
+  >   bbdb4 reboot-recovery
+      bcad4 [AVB] Fail To Get Verification Disabled Bit
+      bd4d5 [recovery_check] open misc partition fail
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:84
+     204031 [FASTBOOT] USB2JTAG Done!
+     204b8a recovery_b
+  >  204efe boot-recovery
+     205d98 [RTC]MT6685_RG_UVLO2V0_EN_ADDR write fail.
+     2060ca [FASTBOOT] Enable USB2JTAG
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:98
+     20e3e9 [RTC]RG_SEQ_OFF write fail.
+     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+  >  2125fb reboot-recovery
+     214356 [FASTBOOT] oem printk-ratelimit on!
+     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/lk-log-strings.txt:98
+     20e3e9 [RTC]RG_SEQ_OFF write fail.
+     211c87 %s:%d: boot_reason(%d) boot_mode(%d)
+  >  2125fb reboot-recovery
+     214356 [FASTBOOT] oem printk-ratelimit on!
+     2146f2 [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:15
+    3800  0x000a628f 0x000a628f 23   24           ascii   [FASTBOOT] oem p2u off!
+    3801  0x000a62a7 0x000a62a7 25   26           ascii   [FASTBOOT] USB2JTAG Done!
+  > 3843  0x000a6756 0x000a6756 13   14           ascii   boot-fastboot
+    3844  0x000a6764 0x000a6764 18   19           ascii   set slot a failed!
+    3849  0x000a67d9 0x000a67d9 60   61           ascii   Lock the device successfully! Will return to fastboot in 3s\n
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:21
+    3974  0x000a7408 0x000a7408 10   11           ascii   recovery_b
+    3995  0x000a75c3 0x000a75c3 23   24           ascii   wait_for_enter_fastboot
+  > 3997  0x000a75e4 0x000a75e4 13   14           ascii   boot-recovery
+    4017  0x000a7846 0x000a7846 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+    4033  0x000a79cf 0x000a79cf 46   47           ascii   [CCCI][%s:%d] Size abnormal[0x%x] for slot:%d\n
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:91
+    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:91
+    6843  0x000bbd61 0x000bbd61 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+    6844  0x000bbd9e 0x000bbd9e 21   22           ascii   notify_enter_fastboot
+  > 6845  0x000bbdb4 0x000bbdb4 15   16           ascii   reboot-recovery
+    6846  0x000bbdc4 0x000bbdc4 18   19           ascii   slot-retry-count:a
+    6847  0x000bbdd7 0x000bbdd7 18   19           ascii   slot-retry-count:b
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:105
+    7306  0x000bf1e2 0x000bf1e2 64   65           ascii   [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d\n
+    7307  0x000bf223 0x000bf223 15   16           ascii   mt6685_rtc_read
+  > 7310  0x000bf24f 0x000bf24f 15   16           ascii   reboot-fastboot
+    7335  0x000bf53e 0x000bf53e 35   36           ascii   platform_pl_boottags_boot_mode_hook
+    7387  0x000bfb55 0x000bfb55 41   42           ascii   [RTC]MT6685_RGDCXO_AAC_ELR_1 write fail.\n
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:153
+    17922 0x00204019 0x00204019 23   24           ascii   [FASTBOOT] oem p2u off!
+    17923 0x00204031 0x00204031 25   26           ascii   [FASTBOOT] USB2JTAG Done!
+  > 17961 0x002044f1 0x002044f1 13   14           ascii   boot-fastboot
+    17962 0x002044ff 0x002044ff 18   19           ascii   set slot a failed!
+    17967 0x00204574 0x00204574 60   61           ascii   Lock the device successfully! Will return to fastboot in 3s\n
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:159
+    18039 0x00204b8a 0x00204b8a 10   11           ascii   recovery_b
+    18072 0x00204edd 0x00204edd 23   24           ascii   wait_for_enter_fastboot
+  > 18074 0x00204efe 0x00204efe 13   14           ascii   boot-recovery
+    18079 0x00204f80 0x00204f80 45   46           ascii   %s:%d: [LK_AB] set to slot %d fail, ret 0x%x\n
+    18156 0x002057c6 0x002057c6 23   24           ascii   app/fastboot/fastboot.c
+
+[REBOOT_RECOVERY_REQUEST] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:214
+    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+
+[BCB_RECOVERY] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:214
+    19892 0x00211da6 0x00211da6 21   22           ascii    => FASTBOOT mode...\n
+    19969 0x002125be 0x002125be 60   61           ascii   fastboot mode idle for a while. Trigger system reboot now...
+  > 19970 0x002125fb 0x002125fb 15   16           ascii   reboot-recovery
+    19971 0x0021260b 0x0021260b 18   19           ascii   slot-retry-count:a
+    19972 0x0021261e 0x0021261e 18   19           ascii   slot-retry-count:b
+
+[BCB_FASTBOOT] lk-recovery-mode-static-analysis-20261002/rabin2-recovery-strings.txt:227
+    20271 0x002146f2 0x002146f2 64   65           ascii   [RTC]%s(%d):%s: rtc register shutdown callback failed, ret = %d\n
+    20272 0x00214733 0x00214733 15   16           ascii   mt6685_rtc_read
+  > 20285 0x00214873 0x00214873 15   16           ascii   reboot-fastboot
+    20299 0x002149e2 0x002149e2 35   36           ascii   platform_pl_boottags_boot_mode_hook
+    20324 0x00214c86 0x00214c86 41   42           ascii   [RTC]MT6685_RGDCXO_AAC_ELR_1 write fail.\n
+
+[WATCHDOG_RESET] lk-recovery-mode-static-analysis-20261002/current-a-pl_lk.txt:52
+    [RGU] mtk_wdt_mode_config mode value=34, tmp:22000034
+    [RGU] mtk_wdt_mode_config mode value=7D, tmp:2200007D
+  > [RGU] mtk_wdt_reset_deglitch_enable: MTK_WDT_RSTDEG_EN1(0), MTK_WDT_RSTDEG_EN2(0)
+    [RGU] rgu_update_reg: 0, bits: 0xC000, addr: 0x1C00A040, val: 0x0
+    [RGU] rgu_update_reg: 0, bits: 0x300, addr: 0x1C00A0A0, val: 0x0
+
+[WATCHDOG_RESET] lk-recovery-mode-static-analysis-20261002/current-a-pl_lk.txt:666
+    [RGU] PMIC full rst: true
+    [RGU] PMIC full rst: true
+  > [PLFM] WDT reboot bypass power key!
+    #T#check Boot status=1
+    [RTC]rtc_bbpu_power_on done
+
+[NORMAL_LK] lk-recovery-mode-static-analysis-20261002/current-a-pl_lk.txt:1448
+    BOOT_TAG_VERSION: 1
+    BOOT_REASON: 4
+  > BOOT_MODE: 0
+    META_COM TYPE: 0
+    META_COM ID: 0
+
+[NORMAL_LK] lk-recovery-mode-static-analysis-20261002/current-a-pl_lk.txt:3398
+    [PROFILE] ::: hyp_unmap2() takes 609 ms
+    boot_linux_fdt:618: booting linux @ 0x40000000, ramdisk @ 0x66f00000 (64898270) dtb @ 0x47c80000 (400988)
+  > boot_linux_fdt:619: lk boot mode = 0
+    boot_linux_fdt:621: lk finished --> jump to linux kernel 64Bit
+    
+
+[NORMAL_LK] lk-recovery-mode-static-analysis-20261002/current-a-pl_lk-signals.txt:55
+    1304:metadata.slot_info[0].priority = 7, 6
+    1305:metadata.slot_info[0].retry = 6, 4
+  > 1448:BOOT_MODE: 0
+    1786:get_suffix:212: [LK_AB] boot_ctrl magic number is match, compare priority 7, 6
+    1787:get_suffix:212: [LK_AB] boot_ctrl magic number is match, compare priority 7, 6
+
+[NORMAL_LK] lk-recovery-mode-static-analysis-20261002/current-a-pl_lk-signals.txt:146
+    3137:get_suffix:212: [LK_AB] boot_ctrl magic number is match, compare priority 7, 6
+    3261:set_fdt:34: runs set_fdt_avb_cmdline hook function
+  > 3398:boot_linux_fdt:619: lk boot mode = 0
+
+[INIT_FATAL] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:180
+    [    0.188951][    T1] ALSA device list:
+    [    0.188956][    T1]   No soundcards found.
+  > [    0.197381][   T74] rootfs image is not initramfs (Decoding failed); looks like an initrd
+    [    0.219828][   T74] Freeing initrd memory: 36088K
+    [    0.220941][    T1] Freeing unused kernel memory: 4160K
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:270
+    [    0.244249][    T1] sig 0x5678ef90 flag 0x237 add 0x43ffbe000 size 0x40000 offsize 0x20 point 0xf956
+    [    0.244524][    T1] log_store: pmic child device not found.
+  > [    0.244530][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    [    0.244533][    T1] log_store: sram_dram_buff flag 0x233, reboot count 0, 0.
+    [    0.244537][    T1] log store:sram_dram_buff addr 0x43ffbe000, size 0x40000.
+
+[INIT_FATAL] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:674
+    [    0.454258][  T165] [mmdvfs][dbg]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [    0.454269][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+  > [    0.454326][  T166] [mmdvfs][err]mmdvfs_ccu_init_thread: get ccu phandle failed
+    [    0.457104][    T1] MMP: mmprofile_enable(): enable: 1
+    [    0.457113][    T1] MMP: mmprofile_force_start(): start: 1
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:1966
+    [    1.080183][    T1] pd_adapter pd-adapter: mtk_pd_adapter_probe successfully
+    [    1.082448][    T1] mtk_charger_probe: starts
+  > [    1.082459][    T1] mtk_charger_parse_dt: size:0x10 tag:0x41000802 bootmode:0x2 boottype:0x2
+    [    1.082465][    T1] found Basic
+    [    1.082482][    T1] enable_vbat_mon:0
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:1977
+    [    1.085989][    T1] [PE50]pe50_parse_dt support ta(pd_adapter)
+    [    1.086195][    T1] [DISP][mtk_disp_notifier_register line:18]:mtk_pe50
+  > [    1.086202][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    [    1.086208][    T1] pe5 pe5: pe50_probe: probe boot_mode=2.
+    [    1.086212][    T1] pe5 pe5: pe50_probe successfully
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:1995
+    [    1.097112][    T1] mt6685-rtc mt6685-rtc: rtc_field_read: rg:0x54, val:0x20
+    [    1.097185][    T1] mt6685-rtc mt6685-rtc: rtc_field_read: rg:0x56, val:0xa0
+  > [    1.097194][    T1] fg_check_bootmode: size:0x10 tag:0x41000802 bootmode:0x2 boottype:0x2
+    [    1.097200][    T1] fg_swocv_v prop == NULL, len=0
+    [    1.097203][    T1] fg_swocv_i prop == NULL, len=0
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:2432
+    [    1.460891][    T1] low_battery_throttling low-battery-throttling: lvsys_register: 2900 mV, 3100 mV
+    [    1.460895][    T1] low_battery_throttling low-battery-throttling: [low_battery_throttling_probe] failed to get pt-shutdown, set to 1
+  > [    1.460906][    T1] low_battery_throttling low-battery-throttling: bootmode:0x2
+    [    1.462102][    T1] mtk_dynamic_loading_throttling mtk-dynamic-loading-throttling: DMA mask not set
+    [    1.462284][    T1] mtk_dynamic_loading_throttling mtk-dynamic-loading-throttling: bob_exist:0
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:2437
+    [    1.462310][    T1] [dlpt] UVLO_VOLT_LEVEL = 2600, RG_UVLO_VTHL = 0x6
+    [    1.462327][    T1] [dlpt] VBB_UVLO_VOLT_LEVEL = 2500, RG_VBB_UVLO_VTHL = 0x5
+  > [    1.462414][    T1] mtk_dynamic_loading_throttling mtk-dynamic-loading-throttling: bootmode:0x2
+    [    1.462417][    T1] mtk_dynamic_loading_throttling mtk-dynamic-loading-throttling: power_path_support:0 isense_support:0
+    [    1.462434][    T1] [dlpt] imix_r=85
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:2452
+    [    1.466991][    T1] aw2013_probe -1: chip-enable-gpio = (484) gpio_state = (1)  end. 
+    [    1.466997][    T1] aw2013_probe -2: chip-enable-gpio = (484) gpio_state = (1)  end. 
+  > [    1.467989][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    [    1.467994][    T1] leds-rgb-aw2013[led_aw2103_control]  led_aw2103_boot_mode=2
+    [    1.469363][    T1] input: yft-gpio-keys as /devices/platform/yft-gpio-keys/input/input2
+
+[INIT_FATAL] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:2607
+    [    2.165816][    T1] printk: init: 384 output lines suppressed due to ratelimiting
+    [    2.175258][    T1] init: [libfs_mgr] Warning: unknown flag: resize
+  > [    2.175877][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+    [    2.175890][    T1] init: Could not update logical partition
+    [    2.175969][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+
+[INIT_FATAL] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:2609
+    [    2.175877][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+    [    2.175890][    T1] init: Could not update logical partition
+  > [    2.175969][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+    [    2.175976][    T1] init: Could not update logical partition
+    [    2.176047][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+
+[INIT_FATAL] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:2611
+    [    2.175969][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+    [    2.175976][    T1] init: Could not update logical partition
+  > [    2.176047][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+    [    2.176053][    T1] init: Could not update logical partition
+    [    2.176122][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+
+[INIT_FATAL] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:2613
+    [    2.176047][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+    [    2.176053][    T1] init: Could not update logical partition
+  > [    2.176122][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+    [    2.176128][    T1] init: Could not update logical partition
+    [    2.176149][    T1] init: Opening SELinux policy
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:2813
+    [    4.547681][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [    4.750287][  T373] [DISP]mtk_crtc_update_ddp_state frame:0 correct invalid hrt to:456,mode:0->0,bpp:4,w:456
+  > [    4.757740][  T373] recovery: Starting recovery (pid 373) on Fri Oct  2 19:54:59 2026
+    [    4.757750][  T373] recovery: 
+    [    4.757763][  T373] recovery: locale is [en-US]
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:2992
+    [   13.041736][  T129] sd 0:0:0:2: [sdc] Starting disk
+    [   13.041945][  T129] sd 0:0:0:2: [sdc] Starting disk
+  > [   13.043902][  T373] recovery: Entering fastboot
+    [   13.044343][    T1] init: processing action (sys.usb.config=none && sys.usb.configfs=1) from (/system/etc/init/hw/init.rc:162)
+    [   13.044735][    T1] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3001
+    [   13.112276][    T1] init: Service 'adbd' (pid 388) received signal 9
+    [   13.113716][    T1] init: processing action (sys.usb.config=fastboot) from (/system/etc/init/hw/init.rc:134)
+  > [   13.113825][    T1] init: starting service 'fastbootd'...
+    [   13.118109][    T1] libprocessgroup: Failed to find NormalIoPriority process profile
+    [   13.118787][    T1] init: ... started service 'fastbootd' has pid 403
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3003
+    [   13.113825][    T1] init: starting service 'fastbootd'...
+    [   13.118109][    T1] libprocessgroup: Failed to find NormalIoPriority process profile
+  > [   13.118787][    T1] init: ... started service 'fastbootd' has pid 403
+    [   13.132352][  T403] cutils-trace: Error opening trace file: No such file or directory (2)
+    [   13.132737][  T372] servicemanager: Found android.hardware.boot.IBootControl/default in recovery VINTF manifest.
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3014
+    [   13.161771][  T372] servicemanager: Found android.hardware.boot.IBootControl/default in recovery VINTF manifest.
+    [   13.161869][  T405] android.hardware.boot-service.mtk_recovery: IBootControl AIDL service running...
+  > [   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    [   13.283659][  T319] [sh366003] fg_update_workfunc(2185): [sh366003]not Update FW!! adapter_status=2, soc=32, boot_mode=2
+    [   13.763659][  T165] [mmdvfs][dbg]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3020
+    [   14.133223][  T403] ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 0. Are binder threads started and available?)
+    [   14.133434][  T372] BpBinder: onLastStrongRef automatically unlinking death recipients: 
+  > [   14.133559][  T403] fastbootd: Using AIDL version of IBootControl
+    [   14.133712][  T372] servicemanager: Found android.hardware.health.IHealth/default in recovery VINTF manifest.
+    [   14.134032][  T372] servicemanager: Could not find android.hardware.fastboot.IFastboot/default in the VINTF manifest.
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3023
+    [   14.133712][  T372] servicemanager: Found android.hardware.health.IHealth/default in recovery VINTF manifest.
+    [   14.134032][  T372] servicemanager: Could not find android.hardware.fastboot.IFastboot/default in the VINTF manifest.
+  > [   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+    [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3024
+    [   14.134032][  T372] servicemanager: Could not find android.hardware.fastboot.IFastboot/default in the VINTF manifest.
+    [   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+  > [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+    [   14.134492][  T403] fastbootd: initializing functionfs
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3025
+    [   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+    [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+  > [   14.134482][  T403] fastbootd: Using aio for usb ffs
+    [   14.134492][  T403] fastbootd: initializing functionfs
+    [   14.134499][  T403] fastbootd: opening control endpoint /dev/usb-ffs/fastboot/ep0
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3026
+    [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+  > [   14.134492][  T403] fastbootd: initializing functionfs
+    [   14.134499][  T403] fastbootd: opening control endpoint /dev/usb-ffs/fastboot/ep0
+    [   14.134533][  T403] read descriptors
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3027
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+    [   14.134492][  T403] fastbootd: initializing functionfs
+  > [   14.134499][  T403] fastbootd: opening control endpoint /dev/usb-ffs/fastboot/ep0
+    [   14.134533][  T403] read descriptors
+    [   14.134538][  T403] read strings
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3030
+    [   14.134533][  T403] read descriptors
+    [   14.134538][  T403] read strings
+  > [   14.135538][  T403] fastbootd: [libfs_mgr] Warning: unknown flag: resize
+    [   14.136030][  T403] fastbootd: [libfs_mgr] unknown volume for path [/cache]
+    [   14.137674][    T1] mtu3 11201000.usb0: gadget (high-speed) pullup D+
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3031
+    [   14.134538][  T403] read strings
+    [   14.135538][  T403] fastbootd: [libfs_mgr] Warning: unknown flag: resize
+  > [   14.136030][  T403] fastbootd: [libfs_mgr] unknown volume for path [/cache]
+    [   14.137674][    T1] mtu3 11201000.usb0: gadget (high-speed) pullup D+
+    [   14.140458][  T373] [DISP]mtk_crtc_update_ddp_state frame:0 correct invalid hrt to:456,mode:0->0,bpp:4,w:456
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3123
+    [   20.931653][  T165] [mmdvfs][dbg]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [   20.931664][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+  > [   21.528491][  T403] fastbootd: Fastboot command: getvar:slot-count
+    [   21.529182][  T403] fastbootd: Fastboot command: set_active:a
+    [   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3124
+    [   20.931664][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [   21.528491][  T403] fastbootd: Fastboot command: getvar:slot-count
+  > [   21.529182][  T403] fastbootd: Fastboot command: set_active:a
+    [   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+    [   21.538468][  T143] sd 0:0:0:2: [sdc] Starting disk
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3129
+    [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+  > [   21.549267][  T403] fastbootd: Fastboot command: reboot
+    [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0:3130
+    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+
+[INIT_FATAL] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:180
+    [    0.188951][    T1] ALSA device list:
+    [    0.188956][    T1]   No soundcards found.
+  > [    0.197381][   T74] rootfs image is not initramfs (Decoding failed); looks like an initrd
+    [    0.219828][   T74] Freeing initrd memory: 36088K
+    [    0.220941][    T1] Freeing unused kernel memory: 4160K
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:270
+    [    0.244249][    T1] sig 0x5678ef90 flag 0x237 add 0x43ffbe000 size 0x40000 offsize 0x20 point 0xf956
+    [    0.244524][    T1] log_store: pmic child device not found.
+  > [    0.244530][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    [    0.244533][    T1] log_store: sram_dram_buff flag 0x233, reboot count 0, 0.
+    [    0.244537][    T1] log store:sram_dram_buff addr 0x43ffbe000, size 0x40000.
+
+[INIT_FATAL] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:674
+    [    0.454258][  T165] [mmdvfs][dbg]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [    0.454269][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+  > [    0.454326][  T166] [mmdvfs][err]mmdvfs_ccu_init_thread: get ccu phandle failed
+    [    0.457104][    T1] MMP: mmprofile_enable(): enable: 1
+    [    0.457113][    T1] MMP: mmprofile_force_start(): start: 1
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:1970
+    [    1.080183][    T1] pd_adapter pd-adapter: mtk_pd_adapter_probe successfully
+    [    1.082448][    T1] mtk_charger_probe: starts
+  > [    1.082459][    T1] mtk_charger_parse_dt: size:0x10 tag:0x41000802 bootmode:0x2 boottype:0x2
+    [    1.082465][    T1] found Basic
+    [    1.082482][    T1] enable_vbat_mon:0
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:1981
+    [    1.085989][    T1] [PE50]pe50_parse_dt support ta(pd_adapter)
+    [    1.086195][    T1] [DISP][mtk_disp_notifier_register line:18]:mtk_pe50
+  > [    1.086202][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    [    1.086208][    T1] pe5 pe5: pe50_probe: probe boot_mode=2.
+    [    1.086212][    T1] pe5 pe5: pe50_probe successfully
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:1999
+    [    1.097112][    T1] mt6685-rtc mt6685-rtc: rtc_field_read: rg:0x54, val:0x20
+    [    1.097185][    T1] mt6685-rtc mt6685-rtc: rtc_field_read: rg:0x56, val:0xa0
+  > [    1.097194][    T1] fg_check_bootmode: size:0x10 tag:0x41000802 bootmode:0x2 boottype:0x2
+    [    1.097200][    T1] fg_swocv_v prop == NULL, len=0
+    [    1.097203][    T1] fg_swocv_i prop == NULL, len=0
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2436
+    [    1.460891][    T1] low_battery_throttling low-battery-throttling: lvsys_register: 2900 mV, 3100 mV
+    [    1.460895][    T1] low_battery_throttling low-battery-throttling: [low_battery_throttling_probe] failed to get pt-shutdown, set to 1
+  > [    1.460906][    T1] low_battery_throttling low-battery-throttling: bootmode:0x2
+    [    1.462102][    T1] mtk_dynamic_loading_throttling mtk-dynamic-loading-throttling: DMA mask not set
+    [    1.462284][    T1] mtk_dynamic_loading_throttling mtk-dynamic-loading-throttling: bob_exist:0
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2441
+    [    1.462310][    T1] [dlpt] UVLO_VOLT_LEVEL = 2600, RG_UVLO_VTHL = 0x6
+    [    1.462327][    T1] [dlpt] VBB_UVLO_VOLT_LEVEL = 2500, RG_VBB_UVLO_VTHL = 0x5
+  > [    1.462414][    T1] mtk_dynamic_loading_throttling mtk-dynamic-loading-throttling: bootmode:0x2
+    [    1.462417][    T1] mtk_dynamic_loading_throttling mtk-dynamic-loading-throttling: power_path_support:0 isense_support:0
+    [    1.462434][    T1] [dlpt] imix_r=85
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2456
+    [    1.466991][    T1] aw2013_probe -1: chip-enable-gpio = (484) gpio_state = (1)  end. 
+    [    1.466997][    T1] aw2013_probe -2: chip-enable-gpio = (484) gpio_state = (1)  end. 
+  > [    1.467989][    T1] log_store: bootmode: 0x2 boottype: 0x2.
+    [    1.467994][    T1] leds-rgb-aw2013[led_aw2103_control]  led_aw2103_boot_mode=2
+    [    1.469363][    T1] input: yft-gpio-keys as /devices/platform/yft-gpio-keys/input/input2
+
+[INIT_FATAL] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2611
+    [    2.165816][    T1] printk: init: 384 output lines suppressed due to ratelimiting
+    [    2.175258][    T1] init: [libfs_mgr] Warning: unknown flag: resize
+  > [    2.175877][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+    [    2.175890][    T1] init: Could not update logical partition
+    [    2.175969][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+
+[INIT_FATAL] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2613
+    [    2.175877][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+    [    2.175890][    T1] init: Could not update logical partition
+  > [    2.175969][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+    [    2.175976][    T1] init: Could not update logical partition
+    [    2.176047][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+
+[INIT_FATAL] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2615
+    [    2.175969][    T1] init: DM_DEV_STATUS failed for system_ext_b: No such device or address
+    [    2.175976][    T1] init: Could not update logical partition
+  > [    2.176047][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+    [    2.176053][    T1] init: Could not update logical partition
+    [    2.176122][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+
+[INIT_FATAL] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2617
+    [    2.176047][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+    [    2.176053][    T1] init: Could not update logical partition
+  > [    2.176122][    T1] init: DM_DEV_STATUS failed for product_b: No such device or address
+    [    2.176128][    T1] init: Could not update logical partition
+    [    2.176149][    T1] init: Opening SELinux policy
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2817
+    [    4.547681][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [    4.750287][  T373] [DISP]mtk_crtc_update_ddp_state frame:0 correct invalid hrt to:456,mode:0->0,bpp:4,w:456
+  > [    4.757740][  T373] recovery: Starting recovery (pid 373) on Fri Oct  2 19:54:59 2026
+    [    4.757750][  T373] recovery: 
+    [    4.757763][  T373] recovery: locale is [en-US]
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2996
+    [   13.041736][  T129] sd 0:0:0:2: [sdc] Starting disk
+    [   13.041945][  T129] sd 0:0:0:2: [sdc] Starting disk
+  > [   13.043902][  T373] recovery: Entering fastboot
+    [   13.044343][    T1] init: processing action (sys.usb.config=none && sys.usb.configfs=1) from (/system/etc/init/hw/init.rc:162)
+    [   13.044735][    T1] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3005
+    [   13.112276][    T1] init: Service 'adbd' (pid 388) received signal 9
+    [   13.113716][    T1] init: processing action (sys.usb.config=fastboot) from (/system/etc/init/hw/init.rc:134)
+  > [   13.113825][    T1] init: starting service 'fastbootd'...
+    [   13.118109][    T1] libprocessgroup: Failed to find NormalIoPriority process profile
+    [   13.118787][    T1] init: ... started service 'fastbootd' has pid 403
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3007
+    [   13.113825][    T1] init: starting service 'fastbootd'...
+    [   13.118109][    T1] libprocessgroup: Failed to find NormalIoPriority process profile
+  > [   13.118787][    T1] init: ... started service 'fastbootd' has pid 403
+    [   13.132352][  T403] cutils-trace: Error opening trace file: No such file or directory (2)
+    [   13.132737][  T372] servicemanager: Found android.hardware.boot.IBootControl/default in recovery VINTF manifest.
+
+[RECOVERY_LK] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3018
+    [   13.161771][  T372] servicemanager: Found android.hardware.boot.IBootControl/default in recovery VINTF manifest.
+    [   13.161869][  T405] android.hardware.boot-service.mtk_recovery: IBootControl AIDL service running...
+  > [   13.283651][  T319] [sh366003] get_sh366003_boot_mode_from_dts(2168): log_store: bootmode: 0x2 boottype: 0x2.
+    [   13.283659][  T319] [sh366003] fg_update_workfunc(2185): [sh366003]not Update FW!! adapter_status=2, soc=32, boot_mode=2
+    [   13.763659][  T165] [mmdvfs][dbg]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3024
+    [   14.133223][  T403] ServiceManagerCppClient: Waited one second for android.hardware.boot.IBootControl/default (is service started? Number of threads started in the threadpool: 0. Are binder threads started and available?)
+    [   14.133434][  T372] BpBinder: onLastStrongRef automatically unlinking death recipients: 
+  > [   14.133559][  T403] fastbootd: Using AIDL version of IBootControl
+    [   14.133712][  T372] servicemanager: Found android.hardware.health.IHealth/default in recovery VINTF manifest.
+    [   14.134032][  T372] servicemanager: Could not find android.hardware.fastboot.IFastboot/default in the VINTF manifest.
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3027
+    [   14.133712][  T372] servicemanager: Found android.hardware.health.IHealth/default in recovery VINTF manifest.
+    [   14.134032][  T372] servicemanager: Could not find android.hardware.fastboot.IFastboot/default in the VINTF manifest.
+  > [   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+    [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3028
+    [   14.134032][  T372] servicemanager: Could not find android.hardware.fastboot.IFastboot/default in the VINTF manifest.
+    [   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+  > [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+    [   14.134492][  T403] fastbootd: initializing functionfs
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3029
+    [   14.134075][  T403] fastbootd: Unable to get AIDL fastboot service, trying HIDL...
+    [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+  > [   14.134482][  T403] fastbootd: Using aio for usb ffs
+    [   14.134492][  T403] fastbootd: initializing functionfs
+    [   14.134499][  T403] fastbootd: opening control endpoint /dev/usb-ffs/fastboot/ep0
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3030
+    [   14.134336][  T403] fastbootd: No fastboot implementation is found.
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+  > [   14.134492][  T403] fastbootd: initializing functionfs
+    [   14.134499][  T403] fastbootd: opening control endpoint /dev/usb-ffs/fastboot/ep0
+    [   14.134533][  T403] read descriptors
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3031
+    [   14.134482][  T403] fastbootd: Using aio for usb ffs
+    [   14.134492][  T403] fastbootd: initializing functionfs
+  > [   14.134499][  T403] fastbootd: opening control endpoint /dev/usb-ffs/fastboot/ep0
+    [   14.134533][  T403] read descriptors
+    [   14.134538][  T403] read strings
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3034
+    [   14.134533][  T403] read descriptors
+    [   14.134538][  T403] read strings
+  > [   14.135538][  T403] fastbootd: [libfs_mgr] Warning: unknown flag: resize
+    [   14.136030][  T403] fastbootd: [libfs_mgr] unknown volume for path [/cache]
+    [   14.137674][    T1] mtu3 11201000.usb0: gadget (high-speed) pullup D+
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3035
+    [   14.134538][  T403] read strings
+    [   14.135538][  T403] fastbootd: [libfs_mgr] Warning: unknown flag: resize
+  > [   14.136030][  T403] fastbootd: [libfs_mgr] unknown volume for path [/cache]
+    [   14.137674][    T1] mtu3 11201000.usb0: gadget (high-speed) pullup D+
+    [   14.140458][  T373] [DISP]mtk_crtc_update_ddp_state frame:0 correct invalid hrt to:456,mode:0->0,bpp:4,w:456
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3127
+    [   20.931653][  T165] [mmdvfs][dbg]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [   20.931664][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+  > [   21.528491][  T403] fastbootd: Fastboot command: getvar:slot-count
+    [   21.529182][  T403] fastbootd: Fastboot command: set_active:a
+    [   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3128
+    [   20.931664][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [   21.528491][  T403] fastbootd: Fastboot command: getvar:slot-count
+  > [   21.529182][  T403] fastbootd: Fastboot command: set_active:a
+    [   21.529701][  T405] android.hardware.boot-service.mtk_recovery: [libfs_mgr] Warning: unknown flag: resize
+    [   21.538468][  T143] sd 0:0:0:2: [sdc] Starting disk
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3133
+    [   21.538678][  T143] sd 0:0:0:2: [sdc] Starting disk
+    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+  > [   21.549267][  T403] fastbootd: Fastboot command: reboot
+    [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+
+[RECOVERY_USERSPACE] android17-metadata-fix-boot-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:3134
+    [   21.541500][  T405] android.hardware.boot-service.mtk_recovery: setActiveBootSlot SetBootRegionSlot 0
+    [   21.549267][  T403] fastbootd: Fastboot command: reboot
+  > [   21.549776][  T359] init: Received sys.powerctl='reboot,from_fastboot' from pid: 403 (/system/bin/fastbootd)
+    [   21.549891][  T403] mtu3 11201000.usb0: gadget (high-speed) pullup D-
+    [   21.549899][    T1] init: Got shutdown_command 'reboot,from_fastboot' Calling HandlePowerctlMessage()
+
+[INIT_FATAL] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:443
+    [    0.188511][    T1] Key type fscrypt-provisioning registered
+    [    0.188682][    T1] pstore: Using crash dump compression: deflate
+  > [    0.189354][   T74] rootfs image is not initramfs (Decoding failed); looks like an initrd
+    [    0.190247][    T1] clk: Disabling unused clocks
+    [    0.190269][    T1] ALSA device list:
+
+[NORMAL_LK] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:536
+    [    0.236669][    T1] sig 0x5678ef90 flag 0x227 add 0x43ffbe000 size 0x40000 offsize 0x20 point 0xf2f7
+    [    0.236948][    T1] log_store: pmic child device not found.
+  > [    0.236955][    T1] log_store: bootmode: 0x0 boottype: 0x2.
+    [    0.236958][    T1] log store:sram_dram_buff addr 0x43ffbe000, size 0x40000.
+    [    0.236970][    T1] [PHY layout]log_store_mem:0x43ffbe000-0x43fffdfff (0x40000)
+
+[INIT_FATAL] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:1000
+    [    0.460923][  T165] [mmdvfs][dbg]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [    0.460938][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+  > [    0.460976][  T166] [mmdvfs][err]mmdvfs_ccu_init_thread: get ccu phandle failed
+    [    0.463766][    T1] MMP: mmprofile_enable(): enable: 1
+    [    0.463775][    T1] MMP: mmprofile_force_start(): start: 1
+
+[NORMAL_LK] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:2287
+    [    1.056570][    T1] pd_adapter pd-adapter: mtk_pd_adapter_probe successfully
+    [    1.058827][    T1] mtk_charger_probe: starts
+  > [    1.058836][    T1] mtk_charger_parse_dt: size:0x10 tag:0x41000802 bootmode:0x0 boottype:0x2
+    [    1.058841][    T1] found Basic
+    [    1.058859][    T1] enable_vbat_mon:0
+
+[NORMAL_LK] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:2298
+    [    1.062481][    T1] [PE50]pe50_parse_dt support ta(pd_adapter)
+    [    1.062693][    T1] [DISP][mtk_disp_notifier_register line:18]:mtk_pe50
+  > [    1.062700][    T1] log_store: bootmode: 0x0 boottype: 0x2.
+    [    1.062707][    T1] pe5 pe5: pe50_probe: probe boot_mode=0.
+    [    1.062711][    T1] pe5 pe5: pe50_probe successfully
+
+[NORMAL_LK] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:2316
+    [    1.073523][    T1] mt6685-rtc mt6685-rtc: rtc_field_read: rg:0x54, val:0x20
+    [    1.073603][    T1] mt6685-rtc mt6685-rtc: rtc_field_read: rg:0x56, val:0x9e
+  > [    1.073611][    T1] fg_check_bootmode: size:0x10 tag:0x41000802 bootmode:0x0 boottype:0x2
+    [    1.073616][    T1] fg_swocv_v prop == NULL, len=0
+    [    1.073620][    T1] fg_swocv_i prop == NULL, len=0
+
+[NORMAL_LK] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0:2683
+    [    1.344003][    T1] aw2013_probe -1: chip-enable-gpio = (484) gpio_state = (1)  end. 
+    [    1.344007][    T1] aw2013_probe -2: chip-enable-gpio = (484) gpio_state = (1)  end. 
+  > [    1.345040][    T1] log_store: bootmode: 0x0 boottype: 0x2.
+    [    1.345045][    T1] leds-rgb-aw2013[led_aw2103_control]  led_aw2103_boot_mode=0
+    [    1.346742][    T1] input: yft-gpio-keys as /devices/platform/yft-gpio-keys/input/input2
+
+[INIT_FATAL] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:443
+    [    0.188511][    T1] Key type fscrypt-provisioning registered
+    [    0.188682][    T1] pstore: Using crash dump compression: deflate
+  > [    0.189354][   T74] rootfs image is not initramfs (Decoding failed); looks like an initrd
+    [    0.190247][    T1] clk: Disabling unused clocks
+    [    0.190269][    T1] ALSA device list:
+
+[NORMAL_LK] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:536
+    [    0.236669][    T1] sig 0x5678ef90 flag 0x227 add 0x43ffbe000 size 0x40000 offsize 0x20 point 0xf2f7
+    [    0.236948][    T1] log_store: pmic child device not found.
+  > [    0.236955][    T1] log_store: bootmode: 0x0 boottype: 0x2.
+    [    0.236958][    T1] log store:sram_dram_buff addr 0x43ffbe000, size 0x40000.
+    [    0.236970][    T1] [PHY layout]log_store_mem:0x43ffbe000-0x43fffdfff (0x40000)
+
+[INIT_FATAL] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:1000
+    [    0.460923][  T165] [mmdvfs][dbg]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+    [    0.460938][  T165] [mmdvfs][err]mtk_mmdvfs_enable_vcp: ret:-1 enable:1 vcp_power:0 idx:0 usage:0
+  > [    0.460976][  T166] [mmdvfs][err]mmdvfs_ccu_init_thread: get ccu phandle failed
+    [    0.463766][    T1] MMP: mmprofile_enable(): enable: 1
+    [    0.463775][    T1] MMP: mmprofile_force_start(): start: 1
+
+[NORMAL_LK] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2291
+    [    1.056570][    T1] pd_adapter pd-adapter: mtk_pd_adapter_probe successfully
+    [    1.058827][    T1] mtk_charger_probe: starts
+  > [    1.058836][    T1] mtk_charger_parse_dt: size:0x10 tag:0x41000802 bootmode:0x0 boottype:0x2
+    [    1.058841][    T1] found Basic
+    [    1.058859][    T1] enable_vbat_mon:0
+
+[NORMAL_LK] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2302
+    [    1.062481][    T1] [PE50]pe50_parse_dt support ta(pd_adapter)
+    [    1.062693][    T1] [DISP][mtk_disp_notifier_register line:18]:mtk_pe50
+  > [    1.062700][    T1] log_store: bootmode: 0x0 boottype: 0x2.
+    [    1.062707][    T1] pe5 pe5: pe50_probe: probe boot_mode=0.
+    [    1.062711][    T1] pe5 pe5: pe50_probe successfully
+
+[NORMAL_LK] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2320
+    [    1.073523][    T1] mt6685-rtc mt6685-rtc: rtc_field_read: rg:0x54, val:0x20
+    [    1.073603][    T1] mt6685-rtc mt6685-rtc: rtc_field_read: rg:0x56, val:0x9e
+  > [    1.073611][    T1] fg_check_bootmode: size:0x10 tag:0x41000802 bootmode:0x0 boottype:0x2
+    [    1.073616][    T1] fg_swocv_v prop == NULL, len=0
+    [    1.073620][    T1] fg_swocv_i prop == NULL, len=0
+
+[NORMAL_LK] android17-slot-b-first-failure-forensics-20261002/pstore/console-ramoops-0.sanitized.txt:2687
+    [    1.344003][    T1] aw2013_probe -1: chip-enable-gpio = (484) gpio_state = (1)  end. 
+    [    1.344007][    T1] aw2013_probe -2: chip-enable-gpio = (484) gpio_state = (1)  end. 
+  > [    1.345040][    T1] log_store: bootmode: 0x0 boottype: 0x2.
+    [    1.345045][    T1] leds-rgb-aw2013[led_aw2103_control]  led_aw2103_boot_mode=0
+    [    1.346742][    T1] input: yft-gpio-keys as /devices/platform/yft-gpio-keys/input/input2

@@ -556,3 +556,30 @@ control flow, referenced strings, call graph, and post-write reset path in
 order to identify the exact LK-side conditions that select these modes.
 
 No phone state is modified by this investigation.
+
+## Slot-B first-boot recovery-cause audit
+
+Further LK analysis showed that the previously oversized `0x8938` function
+was partially an analysis-boundary artifact.
+
+Adjacent code implements explicit reboot command paths:
+
+- normal reboot,
+- reboot to bootloader using reboot-mode value 3,
+- fastbootd via `boot-fastboot` in misc followed by recovery-mode value 2,
+- recovery using reboot-mode value 2 with a `boot-recovery` fallback.
+
+The low `MTK_WDT_NONRST_REG2` writer at `0x3dc5c` has only three direct static
+call sites in the analyzed LK payload. The third call supplies zero.
+
+This substantially weakens the hypothesis that ordinary LK boot selection
+spontaneously writes recovery value 2. The leading causal question is now
+whether an earlier Slot-B Android boot requested a recovery reboot, causing
+Linux `syscon-reboot-mode` to persist value 2 before the next LK invocation.
+
+A host-only audit therefore searched all retained Slot-B runtime evidence for
+normal-boot, recovery-boot, reboot-command, sys.powerctl, BCB, init-failure and
+reboot_on_failure markers. Generated Android 17 init/RC configuration was also
+scanned for recovery-producing failure actions.
+
+No phone state was modified and Slot B was not booted.
