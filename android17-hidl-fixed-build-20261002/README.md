@@ -645,3 +645,22 @@ The first mode-0 Slot-B reboot-to-bootloader cause was also checked for an
 explicit `bootstrap-apexd-failed` marker.
 
 No phone state was modified.
+
+## Pre-LK NONRST_REG2 address users found
+
+A targeted raw machine-code scan found direct AArch64 constructions of
+`0x1c00a024` in firmware stages outside the main LK payload.
+
+Candidates were found in:
+
+- `bl2_ext`;
+- AEE;
+- `preloader_k6878v1_64.bin`.
+
+This is significant because the preloader executes before LK and can in
+principle alter the reboot-mode field before LK reads it.
+
+Focused disassembly was generated only around those candidate offsets to
+distinguish reads from writes and identify any value-2 recovery assignment.
+
+No phone state was modified and Slot B was not booted.
