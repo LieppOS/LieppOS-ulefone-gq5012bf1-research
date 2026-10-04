@@ -1,0 +1,13 @@
+layer	artifact	path	interface_provided	interface_consumed	evidence
+app	YftMiniScreen.apk	system/app/YftMiniScreen/YftMiniScreen.apk	rear-screen UI (clock, camera preview, music, notifications, compass, race text, AOD selection)	framework mini-screen display	dex strings (com.yft.miniscreen.*)
+app	FactoryMode.apk	system/app/FactoryMode/FactoryMode.apk	TinyLCD factory/aging tests	vendor.yft.hardware.tinylcd@1.0::ITinylcd (direct proxy)	dex strings (ITinylcd$Proxy, TinyLCDTestActivity)
+app	YftSettings.apk	system_ext/priv-app/YftSettings/YftSettings.apk	mini-screen settings tiles, maxFrameSize	ro.yft_support_tinylcd	dex strings
+framework	services.jar	system/framework/services.jar	MiniScreenDisplay, writeFrameToHal, startGestureWake, setBacklightCtrl	VirtualDisplayAdapter/ImageReader; ITinylcd	dex strings
+property	ro.yft_support_tinylcd	build props	feature gate =1	-	build.prop
+hal-service	vendor.yft.hardware.tinylcd@1.0-service	vendor/bin/hw/	ITinylcd/default (hwbinder)	tinylcd.default.so	vendor rc + vintf manifest_tinylcd.xml
+hal-lib	vendor.yft.hardware.tinylcd@1.0.so	vendor/lib64/	HIDL proxy/stub	-	vendor lib
+hal-module	tinylcd.default.so	vendor/lib/hw, vendor/lib64/hw	lcd_set_power, set_bl, wirte_frame, wirte_frame_size, start_gesture, frame_status	/dev/tiny_lcd_miscdev ioctls 0x6b37..0x6b41	HAL strings
+init	init.tinylcd.rc	vendor/etc/init/	chmod 0666 /dev/tiny_lcd_miscdev on boot	-	rc file
+kernel	spi_tiny_co5300_lcd.ko	vendor_dlkm/lib/modules	/dev/tiny_lcd_miscdev; sysfs tiny_lcd_{power_enable,bl_enable,backlight_control,write_frame,tp_control}	hynitron exports; yft_devinfo exports	byte-identical rebuild 24/25
+kernel	hynitron.ko	vendor_dlkm/lib/modules	input hyn_ts; tiny_tp_power_contorl; tiny_tp_gesture_contorl; /sys/hynitron_debug	yft_devinfo exports	stock disasm + prior contracts
+kernel	yft_devinfo.ko	vendor_dlkm/lib/modules	yft_tinylcd_device_add, yft_set_tinylcd_device_used, yft_touchpanel_* registry	-	CRCs from stock __kcrctab
