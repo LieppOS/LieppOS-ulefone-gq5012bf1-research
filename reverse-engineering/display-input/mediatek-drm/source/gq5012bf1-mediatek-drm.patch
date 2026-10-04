@@ -1,0 +1,605 @@
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_debug.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_debug.c
+index b4617c5..150905c 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_debug.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_debug.c
+@@ -1532,6 +1532,63 @@ int mtk_ddic_dsi_read_cmd(struct mtk_ddic_dsi_msg *cmd_msg)
+ 	return ret;
+ }
+ 
++__weak void ddic_dsi_send_cmd_for_fp(u8 *tx_buf, unsigned int cmd_num)
++{
++	int ret;
++	struct mtk_ddic_dsi_msg *cmd_msg =
++		vmalloc(sizeof(struct mtk_ddic_dsi_msg));
++
++	if (!cmd_msg) {
++		DDPPR_ERR("%s alloc cmd_msg fail\n", __func__);
++		return;
++	}
++
++	if (!cmd_num) {
++		DDPPR_ERR("%s invalid cmd_num\n", __func__);
++		vfree(cmd_msg);
++		return;
++	}
++	memset(cmd_msg, 0, sizeof(struct mtk_ddic_dsi_msg));
++
++	switch (cmd_num) {
++	case 1:
++		cmd_msg->type[0] = 0x05;
++		break;
++	case 2:
++		cmd_msg->type[0] = 0x15;
++		break;
++	default:
++		cmd_msg->type[0] = 0x39;
++		break;
++	}
++
++	cmd_msg->channel = 0;
++	cmd_msg->flags |= MIPI_DSI_MSG_USE_LPM;
++	cmd_msg->tx_cmd_num = 1;
++	cmd_msg->tx_buf[0] = tx_buf;
++	cmd_msg->tx_len[0] = cmd_num;
++
++	ret = mtk_ddic_dsi_send_cmd(cmd_msg, true);
++	if (ret != 0) {
++		DDPPR_ERR("mtk_ddic_dsi_send_cmd error\n");
++		goto done;
++	}
++done:
++	vfree(cmd_msg);
++
++	DDPMSG("%s end -\n", __func__);
++}
++EXPORT_SYMBOL(ddic_dsi_send_cmd_for_fp);
++/* GQ5012BF1 layout: stock has 9 more source lines in B(1529,2180]; text not recoverable */
++
++
++
++
++
++
++
++
++
+ void ddic_dsi_send_cmd_test(unsigned int case_num)
+ {
+ 	unsigned int i = 0, j = 0;
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c
+index b4ff360..779bd99 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c
+@@ -557,6 +557,8 @@ int mtk_drm_esd_testing_process(struct mtk_drm_esd_ctx *esd_ctx, bool need_lock)
+ 		int i = 0;
+ 		int recovery_flg = 0;
+ 		unsigned int crtc_idx;
++		struct mtk_ddp_comp *output_comp = NULL;
++		bool is_doze = false;
+ 
+ 		if (!esd_ctx) {
+ 			DDPPR_ERR("%s invalid ESD context, stop thread\n", __func__);
+@@ -579,6 +581,21 @@ int mtk_drm_esd_testing_process(struct mtk_drm_esd_ctx *esd_ctx, bool need_lock)
+ 		}
+ 		crtc_idx = drm_crtc_index(crtc);
+ 
++/* GQ5012BF1 layout: stock has 3 more source lines in B[1,598]; text not recoverable */
++
++
++		output_comp = mtk_ddp_comp_request_output(mtk_crtc);
++		if (output_comp && output_comp->funcs && output_comp->funcs->io_cmd) {
++			mtk_ddp_comp_io_cmd(output_comp, NULL, DSI_GET_AOD_STATE, &is_doze);
++			if (is_doze) {
++				DDPINFO("[ESD] is in aod doze mode, skip esd check!\n");
++				return 0;
++			}
++		} else {
++			DDPPR_ERR("%s fail, invalid comp->funcs && comp->funcs->io_cmd\n", __func__);
++			return -EINVAL;
++		}
++
+ 		private = crtc->dev->dev_private;
+ 		if (need_lock) {
+ 			DDP_MUTEX_LOCK(&mtk_crtc->lock, __func__, __LINE__);
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp.c
+index 331d71c..f41e9a2 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp.c
+@@ -105,6 +105,23 @@ struct notify_dev dptx_notify_data;
+ struct class *switch_class;
+ static atomic_t device_count;
+ 
++/* GQ5012BF1 layout: stock has 17 more source lines in B[1,267]; text not recoverable */
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
+ static ssize_t state_show(struct device *dev,
+ 	struct device_attribute *attr, char *buf)
+ {
+@@ -454,6 +471,7 @@ void mdrv_DPTx_InitVariable(struct mtk_dp *mtk_dp)
+ 	mtk_dp->has_dsc   = false;
+ 	mtk_dp->has_fec   = false;
+ 	mtk_dp->dsc_enable = false;
++	mtk_dp->fake_comeplete_irq = false;
+ 
+ 	if (!mtk_dp->training_info.set_max_linkrate)
+ 		mdrv_DPTx_CheckMaxLinkRate(mtk_dp);
+@@ -3178,6 +3196,22 @@ void mtk_dp_power_save(unsigned int status)
+ 	queue_work(g_mtk_dp->dptx_wq, &g_mtk_dp->dptx_work);
+ }
+ 
++/* GQ5012BF1 layout: stock has 16 more source lines in B(1504,3190]; text not recoverable */
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
+ atomic_t dp_comm_event = ATOMIC_INIT(0);
+ void mtk_dp_video_trigger(int res)
+ {
+@@ -3544,6 +3578,17 @@ static int mtk_dp_dt_parse_pdata(struct mtk_dp *mtk_dp,
+ 	return 0;
+ }
+ 
++/* GQ5012BF1 layout: stock has 11 more source lines in B(3346,3558]; text not recoverable */
++
++
++
++
++
++
++
++
++
++
+ static inline struct mtk_dp *mtk_dp_ctx_from_conn(struct drm_connector *c)
+ {
+ 	return container_of(c, struct mtk_dp, conn);
+@@ -4359,6 +4404,10 @@ static int mtk_drm_dp_remove(struct platform_device *pdev)
+ }
+ 
+ #ifdef CONFIG_PM_SLEEP
++/* GQ5012BF1 layout: stock has 4 more source lines in B(4272,4375]; text not recoverable */
++
++
++
+ static int mtk_dp_suspend(struct device *dev)
+ {
+ 	struct mtk_dp *mtk_dp = dev_get_drvdata(dev);
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_common.h b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_common.h
+index 3c9032a..45b3420 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_common.h
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_common.h
+@@ -326,6 +326,7 @@ struct mtk_dp {
+ 	u32 vsv_reg;
+ 	u32 vsv_mask;
+ 	u32 vsv_vers;
++	int fake_comeplete_irq;
+ };
+ 
+ #endif /*__DRTX_TYPE_H__*/
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_hal.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_hal.c
+index cf103ba..96660ea 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_hal.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_hal.c
+@@ -1692,6 +1692,31 @@ void mhal_DPTx_SPKG_VSC_EXT_CEA(struct mtk_dp *mtk_dp, bool bEnable,
+ 	msWriteByteMask(mtk_dp, REG_30A0_DP_ENCODER0_P0 + 1, BIT(4), BIT(4));
+ 	msWriteByteMask(mtk_dp, REG_32A0_DP_ENCODER1_P0, BIT(7), BIT(7));
+ }
++
++/* GQ5012BF1 layout: stock has 25 more source lines in B[1,2042]; text not recoverable */
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
+ 
+ UINT8 mhal_DPTx_AuxRead_Bytes(struct mtk_dp *mtk_dp, BYTE ubCmd,
+ 	DWORD  usDPCDADDR, size_t ubLength, BYTE *pRxBuf)
+@@ -1702,6 +1727,10 @@ UINT8 mhal_DPTx_AuxRead_Bytes(struct mtk_dp *mtk_dp, BYTE ubCmd,
+ 	BYTE uAuxIrqStatus = 0;
+ 	UINT8 ret = AUX_HW_FAILED;
+ 	unsigned int WaitReplyCount = AuxWaitReplyLpCntNum;
++	u32 aux_state = 0;
++
++	if (mtk_dp->fake_comeplete_irq && (ubCmd == AUX_CMD_NATIVE_R))
++		msWriteByteMask(mtk_dp, REG_3614_AUX_TX_P0, 0x18, MASKBIT(6 : 0));
+ 
+ 	msWriteByte(mtk_dp, REG_3640_AUX_TX_P0, 0x7F);
+ 	udelay(AUX_WRITE_READ_WAIT_TIME);
+@@ -1736,13 +1765,31 @@ UINT8 mhal_DPTx_AuxRead_Bytes(struct mtk_dp *mtk_dp, BYTE ubCmd,
+ 	while (--WaitReplyCount) {
+ 		uAuxIrqStatus = msReadByte(mtk_dp, REG_3640_AUX_TX_P0) & 0xFF;
+ 		if (uAuxIrqStatus & AUX_RX_RECV_COMPLETE_IRQ_TX_P0_FLDMASK) {
+-			bVaildCmd = true;
+-			break;
++			aux_state = (msRead2Byte(mtk_dp, REG_3644_AUX_TX_P0)
++				& AUX_STATE_AUX_TX_P0_FLDMASK)
++				>> AUX_STATE_AUX_TX_P0_FLDMASK_POS;
++
++			if (aux_state == 0x1) {
++				DPTXDBG("[AUX] Aux Recv Complete!\n");
++				bVaildCmd = true;
++				break;
++			}
++			msWriteByte(mtk_dp, REG_3640_AUX_TX_P0, 0x7F);
++			mtk_dp->fake_comeplete_irq = true;
++			DPTXERR("[AUX] Fake Complete irq! Clear IRQ\n");
++			DPTXDBG("[AUX] chia-cheng Aux state is %x\n", aux_state);
+ 		}
+ 
+ 		if (uAuxIrqStatus & AUX_RX_EDID_RECV_COMPLETE_IRQ_AUX_TX_P0_FLDMASK) {
+-			bVaildCmd = true;
+-			break;
++			if (ubCmd == AUX_CMD_I2C_R) {
++				bVaildCmd = true;
++				DPTXDBG("[AUX] AUX_RX_EDID_RECV_COMPLETE_IRQ\n");
++				break;
++			}
++			msWriteByteMask(mtk_dp, REG_3640_AUX_TX_P0,
++			1 << AUX_RX_EDID_RECV_COMPLETE_IRQ_AUX_TX_P0_FLDMASK_POS,
++			AUX_RX_EDID_RECV_COMPLETE_IRQ_AUX_TX_P0_FLDMASK);
++			DPTXERR("[AUX] Un-expected EDID complete IRQ\n");
+ 		}
+ 
+ 		if (uAuxIrqStatus & AUX_400US_TIMEOUT_IRQ_AUX_TX_P0_FLDMASK) {
+@@ -1752,6 +1799,9 @@ UINT8 mhal_DPTx_AuxRead_Bytes(struct mtk_dp *mtk_dp, BYTE ubCmd,
+ 		}
+ 	}
+ 
++	if (mtk_dp->fake_comeplete_irq && (ubCmd == AUX_CMD_NATIVE_R))
++		msWriteByteMask(mtk_dp, REG_3614_AUX_TX_P0, 0xD, MASKBIT(6 : 0));
++
+ 	if (WaitReplyCount == 0x0) {
+ 		BYTE phyStatus = 0x00;
+ 
+@@ -1800,7 +1850,7 @@ UINT8 mhal_DPTx_AuxRead_Bytes(struct mtk_dp *mtk_dp, BYTE ubCmd,
+ 	msWriteByte(mtk_dp, REG_3640_AUX_TX_P0, 0x7F);
+ 
+ 	if (bVaildCmd) {
+-		//DPTXMSG("[AUX] Read reply_cmd = %d\n", ubReplyCmd);
++		//DPTXDBG("[AUX] Read reply_cmd = %d\n", ubReplyCmd);
+ 		ret = ubReplyCmd;
+ 	} else {
+ 		DPTXMSG("[AUX] Timeout Read reply_cmd = %d\n", ubReplyCmd);
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_intf.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_intf.c
+index b0d918d..10e6a80 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_intf.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_intf.c
+@@ -88,6 +88,14 @@
+     #define BUF_BUF_FIFO_UNDERFLOW_DONT_BLOCK	BIT(4)
+ #define DP_BUF_CON1						0x0214
+ #define DP_BUF_RW_TIMES					0x0220
++#define DP_BUF_SODI_HIGH				0x0224
++#define DP_BUF_SODI_LOW					0x0228
++#define DP_BUF_PREULTRA_HIGH			0x0234
++#define DP_BUF_PREULTRA_LOW				0x0238
++#define DP_BUF_ULTRA_HIGH				0x023C
++#define DP_BUF_ULTRA_LOW				0x0240
++#define DP_BUF_URGENT_HIGH				0x0244
++#define DP_BUF_URGENT_LOW				0x0248
+ #define DP_SW_NP_SEL					0x0250
+ #define DP_PATTERN_CTRL0				0x0F00
+ 	#define DP_PATTERN_COLOR_BAR			BIT(6)
+@@ -559,6 +567,10 @@ static int irq_tl;
+ static unsigned long long dp_intf_bw;
+ static struct mtk_dp_intf *g_dp_intf;
+ 
++/* GQ5012BF1 layout: stock has 4 more source lines in B[1,663]; text not recoverable */
++
++
++
+ static inline struct mtk_dp_intf *comp_to_dp_intf(struct mtk_ddp_comp *comp)
+ {
+ 	return container_of(comp, struct mtk_dp_intf, ddp_comp);
+@@ -782,6 +794,35 @@ void mhal_DPTx_VideoClock(bool enable, int resolution)
+ 	} else
+ 		clk_disable_unprepare(g_dp_intf->pclk);
+ }
++
++/* GQ5012BF1 layout: stock has 29 more source lines in B(693,1259]; text not recoverable */
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
+ 
+ static void mtk_dp_intf_config(struct mtk_ddp_comp *comp,
+ 				 struct mtk_ddp_config *cfg,
+@@ -789,11 +830,12 @@ static void mtk_dp_intf_config(struct mtk_ddp_comp *comp,
+ {
+ 	/*u32 reg_val;*/
+ 	struct mtk_dp_intf *dp_intf = comp_to_dp_intf(comp);
++	struct mtk_drm_private *priv = comp->mtk_crtc->base.dev->dev_private;
+ 	unsigned int hsize = 0, vsize = 0;
+-	unsigned int hpw = 0;
+ 	unsigned int hfp = 0, hbp = 0;
+ 	unsigned int vpw = 0;
+ 	unsigned int vfp = 0, vbp = 0;
++	unsigned int hpw = 0;
+ 	unsigned int bg_left = 0, bg_right = 0;
+ 	unsigned int bg_top = 0, bg_bot = 0;
+ 	unsigned int rw_times = 0;
+@@ -954,6 +996,17 @@ static void mtk_dp_intf_config(struct mtk_ddp_comp *comp,
+ 	mtk_ddp_write_relaxed(comp, dp_intf->driver_data->np_sel,
+ 			DP_SW_NP_SEL, handle);
+ 
++	if (priv->data->mmsys_id == MMSYS_MT6989) {
++		mtk_ddp_write_relaxed(comp, 5225, DP_BUF_SODI_HIGH, handle);
++		mtk_ddp_write_relaxed(comp, 3899, DP_BUF_SODI_LOW, handle);
++		mtk_ddp_write_relaxed(comp, 3620, DP_BUF_PREULTRA_HIGH, handle);
++		mtk_ddp_write_relaxed(comp, 3481, DP_BUF_PREULTRA_LOW, handle);
++		mtk_ddp_write_relaxed(comp, 3481, DP_BUF_ULTRA_HIGH, handle);
++		mtk_ddp_write_relaxed(comp, 3203, DP_BUF_ULTRA_LOW, handle);
++		mtk_ddp_write_relaxed(comp, 1671, DP_BUF_URGENT_HIGH, handle);
++		mtk_ddp_write_relaxed(comp, 1532, DP_BUF_URGENT_LOW, handle);
++	}
++
+ 	DPTXMSG("%s config done\n",
+ 			mtk_dump_comp_str(comp));
+ 
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_reg.h b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_reg.h
+index c253e34..31e4570 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_reg.h
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_reg.h
+@@ -3899,6 +3899,11 @@
+ #define GTC_TX_LCK_ACQ_SEND_NUM_AUX_TX_P0_FLDMASK_POS                     0
+ #define GTC_TX_LCK_ACQ_SEND_NUM_AUX_TX_P0_FLDMASK_LEN                     5
+ 
++#define REG_36F4_AUX_TX_P0              (0x36F4)
++#define IDLE_TO_PRECHARGE_DATA_ONE_EN_AUX_TX_P0_FLDMASK                   0x1
++#define IDLE_TO_PRECHARGE_DATA_ONE_EN_AUX_TX_P0_FLDMASK_POS               0
++#define IDLE_TO_PRECHARGE_DATA_ONE_EN_AUX_TX_P0_FLDMASK_LEN               1
++
+ #define REG_3700_AUX_TX_P0              (0x3700)
+ #define AUX_PHYWAKE_MODE_AUX_TX_P0_FLDMASK                                0x1
+ #define AUX_PHYWAKE_MODE_AUX_TX_P0_FLDMASK_POS                            0
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.c
+index 2a16afc..7463876 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.c
+@@ -2633,6 +2633,8 @@ void mt6989_mtk_sodi_config(struct drm_device *drm, enum mtk_ddp_comp_id id,
+ 		if (priv->ovlsys1_regs) {
+ 			v = (readl(priv->ovlsys1_regs + MMSYS_MISC)
+ 				& (~0x3FFFC));
++			if (priv->data->mmsys_id == MMSYS_MT6989)
++				v |= 0x280;
+ 			writel_relaxed(v, priv->ovlsys1_regs + MMSYS_MISC);
+ 
+ 			v = readl(priv->ovlsys1_regs + MMSYS_SODI_REQ_MASK);
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.h b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.h
+index 3387e8b..7d86b0f 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.h
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.h
+@@ -715,6 +715,7 @@ enum mtk_ddp_io_cmd {
+ 	BYPASS_SPR2RGB,
+ 	DSI_GET_PANEL_VBLANK_PERIOD_US,
+ 	PMQOS_GET_HRT_BW,
++	DSI_GET_AOD_STATE,
+ };
+ 
+ enum mtk_ddp_comp_apsrc_crtc_id {
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_drv.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_drv.c
+index 295fe6c..1c7ee05 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_drv.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_drv.c
+@@ -909,6 +909,7 @@ static void mtk_atomic_doze_update_dsi_state(struct drm_device *dev,
+ {
+ 	struct mtk_crtc_state *mtk_state;
+ 	struct mtk_drm_private *priv = dev->dev_private;
++	struct mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
+ 
+ 	mtk_state = to_mtk_crtc_state(crtc->state);
+ 	DDPINFO("%s doze_changed:%d, needs_modeset:%d, doze_active:%llu\n",
+@@ -921,6 +922,18 @@ static void mtk_atomic_doze_update_dsi_state(struct drm_device *dev,
+ 	if (mtk_state->doze_changed && priv->data->doze_ctrl_pmic) {
+ 		if (mtk_state->prop_val[CRTC_PROP_DOZE_ACTIVE] && prepare) {
+ 			DDPDBG("enter AOD, disable PMIC LPMODE\n");
++			atomic_set(&mtk_crtc->force_high_step, 1);
++			mtk_crtc->force_high_enabled = 2;
++			DDPMSG("%s set force_high_step 1\n", __func__);
++/* GQ5012BF1 layout: stock has 9 more source lines in B(549,1465]; text not recoverable */
++
++
++
++
++
++
++
++
+ 			//pmic_ldo_vio18_lp(SRCLKEN0, 0, 1, HW_LP);
+ 			//pmic_ldo_vio18_lp(SRCLKEN2, 0, 1, HW_LP);
+ 			/* DWFS, drivers/misc/mediatek/clkbuf/v1/src/mtk_clkbuf_ctl.c */
+@@ -3587,7 +3600,7 @@ static const enum mtk_ddp_comp_id mt6878_mtk_ddp_main[] = {
+ 	DDP_COMPONENT_SPLIT_OUT_CB2,
+ 	DDP_COMPONENT_COMP0_OUT_CB2,
+ 	DDP_COMPONENT_DSI0,
+-	//DDP_COMPONENT_PWM0,
++	DDP_COMPONENT_PWM0,
+ };
+ 
+ static const enum mtk_ddp_comp_id mt6878_mtk_ddp_third[] = {
+@@ -8930,7 +8943,9 @@ static const struct of_device_id mtk_ddp_comp_dt_ids[] = {
+ 	 .data = (void *)MTK_DISP_PWM},
+ 	{.compatible = "mediatek,mt6835-disp-pwm",
+ 	 .data = (void *)MTK_DISP_PWM},
+-	{.compatible = "mediatek,mt6878-disp-pwm",
++	{.compatible = "mediatek,mt6878-disp-pwm0",
++	 .data = (void *)MTK_DISP_PWM},
++	{.compatible = "mediatek,mt6878-disp-pwm1",
+ 	 .data = (void *)MTK_DISP_PWM},
+ 	{.compatible = "mediatek,mt8173-disp-od",
+ 	 .data = (void *)MTK_DISP_OD},
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c
+index 9167f69..9af0848 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c
+@@ -57,6 +57,8 @@
+ #include "mtk_fbconfig_kdebug.h"
+ /* ********* end Panel Master *********** */
+ //#define DSI_SELF_PATTERN
++/* GQ5012BF1 layout: stock has 2 more source lines in B[1,579]; text not recoverable */
++
+ #define DSI_START 0x00
+ #define SLEEPOUT_START BIT(2)
+ #define SKEWCAL_START BIT(4)
+@@ -3323,6 +3325,9 @@ static void mtk_output_en_doze_switch(struct mtk_dsi *dsi)
+ 		mtk_dsi_set_mode(dsi);
+ 		mtk_dsi_clk_hs_mode(dsi, 1);
+ 
++		if (dsi->driver_data->dsi_buffer)
++			mtk_dsi_tx_buf_rw(dsi);
++
+ 		/* Update RDMA golden setting after switch */
+ 		{
+ 			struct drm_crtc *crtc = dsi->encoder.crtc;
+@@ -3347,7 +3352,19 @@ static void mtk_output_en_doze_switch(struct mtk_dsi *dsi)
+ 					MTK_IO_CMD_RDMA_GOLDEN_SETTING, &cfg);
+ 			cmdq_pkt_flush(handle);
+ 			cmdq_pkt_destroy(handle);
++
++			if (dsi->driver_data && dsi->driver_data->mmclk_by_datarate)
++				dsi->driver_data->mmclk_by_datarate(dsi, mtk_crtc, 1);
+ 		}
++/* GQ5012BF1 layout: stock has 9 more source lines in B(2676,3638]; text not recoverable */
++
++
++
++
++
++
++
++
+ 
+ 		if (!mtk_dsi_is_cmd_mode(&dsi->ddp_comp)) {
+ 			mtk_dsi_set_vm_cmd(dsi);
+@@ -3972,6 +3989,33 @@ static void mtk_output_dsi_disable(struct mtk_dsi *dsi, struct cmdq_pkt *cmdq_ha
+ 	CRTC_MMP_EVENT_END(crtc_idx, dsi_disable,
+ 				(unsigned long)dsi->output_en, 0);
+ }
++
++/* GQ5012BF1 layout: stock has 27 more source lines in B(3638,4076]; text not recoverable */
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
+ 
+ static void mtk_dsi_encoder_destroy(struct drm_encoder *encoder)
+ {
+@@ -11319,6 +11363,14 @@ static int mtk_dsi_io_cmd(struct mtk_ddp_comp *comp, struct cmdq_pkt *handle,
+ 		mtk_dsi_LFR_status_check(dsi);
+ 	}
+ 		break;
++/* GQ5012BF1 layout: stock has 8 more source lines in B(10539,11336]; text not recoverable */
++
++
++
++
++
++
++
+ 	/****Msync 2.0 cmds start*****/
+ 	case DSI_ADD_VFP_FOR_MSYNC:
+ 	{
+@@ -11559,6 +11611,17 @@ static int mtk_dsi_io_cmd(struct mtk_ddp_comp *comp, struct cmdq_pkt *handle,
+ 		*dur_vblank = 1000000000UL / fps / vtotal * vfp / 1000;
+ 	}
+ 		break;
++	case DSI_GET_AOD_STATE:
++/* GQ5012BF1 layout: stock has 7 more source lines in B(11439,12886]; text not recoverable */
++
++
++
++
++
++
++		if (dsi && dsi->encoder.crtc)
++			*(bool *)params = mtk_dsi_doze_state(dsi);
++		break;
+ 	default:
+ 		break;
+ 	}

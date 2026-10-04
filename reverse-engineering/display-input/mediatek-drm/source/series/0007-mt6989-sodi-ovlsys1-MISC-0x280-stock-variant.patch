@@ -1,0 +1,25 @@
+From 8642455fb2f91f10a2c55060657c0831a10319c1 Mon Sep 17 00:00:00 2001
+From: lieppos <l@l>
+Date: Sun, 4 Oct 2026 21:16:34 +0300
+Subject: [PATCH 07/10] mt6989 sodi: ovlsys1 MISC |= 0x280 (stock variant)
+
+---
+ drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.c
+index 2a16afc..7463876 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.c
+@@ -2633,6 +2633,8 @@ void mt6989_mtk_sodi_config(struct drm_device *drm, enum mtk_ddp_comp_id id,
+ 		if (priv->ovlsys1_regs) {
+ 			v = (readl(priv->ovlsys1_regs + MMSYS_MISC)
+ 				& (~0x3FFFC));
++			if (priv->data->mmsys_id == MMSYS_MT6989)
++				v |= 0x280;
+ 			writel_relaxed(v, priv->ovlsys1_regs + MMSYS_MISC);
+ 
+ 			v = readl(priv->ovlsys1_regs + MMSYS_SODI_REQ_MASK);
+-- 
+2.56.0
+

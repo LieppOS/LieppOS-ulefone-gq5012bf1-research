@@ -42,6 +42,28 @@ Notable structure facts:
   (sensorhub, focaltech touch) and has **no dependencies** — the cheapest
   first target.
 
+## Status after the mediatek-drm pass (2026-10-04)
+
+See [`mediatek-drm/`](mediatek-drm/).
+
+- **`mediatek-drm.ko` is exact.** It rebuilds as 2376/2376 functions,
+  2072/2072 data, 542/542 imports, 52/52 exports with 51/51 export CRCs, and
+  569/569 modinfo. All 70 sections match except `.note.gnu.build-id`, the
+  symtab is identical, and B1==B2 is file-identical.
+- Base is MTK ALPS `5e415e059253` (NothingOSS mt6878 history, 2025-02-25)
+  plus 10 proven GQ5012BF1 patches: the FP-HBM `ddic_dsi_send_cmd_for_fp`
+  (`__weak`, exported), the `DSI_GET_AOD_STATE` io_cmd with ESD skip in AOD
+  doze, the AOD `force_high_step`, the doze DSI buffer/mmclk handling, disp-pwm0/1
+  with PWM0, the DP AUX refine, MT6989 dead-code variants, and source-line padding.
+- Object composition is 66 objects, all mapped by symbol name and link order,
+  and all exact.
+- **`mediatek-drm-panel-drv` is 123/123 and exact except build-id.** The
+  "private `mtk_lcm_*` layout" was `struct mtk_panel_params` from the wrong
+  (Nothing-tip) `mtk_panel_ext.h`.
+- **`mtk_panel_ext.ko` export CRCs are now 9/9.** Five used to mismatch. With
+  the ALPS header, every section except build-id matches.
+- Workspace: new DONE component `MEDIATEK-DRM`.
+
 ## Status after the backlight/display-glue pass (2026-10-04)
 
 See [`backlight-glue/`](backlight-glue/) and
@@ -57,12 +79,12 @@ See [`backlight-glue/`](backlight-glue/) and
 - Main brightness is leds-mtk `lcd-backlight` → mtkfb → VTDR6115 DCS 0x51. No
   PWM backlight exists, and DISP_PWM has no consumer.
 - Rear brightness is CO5300 DCS 0x51 only. The DT has no backlight GPIO.
-- `mediatek-drm-panel-drv` is unused on this board (111/123;
-  `mtk_lcm_dsi_params` layout open).
+- `mediatek-drm-panel-drv` is unused on this board (111/123 at this pass;
+  closed to 123/123 in the mediatek-drm pass above).
 - Workspace: `MTK-PWM`, `IR-BLASTER`, `HAPTICS`, `AW36518-FLASH` and
   `AW36518-V2-FLASH` moved to DONE, and `BACKLIGHT-DISPLAY-GLUE` was added as
   DONE. Totals are now 54 / 72 / 4 (130).
-- Remaining display kernel module: `mediatek-drm.ko` (5.7 MB).
+- Remaining display kernel module: `mediatek-drm.ko` (5.7 MB). Closed in the pass above.
 
 ## Status after the second pass (2026-10-04)
 
@@ -113,5 +135,5 @@ module — the next step is to build it in isolation (scratch Kbuild dir with
    plus two analysis scripts.
 5. `spi_tiny_co5300_lcd` (rear display) — pairs with the already-DONE
    `HYNITRON-REAR-TOUCH`.
-6. `mediatek-drm` (5.7 MB, 25 dependencies) — last; it is the largest single
-   module on the device.
+6. ~~`mediatek-drm`~~ (5.7 MB, 25 dependencies) is **done and exact**. See
+   [`mediatek-drm/`](mediatek-drm/).

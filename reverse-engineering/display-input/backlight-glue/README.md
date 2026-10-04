@@ -22,7 +22,7 @@ from the stock `__kcrctab` (`scripts/glue.py`). Comparator:
 | `regulator-vibrator` | **9/9** | 15/15 | 18/18 | 0 | 6/6 | 37/38 | yes | MTK 4d63add + line layout |
 | `aw36518` | 22/23 (+1 sched) | 32/32 | 47/47 | 0 | 9/9 | `.text`,`.data` order | yes | Phase-4 recon + 5 fixes |
 | `aw36518_v2` | 22/23 (+1 sched) | 32/32 | 46/46 | 0 | 9/9 | same | yes | same |
-| `mediatek-drm-panel-drv` (unused) | 111/123 | 43/43 | 71/71 | 53/53 | 30/30 | 34/43 | — | `mtk_lcm_*` layout open |
+| `mediatek-drm-panel-drv` (unused) | **123/123** | 43/43 | 71/71 | 53/53 | 30/30 | 42/43 (build-id) | yes | KDM baseline + ALPS `5e415e059253` `mtk_panel_ext.h` (see `../mediatek-drm/`) |
 
 KCFI type ids are equal for every function in every row. Modversion CRCs are
 equal for every import and export. Sections are compared after debug-stripping.

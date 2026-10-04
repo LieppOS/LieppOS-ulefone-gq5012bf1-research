@@ -1,0 +1,179 @@
+From 46f240d89f146ba2283c1322efa30133bce04157 Mon Sep 17 00:00:00 2001
+From: lieppos <l@l>
+Date: Sun, 4 Oct 2026 20:42:21 +0300
+Subject: [PATCH 03/10] layout padding (proven line counts/bounds) + ESD doze
+ log DDPINFO
+
+---
+ .../gpu/drm/mediatek/mediatek_v2/mtk_debug.c  |  9 ++++
+ .../mediatek/mediatek_v2/mtk_disp_recovery.c  | 16 +++---
+ .../drm/mediatek/mediatek_v2/mtk_drm_drv.c    |  9 ++++
+ .../gpu/drm/mediatek/mediatek_v2/mtk_dsi.c    | 53 +++++++++++++++++++
+ 4 files changed, 81 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_debug.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_debug.c
+index 9a559fe..31c930b 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_debug.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_debug.c
+@@ -1579,6 +1579,15 @@ void ddic_dsi_send_cmd_for_fp(u8 *tx_buf, unsigned int cmd_num)
+ 	DDPMSG("%s end -\n", __func__);
+ }
+ EXPORT_SYMBOL(ddic_dsi_send_cmd_for_fp);
++/* GQ5012BF1 layout: stock has 9 more source lines in B(1529,2180]; text not recoverable */
++
++
++
++
++
++
++
++
+ 
+ void ddic_dsi_send_cmd_test(unsigned int case_num)
+ {
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c
+index 9165699..0d34cb5 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c
+@@ -581,16 +581,20 @@ int mtk_drm_esd_testing_process(struct mtk_drm_esd_ctx *esd_ctx, bool need_lock)
+ 		}
+ 		crtc_idx = drm_crtc_index(crtc);
+ 
++/* GQ5012BF1 layout: stock has 3 more source lines in B[1,598]; text not recoverable */
++
++
+ 		output_comp = mtk_ddp_comp_request_output(mtk_crtc);
+-		if (unlikely(!output_comp || !output_comp->funcs || !output_comp->funcs->io_cmd)) {
++		if (output_comp && output_comp->funcs && output_comp->funcs->io_cmd) {
++			mtk_ddp_comp_io_cmd(output_comp, NULL, DSI_GET_DOZE_STATE, &is_doze);
++			if (is_doze) {
++				DDPINFO("[ESD] is in aod doze mode, skip esd check!\n");
++				return 0;
++			}
++		} else {
+ 			DDPPR_ERR("%s fail, invalid comp->funcs && comp->funcs->io_cmd\n", __func__);
+ 			return -EINVAL;
+ 		}
+-		mtk_ddp_comp_io_cmd(output_comp, NULL, DSI_GET_DOZE_STATE, &is_doze);
+-		if (is_doze) {
+-			DDPMSG("[ESD] is in aod doze mode, skip esd check!\n");
+-			return 0;
+-		}
+ 
+ 		private = crtc->dev->dev_private;
+ 		if (need_lock) {
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_drv.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_drv.c
+index e514e89..1c7ee05 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_drv.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_drv.c
+@@ -925,6 +925,15 @@ static void mtk_atomic_doze_update_dsi_state(struct drm_device *dev,
+ 			atomic_set(&mtk_crtc->force_high_step, 1);
+ 			mtk_crtc->force_high_enabled = 2;
+ 			DDPMSG("%s set force_high_step 1\n", __func__);
++/* GQ5012BF1 layout: stock has 9 more source lines in B(549,1465]; text not recoverable */
++
++
++
++
++
++
++
++
+ 			//pmic_ldo_vio18_lp(SRCLKEN0, 0, 1, HW_LP);
+ 			//pmic_ldo_vio18_lp(SRCLKEN2, 0, 1, HW_LP);
+ 			/* DWFS, drivers/misc/mediatek/clkbuf/v1/src/mtk_clkbuf_ctl.c */
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c
+index 5114ecb..acabd83 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c
+@@ -57,6 +57,8 @@
+ #include "mtk_fbconfig_kdebug.h"
+ /* ********* end Panel Master *********** */
+ //#define DSI_SELF_PATTERN
++/* GQ5012BF1 layout: stock has 2 more source lines in B[1,579]; text not recoverable */
++
+ #define DSI_START 0x00
+ #define SLEEPOUT_START BIT(2)
+ #define SKEWCAL_START BIT(4)
+@@ -3354,6 +3356,15 @@ static void mtk_output_en_doze_switch(struct mtk_dsi *dsi)
+ 			if (dsi->driver_data && dsi->driver_data->mmclk_by_datarate)
+ 				dsi->driver_data->mmclk_by_datarate(dsi, mtk_crtc, 1);
+ 		}
++/* GQ5012BF1 layout: stock has 9 more source lines in B(2676,3638]; text not recoverable */
++
++
++
++
++
++
++
++
+ 
+ 		if (!mtk_dsi_is_cmd_mode(&dsi->ddp_comp)) {
+ 			mtk_dsi_set_vm_cmd(dsi);
+@@ -3978,6 +3989,33 @@ static void mtk_output_dsi_disable(struct mtk_dsi *dsi, struct cmdq_pkt *cmdq_ha
+ 	CRTC_MMP_EVENT_END(crtc_idx, dsi_disable,
+ 				(unsigned long)dsi->output_en, 0);
+ }
++
++/* GQ5012BF1 layout: stock has 27 more source lines in B(3638,4076]; text not recoverable */
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
+ 
+ static void mtk_dsi_encoder_destroy(struct drm_encoder *encoder)
+ {
+@@ -11325,6 +11363,14 @@ static int mtk_dsi_io_cmd(struct mtk_ddp_comp *comp, struct cmdq_pkt *handle,
+ 		mtk_dsi_LFR_status_check(dsi);
+ 	}
+ 		break;
++/* GQ5012BF1 layout: stock has 8 more source lines in B(10539,11336]; text not recoverable */
++
++
++
++
++
++
++
+ 	/****Msync 2.0 cmds start*****/
+ 	case DSI_ADD_VFP_FOR_MSYNC:
+ 	{
+@@ -11566,6 +11612,13 @@ static int mtk_dsi_io_cmd(struct mtk_ddp_comp *comp, struct cmdq_pkt *handle,
+ 	}
+ 		break;
+ 	case DSI_GET_DOZE_STATE:
++/* GQ5012BF1 layout: stock has 7 more source lines in B(11439,12886]; text not recoverable */
++
++
++
++
++
++
+ 		if (dsi && dsi->encoder.crtc)
+ 			*(bool *)params = mtk_dsi_doze_state(dsi);
+ 		break;
+-- 
+2.56.0
+

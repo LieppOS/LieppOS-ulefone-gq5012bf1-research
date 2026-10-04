@@ -1,0 +1,54 @@
+From c507835ce6687f3177ea48a76baae65d238a33c9 Mon Sep 17 00:00:00 2001
+From: lieppos <l@l>
+Date: Sun, 4 Oct 2026 22:22:39 +0300
+Subject: [PATCH 09/10] io_cmd enum name DSI_GET_AOD_STATE (proven by genksyms
+ CRC of disp_pq_notify_backlight_changed)
+
+---
+ drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c | 2 +-
+ drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.h  | 2 +-
+ drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c           | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c
+index 0d34cb5..779bd99 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c
+@@ -586,7 +586,7 @@ int mtk_drm_esd_testing_process(struct mtk_drm_esd_ctx *esd_ctx, bool need_lock)
+ 
+ 		output_comp = mtk_ddp_comp_request_output(mtk_crtc);
+ 		if (output_comp && output_comp->funcs && output_comp->funcs->io_cmd) {
+-			mtk_ddp_comp_io_cmd(output_comp, NULL, DSI_GET_DOZE_STATE, &is_doze);
++			mtk_ddp_comp_io_cmd(output_comp, NULL, DSI_GET_AOD_STATE, &is_doze);
+ 			if (is_doze) {
+ 				DDPINFO("[ESD] is in aod doze mode, skip esd check!\n");
+ 				return 0;
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.h b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.h
+index a15568a..7d86b0f 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.h
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.h
+@@ -715,7 +715,7 @@ enum mtk_ddp_io_cmd {
+ 	BYPASS_SPR2RGB,
+ 	DSI_GET_PANEL_VBLANK_PERIOD_US,
+ 	PMQOS_GET_HRT_BW,
+-	DSI_GET_DOZE_STATE,
++	DSI_GET_AOD_STATE,
+ };
+ 
+ enum mtk_ddp_comp_apsrc_crtc_id {
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c
+index acabd83..9af0848 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c
+@@ -11611,7 +11611,7 @@ static int mtk_dsi_io_cmd(struct mtk_ddp_comp *comp, struct cmdq_pkt *handle,
+ 		*dur_vblank = 1000000000UL / fps / vtotal * vfp / 1000;
+ 	}
+ 		break;
+-	case DSI_GET_DOZE_STATE:
++	case DSI_GET_AOD_STATE:
+ /* GQ5012BF1 layout: stock has 7 more source lines in B(11439,12886]; text not recoverable */
+ 
+ 
+-- 
+2.56.0
+

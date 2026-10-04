@@ -1,0 +1,137 @@
+From 5fef546f1cb28c67a293e8c7dae598c8e44d1f5e Mon Sep 17 00:00:00 2001
+From: lieppos <l@l>
+Date: Sun, 4 Oct 2026 20:19:13 +0300
+Subject: [PATCH 02/10] GQ5012BF1: disp-pwm0/1 + PWM0 in mt6878 main path;
+ doze-state io_cmd; ESD skip in AOD doze; doze switch tx_buf/mmclk;
+ force_high_step on AOD enter
+
+---
+ .../drm/mediatek/mediatek_v2/mtk_disp_recovery.c    | 13 +++++++++++++
+ .../gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.h |  1 +
+ drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_drv.c  | 10 ++++++++--
+ drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c      | 10 ++++++++++
+ 4 files changed, 32 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c
+index b4ff360..9165699 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_disp_recovery.c
+@@ -557,6 +557,8 @@ int mtk_drm_esd_testing_process(struct mtk_drm_esd_ctx *esd_ctx, bool need_lock)
+ 		int i = 0;
+ 		int recovery_flg = 0;
+ 		unsigned int crtc_idx;
++		struct mtk_ddp_comp *output_comp = NULL;
++		bool is_doze = false;
+ 
+ 		if (!esd_ctx) {
+ 			DDPPR_ERR("%s invalid ESD context, stop thread\n", __func__);
+@@ -579,6 +581,17 @@ int mtk_drm_esd_testing_process(struct mtk_drm_esd_ctx *esd_ctx, bool need_lock)
+ 		}
+ 		crtc_idx = drm_crtc_index(crtc);
+ 
++		output_comp = mtk_ddp_comp_request_output(mtk_crtc);
++		if (unlikely(!output_comp || !output_comp->funcs || !output_comp->funcs->io_cmd)) {
++			DDPPR_ERR("%s fail, invalid comp->funcs && comp->funcs->io_cmd\n", __func__);
++			return -EINVAL;
++		}
++		mtk_ddp_comp_io_cmd(output_comp, NULL, DSI_GET_DOZE_STATE, &is_doze);
++		if (is_doze) {
++			DDPMSG("[ESD] is in aod doze mode, skip esd check!\n");
++			return 0;
++		}
++
+ 		private = crtc->dev->dev_private;
+ 		if (need_lock) {
+ 			DDP_MUTEX_LOCK(&mtk_crtc->lock, __func__, __LINE__);
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.h b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.h
+index 3387e8b..a15568a 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.h
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_ddp_comp.h
+@@ -715,6 +715,7 @@ enum mtk_ddp_io_cmd {
+ 	BYPASS_SPR2RGB,
+ 	DSI_GET_PANEL_VBLANK_PERIOD_US,
+ 	PMQOS_GET_HRT_BW,
++	DSI_GET_DOZE_STATE,
+ };
+ 
+ enum mtk_ddp_comp_apsrc_crtc_id {
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_drv.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_drv.c
+index 295fe6c..e514e89 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_drv.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_drm_drv.c
+@@ -909,6 +909,7 @@ static void mtk_atomic_doze_update_dsi_state(struct drm_device *dev,
+ {
+ 	struct mtk_crtc_state *mtk_state;
+ 	struct mtk_drm_private *priv = dev->dev_private;
++	struct mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
+ 
+ 	mtk_state = to_mtk_crtc_state(crtc->state);
+ 	DDPINFO("%s doze_changed:%d, needs_modeset:%d, doze_active:%llu\n",
+@@ -921,6 +922,9 @@ static void mtk_atomic_doze_update_dsi_state(struct drm_device *dev,
+ 	if (mtk_state->doze_changed && priv->data->doze_ctrl_pmic) {
+ 		if (mtk_state->prop_val[CRTC_PROP_DOZE_ACTIVE] && prepare) {
+ 			DDPDBG("enter AOD, disable PMIC LPMODE\n");
++			atomic_set(&mtk_crtc->force_high_step, 1);
++			mtk_crtc->force_high_enabled = 2;
++			DDPMSG("%s set force_high_step 1\n", __func__);
+ 			//pmic_ldo_vio18_lp(SRCLKEN0, 0, 1, HW_LP);
+ 			//pmic_ldo_vio18_lp(SRCLKEN2, 0, 1, HW_LP);
+ 			/* DWFS, drivers/misc/mediatek/clkbuf/v1/src/mtk_clkbuf_ctl.c */
+@@ -3587,7 +3591,7 @@ static const enum mtk_ddp_comp_id mt6878_mtk_ddp_main[] = {
+ 	DDP_COMPONENT_SPLIT_OUT_CB2,
+ 	DDP_COMPONENT_COMP0_OUT_CB2,
+ 	DDP_COMPONENT_DSI0,
+-	//DDP_COMPONENT_PWM0,
++	DDP_COMPONENT_PWM0,
+ };
+ 
+ static const enum mtk_ddp_comp_id mt6878_mtk_ddp_third[] = {
+@@ -8930,7 +8934,9 @@ static const struct of_device_id mtk_ddp_comp_dt_ids[] = {
+ 	 .data = (void *)MTK_DISP_PWM},
+ 	{.compatible = "mediatek,mt6835-disp-pwm",
+ 	 .data = (void *)MTK_DISP_PWM},
+-	{.compatible = "mediatek,mt6878-disp-pwm",
++	{.compatible = "mediatek,mt6878-disp-pwm0",
++	 .data = (void *)MTK_DISP_PWM},
++	{.compatible = "mediatek,mt6878-disp-pwm1",
+ 	 .data = (void *)MTK_DISP_PWM},
+ 	{.compatible = "mediatek,mt8173-disp-od",
+ 	 .data = (void *)MTK_DISP_OD},
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c
+index 9167f69..5114ecb 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dsi.c
+@@ -3323,6 +3323,9 @@ static void mtk_output_en_doze_switch(struct mtk_dsi *dsi)
+ 		mtk_dsi_set_mode(dsi);
+ 		mtk_dsi_clk_hs_mode(dsi, 1);
+ 
++		if (dsi->driver_data->dsi_buffer)
++			mtk_dsi_tx_buf_rw(dsi);
++
+ 		/* Update RDMA golden setting after switch */
+ 		{
+ 			struct drm_crtc *crtc = dsi->encoder.crtc;
+@@ -3347,6 +3350,9 @@ static void mtk_output_en_doze_switch(struct mtk_dsi *dsi)
+ 					MTK_IO_CMD_RDMA_GOLDEN_SETTING, &cfg);
+ 			cmdq_pkt_flush(handle);
+ 			cmdq_pkt_destroy(handle);
++
++			if (dsi->driver_data && dsi->driver_data->mmclk_by_datarate)
++				dsi->driver_data->mmclk_by_datarate(dsi, mtk_crtc, 1);
+ 		}
+ 
+ 		if (!mtk_dsi_is_cmd_mode(&dsi->ddp_comp)) {
+@@ -11559,6 +11565,10 @@ static int mtk_dsi_io_cmd(struct mtk_ddp_comp *comp, struct cmdq_pkt *handle,
+ 		*dur_vblank = 1000000000UL / fps / vtotal * vfp / 1000;
+ 	}
+ 		break;
++	case DSI_GET_DOZE_STATE:
++		if (dsi && dsi->encoder.crtc)
++			*(bool *)params = mtk_dsi_doze_state(dsi);
++		break;
+ 	default:
+ 		break;
+ 	}
+-- 
+2.56.0
+

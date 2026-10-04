@@ -139,3 +139,18 @@ offsets (5.7 MB module, not analysed yet).
 
 Verdict: `mtk_panel_ext` is **byte-exact** (12/12 functions, 13/13 data,
 6/6 import CRCs, identical `.modinfo`). Residual: DWARF only.
+
+### Export CRCs closed (2026-10-04, mediatek-drm pass)
+
+The five `mtk_panel_ext.ko` export-CRC mismatches recorded in
+`parity/mtk_panel_ext.parity.txt` came from the type graph of the donor
+(Nothing-tip) `mtk_panel_ext.h`. With the ALPS `5e415e059253` header, which is
+proven by the exact `mediatek-drm.ko` and `mediatek-drm-panel-drv.ko`
+rebuilds, all 9/9 export CRCs match. Every section except
+`.note.gnu.build-id` also matches. See `parity/mtk_panel_ext.header-proof.txt`
+and `../mediatek-drm/source/mtk_panel_ext.h`. The header differs from the
+donor in `ESD_CHECK_NUM` 3 (donor 4), `READ_DDIC_SLOT_NUM` 8 (16) and
+`MAX_DYN_CMD_NUM` 20 (60). It also places `change_fps_by_vfp_send_cmd`
+differently and lacks `delay_first_bl_en`, `vdo_mix_mode_en` and four
+fingerprint/UI prototypes. Like the `stock-abi` model, it has no
+`set_backlight_pack` or `hbm_set_pack`.

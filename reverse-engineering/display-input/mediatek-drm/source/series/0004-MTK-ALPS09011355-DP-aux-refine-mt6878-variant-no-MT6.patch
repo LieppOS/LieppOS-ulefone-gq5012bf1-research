@@ -1,0 +1,126 @@
+From c120e1199047638c8c611d4e7bc24fffadd1f7ee Mon Sep 17 00:00:00 2001
+From: lieppos <l@l>
+Date: Sun, 4 Oct 2026 21:00:24 +0300
+Subject: [PATCH 04/10] MTK ALPS09011355 DP aux refine (mt6878 variant: no
+ MT6991 branch, int field at end, chia-cheng debug)
+
+---
+ drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp.c |  1 +
+ .../drm/mediatek/mediatek_v2/mtk_dp_common.h  |  1 +
+ .../gpu/drm/mediatek/mediatek_v2/mtk_dp_hal.c | 35 ++++++++++++++++---
+ .../gpu/drm/mediatek/mediatek_v2/mtk_dp_reg.h |  5 +++
+ 4 files changed, 37 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp.c
+index 331d71c..82d49a0 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp.c
+@@ -454,6 +454,7 @@ void mdrv_DPTx_InitVariable(struct mtk_dp *mtk_dp)
+ 	mtk_dp->has_dsc   = false;
+ 	mtk_dp->has_fec   = false;
+ 	mtk_dp->dsc_enable = false;
++	mtk_dp->fake_comeplete_irq = false;
+ 
+ 	if (!mtk_dp->training_info.set_max_linkrate)
+ 		mdrv_DPTx_CheckMaxLinkRate(mtk_dp);
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_common.h b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_common.h
+index 3c9032a..45b3420 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_common.h
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_common.h
+@@ -326,6 +326,7 @@ struct mtk_dp {
+ 	u32 vsv_reg;
+ 	u32 vsv_mask;
+ 	u32 vsv_vers;
++	int fake_comeplete_irq;
+ };
+ 
+ #endif /*__DRTX_TYPE_H__*/
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_hal.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_hal.c
+index cf103ba..38eecac 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_hal.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_hal.c
+@@ -1702,6 +1702,10 @@ UINT8 mhal_DPTx_AuxRead_Bytes(struct mtk_dp *mtk_dp, BYTE ubCmd,
+ 	BYTE uAuxIrqStatus = 0;
+ 	UINT8 ret = AUX_HW_FAILED;
+ 	unsigned int WaitReplyCount = AuxWaitReplyLpCntNum;
++	u32 aux_state = 0;
++
++	if (mtk_dp->fake_comeplete_irq && (ubCmd == AUX_CMD_NATIVE_R))
++		msWriteByteMask(mtk_dp, REG_3614_AUX_TX_P0, 0x18, MASKBIT(6 : 0));
+ 
+ 	msWriteByte(mtk_dp, REG_3640_AUX_TX_P0, 0x7F);
+ 	udelay(AUX_WRITE_READ_WAIT_TIME);
+@@ -1736,13 +1740,31 @@ UINT8 mhal_DPTx_AuxRead_Bytes(struct mtk_dp *mtk_dp, BYTE ubCmd,
+ 	while (--WaitReplyCount) {
+ 		uAuxIrqStatus = msReadByte(mtk_dp, REG_3640_AUX_TX_P0) & 0xFF;
+ 		if (uAuxIrqStatus & AUX_RX_RECV_COMPLETE_IRQ_TX_P0_FLDMASK) {
+-			bVaildCmd = true;
+-			break;
++			aux_state = (msRead2Byte(mtk_dp, REG_3644_AUX_TX_P0)
++				& AUX_STATE_AUX_TX_P0_FLDMASK)
++				>> AUX_STATE_AUX_TX_P0_FLDMASK_POS;
++
++			if (aux_state == 0x1) {
++				DPTXDBG("[AUX] Aux Recv Complete!\n");
++				bVaildCmd = true;
++				break;
++			}
++			msWriteByte(mtk_dp, REG_3640_AUX_TX_P0, 0x7F);
++			mtk_dp->fake_comeplete_irq = true;
++			DPTXERR("[AUX] Fake Complete irq! Clear IRQ\n");
++			DPTXDBG("[AUX] chia-cheng Aux state is %x\n", aux_state);
+ 		}
+ 
+ 		if (uAuxIrqStatus & AUX_RX_EDID_RECV_COMPLETE_IRQ_AUX_TX_P0_FLDMASK) {
+-			bVaildCmd = true;
+-			break;
++			if (ubCmd == AUX_CMD_I2C_R) {
++				bVaildCmd = true;
++				DPTXDBG("[AUX] AUX_RX_EDID_RECV_COMPLETE_IRQ\n");
++				break;
++			}
++			msWriteByteMask(mtk_dp, REG_3640_AUX_TX_P0,
++			1 << AUX_RX_EDID_RECV_COMPLETE_IRQ_AUX_TX_P0_FLDMASK_POS,
++			AUX_RX_EDID_RECV_COMPLETE_IRQ_AUX_TX_P0_FLDMASK);
++			DPTXERR("[AUX] Un-expected EDID complete IRQ\n");
+ 		}
+ 
+ 		if (uAuxIrqStatus & AUX_400US_TIMEOUT_IRQ_AUX_TX_P0_FLDMASK) {
+@@ -1752,6 +1774,9 @@ UINT8 mhal_DPTx_AuxRead_Bytes(struct mtk_dp *mtk_dp, BYTE ubCmd,
+ 		}
+ 	}
+ 
++	if (mtk_dp->fake_comeplete_irq && (ubCmd == AUX_CMD_NATIVE_R))
++		msWriteByteMask(mtk_dp, REG_3614_AUX_TX_P0, 0xD, MASKBIT(6 : 0));
++
+ 	if (WaitReplyCount == 0x0) {
+ 		BYTE phyStatus = 0x00;
+ 
+@@ -1800,7 +1825,7 @@ UINT8 mhal_DPTx_AuxRead_Bytes(struct mtk_dp *mtk_dp, BYTE ubCmd,
+ 	msWriteByte(mtk_dp, REG_3640_AUX_TX_P0, 0x7F);
+ 
+ 	if (bVaildCmd) {
+-		//DPTXMSG("[AUX] Read reply_cmd = %d\n", ubReplyCmd);
++		//DPTXDBG("[AUX] Read reply_cmd = %d\n", ubReplyCmd);
+ 		ret = ubReplyCmd;
+ 	} else {
+ 		DPTXMSG("[AUX] Timeout Read reply_cmd = %d\n", ubReplyCmd);
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_reg.h b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_reg.h
+index c253e34..31e4570 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_reg.h
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_reg.h
+@@ -3899,6 +3899,11 @@
+ #define GTC_TX_LCK_ACQ_SEND_NUM_AUX_TX_P0_FLDMASK_POS                     0
+ #define GTC_TX_LCK_ACQ_SEND_NUM_AUX_TX_P0_FLDMASK_LEN                     5
+ 
++#define REG_36F4_AUX_TX_P0              (0x36F4)
++#define IDLE_TO_PRECHARGE_DATA_ONE_EN_AUX_TX_P0_FLDMASK                   0x1
++#define IDLE_TO_PRECHARGE_DATA_ONE_EN_AUX_TX_P0_FLDMASK_POS               0
++#define IDLE_TO_PRECHARGE_DATA_ONE_EN_AUX_TX_P0_FLDMASK_LEN               1
++
+ #define REG_3700_AUX_TX_P0              (0x3700)
+ #define AUX_PHYWAKE_MODE_AUX_TX_P0_FLDMASK                                0x1
+ #define AUX_PHYWAKE_MODE_AUX_TX_P0_FLDMASK_POS                            0
+-- 
+2.56.0
+

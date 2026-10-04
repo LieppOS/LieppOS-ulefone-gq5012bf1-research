@@ -1,0 +1,58 @@
+From 5bfe1637d6da6322ac989634909b894c7e6ecce0 Mon Sep 17 00:00:00 2001
+From: lieppos <l@l>
+Date: Sun, 4 Oct 2026 21:05:19 +0300
+Subject: [PATCH 05/10] dp_intf: MT6989-gated buffer golden values in
+ mtk_dp_intf_config (stock variant)
+
+---
+ .../drm/mediatek/mediatek_v2/mtk_dp_intf.c    | 20 +++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_intf.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_intf.c
+index b0d918d..d4b8ee9 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_intf.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_intf.c
+@@ -88,6 +88,14 @@
+     #define BUF_BUF_FIFO_UNDERFLOW_DONT_BLOCK	BIT(4)
+ #define DP_BUF_CON1						0x0214
+ #define DP_BUF_RW_TIMES					0x0220
++#define DP_BUF_SODI_HIGH				0x0224
++#define DP_BUF_SODI_LOW					0x0228
++#define DP_BUF_PREULTRA_HIGH			0x0234
++#define DP_BUF_PREULTRA_LOW				0x0238
++#define DP_BUF_ULTRA_HIGH				0x023C
++#define DP_BUF_ULTRA_LOW				0x0240
++#define DP_BUF_URGENT_HIGH				0x0244
++#define DP_BUF_URGENT_LOW				0x0248
+ #define DP_SW_NP_SEL					0x0250
+ #define DP_PATTERN_CTRL0				0x0F00
+ 	#define DP_PATTERN_COLOR_BAR			BIT(6)
+@@ -789,6 +797,7 @@ static void mtk_dp_intf_config(struct mtk_ddp_comp *comp,
+ {
+ 	/*u32 reg_val;*/
+ 	struct mtk_dp_intf *dp_intf = comp_to_dp_intf(comp);
++	struct mtk_drm_private *priv = comp->mtk_crtc->base.dev->dev_private;
+ 	unsigned int hsize = 0, vsize = 0;
+ 	unsigned int hpw = 0;
+ 	unsigned int hfp = 0, hbp = 0;
+@@ -954,6 +963,17 @@ static void mtk_dp_intf_config(struct mtk_ddp_comp *comp,
+ 	mtk_ddp_write_relaxed(comp, dp_intf->driver_data->np_sel,
+ 			DP_SW_NP_SEL, handle);
+ 
++	if (priv->data->mmsys_id == MMSYS_MT6989) {
++		mtk_ddp_write_relaxed(comp, 5225, DP_BUF_SODI_HIGH, handle);
++		mtk_ddp_write_relaxed(comp, 3899, DP_BUF_SODI_LOW, handle);
++		mtk_ddp_write_relaxed(comp, 3620, DP_BUF_PREULTRA_HIGH, handle);
++		mtk_ddp_write_relaxed(comp, 3481, DP_BUF_PREULTRA_LOW, handle);
++		mtk_ddp_write_relaxed(comp, 3481, DP_BUF_ULTRA_HIGH, handle);
++		mtk_ddp_write_relaxed(comp, 3203, DP_BUF_ULTRA_LOW, handle);
++		mtk_ddp_write_relaxed(comp, 1671, DP_BUF_URGENT_HIGH, handle);
++		mtk_ddp_write_relaxed(comp, 1532, DP_BUF_URGENT_LOW, handle);
++	}
++
+ 	DPTXMSG("%s config done\n",
+ 			mtk_dump_comp_str(comp));
+ 
+-- 
+2.56.0
+

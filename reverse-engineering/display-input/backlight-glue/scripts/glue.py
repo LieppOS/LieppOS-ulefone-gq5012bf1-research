@@ -34,7 +34,7 @@ SPECS = {
                                 objs='mtk_drm_panel_i2c.o mtk_drm_gateic_rt4801h.o mtk_drm_gateic_rt4831a.o mtk_drm_gateic.o'),
     'mediatek-drm-panel-drv': dict(mode='mirror', dir='drivers/gpu/drm/panel',
                                 copydirs=['drivers/gpu/drm/panel', 'drivers/gpu/drm/mediatek/mediatek_v2'],
-                                overrides={'/home/armol/kernel-work/gki-12901745-workspace/lieppos/disp/stockhdr/mtk_panel_ext.h':
+                                overrides={'/home/armol/kernel-work/gki-12901745-workspace/lieppos/drm/recon/drivers/gpu/drm/mediatek/mediatek_v2/mtk_panel_ext.h':
                                            'drivers/gpu/drm/mediatek/mediatek_v2/mtk_panel_ext.h'},
                                 links=['drivers/gpu/drm/mediatek/mml', 'drivers/misc', 'drivers/leds', 'include'],
                                 inc=['drivers/misc/mediatek/include/mt-plat', 'drivers/leds/', 'include'],

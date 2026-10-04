@@ -1,0 +1,181 @@
+From d993ecd4ee3977b0c35e33a509c772c125b3bc92 Mon Sep 17 00:00:00 2001
+From: lieppos <l@l>
+Date: Sun, 4 Oct 2026 21:14:31 +0300
+Subject: [PATCH 06/10] DP layout padding (proven bounds)
+
+---
+ drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp.c | 48 +++++++++++++++++++
+ .../gpu/drm/mediatek/mediatek_v2/mtk_dp_hal.c | 25 ++++++++++
+ .../drm/mediatek/mediatek_v2/mtk_dp_intf.c    | 33 +++++++++++++
+ 3 files changed, 106 insertions(+)
+
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp.c
+index 82d49a0..f41e9a2 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp.c
+@@ -105,6 +105,23 @@ struct notify_dev dptx_notify_data;
+ struct class *switch_class;
+ static atomic_t device_count;
+ 
++/* GQ5012BF1 layout: stock has 17 more source lines in B[1,267]; text not recoverable */
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
+ static ssize_t state_show(struct device *dev,
+ 	struct device_attribute *attr, char *buf)
+ {
+@@ -3179,6 +3196,22 @@ void mtk_dp_power_save(unsigned int status)
+ 	queue_work(g_mtk_dp->dptx_wq, &g_mtk_dp->dptx_work);
+ }
+ 
++/* GQ5012BF1 layout: stock has 16 more source lines in B(1504,3190]; text not recoverable */
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
+ atomic_t dp_comm_event = ATOMIC_INIT(0);
+ void mtk_dp_video_trigger(int res)
+ {
+@@ -3545,6 +3578,17 @@ static int mtk_dp_dt_parse_pdata(struct mtk_dp *mtk_dp,
+ 	return 0;
+ }
+ 
++/* GQ5012BF1 layout: stock has 11 more source lines in B(3346,3558]; text not recoverable */
++
++
++
++
++
++
++
++
++
++
+ static inline struct mtk_dp *mtk_dp_ctx_from_conn(struct drm_connector *c)
+ {
+ 	return container_of(c, struct mtk_dp, conn);
+@@ -4360,6 +4404,10 @@ static int mtk_drm_dp_remove(struct platform_device *pdev)
+ }
+ 
+ #ifdef CONFIG_PM_SLEEP
++/* GQ5012BF1 layout: stock has 4 more source lines in B(4272,4375]; text not recoverable */
++
++
++
+ static int mtk_dp_suspend(struct device *dev)
+ {
+ 	struct mtk_dp *mtk_dp = dev_get_drvdata(dev);
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_hal.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_hal.c
+index 38eecac..96660ea 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_hal.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_hal.c
+@@ -1692,6 +1692,31 @@ void mhal_DPTx_SPKG_VSC_EXT_CEA(struct mtk_dp *mtk_dp, bool bEnable,
+ 	msWriteByteMask(mtk_dp, REG_30A0_DP_ENCODER0_P0 + 1, BIT(4), BIT(4));
+ 	msWriteByteMask(mtk_dp, REG_32A0_DP_ENCODER1_P0, BIT(7), BIT(7));
+ }
++
++/* GQ5012BF1 layout: stock has 25 more source lines in B[1,2042]; text not recoverable */
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
+ 
+ UINT8 mhal_DPTx_AuxRead_Bytes(struct mtk_dp *mtk_dp, BYTE ubCmd,
+ 	DWORD  usDPCDADDR, size_t ubLength, BYTE *pRxBuf)
+diff --git a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_intf.c b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_intf.c
+index d4b8ee9..a10114b 100644
+--- a/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_intf.c
++++ b/drivers/gpu/drm/mediatek/mediatek_v2/mtk_dp_intf.c
+@@ -567,6 +567,10 @@ static int irq_tl;
+ static unsigned long long dp_intf_bw;
+ static struct mtk_dp_intf *g_dp_intf;
+ 
++/* GQ5012BF1 layout: stock has 4 more source lines in B[1,663]; text not recoverable */
++
++
++
+ static inline struct mtk_dp_intf *comp_to_dp_intf(struct mtk_ddp_comp *comp)
+ {
+ 	return container_of(comp, struct mtk_dp_intf, ddp_comp);
+@@ -790,6 +794,35 @@ void mhal_DPTx_VideoClock(bool enable, int resolution)
+ 	} else
+ 		clk_disable_unprepare(g_dp_intf->pclk);
+ }
++
++/* GQ5012BF1 layout: stock has 29 more source lines in B(693,1259]; text not recoverable */
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
+ 
+ static void mtk_dp_intf_config(struct mtk_ddp_comp *comp,
+ 				 struct mtk_ddp_config *cfg,
+-- 
+2.56.0
+
