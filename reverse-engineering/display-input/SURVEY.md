@@ -1,4 +1,4 @@
-# Display / input scope survey (entry point, not yet closed)
+# Display / input scope survey (entry point)
 
 Started immediately after the NFC scope closed. This file records only what was
 established in the survey so the next session does not redo it.
@@ -41,6 +41,28 @@ Notable structure facts:
 - `mtk_disp_notify` is the glue every suspend/resume-aware driver uses
   (sensorhub, focaltech touch) and has **no dependencies** — the cheapest
   first target.
+
+## Status after the backlight/display-glue pass (2026-10-04)
+
+See [`backlight-glue/`](backlight-glue/) and
+[`yft-display-glue-deltas.md`](yft-display-glue-deltas.md).
+
+- Eleven modules are byte-identical to stock except build-id, with B1==B2:
+  - display glue: `leds-mtk` (MTK `164442952094`), `leds-mtk-disp`,
+    `pwm-mtk-disp` (+mt6878 match entries and probe logs), `backlight_cooling`,
+    `rt4831a_drv`, `mediatek-drm-gateic`, `mtk_disp_sec`, `met_backlight_api`;
+  - PWM, IR and haptics: `mtk-pwm`, `mtk_irtx_pwm` (+`dma-mask-bit`),
+    `regulator-vibrator`.
+- `aw36518` and `aw36518_v2` are 22/23 each.
+- Main brightness is leds-mtk `lcd-backlight` → mtkfb → VTDR6115 DCS 0x51. No
+  PWM backlight exists, and DISP_PWM has no consumer.
+- Rear brightness is CO5300 DCS 0x51 only. The DT has no backlight GPIO.
+- `mediatek-drm-panel-drv` is unused on this board (111/123;
+  `mtk_lcm_dsi_params` layout open).
+- Workspace: `MTK-PWM`, `IR-BLASTER`, `HAPTICS`, `AW36518-FLASH` and
+  `AW36518-V2-FLASH` moved to DONE, and `BACKLIGHT-DISPLAY-GLUE` was added as
+  DONE. Totals are now 54 / 72 / 4 (130).
+- Remaining display kernel module: `mediatek-drm.ko` (5.7 MB).
 
 ## Status after the second pass (2026-10-04)
 
