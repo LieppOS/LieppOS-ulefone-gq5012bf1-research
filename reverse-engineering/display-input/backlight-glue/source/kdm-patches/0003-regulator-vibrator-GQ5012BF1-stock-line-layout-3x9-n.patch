@@ -1,0 +1,66 @@
+From ef13d89e174f06f27666980cdaef565597e37d69 Mon Sep 17 00:00:00 2001
+From: ArnoldasMk <arnoldas.kanobi@gmail.com>
+Date: Sun, 4 Oct 2026 19:03:32 +0300
+Subject: [PATCH 3/3] regulator-vibrator: GQ5012BF1 stock line layout (3x9
+ non-code lines, proven by pr_fmt __LINE__) - 9/9 15/15 ABI exact,
+ byte-identical except build-id
+
+---
+ drivers/leds/regulator-vibrator.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/drivers/leds/regulator-vibrator.c b/drivers/leds/regulator-vibrator.c
+index 255e20c..3f2725d 100644
+--- a/drivers/leds/regulator-vibrator.c
++++ b/drivers/leds/regulator-vibrator.c
+@@ -22,6 +22,15 @@
+ #define pr_fmt(fmt) KBUILD_MODNAME " %s(%d) :" fmt, __func__, __LINE__
+ 
+ #define DEFAULT_MIN_LIMIT 15
++/*
++ * GQ5012BF1 stock layout: the shipped object was compiled from a
++ * revision with 9 extra non-code lines here (proven by every
++ * pr_fmt __LINE__ immediate; the original text is not recoverable).
++ * This comment reproduces the line count only.
++ *
++ *
++ * header
++ */
+ 
+ struct reg_vibr_config {
+ 	unsigned int min_volt;
+@@ -104,6 +113,15 @@ static void vibr_enable(struct reg_vibr *vibr)
+ 			pr_notice("set vibr_reg enable failed!\n");
+ 		else
+ 			atomic_set(&vibr->reg_status, 1);
++/*
++ * GQ5012BF1 stock layout: the shipped object was compiled from a
++ * revision with 9 extra non-code lines here (proven by every
++ * pr_fmt __LINE__ immediate; the original text is not recoverable).
++ * This comment reproduces the line count only.
++ *
++ *
++ * vibr_enable
++ */
+ 	} else {
+ 		pr_notice("vibr_reg already enabled.\n");
+ 	}
+@@ -118,6 +136,15 @@ static void vibr_disable(struct reg_vibr *vibr)
+ 			pr_notice("set vibr_reg disable failed!\n");
+ 		else
+ 			atomic_set(&vibr->reg_status, 0);
++/*
++ * GQ5012BF1 stock layout: the shipped object was compiled from a
++ * revision with 9 extra non-code lines here (proven by every
++ * pr_fmt __LINE__ immediate; the original text is not recoverable).
++ * This comment reproduces the line count only.
++ *
++ *
++ * vibr_disable
++ */
+ 	} else {
+ 		pr_notice("vibr_reg already disabled.\n");
+ 	}
+-- 
+2.56.0
+

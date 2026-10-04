@@ -1,0 +1,88 @@
+--- /home/armol/kernel-work/gki-12901745-workspace/lieppos/aw36518-v2-recon/aw36518_v2.c	2026-09-07 18:21:10.369800034 +0300
++++ /home/armol/kernel-work/gki-12901745-workspace/lieppos/glue/aw36518_v2/src/aw36518_v2.c	2026-10-04 19:11:27.388011830 +0300
+@@ -168,8 +168,9 @@
+ static __always_inline void aw36518_v2_gpio_set(struct aw36518_v2_flash *flash,
+ 					      int state)
+ {
+-	aw_log("set start, pin(%d) state(%d)\n",
+-		flash->flash_externel_gpio, state);
++	int pin = 0;	/* stock logs pin(0): the variable is never assigned */
++
++	aw_log("set start, pin(%d) state(%d)\n", pin, state);
+ 	gpio_set_value(flash->flash_externel_gpio, state);
+ }
+ 
+@@ -328,7 +329,9 @@
+ 		rval = regmap_read(flash->regmap, REG_FLAG1, &reg_val);
+ 		if (rval < 0)
+ 			goto out;
+-		if (reg_val & (BIT(4) | FAULT_LED0_SHORT_CIRCUIT))
++		if (reg_val & FAULT_LED0_SHORT_CIRCUIT)
++			fault |= V4L2_FLASH_FAULT_SHORT_CIRCUIT;
++		if (reg_val & BIT(4))
+ 			fault |= V4L2_FLASH_FAULT_SHORT_CIRCUIT;
+ 		if (reg_val & FAULT_THERMAL_SHUTDOWN)
+ 			fault |= V4L2_FLASH_FAULT_OVER_TEMPERATURE;
+@@ -733,9 +736,9 @@
+ static ssize_t reg_show(struct device *dev, struct device_attribute *attr,
+ 			char *buf)
+ {
++	int i;
+ 	unsigned int val;
+ 	ssize_t len = 0;
+-	int i;
+ 
+ 	for (i = 0; i < 0x0e; i++) {
+ 		regmap_read(aw36518_v2_flash_data->regmap, i, &val);
+@@ -878,6 +881,7 @@
+ 	unsigned int reg_val = 0;
+ 	int rval;
+ 
++#line 930
+ 	aw_log("%s:%d, addr=0x%X", __func__, __LINE__, client->addr);
+ 
+ 	flash = devm_kzalloc(&client->dev, sizeof(*flash), GFP_KERNEL);
+@@ -906,7 +910,7 @@
+ 	aw36518_v2_flash_data = flash;
+ 
+ 	rval = aw36518_v2_gpio_init(flash);
+-	if (rval)
++	if (rval < 0)
+ 		return rval;
+ 
+ 	rval = aw36518_v2_subdev_init(flash, aw36518_v2_LED0, "aw36518_v2-led0");
+@@ -932,15 +936,18 @@
+ 
+ 	regmap_read(flash->regmap, 0x00, &reg_val);
+ 	aw_log("read chip id:%d\n", reg_val);
++#line 984
+ 	aw_log("%s %s:%d", aw36518_v2_DRIVER_VERSION, __func__, __LINE__);
+ 	rval = regmap_read(flash->regmap, 0x07, &reg_val);
+ 	if (rval < 0)
+ 		return 0;
+ 	msleep(10);
+ 	printk("%s:%d: do software reset0 reg0x07=0x%02x\n",
++#line 988
+ 	       __func__, __LINE__, reg_val);
+ 	reg_val |= BIT(7);
+ 	printk("%s:%d: do software reset1 write data:0x%02x to reg 0x07\n",
++#line 990
+ 	       __func__, __LINE__, reg_val);
+ 	regmap_write(flash->regmap, 0x07, reg_val);
+ 	return 0;
+@@ -966,6 +973,7 @@
+ {
+ 	struct aw36518_v2_flash *flash = dev_get_drvdata(dev);
+ 
++#line 1020
+ 	aw_log("%s %d", __func__, __LINE__);
+ 	aw36518_v2_gpio_set(flash, 0);
+ 	return 0;
+@@ -975,6 +983,7 @@
+ {
+ 	struct aw36518_v2_flash *flash = dev_get_drvdata(dev);
+ 
++#line 1030
+ 	aw_log("%s %d", __func__, __LINE__);
+ 	return aw36518_v2_init(flash);
+ }

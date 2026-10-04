@@ -1,0 +1,303 @@
+From 5326ad7031b1c66e24d9f7f2824de5eea0a6e69d Mon Sep 17 00:00:00 2001
+From: ArnoldasMk <arnoldas.kanobi@gmail.com>
+Date: Sun, 4 Oct 2026 19:01:26 +0300
+Subject: [PATCH 1/3] display glue: leds-mtk at MTK ALPS 164442952094
+ (battery-percent PT backlight), pwm-mtk-disp at MTK e46af0f + GQ5012BF1
+ mt6878-disp-pwm0/1 + probe start/end logs
+
+leds-mtk 25/25 27/27, leds-mtk-disp 9/9 23/23, pwm-mtk-disp 10/10 44/44; unchanged
+files also exact: mtk-pwm 87/87 30/30, backlight_cooling 8/8, rt4831a_drv 14/14,
+mediatek-drm-gateic 39/39, mtk_disp_sec 11/11. ABI exact, byte-identical except
+build-id (KCFLAGS=-faddrsig, __FILE__ = ../kernel_device_modules-6.1/...).
+---
+ drivers/leds/leds-mtk.c    | 91 ++++++++++++++++++++++++++++++++++++--
+ drivers/leds/leds-mtk.h    |  1 +
+ drivers/pwm/pwm-mtk-disp.c | 50 ++++++++++++---------
+ include/linux/leds-mtk.h   |  6 +++
+ 4 files changed, 123 insertions(+), 25 deletions(-)
+
+diff --git a/drivers/leds/leds-mtk.c b/drivers/leds/leds-mtk.c
+index c462bb5..3eb46e1 100755
+--- a/drivers/leds/leds-mtk.c
++++ b/drivers/leds/leds-mtk.c
+@@ -16,7 +16,8 @@
+ #include <linux/slab.h>
+ #include <linux/string.h>
+ #include <leds-mtk.h>
+-
++#include "mtk_low_battery_throttling.h"
++#include "mtk_bp_thl.h"
+ 
+ /****************************************************************************
+  * variables
+@@ -37,6 +38,10 @@ static BLOCKING_NOTIFIER_HEAD(mtk_leds_chain_head);
+ 
+ struct mt_leds_desp_info *leds_info;
+ 
++#if IS_ENABLED(CONFIG_MTK_BATTERY_PERCENT_THROTTLING)
++static int led_bat_per_pt[MAX_BL_PT_NUM];
++#endif
++
+ int mtk_leds_register_notifier(struct notifier_block *nb)
+ {
+ 	return blocking_notifier_chain_register(&mtk_leds_chain_head, nb);
+@@ -517,6 +522,54 @@ int setMaxBrightness(int connector_id, int percent, bool enable)
+ }
+ EXPORT_SYMBOL(setMaxBrightness);
+ 
++int setPTBrightness(int percent)
++{
++	int i = 0;
++	int brightness = 0;
++
++	struct mt_led_data *led_dat = NULL;
++
++	while (i < leds_info->lens) {
++		pr_info("led %d name %s\n", i, leds_info->leds[i]->name);
++		if (strstr(leds_info->leds[i]->name, "lcd-backlight")) {
++			led_dat = container_of(leds_info->leds[i],
++				struct mt_led_data, desp);
++
++			pr_info("led_dat->last_percent %d\n", led_dat->last_percent);
++
++			if (led_dat->last_percent != 0) {
++				brightness = led_dat->last_brightness * percent / led_dat->last_percent;
++				led_dat->last_percent = percent;
++			}
++
++			pr_info("last_brightness %d, brightness = %d\n", led_dat->last_brightness, brightness);
++
++			mtk_set_brightness(&led_dat->conf.cdev, brightness);
++		}
++		i++;
++	}
++
++	return 0;
++}
++
++#if IS_ENABLED(CONFIG_MTK_BATTERY_PERCENT_THROTTLING)
++static void mt_leds_bat_low_cb(BATTERY_PERCENT_LEVEL level)
++{
++	int percent = 100;
++
++	if (level >= BATTERY_PERCENT_LEVEL_NUM) {
++		pr_info("%s:%d invalid level %d\n", __func__, __LINE__, level);
++		return;
++	}
++
++	percent = led_bat_per_pt[(int)level];
++
++	pr_info("%s:%d lv = %d, percent = %d\n", __func__, __LINE__, level, percent);
++
++	setPTBrightness(percent);
++}
++#endif
++
+ int mt_leds_parse_dt(struct mt_led_data *mdev, struct fwnode_handle *fwnode)
+ {
+ 	int ret = 0;
+@@ -567,7 +620,6 @@ int mt_leds_parse_dt(struct mt_led_data *mdev, struct fwnode_handle *fwnode)
+ 		pr_info("No min-brightness, use default value 1");
+ 		mdev->conf.mode = MT_LED_MODE_CUST_BLS_I2C;
+ 	}
+-	mdev->conf.mode = MT_LED_MODE_CUST_LCM;
+ 	mdev->conf.limit_hw_brightness = mdev->conf.max_hw_brightness;
+ 	ret = fwnode_property_read_string(fwnode, "default-state", &state);
+ 	if (!ret) {
+@@ -578,9 +630,41 @@ int mt_leds_parse_dt(struct mt_led_data *mdev, struct fwnode_handle *fwnode)
+ 		else
+ 			mdev->conf.cdev.brightness = 0;
+ 	} else {
+-		mdev->conf.cdev.brightness = mdev->conf.cdev.max_brightness * 10 / 100;
++		mdev->conf.cdev.brightness = mdev->conf.cdev.max_brightness * 40 / 100;
++	}
++
++#if IS_ENABLED(CONFIG_MTK_BATTERY_PERCENT_THROTTLING)
++	ret = fwnode_property_read_u32(fwnode, "reg-bat-percent-pt", &(mdev->conf.reg_battery_percent_pt));
++
++	if (ret) {
++		pr_info("No need to register battery percent pt notify");
++		mdev->conf.reg_battery_percent_pt = 0;
+ 	}
+ 
++	pr_info("%s:%d ret = %d, reg_battery_percent_pt = %d\n", __func__, __LINE__, ret,
++		mdev->conf.reg_battery_percent_pt);
++
++	ret = fwnode_property_read_u32_array(fwnode, "bl-bat-pt-percent", mdev->conf.bl_bat_pt_per,
++		MAX_BL_PT_NUM);
++
++	if (ret) {
++		pr_info("failed to read battery percent properity, use default value");
++		mdev->conf.bl_bat_pt_per[0] = mdev->conf.bl_bat_pt_per[1] = mdev->conf.bl_bat_pt_per[2] = 100;
++		mdev->conf.bl_bat_pt_per[3] = mdev->conf.bl_bat_pt_per[4] = mdev->conf.bl_bat_pt_per[5] = 67;
++	}
++
++	pr_info("%s:%d ret = %d, bl_bat_pt_per value: %d, %d, %d, %d, %d, %d\n",
++		__func__, __LINE__, ret,
++		mdev->conf.bl_bat_pt_per[0], mdev->conf.bl_bat_pt_per[1],
++		mdev->conf.bl_bat_pt_per[2], mdev->conf.bl_bat_pt_per[3],
++		mdev->conf.bl_bat_pt_per[4], mdev->conf.bl_bat_pt_per[5]);
++
++	memcpy(led_bat_per_pt, mdev->conf.bl_bat_pt_per, sizeof(mdev->conf.bl_bat_pt_per));
++
++	if (mdev->conf.reg_battery_percent_pt == 1)
++		register_bp_thl_notify(mt_leds_bat_low_cb, BATTERY_PERCENT_PRIO_BACKLIGHT);
++#endif
++
+ 	strscpy(mdev->desp.name, mdev->conf.cdev.name,
+ 		sizeof(mdev->desp.name));
+ 	mdev->conf.led_type = LED_TYPE_FILE;
+@@ -672,6 +756,7 @@ int mt_leds_classdev_register(struct device *parent,
+ 		pr_info("print log init error!");
+ 
+ 	led_dat->last_brightness = led_dat->conf.cdev.brightness;
++	led_dat->last_percent = 100;
+ 
+ 	mtk_set_hw_brightness(led_dat,
+ 		brightness_maptolevel(&led_dat->conf, led_dat->last_brightness),
+diff --git a/drivers/leds/leds-mtk.h b/drivers/leds/leds-mtk.h
+index 9392559..64c9cc1 100644
+--- a/drivers/leds/leds-mtk.h
++++ b/drivers/leds/leds-mtk.h
+@@ -34,6 +34,7 @@ struct mt_led_data {
+ 	int (*mtk_conn_id_get)(struct mt_led_data *m_data,
+ 		int flag);
+ 	struct mutex	led_access;
++	int last_percent;
+ };
+ 
+ int mt_leds_parse_dt(struct mt_led_data *mdev, struct fwnode_handle *fwnode);
+diff --git a/drivers/pwm/pwm-mtk-disp.c b/drivers/pwm/pwm-mtk-disp.c
+index 3c313ed..6459e7e 100644
+--- a/drivers/pwm/pwm-mtk-disp.c
++++ b/drivers/pwm/pwm-mtk-disp.c
+@@ -124,10 +124,9 @@ static int mtk_disp_pwm_apply(struct pwm_chip *chip, struct pwm_device *pwm,
+ 	clk_div = mul_u64_u64_div_u64(state->period, rate, NSEC_PER_SEC) >>
+ 			  PWM_PERIOD_BIT_WIDTH;
+ 	if (clk_div > PWM_CLKDIV_MAX) {
+-		if (!mdp->enabled) {
+-			clk_disable_unprepare(mdp->clk_mm);
+-			clk_disable_unprepare(mdp->clk_main);
+-		}
++		clk_disable_unprepare(mdp->clk_mm);
++		clk_disable_unprepare(mdp->clk_main);
++		mdp->enabled = false;
+ 		return -EINVAL;
+ 	}
+ 
+@@ -182,26 +181,13 @@ static int mtk_disp_pwm_get_state(struct pwm_chip *chip,
+ {
+ 	struct mtk_disp_pwm *mdp = to_mtk_disp_pwm(chip);
+ 	u64 rate, period, high_width;
+-	u32 clk_div, con0, con1;
+-	int err;
+-
+-	err = clk_prepare_enable(mdp->clk_main);
+-	if (err < 0) {
+-		dev_err(chip->dev, "Can't enable mdp->clk_main: %pe\n", ERR_PTR(err));
+-		return 0;
+-	}
+-
+-	err = clk_prepare_enable(mdp->clk_mm);
+-	if (err < 0) {
+-		dev_err(chip->dev, "Can't enable mdp->clk_mm: %pe\n", ERR_PTR(err));
+-		clk_disable_unprepare(mdp->clk_main);
+-		return 0;
+-	}
++	u32 clk_div, pwm_en, con0, con1;
+ 
+ 	rate = clk_get_rate(mdp->clk_main);
+ 	con0 = readl(mdp->base + mdp->data->con0);
+ 	con1 = readl(mdp->base + mdp->data->con1);
+-	state->enabled = !!(con0 & BIT(0));
++	pwm_en = readl(mdp->base + DISP_PWM_EN);
++	state->enabled = !!(pwm_en & mdp->data->enable_mask);
+ 	clk_div = FIELD_GET(PWM_CLKDIV_MASK, con0);
+ 	period = FIELD_GET(PWM_PERIOD_MASK, con1);
+ 	/*
+@@ -217,8 +203,6 @@ static int mtk_disp_pwm_get_state(struct pwm_chip *chip,
+ 	state->duty_cycle = DIV64_U64_ROUND_UP(high_width * (clk_div + 1) * NSEC_PER_SEC,
+ 					       rate);
+ 	state->polarity = PWM_POLARITY_NORMAL;
+-	clk_disable_unprepare(mdp->clk_mm);
+-	clk_disable_unprepare(mdp->clk_main);
+ 
+ 	return 0;
+ }
+@@ -234,6 +218,7 @@ static int mtk_disp_pwm_probe(struct platform_device *pdev)
+ 	struct mtk_disp_pwm *mdp;
+ 	int ret;
+ 
++	pr_notice("%s start", __func__);
+ 	mdp = devm_kzalloc(&pdev->dev, sizeof(*mdp), GFP_KERNEL);
+ 	if (!mdp)
+ 		return -ENOMEM;
+@@ -262,6 +247,23 @@ static int mtk_disp_pwm_probe(struct platform_device *pdev)
+ 	mdp->chip.ops = &mtk_disp_pwm_ops;
+ 	mdp->chip.npwm = 1;
+ 
++	ret = clk_prepare_enable(mdp->clk_main);
++	if (ret < 0) {
++		dev_err(&pdev->dev, "can't enable mdp->clk_main: %pe\n",
++			ERR_PTR(ret));
++		return ret;
++	}
++
++	ret = clk_prepare_enable(mdp->clk_mm);
++	if (ret < 0) {
++		dev_err(&pdev->dev, "can't enable mdp->clk_mm: %pe\n",
++			ERR_PTR(ret));
++		clk_disable_unprepare(mdp->clk_main);
++		return ret;
++	}
++	mdp->enabled = true;
++	pr_notice("%s mdp->enabled=%d", __func__, mdp->enabled);
++
+ 	ret = pwmchip_add(&mdp->chip);
+ 	if (ret < 0) {
+ 		dev_err(&pdev->dev, "pwmchip_add() failed: %pe\n", ERR_PTR(ret));
+@@ -269,6 +271,7 @@ static int mtk_disp_pwm_probe(struct platform_device *pdev)
+ 	}
+ 
+ 	platform_set_drvdata(pdev, mdp);
++	pr_notice("%s end", __func__);
+ 
+ 	return 0;
+ }
+@@ -332,6 +335,9 @@ static const struct of_device_id mtk_disp_pwm_of_match[] = {
+ 	{ .compatible = "mediatek,mt8183-disp-pwm", .data = &mt8183_pwm_data},
+ 	{ .compatible = "mediatek,mt6886-disp-pwm", .data = &mt6799_pwm_data},
+ 	{ .compatible = "mediatek,mt6835-disp-pwm", .data = &mt6799_pwm_data},
++	{ .compatible = "mediatek,mt6878-disp-pwm0", .data = &mt6799_pwm_data},
++	{ .compatible = "mediatek,mt6878-disp-pwm1", .data = &mt6799_pwm_data},
++	{ .compatible = "mediatek,mt6897-disp-pwm", .data = &mt8183_pwm_data},
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(of, mtk_disp_pwm_of_match);
+diff --git a/include/linux/leds-mtk.h b/include/linux/leds-mtk.h
+index c82d839..b513891 100644
+--- a/include/linux/leds-mtk.h
++++ b/include/linux/leds-mtk.h
+@@ -6,6 +6,8 @@
+ 
+ #include <linux/leds.h>
+ 
++#define MAX_BL_PT_NUM	6
++
+ enum mtk_leds_events {
+ 	LED_BRIGHTNESS_CHANGED	= 0,
+ 	LED_STATUS_SHUTDOWN	= 1,
+@@ -43,6 +45,10 @@ struct led_conf_info {
+ 	struct kernfs_node	*brightness_hw_changed_kn;
+ #endif
+ 	enum mtk_leds_types led_type;
++#if IS_ENABLED(CONFIG_MTK_BATTERY_PERCENT_THROTTLING)
++	int reg_battery_percent_pt;
++	int bl_bat_pt_per[MAX_BL_PT_NUM];
++#endif
+ };
+ 
+ #ifdef CONFIG_LEDS_MT_BRIGHTNESS_HW_CHANGED
+-- 
+2.56.0
+

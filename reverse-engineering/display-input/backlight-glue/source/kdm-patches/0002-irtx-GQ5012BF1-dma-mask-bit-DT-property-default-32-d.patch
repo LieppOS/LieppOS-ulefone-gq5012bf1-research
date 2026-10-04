@@ -1,0 +1,48 @@
+From 3b995377e08cbd9ccd53fb7407fd8a88b6afb5c7 Mon Sep 17 00:00:00 2001
+From: ArnoldasMk <arnoldas.kanobi@gmail.com>
+Date: Sun, 4 Oct 2026 19:01:26 +0300
+Subject: [PATCH 2/3] irtx: GQ5012BF1 dma-mask-bit DT property (default 32) +
+ dma_set_coherent_mask before TX alloc - mtk_irtx_pwm 6/6 16/16 ABI exact,
+ byte-identical except build-id
+
+---
+ drivers/misc/mediatek/irtx/mtk_irtx_pwm.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/drivers/misc/mediatek/irtx/mtk_irtx_pwm.c b/drivers/misc/mediatek/irtx/mtk_irtx_pwm.c
+index fc4144e..8bcd357 100644
+--- a/drivers/misc/mediatek/irtx/mtk_irtx_pwm.c
++++ b/drivers/misc/mediatek/irtx/mtk_irtx_pwm.c
+@@ -30,6 +30,8 @@ struct mtk_pwm_ir {
+ 	struct platform_device *pdev;
+ };
+ 
++static unsigned int dma_mask_bit;
++
+ static struct pwm_spec_config irtx_pwm_config = {
+ 	.pwm_no = 0,
+ 	.mode = PWM_MODE_MEMORY,
+@@ -92,6 +94,7 @@ static int mtk_pwm_ir_tx(struct rc_dev *rcdev, unsigned int *txbuf,
+ 				pwm_ir->carrier*pwm_ir->cycle));
+ 	buf_size = buf_size / BITS_PER_BYTE; /* byte size */
+ 
++	dma_set_coherent_mask(&pwm_ir->pdev->dev, DMA_BIT_MASK(dma_mask_bit));
+ 	wave_vir = dma_alloc_coherent(&pwm_ir->pdev->dev, buf_size,
+ 		&wave_phy, GFP_KERNEL);
+ 	if (!wave_vir)
+@@ -240,6 +243,12 @@ static int mtk_pwm_ir_probe(struct platform_device *pdev)
+ 		return -ENODEV;
+ 	}
+ 
++	rc = of_property_read_u32(pdev->dev.of_node, "dma-mask-bit", &dma_mask_bit);
++	if (rc || !dma_mask_bit) {
++		dev_err(&pdev->dev, "rc=%d,dma_mask_bit=%d\n", rc, dma_mask_bit);
++		dma_mask_bit = 32;
++	}
++
+ 	pwm_ir->regulator = devm_regulator_get(&pdev->dev, pwm_str);
+ 	if (IS_ERR(pwm_ir->regulator))
+ 		return PTR_ERR(pwm_ir->regulator);
+-- 
+2.56.0
+
