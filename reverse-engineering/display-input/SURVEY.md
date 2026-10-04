@@ -62,7 +62,7 @@ See [`mediatek-drm/`](mediatek-drm/).
   (Nothing-tip) `mtk_panel_ext.h`.
 - **`mtk_panel_ext.ko` export CRCs are now 9/9.** Five used to mismatch. With
   the ALPS header, every section except build-id matches.
-- Workspace: new DONE component `MEDIATEK-DRM`.
+- Workspace: new DONE component `MEDIATEK-DRM`. Totals are now 55 / 72 / 4 (131).
 
 ## Status after the backlight/display-glue pass (2026-10-04)
 
