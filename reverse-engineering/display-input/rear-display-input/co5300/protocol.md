@@ -65,8 +65,10 @@ protocol is a CO5300-class AMOLED DDIC with internal GRAM (window + RAMWR).
 - Brightness: `51 <backlight_step & 0xff>` then `2C`. These are sent *only*
   inside the next frame write, and only if `backlight_step` changed since the
   last send (`current_backlight_level != backlight_step`). There is no
-  backlight GPIO activity: `bl_ctrl_gpio` is requested low in probe and never
-  touched again.
+  backlight GPIO activity: the driver *would* request `bl_ctrl_gpio` low in
+  probe, but the live DT `tiny_lcd` node has no `tiny_lcd,backlight_gpio`
+  property, so `gpio_is_valid()` fails and no GPIO is requested at all
+  (correction 2026-10-04, `../../backlight-glue/rear-brightness-path.md`).
 - Window: `2A/2B` + `2C`, sent only when the frame width changes (`pre_framesize`).
 - Suspend: `28`, 20 ms, `10`, 220 ms.
 
