@@ -36,9 +36,9 @@ Decoded from the JEDEC descriptor dumps printed by PL/LK:
 | field | value | meaning |
 |---|---|---|
 | `wManufacturerID` | `0x012C` | Micron (`UFS_VENDOR_MICRON`) |
-| product string | `MT512GBCAV8U31` | as printed by LK `ufs id:` |
+| product string | `MT512GBCAV8U31` | as printed by LK `ufs id:`. This is a Micron uMCP (UFS + LPDDR in one package, 512 GB); `lpddr_used_name` in the bootargs carries the same id |
 | FW revision string | `0108` | |
-| `wSpecVersion` | `0x0310` | UFS 3.1 |
+| `wSpecVersion` | `0x0310` | **UFS 3.1**. This resolves the earlier UNKNOWN in `qwen_hardware/verification/findings/ufs.md` |
 | `bNumberLU` / `bNumberWLU` | 3 / 4 | |
 | `bBootEnable` / `bInitPowerMode` / `bSecurityLU` | 1 / 1 / 1 | |
 | `bQueueDepth` | `0x20` | 32 (single doorbell queue; MCQ disabled anyway) |
