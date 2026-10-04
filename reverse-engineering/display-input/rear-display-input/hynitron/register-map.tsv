@@ -1,0 +1,17 @@
+register	read/write	length	function	meaning	confidence	source evidence
+0x00	R	9	tpd_touchinfo	touch report: d[0]&0x70 must be 0; count=d[2]&0x0f (clamped to 1); event=d[3]>>6; X=(d[3]&0x0f)<<8|d[4]; id=d[5]>>4; Y=(d[5]&0x0f)<<8|d[6]	exact	byte-identical tpd_touchinfo; POINT_READ_BUF=3+6*1
+0xA6	R	6	cst8xx_firmware_info	identity: [1]=chip type [2]=project [3]=fw version [4]=module	exact	byte-identical cst8xx_firmware_info (after msleep 100)
+0xA6	R	8	hyn_tpfwver_show	sysfs hyntpfwver self-cap identity dump	exact	byte-identical hyn_tpfwver_show
+0xEC	W/R	1	hyn_gesture_suspend	gesture enable: write 1, msleep 10, read back, up to 3 retries	exact	byte-identical hyn_gesture_suspend (SEL_CAP path)
+0xE5	W/R	1	hyn_gesture_suspend	double-tap gesture enable: write 1 after msleep 2, msleep 10, read back, up to 3 retries	exact	byte-identical hyn_gesture_suspend
+0xE5	W	1	hyn_enter_deep_sleep	power mode = 0x03 (deep sleep) after hyn_reset_proc(50)	exact	byte-identical hyn_enter_deep_sleep (SEL_CAP path)
+0x01	R	8	hyn_gesture_readdata	gesture header; gesture id = byte 0; point coords read from buf[10..13] which the 8-byte read never fills (stock defect: always 0)	exact	byte-identical hyn_gesture_readdata (mov w4,#8; strb #1)
+0xA001	W	1 (2-byte reg)	cst8xx_bootloader_enter	enter ROM program mode: 0xAB, reset width t=6..15 ms per try	exact	byte-identical hyn_detect_bootloader (inlined)
+0xA003	R	1 (2-byte reg)	cst8xx_bootloader_enter	program-mode flag, success == 0xC1	exact	byte-identical hyn_detect_bootloader (inlined)
+0xD101/0xD204/0xD208/0xD20C/0xD109	W/R	2/4	hyn_tpfwver_show,cst3xx_firmware_info	mutual-cap (CST1xx/3xx) info mode registers; not reached for config CST820 (SEL_CAP)	exact (dead for CST820)	byte-identical; guarded by config_chip_product_line==MUT_CAP
+0xD04C	W/R	3/1	hyn_gesture_suspend/resume/readdata	mutual-cap gesture enable/state; dead for CST820	exact (dead for CST820)	byte-identical; MUT_CAP branch
+0xD105	W	2	hyn_enter_deep_sleep	mutual-cap deep sleep; dead for CST820	exact (dead for CST820)	byte-identical; MUT_CAP branch
+0xD000..	R	var	cst3xx_touch_report	mutual-cap report path; work item never installed for SEL_CAP	exact (dead for CST820)	hyn_input_dev_int selects cst8xx_touch_report for SEL_CAP
+0xA001/0xA002/0xA003 (0xAA/0xAB)	W/R	1	cst2xx/cst3xx/cst3xxse/cst6xx/cst644K_bootloader_enter	other-family ROM handshakes; unreachable for series CST8XX	exact (dead for CST820)	switch on config_chip_series in hyn_detect_bootloader
+0xD111/0xD001/0xD110	W/R	2/1	cst2xx_bootloader_enter	CST2xx ROM handshake; unreachable	exact (dead for CST820)	same switch
+any (sysfs-chosen)	W/R	user	hyn_tprwreg_store/show	engineering raw register read/write via hyntprwreg; also opcodes 0x30..0x34 (info/reset/boot-update)	exact	byte-identical hyn_tprwreg_store

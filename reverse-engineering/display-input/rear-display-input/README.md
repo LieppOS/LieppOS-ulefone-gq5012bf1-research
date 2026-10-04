@@ -7,7 +7,7 @@ Coupled subsystem: a 340×340 rear AMOLED driven over SPI by
 | component | status | headline |
 |---|---|---|
 | CO5300 rear display (`co5300/`) | **DONE (static)** | A = stock vs B = rebuild: 25/25 size-equal, **24/25 byte-identical**, 25/25 KCFI, 64/64 data section+size (63/64 bytes, `srcversion` only), 58/58 import CRCs, all section sizes equal, B1==B2 reproducible |
-| Hynitron rear touch (`hynitron/`) | **PARTIAL** (reclassified from DONE) | hardware/protocol/ABI/coupling closed; existing source only 8/65 byte-identical, `.text` 8364 vs 22044 B |
+| Hynitron rear touch (`hynitron/`) | **DONE (static)** | V2.1 reconstruction: **65/65 byte-identical**, 40/40 data, 258/258 strings, 54/54 import CRCs, 2/2 exports; 41/42 sections equal (build-id only); B1==B2. Old rebuild was 8/65 (RED record kept) |
 | integration (`integration.md`) | closed | 2 Hynitron exports consumed by 6 CO5300 call sites; CO5300 owns sequencing |
 | userspace (`userspace/`) | boundary mapped | MiniScreen app → services.jar VirtualDisplay → ITinylcd HIDL → `tinylcd.default.so` → ioctl |
 
