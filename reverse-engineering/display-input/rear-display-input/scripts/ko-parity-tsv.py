@@ -144,6 +144,25 @@ class Ko:
         return sorted(s[0][len('__ksymtab_'):] for s in self.syms
                       if s[0].startswith('__ksymtab_') and not s[0].startswith('__ksymtab_strings'))
 
+    def export_crcs(self):
+        """{exported symbol: MODVERSION CRC} read from the __kcrctab* sections.
+
+        An export name list alone says nothing about ABI identity: a wrong
+        parameter *type* keeps every name but shifts the CRC.  (GQ5012BF1
+        yft_devinfo: 27/27 names equal, 10 CRCs different.)
+        """
+        out = {}
+        for nm, typ, bind, sec, val, size in self.syms:
+            if not nm.startswith('__crc_') or not sec or sec in ('UND', 'ABS'):
+                continue
+            try:
+                d = self.secdata(sec)
+            except KeyError:
+                continue
+            if val + 4 <= len(d):
+                out[nm[len('__crc_'):]] = int.from_bytes(d[val:val + 4], 'little')
+        return out
+
 
 def branch_only_diff(a, b):
     """True if two equal-length AArch64 byte strings differ only in B/BL imm26."""
@@ -247,9 +266,14 @@ def main():
         arows.append(['import', n, f'{va[n]:#010x}' if n in va else '', f'{vb[n]:#010x}' if n in vb else '',
                       'yes' if va.get(n) == vb.get(n) else 'no'])
     ea, eb = a.exports(), b.exports()
+    ca, cb = a.export_crcs(), b.export_crcs()
     for n in sorted(set(ea) | set(eb)):
-        arows.append(['export', n, 'yes' if n in ea else '', 'yes' if n in eb else '',
-                      'yes' if (n in ea) == (n in eb) else 'no'])
+        name_eq = (n in ea) == (n in eb)
+        crc_eq = ca.get(n) == cb.get(n)
+        arows.append(['export', n,
+                      f'{ca[n]:#010x}' if n in ca else ('yes' if n in ea else ''),
+                      f'{cb[n]:#010x}' if n in cb else ('yes' if n in eb else ''),
+                      'yes' if (name_eq and crc_eq) else 'no'])
     ma, mb = a.modinfo(), b.modinfo()
     for i in range(max(len(ma), len(mb))):
         x = ma[i] if i < len(ma) else ''
@@ -262,7 +286,10 @@ def main():
     imp_eq = sum(1 for n in va if vb.get(n) == va[n])
     summ.append(f"imports: A={len(va)} B={len(vb)} name+CRC-equal={imp_eq}; "
                 f"__versions order equal={a.versions() == b.versions()}")
-    summ.append(f"exports: A={len(ea)} B={len(eb)} equal={ea == eb}")
+    crc_bad = sorted(n for n in set(ca) | set(cb) if ca.get(n) != cb.get(n))
+    summ.append(f"exports: A={len(ea)} B={len(eb)} names-equal={ea == eb}; "
+                f"CRCs A={len(ca)} B={len(cb)} equal={len(set(ca) | set(cb)) - len(crc_bad)}"
+                f"{'' if not crc_bad else ' differing=' + str(crc_bad)}")
     mi_eq = [x == y for x, y in zip(ma, mb)]
     summ.append(f"modinfo: A={len(ma)} B={len(mb)} positional-equal={sum(mi_eq)} "
                 f"differing={[ma[i].split('=')[0] for i, e in enumerate(mi_eq) if not e]}")
