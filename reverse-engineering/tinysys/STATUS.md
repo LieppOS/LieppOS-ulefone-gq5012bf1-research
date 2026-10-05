@@ -20,3 +20,5 @@ Recorded in `REVERSE-ENGINEERING-STATUS.md` and `COPY-MANIFEST.tsv` of the organ
 
 - PARTIAL → DONE: `MTK-RPMSG-MBOX`, `MTK-TINYSYS-IPI`.
 - Their old `source/` copies of `mtk-mbox.c` were kept as historical copies (they are exact and belong to MTK-MBOX).
+
+Totals after the move: DONE 62 → 64, PARTIAL 68 → 66, BLOCKED 3, total 133. These match the directory counts. The manifest has 43 + 47 rows, every hash verified.
