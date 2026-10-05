@@ -22,7 +22,7 @@ REL = {  # module -> (class, dir, source candidate, revision, runtime role, pari
     'rt_pd_manager': ('MEDIATEK VENDOR (TCPC 2.0.31 + GQ5012BF1)', VR, 'KDM drivers/misc/mediatek/typec/tcpc/rt_pd_manager.c (+2.0.31 inc/ headers)', 'MTK ALPS 5e415e059253 + reconstructed patch 0001 (srcversion residual)',
                       'ACTIVE: /rt-pd-manager: Type-C class port (typec_port0), partner/altmode registration, mux/orientation forwarding', 'rt_pd_manager-B2', 'USB-TYPEC-ROLE-KERNEL'),
     'tcpci_late_sync': ('MEDIATEK VENDOR', VR, 'KDM drivers/misc/mediatek/typec/tcpc/tcpci_late_sync.c', B,
-                        'ACTIVE: late_initcall tcpc_schedule_init_work for registered TCPCs', 'tcpci_late_sync-B2', 'USB-TYPEC-ROLE-KERNEL'),
+                        'ACTIVE: late_initcall_sync tcpc_device_irq_enable() for every registered TCPC', 'tcpci_late_sync-B2', 'USB-TYPEC-ROLE-KERNEL'),
     'mux_switch': ('MEDIATEK VENDOR', VR, 'KDM drivers/misc/mediatek/typec/mux/mux_switch.c', B,
                    'LOADED, PASS-THROUGH: /soc/typec-mux-switch (DTBO-added) registers typec_switch/typec_mux; no mux IC driver registers below it', 'mux_switch-B2', 'USB-TYPEC-ROLE-KERNEL'),
     'usb_meta': ('MEDIATEK VENDOR', VR, 'KDM drivers/misc/mediatek/usb/usb_meta/usb_meta.c', B,
