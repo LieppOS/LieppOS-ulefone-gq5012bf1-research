@@ -1,0 +1,39 @@
+# Source-lineage discrimination (same harness, same tree, only the one source file swapped)
+
+## mtk_rpmsg_mbox-B1  blob 82ec9c50d3  (pinned (ALPS 5e415e059253 / NothingOSS 862ee58))
+functions: A=8 B=8 shared=8 size-equal=8 byte-identical=8 byte-identical-or-layout-only=8 kcfi-equal=8 relocs-equal=8
+data objects: A=12 B=12 shared(by name, __UNIQUE_ID counter-normalised)=12 section+size-equal=12 bytes-equal=12
+sections 37 vs 37; differing: ['.note.gnu.build-id']
+
+## mtk_rpmsg_mbox-V-a8a808eb63  blob a8a808eb63  (MiCode kdm later: unused 'mdev' local removed)
+functions: A=8 B=8 shared=8 size-equal=8 byte-identical=8 byte-identical-or-layout-only=8 kcfi-equal=8 relocs-equal=8
+data objects: A=12 B=12 shared(by name, __UNIQUE_ID counter-normalised)=12 section+size-equal=12 bytes-equal=12
+sections 37 vs 37; differing: ['.note.gnu.build-id', '__bug_table']
+
+## mtk_rpmsg_mbox-V-9699dc5b1e  blob 9699dc5b1e  (MiCode kdm later: + strlcpy->strscpy)
+functions: A=8 B=8 shared=8 size-equal=7 byte-identical=7 byte-identical-or-layout-only=7 kcfi-equal=8 relocs-equal=7
+data objects: A=12 B=12 shared(by name, __UNIQUE_ID counter-normalised)=12 section+size-equal=11 bytes-equal=11
+sections 37 vs 38; differing: ['.init.eh_frame', '.llvm_addrsig', '.note.gnu.build-id', '.rela.altinstructions', '.rela.data', '.rela.eh_frame', '.rela.rodata', '.rela.text', '.rela___ksymtab_gpl+mtk_mbox_send', '.rela__bug_table', '.rodata.str1.1', '.shstrtab', '.strtab', '.symtab', '.text', '__bug_table', '__versions']
+
+## mtk_tinysys_ipi-B1  blob 1acca98c7c  (pinned (ALPS 5e415e059253 / NothingOSS a5b60cb))
+functions: A=12 B=12 shared=12 size-equal=12 byte-identical=12 byte-identical-or-layout-only=12 kcfi-equal=12 relocs-equal=12
+data objects: A=12 B=12 shared(by name, __UNIQUE_ID counter-normalised)=12 section+size-equal=12 bytes-equal=12
+sections 36 vs 36; differing: ['.note.gnu.build-id']
+
+## mtk_tinysys_ipi-V-682a41e8c8  blob 682a41e8c8  (MiCode kdm later: extra timeout_handler call)
+functions: A=12 B=12 shared=12 size-equal=11 byte-identical=11 byte-identical-or-layout-only=11 kcfi-equal=12 relocs-equal=11
+data objects: A=12 B=12 shared(by name, __UNIQUE_ID counter-normalised)=12 section+size-equal=12 bytes-equal=12
+sections 36 vs 36; differing: ['.init.eh_frame', '.note.gnu.build-id', '.rela.altinstructions', '.rela.eh_frame', '.rela.text', '.rela__bug_table', '.symtab', '.text', '__bug_table']
+
+## mtk_tinysys_ipi-V-ded6  blob 4cf44795d1  (NothingOSS ded6956 (one revision earlier: IPI_COMPL_TIMEOUT instead of IPI_FAKE_SIGNAL))
+functions: A=12 B=12 shared=12 size-equal=12 byte-identical=10 byte-identical-or-layout-only=10 kcfi-equal=12 relocs-equal=12
+data objects: A=12 B=12 shared(by name, __UNIQUE_ID counter-normalised)=12 section+size-equal=12 bytes-equal=12
+sections 36 vs 36; differing: ['.note.gnu.build-id', '.text']
+
+Conclusion: only the pinned blobs give zero differing sections other than .note.gnu.build-id.
+mtk_rpmsg_mbox blob a8a808eb63 is .text-identical to stock (8/8 functions) and is rejected only by __bug_table: the WARN_ON __LINE__ values in mtk_mbox_send shift by -1 (one deleted declaration line above them).
+This is why a .text-only comparison (the earlier phase4 note) could not pin the commit.
+
+# Whole-file check
+mtk_rpmsg_mbox: size A=16272 B=16272; stock build-id f167cb1ef321bfa34eb6051fef8e41cad2139ac1 / B a02cfc946c7a94e081838ac8de9e5417e22c539e; bytes differing after transplanting the 20-byte build-id descriptor: 0
+mtk_tinysys_ipi: size A=31888 B=31888; stock build-id fb71d971abc9196febb2c430832478e56224ba8b / B c2bf49bf1de494f549739500225b132411baa226; bytes differing after transplanting the 20-byte build-id descriptor: 0
