@@ -25,3 +25,14 @@ Runtime validation was not performed (by rule):
 - Which TEE owns RPMB regions 1 and 2.
 - The OEM OTA client and server (proprietary), plus payload production and validation (workspace `OTA-AB-UPDATE`).
 - Minor-partition ownership and rollback-index ownership (workspace `PARTITION-OWNERSHIP`).
+
+## Workspace classification (2026-10-04)
+
+Recorded in the organized workspace (`../../../Reverse Engineer - *`, indexed by `REVERSE-ENGINEERING-STATUS.md` and `COPY-MANIFEST.tsv`):
+
+- new **DONE/UFS-RPMB-KERNEL**: ufs-mediatek-mod, ufs-mediatek-dbg, phy-mtk-ufs, rpmb, rpmb-mtk, blocktag
+- new **DONE/MICROSD-KERNEL**: mtk-mmc, mtk-mmc-dbg, cqhci, mtk-wp
+- `PARTIAL/UFS-STORAGE` and `PARTIAL/MICROSD` stay PARTIAL, re-scoped to runtime behaviour and device-firmware items
+- `PARTIAL/OTA-AB-UPDATE` and `PARTIAL/PARTITION-OWNERSHIP` are unchanged
+
+Totals: DONE 55 → 57, total 131 → 133.
