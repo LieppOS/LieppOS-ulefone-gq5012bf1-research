@@ -21,3 +21,16 @@ Not done, by rule (runtime):
 - `rt_pd_manager` `srcversion`: the exact stock source text (comments/whitespace) is unknown.
 - The part number of the board D+/D− switch on GPIO 55 and the netlist.
 - The producer semantics of `yft_usb_flag` (MT6375 charger side; power-charging research).
+
+## Workspace classification (2026-10-05)
+
+Recorded in `REVERSE-ENGINEERING-STATUS.md` and `COPY-MANIFEST.tsv` of the organized workspace:
+
+- PARTIAL → DONE: `MTU3-SSUSB` (controller + xHCI + boost/logger/offload + gadget vendor modules), `USB-PHY`, `EXTCON-MTK-USB`, `USB-TYPEC` (role kernel; the TCPC core was already in `DONE/TCPC-CLASS` and `DONE/TCPC-MT6375`).
+- BLOCKED → DONE: `USB3-FEASIBILITY`, a resolved negative (verdict D).
+- Staying PARTIAL, with notes added: `EXTERNAL-USB` (runtime/replacement validation) and `INTERNAL-THERMAL-USB` (thermal app/libusb protocol). `USB-CHARGER-INTEGRATION` is unchanged (charging scope).
+- USB-PHY audit:
+  - `panel-ky-vtdr6115-dphy-cmd.c` (a DSI D-PHY panel driver) was dropped; the canonical copy is in `DONE/VTDR6115-DISPLAY`.
+  - `47-resume-approved-b-physical-provisioning.sh` was moved to `PARTIAL/PARTITION-OWNERSHIP`.
+
+Totals: DONE 57 → 62, PARTIAL 72 → 68, BLOCKED 4 → 3, total 133.
