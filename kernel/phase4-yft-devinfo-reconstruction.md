@@ -12,6 +12,21 @@ Complete, buildable source for the whole provider now exists and builds
 CRCs and **all 40** import CRCs reproduce from source; the remaining 10 are
 reduced to a single, precisely measured missing token.
 
+> **Updated.** Two follow-up passes refined this result and are documented
+> separately:
+>
+> * [`phase4-yft-devinfo-kcfi-typeid.md`](phase4-yft-devinfo-kcfi-typeid.md) —
+>   the clang **KCFI type-id** channel gives one independent 32-bit constraint
+>   per address-taken function, so the unknown parameter type is now pinned by
+>   **four** simultaneous equations rather than the single (degenerate) CRC
+>   equation. It proved the unknown is a real named `enum`/`struct` **tag**
+>   (not a typedef of a builtin), excluded ~1.4·10¹³ spellings, and corrected
+>   two stock prototypes (`yft_add_display_info`, `yft_display_info_dump`
+>   both return `void`).
+> * [`phase4-yft-devinfo-byte-parity.md`](phase4-yft-devinfo-byte-parity.md) —
+>   per-function byte parity against the stock object, now **54/72
+>   byte-identical** (was 34/72) after four codegen-shape corrections.
+
 ---
 
 ## Oracle
