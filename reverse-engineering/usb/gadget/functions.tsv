@@ -1,0 +1,18 @@
+function	configfs instance	kernel provider	sys.usb.config value(s)	idProduct (acm_cnt 0/1/2)	status on GQ5012BF1	evidence
+adb	ffs.adb (FunctionFS /dev/usb-ffs/adb)	GKI USB_F_FS=y	adb; *,adb	0x201C / 0x2006 / 0x2029	CONFIGURED, runtime-proven (ADB-only capture: 0e8d:201c, bcdUSB 2.00, HS)	init.mt6878.usb.rc; usb-research/evidence/host-external-usb-descriptor.txt
+MTP	ffs.mtp (/dev/usb-ffs/mtp, os_desc compatible_id MTP)	GKI USB_F_FS=y (+ gadget HAL MtpServer FFS)	mtp; mtp,adb	mtp 0x2008/0x2012/0x202A; mtp,adb 0x201D/0x200A/0x2026	CONFIGURED	init.mt6878.usb.rc
+PTP	ffs.ptp (/dev/usb-ffs/ptp)	GKI USB_F_FS=y	ptp; ptp,adb	ptp 0x200B/0x2013/0x202B; ptp,adb 0x200C/0x200D/0x2027	CONFIGURED	init.mt6878.usb.rc
+RNDIS	mtk_rndis.gs4	vendor mtk_usb_f_rndis.ko + mtk_u_ether.ko (exact); GKI USB_CONFIGFS_RNDIS is NOT set	rndis; rndis,adb; rndis,*gs*	rndis 0x2004/0x2011/0x202C; rndis,adb 0x2005/0x2010/0x2028	CONFIGURED (USB tethering)	init.mt6878.usb.rc; vendor_dlkm modules.load
+NCM	ncm.gs6	GKI USB_F_NCM=y	ncm; ncm,adb	ncm 0x2067/0x2068/0x2069; ncm,adb 0x206A/0x206B/0x206C	CONFIGURED	init.mt6878.usb.rc
+MIDI	midi.gs5	GKI USB_F_MIDI=y	midi; midi,adb; kpoc_midi	midi 0x2046; midi,adb 0x2048; kpoc_midi 0x2046	CONFIGURED (also default in charger/KPOC boot)	init.mt6878.usb.rc + system init.usb.configfs.rc
+accessory (AOA)	accessory.gs2	GKI USB_F_ACC=y	accessory[,audio_source][,adb]	0x2d00-0x2d05 (AOSP Google VID path)	CONFIGURED	init.mt6878.usb.rc
+audio_source	audio_source.gs3	GKI USB_F_AUDIO_SRC=y	audio_source[,adb]; accessory,audio_source[,adb]	0x2d02-0x2d05	CONFIGURED (legacy AOA audio)	init.mt6878.usb.rc
+ACM serial	acm.gs0..gs3	GKI USB_F_ACM=y (u_serial)	any config with vendor.usb.acm_enable=1; acm_gs*, gs0gs1, gs0gs3, gs1gs3, gs3, dual_acm, atm_gs*, acm_third	via vendor.usb.pid table	CONFIGURED (MTK engineering/META/modem logging)	init.mt6878.usb.rc
+mass storage	mass_storage.usb0	GKI USB_F_MASS_STORAGE=y	mass_storage[,adb][,acm]; bicr[,adb]	0x2002/0x200F/0x202D; ,adb 0x2003/0x2006/0x2029	CONFIGURED (bicr = MTK built-in CD-ROM; also linked in adb+acm debug config)	init.mt6878.usb.rc
+HID	hid.gs0	GKI USB_F_HID=y	(created, never linked by stock init)	-	CREATED, UNUSED	init.mt6878.usb.rc post-fs
+C2K modem rawbulk	via_modem.gs0, via_ets.gs0, via_atc.gs0	vendor c2k_usb*.ko (modem research, DONE)	via_bypass[,adb][,gs1gs3]	0x2031/0x2033; ,adb 0x2032/0x2034/0x2050	CONFIGURED (factory/modem debug)	init.mt6878.usb.rc post-fs-data
+cdp	ffs.mtp	-	cdp	0x2008	CONFIGURED (MTK CDP charging test config)	init.mt6878.usb.rc
+charging_yes / charging_no	(none)	-	charging_yes; charging_no	-	CONFIGURED (no gadget functions; charge-only)	init.mt6878.usb.rc
+UVC	-	GKI USB_CONFIGFS_F_UVC=y	-	-	AVAILABLE in kernel, NOT configured	GKI .config
+ECM / EEM	-	GKI USB_CONFIGFS_ECM=y / EEM=y	-	-	AVAILABLE in kernel, NOT configured	GKI .config
+legacy android_usb (META)	/sys/class/android_usb/android0	vendor usb_meta.ko (exact)	sys.usb.configfs=0 paths in system init.usb.rc (unused: vendor sets configfs=1)	-	LOADED (META/factory mode composite; iSerial node chmod in vendor rc)	usb_meta.c; init.mt6878.usb.rc on boot

@@ -29,7 +29,7 @@ This **supersedes** the previous workspace reconstruction (`PARTIAL/EXTCON-MTK-U
 | probe additions | after `extcon_wq`: parse `uvc_vbus_gpio`, then `uvc_switch_gpio` + `device_create_file(dev_attr_uvc_insert_status)` (through a helper; that ordering is proven by `.data` layout). Then `yft_extcon = extcon`, `printk("yft_tiny2c_mode=%d")`, `class_create("yft_extcon")` + loop over the `tiny2c_mode` class attribute array. At the end: `get_otg_select_gpio()` if not yet parsed, and `dev_err(dev, "end\n")` |
 | sysfs | `/sys/devices/platform/extcon-usb/uvc_insert_status` (0444), `/sys/class/yft_extcon/tiny2c_mode` (0664). Writing `1` queues role **HOST**, anything else role **NONE**. Reads always return 0, because `yft_tiny2c_status` is never written: an upstream bug that has been preserved |
 
-The "bypss" spelling, the "cannnot"-style typos, the `'mediatek,usb3'` error text and the "failed. … =%d" messages that print `yft_otg_select_gpio_num` for the UVC GPIOs are all stock bugs, reproduced byte-for-byte.
+The "bypss" and "currnet" spellings, the `'mediatek,usb3'` error text and the "failed. … =%d" messages that print `yft_otg_select_gpio_num` for the UVC GPIOs are all stock bugs, reproduced byte-for-byte.
 
 ## Role/VBUS contract
 
@@ -43,13 +43,13 @@ TCPC (type_c_port0) notifier, TCP_NOTIFY_TYPE_USB|VBUS|MISC (mask 0xe)
                   SRC|SNK|NORP|CUSTOM|DBGACC → UNATTACHED        → role NONE
   DR_SWAP(17)     UFP & c_role≠DEVICE → NONE then DEVICE;  DFP & c_role≠HOST → NONE then HOST
 power_supply notifier (primary_chg / charger phandle, PROP_CHANGED)
-  psy_detector: with tcpc_dev, set DEVICE if online(SDP/CDP) and c_role==NONE
+  psy_detector: with tcpc_dev, set DEVICE if ONLINE and PROP_TYPE is USB (SDP) or USB_CDP, and c_role==NONE
 GPIO 28 (id) both edges → detect_cable (internal UVC accessory) → HOST/NONE + UVC GPIOs
 /sys/class/yft_extcon/tiny2c_mode → HOST/NONE
 all paths → extcon_wq → update_role: extcon USB/USB-HOST state + usb_role_switch_set_role(mtu3)
 ```
 
-`mediatek,bypss-typec-sink = <1>` is the reason **device mode is not entered on Type-C SINK attach** here. Device role on charger/PC attach instead comes from the power-supply path (`psy_detector` → `usb_is_online` with an SDP/CDP charger type from `mtk_chg_type_det`/MT6375 BC1.2). The donor DT sets the same flag.
+`mediatek,bypss-typec-sink = <1>` is the reason **device mode is not entered on Type-C SINK attach** here. Device role on charger/PC attach instead comes from the power-supply path (`psy_detector` → `usb_is_online`, which needs `POWER_SUPPLY_TYPE_USB`/`USB_CDP` from `mtk_chg_type_det`/MT6375 BC1.2). The donor DT sets the same flag.
 
 ## Runtime class
 
