@@ -23,6 +23,9 @@ Harness: `workspace/phase4-yft-devinfo/scripts/yft-build-parity.sh` (ignored wor
 
 ---
 
+Determinism: two independent rebuilds of the final source produce a
+byte-identical `.ko` (`FINAL == DET`).
+
 ## Corrections found and applied
 
 ### 1. `find_device_type_info()` must not survive as a NULL-returning helper
