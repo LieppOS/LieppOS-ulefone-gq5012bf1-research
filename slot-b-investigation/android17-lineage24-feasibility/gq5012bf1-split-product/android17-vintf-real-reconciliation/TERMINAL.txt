@@ -2271,3 +2271,56 @@ analyzer VENDOR-ONLY set == run N2 unused-instance set: 90/90 identical (verifie
 CHECKVINTF_RESULT=COMPATIBLE
 Device state: untouched (no adb/fastboot command was issued in this session).
 Temporary host dirs (not committed): /tmp/a17-vintf-hostroot /tmp/a17-vintf-imgx /tmp/a17-vintf-apex-* /tmp/a17-vintf-neg /tmp/a17-vintf-variant-stockfp /tmp/a17-vintf-work
+===== RUN  =====
+$ /mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/checkvintf 
+--- stdout ---
+--- stderr ---
+./slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-real-reconciliation/scripts/run.sh: line 6: /mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/checkvintf: No such file or directory
+--- exit status: 127 ---
+===== RUN  =====
+$ /mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/checkvintf 
+--- stdout ---
+--- stderr ---
+./slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-real-reconciliation/scripts/run.sh: line 6: /mnt/SamsungSSD/android/lineage-24.0/out-android17-gsi-erofs/host/linux-x86/bin/checkvintf: No such file or directory
+--- exit status: 127 ---
+===== RUN  =====
+$ /mnt/SamsungSSD/android/lineage-24.0/out/host/linux-x86/bin/checkvintf 
+--- stdout ---
+--- stderr ---
+./slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-vintf-real-reconciliation/scripts/run.sh: line 6: /mnt/SamsungSSD/android/lineage-24.0/out/host/linux-x86/bin/checkvintf: No such file or directory
+--- exit status: 127 ---
+===== RUN  =====
+$ /mnt/SamsungSSD/android/lineage-24.0/out/host/linux-x86/bin/checkvintf 
+--- stdout ---
+--- stderr ---
+/mnt/SamsungSSD/android/lineage-24.0/out/host/linux-x86/bin/checkvintf: check VINTF metadata.
+    Modes:
+        --dump-file-list: Dump a list of directories / files on device
+                that is required to be used by --check-compat.
+        -c, --check-compat: check compatibility for files under the root
+                directory specified by --root-dir.
+        --check-one: check consistency of VINTF metadata for a single partition.
+
+    Options:
+        --rootdir=<dir>: specify root directory for all metadata. Same as 
+                --dirmap /:<dir>
+        -D, --property <key>=<value>: specify sysprops.
+        --dirmap </system:/dir/to/system> [--dirmap </vendor:/dir/to/vendor>[...]]
+                Map partitions to directories. Cannot be specified with --rootdir.        --kernel <version:path/to/config>
+                Use the given kernel version and config to check. If
+                unspecified, kernel requirements are skipped.
+                The first half, version, can be just x.y.z, or a file 
+                containing the full kernel release string x.y.z-something.
+        --help: show this message.
+
+    Example:
+        # Get the list of required files.
+        /mnt/SamsungSSD/android/lineage-24.0/out/host/linux-x86/bin/checkvintf --dump-file-list > /tmp/files.txt
+        # Pull from ADB, or use your own command to extract files from images
+        ROOTDIR=/tmp/device/
+        cat /tmp/files.txt | xargs -I{} bash -c "mkdir -p $ROOTDIR`dirname {}` && adb pull {} $ROOTDIR{}"
+        # Check compatibility.
+        /mnt/SamsungSSD/android/lineage-24.0/out/host/linux-x86/bin/checkvintf --check-compat --rootdir=$ROOTDIR \
+            --property ro.product.first_api_level=`adb shell getprop ro.product.first_api_level` \
+            --property ro.boot.product.hardware.sku=`adb shell getprop ro.boot.product.hardware.sku`
+--- exit status: 64 ---

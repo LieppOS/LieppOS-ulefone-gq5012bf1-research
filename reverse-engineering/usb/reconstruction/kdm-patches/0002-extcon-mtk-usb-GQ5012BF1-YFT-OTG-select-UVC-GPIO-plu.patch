@@ -1,0 +1,338 @@
+From 93ed058ffcaa1fb38dfdf762e3c0fc858434e8c8 Mon Sep 17 00:00:00 2001
+From: lieppos <lieppos@local>
+Date: Mon, 5 Oct 2026 12:03:43 +0300
+Subject: [PATCH 2/2] extcon-mtk-usb: GQ5012BF1 YFT OTG-select/UVC GPIO
+ plumbing, yft_usb_flag gate, uvc_insert_status attr, yft_extcon class
+ tiny2c_mode - 22/22 functions, all sections except build-id
+
+---
+ drivers/misc/mediatek/extcon/extcon-mtk-usb.c | 201 +++++++++++++++++-
+ 1 file changed, 198 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/misc/mediatek/extcon/extcon-mtk-usb.c b/drivers/misc/mediatek/extcon/extcon-mtk-usb.c
+index a922257..7bf5dd9 100644
+--- a/drivers/misc/mediatek/extcon/extcon-mtk-usb.c
++++ b/drivers/misc/mediatek/extcon/extcon-mtk-usb.c
+@@ -26,6 +26,14 @@
+ #include "tcpm.h"
+ #endif
+ 
++extern int yft_usb_flag;
++static int yft_otg_select_gpio_num;
++static int yft_uvc_switch_gpio_num;
++static int yft_uvc_vbus_gpio_num;
++static bool uvc_insert_status;
++static int yft_tiny2c_status;
++static struct mtk_extcon_info *yft_extcon;
++
+ static const unsigned int usb_extcon_cable[] = {
+ 	EXTCON_USB,
+ 	EXTCON_USB_HOST,
+@@ -100,6 +108,68 @@ static int mtk_usb_extcon_set_role(struct mtk_extcon_info *extcon,
+ 	return 0;
+ }
+ 
++static int yft_parse_dts(struct device_node *node, const char *name)
++{
++	int gpio_num;
++
++	printk("%s: YFT_OTG_yft_parse_dts \n", __func__);
++	if (node) {
++		gpio_num = of_get_named_gpio(node, name, 0);
++		if (gpio_num < 0) {
++			printk("%s: YFT_OTG_of_get_named_gpio fail. \n", __func__);
++			return -1;
++		}
++		printk("%s: YFT_OTG_of_get_named_gpio GPIO is %d.\n", __func__, gpio_num);
++
++		if (!gpio_to_desc(gpio_num)) {
++			printk("%s: YFT_OTG_gpio_desc is null.\n", __func__);
++			return -1;
++		}
++		printk("%s: YFT_OTG_gpio_desc is not null.\n", __func__);
++
++		if (gpio_is_valid(gpio_num))
++			printk("%s: YFT_OTG_gpio number %d is valid. \n", __func__, gpio_num);
++	} else {
++		printk("%s: YFT_OTG_get gpio num fail. \n", __func__);
++		return -1;
++	}
++
++	if (gpio_request(gpio_num, name)) {
++		printk("%s: YFT_OTG_gpio_request fail. \n", __func__);
++		return -1;
++	}
++
++	if (gpio_direction_output(gpio_num, 0)) {
++		printk("%s: YFT_OTG_gpio_direction_output failed. \n", __func__);
++		return -1;
++	}
++	gpio_set_value(gpio_num, 0);
++	printk("%s: YFT_OTG_gpio_get_value =%d. \n", __func__, gpio_get_value(gpio_num));
++
++	return gpio_num;
++}
++
++int get_otg_select_gpio(void)
++{
++	struct device_node *node;
++
++	printk("%s: YFT_OTG_enter. \n", __func__);
++	node = of_find_compatible_node(NULL, NULL, "mediatek,extcon-usb");
++	if (!node) {
++		printk("%s: YFT_OTG_cannot get the node: 'mediatek,usb3'.\n", __func__);
++		return -ENODEV;
++	}
++
++	yft_otg_select_gpio_num = yft_parse_dts(node, "otg_gpio_select");
++	if (yft_otg_select_gpio_num < 0) {
++		printk("%s: YFT_OTG_yft_parse_dts 1 fail. \n", __func__);
++		return -1;
++	}
++	printk("%s: YFT_OTG_end. \n", __func__);
++
++	return 0;
++}
++
+ static bool usb_is_online(struct mtk_extcon_info *extcon)
+ {
+ 	union power_supply_propval pval;
+@@ -134,6 +204,11 @@ static void mtk_usb_extcon_psy_detector(struct work_struct *work)
+ 	struct mtk_extcon_info *extcon = container_of(to_delayed_work(work),
+ 		struct mtk_extcon_info, wq_psy);
+ 
++	if (yft_usb_flag == 1) {
++		printk("[%s] yft_drv ignore usb func for yft_usb_flag\n", __func__);
++		return;
++	}
++
+ 	/* Workaround for PR_SWAP, IF tcpc_dev, then do not switch role. */
+ 	/* Since we will set USB to none when type-c plug out */
+ 	if (extcon->tcpc_dev) {
+@@ -208,6 +283,8 @@ static int mtk_usb_extcon_set_vbus(struct mtk_extcon_info *extcon,
+ 	dev_info(dev, "vbus turn %s\n", is_on ? "on" : "off");
+ 
+ 	if (is_on) {
++		gpio_set_value(yft_otg_select_gpio_num, 1);
++		printk("[%s] YFT_OTG_yft_otg_gpio set_high\n", __func__);
+ 		if (extcon->vbus_vol) {
+ 			ret = regulator_set_voltage(vbus,
+ 					extcon->vbus_vol, extcon->vbus_vol);
+@@ -232,6 +309,8 @@ static int mtk_usb_extcon_set_vbus(struct mtk_extcon_info *extcon,
+ 			return ret;
+ 		}
+ 	} else {
++		gpio_set_value(yft_otg_select_gpio_num, 0);
++		printk("[%s] YFT_OTG_yft_otg_gpio set_low\n", __func__);
+ 		regulator_disable(vbus);
+ 		/* Restore to default state */
+ 		extcon->vbus_cur_inlimit = 0;
+@@ -293,6 +372,43 @@ static ssize_t vbus_limit_cur_store(struct device *dev,
+ 
+ static DEVICE_ATTR_RW(vbus_limit_cur);
+ 
++static ssize_t show_uvc_insert_status(struct device *dev,
++				      struct device_attribute *attr, char *buf)
++{
++	printk("show uvc insert status is %d \n", uvc_insert_status);
++	return scnprintf(buf, PAGE_SIZE, "%d\n", uvc_insert_status);
++}
++
++static DEVICE_ATTR(uvc_insert_status, 0444, show_uvc_insert_status, NULL);
++
++static ssize_t show_tiny2c_mode(struct class *class,
++				struct class_attribute *attr, char *buf)
++{
++	printk("[%s] is yft_tiny2c_status=%d \n", __func__, yft_tiny2c_status);
++	return scnprintf(buf, PAGE_SIZE, "%d\n", yft_tiny2c_status);
++}
++
++static ssize_t store_tiny2c_mode(struct class *class,
++				 struct class_attribute *attr,
++				 const char *buf, size_t count)
++{
++	int mode = 0;
++
++	sscanf(buf, "%d", &mode);
++	printk("[%s] yft_tiny2c_status=%d\n", __func__, mode);
++	if (mode == 1)
++		mtk_usb_extcon_set_role(yft_extcon, USB_ROLE_HOST);
++	else
++		mtk_usb_extcon_set_role(yft_extcon, USB_ROLE_NONE);
++
++	return count;
++}
++
++static struct class_attribute class_attr_tiny2c_mode[] = {
++	__ATTR(tiny2c_mode, 0664, show_tiny2c_mode, store_tiny2c_mode),
++	__ATTR_NULL,
++};
++
+ static int mtk_usb_extcon_vbus_init(struct mtk_extcon_info *extcon)
+ {
+ 	int ret = 0;
+@@ -363,6 +479,10 @@ static int mtk_extcon_tcpc_notifier(struct notifier_block *nb,
+ 		if (noti->typec_state.old_state == TYPEC_UNATTACHED &&
+ 			noti->typec_state.new_state == TYPEC_ATTACHED_SRC) {
+ 			dev_info(dev, "Type-C SRC plug in\n");
++			if (yft_usb_flag == 1) {
++				printk("[%s] yft_drv ignore usb func for yft_usb_flag\n", __func__);
++				break;
++			}
+ 			mtk_usb_extcon_set_role(extcon, USB_ROLE_HOST);
+ 		} else if (!(extcon->bypss_typec_sink) &&
+ 			noti->typec_state.old_state == TYPEC_UNATTACHED &&
+@@ -371,6 +491,10 @@ static int mtk_extcon_tcpc_notifier(struct notifier_block *nb,
+ 			noti->typec_state.new_state == TYPEC_ATTACHED_CUSTOM_SRC ||
+ 			noti->typec_state.new_state == TYPEC_ATTACHED_DBGACC_SNK)) {
+ 			dev_info(dev, "Type-C SINK plug in\n");
++			if (yft_usb_flag == 1) {
++				printk("[%s] yft_drv ignore usb func for yft_usb_flag\n", __func__);
++				break;
++			}
+ 			mtk_usb_extcon_set_role(extcon, USB_ROLE_DEVICE);
+ 		} else if ((noti->typec_state.old_state == TYPEC_ATTACHED_SRC ||
+ 			noti->typec_state.old_state == TYPEC_ATTACHED_SNK ||
+@@ -379,6 +503,10 @@ static int mtk_extcon_tcpc_notifier(struct notifier_block *nb,
+ 			noti->typec_state.old_state == TYPEC_ATTACHED_DBGACC_SNK) &&
+ 			noti->typec_state.new_state == TYPEC_UNATTACHED) {
+ 			dev_info(dev, "Type-C plug out\n");
++			if (yft_usb_flag == 1) {
++				printk("[%s] yft_drv ignore usb func for yft_usb_flag\n", __func__);
++				break;
++			}
+ 			mtk_usb_extcon_set_role(extcon, USB_ROLE_NONE);
+ 		}
+ 		break;
+@@ -388,11 +516,19 @@ static int mtk_extcon_tcpc_notifier(struct notifier_block *nb,
+ 		if (noti->swap_state.new_role == PD_ROLE_UFP &&
+ 				extcon->c_role != USB_ROLE_DEVICE) {
+ 			dev_info(dev, "switch role to device\n");
++			if (yft_usb_flag == 1) {
++				printk("[%s] yft_drv ignore usb func for yft_usb_flag\n", __func__);
++				break;
++			}
+ 			mtk_usb_extcon_set_role(extcon, USB_ROLE_NONE);
+ 			mtk_usb_extcon_set_role(extcon, USB_ROLE_DEVICE);
+ 		} else if (noti->swap_state.new_role == PD_ROLE_DFP &&
+ 				extcon->c_role != USB_ROLE_HOST) {
+ 			dev_info(dev, "switch role to host\n");
++			if (yft_usb_flag == 1) {
++				printk("[%s] yft_drv ignore usb func for yft_usb_flag\n", __func__);
++				break;
++			}
+ 			mtk_usb_extcon_set_role(extcon, USB_ROLE_NONE);
+ 			mtk_usb_extcon_set_role(extcon, USB_ROLE_HOST);
+ 		}
+@@ -446,10 +582,24 @@ static void mtk_usb_extcon_detect_cable(struct work_struct *work)
+ 
+ 	/* at first we clean states which are no longer active */
+ 	if (id) {
+-		mtk_usb_extcon_set_vbus(extcon, false);
++		gpio_set_value(yft_uvc_vbus_gpio_num, 0);
++		if (yft_uvc_switch_gpio_num > 0)
++			gpio_set_value(yft_uvc_switch_gpio_num, 0);
++		uvc_insert_status = false;
++		if (yft_usb_flag == 1) {
++			printk("[%s] yft_drv ignore usb func for yft_usb_flag\n", __func__);
++			return;
++		}
+ 		mtk_usb_extcon_set_role(extcon, USB_ROLE_NONE);
+ 	} else {
+-		mtk_usb_extcon_set_vbus(extcon, true);
++		gpio_set_value(yft_uvc_vbus_gpio_num, 1);
++		if (yft_uvc_switch_gpio_num > 0)
++			gpio_set_value(yft_uvc_switch_gpio_num, 1);
++		uvc_insert_status = true;
++		if (yft_usb_flag == 1) {
++			printk("[%s] yft_drv ignore usb func for yft_usb_flag\n", __func__);
++			return;
++		}
+ 		mtk_usb_extcon_set_role(extcon, USB_ROLE_HOST);
+ 	}
+ }
+@@ -499,7 +649,10 @@ static int mtk_usb_extcon_id_pin_init(struct mtk_extcon_info *extcon)
+ 		gpiod_get_value_cansleep(extcon->id_gpiod) : 1;
+ 	dev_info(extcon->dev, "id value : %d\n", id);
+ 	if (!id) {
+-		mtk_usb_extcon_set_vbus(extcon, true);
++		gpio_set_value(yft_uvc_vbus_gpio_num, 1);
++		if (yft_uvc_switch_gpio_num > 0)
++			gpio_set_value(yft_uvc_switch_gpio_num, 1);
++		uvc_insert_status = true;
+ 		mtk_usb_extcon_set_role(extcon, USB_ROLE_HOST);
+ 	}
+ 
+@@ -582,6 +735,11 @@ static int mtk_usb_extcon_procfs_init(struct mtk_extcon_info *extcon)
+ }
+ #endif
+ 
++static int uvc_sysfs_init(struct device *dev)
++{
++	return device_create_file(dev, &dev_attr_uvc_insert_status);
++}
++
+ static int mtk_usb_extcon_probe(struct platform_device *pdev)
+ {
+ 	struct device *dev = &pdev->dev;
+@@ -590,6 +748,8 @@ static int mtk_usb_extcon_probe(struct platform_device *pdev)
+ 	const char *tcpc_name;
+ #endif
+ 	int ret;
++	int i;
++	static struct class *yft_extcon_class;
+ 
+ 	extcon = devm_kzalloc(&pdev->dev, sizeof(*extcon), GFP_KERNEL);
+ 	if (!extcon)
+@@ -642,6 +802,32 @@ static int mtk_usb_extcon_probe(struct platform_device *pdev)
+ 	if (!extcon->extcon_wq)
+ 		return -ENOMEM;
+ 
++	if (yft_uvc_vbus_gpio_num <= 0) {
++		yft_uvc_vbus_gpio_num = yft_parse_dts(dev->of_node, "uvc_vbus_gpio");
++		if (yft_uvc_vbus_gpio_num < 0)
++			dev_info(dev, "%s: yft_parse_dts fail. \n", __func__);
++	} else
++		printk("yft_uvc_vbus_gpio_num failed. yft_uvc_vbus_gpio_num=%d\n",
++			yft_otg_select_gpio_num);
++
++	if (yft_uvc_switch_gpio_num <= 0) {
++		yft_uvc_switch_gpio_num = yft_parse_dts(dev->of_node, "uvc_switch_gpio");
++		if (yft_uvc_switch_gpio_num < 0)
++			dev_info(dev, "%s: yft_parse_dts fail. yft_uvc_switch_gpio_num=%d \n",
++				__func__, yft_uvc_switch_gpio_num);
++		ret = uvc_sysfs_init(dev);
++		if (ret)
++			printk("Failed to create uvc sysfs file %d\n", ret);
++	} else
++		printk("yft_uvc_switch_gpio_num failed. yft_uvc_switch_gpio_num=%d\n",
++			yft_otg_select_gpio_num);
++
++	yft_extcon = extcon;
++	printk("yft_tiny2c_mode=%d\n", yft_tiny2c_status);
++	yft_extcon_class = class_create(THIS_MODULE, "yft_extcon");
++	for (i = 0; class_attr_tiny2c_mode[i].attr.name; i++)
++		ret = class_create_file(yft_extcon_class, &class_attr_tiny2c_mode[i]);
++
+ 	/* get id resources */
+ 	ret = mtk_usb_extcon_id_pin_init(extcon);
+ 	if (ret < 0)
+@@ -661,6 +847,15 @@ static int mtk_usb_extcon_probe(struct platform_device *pdev)
+ 
+ 	platform_set_drvdata(pdev, extcon);
+ 
++	if (yft_otg_select_gpio_num <= 0) {
++		if (get_otg_select_gpio() < 0)
++			printk("YFT_OTG_get_otg_select_gpio failed.\n");
++	} else
++		printk("YFT_OTG_get_otg_select_gpio failed. yft_otg_select_gpio_num=%d\n",
++			yft_otg_select_gpio_num);
++
++	dev_err(dev, "end\n");
++
+ 	return 0;
+ }
+ 
+-- 
+2.56.0
+

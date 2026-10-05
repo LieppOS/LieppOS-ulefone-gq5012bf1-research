@@ -1,0 +1,16 @@
+--- "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/slot-b-investigation/android17-lineage24-feasibility/gq5012bf1-split-product/android17-hidl-runtime-fix-continue-20261001-130735/../android17-hidl-runtime-fix-20261001-130428/device.mk.before"	2026-09-29 01:03:51.253279305 +0300
++++ /mnt/SamsungSSD/android/lineage-24.0/device/ulefone/gq5012bf1/device.mk	2026-10-01 13:04:28.656773246 +0300
+@@ -48,3 +48,13 @@
+ # which on this device is the untouched stock vendor build.prop (it already
+ # declares ro.product.first_api_level=35). The secondary ABI required by the
+ # captured ELF32 vendor objects is configured in BoardConfig.mk.
++
++
++# Android 17 / FCM 8:
++# The Ulefone vendor image still exposes legacy HIDL HALs.
++# Keep the legacy HIDL runtime available even though this product
++# ships with PRODUCT_SHIPPING_API_LEVEL := 35.
++PRODUCT_PACKAGES += \
++    hwservicemanager \
++    android.hidl.allocator@1.0-service \
++    android.hidl.memory@1.0-impl

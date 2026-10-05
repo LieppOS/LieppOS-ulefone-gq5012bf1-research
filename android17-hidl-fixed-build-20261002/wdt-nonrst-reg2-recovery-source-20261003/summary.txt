@@ -1,0 +1,81 @@
+============================================================
+MT6878 WDT NONRST_REG2 RECOVERY SOURCE ANALYSIS
+============================================================
+
+===== SLOT-A SAFETY =====
+slot=_a
+boot_completed=1
+current_slot=0
+
+===== CONFIRMED LK WDT GETTER =====
+            0x0003dc80      880400d0       adrp x8, 0xcf000
+            0x0003dc84      00916039       ldrb w0, [x8, 0x824]
+            0x0003dc88      1f3c0071       cmp w0, 0xf
+        ┌─< 0x0003dc8c      41010054       b.ne 0x3dcb4
+        │   0x0003dc90      890494d2       mov x9, 0xa024
+        │   0x0003dc94      0980a3f2       movk x9, 0x1c00, lsl 16
+        │   0x0003dc98      e9fffff2       movk x9, 0xffff, lsl 48
+        │   0x0003dc9c      2a0140b9       ldr w10, [x9]
+        │   0x0003dca0      4b0d0012       and w11, w10, 0xf
+        │   0x0003dca4      4a6d1c12       and w10, w10, 0xfffffff0
+        │   0x0003dca8      0b912039       strb w11, [x8, 0x824]
+        │   0x0003dcac      2a0100b9       str w10, [x9]
+        │   0x0003dcb0      00916039       ldrb w0, [x8, 0x824]
+        └─> 0x0003dcb4      c0035fd6       ret
+            0x0003dcb8      880494d2       mov x8, 0xa024
+            0x0003dcbc      0a1c0012       and w10, w0, 0xff
+            0x0003dcc0      0880a3f2       movk x8, 0x1c00, lsl 16
+            0x0003dcc4      e8fffff2       movk x8, 0xffff, lsl 48
+            0x0003dcc8      090140b9       ldr w9, [x8]
+            0x0003dccc      29611512       and w9, w9, 0xfffff80f
+            0x0003dcd0      29110a2a       orr w9, w9, w10, lsl 4
+            0x0003dcd4      090100b9       str w9, [x8]
+            0x0003dcd8      c0035fd6       ret
+            0x0003dcdc      880494d2       mov x8, 0xa024
+
+===== DECODE MMIO CONSTANT =====
+physical_mmio=0x1c00a024
+wdt_base=0x1c00a000
+offset=0x24
+register=MTK_WDT_NONRST_REG2
+
+===== LK CALLER 0x3810 =====
+            ; CALL XREF from fcn.00017ec0 @ 0x17ef0(x)
+┌ 108: fcn.00003810 ();
+│ afv: vars(2:sp[0x8..0x10])
+│           0x00003810      fd7bbfa9       stp x29, x30, [sp, -0x10]!
+│           0x00003814      fd030091       mov x29, sp
+│           0x00003818      c5430194       bl fcn.0005472c
+│       ┌─< 0x0000381c      40000036       tbz w0, 0, 0x3824
+│       │   0x00003820      e4da0094       bl fcn.0003a3b0
+│       │   ; CODE XREF from fcn.00003810 @ 0x381c(x)
+│       └─> 0x00003824      98bf0194       bl fcn.00073684
+│           0x00003828      ad330094       bl fcn.000106dc
+│           0x0000382c      15e90094       bl fcn.0003dc80
+│           0x00003830      c0038052       mov w0, 0x1e
+│           0x00003834      60e90094       bl fcn.0003ddb4
+│           0x00003838      59e90094       bl fcn.0003dd9c
+│           0x0000383c      1eed0094       bl fcn.0003ecb4
+│           0x00003840      bfec0194       bl fcn.0007eb3c
+│           0x00003844      bdec0194       bl fcn.0007eb38
+│           0x00003848      e0031f2a       mov w0, wzr
+│           0x0000384c      cf5b0094       bl fcn.0001a788
+│           0x00003850      20008052       mov w0, 1
+│           0x00003854      cd5b0094       bl fcn.0001a788
+│           0x00003858      40008052       mov w0, 2
+│           0x0000385c      cb5b0094       bl fcn.0001a788
+│           0x00003860      80008052       mov w0, 4
+│           0x00003864      c95b0094       bl fcn.0001a788
+│           0x00003868      a0008052       mov w0, 5
+│           0x0000386c      c75b0094       bl fcn.0001a788
+│           0x00003870      c0008052       mov w0, 6
+│           0x00003874      fd7bc1a8       ldp x29, x30, [sp], 0x10
+└       ┌─< 0x00003878      c45b0014       b fcn.0001a788
+fcn.00017ec0 0x17ef0 [CALL:--x] bl fcn.00003810
+
+===== LK CACHE GLOBAL 0xcf824 REFERENCES =====
+fcn.0003dc80 0x3dc84 [DATA:r--] ldrb w0, [x8, 0x824]
+fcn.0003dc80 0x3dca8 [DATA:-w-] strb w11, [x8, 0x824]
+fcn.0003dc80 0x3dcb0 [DATA:r--] ldrb w0, [x8, 0x824]
+
+===== FIND LOCAL MT6878 SOURCE TREES =====

@@ -1,0 +1,7 @@
+#!/bin/bash
+# f <module> <func> [opts]  -- symbolic function diff stock vs rebuilt (ko_fdiff)
+export PATH=/home/armol/kernel-work/gki-12901745-workspace/prebuilts/clang/host/linux-x86/clang-r487747c/bin:$PATH
+cd /home/armol/kernel-work/gki-12901745-workspace/lieppos/usb
+M=$1; shift
+B=$(find trees/5e41 -name "$M.stripped.ko" | head -1)
+python3 tools/ko_fdiff.py stock/$M.ko $B "$@"

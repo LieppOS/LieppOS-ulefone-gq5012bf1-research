@@ -1,0 +1,1275 @@
+From 4c97b9be66c0fd636c5d647f3a929edbce350823 Mon Sep 17 00:00:00 2001
+From: lieppos <lieppos@local>
+Date: Mon, 5 Oct 2026 11:56:52 +0300
+Subject: [PATCH 1/2] rt_pd_manager: GQ5012BF1 tcpc 2.0.31 headers (proven by
+ TCPC-CLASS) + WATER_DETECT, vsc_status bitmask print, ALERT_RATELIMITED,
+ TYPEC_PROTECTION detach, WD0 skip in bootmode 8/9 - 11/11 functions, all
+ sections except srcversion/build-id
+
+---
+ drivers/misc/mediatek/typec/tcpc/inc/mt6360.h |   2 +-
+ drivers/misc/mediatek/typec/tcpc/inc/mt6370.h | 123 +++++++++---------
+ .../misc/mediatek/typec/tcpc/inc/pd_core.h    |  29 +++--
+ .../mediatek/typec/tcpc/inc/pd_dpm_core.h     |   3 +-
+ .../typec/tcpc/inc/pd_policy_engine.h         |   7 +
+ .../misc/mediatek/typec/tcpc/inc/rt1711h.h    |   4 +-
+ .../mediatek/typec/tcpc/inc/std_tcpci_v10.h   |  22 +++-
+ drivers/misc/mediatek/typec/tcpc/inc/tcpci.h  |  60 +++++----
+ .../mediatek/typec/tcpc/inc/tcpci_config.h    |  26 ++--
+ .../misc/mediatek/typec/tcpc/inc/tcpci_core.h |  96 +++++++-------
+ .../mediatek/typec/tcpc/inc/tcpci_event.h     |   4 +-
+ .../typec/tcpc/inc/tcpci_pd30_config.h        |   2 -
+ .../mediatek/typec/tcpc/inc/tcpci_pd_config.h |  17 ++-
+ .../mediatek/typec/tcpc/inc/tcpci_timer.h     |   6 +
+ .../mediatek/typec/tcpc/inc/tcpci_typec.h     |   5 +-
+ drivers/misc/mediatek/typec/tcpc/inc/tcpm.h   |  32 +++--
+ .../misc/mediatek/typec/tcpc/inc/tcpm_pd.h    |   1 +
+ .../misc/mediatek/typec/tcpc/rt_pd_manager.c  |  22 +++-
+ 18 files changed, 250 insertions(+), 211 deletions(-)
+
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/mt6360.h b/drivers/misc/mediatek/typec/tcpc/inc/mt6360.h
+index 734ac9b..29d797d 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/mt6360.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/mt6360.h
+@@ -32,7 +32,7 @@ enum mt6360_id_rupsel {
+ };
+ 
+ /*show debug message or not */
+-#define ENABLE_MT6360_DBG	1
++#define ENABLE_MT6360_DBG				0
+ 
+ /* MT6360 Private RegMap */
+ 
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/mt6370.h b/drivers/misc/mediatek/typec/tcpc/inc/mt6370.h
+index a45df07..60bdddb 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/mt6370.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/mt6370.h
+@@ -10,49 +10,48 @@
+ #include "pd_dbg_info.h"
+ 
+ /*show debug message or not */
+-#define ENABLE_MT6370_DBG	0
++#define ENABLE_MT6370_DBG		0
+ 
+ /* MT6370 Private RegMap */
+ 
+-#define MT6370_REG_PHY_CTRL1				(0x80)
+-#define MT6370_REG_PHY_CTRL2				(0x81)
+-#define MT6370_REG_PHY_CTRL3				(0x82)
+-#define MT6370_REG_CLK_CTRL2				(0x87)
+-#define MT6370_REG_CLK_CTRL3				(0x88)
++#define MT6370_REG_PHY_CTRL1		(0x80)
++#define MT6370_REG_PHY_CTRL2		(0x81)
++#define MT6370_REG_PHY_CTRL3		(0x82)
++#define MT6370_REG_CLK_CTRL2		(0x87)
++#define MT6370_REG_CLK_CTRL3		(0x88)
+ 
+-#define MT6370_REG_PRL_FSM_RESET			(0x8D)
++#define MT6370_REG_PRL_FSM_RESET	(0x8D)
+ 
+-#define MT6370_REG_BMC_CTRL				(0x90)
+-#define MT6370_REG_BMCIO_RXDZSEL			(0x93)
++#define MT6370_REG_BMC_CTRL		(0x90)
++#define MT6370_REG_BMCIO_RXDZSEL	(0x93)
+ 
+-#define MT6370_REG_MT_STATUS				(0x97)
+-#define MT6370_REG_MT_INT					(0x98)
+-#define MT6370_REG_MT_MASK					(0x99)
++#define MT6370_REG_MT_STATUS		(0x97)
++#define MT6370_REG_MT_INT		(0x98)
++#define MT6370_REG_MT_MASK		(0x99)
+ 
+-#define MT6370_REG_BMCIO_RXDZEN			(0x9A)
+-#define MT6370_REG_IDLE_CTRL				(0x9B)
+-#define MT6370_REG_I2CRST_CTRL				(0X9E)
++#define MT6370_REG_BMCIO_RXDZEN		(0x9A)
++#define MT6370_REG_IDLE_CTRL		(0x9B)
++#define MT6370_REG_I2CRST_CTRL		(0x9E)
+ 
+-#define MT6370_REG_SWRESET				(0xA0)
+-#define MT6370_REG_TTCPC_FILTER			(0xA1)
+-#define MT6370_REG_DRP_TOGGLE_CYCLE		(0xA2)
+-#define MT6370_REG_DRP_DUTY_CTRL			(0xA3)
++#define MT6370_REG_SWRESET		(0xA0)
++#define MT6370_REG_TCPC_FILTER		(0xA1)
++#define MT6370_REG_DRP_TOGGLE_CYCLE	(0xA2)
++#define MT6370_REG_DRP_DUTY_CTRL	(0xA3)
+ 
+-#define MT6370_REG_PHY_CTRL11				(0xBA)
+-#define MT6370_REG_PHY_CTRL12				(0xBB)
++#define MT6370_REG_PHY_CTRL11		(0xBA)
++#define MT6370_REG_PHY_CTRL12		(0xBB)
+ 
+ /*
+  * Device ID
+  */
+ 
+-#define MT6370_DID_A		0x2170
+-#define MT6370_DID_B		0x2171
+-#define MT6370_DID_C		0x2172
+-
+-#define MT6370_DID_D            0x2173
++#define MT6370_DID_A			0x2170
++#define MT6370_DID_B			0x2171
++#define MT6370_DID_C			0x2172
++#define MT6370_DID_D			0x2173
+ 
+ /*
+- * MT6370_REG_PHY_CTRL1            (0x80)
++ * MT6370_REG_PHY_CTRL1			(0x80)
+  */
+ 
+ #define MT6370_REG_PHY_CTRL1_SET( \
+@@ -64,67 +63,67 @@
+  * MT6370_REG_CLK_CTRL2			(0x87)
+  */
+ 
+-#define MT6370_REG_CLK_DIV_600K_EN		(1<<7)
++#define MT6370_REG_CLK_DIV_600K_EN	(1<<7)
+ #define MT6370_REG_CLK_BCLK2_EN		(1<<6)
+-#define MT6370_REG_CLK_BCLK2_TG_EN		(1<<5)
+-#define MT6370_REG_CLK_DIV_300K_EN		(1<<3)
+-#define MT6370_REG_CLK_CK_300K_EN		(1<<2)
+-#define MT6370_REG_CLK_BCLK_EN			(1<<1)
+-#define MT6370_REG_CLK_BCLK_TH_EN		(1<<0)
++#define MT6370_REG_CLK_BCLK2_TG_EN	(1<<5)
++#define MT6370_REG_CLK_DIV_300K_EN	(1<<3)
++#define MT6370_REG_CLK_CK_300K_EN	(1<<2)
++#define MT6370_REG_CLK_BCLK_EN		(1<<1)
++#define MT6370_REG_CLK_BCLK_TH_EN	(1<<0)
+ 
+ /*
+  * MT6370_REG_CLK_CTRL3			(0x88)
+  */
+ 
+ #define MT6370_REG_CLK_OSCMUX_RG_EN	(1<<7)
+-#define MT6370_REG_CLK_CK_24M_EN		(1<<6)
+-#define MT6370_REG_CLK_OSC_RG_EN		(1<<5)
+-#define MT6370_REG_CLK_DIV_2P4M_EN		(1<<4)
+-#define MT6370_REG_CLK_CK_2P4M_EN		(1<<3)
+-#define MT6370_REG_CLK_PCLK_EN			(1<<2)
+-#define MT6370_REG_CLK_PCLK_RG_EN		(1<<1)
+-#define MT6370_REG_CLK_PCLK_TG_EN		(1<<0)
++#define MT6370_REG_CLK_CK_24M_EN	(1<<6)
++#define MT6370_REG_CLK_OSC_RG_EN	(1<<5)
++#define MT6370_REG_CLK_DIV_2P4M_EN	(1<<4)
++#define MT6370_REG_CLK_CK_2P4M_EN	(1<<3)
++#define MT6370_REG_CLK_PCLK_EN		(1<<2)
++#define MT6370_REG_CLK_PCLK_RG_EN	(1<<1)
++#define MT6370_REG_CLK_PCLK_TG_EN	(1<<0)
+ 
+ /*
+- * MT6370_REG_BMC_CTRL				(0x90)
++ * MT6370_REG_BMC_CTRL			(0x90)
+  */
+ 
+-#define MT6370_REG_IDLE_EN				(1<<6)
+-#define MT6370_REG_DISCHARGE_EN			(1<<5)
+-#define MT6370_REG_BMCIO_LPRPRD			(1<<4)
+-#define MT6370_REG_BMCIO_LPEN				(1<<3)
+-#define MT6370_REG_BMCIO_BG_EN				(1<<2)
+-#define MT6370_REG_VBUS_DET_EN				(1<<1)
+-#define MT6370_REG_BMCIO_OSC_EN			(1<<0)
++#define MT6370_REG_IDLE_EN		(1<<6)
++#define MT6370_REG_DISCHARGE_EN		(1<<5)
++#define MT6370_REG_BMCIO_LPRPRD		(1<<4)
++#define MT6370_REG_BMCIO_LPEN		(1<<3)
++#define MT6370_REG_BMCIO_BG_EN		(1<<2)
++#define MT6370_REG_VBUS_DET_EN		(1<<1)
++#define MT6370_REG_BMCIO_OSC_EN		(1<<0)
+ 
+ /*
+- * MT6370_REG_MT_STATUS				(0x97)
++ * MT6370_REG_MT_STATUS			(0x97)
+  */
+ 
+-#define MT6370_REG_VBUS_80				(1<<1)
++#define MT6370_REG_VBUS_80		(1<<1)
+ 
+ /*
+- * MT6370_REG_MT_INT				(0x98)
++ * MT6370_REG_MT_INT			(0x98)
+  */
+ 
+-#define MT6370_REG_INT_VBUS_80				(1<<1)
+-#define MT6370_REG_INT_WAKEUP				(1<<0)
++#define MT6370_REG_INT_VBUS_80		(1<<1)
++#define MT6370_REG_INT_WAKEUP		(1<<0)
+ 
+ /*
+- * MT6370_REG_MT_MASK				(0x99)
++ * MT6370_REG_MT_MASK			(0x99)
+  */
+ 
+-#define MT6370_REG_M_VBUS_80				(1<<1)
+-#define MT6370_REG_M_WAKEUP				(1<<0)
++#define MT6370_REG_M_VBUS_80		(1<<1)
++#define MT6370_REG_M_WAKEUP		(1<<0)
+ 
+ /*
+- * MT6370_REG_IDLE_CTRL				(0x9B)
++ * MT6370_REG_IDLE_CTRL			(0x9B)
+  */
+ 
+-#define MT6370_REG_CK_300K_SEL				(1<<7)
+-#define MT6370_REG_SHIPPING_OFF			(1<<5)
+-#define MT6370_REG_ENEXTMSG			(1<<4)
+-#define MT6370_REG_AUTOIDLE_EN				(1<<3)
++#define MT6370_REG_CK_300K_SEL		(1<<7)
++#define MT6370_REG_SHIPPING_OFF		(1<<5)
++#define MT6370_REG_ENEXTMSG		(1<<4)
++#define MT6370_REG_AUTOIDLE_EN		(1<<3)
+ 
+ /* timeout = (tout*2+1) * 6.4ms */
+ #if CONFIG_USB_PD_REV30
+@@ -140,7 +139,7 @@
+  * MT6370_REG_I2CRST_CTRL		(0x9E)
+  */
+ 
+-#define MT6370_REG_I2CRST_EN				(1<<7)
++#define MT6370_REG_I2CRST_EN		(1<<7)
+ 
+ /* timeout = (tout+1) * 12.5ms */
+ #define MT6370_REG_I2CRST_SET(en, tout)	\
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/pd_core.h b/drivers/misc/mediatek/typec/tcpc/inc/pd_core.h
+index daf3597..a8414e4 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/pd_core.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/pd_core.h
+@@ -6,14 +6,12 @@
+ #ifndef PD_CORE_H_
+ #define PD_CORE_H_
+ 
+-#include <linux/platform_device.h>
+-#include <linux/pm_wakeup.h>
+ #include "tcpci_timer.h"
+ #include "tcpci_event.h"
+ #include "pd_dbg_info.h"
+ #include "tcpm.h"
+ 
+-#define PD_BUG_ON(x)	WARN_ON(x)
++#define PD_WARN_ON(x)	WARN_ON(x)
+ 
+ #define PD_SOP_NR	3
+ 
+@@ -816,6 +814,8 @@ struct pd_port {
+ 
+ 	struct dpm_pdo_info_t last_sink_pdo_info;
+ 	uint32_t last_rdo;
++	uint32_t last_src_pdo;
++	uint32_t prev_src_pdo;
+ 
+ 	uint8_t id_vdo_nr;
+ 	uint32_t id_vdos[VDO_MAX_NR];
+@@ -850,6 +850,7 @@ struct pd_port {
+ 	uint16_t cable_mode_svid;
+ 	uint8_t cable_mode_obj_pos;
+ 	uint16_t cable_svid_to_discover;
++	bool dp_v21;
+ 
+ 	uint32_t dpm_caps;
+ 
+@@ -884,10 +885,12 @@ struct pd_port {
+ 	int tcpm_bk_ret;
+ 	bool tcpm_bk_done;
+ 	uint8_t tcpm_bk_event_id;
++	uint8_t tcpm_bk_event_serial;
+ 	struct mutex tcpm_bk_lock;
+ 	wait_queue_head_t tcpm_bk_wait_que;
+ #endif	/* CONFIG_USB_PD_BLOCK_TCPM */
+ 
++	/* XM customize */
+ 	/* curr_event info */
+ 	bool curr_is_vdm_evt;
+ 	struct pd_event curr_pd_event;
+@@ -1057,7 +1060,7 @@ static inline int pd_is_support_modal_operation(struct pd_port *pd_port)
+ 	return pd_port->svid_data_cnt > 0;
+ }
+ 
+-static inline int pd_is_source_support_apdo(struct pd_port *pd_port)
++static inline bool pd_is_source_support_apdo(struct pd_port *pd_port)
+ {
+ #if CONFIG_USB_PD_REV30_PPS_SINK
+ 	uint8_t i;
+@@ -1079,15 +1082,13 @@ static inline int pd_is_source_support_apdo(struct pd_port *pd_port)
+ #define PD_RX_CAP_PE_DISABLE			(TCPC_RX_CAP_HARD_RESET)
+ #define PD_RX_CAP_PE_STARTUP			(TCPC_RX_CAP_HARD_RESET)
+ #define PD_RX_CAP_PE_HARDRESET			(0)
+-#define PD_RX_CAP_PE_SWAP	\
+-	(TCPC_RX_CAP_HARD_RESET|TCPC_RX_CAP_SOP)
+ #define PD_RX_CAP_PE_SEND_WAIT_CAP	\
+ 	(TCPC_RX_CAP_HARD_RESET|TCPC_RX_CAP_SOP)
+ #define PD_RX_CAP_PE_DISCOVER_CABLE	\
+ 	(TCPC_RX_CAP_HARD_RESET|TCPC_RX_CAP_SOP_PRIME)
+-#define PD_RX_CAP_PE_READY_UFP	\
++#define PD_RX_CAP_PE_READY	\
+ 	(TCPC_RX_CAP_HARD_RESET|TCPC_RX_CAP_SOP)
+-#define PD_RX_CAP_PE_READY_DFP	\
++#define PD_RX_CAP_PE_READY_CABLE	\
+ 	(TCPC_RX_CAP_HARD_RESET|TCPC_RX_CAP_SOP|TCPC_RX_CAP_SOP_PRIME)
+ 
+ enum {
+@@ -1143,7 +1144,7 @@ extern void pd_notify_pe_error_recovery(struct pd_port *pd_port);
+ extern void pd_notify_pe_execute_pr_swap(struct pd_port *pd_port);
+ extern void pd_notify_pe_reset_protocol(struct pd_port *pd_port);
+ extern void pd_notify_pe_cancel_pr_swap(struct pd_port *pd_port);
+-extern void pd_noitfy_pe_bist_mode(struct pd_port *pd_port, uint8_t mode);
++extern void pd_notify_pe_bist_mode(struct pd_port *pd_port, uint8_t mode);
+ extern void pd_notify_pe_pr_changed(struct pd_port *pd_port);
+ extern void pd_notify_pe_snk_explicit_contract(struct pd_port *pd_port);
+ extern void pd_notify_pe_src_explicit_contract(struct pd_port *pd_port);
+@@ -1160,7 +1161,9 @@ extern void pd_notify_tcp_event_2nd_result(struct pd_port *pd_port, int ret);
+ extern void pd_notify_tcp_vdm_event_2nd_result(
+ 		struct pd_port *pd_port, uint8_t ret);
+ 
++#if CONFIG_USB_PD_DISCARD_AND_UNEXPECT_MSG
+ extern bool pd_is_pe_wait_pd_transmit_done(struct pd_port *pd_port);
++#endif	/* CONFIG_USB_PD_DISCARD_AND_UNEXPECT_MSG */
+ 
+ /* ---- pd_timer ---- */
+ 
+@@ -1375,7 +1378,7 @@ int pd_send_ext_msg(struct pd_port *pd_port,
+ static inline int pd_send_sop_ext_msg(struct pd_port *pd_port,
+ 	uint8_t msg, uint8_t size, const void *data)
+ {
+-	PD_BUG_ON(size > MAX_EXTENDED_MSG_LEGACY_LEN);
++	PD_WARN_ON(size > MAX_EXTENDED_MSG_LEGACY_LEN);
+ 
+ 	/* TODO: chunking */
+ 
+@@ -1389,7 +1392,6 @@ int pd_send_soft_reset(struct pd_port *pd_port);
+ int pd_send_hard_reset(struct pd_port *pd_port);
+ 
+ int pd_send_bist_mode2(struct pd_port *pd_port);
+-int pd_disable_bist_mode2(struct pd_port *pd_port);
+ 
+ 
+ /* ---- Send / Reply SVDM Command ----*/
+@@ -1519,4 +1521,9 @@ struct pd_battery_info *pd_get_battery_info(
+ 	struct pd_port *pd_port, enum pd_battery_reference ref);
+ #endif	/* CONFIG_USB_PD_REV30 */
+ 
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++void pd_add_miss_msg(struct pd_port *pd_port,struct pd_event *pd_event,
++				uint8_t msg);
++#endif /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
++
+ #endif /* PD_CORE_H_ */
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/pd_dpm_core.h b/drivers/misc/mediatek/typec/tcpc/inc/pd_dpm_core.h
+index 2a913c5..1097681 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/pd_dpm_core.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/pd_dpm_core.h
+@@ -312,7 +312,8 @@ extern uint8_t pd_dpm_get_ready_reaction(struct pd_port *pd_port);
+ 	DPM_REACTION_DISCOVER_CABLE | \
+ 	DPM_REACTION_REQUEST_VCONN_SRC |\
+ 	DPM_REACTION_VCONN_STABLE_DELAY |\
+-	DPM_REACTION_DYNAMIC_VCONN)
++	DPM_REACTION_DYNAMIC_VCONN |	\
++	DPM_REACTION_REQUEST_DR_SWAP)
+ 
+ #define DPM_REACTION_GET_SOURCE_CAP_EXT		BIT(15)
+ 
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/pd_policy_engine.h b/drivers/misc/mediatek/typec/tcpc/inc/pd_policy_engine.h
+index de0e30a..d939782 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/pd_policy_engine.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/pd_policy_engine.h
+@@ -182,6 +182,9 @@ enum pd_pe_state {
+ #if CONFIG_USB_PD_REV30_SRC_CAP_EXT_LOCAL
+ 	PE_SRC_GIVE_SOURCE_CAP_EXT,
+ #endif	/* CONFIG_USB_PD_REV30_SRC_CAP_EXT_LOCAL */
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++	PE_SRC_GIVE_SINK_CAP_EXT,
++#endif /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
+ #if CONFIG_USB_PD_REV30_STATUS_LOCAL
+ 	PE_SRC_GIVE_SOURCE_STATUS,
+ #endif	/* CONFIG_USB_PD_REV30_STATUS_LOCAL */
+@@ -524,6 +527,10 @@ void pe_src_sink_alert_received_entry(
+ void pe_src_give_source_cap_ext_entry(
+ 	struct pd_port *pd_port);
+ #endif	/* CONFIG_USB_PD_REV30_SRC_CAP_EXT_LOCAL */
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++void pe_src_give_sink_cap_ext_entry(
++    struct pd_port *pd_port);
++#endif /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
+ #if CONFIG_USB_PD_REV30_STATUS_LOCAL
+ void pe_src_give_source_status_entry(
+ 	struct pd_port *pd_port);
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/rt1711h.h b/drivers/misc/mediatek/typec/tcpc/inc/rt1711h.h
+index a61215e..feaa930 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/rt1711h.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/rt1711h.h
+@@ -10,7 +10,7 @@
+ #include "pd_dbg_info.h"
+ 
+ /*show debug message or not */
+-#define ENABLE_RT1711_DBG	0
++#define ENABLE_RT1711_DBG				0
+ 
+ /* RT1711H Private RegMap */
+ 
+@@ -31,7 +31,7 @@
+ #define RT1711H_REG_RT_MASK					(0x99)
+ 
+ #define RT1711H_REG_IDLE_CTRL				(0x9B)
+-#define RT1711H_REG_I2CRST_CTRL				(0X9E)
++#define RT1711H_REG_I2CRST_CTRL				(0x9E)
+ 
+ #define RT1711H_REG_SWRESET				(0xA0)
+ #define RT1711H_REG_TTCPC_FILTER			(0xA1)
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/std_tcpci_v10.h b/drivers/misc/mediatek/typec/tcpc/inc/std_tcpci_v10.h
+index 93db48b..17ead26 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/std_tcpci_v10.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/std_tcpci_v10.h
+@@ -47,7 +47,7 @@
+ #define TCPC_V10_REG_TX_HDR				(0x52)
+ #define TCPC_V10_REG_TX_DATA				(0x54)/* through 0x6f */
+ 
+-#define TCPC_V10_REG_VBUS_VOLTAGE_L                     (0x70)
++#define TCPC_V10_REG_VBUS_VOLTAGE_L			(0x70)
+ #define TCPC_V10_REG_VBUS_SINK_DISCONNECT_THD		(0x72)
+ #define TCPC_V10_REG_VBUS_STOP_DISCHARGE_THD		(0x74)
+ #define TCPC_V10_REG_VBUS_VOLTAGE_ALARM_HI		(0x76)
+@@ -58,8 +58,8 @@
+  * TCPC_V10_REG_ALERT_MASK		(0x12)
+  */
+ #define TCPC_V10_REG_ALERT_VENDOR_DEFINED		(1<<15)
+-#define TCPC_V10_REG_VBUS_SINK_DISCONNECT		(1<<11)
+-#define TCPC_V10_REG_RX_OVERFLOW			(1<<10)
++#define TCPC_V10_REG_ALERT_VBUS_SINK_DISCONNECT		(1<<11)
++#define TCPC_V10_REG_ALERT_RX_OVERFLOW			(1<<10)
+ #define TCPC_V10_REG_ALERT_FAULT			(1<<9)
+ #define TCPC_V10_REG_ALERT_LO_VOLT			(1<<8)
+ #define TCPC_V10_REG_ALERT_HI_VOLT			(1<<7)
+@@ -70,6 +70,19 @@
+ #define TCPC_V10_REG_ALERT_RX_STATUS			(1<<2)
+ #define TCPC_V10_REG_ALERT_POWER_STATUS			(1<<1)
+ #define TCPC_V10_REG_ALERT_CC_STATUS			(1<<0)
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++#define TCPC_V10_REG_TCPC_CTRL_EN_WDT		(1<<5)
++#endif /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
++
++#define TCPC_V10_REG_ALERT_RX_ALL_MASK	\
++	(TCPC_V10_REG_ALERT_RX_STATUS | TCPC_V10_REG_ALERT_RX_OVERFLOW | \
++	 TCPC_V10_REG_ALERT_RX_HARD_RST)
++
++#define TCPC_V10_REG_ALERT_HRESET_SUCCESS	\
++	(TCPC_V10_REG_ALERT_TX_SUCCESS | TCPC_V10_REG_ALERT_TX_FAILED)
++
++#define TCPC_V10_REG_ALERT_TX_MASK (TCPC_V10_REG_ALERT_TX_SUCCESS | \
++	TCPC_V10_REG_ALERT_TX_FAILED | TCPC_V10_REG_ALERT_TX_DISCARDED)
+ 
+ /*
+  * TCPC_V10_REG_POWER_STATUS_MASK	(0x14)
+@@ -90,6 +103,7 @@
+  */
+ 
+ /* VCONN_OV should not be here */
++#define TCPC_V20_REG_FAULT_STATUS_RESET_TO_DEFAULT	(1<<7)
+ #define TCPC_V10_REG_FAULT_STATUS_VCONN_OV		(1<<7)
+ #define TCPC_V10_REG_FAULT_STATUS_FORCE_OFF_VBUS	(1<<6)
+ #define TCPC_V10_REG_FAULT_STATUS_AUTO_DISC_FAIL	(1<<5)
+@@ -134,7 +148,7 @@
+  */
+ 
+ #define TCPC_V10_REG_VBUS_MONITOR		(1<<6)
+-#define TCPC_V10_REG_AUTO_DISCHG_DISCNT         (1<<4)
++#define TCPC_V10_REG_AUTO_DISCHG_DISCNT		(1<<4)
+ #define TCPC_V10_REG_BLEED_DISC_EN		(1<<3)
+ #define TCPC_V10_REG_FORCE_DISC_EN		(1<<2)
+ #define TCPC_V10_REG_POWER_CTRL_VCONN		(1<<0)
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/tcpci.h b/drivers/misc/mediatek/typec/tcpc/inc/tcpci.h
+index 6a1fc2a..65811ba 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/tcpci.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/tcpci.h
+@@ -21,7 +21,7 @@
+ #include "pd_core.h"
+ #endif /* CONFIG_USB_POWER_DELIVERY */
+ 
+-#define PE_STATE_FULL_NAME	1
++#define PE_STATE_FULL_NAME	0
+ 
+ #define TCPC_NORMAL_RP_DUTY	(308)		/* 30% */
+ 
+@@ -29,6 +29,22 @@
+ #define MIN(a, b)       (((a) < (b)) ? (a) : (b))
+ #endif
+ 
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++#define SOUTHCHIP_PD_VER    0X3116
++
++/********************** product define *********************/
++#define SOUTHCHIP_PD_VID	0x311C
++#define SC2150_PID			0x2150
++#define SC2150A_DID			0x0000
++#define SC2150A_1P2_DID 	0x0001
++#define SC2150P_DID			0x0003
++
++#define SC660X_PID			0x6600
++#define SC660X_DID			0x0000
++/***********************************************************/
++#endif /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
++#define TCPC_LOW_RP_DUTY		(100)		/* 10 % */
++
+ /* provide to TCPC interface */
+ extern int tcpci_report_usb_port_attached(struct tcpc_device *tcpc);
+ extern int tcpci_report_usb_port_detached(struct tcpc_device *tcpc);
+@@ -75,23 +91,6 @@ int tcpci_init_alert_mask(struct tcpc_device *tcpc);
+ int tcpci_get_cc(struct tcpc_device *tcpc);
+ int tcpci_is_plugged_in(struct tcpc_device *tcpc);
+ int tcpci_set_cc(struct tcpc_device *tcpc, int pull);
+-int tcpci_set_vbus_short_cc_en(struct tcpc_device *tcpc, bool cc1, bool cc2);
+-int tcpci_notify_vbus_short_cc_status(struct tcpc_device *tcpc,
+-				      bool vsc_status, bool short_cc);
+-
+-static inline int __tcpci_set_cc(struct tcpc_device *tcpc, int pull)
+-{
+-	PD_BUG_ON(tcpc->ops->set_cc == NULL);
+-
+-	if (pull & TYPEC_CC_DRP) {
+-		tcpc->typec_remote_cc[0] =
+-		tcpc->typec_remote_cc[1] =
+-			TYPEC_CC_DRP_TOGGLING;
+-	}
+-
+-	tcpc->typec_local_cc = pull;
+-	return tcpc->ops->set_cc(tcpc, pull);
+-}
+ int tcpci_set_polarity(struct tcpc_device *tcpc, int polarity);
+ int tcpci_set_vconn(struct tcpc_device *tcpc, int enable);
+ 
+@@ -99,22 +98,29 @@ int tcpci_set_low_power_mode(struct tcpc_device *tcpc, bool en);
+ int tcpci_alert_vendor_defined_handler(struct tcpc_device *tcpc);
+ int tcpci_set_auto_dischg_discnt(struct tcpc_device *tcpc, bool en);
+ int tcpci_get_vbus_voltage(struct tcpc_device *tcpc, u32 *vbus);
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++int tcpci_set_watchdog(struct tcpc_device *tcpc, bool en);
++#endif /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
+ 
+ #if CONFIG_WATER_DETECTION
+ int tcpci_set_water_protection(struct tcpc_device *tcpc, bool en);
+ int tcpci_notify_wd_status(struct tcpc_device *tcpc, bool water_detected);
+ #endif /* CONFIG_WATER_DETECTION */
+ 
++int tcpci_notify_fod_status(struct tcpc_device *tcpc);
+ #if CONFIG_CABLE_TYPE_DETECTION
+ int tcpci_notify_cable_type(struct tcpc_device *tcpc);
+ #endif /* CONFIG_CABLE_TYPE_DETECTION */
+-
+-int tcpci_notify_fod_status(struct tcpc_device *tcpc);
+-
+ int tcpci_notify_typec_otp(struct tcpc_device *tcpc);
+ 
+ int tcpci_set_cc_hidet(struct tcpc_device *tcpc, bool en);
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++int tcpci_notify_wd0_state(struct tcpc_device *tcpc, bool wd0_state, bool typec_port_stat);
++#else
+ int tcpci_notify_wd0_state(struct tcpc_device *tcpc, bool wd0_state);
++#endif
++int tcpci_set_vbus_short_cc(struct tcpc_device *tcpc, bool cc1, bool cc2);
++int tcpci_notify_vbus_short_cc_status(struct tcpc_device *tcpc, int vsc_status);
+ 
+ #if IS_ENABLED(CONFIG_USB_POWER_DELIVERY)
+ 
+@@ -135,13 +141,17 @@ int tcpci_transmit(struct tcpc_device *tcpc,
+ 
+ int tcpci_set_bist_test_mode(struct tcpc_device *tcpc, bool en);
+ 
+-int tcpci_set_bist_carrier_mode(struct tcpc_device *tcpc, uint8_t pattern);
+-
+ #if CONFIG_USB_PD_RETRY_CRC_DISCARD
+ int tcpci_retransmit(struct tcpc_device *tcpc);
+ #endif	/* CONFIG_USB_PD_RETRY_CRC_DISCARD */
+ #endif	/* CONFIG_USB_POWER_DELIVERY */
+ 
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++int tcpci_get_chip_id(struct tcpc_device *tcpc,uint32_t *chip_id);
++int tcpci_get_chip_pid(struct tcpc_device *tcpc,uint32_t *chip_pid);
++int tcpci_get_chip_vid(struct tcpc_device *tcpc,uint32_t *chip_vid);
++#endif /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
++
+ int tcpci_notify_typec_state(struct tcpc_device *tcpc);
+ 
+ int tcpci_notify_role_swap(
+@@ -153,10 +163,10 @@ int tcpci_source_vbus(struct tcpc_device *tcpc, uint8_t type, int mv, int ma);
+ int tcpci_sink_vbus(struct tcpc_device *tcpc, uint8_t type, int mv, int ma);
+ int tcpci_disable_vbus_control(struct tcpc_device *tcpc);
+ int tcpci_notify_attachwait_state(struct tcpc_device *tcpc, bool as_sink);
+-int tcpci_enable_auto_discharge(struct tcpc_device *tcpc, bool en);
+-int tcpci_enable_force_discharge(struct tcpc_device *tcpc, bool en, int mv);
++int tcpci_enable_discharge(struct tcpc_device *tcpc, bool en, int mv);
+ int tcpci_notify_ps_change(struct tcpc_device *tcpc, int vbus_level);
+ int tcpci_notify_cc_hi(struct tcpc_device *tcpc, int cc_hi);
++int tcpci_notify_alert_ratelimited(struct tcpc_device *tcpc, bool limited);
+ 
+ #if IS_ENABLED(CONFIG_USB_POWER_DELIVERY)
+ 
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/tcpci_config.h b/drivers/misc/mediatek/typec/tcpc/inc/tcpci_config.h
+index edf96ae..bb57313 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/tcpci_config.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/tcpci_config.h
+@@ -6,9 +6,6 @@
+ #ifndef __LINUX_TCPC_CONFIG_H
+ #define __LINUX_TCPC_CONFIG_H
+ 
+-#if IS_ENABLED(CONFIG_TCPC_CLASS)
+-/* default config */
+-
+ #define CONFIG_TYPEC_USE_DIS_VBUS_CTRL	0
+ 
+ #define CONFIG_TYPEC_CAP_TRY_SOURCE	1
+@@ -28,12 +25,8 @@
+ 
+ #define CONFIG_TYPEC_CAP_DISCHARGE_TOUT		300
+ 
+-#define CONFIG_TYPEC_CAP_AUTO_DISCHARGE		1
+-#define CONFIG_TCPC_AUTO_DISCHARGE_IC		0
+-
+ #define CONFIG_TYPEC_CAP_FORCE_DISCHARGE	1
+-#define CONFIG_TCPC_FORCE_DISCHARGE_IC		1
+-#define CONFIG_TCPC_FORCE_DISCHARGE_EXT		1
++#define CONFIG_TYPEC_CAP_EXT_DISCHARGE		1
+ 
+ #define CONFIG_TYPEC_CAP_AUDIO_ACC_SINK_VBUS	1
+ 
+@@ -42,8 +35,6 @@
+ 
+ #define CONFIG_TYPEC_SNK_ONLY_WHEN_SUSPEND	0
+ 
+-#define CONFIG_TCPC_ATTACH_WAKE_LOCK_TOUT	5000
+-
+ #define CONFIG_TCPC_LOG_WITH_PORT_NAME		0
+ 
+ #if CONFIG_TCPC_LOG_WITH_PORT_NAME
+@@ -52,6 +43,13 @@
+ #define CONFIG_TCPC_DBG_PRESTR		"TCPC-"
+ #endif /* CONFIG_TCPC_LOG_WITH_PORT_NAME */
+ 
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++#define CONFIG_TCPC_WATCHDOG_EN
++#define CONFIG_SOUTHCHIP_INT_INVAILD_RETRY_MAX		3
++#define CONFIG_SOUTHCHIP_ERROR_MSG_CNT_MAX			15
++
++#endif /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
++
+ /*
+  * USB 2.0 & 3.0 current
+  * Unconfigured :	100 / 150 mA
+@@ -67,7 +65,6 @@
+ 
+ #define CONFIG_TCPC_I2CRST_EN		1
+ 
+-#define CONFIG_TCPC_SHUTDOWN_CC_DETACH	1
+ #define CONFIG_TCPC_SHUTDOWN_VBUS_DISABLE	1
+ 
+ #define CONFIG_TCPC_NOTIFICATION_NON_BLOCKING	1
+@@ -122,7 +119,6 @@
+ #define CONFIG_USB_PD_REV30_COUNTRY_AUTHORITY	0
+ #define CONFIG_USB_PD_DPM_AUTO_SEND_ALERT	0
+ #define CONFIG_USB_PD_DPM_AUTO_GET_STATUS	0
+-#define CONFIG_MTK_HANDLE_PPS_TIMEOUT		0
+ 
+ /* CONFIG_USB_PD_REV30 */
+ 
+@@ -162,21 +158,16 @@
+ 
+ #define CONFIG_USB_PD_IGNORE_HRESET_COMPLETE_TIMER	0
+ #define CONFIG_USB_PD_RETRY_HRESET			0
+-#define CONFIG_USB_PD_DROP_REPEAT_PING			0
+ #define CONFIG_USB_PD_CHECK_DATA_ROLE			0
+ #define CONFIG_USB_PD_RETRY_CRC_DISCARD			0
+ #define CONFIG_USB_PD_PARTNER_CTRL_MSG_FIRST		0
+ 
+ #define CONFIG_USB_PD_SNK_IGNORE_HRESET_IF_TYPEC_ONLY	0
+-#define CONFIG_USB_PD_SNK_STANDBY_POWER			0
+-#define CONFIG_USB_PD_SNK_GOTOMIN			0
+ 
+ #define CONFIG_USB_PD_SRC_HIGHCAP_POWER			0
+ #define CONFIG_USB_PD_SRC_TRY_PR_SWAP_IF_BAD_PW		0
+ #define CONFIG_USB_PD_SRC_REJECT_PR_SWAP_IF_GOOD_PW	0
+ 
+-#define CONFIG_USB_PD_TRANSMIT_BIST2		0
+-
+ #define CONFIG_USB_PD_SAFE0V_DELAY		0
+ #define CONFIG_USB_PD_SAFE0V_TOUT		0
+ #define CONFIG_USB_PD_SAFE5V_DELAY		0
+@@ -229,5 +220,4 @@
+ 
+ #define CONFIG_CABLE_TYPE_DETECTION	1
+ 
+-#endif /* CONFIG_TCPC_CLASS */
+ #endif /* __LINUX_TCPC_CONFIG_H */
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/tcpci_core.h b/drivers/misc/mediatek/typec/tcpc/inc/tcpci_core.h
+index 5617cd5..5951085 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/tcpci_core.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/tcpci_core.h
+@@ -6,20 +6,22 @@
+ #ifndef __LINUX_RT_TCPCI_CORE_H
+ #define __LINUX_RT_TCPCI_CORE_H
+ 
++#include <linux/alarmtimer.h>
+ #include <linux/device.h>
+ #include <linux/hrtimer.h>
+-#include <linux/alarmtimer.h>
+-#include <linux/workqueue.h>
+-#include <linux/pm_wakeup.h>
+ #include <linux/notifier.h>
++#include <linux/platform_device.h>
++#include <linux/pm_wakeup.h>
+ #include <linux/sched.h>
+ #include <linux/semaphore.h>
+ #include <linux/spinlock.h>
++#include <linux/workqueue.h>
+ #include <uapi/linux/sched/types.h>
+ 
+ #include "tcpm.h"
+ #include "tcpci_timer.h"
+ #include "tcpci_config.h"
++#include "std_tcpci_v10.h"
+ 
+ #if IS_ENABLED(CONFIG_USB_POWER_DELIVERY)
+ #include "pd_core.h"
+@@ -38,15 +40,14 @@
+ #define TCPC_DBG_ENABLE		0
+ #define TCPC_DBG2_ENABLE	0
+ #define DPM_INFO_ENABLE		1
+-#define DPM_INFO2_ENABLE	1
++#define DPM_INFO2_ENABLE	0
+ #define DPM_DBG_ENABLE		0
+ #define PD_ERR_ENABLE		1
+ #define PE_DBG_ENABLE		0
+ #define TYPEC_DBG_ENABLE	0
+ 
+-
+ #define DP_INFO_ENABLE		1
+-#define DP_DBG_ENABLE		1
++#define DP_DBG_ENABLE		0
+ 
+ #define TCPM_DBG_ENABLE		1
+ 
+@@ -63,9 +64,8 @@
+ /* Disable VDM DBG Msg */
+ #define PE_STATE_INFO_VDM_DIS	0
+ #define PE_EVT_INFO_VDM_DIS	0
+-#define PE_DBG_RESET_VDM_DIS	1
+ 
+-#define PD_BUG_ON(x)	WARN_ON(x)
++#define PD_WARN_ON(x)	WARN_ON(x)
+ 
+ struct tcpc_device;
+ 
+@@ -76,8 +76,8 @@ struct tcpc_desc {
+ 	const char *name;
+ 	bool en_wd;
+ 	bool en_wd_dual_port;
+-	bool en_ctd;
+ 	bool en_fod;
++	bool en_ctd;
+ 	bool en_typec_otp;
+ 	bool en_floatgnd;
+ 	bool en_vbus_short_cc;
+@@ -105,15 +105,14 @@ struct tcpc_desc {
+ #define CONFIG_TYPEC_NOTIFY_ATTACHWAIT 1
+ #endif	/* CONFIG_TYPEC_NOTIFY_ATTACHWAIT_SRC */
+ 
+-
+-#if CONFIG_TCPC_FORCE_DISCHARGE_EXT
+-#define CONFIG_TCPC_EXT_DISCHARGE 1
+-#endif	/* CONFIG_TCPC_FORCE_DISCHARGE_EXT */
+ /*---------------------------------------------------------------------------*/
+ 
+ /* TCPC Alert Register Define */
+ #define TCPC_REG_ALERT_EXT_VBUS_80		(1<<(16+1))
+ #define TCPC_REG_ALERT_EXT_WAKEUP		(1<<(16+0))
++#define TCPC_REG_POWER_STATUS_VBUS_PRES		(1<<2)
++#define TCPC_REG_POWER_STATUS_EXT_VSAFE0V	(1<<15)	/* extend */
++#define TCPC_FLAGS_LPM_WAKEUP_WATCHDOG		(1<<3)
+ 
+ #define TCPC_REG_ALERT_VBUS_DISCNCT (1<<11)
+ #define TCPC_REG_ALERT_RX_BUF_OVF   (1<<10)
+@@ -127,7 +126,9 @@ struct tcpc_desc {
+ #define TCPC_REG_ALERT_RX_STATUS    (1<<2)
+ #define TCPC_REG_ALERT_POWER_STATUS (1<<1)
+ #define TCPC_REG_ALERT_CC_STATUS    (1<<0)
+-
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++#define TCPC_FLAGS_WATCHDOG_EN		(1<<13)
++#endif /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
+ #define TCPC_REG_ALERT_RX_MASK	\
+ 	(TCPC_REG_ALERT_RX_STATUS | TCPC_REG_ALERT_RX_BUF_OVF)
+ 
+@@ -197,6 +198,11 @@ struct tcpc_ops {
+ 	int (*alert_status_clear)(struct tcpc_device *tcpc, uint32_t mask);
+ 	int (*fault_status_clear)(struct tcpc_device *tcpc, uint8_t status);
+ 	int (*set_alert_mask)(struct tcpc_device *tcpc, uint32_t mask);
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++	int (*get_chip_id)(struct tcpc_device *tcpc,uint32_t *chip_id);
++	int (*get_chip_pid)(struct tcpc_device *tcpc,uint32_t *chip_pid);
++	int (*get_chip_vid)(struct tcpc_device *tcpc,uint32_t *chip_vid);
++#endif /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
+ 	int (*get_alert_mask)(struct tcpc_device *tcpc, uint32_t *mask);
+ 	int (*get_alert_status_and_mask)(struct tcpc_device *tcpc, uint32_t *alert, uint32_t *mask);
+ 	int (*get_power_status)(struct tcpc_device *tcpc);
+@@ -216,22 +222,16 @@ struct tcpc_ops {
+ 	int (*set_cc_hidet)(struct tcpc_device *tcpc, bool en);
+ 	int (*get_cc_hi)(struct tcpc_device *tcpc);
+ 
+-	int (*set_vbus_short_cc_en)(struct tcpc_device *tcpc, bool cc1, bool cc2);
++	int (*set_vbus_short_cc)(struct tcpc_device *tcpc, bool cc1, bool cc2);
+ 
+ 	int (*set_low_power_mode)(struct tcpc_device *tcpc, bool en, int pull);
+ 
+-#if CONFIG_TYPEC_CAP_AUTO_DISCHARGE
+-#if CONFIG_TCPC_AUTO_DISCHARGE_IC
+-	int (*set_auto_discharge)(struct tcpc_device *tcpc, bool en);
+-#endif	/* CONFIG_TCPC_AUTO_DISCHARGE_IC */
+-#endif	/* CONFIG_TYPEC_CAP_AUTO_DISCHARGE */
+-
+ #if CONFIG_TYPEC_CAP_FORCE_DISCHARGE
+-#if CONFIG_TCPC_FORCE_DISCHARGE_IC
+ 	int (*set_force_discharge)(struct tcpc_device *tcpc, bool en, int mv);
+-#endif	/* CONFIG_TCPC_FORCE_DISCHARGE_IC */
+ #endif	/* CONFIG_TYPEC_CAP_FORCE_DISCHARGE */
+ 
++	void (*set_command)(struct tcpc_device *tcpc, u8 cmd);
++
+ #if IS_ENABLED(CONFIG_USB_POWER_DELIVERY)
+ 	int (*set_msg_header)(struct tcpc_device *tcpc,
+ 			uint8_t power_role, uint8_t data_role);
+@@ -243,7 +243,6 @@ struct tcpc_ops {
+ 			enum tcpm_transmit_type type,
+ 			uint16_t header, const uint32_t *data);
+ 	int (*set_bist_test_mode)(struct tcpc_device *tcpc, bool en);
+-	int (*set_bist_carrier_mode)(struct tcpc_device *tcpc, uint8_t pattern);
+ 
+ #if CONFIG_USB_PD_RETRY_CRC_DISCARD
+ 	int (*retransmit)(struct tcpc_device *tcpc);
+@@ -263,6 +262,7 @@ struct tcpc_managed_res;
+ struct tcpc_timer {
+ 	struct alarm alarm;
+ 	struct tcpc_device *tcpc;
++	bool en;
+ };
+ 
+ /*
+@@ -274,9 +274,6 @@ struct tcpc_device {
+ 	void *drv_data;
+ 	struct tcpc_desc desc;
+ 	struct device dev;
+-	uint8_t wake_lock_pd;
+-	struct wakeup_source *attach_wake_lock;
+-	struct wakeup_source *detach_wake_lock;
+ 
+ 	struct tcpc_timer tcpc_timer[PD_TIMER_NR];
+ 
+@@ -288,9 +285,11 @@ struct tcpc_device {
+ 	spinlock_t timer_tick_lock;
+ 	atomic_t pending_event;
+ 	atomic_t suspend_pending;
++	atomic_t is_suspended;
+ 	uint64_t timer_tick;
+ 	wait_queue_head_t event_wait_que;
+ 	wait_queue_head_t timer_wait_que;
++	wait_queue_head_t resume_wait_que;
+ 	struct task_struct *event_task;
+ 	struct task_struct *timer_task;
+ 
+@@ -299,6 +298,10 @@ struct tcpc_device {
+ 	struct srcu_notifier_head evt_nh[TCP_NOTIFY_IDX_NR];
+ 	struct tcpc_managed_res *mr_head;
+ 	struct mutex mr_lock;
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++	int recv_msg_cnt;
++	int int_invaild_cnt;
++#endif /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
+ 
+ 	/* For TCPC TypeC */
+ 	uint8_t typec_state;
+@@ -322,21 +325,15 @@ struct tcpc_device {
+ 	uint8_t typec_during_role_swap;
+ #endif	/* CONFIG_TYPEC_CAP_ROLE_SWAP */
+ 
+-#if CONFIG_TYPEC_CAP_AUTO_DISCHARGE
+-#if CONFIG_TCPC_AUTO_DISCHARGE_IC
+-	bool typec_auto_discharge;
+-#endif	/* CONFIG_TCPC_AUTO_DISCHARGE_IC */
+-#endif	/* CONFIG_TYPEC_CAP_AUTO_DISCHARGE */
++	bool typec_auto_dischg_discnt;
+ 
+ #if CONFIG_TYPEC_CAP_FORCE_DISCHARGE
+-#if CONFIG_TCPC_FORCE_DISCHARGE_IC
+ 	bool typec_force_discharge;
+-#endif	/* CONFIG_TCPC_FORCE_DISCHARGE_IC */
+ #endif	/* CONFIG_TYPEC_CAP_FORCE_DISCHARGE */
+ 
+-#if CONFIG_TCPC_EXT_DISCHARGE
++#if CONFIG_TYPEC_CAP_EXT_DISCHARGE
+ 	bool typec_ext_discharge;
+-#endif	/* CONFIG_TCPC_EXT_DISCHARGE */
++#endif	/* CONFIG_TYPEC_CAP_EXT_DISCHARGE */
+ 
+ 	uint8_t tcpc_vconn_supply;
+ 	bool tcpc_source_vconn;
+@@ -375,7 +372,6 @@ struct tcpc_device {
+ 	bool pd_hard_reset_event_pending;
+ 	bool pd_wait_hard_reset_complete;
+ 	bool pd_wait_pr_swap_complete;
+-	bool pd_ping_event_pending;
+ 	uint8_t pd_bist_mode;
+ 	uint8_t pd_transmit_state;
+ 	uint8_t pd_wait_vbus_once;
+@@ -423,19 +419,21 @@ struct tcpc_device {
+ 	uint8_t sink_vbus_type;
+ 
+ 	int bootmode;
+-#if CONFIG_CABLE_TYPE_DETECTION
+-	enum tcpc_cable_type typec_cable_type;
+-#endif /* CONFIG_CABLE_TYPE_DETECTION */
+-
+-	/* TypeC Shield Protection */
+ #if CONFIG_WATER_DETECTION
+ 	bool wd_in_kpoc;
+ #endif /* CONFIG_WATER_DETECTION */
+ 	enum tcpc_fod_status typec_fod;
++#if CONFIG_CABLE_TYPE_DETECTION
++	enum tcpc_cable_type typec_cable_type;
++#endif /* CONFIG_CABLE_TYPE_DETECTION */
+ 	bool typec_otp;
+-	bool typec_vbus_to_cc_en;
++	int vbus_short_cc;
++	int vsc_status;
+ 	bool cc_hidet_en;
+ 	int cc_hi;
++
++	struct ratelimit_state alert_rs;
++	bool alert_ratelimited;
+ };
+ 
+ #define to_tcpc_device(obj) container_of(obj, struct tcpc_device, dev)
+@@ -445,17 +443,13 @@ static inline uint8_t pd_get_rev(struct pd_port *pd_port, uint8_t sop_type)
+ {
+ 	uint8_t pd_rev = PD_REV20;
+ #if CONFIG_USB_PD_REV30
+-	struct pe_data *pe_data = &pd_port->pe_data;
+ 	struct tcpc_device *tcpc = pd_port->tcpc;
+ 
+-	if (sop_type == TCPC_TX_SOP) {
+-		pd_rev = pd_port->pd_revision[0];
+-	} else {
+-		if (pe_data->explicit_contract || pe_data->cable_rev_discovered)
+-			pd_rev = pd_port->pd_revision[1];
+-		else if (tcpc->tcpc_flags & TCPC_FLAGS_PD_REV30)
++	if (sop_type >= ARRAY_SIZE(pd_port->pd_revision)) {
++		if (tcpc->tcpc_flags & TCPC_FLAGS_PD_REV30)
+ 			pd_rev = PD_REV30;
+-	}
++	} else
++		pd_rev = pd_port->pd_revision[sop_type];
+ #endif	/* CONFIG_USB_PD_REV30 */
+ 
+ 	return pd_rev;
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/tcpci_event.h b/drivers/misc/mediatek/typec/tcpc/inc/tcpci_event.h
+index dc3b517..98dd0d0 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/tcpci_event.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/tcpci_event.h
+@@ -43,7 +43,6 @@ struct pd_event {
+ void pd_postpone_vdm_event_timeout(struct tcpc_device *tcpc);
+ struct pd_msg *pd_alloc_msg(struct tcpc_device *tcpc);
+ void pd_free_msg(struct tcpc_device *tcpc, struct pd_msg *pd_msg);
+-bool pd_is_msg_empty(struct tcpc_device *tcpc);
+ 
+ bool pd_get_event(struct tcpc_device *tcpc, struct pd_event *pd_event);
+ bool pd_put_event(struct tcpc_device *tcpc,
+@@ -121,6 +120,9 @@ enum pd_msg_type {
+ 	PD_CTRL_GET_COUNTRY_CODE = 0x10 + 5,
+ 	PD_CTRL_GET_SINK_CAP_EXT = 0x10 + 6,
+ 	PD_CTRL_GET_REVISION = 0x10 + 8,
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++	PD_CTRL_GET_SOURCE_INFO = 0x10 + 9,
++#endif /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
+ #endif	/* CONFIG_USB_PD_REV30 */
+ 	/* 22-31 Reserved */
+ 	PD_CTRL_MSG_NR,
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/tcpci_pd30_config.h b/drivers/misc/mediatek/typec/tcpc/inc/tcpci_pd30_config.h
+index efc68df..da070eb 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/tcpci_pd30_config.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/tcpci_pd30_config.h
+@@ -88,6 +88,4 @@
+ #define CONFIG_USB_PD_DPM_AUTO_GET_STATUS	0
+ #endif	/* CONFIG_USB_PD_REV30_ALERT_REMOTE */
+ 
+-#define CONFIG_MTK_HANDLE_PPS_TIMEOUT	1
+-
+ #endif /* __LINUX_TCPC_PD30_CONFIG_H */
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/tcpci_pd_config.h b/drivers/misc/mediatek/typec/tcpc/inc/tcpci_pd_config.h
+index 458e372..fad1ea6 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/tcpci_pd_config.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/tcpci_pd_config.h
+@@ -53,7 +53,6 @@
+ #define CONFIG_USB_PD_REV30_COUNTRY_AUTHORITY	0
+ #define CONFIG_USB_PD_DPM_AUTO_SEND_ALERT	0
+ #define CONFIG_USB_PD_DPM_AUTO_GET_STATUS	0
+-#define CONFIG_MTK_HANDLE_PPS_TIMEOUT	0
+ #endif	/* CONFIG_USB_PD_REV30 */
+ 
+ /**********************************************************
+@@ -74,7 +73,7 @@
+ #define CONFIG_USB_PD_DFP_FLOW_DELAY_DRSWAP	1
+ #define CONFIG_USB_PD_DFP_FLOW_DELAY_RESET	1
+ 
+-#define CONFIG_USB_PD_DISCARD_AND_UNEXPECT_MSG	1
++#define CONFIG_USB_PD_DISCARD_AND_UNEXPECT_MSG	0
+ 
+ /* Only in startup */
+ #define CONFIG_USB_PD_UFP_FLOW_DELAY		0
+@@ -135,20 +134,14 @@
+ 
+ #define CONFIG_USB_PD_IGNORE_HRESET_COMPLETE_TIMER	1
+ #define CONFIG_USB_PD_RETRY_HRESET			1
+-#define CONFIG_USB_PD_DROP_REPEAT_PING		1
+ #define CONFIG_USB_PD_CHECK_DATA_ROLE		1
+ #define CONFIG_USB_PD_RETRY_CRC_DISCARD		1
+ #define CONFIG_USB_PD_PARTNER_CTRL_MSG_FIRST	1
+ 
+ #define CONFIG_USB_PD_SNK_IGNORE_HRESET_IF_TYPEC_ONLY	0
+-#define CONFIG_USB_PD_SNK_STANDBY_POWER		1
+-#define CONFIG_USB_PD_SNK_GOTOMIN		1
+ 
+ #define CONFIG_USB_PD_SRC_HIGHCAP_POWER			0
+ #define CONFIG_USB_PD_SRC_TRY_PR_SWAP_IF_BAD_PW		1
+-#define CONFIG_USB_PD_SRC_REJECT_PR_SWAP_IF_GOOD_PW	0
+-
+-#define CONFIG_USB_PD_TRANSMIT_BIST2		1
+ 
+ #ifndef CONFIG_USB_PD_SAFE0V_DELAY
+ #define CONFIG_USB_PD_SAFE0V_DELAY	200
+@@ -172,9 +165,15 @@
+ #define CONFIG_USB_PD_VBUS_STABLE_TOUT 125
+ #endif	/* CONFIG_USB_PD_VBUS_STABLE_TOUT */
+ 
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++#ifndef CONFIG_USB_PD_CUSTOM_VDM_TOUT
++#define CONFIG_USB_PD_CUSTOM_VDM_TOUT	1000
++#endif	/* CONFIG_USB_PD_CUSTOM_VDM_TOUT */
++#else
+ #ifndef CONFIG_USB_PD_CUSTOM_VDM_TOUT
+-#define CONFIG_USB_PD_CUSTOM_VDM_TOUT	500
++#define CONFIG_USB_PD_CUSTOM_VDM_TOUT	550
+ #endif	/* CONFIG_USB_PD_CUSTOM_VDM_TOUT */
++#endif  /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
+ 
+ #ifndef CONFIG_USB_PD_VCONN_READY_TOUT
+ #define CONFIG_USB_PD_VCONN_READY_TOUT		5
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/tcpci_timer.h b/drivers/misc/mediatek/typec/tcpc/inc/tcpci_timer.h
+index abddc8b..fbe1732 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/tcpci_timer.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/tcpci_timer.h
+@@ -14,6 +14,9 @@ enum {
+ #if IS_ENABLED(CONFIG_USB_POWER_DELIVERY)
+ 	PD_TIMER_DISCOVER_ID = 0,
+ 	PD_TIMER_BIST_CONT_MODE,
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++	PD_TIMER_HARD_RESET_COMPLETE,
++#endif /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
+ 	PD_TIMER_NO_RESPONSE,
+ 	PD_TIMER_PS_HARD_RESET,
+ 	PD_TIMER_PS_SOURCE_OFF,
+@@ -75,6 +78,9 @@ enum {
+ #endif	/* CONFIG_USB_PD_REV30_PPS_SINK */
+ #endif	/* CONFIG_USB_PD_REV30 */
+ 	PD_TIMER_PE_IDLE_TOUT,
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++	PD_TIMER_INT_INVAILD,
++#endif /* CONFIG_SUPPORT_SOUTHCHIP_PDPHY */
+ 	PD_PE_TIMER_END_ID,
+ #endif /* CONFIG_USB_POWER_DELIVERY */
+ 
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/tcpci_typec.h b/drivers/misc/mediatek/typec/tcpc/inc/tcpci_typec.h
+index 1f95e26..3385818 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/tcpci_typec.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/tcpci_typec.h
+@@ -58,14 +58,11 @@ extern int tcpc_typec_handle_wd(struct tcpc_device **tcpcs, size_t nr, bool wd);
+ 
+ extern int tcpc_typec_handle_fod(struct tcpc_device *tcpc,
+ 					enum tcpc_fod_status);
+-extern int tcpc_typec_handle_otp(struct tcpc_device *tcpc, bool otp);
+-
+ #if CONFIG_CABLE_TYPE_DETECTION
+ extern int tcpc_typec_handle_ctd(struct tcpc_device *tcpc,
+ 				 enum tcpc_cable_type cable_type);
+ #endif /* CONFIG_CABLE_TYPEC_DETECTION */
+-
+-extern int tcpc_typec_handle_cc_hi(struct tcpc_device *tcpc, int cc_hi);
++extern int tcpc_typec_handle_otp(struct tcpc_device *tcpc, bool otp);
+ 
+ #define typec_get_cc1()		\
+ 	tcpc->typec_remote_cc[0]
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/tcpm.h b/drivers/misc/mediatek/typec/tcpc/inc/tcpm.h
+index 0093dc4..709531b 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/tcpm.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/tcpm.h
+@@ -153,7 +153,8 @@ enum {
+ 	TCP_NOTIFY_VBUS_SHORT_CC,
+ 	TCP_NOTIFY_PS_CHANGE,
+ 	TCP_NOTIFY_CC_HI,
+-	TCP_NOTIFY_MISC_END = TCP_NOTIFY_CC_HI,
++	TCP_NOTIFY_ALERT_RATELIMITED,
++	TCP_NOTIFY_MISC_END = TCP_NOTIFY_ALERT_RATELIMITED,
+ };
+ 
+ struct tcp_ny_pd_state {
+@@ -331,11 +332,9 @@ struct tcp_ny_typec_otp {
+ 
+ struct tcp_ny_wd0_state {
+ 	bool wd0;
+-};
+-
+-struct tcp_ny_vbus_short_cc {
+-	bool short_status;
+-	u8 short_cc;
++#ifdef CONFIG_SUPPORT_SOUTHCHIP_PDPHY
++	bool is_typec_port0;
++#endif
+ };
+ 
+ struct tcp_notify {
+@@ -359,9 +358,10 @@ struct tcp_notify {
+ 		struct tcp_ny_cable_type cable_type;
+ 		struct tcp_ny_typec_otp typec_otp;
+ 		struct tcp_ny_wd0_state wd0_state;
+-		struct tcp_ny_vbus_short_cc vsc_status;
++		int vsc_status;
+ 		int vbus_level;
+ 		int cc_hi;
++		bool alert_ratelimited;
+ 	};
+ };
+ 
+@@ -714,6 +714,7 @@ struct tcp_dpm_custom_vdm_data {
+ 
+ struct tcp_dpm_event {
+ 	uint8_t event_id;
++	uint8_t event_serial;
+ 	void *user_data;
+ 	tcp_dpm_event_cb event_cb;
+ 
+@@ -875,6 +876,7 @@ extern int unregister_tcp_dev_notifier(struct tcpc_device *tcpc,
+ 				struct notifier_block *nb, uint8_t flags);
+ 
+ extern int tcpm_shutdown(struct tcpc_device *tcpc);
++extern int tcpm_check_suspend_pending(struct tcpc_device *tcpc);
+ extern int tcpm_suspend(struct tcpc_device *tcpc);
+ extern void tcpm_resume(struct tcpc_device *tcpc);
+ 
+@@ -968,6 +970,10 @@ extern bool tcpm_extract_power_cap_val(
+ extern int tcpm_get_remote_power_cap(struct tcpc_device *tcpc,
+ 	struct tcpm_remote_power_cap *cap);
+ 
++extern void tcpm_set_adapter_dcc_support(struct tcpc_device *tcpc, bool support);
++extern void tcpm_set_direct_cap_change_over(struct tcpc_device *tcpc);
++extern bool tcpm_get_direct_cap_change_status(struct tcpc_device *tcpc);
++
+ extern int tcpm_inquire_select_source_cap(
+ 	struct tcpc_device *tcpc, struct tcpm_power_cap_val *cap_val);
+ 
+@@ -1359,12 +1365,6 @@ static inline void tcpm_inquire_sink_vbus(struct tcpc_device *tcpc,
+ {
+ }
+ 
+-static inline int tcpm_typec_set_wake_lock(
+-	struct tcpc_device *tcpc, bool user_lock)
+-{
+-	return TCPM_ERROR_NO_IMPLEMENT;
+-}
+-
+ static inline int tcpm_typec_set_usb_sink_curr(
+ 	struct tcpc_device *tcpc, int curr)
+ {
+@@ -1427,6 +1427,12 @@ static inline uint8_t tcpm_inquire_pd_power_role(
+ 	return 0;
+ }
+ 
++static inline uint8_t tcpm_inquire_pd_state_curr(
++	struct tcpc_device *tcpc_dev)
++{
++	return 0;
++}
++
+ static inline uint8_t tcpm_inquire_pd_vconn_role(
+ 	struct tcpc_device *tcpc)
+ {
+diff --git a/drivers/misc/mediatek/typec/tcpc/inc/tcpm_pd.h b/drivers/misc/mediatek/typec/tcpc/inc/tcpm_pd.h
+index 6cf2222..d9d9794 100644
+--- a/drivers/misc/mediatek/typec/tcpc/inc/tcpm_pd.h
++++ b/drivers/misc/mediatek/typec/tcpc/inc/tcpm_pd.h
+@@ -125,6 +125,7 @@ enum pd_battery_reference {
+ 
+ #define PD_SCEDB_SIZE	25
+ 
++
+ #define PD_SCEDB_VR(load_step, ioc)	\
+ 	((load_step) | (ioc << 2))
+ 
+diff --git a/drivers/misc/mediatek/typec/tcpc/rt_pd_manager.c b/drivers/misc/mediatek/typec/tcpc/rt_pd_manager.c
+index 4d9455d..b3375c2 100644
+--- a/drivers/misc/mediatek/typec/tcpc/rt_pd_manager.c
++++ b/drivers/misc/mediatek/typec/tcpc/rt_pd_manager.c
+@@ -43,6 +43,7 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
+ 		container_of(nb, struct rpmd_notifier_block, nb);
+ 	struct rt_pd_manager_data *rpmd = pd_nb->rpmd;
+ 	int ret = 0, idx = pd_nb - rpmd->pd_nb;
++	int boot_mode = rpmd->tcpc[idx]->bootmode;
+ 	uint8_t old_state = TYPEC_UNATTACHED, new_state = TYPEC_UNATTACHED;
+ 	enum typec_pwr_opmode opmode = TYPEC_PWR_MODE_USB;
+ 	uint16_t pd_revision = 0x0316;
+@@ -54,13 +55,13 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
+ 
+ 	switch (event) {
+ 	case TCP_NOTIFY_VBUS_SHORT_CC:
+-		if (noti->vsc_status.short_status)
+-			dev_info(rpmd->dev,
+-				 "%s enter short status, short_cc = %s\n",
+-				 __func__, noti->vsc_status.short_cc ==
+-				 TCPC_POLARITY_CC1 ? "CC1" : "CC2");
+-		else
++		if (!noti->vsc_status) {
+ 			dev_info(rpmd->dev, "%s exit short status\n", __func__);
++			break;
++		}
++		dev_info(rpmd->dev, "%s enter short status, CC%s%s\n", __func__,
++			 noti->vsc_status & BIT(TCPC_POLARITY_CC1) ? "1" : "",
++			 noti->vsc_status & BIT(TCPC_POLARITY_CC2) ? "2" : "");
+ 		break;
+ 	case TCP_NOTIFY_SINK_VBUS:
+ 		dev_info(rpmd->dev, "%s sink vbus %dmV %dmA type(0x%02X)\n",
+@@ -156,7 +157,8 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
+ 			/* disable AudioAccessory connection */
+ 		}
+ 
+-		if (new_state == TYPEC_UNATTACHED) {
++		if (new_state == TYPEC_UNATTACHED ||
++		    new_state == TYPEC_PROTECTION) {
+ 			typec_unregister_partner(rpmd->partner[idx]);
+ 			rpmd->partner[idx] = NULL;
+ 			if (rpmd->typec_caps[idx].prefer_role == TYPEC_SOURCE) {
+@@ -337,6 +339,8 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
+ 		typec_mux_set(rpmd->mux[idx], &state);
+ 		break;
+ 	case TCP_NOTIFY_WD0_STATE:
++		if (boot_mode == 8 || boot_mode == 9)
++			break;
+ 		tcpm_typec_change_role_postpone(rpmd->tcpc[idx],
+ 						noti->wd0_state.wd0 ?
+ 						rpmd->role_def[idx] :
+@@ -349,6 +353,10 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
+ 	case TCP_NOTIFY_CC_HI:
+ 		dev_info(rpmd->dev, "%s cc_hi = %d\n", __func__, noti->cc_hi);
+ 		break;
++	case TCP_NOTIFY_ALERT_RATELIMITED:
++		dev_info(rpmd->dev, "%s alert_ratelimited = %d\n",
++				    __func__, noti->alert_ratelimited);
++		break;
+ 	default:
+ 		break;
+ 	}
+-- 
+2.56.0
+

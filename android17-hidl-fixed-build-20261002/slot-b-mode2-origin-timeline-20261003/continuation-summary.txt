@@ -1853,3 +1853,78 @@ MODE2_ORIGIN_STATUS=NO_EXPLICIT_HOST_COMMAND_FOUND
 ============================================================
 14. COMMIT
 ============================================================
+[master 3748f31] research: continue Slot B mode2 origin timeline
+ 20 files changed, 5229 insertions(+)
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/CORRELATION.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/CURRENT-MODEL.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/README.md
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/artifact-timeline.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/continuation-summary.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/decoded-boot-reasons.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/first-b-apex-init-failure.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/first-b-final-1000-lines.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/first-b-final-markers.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/first-b-service-correlation.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/first-b-shutdown-context.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/other-shell-mode-commands.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/reboot-bootloader-init-services.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/research-mode2-command-mentions.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/saved-boot-reasons.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/second-b-mode2-proof.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/summary.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/zsh-20261002-events.txt
+ create mode 100644 android17-hidl-fixed-build-20261002/slot-b-mode2-origin-timeline-20261003/zsh-mode2-candidates.txt
+
+===== RESEARCH COMMIT =====
+3748f31 research: continue Slot B mode2 origin timeline
+
+============================================================
+FINAL HIGH-VALUE OUTPUT
+============================================================
+
+===== CORRELATION =====
+FIRST_B_BOOTMODE=0
+FIRST_B_REBOOT_TARGET=bootloader
+BOOTLOADER_MAGIC=3
+LK_LOW_NIBBLE_CLEAR=PROVEN
+LATER_B_BOOTMODE=2
+NEW_MODE2_WRITE_REQUIRED=YES
+EXPLICIT_MODE2_ZSH_COMMAND_FOUND=NO
+FASTBOOT_BOOT_REASON_FOUND=YES
+RECOVERY_BOOT_REASON_FOUND=NO
+MODE2_ORIGIN_STATUS=NO_EXPLICIT_HOST_COMMAND_FOUND
+
+===== MODE-2 ZSH CANDIDATES =====
+EXPLICIT_MODE2_ZSH_COMMAND=NOT_FOUND
+
+===== BOOTLOADER FAILURE SERVICES =====
+SERVICES=1
+
+========================================================================
+FILE=/mnt/SamsungSSD/android/lineage-24.0/out/target/product/gq5012bf1/system/etc/init/apexd.rc
+SERVICE=apexd-bootstrap
+LINE=13
+service apexd-bootstrap /system/bin/apexd --bootstrap
+    user root
+    group system
+    oneshot
+    disabled
+    reboot_on_failure reboot,bootloader,bootstrap-apexd-failed
+    # CAP_SYS_ADMIN is required to access device-mapper and to use mount syscall
+    # apexd-bootstrap doesn't manage apexdata snapshot & restore, hence no need for other capabilities.
+    capabilities SYS_ADMIN MKNOD
+
+
+===== FIRST-B SERVICE CORRELATION =====
+
+========================================================================
+SERVICE=apexd-bootstrap
+HITS=0
+
+===== BOOT REASONS =====
+EPOCH=1790245093 UTC=2026-09-24T10:18:13+00:00 VILNIUS=2026-09-24T13:18:13+03:00 REASON=reboot,shell
+EPOCH=1790289835 UTC=2026-09-24T22:43:55+00:00 VILNIUS=2026-09-25T01:43:55+03:00 REASON=reboot,from_fastboot
+EPOCH=1790972723 UTC=2026-10-02T20:25:23+00:00 VILNIUS=2026-10-02T23:25:23+03:00 REASON=reboot,shell
+
+PHONE_TOUCHED=NO
+SLOT_B_BOOTED=NO

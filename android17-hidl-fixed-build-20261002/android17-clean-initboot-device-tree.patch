@@ -1,0 +1,28 @@
+--- BoardConfig.mk.before
++++ BoardConfig.mk.after
+@@ -22,6 +22,14 @@
+ TARGET_NO_KERNEL := true
+ TARGET_NO_RADIOIMAGE := true
+ 
++# Branch-generated init_boot for controlled Slot-B Android bring-up.
++# boot/vendor_boot/DTBO/kernel remain external and are not rebuilt.
++BOARD_BOOT_HEADER_VERSION := 4
++BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE := 8388608
++BOARD_KERNEL_PAGESIZE := 4096
++BOARD_USES_GENERIC_KERNEL_IMAGE := true
++
++
+ # These flags match the successful generic reference and retain its measured
+ # 209-file broad font set rather than applying an unreviewed language trim.
+ SMALLER_FONT_FOOTPRINT := true
+--- device.mk.before
++++ device.mk.after
+@@ -25,7 +25,7 @@
+ # Host-only userspace milestone: preserve the existing Ulefone kernel/vendor
+ # stack by not emitting replacement images for it.
+ PRODUCT_BUILD_BOOT_IMAGE := false
+-PRODUCT_BUILD_INIT_BOOT_IMAGE := false
++PRODUCT_BUILD_INIT_BOOT_IMAGE := true
+ PRODUCT_BUILD_VENDOR_BOOT_IMAGE := false
+ PRODUCT_BUILD_VENDOR_IMAGE := false
+ PRODUCT_BUILD_VENDOR_DLKM_IMAGE := false
