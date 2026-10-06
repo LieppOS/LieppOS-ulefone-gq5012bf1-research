@@ -1,0 +1,40 @@
+# live system_ext_b sha256 4187b58a47ad36cd5b4e58f87c642ac4a73c617d241d796cdff53f451d41d84b (== out/system_ext.img)
+total 6336
+drwxr-x--x  3 armol armol     340 Oct  2 15:52 .
+drwxr-xr-x 11 armol armol     220 Oct  2 15:52 ..
+-rwxr-xr-x  1 armol armol   52720 Oct  2 15:48 adb_root
+-rwxr-xr-x  1 armol armol 1017160 Oct  2 15:49 bash
+-rwxr-xr-x  1 armol armol  306720 Oct  2 15:48 htop
+drwxr-x--x  2 armol armol      60 Oct  2 15:52 hw
+-rwxr-xr-x  1 armol armol  120392 Oct  1 13:36 hwservicemanager
+-rwxr-xr-x  1 armol armol  301536 Oct  2 15:49 nano
+-rwxr-xr-x  1 armol armol  549472 Oct  2 15:47 rsync
+-rwxr-xr-x  1 armol armol  386368 Oct  2 15:49 unrar
+lrwxrwxrwx  1 armol armol       4 Oct  2 15:47 unzstd -> zstd
+-rwxr-xr-x  1 armol armol 3542856 Oct  2 15:46 vim
+-rwxr-xr-x  1 armol armol  185120 Oct  2 15:46 zstd
+lrwxrwxrwx  1 armol armol       4 Oct  2 15:47 zstdcat -> zstd
+-rwxr-xr-x  1 armol armol    3869 Oct  2 15:46 zstdgrep
+-rwxr-xr-x  1 armol armol     197 Oct  2 15:46 zstdless
+lrwxrwxrwx  1 armol armol       4 Oct  2 15:47 zstdmt -> zstd
+-rw-r--r--  1 armol armol 187 Oct  1 13:33 android.hidl.allocator@1.0-service.rc
+-rw-r--r--  1 armol armol 497 Oct  1 13:33 hwservicemanager.rc
+total 52
+drwxr-x--x 2 armol armol    60 Oct  2 15:52 .
+drwxr-x--x 3 armol armol   340 Oct  2 15:52 ..
+-rwxr-xr-x 1 armol armol 51800 Oct  1 13:34 android.hidl.allocator@1.0-service
+service hwservicemanager /system/system_ext/bin/hwservicemanager
+    user system
+    disabled
+    group system readproc
+    critical
+    onrestart setprop hwservicemanager.ready false
+    onrestart class_restart --only-enabled main
+    onrestart class_restart --only-enabled hal
+    onrestart class_restart --only-enabled early_hal
+    task_profiles ServiceCapacityLow HighPerformance
+    class animation
+    shutdown critical
+
+on property:hwservicemanager.disabled=true
+    stop hwservicemanager

@@ -1,0 +1,13 @@
+B_ATTEMPT=2026-10-03 plain adb reboot A->B (reboot 14:25:48, rescue A boot ~14:45)
+COLLECTION=read-only from Slot A, 2026-10-07, scripts/slotb-postmortem-collect.sh (end-to-end run OK)
+DEEPEST_PROVEN_B_STAGE=SECOND_STAGE_INIT_EARLY_INIT (A17 aconfigd /metadata/aconfig/boot change 14:26:08.964)
+ACONFIGD_EARLY_INIT_MARKER_CREATED=NO
+B_MOUNTED_DATA=NO (no /data writes in window; no @370399999 decompressed APEX; mainline aconfig boot files untouched)
+HANG_WINDOW=early-init .. post-fs-data (before apexd data activation)
+PRIMARY_ROOT_CAUSE_CANDIDATE=vendor_b (9f3dfe3f) has no second-stage fstab -> mount_all --early/--late fail -> /data never mounted
+SECONDARY_GATE=vendor init.mt6878.rc late-fs wait_for_prop hwservicemanager.ready "true" (no timeout)
+HWSERVICEMANAGER_IN_FLASHED_SYSTEM_EXT_B=YES (4187b58a) -> earlier "missing hwservicemanager" claim was about Oct-1 images (e72441c5); CORRECTED
+RESCUE_RESET_TYPE=PMIC_COLD_RESET (POFFSTS 0x20) -> pstore/ramoops lost; reason no kernel log survived
+BOOTCTRL_NOW=a:prio7 tries1 ok1 | b:prio6 tries1 ok0 (B never auto-marked unbootable)
+MISSING_EVIDENCE=B kernel/init console (needs warm-reset ending or UART, or /metadata init markers)
+DEVICE_WRITES=NONE  SLOT_B_BOOTED=NO

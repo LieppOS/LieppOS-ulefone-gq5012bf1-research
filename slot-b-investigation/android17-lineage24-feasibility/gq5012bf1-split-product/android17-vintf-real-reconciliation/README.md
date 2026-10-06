@@ -1,5 +1,13 @@
 # Android 17 ↔ Ulefone vendor: first real VINTF reconciliation
 
+> **CORRECTION (2026-10-07):** the "hwservicemanager / hidl.allocator missing" finding below applies to the
+> Oct-1 collection images (system_ext.img sha256 `e72441c5…`). The system_ext_b actually flashed for the
+> 2026-10-03 plain-reboot test is `4187b58a…` (hidl-fixed build), and it **does** contain `/system_ext/bin/hwservicemanager`,
+> `hwservicemanager.rc` and the allocator service. The vendor inputs here are the live vendor_a files, not the
+> `vendor_b` (`9f3dfe3f…`) that Slot B boots. See
+> `android17-hidl-fixed-build-20261002/slot-b-logo-hang-postmortem-boundary-20261007/README.md`.
+
+
 Date: 2026-10-01 · Host-only analysis · **no device was touched**: no flash, no reboot, no slot/A-B metadata change, no vbmeta/AVB change.
 Slot B was not booted. Every input is either the already-committed collection
 `../android17-vintf-compat-collect-20261001-010627/` or a host file whose identity to the device was verified by hash

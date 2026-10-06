@@ -1,0 +1,51 @@
+# vendor_b = live /dev/block/mapper/vendor_b sha256 9f3dfe3f... == host image slot-b-investigation/current-b-logical-dumps/vendor_b.img
+# extracted with lineage-24.0 fsck.erofs --extract
+
+## fstab files in vendor_b (find -name 'fstab*'):
+(none)
+
+## fstab files on live vendor_a:
+/vendor/etc/fstab.emmc
+/vendor/etc/fstab.enableswap
+/vendor/etc/fstab.mt6878
+
+## B system/system_ext/product fstab files (out staging == flashed hashes):
+system/etc/fstab.postinstall
+system_ext/usr/share/vim/syntax/fstab.vim
+
+## A17 GetFstabPath search order (system/fs/fs_mgr/libfstab/fstab.cpp:469-491)
+std::string GetFstabPath() {
+    if (InRecovery()) {
+        return GetRecoveryFstabPath();
+    }
+    for (const char* prop : {"fstab_suffix", "hardware", "hardware.platform"}) {
+        std::string suffix;
+
+        if (!fs_mgr_get_boot_config(prop, &suffix)) continue;
+
+        for (const char* prefix : {// late-boot/post-boot locations
+                                   "/odm/etc/fstab.", "/vendor/etc/fstab.",
+                                   // early boot locations
+                                   "/system/etc/fstab.", "/first_stage_ramdisk/system/etc/fstab.",
+                                   "/fstab.", "/first_stage_ramdisk/fstab."}) {
+            std::string fstab_path = prefix + suffix;
+            if (access(fstab_path.c_str(), F_OK) == 0) {
+                return fstab_path;
+            }
+        }
+    }
+
+    return "";
+}
+
+## A17 do_mount_all (system/core/init/builtins.cpp:633-642)
+    Fstab fstab;
+    if (mount_all->fstab_path.empty()) {
+        if (!ReadDefaultFstab(&fstab)) {
+            return Error() << "Could not read default fstab";
+        }
+    } else {
+        if (!ReadFstabFromFile(mount_all->fstab_path, &fstab)) {
+            return Error() << "Could not read fstab";
+        }
+    }

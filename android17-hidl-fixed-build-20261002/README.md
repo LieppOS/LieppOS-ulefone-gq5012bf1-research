@@ -991,3 +991,17 @@ framework against the retained stock vendor contract.
     BASIC_VENDOR_RUNTIME_BRIDGE=INCOMPLETE
 
 No Slot-B boot or partition write was performed.
+
+## Slot-B logo hang — post-mortem boundary from Slot A (2026-10-07)
+
+Read-only collection from Slot A (`slot-b-logo-hang-postmortem-boundary-20261007/`,
+collector `scripts/slotb-postmortem-collect.sh`, run end-to-end):
+
+    DEEPEST_PROVEN_B_STAGE=SECOND_STAGE_INIT_EARLY_INIT (A17 aconfigd changed /metadata/aconfig/boot at 14:26:08.964)
+    B_MOUNTED_DATA=NO (no /data writes in window, no @370399999 decompressed APEX)
+    PRIMARY_ROOT_CAUSE_CANDIDATE=vendor_b (9f3dfe3f) has no second-stage fstab -> mount_all fails -> /data never mounted
+    SECONDARY_GATE=vendor init.mt6878.rc late-fs wait_for_prop hwservicemanager.ready (no timeout)
+    HWSERVICEMANAGER_IN_FLASHED_SYSTEM_EXT_B=YES (earlier "missing" claim was about the Oct-1 images; corrected)
+    RESCUE_RESET_TYPE=PMIC_COLD_RESET -> pstore lost (why no kernel log survived)
+
+No Slot-B boot and no device write were performed.
