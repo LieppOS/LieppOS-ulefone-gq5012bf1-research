@@ -1,0 +1,13 @@
+search_term	hit	location	kind	relevance
+fm78100	fm78100@0x3c	stock DT /soc/i2c@11e03000 (i2c8)	DT node name only	node binds compatible mediatek,tiny2c_usb (yft_tiny2c_usb.ko); name is inherited
+fm78100	/sys/bus/i2c/drivers/fm78100-sensor/{chip_power,chip_enable,chip_exist,mems_temp,ntc_temp,objs_temp}	vendor/etc/init/hw/init.yft.rc lines 41-52	init chown/chmod	dead: no shipped kernel object defines driver fm78100-sensor
+fm78100	ThermometerTestActivity / FactoryMode.isThermometerSensorEnable()	FactoryMode.apk	app	test hidden unless .../fm78100-sensor/chip_exist exists -> hidden on GQ5012BF1
+78102	libthermometerTemp78102.so (sha256 3cb2d028…, 22096 B)	system/lib64 (FactoryMode symlink)	JNI math library	imports only liblog/libm; converts fm78100-sensor ADC/NTC readings; no device access
+fm78100|tiny2c	(none)	GKI kernel Image (boot)	built-in	no hit
+fm78100|tiny2c	yft_tiny2c_usb.ko	vendor_dlkm	dedicated module	the 8-003c driver
+tiny2c	extcon-mtk-usb.ko	vendor ramdisk	related module	/sys/class/yft_extcon/tiny2c_mode -> USB host role
+tiny2c	TINY2C_MIPI_RAW static metadata	libcam.halsensor.so, libmtkcam.logicalmodule.so, libacdk.so (vendor/lib64/mt6878)	MTK HAL table	no kernel imgsensor driver ships; tuning_DB/tiny2c_mipi_raw/mt6897 is empty; MIPI variant unused here
+tiny2c	GPIOUtils (tiny2c_usb_mode + tiny2c_mode)	M170infisens.apk, M170infDlp.apk, FactoryMode.apk	app	power/route control
+tiny2c	PlatformUtils.getMTK8788Tiny2CIrData; Const.I2C_ADDRESS=72, I2C_DEVICE_NODE=/dev/i2c-8, VIDEO_DEVICE_NODE=/dev/video0	M170infisens.apk	app constants	unreferenced legacy MIPI/I2C constants; no code path uses them
+i2c/dev-i2c	(none)	all APK native libs, system/lib64	native	no /dev/i2c, no I2C_SLAVE ioctl in any thermal native library
+sensor_id	/sys/devices/platform/yft_tiny2c_usb/sensor_id	FactoryMode InfiraySmtTest + VernoInfo, YftSystemUI	app read	cached boot-time chip ID; pass value "0x4c59"

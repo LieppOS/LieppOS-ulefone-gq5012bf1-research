@@ -1,0 +1,23 @@
+field	yft_tiny2c_usb.ko (DEDICATED, I2C 8-003c + platform /yft_tiny2c_usb)	extcon-mtk-usb.ko (related: tiny2c_mode host-role node)	mt6375-charger.ko (related: yft_usb_flag provider)
+stock_path	vendor_dlkm/lib/modules/yft_tiny2c_usb.ko	vendor_boot platform ramdisk lib/modules/extcon-mtk-usb.ko	vendor_boot platform ramdisk lib/modules/mt6375-charger.ko
+repo_copy	workspace/gq5012bf1/stock/partitions/vendor_dlkm/lib/modules/yft_tiny2c_usb.ko (== workspace/phase4-yft-tiny2c-usb/oracle/yft_tiny2c_usb-stock.ko)	workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/extcon-mtk-usb.ko	workspace/gq5012bf1/stock/vendor-ramdisks/platform-extracted/lib/modules/mt6375-charger.ko
+sha256	77baeee8fa7c01d9b6ad9b3a9743caa69aa61b840c3d565d5263d3e965d63eed	9e6adf23de6729f9983f680be75c8aca9eabe22aa6efcaafe7704257b37cb2bf	201628cd5b5aff2129901fcf555049afa7fdc3ce80f7ff1502b6b095806384d4
+size	30464	46864	117904
+build_id	c626fad2c0d464704f27a9a5ad5dd514be63c3da	see reverse-engineering/usb (closed, exact)	see reverse-engineering/power-charging (closed)
+vermagic	6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64	same kernel	same kernel
+compiler	Android clang 17.0.2 (10087095, r487747c)	-	-
+modinfo	name=yft_tiny2c_usb; description=Module For tiny2c_usb; author=yft-drv; license=GPL; depends=mt6375-charger; 3 aliases; no srcversion, no parameters	-	-
+load_order	vendor_dlkm modules.load line 195; not in recovery	vendor ramdisk (early)	vendor ramdisk (early)
+aliases	i2c:tiny2c_usb-sensor; of:N*T*Cmediatek,yft_tiny2c_usb; of:N*T*Cmediatek,yft_tiny2c_usbC* (the I2C OF table mediatek,tiny2c_usb is NOT MODULE_DEVICE_TABLE'd)	-	-
+depends	mt6375-charger (single object import yft_usb_flag, CRC 0x398e9c8b)	mt6375-charger (yft_usb_flag reader)	-
+imports	22 undefined: _printk gpio_to_desc gpiod_set_raw_value gpiod_get_raw_value scnprintf sscanf yft_usb_flag __stack_chk_fail i2c_transfer _dev_info msleep __const_udelay i2c_unregister_device __platform_driver_register platform_driver_unregister kmalloc_caches kmalloc_trace of_get_named_gpio_flags gpio_request i2c_register_driver device_create_file device_remove_file	-	exports yft_usb_flag (GPL)
+exports	0	0 relevant	yft_usb_flag
+modversions	23 (22 + module_layout); rebuild 23/23 name+CRC, order equal	-	-
+kcfi	12/12 functions type-id equal in rebuild	-	-
+functions	12: init_module cleanup_module tiny2c_usb_power_init(G) tiny2c_usb_mode_show tiny2c_usb_mode_store sensor_id_show tiny2c_usb_i2c_read(G) tiny2c_usb_read_chipid(G) tiny2c_usb_i2c_probe tiny2c_usb_i2c_remove tiny2c_usb_probe tiny2c_usb_remove	-	-
+data	27 symbols incl. chip_id(.bss 4) tiny2c_usb_chip_data(.bss 8) dev_attr_tiny2c_usb_mode(G) dev_attr_sensor_id(G) tiny2c_usb_i2c_driver(G) tiny2c_usb_driver tiny2c_usb_of_match tiny2c_usb_sensor_of_match tiny2c_usb_i2c_id mt_sysfs_attributes(.rodata)	-	-
+sections	40 section headers; .text 3388 .rodata 488 .data 992 .bss 16 .rodata.str1.1 1326 __versions 1472 .modinfo 297	-	-
+relocations	378 (non-DWARF); .text 336	-	-
+source_path_strings	none (no __FILE__/path strings; only clang ident)	-	-
+misc/ioctl/firmware	none: no misc/chardev/ioctl/debugfs/proc/firmware request; sysfs only (tiny2c_usb_mode 0644, sensor_id 0444)	sysfs class yft_extcon/tiny2c_mode, extcon-usb/uvc_insert_status	-
+parity	rebuild 11/12 functions byte-identical; probe +4 B (sysfs unwind loop codegen); data 27/27; imports 23/23; modinfo 9/9; strings 1326/1326 B; B1==B2	exact (USB closure)	exact (power closure)

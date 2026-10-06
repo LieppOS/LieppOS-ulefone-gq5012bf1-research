@@ -1,0 +1,11 @@
+consumer	interface	provider	kind	needed_for
+M170infisens / M170infDlp / FactoryMode	/sys/devices/platform/yft_tiny2c_usb/tiny2c_usb_mode (W 1/0)	yft_tiny2c_usb.ko	sysfs	module rails + yft_usb_flag
+M170infisens / M170infDlp / FactoryMode	/sys/class/yft_extcon/tiny2c_mode (W 1/0)	extcon-mtk-usb.ko	sysfs class	USB host role
+FactoryMode InfiraySmtTest / VernoInfo, YftSystemUI	/sys/devices/platform/yft_tiny2c_usb/sensor_id (R)	yft_tiny2c_usb.ko (boot I2C read of 8-003c)	sysfs	presence/ID only
+YftSystemUI	/sys/devices/platform/extcon-usb/uvc_insert_status (R)	extcon-mtk-usb.ko	sysfs	uSmart accessory state (not thermal)
+services.jar ActivityManager	both mode nodes (W 0)	as above	sysfs	crash cleanup
+thermal apps	/dev/bus/usb/001/NNN	GKI usbfs (+ uvcvideo detached)	usbfs	stream + vdcmd control
+libAC020sdk.so	libircmd020.so, libusbuvccamera020.so, libdualuvccamera020.so, libomniircamera020.so	APK native	JNI/native	command + transport
+libircmd020.so	standard/short/long_cmd_* → EP0 vendor requests	module ASIC	USB control	FFC, shutter, gain, palette, config, flash, reset_to_rom
+M170infisens	libmnnmodel.so MNN_SR_TINY2C	APK native	native	256x192 → x2 super-resolution
+FactoryMode ThermometerTestActivity	/sys/bus/i2c/drivers/fm78100-sensor/* + libthermometerTemp78102.so	(no driver)	sysfs	dead on GQ5012BF1 (test hidden)
