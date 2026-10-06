@@ -9,3 +9,11 @@
 Not claimed: runtime confirmation of the *normal-boot* first-stage count (187 is simulated;
 recovery 192 and total 443 are observed); the parallel touch/vendor race outcome varies per
 boot (stock capture: touch modprobe won `hynitron`).
+
+## Workspace
+
+Moved `Reverse Engineer - PARTIAL/{MTK-MODULE-LOADER,INIT-INSMOD,VENDOR-ALL-MODULES-READY}` →
+`Reverse Engineer - DONE/` on 2026-10-06 (index totals 72/58/3 → 75/55/3). Existing evidence and
+notes kept; closure notes copied with provenance; README/EVIDENCE-INDEX/PROVENANCE regenerated;
+`notes/CLASSIFICATION-CHANGE.md` added. manifest-audit: 3846/3846 rows resolve, status trees
+75/55/3, the three packs have no drift (pre-existing drift in 5 unrelated packs untouched).
