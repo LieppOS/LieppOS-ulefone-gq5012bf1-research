@@ -40,3 +40,15 @@ shipped module only sequences `tiny2c_usb_vdd_1v8` (GPIO 192), `_3v3` (GPIO 191)
 and reads a `sensor_id`; it exposes no thermopile register/temperature interface. Thus FM78100 is a genuine
 alternate-project part name, but on GQ5012BF1 the node remains the InfiRay module's power/ID endpoint, **not
 an independently populated thermometer**.
+
+
+## Correction (2026-10-06, `reverse-engineering/thermal-camera/`)
+
+- The module is a Raytron/InfiRay **Tiny2-C (TC2-C), native 256×192**: M170infDlp ships
+  `RS300_TC2C_…whole_package…zip` whose `whole_package.json` says `"device_name":"TINY2-C"`;
+  M170infDlp `IR_SENSOR_WIDTH/HEIGHT = 256/386`; USB identity 3474:4321 equals the public
+  Tiny2-C/TC001 descriptor (YUY2 256×194 / 256×386 @25 Hz). **640×512 is the marketing output
+  after the app's `MNN_SR_TINY2C` super-resolution; native 640×512 is retracted.**
+- `tiny2c_usb_vdd_5v` is not "unrecovered": the property is absent from the GQ5012BF1 DT.
+- 8-003c ID value is known: `0x4c59` (reg 0x0001=0x4c, reg 0x0000=0x59).
+- GPIO 55/152/28 belong to the uSmart accessory path, not to the thermal camera.

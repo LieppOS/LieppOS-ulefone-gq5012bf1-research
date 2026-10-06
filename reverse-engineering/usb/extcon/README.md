@@ -44,7 +44,7 @@ TCPC (type_c_port0) notifier, TCP_NOTIFY_TYPE_USB|VBUS|MISC (mask 0xe)
   DR_SWAP(17)     UFP & c_role≠DEVICE → NONE then DEVICE;  DFP & c_role≠HOST → NONE then HOST
 power_supply notifier (primary_chg / charger phandle, PROP_CHANGED)
   psy_detector: with tcpc_dev, set DEVICE if ONLINE and PROP_TYPE is USB (SDP) or USB_CDP, and c_role==NONE
-GPIO 28 (id) both edges → detect_cable (internal UVC accessory) → HOST/NONE + UVC GPIOs
+GPIO 28 (id) both edges → detect_cable (uSmart UVC accessory; NOT the internal thermal camera) → HOST/NONE + UVC GPIOs
 /sys/class/yft_extcon/tiny2c_mode → HOST/NONE
 all paths → extcon_wq → update_role: extcon USB/USB-HOST state + usb_role_switch_set_role(mtu3)
 ```
