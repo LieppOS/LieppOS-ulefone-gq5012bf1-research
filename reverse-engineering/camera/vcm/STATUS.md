@@ -15,3 +15,7 @@
 | OIS | separate chip/bus; HAL OIS table empty |
 | calibration | module EEPROM AF block (AFInf/AFMacro) via `camera_eeprom_v4l2`; HAL consumes |
 | firmware | **NO FIRMWARE BOUNDARY** |
+
+## Workspace
+
+Moved `Reverse Engineer - PARTIAL/CAMERA-VCMS` → `Reverse Engineer - DONE/CAMERA-VCMS` on 2026-10-06 (index totals 67/63/3 → 68/62/3; 81 manifest entries hash-verified).
