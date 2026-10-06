@@ -195,7 +195,7 @@ Ulefone official spec sheet, GSMArena.
 | Hardware level | 3 (top level, Android 14+) |
 | I2C address | `7-0020` (sensor0) |
 | VCM (AF) | DW9800W-class at `7-000c`, driver `main_vcm` (DT client `7-000a` is a placeholder; wire address 0x0C set from the HAL lens table) |
-| EEPROM | `camera-eeprom0` at I2C `7-0051` |
+| EEPROM | module EEPROM at `7-0050` (wire; DT client `camera-eeprom0` `7-0051` is a placeholder), `/dev/camera_eeprom0` (see `reverse-engineering/camera/eeprom/`) |
 | Confidence | PROVEN (driver + physical size + 1.6 µm pitch all match IMX989) |
 
 **Sensor conflict note**: The official spec sheet markets the main as Samsung GN1 (1/1.3″, 1.2 µm),
@@ -241,7 +241,7 @@ unit**: IMX989; marketing label likely wrong or refers to a different production
 | OIS | Not exposed in HAL (`[0]`) |
 | I2C address | `2-0010` (sensor2) |
 | VCM (AF) | DW9800W-class at `2-000c`, driver `main4_vcm` (DT client `2-000d`) (see `reverse-engineering/camera/vcm/`) |
-| EEPROM | `camera-eeprom1` at I2C `4-0050` |
+| EEPROM | module EEPROM at `2-0050` (`camera-eeprom2`, `/dev/camera_eeprom2`) (see `reverse-engineering/camera/eeprom/`). *Retracted 2026-10-06: previously listed `camera-eeprom1` `4-0050`, which is the front camera's EEPROM.* |
 | Note | HAL reports physical size 13.107×9.830 mm — identical to cam0; treated as a tuning-DB default (a 117° ultra-wide on a 13 mm sensor is implausible) |
 | Confidence | PROVEN |
 
@@ -264,7 +264,7 @@ unit**: IMX989; marketing label likely wrong or refers to a different production
 | OIS | Hardware motor present (DW9781C, I2C `4-000e`) — **not exposed** in HAL (`[0]`), EIS-only |
 | I2C address | `4-0020` (sensor4) |
 | VCM (AF) | DW9800W-class at `4-000c`, driver `main2_vcm` (DT client `4-000b`) (see `reverse-engineering/camera/vcm/`) |
-| EEPROM | `camera-eeprom2` at I2C `2-0050`, `camera-eeprom4` at I2C `4-0051` |
+| EEPROM | module EEPROM at `4-0053` (wire, I2C 8-bit 0xA6; DT client `camera-eeprom4` `4-0051`), `/dev/camera_eeprom4`; AF data only (see `reverse-engineering/camera/eeprom/`). *Retracted 2026-10-06: previously listed `camera-eeprom2` `2-0050` + `camera-eeprom4`.* |
 | Confidence | PROVEN |
 
 ### OIS hardware
@@ -363,12 +363,14 @@ All three are DW9800W command-set actuators (lens_id 0x9800); the DT `reg` value
 
 ### Camera EEPROMs
 
-| I2C Address | Driver |
-|---|---|
-| `7-0051` | `mediatek,camera_eeprom` |
-| `4-0050` | `mediatek,camera_eeprom` |
-| `2-0050` | `mediatek,camera_eeprom` |
-| `4-0051` | `mediatek,camera_eeprom` |
+| DT client | Wire address | Node | Camera |
+|---|---|---|---|
+| `7-0051` | `7-0050` | `/dev/camera_eeprom0` | 0 IMX989 |
+| `4-0050` | `4-0050` | `/dev/camera_eeprom1` | 1 S5KJN1 (front) |
+| `2-0050` | `2-0050` | `/dev/camera_eeprom2` | 2 S5KJN1MAIN2 |
+| `4-0051` | `4-0053` | `/dev/camera_eeprom4` | 3 OV64B |
+
+Driver `camera_eeprom_v4l2` (`mediatek,camera_eeprom`) retargets every transfer to the address in the sensor's stock layout config; DT `reg` only creates the client. Read-only in stock (see `reverse-engineering/camera/eeprom/`).
 
 **Evidence**: I2C bus enumeration (`buses.txt`), camera HAL output.
 
@@ -894,15 +896,16 @@ See `../docs/known-unknowns.md` for the full list. Key gaps (after 2026-08-31 fa
 | Rear Touch | Controller | Hynitron | hyn_ts | 1 | I2C | 0-0015 | Kernel probe | PROVEN |
 | CAM0 | Rear sensor | Sony | IMX989 | 1 | MIPI | 7-0020 | Camera HAL | PROVEN |
 | CAM0 AF | VCM | DW9800W-class | main_vcm | 1 | I2C | 7-000c | DT + HAL lens table + pw_seq + metadata | PROVEN |
-| CAM0 EEPROM | Calibration | — | — | 1 | I2C | 7-0051 | Kernel probe | PROVEN |
+| CAM0 EEPROM | Calibration | — | module EEPROM | 1 | I2C | 7-0050 (DT client 7-0051) | cam_cal config + imgsensor eeprom_info + live binding | PROVEN |
 | CAM1 | Front sensor | Samsung | S5KJN1 | 1 | MIPI | 4-0010 | Camera HAL | PROVEN |
+| CAM1 EEPROM | Calibration | — | module EEPROM | 1 | I2C | 4-0050 | cam_cal config + imgsensor 4-cell reads + live binding | PROVEN |
 | CAM2 | Rear sensor | Samsung | S5KJN1MAIN2 | 1 | MIPI | 2-0010 | Camera HAL | PROVEN |
 | CAM2 AF | VCM | DW9800W-class | main4_vcm | 1 | I2C | 2-000c | DT + HAL lens table + pw_seq + metadata | PROVEN |
-| CAM2 EEPROM | Calibration | — | — | 1 | I2C | 4-0050 | Kernel probe | PROVEN |
+| CAM2 EEPROM | Calibration | — | module EEPROM | 1 | I2C | 2-0050 | cam_cal config + imgsensor eeprom_info + live binding (retracted: was 4-0050) | PROVEN |
 | CAM3 | Rear sensor | OmniVision | OV64B | 1 | MIPI | 4-0020 | Camera HAL | PROVEN |
 | CAM3 AF | VCM | DW9800W-class | main2_vcm | 1 | I2C | 4-000c | DT + HAL lens table + pw_seq + metadata | PROVEN |
 | CAM3 OIS | Stabilizer | Dahua | DW9781C | 1 | I2C | 4-000e | Kernel probe | PROVEN |
-| CAM3 EEPROM | Calibration | — | — | 1+ | I2C | 2-0050, 4-0051 | Kernel probe | PROVEN |
+| CAM3 EEPROM | Calibration | — | module EEPROM | 1 | I2C | 4-0053 (DT client 4-0051) | cam_cal config (0xA6) + g_camCalList + live binding (retracted: was 2-0050, 4-0051) | PROVEN |
 | Thermal Cam | Imaging module | ThermoVue | T2 (640×512, 12 µm) | 1 | USB | I2C 8-003c | official spec + APK + driver | PROVEN |
 | Battery | Fuel gauge | MediaTek | MT6375 | 1 | I2C | 5-0034 | Kernel probe | PROVEN |
 | Battery | Fuel gauge | SH | SH366003 | 1 | I2C | 9-0055 | Kernel probe | PROVEN |

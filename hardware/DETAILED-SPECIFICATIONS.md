@@ -244,7 +244,7 @@ Official spec: **1.04″ AMOLED, 340 × 340 px, 60 Hz, 600 nits peak, Corning Go
 | **Interface** | MIPI CSI-2 (4 lanes) |
 | **I2C address** | `7-0020` (sensor0) |
 | **VCM (AF)** | DW9800W-class at `7-000c`, driver `main_vcm` (DT client `7-000a`; see `reverse-engineering/camera/vcm/`) |
-| **EEPROM** | `camera-eeprom0` at I2C `7-0051` |
+| **EEPROM** | `7-0050` (wire; DT client `camera-eeprom0` `7-0051`) (see `reverse-engineering/camera/eeprom/`) |
 | **Driver** | `SENSOR_DRVNAME_IMX989_MIPI_RAW` |
 | **Active array** | 4096 × 3072 |
 | **HDR** | Yes (via dual-gain or multi-frame) |
@@ -256,7 +256,7 @@ Official spec: **1.04″ AMOLED, 340 × 340 px, 60 Hz, 600 nits peak, Corning Go
 | **Stacked design** | Yes (Sony stacked CMOS) |
 
 **Evidence**: Camera HAL static info — exact driver name `SENSOR_DRVNAME_IMX989_MIPI_RAW`,
-I2C bus `7-0020` (sensor0), I2C `7-000c` (VCM wire address; DT client `7-000a`), `7-0051` (EEPROM).
+I2C bus `7-0020` (sensor0), I2C `7-000c` (VCM wire address; DT client `7-000a`), `7-0050` (EEPROM wire address; DT client `7-0051`).
 Web search: Sony IMX989 1-inch 50MP 1.6μm pixel pitch sensor.
 
 ### F.2 Camera 1 — Front: Samsung ISOCELL JN1
@@ -305,7 +305,7 @@ I2C `4-0010` (sensor1). Web search: Samsung ISOCELL JN1 50MP 0.64μm Smart ISO P
 | **Orientation** | 270° |
 | **I2C address** | `2-0010` (sensor2) |
 | **VCM (AF)** | DW9800W-class at `2-000c`, driver `main4_vcm` (see `reverse-engineering/camera/vcm/`) |
-| **EEPROM** | `camera-eeprom1` at I2C `4-0050` |
+| **EEPROM** | `2-0050` (`camera-eeprom2`) (see `reverse-engineering/camera/eeprom/`); *retracted: previously `camera-eeprom1` `4-0050` (front camera's)* |
 | **Driver** | `SENSOR_DRVNAME_S5KJN1MAIN2_MIPI_RAW` |
 
 **Evidence**: Camera HAL static info, I2C bus enumeration.
@@ -329,7 +329,7 @@ I2C `4-0010` (sensor1). Web search: Samsung ISOCELL JN1 50MP 0.64μm Smart ISO P
 | **Orientation** | 270° |
 | **I2C address** | `4-0020` (sensor4) |
 | **VCM (AF)** | DW9800W-class at `4-000c`, driver `main2_vcm` (see `reverse-engineering/camera/vcm/`) |
-| **EEPROM** | `camera-eeprom2` at I2C `2-0050`, `camera-eeprom4` at I2C `4-0051` |
+| **EEPROM** | `4-0053` (wire 0xA6; DT client `camera-eeprom4` `4-0051`), AF data only (see `reverse-engineering/camera/eeprom/`); *retracted: previously `camera-eeprom2` + `camera-eeprom4`* |
 | **Driver** | `SENSOR_DRVNAME_OV64B_MIPI_RAW` |
 | **HDR** | Yes (via multi-frame) |
 | **Max frame rate** | 15 fps @ 64MP, higher @ binned |
