@@ -194,7 +194,7 @@ Ulefone official spec sheet, GSMArena.
 | RAW | Yes (RAW capability + vendor RAW format in stream configs) |
 | Hardware level | 3 (top level, Android 14+) |
 | I2C address | `7-0020` (sensor0) |
-| VCM (AF) | `main_vcm` at I2C `7-000a` (PDAF) |
+| VCM (AF) | DW9800W-class at `7-000c`, driver `main_vcm` (DT client `7-000a` is a placeholder; wire address 0x0C set from the HAL lens table) |
 | EEPROM | `camera-eeprom0` at I2C `7-0051` |
 | Confidence | PROVEN (driver + physical size + 1.6 µm pitch all match IMX989) |
 
@@ -240,7 +240,7 @@ unit**: IMX989; marketing label likely wrong or refers to a different production
 | Flash | Yes (`torchModeStatus:AVAILABLE_OFF`) |
 | OIS | Not exposed in HAL (`[0]`) |
 | I2C address | `2-0010` (sensor2) |
-| VCM (AF) | `main2_vcm` at I2C `4-000b` |
+| VCM (AF) | DW9800W-class at `2-000c`, driver `main4_vcm` (DT client `2-000d`) (see `reverse-engineering/camera/vcm/`) |
 | EEPROM | `camera-eeprom1` at I2C `4-0050` |
 | Note | HAL reports physical size 13.107×9.830 mm — identical to cam0; treated as a tuning-DB default (a 117° ultra-wide on a 13 mm sensor is implausible) |
 | Confidence | PROVEN |
@@ -263,7 +263,7 @@ unit**: IMX989; marketing label likely wrong or refers to a different production
 | Flash | Yes; **4 IR illuminator LEDs** (official, GSMArena) for night-vision mode |
 | OIS | Hardware motor present (DW9781C, I2C `4-000e`) — **not exposed** in HAL (`[0]`), EIS-only |
 | I2C address | `4-0020` (sensor4) |
-| VCM (AF) | `main4_vcm` at I2C `2-000d` |
+| VCM (AF) | DW9800W-class at `4-000c`, driver `main2_vcm` (DT client `4-000b`) (see `reverse-engineering/camera/vcm/`) |
 | EEPROM | `camera-eeprom2` at I2C `2-0050`, `camera-eeprom4` at I2C `4-0051` |
 | Confidence | PROVEN |
 
@@ -278,7 +278,7 @@ unit**: IMX989; marketing label likely wrong or refers to a different production
 | Confidence | PROVEN (motor present + HAL disabled) |
 
 **Evidence**: Camera HAL `camerahalserver` static info — 4 physical devices, exact driver names.
-I2C bus enumeration: 4 `imgsensor` bindings, 4 camera EEPROMs, 4 VCM (AF) drivers, 1 OIS.
+I2C bus enumeration: 4 `imgsensor` bindings, 4 camera EEPROMs, 3 VCM (AF) clients (`main_vcm`, `main2_vcm`, `main4_vcm`; `main3_vcm`/`sub_vcm` load but have no client), 1 OIS. Camera 1 (front) is fixed focus.
 
 ---
 
@@ -347,11 +347,13 @@ blue otherwise, from the `3rd-gauge` fuel gauge.
 
 ### Camera VCM (AF) Motors
 
-| I2C Address | Driver | Purpose |
-|---|---|---|
-| `7-000a` | `main_vcm` | Camera 0 (IMX989) |
-| `4-000b` | `main2_vcm` | Camera 2 (S5KJN1MAIN2) |
-| `2-000d` | `main4_vcm` | Camera 3 (OV64B) |
+| Wire address | DT client | Driver | Purpose |
+|---|---|---|---|
+| `7-000c` | `7-000a` | `main_vcm` | Camera 0 (IMX989) |
+| `2-000c` | `2-000d` | `main4_vcm` | Camera 2 (S5KJN1MAIN2) |
+| `4-000c` | `4-000b` | `main2_vcm` | Camera 3 (OV64B) |
+
+All three are DW9800W command-set actuators (lens_id 0x9800); the DT `reg` values only create distinct I2C clients — the driver retargets to 0x0C from the HAL lens table. Corrected 2026-10-06: the earlier table swapped `main2_vcm`/`main4_vcm` (see `reverse-engineering/camera/vcm/`).
 
 ### OIS
 
@@ -891,14 +893,14 @@ See `../docs/known-unknowns.md` for the full list. Key gaps (after 2026-08-31 fa
 | Rear Display | Panel | — | CO5300 | 1 | SPI0 | spi0.0 | Kernel probe | PROVEN |
 | Rear Touch | Controller | Hynitron | hyn_ts | 1 | I2C | 0-0015 | Kernel probe | PROVEN |
 | CAM0 | Rear sensor | Sony | IMX989 | 1 | MIPI | 7-0020 | Camera HAL | PROVEN |
-| CAM0 AF | VCM | — | main_vcm | 1 | I2C | 7-000a | Kernel probe | PROVEN |
+| CAM0 AF | VCM | DW9800W-class | main_vcm | 1 | I2C | 7-000c | DT + HAL lens table + pw_seq + metadata | PROVEN |
 | CAM0 EEPROM | Calibration | — | — | 1 | I2C | 7-0051 | Kernel probe | PROVEN |
 | CAM1 | Front sensor | Samsung | S5KJN1 | 1 | MIPI | 4-0010 | Camera HAL | PROVEN |
 | CAM2 | Rear sensor | Samsung | S5KJN1MAIN2 | 1 | MIPI | 2-0010 | Camera HAL | PROVEN |
-| CAM2 AF | VCM | — | main2_vcm | 1 | I2C | 4-000b | Kernel probe | PROVEN |
+| CAM2 AF | VCM | DW9800W-class | main4_vcm | 1 | I2C | 2-000c | DT + HAL lens table + pw_seq + metadata | PROVEN |
 | CAM2 EEPROM | Calibration | — | — | 1 | I2C | 4-0050 | Kernel probe | PROVEN |
 | CAM3 | Rear sensor | OmniVision | OV64B | 1 | MIPI | 4-0020 | Camera HAL | PROVEN |
-| CAM3 AF | VCM | — | main4_vcm | 1 | I2C | 2-000d | Kernel probe | PROVEN |
+| CAM3 AF | VCM | DW9800W-class | main2_vcm | 1 | I2C | 4-000c | DT + HAL lens table + pw_seq + metadata | PROVEN |
 | CAM3 OIS | Stabilizer | Dahua | DW9781C | 1 | I2C | 4-000e | Kernel probe | PROVEN |
 | CAM3 EEPROM | Calibration | — | — | 1+ | I2C | 2-0050, 4-0051 | Kernel probe | PROVEN |
 | Thermal Cam | Imaging module | ThermoVue | T2 (640×512, 12 µm) | 1 | USB | I2C 8-003c | official spec + APK + driver | PROVEN |

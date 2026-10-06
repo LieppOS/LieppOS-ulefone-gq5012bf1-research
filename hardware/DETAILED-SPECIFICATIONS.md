@@ -243,7 +243,7 @@ Official spec: **1.04″ AMOLED, 340 × 340 px, 60 Hz, 600 nits peak, Corning Go
 | **Video recording** | 4K@60fps, 1080p@240fps (TBD exact) |
 | **Interface** | MIPI CSI-2 (4 lanes) |
 | **I2C address** | `7-0020` (sensor0) |
-| **VCM (AF)** | `main_vcm` at I2C `7-000a` |
+| **VCM (AF)** | DW9800W-class at `7-000c`, driver `main_vcm` (DT client `7-000a`; see `reverse-engineering/camera/vcm/`) |
 | **EEPROM** | `camera-eeprom0` at I2C `7-0051` |
 | **Driver** | `SENSOR_DRVNAME_IMX989_MIPI_RAW` |
 | **Active array** | 4096 × 3072 |
@@ -256,7 +256,7 @@ Official spec: **1.04″ AMOLED, 340 × 340 px, 60 Hz, 600 nits peak, Corning Go
 | **Stacked design** | Yes (Sony stacked CMOS) |
 
 **Evidence**: Camera HAL static info — exact driver name `SENSOR_DRVNAME_IMX989_MIPI_RAW`,
-I2C bus `7-0020` (sensor0), I2C `7-000a` (VCM), `7-0051` (EEPROM).
+I2C bus `7-0020` (sensor0), I2C `7-000c` (VCM wire address; DT client `7-000a`), `7-0051` (EEPROM).
 Web search: Sony IMX989 1-inch 50MP 1.6μm pixel pitch sensor.
 
 ### F.2 Camera 1 — Front: Samsung ISOCELL JN1
@@ -304,7 +304,7 @@ I2C `4-0010` (sensor1). Web search: Samsung ISOCELL JN1 50MP 0.64μm Smart ISO P
 | **Facing** | Back |
 | **Orientation** | 270° |
 | **I2C address** | `2-0010` (sensor2) |
-| **VCM (AF)** | `main2_vcm` at I2C `4-000b` |
+| **VCM (AF)** | DW9800W-class at `2-000c`, driver `main4_vcm` (see `reverse-engineering/camera/vcm/`) |
 | **EEPROM** | `camera-eeprom1` at I2C `4-0050` |
 | **Driver** | `SENSOR_DRVNAME_S5KJN1MAIN2_MIPI_RAW` |
 
@@ -328,7 +328,7 @@ I2C `4-0010` (sensor1). Web search: Samsung ISOCELL JN1 50MP 0.64μm Smart ISO P
 | **Facing** | Back |
 | **Orientation** | 270° |
 | **I2C address** | `4-0020` (sensor4) |
-| **VCM (AF)** | `main4_vcm` at I2C `2-000d` |
+| **VCM (AF)** | DW9800W-class at `4-000c`, driver `main2_vcm` (see `reverse-engineering/camera/vcm/`) |
 | **EEPROM** | `camera-eeprom2` at I2C `2-0050`, `camera-eeprom4` at I2C `4-0051` |
 | **Driver** | `SENSOR_DRVNAME_OV64B_MIPI_RAW` |
 | **HDR** | Yes (via multi-frame) |
