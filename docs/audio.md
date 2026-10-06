@@ -10,7 +10,7 @@ Last verified: 2026-09-25
   MT6878 AFE at `soc/mt6878-afe-pcm@11050000`.
 - The internal codec/headset block is **MT6369** under SPMI
   `second_pmic@5/mt6369codec`, with a separate MT6369 `accdet` path. I2C
-  `5-0018` is not this codec: it is the separate Richtek RT5133 camera-LDO path.
+  `5-0018` is not this codec: it is the separate Richtek RT5133 camera-LDO path (MT6878 base-DTB declaration only: the client is not bound and no chip answers on GQ5012BF1; camera LDO is WL2864C `11-0029` — see `reverse-engineering/power/rt5133/`).
 - The loudspeaker amplifier is an **Awinic AW88394** at I2C `6-0034` (chip ID
   `0x2049`).
 

@@ -566,7 +566,7 @@ web search: ST21NFCL Arm core NFC CLF.
 | **Sample rates** | Source dependent; do not infer acoustic capability from generic AFE rates |
 
 **Evidence**: live DT, stock mixer/AudioParam configuration and ALSA card. I2C
-`5-0018` is RT5133, a separate camera LDO, not the codec.
+`5-0018` is RT5133, a separate camera LDO, not the codec (MT6878 base-DTB declaration only: the client is not bound and no chip answers on GQ5012BF1; camera LDO is WL2864C `11-0029` — see `reverse-engineering/power/rt5133/`).
 
 ### K.2 Speaker Amplifier
 

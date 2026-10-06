@@ -594,7 +594,7 @@ Ulefone official spec sheet (full band list).
 
 **Evidence**: live DT `second_pmic@5/mt6369codec`, stock mixer/AudioParam files,
 HAL MicInfo selection branch, and ALSA `mt6878-mt6369 Headset Jack`. MT6369 is
-an SPMI sub-PMIC; I2C `5-0018` is the separate RT5133 camera LDO.
+an SPMI sub-PMIC; I2C `5-0018` is the separate RT5133 camera LDO (MT6878 base-DTB declaration only: the client is not bound and no chip answers on GQ5012BF1; camera LDO is WL2864C `11-0029` — see `reverse-engineering/power/rt5133/`).
 
 ---
 
