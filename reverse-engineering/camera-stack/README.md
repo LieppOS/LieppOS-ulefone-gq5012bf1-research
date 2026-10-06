@@ -116,6 +116,7 @@ talks to (`i2c_addr_table` write-IDs >>1; the DT `reg` only names the node).
 | power (stock pw_seq, µV) | AVDD 2.8 (LDO3), AVDD2 1.8 (GPIO184 fixed), AFVDD 2.8 (LDO5), DOVDD 1.8 (LDO7), DVDD 1.1 (LDO2) | DOVDD 1.8 (LDO7), DVDD 1.2 (LDO1), AVDD 2.8 (LDO4), AVDD1 1.8 (GPIO76 fixed) | DOVDD 1.8 (LDO7), DVDD 1.2 (LDO1), AVDD 2.8 (LDO4), AVDD1 1.8 (`camera2-common-avdd1`, also GPIO76), AFVDD 2.8 (LDO6) | AVDD 2.8 (LDO4), AFVDD 2.8 (LDO5), DVDD 1.1 (LDO1), DOVDD 1.8 (LDO7) |
 | AF actuator (userspace lens table) | `main_vcm` i2c-7 0x0a | none (fixed focus) | `main4_vcm` i2c-2 0x0d | `main2_vcm` i2c-4 0x0b |
 | EEPROM node (DT) | eeprom0 i2c-7 0x51 | eeprom1 i2c-4 0x50 | eeprom2 i2c-2 0x50 | eeprom4 i2c-4 0x51 |
+| EEPROM wire address (cam_cal config) | i2c-7 0x50 | i2c-4 0x50 | i2c-2 0x50 | i2c-4 0x53 (0xA6) |
 | kernel QSC/cali hook | `set_sensor_cali` (eeprom_info, 1) | none | `set_sensor_cali` (eeprom_info, 1) | none (donor had one; removed) |
 | flash | AW36515/18 group (hasFlashUnit 1) | none | hasFlashUnit 1 | hasFlashUnit 1 |
 | PDAF (static_ctx) | CAMSV_QPD | NA | CAMSV (pd_info on preview) | CAMSV type, no mode has pdaf_cap |
