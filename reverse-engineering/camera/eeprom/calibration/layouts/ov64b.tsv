@@ -1,0 +1,9 @@
+offset	length	field	encoding	checksum	parser (stock function)	consumer	mandatory	confidence
+0x0000	4	header magic (layout identity)	u32 LE == 0x77006901 at I2C 0x53	none (identity compare only)	layout_check (direct I2C read, bypasses preload)	kernel layout selection	MANDATORY: mismatch -> no layout -> every command returns CamCalReturnErr	proven (stock data + code)
+0x076b	2	AF DAC -> S2aAf[1] (HAL "AFMacro" slot)	u16 LE, raw DAC code (no scaling)	none; validity: S2aAf[0] <= S2aAf[1] else yft_otp_state=0 (data still returned)	do_2a_gain_ov64b	HAL 3A AF (macro end of the 0..1023 VCM range)	optional	proven (offset/slot); slot meaning per HAL label
+0x076d	2	AF DAC -> S2aAf[0] (HAL "AFInf" slot)	u16 LE, raw DAC code	same check	do_2a_gain_ov64b	HAL 3A AF (infinity end)	optional	proven (offset/slot); slot meaning per HAL label
+0x0000	0x1500	preload window	-	-	read_data preload (enable_preload=1, preload_size 0x1500): one 0x1500-byte read per device index, served from RAM afterwards	-	-	proven
+0x001d	0x74c	LSC (declared)	-	-	do_single_lsc_ov64b exists but layout Include=0 -> never called	none	not used	proven
+0x0820	0x5f9	PDAF (declared)	-	-	do_pdaf, Include=0	none	not used	proven
+0x0fae	0x550	stereo (declared)	-	-	do_stereo_data, Include=0	none	not used	proven
+-	-	AWB	-	-	not read (ov64b 2A parser: S2aBitEn=2 AF only, S2aAfBitflagEn=0)	-	absent	proven

@@ -1,0 +1,12 @@
+offset	length	field	encoding	checksum	parser (stock function)	consumer	mandatory	confidence
+0x0000	4	header magic (layout identity)	u32 LE == 0x77006901	none (identity compare only)	layout_check (direct I2C read, bypasses preload)	kernel layout selection	MANDATORY: mismatch -> no layout -> every command returns CamCalReturnErr	proven (stock data + code)
+0x000a	1	(byte read, value discarded)	-	none	do_2a_gain_s5kjn1 (dead read into a local that is overwritten)	none	-	proven (stock quirk)
+0x000b	8	AWB unit gain (5100K)	4 x u16 LE: R, B, Gr, Gb (bits 0-15, 16-31, 32-47, 48-63); G=(Gr+Gb+1)>>1	none; validity: all of value,R,G,B != 0	do_2a_gain_s5kjn1	S2aAwb.rUnitGainu4R/G/B = (max(R,G,B)*512 + c/2)/c; rValueR/Gr/Gb/B (u8, truncated)	optional (zero -> unit gain not set, rGainSetNum stays 0)	proven
+0x0013	8	AWB golden gain (5100K)	same as unit gain	none; validity: nonzero	do_2a_gain_s5kjn1	S2aAwb.rGoldGainu4R/G/B; rGoldenR/Gr/Gb/B (u8, truncated)	optional	proven
+0x0007	0xe	(3A_GAIN table item start/size - metadata only)	-	-	ignored by the ODM 2A parser (hard-coded offsets)	-	-	proven
+0x001d	0x74c (1868)	LSC (MTK slim shading table)	raw bytes copied into SingleLsc.LscTable.MtkLcsData from SlimLscType (+4); kernel forces MtkLscType=2, PixId=8, TableSize=0x74c, TableRotation=0	none	do_single_lsc_s5kjn1	HAL LSC manager (libcam.hal3a.lscMgrApi.so loadEEPromDataFlow)	optional (short read -> CAM_CAL_ERR_NO_SHADING)	proven
+0x0d4f	3502	4-cell XTC	raw	none	imgsensor read_4cell_from_eeprom (closed scope)	HAL via SENSOR_FEATURE_GET_4CELL_DATA	optional	proven (stock imgsensor)
+0x1afd	768	4-cell sensor XTC	raw	none	imgsensor read_4cell_from_eeprom	HAL	optional	proven
+0x1dfd	4000	4-cell PDXTC	raw	none	imgsensor read_4cell_from_eeprom	HAL	optional	proven
+0x2d9d	626	4-cell SW GGC	raw	none	imgsensor read_4cell_from_eeprom	HAL	optional	proven
+-	-	AF / PDAF	-	-	not in layout (PDAF item Include=0; 2A parser sets S2aBitEn=1 AWB-only)	-	absent (fixed-focus module)	proven

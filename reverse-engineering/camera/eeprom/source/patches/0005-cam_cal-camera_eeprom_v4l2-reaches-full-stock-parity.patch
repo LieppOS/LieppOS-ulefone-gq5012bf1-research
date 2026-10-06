@@ -1,0 +1,820 @@
+From 133c6c15184a92aaee11d73800923d507ca0f9e8 Mon Sep 17 00:00:00 2001
+From: re <re@local>
+Date: Sat, 3 Oct 2026 01:09:33 +0300
+Subject: [PATCH 5/5] cam_cal: camera_eeprom_v4l2 reaches full stock parity
+ (126/126 funcs, 127/127 data)
+
+---
+ .../custom/layout/imx616_cust_eeprom.c        | 107 +++++++++++++-
+ .../custom/layout/ova0b40_cust_eeprom.c       | 107 +++++++++++++-
+ .../custom/layout/ova0b40cts_cust_eeprom.c    | 107 +++++++++++++-
+ .../custom/layout/s5khp2sp_cust_eeprom.c      |   4 +-
+ .../custom/layout/s5khp3sp03_cust_eeprom.c    |  53 ++++++-
+ .../custom/layout/s5khp3sp23_cust_eeprom.c    |  53 ++++++-
+ .../custom/layout/s5khp3sp_cust_eeprom.c      | 137 +++++++++++++++++-
+ .../custom/layout/s5khp3spcts_cust_eeprom.c   | 137 +++++++++++++++++-
+ 8 files changed, 696 insertions(+), 9 deletions(-)
+
+diff --git a/cam_cal/src_v4l2/custom/layout/imx616_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/imx616_cust_eeprom.c
+index 8378f63..9ce4926 100644
+--- a/cam_cal/src_v4l2/custom/layout/imx616_cust_eeprom.c
++++ b/cam_cal/src_v4l2/custom/layout/imx616_cust_eeprom.c
+@@ -113,7 +113,112 @@ static unsigned int do_2a_gain_imx616(struct EEPROM_DRV_FD_DATA *pdata,
+ 		unsigned int start_addr, unsigned int block_size,
+ 		unsigned int *pGetSensorCalData)
+ {
+-	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned long long CalGain = 0, FacGain = 0;
++	unsigned short AFInf = 0;
++	int tempMax = 0;
++	int CalR = 1, CalGr = 1, CalGb = 1, CalG = 1, CalB = 1;
++	int FacR = 1, FacGr = 1, FacGb = 1, FacG = 1, FacB = 1;
++
++	printk("do_2a_gain_imx616 block_size=%d sensor_id=%x\n",
++		block_size, pCamCalData->sensorID);
++	memset(&pCamCalData->Single2A, 0,
++		sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++
++	pCamCalData->Single2A.S2aVer = 1;
++	pCamCalData->Single2A.S2aBitEn = 1;
++	pCamCalData->Single2A.S2aAfBitflagEn = 0x0c;
++	printk("do_2a_gain_imx616 S2aBitEn=0x%02x",
++		pCamCalData->Single2A.S2aBitEn);
++
++	pCamCalData->Single2A.S2aAwb.rGainSetNum = 0;
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x0a, 1, (unsigned char *)&AFInf);
++	printk("do_2a_gain_imx616  AWB valid=%d \n", AFInf);
++	printk("do_2a_gain_imx616 5100K AWB\n");
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x10, 4, (unsigned char *)&CalGain);
++	if (read_data_size > 0) {
++		printk("do_2a_gain_imx616 Read CalGain OK %x\n",
++			read_data_size);
++		CalR = CalGain & 0xff;
++		CalGr = (CalGain >> 8) & 0xff;
++		CalGb = (CalGain >> 16) & 0xff;
++		CalB = (CalGain >> 24) & 0xff;
++		CalG = (CalGr + CalGb + 1) >> 1;
++		tempMax = max(max(CalR, CalG), CalB);
++		printk("UnitR:%d, UnitG:%d, UnitB:%d, New Unit Max=%d",
++			CalR, CalG, CalB, tempMax);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (CalGain && CalR && CalG && CalB) {
++		pCamCalData->Single2A.S2aAwb.rGainSetNum++;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4R =
++			(tempMax * 512 + (CalR >> 1)) / CalR;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4G =
++			(tempMax * 512 + (CalG >> 1)) / CalG;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4B =
++			(tempMax * 512 + (CalB >> 1)) / CalB;
++	}
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x14, 4, (unsigned char *)&FacGain);
++	if (read_data_size > 0) {
++		printk("Read FacGain OK\n");
++		FacR = FacGain & 0xff;
++		FacGr = (FacGain >> 8) & 0xff;
++		FacGb = (FacGain >> 16) & 0xff;
++		FacB = (FacGain >> 24) & 0xff;
++		FacG = (FacGr + FacGb + 1) >> 1;
++		tempMax = max(max(FacR, FacG), FacB);
++		printk("GoldenR:%d, GoldenG:%d, GoldenB:%d, New Golden Max=%d",
++			FacR, FacG, FacB, tempMax);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (FacGain && FacR && FacG && FacB) {
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4R =
++			(tempMax * 512 + (FacR >> 1)) / FacR;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4G =
++			(tempMax * 512 + (FacG >> 1)) / FacG;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4B =
++			(tempMax * 512 + (FacB >> 1)) / FacB;
++	}
++
++	pCamCalData->Single2A.S2aAwb.rValueR = CalR;
++	pCamCalData->Single2A.S2aAwb.rValueGr = CalGr;
++	pCamCalData->Single2A.S2aAwb.rValueGb = CalGb;
++	pCamCalData->Single2A.S2aAwb.rValueB = CalB;
++	pCamCalData->Single2A.S2aAwb.rGoldenR = FacR;
++	pCamCalData->Single2A.S2aAwb.rGoldenGr = FacGr;
++	pCamCalData->Single2A.S2aAwb.rGoldenGb = FacGb;
++	pCamCalData->Single2A.S2aAwb.rGoldenB = FacB;
++
++	printk("======================AWB CAM_CAL==================\n");
++	printk("AWB Calibration @5100K\n");
++	printk("[CalGain] = 0x%llx\n", CalGain);
++	printk("[FacGain] = 0x%llx\n", FacGain);
++	printk("[rCalGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4R);
++	printk("[rCalGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4G);
++	printk("[rCalGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4B);
++	printk("[rFacGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4R);
++	printk("[rFacGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4G);
++	printk("[rFacGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4B);
++
++	return err;
+ }
+ 
+ static unsigned int do_lens_id_imx616(struct EEPROM_DRV_FD_DATA *pdata,
+diff --git a/cam_cal/src_v4l2/custom/layout/ova0b40_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/ova0b40_cust_eeprom.c
+index 8243448..ed7f1cc 100644
+--- a/cam_cal/src_v4l2/custom/layout/ova0b40_cust_eeprom.c
++++ b/cam_cal/src_v4l2/custom/layout/ova0b40_cust_eeprom.c
+@@ -81,7 +81,112 @@ static unsigned int do_2a_gain_ova0b40(struct EEPROM_DRV_FD_DATA *pdata,
+ 		unsigned int start_addr, unsigned int block_size,
+ 		unsigned int *pGetSensorCalData)
+ {
+-	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned long long CalGain = 0, FacGain = 0;
++	unsigned short AFInf = 0, AFMacro = 0;
++	int tempMax = 0;
++	int CalR = 1, CalGr = 1, CalGb = 1, CalG = 1, CalB = 1;
++	int FacR = 1, FacGr = 1, FacGb = 1, FacG = 1, FacB = 1;
++
++	memset(&pCamCalData->Single2A, 0,
++		sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++
++	pCamCalData->Single2A.S2aVer = 1;
++	pCamCalData->Single2A.S2aBitEn = 3;
++	pCamCalData->Single2A.S2aAfBitflagEn = 0x0c;
++
++	pCamCalData->Single2A.S2aAwb.rGainSetNum = 0;
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x0a, 1, (unsigned char *)&AFInf);
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x0b, 8, (unsigned char *)&CalGain);
++	if (read_data_size > 0) {
++		CalR = CalGain & 0xffff;
++		CalB = (CalGain >> 16) & 0xffff;
++		CalGr = (CalGain >> 32) & 0xffff;
++		CalGb = (CalGain >> 48) & 0xffff;
++		CalG = (CalGr + CalGb + 1) >> 1;
++		tempMax = max(max(CalR, CalG), CalB);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (CalGain && CalR && CalG && CalB) {
++		pCamCalData->Single2A.S2aAwb.rGainSetNum++;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4R =
++			(tempMax * 512 + (CalR >> 1)) / CalR;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4G =
++			(tempMax * 512 + (CalG >> 1)) / CalG;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4B =
++			(tempMax * 512 + (CalB >> 1)) / CalB;
++	}
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x13, 8, (unsigned char *)&FacGain);
++	if (read_data_size > 0) {
++		FacR = FacGain & 0xffff;
++		FacB = (FacGain >> 16) & 0xffff;
++		FacGr = (FacGain >> 32) & 0xffff;
++		FacGb = (FacGain >> 48) & 0xffff;
++		FacG = (FacGr + FacGb + 1) >> 1;
++		tempMax = max(max(FacR, FacG), FacB);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (FacGain && FacR && FacG && FacB) {
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4R =
++			(tempMax * 512 + (FacR >> 1)) / FacR;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4G =
++			(tempMax * 512 + (FacG >> 1)) / FacG;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4B =
++			(tempMax * 512 + (FacB >> 1)) / FacB;
++	}
++
++	pCamCalData->Single2A.S2aAwb.rValueR = CalR;
++	pCamCalData->Single2A.S2aAwb.rValueGr = CalGr;
++	pCamCalData->Single2A.S2aAwb.rValueGb = CalGb;
++	pCamCalData->Single2A.S2aAwb.rValueB = CalB;
++	pCamCalData->Single2A.S2aAwb.rGoldenR = FacR;
++	pCamCalData->Single2A.S2aAwb.rGoldenGr = FacGr;
++	pCamCalData->Single2A.S2aAwb.rGoldenGb = FacGb;
++	pCamCalData->Single2A.S2aAwb.rGoldenB = FacB;
++
++
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x76a, 1, (unsigned char *)&AFInf);
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76d, 2, (unsigned char *)&AFInf);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76b, 2, (unsigned char *)&AFMacro);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	pCamCalData->Single2A.S2aAf[0] = AFInf;
++	pCamCalData->Single2A.S2aAf[1] = AFMacro;
++
++
++	return err;
+ }
+ 
+ static unsigned int do_lens_id_ova0b40(struct EEPROM_DRV_FD_DATA *pdata,
+diff --git a/cam_cal/src_v4l2/custom/layout/ova0b40cts_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/ova0b40cts_cust_eeprom.c
+index 5fabe3e..f320c7f 100644
+--- a/cam_cal/src_v4l2/custom/layout/ova0b40cts_cust_eeprom.c
++++ b/cam_cal/src_v4l2/custom/layout/ova0b40cts_cust_eeprom.c
+@@ -84,7 +84,112 @@ static unsigned int do_2a_gain_ova0b40cts(struct EEPROM_DRV_FD_DATA *pdata,
+ 		unsigned int start_addr, unsigned int block_size,
+ 		unsigned int *pGetSensorCalData)
+ {
+-	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned long long CalGain = 0, FacGain = 0;
++	unsigned short AFInf = 0, AFMacro = 0;
++	int tempMax = 0;
++	int CalR = 1, CalGr = 1, CalGb = 1, CalG = 1, CalB = 1;
++	int FacR = 1, FacGr = 1, FacGb = 1, FacG = 1, FacB = 1;
++
++	memset(&pCamCalData->Single2A, 0,
++		sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++
++	pCamCalData->Single2A.S2aVer = 1;
++	pCamCalData->Single2A.S2aBitEn = 3;
++	pCamCalData->Single2A.S2aAfBitflagEn = 0x0c;
++
++	pCamCalData->Single2A.S2aAwb.rGainSetNum = 0;
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x0a, 1, (unsigned char *)&AFInf);
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x0b, 8, (unsigned char *)&CalGain);
++	if (read_data_size > 0) {
++		CalR = CalGain & 0xffff;
++		CalB = (CalGain >> 16) & 0xffff;
++		CalGr = (CalGain >> 32) & 0xffff;
++		CalGb = (CalGain >> 48) & 0xffff;
++		CalG = (CalGr + CalGb + 1) >> 1;
++		tempMax = max(max(CalR, CalG), CalB);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (CalGain && CalR && CalG && CalB) {
++		pCamCalData->Single2A.S2aAwb.rGainSetNum++;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4R =
++			(tempMax * 512 + (CalR >> 1)) / CalR;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4G =
++			(tempMax * 512 + (CalG >> 1)) / CalG;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4B =
++			(tempMax * 512 + (CalB >> 1)) / CalB;
++	}
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x13, 8, (unsigned char *)&FacGain);
++	if (read_data_size > 0) {
++		FacR = FacGain & 0xffff;
++		FacB = (FacGain >> 16) & 0xffff;
++		FacGr = (FacGain >> 32) & 0xffff;
++		FacGb = (FacGain >> 48) & 0xffff;
++		FacG = (FacGr + FacGb + 1) >> 1;
++		tempMax = max(max(FacR, FacG), FacB);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (FacGain && FacR && FacG && FacB) {
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4R =
++			(tempMax * 512 + (FacR >> 1)) / FacR;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4G =
++			(tempMax * 512 + (FacG >> 1)) / FacG;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4B =
++			(tempMax * 512 + (FacB >> 1)) / FacB;
++	}
++
++	pCamCalData->Single2A.S2aAwb.rValueR = CalR;
++	pCamCalData->Single2A.S2aAwb.rValueGr = CalGr;
++	pCamCalData->Single2A.S2aAwb.rValueGb = CalGb;
++	pCamCalData->Single2A.S2aAwb.rValueB = CalB;
++	pCamCalData->Single2A.S2aAwb.rGoldenR = FacR;
++	pCamCalData->Single2A.S2aAwb.rGoldenGr = FacGr;
++	pCamCalData->Single2A.S2aAwb.rGoldenGb = FacGb;
++	pCamCalData->Single2A.S2aAwb.rGoldenB = FacB;
++
++
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x76a, 1, (unsigned char *)&AFInf);
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76d, 2, (unsigned char *)&AFInf);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76b, 2, (unsigned char *)&AFMacro);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	pCamCalData->Single2A.S2aAf[0] = 0x14;
++	pCamCalData->Single2A.S2aAf[1] = AFMacro;
++
++
++	return err;
+ }
+ 
+ static unsigned int do_pdaf_ova0b40cts(struct EEPROM_DRV_FD_DATA *pdata,
+diff --git a/cam_cal/src_v4l2/custom/layout/s5khp2sp_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/s5khp2sp_cust_eeprom.c
+index 1414db1..fda6c4d 100644
+--- a/cam_cal/src_v4l2/custom/layout/s5khp2sp_cust_eeprom.c
++++ b/cam_cal/src_v4l2/custom/layout/s5khp2sp_cust_eeprom.c
+@@ -226,7 +226,7 @@ static unsigned int do_2a_gain_s5khp2sp(struct EEPROM_DRV_FD_DATA *pdata,
+ 	printk("s5khp2sp do_2a_gain_s5khp2sp  AF valid=%d \n", AFInf);
+ 
+ 	read_data_size = read_data(pdata, pCamCalData->sensorID,
+-		pCamCalData->deviceID, 0x76b, 2, (unsigned char *)&AFMacro);
++		pCamCalData->deviceID, 0x76d, 2, (unsigned char *)&AFInf);
+ 	if (read_data_size > 0)
+ 		err = CAM_CAL_ERR_NO_ERR;
+ 	else {
+@@ -234,7 +234,7 @@ static unsigned int do_2a_gain_s5khp2sp(struct EEPROM_DRV_FD_DATA *pdata,
+ 		show_cmd_error_log(pCamCalData->Command);
+ 	}
+ 	read_data_size = read_data(pdata, pCamCalData->sensorID,
+-		pCamCalData->deviceID, 0x76d, 2, (unsigned char *)&AFInf);
++		pCamCalData->deviceID, 0x76b, 2, (unsigned char *)&AFMacro);
+ 	if (read_data_size > 0)
+ 		err = CAM_CAL_ERR_NO_ERR;
+ 	else {
+diff --git a/cam_cal/src_v4l2/custom/layout/s5khp3sp03_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/s5khp3sp03_cust_eeprom.c
+index 043993a..db9eb9d 100644
+--- a/cam_cal/src_v4l2/custom/layout/s5khp3sp03_cust_eeprom.c
++++ b/cam_cal/src_v4l2/custom/layout/s5khp3sp03_cust_eeprom.c
+@@ -116,7 +116,58 @@ static unsigned int do_2a_gain_s5khp3sp03(struct EEPROM_DRV_FD_DATA *pdata,
+ 		unsigned int start_addr, unsigned int block_size,
+ 		unsigned int *pGetSensorCalData)
+ {
+-	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned short AFInf = 0, AFMacro = 0;
++
++	printk("do_2a_gain_s5khp3sp03 block_size=%d sensor_id=%x\n",
++		block_size, pCamCalData->sensorID);
++	memset(&pCamCalData->Single2A, 0,
++		sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++
++	pCamCalData->Single2A.S2aVer = 1;
++	pCamCalData->Single2A.S2aBitEn = 2;
++	pCamCalData->Single2A.S2aAfBitflagEn = 0;
++	printk("do_2a_gain_s5khp3sp03 S2aBitEn=0x%02x",
++		pCamCalData->Single2A.S2aBitEn);
++
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x21, 1, (unsigned char *)&AFInf);
++	printk("do_2a_gain_s5khp3sp03  AF valid=%d \n", AFInf);
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x22, 2, (unsigned char *)&AFInf);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x24, 2, (unsigned char *)&AFMacro);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	AFInf = swab16(AFInf);
++	AFMacro = swab16(AFMacro);
++	pCamCalData->Single2A.S2aAf[0] = AFInf;
++	pCamCalData->Single2A.S2aAf[1] = AFMacro;
++
++	printk("======================AF CAM_CAL==================\n");
++	printk("[AFInf] = %d\n", AFInf);
++	printk("[AFMacro] = %d\n", AFMacro);
++	printk("======================AF CAM_CAL==================\n");
++
++	return err;
+ }
+ 
+ static unsigned int do_pdaf_s5khp3sp03(struct EEPROM_DRV_FD_DATA *pdata,
+diff --git a/cam_cal/src_v4l2/custom/layout/s5khp3sp23_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/s5khp3sp23_cust_eeprom.c
+index b10ea96..776b179 100644
+--- a/cam_cal/src_v4l2/custom/layout/s5khp3sp23_cust_eeprom.c
++++ b/cam_cal/src_v4l2/custom/layout/s5khp3sp23_cust_eeprom.c
+@@ -116,7 +116,58 @@ static unsigned int do_2a_gain_s5khp3sp23(struct EEPROM_DRV_FD_DATA *pdata,
+ 		unsigned int start_addr, unsigned int block_size,
+ 		unsigned int *pGetSensorCalData)
+ {
+-	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned short AFInf = 0, AFMacro = 0;
++
++	printk("do_2a_gain_s5khp3sp23 block_size=%d sensor_id=%x\n",
++		block_size, pCamCalData->sensorID);
++	memset(&pCamCalData->Single2A, 0,
++		sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++
++	pCamCalData->Single2A.S2aVer = 1;
++	pCamCalData->Single2A.S2aBitEn = 2;
++	pCamCalData->Single2A.S2aAfBitflagEn = 0;
++	printk("do_2a_gain_s5khp3sp23 S2aBitEn=0x%02x",
++		pCamCalData->Single2A.S2aBitEn);
++
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x76a, 1, (unsigned char *)&AFInf);
++	printk("do_2a_gain_s5khp3sp23  AF valid=%d \n", AFInf);
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x22, 2, (unsigned char *)&AFInf);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x24, 2, (unsigned char *)&AFMacro);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	AFInf = swab16(AFInf);
++	AFMacro = swab16(AFMacro);
++	pCamCalData->Single2A.S2aAf[0] = AFInf;
++	pCamCalData->Single2A.S2aAf[1] = AFMacro;
++
++	printk("======================AF CAM_CAL==================\n");
++	printk("xqadd00 [AFInf] = %d\n", AFInf);
++	printk("xqadd00 [AFMacro] = %d\n", AFMacro);
++	printk("======================AF CAM_CAL==================\n");
++
++	return err;
+ }
+ 
+ static unsigned int do_pdaf_s5khp3sp23(struct EEPROM_DRV_FD_DATA *pdata,
+diff --git a/cam_cal/src_v4l2/custom/layout/s5khp3sp_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/s5khp3sp_cust_eeprom.c
+index 94b6275..a79d883 100644
+--- a/cam_cal/src_v4l2/custom/layout/s5khp3sp_cust_eeprom.c
++++ b/cam_cal/src_v4l2/custom/layout/s5khp3sp_cust_eeprom.c
+@@ -116,7 +116,142 @@ static unsigned int do_2a_gain_s5khp3sp(struct EEPROM_DRV_FD_DATA *pdata,
+ 		unsigned int start_addr, unsigned int block_size,
+ 		unsigned int *pGetSensorCalData)
+ {
+-	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned long long CalGain = 0, FacGain = 0;
++	unsigned short AFInf = 0, AFMacro = 0;
++	int tempMax = 0;
++	int CalR = 1, CalGr = 1, CalGb = 1, CalG = 1, CalB = 1;
++	int FacR = 1, FacGr = 1, FacGb = 1, FacG = 1, FacB = 1;
++
++	printk("do_2a_gain_s5khp3sp block_size=%d sensor_id=%x\n",
++		block_size, pCamCalData->sensorID);
++	memset(&pCamCalData->Single2A, 0,
++		sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++
++	pCamCalData->Single2A.S2aVer = 1;
++	pCamCalData->Single2A.S2aBitEn = 3;
++	pCamCalData->Single2A.S2aAfBitflagEn = 0x0c;
++	printk("do_2a_gain_s5khp3sp S2aBitEn=0x%02x",
++		pCamCalData->Single2A.S2aBitEn);
++
++	pCamCalData->Single2A.S2aAwb.rGainSetNum = 0;
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x30, 1, (unsigned char *)&AFInf);
++	printk("do_2a_gain_s5khp3sp  AWB valid=%d \n", AFInf);
++	printk("do_2a_gain_s5khp3sp 5100K AWB\n");
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x31, 4, (unsigned char *)&CalGain);
++	if (read_data_size > 0) {
++		printk("do_2a_gain_s5khp3sp Read CalGain OK %x\n",
++			read_data_size);
++		CalR = CalGain & 0xff;
++		CalGr = (CalGain >> 8) & 0xff;
++		CalGb = (CalGain >> 16) & 0xff;
++		CalB = (CalGain >> 24) & 0xff;
++		CalG = (CalGr + CalGb + 1) >> 1;
++		tempMax = max(max(CalR, CalG), CalB);
++		printk("UnitR:%d, UnitG:%d, UnitB:%d, New Unit Max=%d",
++			CalR, CalG, CalB, tempMax);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (CalGain && CalR && CalG && CalB) {
++		pCamCalData->Single2A.S2aAwb.rGainSetNum++;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4R =
++			(tempMax * 512 + (CalR >> 1)) / CalR;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4G =
++			(tempMax * 512 + (CalG >> 1)) / CalG;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4B =
++			(tempMax * 512 + (CalB >> 1)) / CalB;
++	}
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x35, 4, (unsigned char *)&FacGain);
++	if (read_data_size > 0) {
++		printk("Read FacGain OK\n");
++		FacR = FacGain & 0xff;
++		FacGr = (FacGain >> 8) & 0xff;
++		FacGb = (FacGain >> 16) & 0xff;
++		FacB = (FacGain >> 24) & 0xff;
++		FacG = (FacGr + FacGb + 1) >> 1;
++		tempMax = max(max(FacR, FacG), FacB);
++		printk("GoldenR:%d, GoldenG:%d, GoldenB:%d, New Golden Max=%d",
++			FacR, FacG, FacB, tempMax);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (FacGain && FacR && FacG && FacB) {
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4R =
++			(tempMax * 512 + (FacR >> 1)) / FacR;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4G =
++			(tempMax * 512 + (FacG >> 1)) / FacG;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4B =
++			(tempMax * 512 + (FacB >> 1)) / FacB;
++	}
++
++	pCamCalData->Single2A.S2aAwb.rValueR = CalR;
++	pCamCalData->Single2A.S2aAwb.rValueGr = CalGr;
++	pCamCalData->Single2A.S2aAwb.rValueGb = CalGb;
++	pCamCalData->Single2A.S2aAwb.rValueB = CalB;
++	pCamCalData->Single2A.S2aAwb.rGoldenR = FacR;
++	pCamCalData->Single2A.S2aAwb.rGoldenGr = FacGr;
++	pCamCalData->Single2A.S2aAwb.rGoldenGb = FacGb;
++	pCamCalData->Single2A.S2aAwb.rGoldenB = FacB;
++
++	printk("======================AWB CAM_CAL==================\n");
++	printk("AWB Calibration @5100K\n");
++	printk("[CalGain] = 0x%llx\n", CalGain);
++	printk("[FacGain] = 0x%llx\n", FacGain);
++	printk("[rCalGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4R);
++	printk("[rCalGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4G);
++	printk("[rCalGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4B);
++	printk("[rFacGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4R);
++	printk("[rFacGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4G);
++	printk("[rFacGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4B);
++
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x76a, 1, (unsigned char *)&AFInf);
++	printk("do_2a_gain_s5khp3sp  AF valid=%d \n", AFInf);
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x22, 2, (unsigned char *)&AFInf);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x24, 2, (unsigned char *)&AFMacro);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	AFInf = swab16(AFInf);
++	AFMacro = swab16(AFMacro);
++	pCamCalData->Single2A.S2aAf[0] = AFInf;
++	pCamCalData->Single2A.S2aAf[1] = AFMacro;
++
++	printk("======================AF CAM_CAL==================\n");
++	printk("xqadd00 [AFInf] = %d\n", AFInf);
++	printk("xqadd00 [AFMacro] = %d\n", AFMacro);
++	printk("======================AF CAM_CAL==================\n");
++
++	return err;
+ }
+ 
+ static unsigned int do_pdaf_s5khp3sp(struct EEPROM_DRV_FD_DATA *pdata,
+diff --git a/cam_cal/src_v4l2/custom/layout/s5khp3spcts_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/s5khp3spcts_cust_eeprom.c
+index f37bb15..07f8766 100644
+--- a/cam_cal/src_v4l2/custom/layout/s5khp3spcts_cust_eeprom.c
++++ b/cam_cal/src_v4l2/custom/layout/s5khp3spcts_cust_eeprom.c
+@@ -116,7 +116,142 @@ static unsigned int do_2a_gain_s5khp3spcts(struct EEPROM_DRV_FD_DATA *pdata,
+ 		unsigned int start_addr, unsigned int block_size,
+ 		unsigned int *pGetSensorCalData)
+ {
+-	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned long long CalGain = 0, FacGain = 0;
++	unsigned short AFInf = 0, AFMacro = 0;
++	int tempMax = 0;
++	int CalR = 1, CalGr = 1, CalGb = 1, CalG = 1, CalB = 1;
++	int FacR = 1, FacGr = 1, FacGb = 1, FacG = 1, FacB = 1;
++
++	printk("do_2a_gain_s5khp3spcts block_size=%d sensor_id=%x\n",
++		block_size, pCamCalData->sensorID);
++	memset(&pCamCalData->Single2A, 0,
++		sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++
++	pCamCalData->Single2A.S2aVer = 1;
++	pCamCalData->Single2A.S2aBitEn = 3;
++	pCamCalData->Single2A.S2aAfBitflagEn = 0x0c;
++	printk("do_2a_gain_s5khp3spcts S2aBitEn=0x%02x",
++		pCamCalData->Single2A.S2aBitEn);
++
++	pCamCalData->Single2A.S2aAwb.rGainSetNum = 0;
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x30, 1, (unsigned char *)&AFInf);
++	printk("do_2a_gain_s5khp3spcts  AWB valid=%d \n", AFInf);
++	printk("do_2a_gain_s5khp3spcts 5100K AWB\n");
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x31, 4, (unsigned char *)&CalGain);
++	if (read_data_size > 0) {
++		printk("do_2a_gain_s5khp3spcts Read CalGain OK %x\n",
++			read_data_size);
++		CalR = CalGain & 0xff;
++		CalGr = (CalGain >> 8) & 0xff;
++		CalGb = (CalGain >> 16) & 0xff;
++		CalB = (CalGain >> 24) & 0xff;
++		CalG = (CalGr + CalGb + 1) >> 1;
++		tempMax = max(max(CalR, CalG), CalB);
++		printk("UnitR:%d, UnitG:%d, UnitB:%d, New Unit Max=%d",
++			CalR, CalG, CalB, tempMax);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (CalGain && CalR && CalG && CalB) {
++		pCamCalData->Single2A.S2aAwb.rGainSetNum++;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4R =
++			(tempMax * 512 + (CalR >> 1)) / CalR;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4G =
++			(tempMax * 512 + (CalG >> 1)) / CalG;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4B =
++			(tempMax * 512 + (CalB >> 1)) / CalB;
++	}
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x35, 4, (unsigned char *)&FacGain);
++	if (read_data_size > 0) {
++		printk("Read FacGain OK\n");
++		FacR = FacGain & 0xff;
++		FacGr = (FacGain >> 8) & 0xff;
++		FacGb = (FacGain >> 16) & 0xff;
++		FacB = (FacGain >> 24) & 0xff;
++		FacG = (FacGr + FacGb + 1) >> 1;
++		tempMax = max(max(FacR, FacG), FacB);
++		printk("GoldenR:%d, GoldenG:%d, GoldenB:%d, New Golden Max=%d",
++			FacR, FacG, FacB, tempMax);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (FacGain && FacR && FacG && FacB) {
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4R =
++			(tempMax * 512 + (FacR >> 1)) / FacR;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4G =
++			(tempMax * 512 + (FacG >> 1)) / FacG;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4B =
++			(tempMax * 512 + (FacB >> 1)) / FacB;
++	}
++
++	pCamCalData->Single2A.S2aAwb.rValueR = CalR;
++	pCamCalData->Single2A.S2aAwb.rValueGr = CalGr;
++	pCamCalData->Single2A.S2aAwb.rValueGb = CalGb;
++	pCamCalData->Single2A.S2aAwb.rValueB = CalB;
++	pCamCalData->Single2A.S2aAwb.rGoldenR = FacR;
++	pCamCalData->Single2A.S2aAwb.rGoldenGr = FacGr;
++	pCamCalData->Single2A.S2aAwb.rGoldenGb = FacGb;
++	pCamCalData->Single2A.S2aAwb.rGoldenB = FacB;
++
++	printk("======================AWB CAM_CAL==================\n");
++	printk("AWB Calibration @5100K\n");
++	printk("[CalGain] = 0x%llx\n", CalGain);
++	printk("[FacGain] = 0x%llx\n", FacGain);
++	printk("[rCalGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4R);
++	printk("[rCalGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4G);
++	printk("[rCalGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4B);
++	printk("[rFacGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4R);
++	printk("[rFacGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4G);
++	printk("[rFacGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4B);
++
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x76a, 1, (unsigned char *)&AFInf);
++	printk("do_2a_gain_s5khp3spcts  AF valid=%d \n", AFInf);
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x22, 2, (unsigned char *)&AFInf);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x24, 2, (unsigned char *)&AFMacro);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	AFInf = 0x14;
++	AFMacro = swab16(AFMacro);
++	pCamCalData->Single2A.S2aAf[0] = AFInf;
++	pCamCalData->Single2A.S2aAf[1] = AFMacro;
++
++	printk("======================AF CAM_CAL==================\n");
++	printk("xqadd00 [AFInf] = %d\n", AFInf);
++	printk("xqadd00 [AFMacro] = %d\n", AFMacro);
++	printk("======================AF CAM_CAL==================\n");
++
++	return err;
+ }
+ 
+ static unsigned int do_pdaf_s5khp3spcts(struct EEPROM_DRV_FD_DATA *pdata,
+-- 
+2.56.0
+

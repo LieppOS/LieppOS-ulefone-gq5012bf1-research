@@ -1,0 +1,3720 @@
+From 1c8024b113d5bba2cef066f23bcc17621308e1b3 Mon Sep 17 00:00:00 2001
+From: re <re@local>
+Date: Sat, 3 Oct 2026 01:00:41 +0300
+Subject: [PATCH 2/5] cam_cal: GQ5012BF1 stock EEPROM reconstruction: stock ABI
+ (24B part number, no FuseId/FUSE_ID cmd), g_camCalList, YFT otp sysfs class,
+ 13 stock-only sensor layouts, exact LSC/2A/PDAF templates
+
+---
+ cam_cal/inc/cam_cal_format.h                  |   4 +-
+ cam_cal/src_v4l2/common/v2/eeprom_driver.c    |  37 ++
+ cam_cal/src_v4l2/custom/cam_cal_config.h      |   5 +
+ cam_cal/src_v4l2/custom/cam_cal_list.c        |  41 +-
+ .../custom/layout/gc16b3c_mtk_eeprom.c        |  40 --
+ .../custom/layout/gc16b3ctxd_mtk_eeprom.c     |  40 --
+ .../custom/layout/hi847_cust_eeprom.c         | 158 +++++
+ .../custom/layout/imx616_cust_eeprom.c        | 124 ++++
+ .../custom/layout/imx882_mtk_eeprom.c         |  40 --
+ .../custom/layout/imx882txd_mtk_eeprom.c      |  40 --
+ .../custom/layout/imx989_cust_eeprom.c        | 545 ++++--------------
+ .../custom/layout/imx989cts_cust_eeprom.c     | 135 +++++
+ .../custom/layout/imx989lite_cust_eeprom.c    |   2 +-
+ .../custom/layout/imx989ryyb_cust_eeprom.c    | 203 +++++++
+ .../custom/layout/ov64b_cust_eeprom.c         | 426 ++------------
+ .../custom/layout/ova0b40_cust_eeprom.c       |  67 +++
+ .../custom/layout/ova0b40cts_cust_eeprom.c    | 101 ++++
+ .../custom/layout/s5kgn1sp_cust_eeprom.c      | 203 +++++++
+ .../custom/layout/s5khp2sp_cust_eeprom.c      | 158 +++++
+ .../custom/layout/s5khp3sp03_cust_eeprom.c    | 158 +++++
+ .../custom/layout/s5khp3sp23_cust_eeprom.c    | 158 +++++
+ .../custom/layout/s5khp3sp_cust_eeprom.c      | 158 +++++
+ .../custom/layout/s5khp3spcts_cust_eeprom.c   | 158 +++++
+ .../custom/layout/s5kjn1_cust_eeprom.c        | 179 ++++++
+ .../custom/layout/s5kjn1main2_cust_eeprom.c   | 203 +++++++
+ 25 files changed, 2393 insertions(+), 990 deletions(-)
+ delete mode 100755 cam_cal/src_v4l2/custom/layout/gc16b3c_mtk_eeprom.c
+ delete mode 100755 cam_cal/src_v4l2/custom/layout/gc16b3ctxd_mtk_eeprom.c
+ create mode 100644 cam_cal/src_v4l2/custom/layout/hi847_cust_eeprom.c
+ create mode 100644 cam_cal/src_v4l2/custom/layout/imx616_cust_eeprom.c
+ delete mode 100755 cam_cal/src_v4l2/custom/layout/imx882_mtk_eeprom.c
+ delete mode 100755 cam_cal/src_v4l2/custom/layout/imx882txd_mtk_eeprom.c
+ create mode 100644 cam_cal/src_v4l2/custom/layout/imx989cts_cust_eeprom.c
+ create mode 100644 cam_cal/src_v4l2/custom/layout/imx989ryyb_cust_eeprom.c
+ create mode 100644 cam_cal/src_v4l2/custom/layout/ova0b40_cust_eeprom.c
+ create mode 100644 cam_cal/src_v4l2/custom/layout/ova0b40cts_cust_eeprom.c
+ create mode 100644 cam_cal/src_v4l2/custom/layout/s5kgn1sp_cust_eeprom.c
+ create mode 100644 cam_cal/src_v4l2/custom/layout/s5khp2sp_cust_eeprom.c
+ create mode 100644 cam_cal/src_v4l2/custom/layout/s5khp3sp03_cust_eeprom.c
+ create mode 100644 cam_cal/src_v4l2/custom/layout/s5khp3sp23_cust_eeprom.c
+ create mode 100644 cam_cal/src_v4l2/custom/layout/s5khp3sp_cust_eeprom.c
+ create mode 100644 cam_cal/src_v4l2/custom/layout/s5khp3spcts_cust_eeprom.c
+ create mode 100644 cam_cal/src_v4l2/custom/layout/s5kjn1_cust_eeprom.c
+ create mode 100644 cam_cal/src_v4l2/custom/layout/s5kjn1main2_cust_eeprom.c
+
+diff --git a/cam_cal/inc/cam_cal_format.h b/cam_cal/inc/cam_cal_format.h
+index 2c0733c..c6d9227 100644
+--- a/cam_cal/inc/cam_cal_format.h
++++ b/cam_cal/inc/cam_cal_format.h
+@@ -188,7 +188,7 @@ struct STRUCT_CAM_CAL_PDAF_STRUCT {
+ struct STRUCT_CAM_CAL_DATA_STRUCT {
+ 	enum ENUM_CAMERA_CAM_CAL_TYPE_ENUM Command;
+ 	enum ENUM_CAM_CAL_DATA_VER_ENUM DataVer;
+-	unsigned char PartNumber[48];
++	unsigned char PartNumber[24];
+ 	unsigned int  sensorID;
+ 	unsigned int  deviceID;
+ 	struct STRUCT_CAM_CAL_SINGLE_LSC_STRUCT   SingleLsc;
+@@ -207,7 +207,7 @@ struct STRUCT_CAM_CAL_MODULE_VERSION_STRUCT {
+ };
+ 
+ struct STRUCT_CAM_CAL_PART_NUM_STRUCT {
+-	unsigned char PartNumber[48];
++	unsigned char PartNumber[24];
+ };
+ 
+ struct STRUCT_CAM_CAL_LSC_DATA_STRUCT {
+diff --git a/cam_cal/src_v4l2/common/v2/eeprom_driver.c b/cam_cal/src_v4l2/common/v2/eeprom_driver.c
+index 42c6ae4..e261297 100644
+--- a/cam_cal/src_v4l2/common/v2/eeprom_driver.c
++++ b/cam_cal/src_v4l2/common/v2/eeprom_driver.c
+@@ -32,6 +32,27 @@
+ 
+ #include "cam_cal_config.h"
+ 
++int yft_otp_state_main = -1;
++int yft_otp_state_sub = -1;
++int yft_otp_state_main2 = -1;
++int yft_otp_state_main3 = -1;
++static struct class *camera_otp_class;
++
++static ssize_t camera_otp_show(struct class *class,
++		struct class_attribute *attr, char *buf)
++{
++	printk("%s: yft_otp_state_main:%d, yft_otp_state_sub:%d, yft_otp_state_main2:%d, yft_otp_state_main3:%d\n",
++		__func__, yft_otp_state_main, yft_otp_state_sub,
++		yft_otp_state_main2, yft_otp_state_main3);
++	return sprintf(buf, "%d %d %d %d\n", yft_otp_state_main,
++		yft_otp_state_sub, yft_otp_state_main2, yft_otp_state_main3);
++}
++
++static struct class_attribute class_attr_camera_otp[] = {
++	__ATTR(camera_otp, 0444, camera_otp_show, NULL),
++	__ATTR_NULL,
++};
++
+ static struct stCAM_CAL_LIST_STRUCT *get_list(struct CAM_CAL_SENSOR_INFO *sinfo)
+ {
+ 	struct stCAM_CAL_LIST_STRUCT *plist;
+@@ -393,6 +414,21 @@ static inline int eeprom_driver_register(struct i2c_client *client,
+ 
+ 	mutex_init(&pinst->eeprom_mutex);
+ 
++	if (!camera_otp_class) {
++		int i;
++
++		camera_otp_class = class_create(THIS_MODULE, "camera_otp");
++		if (IS_ERR(camera_otp_class))
++			pr_err("create class, ret = %d\n",
++				(int)PTR_ERR(camera_otp_class));
++		for (i = 0; class_attr_camera_otp[i].attr.name; i++) {
++			ret = class_create_file(camera_otp_class,
++				&class_attr_camera_otp[i]);
++			if (ret)
++				pr_err("Fail class_create_file,ret=%d\n", ret);
++		}
++	}
++
+ 	return ret;
+ }
+ 
+@@ -408,6 +444,7 @@ static inline int eeprom_driver_unregister(struct i2c_client *client)
+ 
+ 	device_destroy(pinst->pclass, pinst->dev_no);
+ 	class_destroy(pinst->pclass);
++	class_destroy(camera_otp_class);
+ 
+ 	return 0;
+ }
+diff --git a/cam_cal/src_v4l2/custom/cam_cal_config.h b/cam_cal/src_v4l2/custom/cam_cal_config.h
+index 2b0361e..b391aec 100644
+--- a/cam_cal/src_v4l2/custom/cam_cal_config.h
++++ b/cam_cal/src_v4l2/custom/cam_cal_config.h
+@@ -31,6 +31,11 @@ struct STRUCT_CALIBRATION_LAYOUT_STRUCT {
+ 	struct STRUCT_CALIBRATION_ITEM_STRUCT cal_layout_tbl[CAMERA_CAM_CAL_DATA_LIST];
+ };
+ 
++extern int yft_otp_state_main;
++extern int yft_otp_state_sub;
++extern int yft_otp_state_main2;
++extern int yft_otp_state_main3;
++
+ struct STRUCT_CAM_CAL_CONFIG_STRUCT {
+ 	const char *name;
+ 	unsigned int (*check_layout_function)(struct EEPROM_DRV_FD_DATA *pdata,
+diff --git a/cam_cal/src_v4l2/custom/cam_cal_list.c b/cam_cal/src_v4l2/custom/cam_cal_list.c
+index d31a8bb..ba22261 100755
+--- a/cam_cal/src_v4l2/custom/cam_cal_list.c
++++ b/cam_cal/src_v4l2/custom/cam_cal_list.c
+@@ -13,35 +13,18 @@
+ #define MAX_EEPROM_SIZE_16K 0x4000
+ 
+ struct stCAM_CAL_LIST_STRUCT g_camCalList[] = {
+-	/*Below is commom sensor */
+-	{OV48B_SENSOR_ID, 0xA0, Common_read_region, MAX_EEPROM_SIZE_16K},
+-	{IMX766_SENSOR_ID, 0xA0, Common_read_region, MAX_EEPROM_SIZE_32K},
+-	{IMX766DUAL_SENSOR_ID, 0xA2, Common_read_region, MAX_EEPROM_SIZE_16K},
+-	{GC8054_SENSOR_ID, 0xA2, Common_read_region, MAX_EEPROM_SIZE_16K},
+-	{S5K3P9SP_SENSOR_ID, 0xA0, Common_read_region},
+-	{IMX481_SENSOR_ID, 0xA2, Common_read_region},
+-	{GC02M0_SENSOR_ID, 0xA8, Common_read_region},
+-	{IMX586_SENSOR_ID, 0xA0, Common_read_region, MAX_EEPROM_SIZE_16K},
+-	{IMX576_SENSOR_ID, 0xA2, Common_read_region},
+-	{IMX519_SENSOR_ID, 0xA0, Common_read_region},
+-	{IMX319_SENSOR_ID, 0xA2, Common_read_region, MAX_EEPROM_SIZE_16K},
+-	{S5K3M5SX_SENSOR_ID, 0xA0, Common_read_region, MAX_EEPROM_SIZE_16K},
+-	{IMX686_SENSOR_ID, 0xA0, Common_read_region, MAX_EEPROM_SIZE_16K},
+-	{HI846_SENSOR_ID, 0xA0, Common_read_region, MAX_EEPROM_SIZE_16K},
+-	{S5KGD1SP_SENSOR_ID, 0xA8, Common_read_region, MAX_EEPROM_SIZE_16K},
+-	{S5K2T7SP_SENSOR_ID, 0xA4, Common_read_region},
+-	{IMX386_SENSOR_ID, 0xA0, Common_read_region},
+-	{S5K2L7_SENSOR_ID, 0xA0, Common_read_region},
+-	{IMX398_SENSOR_ID, 0xA0, Common_read_region},
+-	{IMX350_SENSOR_ID, 0xA0, Common_read_region},
+-	{IMX386_MONO_SENSOR_ID, 0xA0, Common_read_region},
+-	{IMX499_SENSOR_ID, 0xA0, Common_read_region},
+-	{IMX882_SENSOR_ID, 0xA0, Common_read_region},
+-	{GC16B3C_SENSOR_ID, 0xA0, Common_read_region},
+-	{IMX882TXD_SENSOR_ID, 0xA0, Common_read_region},
+-	{GC16B3CTXD_SENSOR_ID, 0xA0, Common_read_region},
+-	/*  ADD before this line */
+-	{0, 0, 0}       /*end of list */
++	{0x0989, 0xA0, Common_read_region},
++	{0x098A, 0xA0, Common_read_region},
++	{0x38E1, 0xA0, Common_read_region},
++	{0x38E2, 0xA0, Common_read_region},
++	{0x566442, 0xA6, Common_read_region},
++	{0xA042, 0xA0, Common_read_region},
++	{0x0616, 0xA0, Common_read_region},
++	{0x1B74, 0xA0, Common_read_region},
++	{0x1B75, 0xA0, Common_read_region},
++	{0x0350, 0xA0, Common_read_region},
++	{0x08E1, 0xA0, Common_read_region},
++	{0, 0, 0}
+ };
+ 
+ unsigned int cam_cal_get_sensor_list(
+diff --git a/cam_cal/src_v4l2/custom/layout/gc16b3c_mtk_eeprom.c b/cam_cal/src_v4l2/custom/layout/gc16b3c_mtk_eeprom.c
+deleted file mode 100755
+index b7029a0..0000000
+--- a/cam_cal/src_v4l2/custom/layout/gc16b3c_mtk_eeprom.c
++++ /dev/null
+@@ -1,40 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0
+-/*
+- * Copyright (c) 2019 MediaTek Inc.
+- */
+-
+-#define PFX "CAM_CAL"
+-#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
+-
+-#include <linux/kernel.h>
+-#include "cam_cal_list.h"
+-#include "eeprom_i2c_common_driver.h"
+-#include "eeprom_i2c_custom_driver.h"
+-#include "cam_cal_config.h"
+-
+-static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
+-	0x0001, 0x001, CAM_CAL_SINGLE_EEPROM_DATA,
+-	{
+-		{0x00000001, 0x00000000, 0x00000008, do_module_version},
+-		{0x00000001, 0x00000008, 0x00000014, do_part_number},
+-		{0x00000001, 0x00000044, 0x0000074C, do_single_lsc},
+-		{0x00000001, 0x0000001E, 0x0000000E, do_2a_gain},
+-		{0x00000000, 0x00000763, 0x00000800, do_pdaf},
+-		{0x00000000, 0x00000FAE, 0x00000550, do_stereo_data},
+-		{0x00000001, 0x00000000, 0x00001600, do_dump_all},
+-		{0x00000000, 0x0000000, 0x0000000A, do_lens_id}
+-	}
+-};
+-
+-struct STRUCT_CAM_CAL_CONFIG_STRUCT gc16b3c_mtk_eeprom = {
+-	.name = "gc16b3c_mtk_eeprom",
+-	.check_layout_function = layout_check,
+-	.read_function = Common_read_region,
+-	.layout = &cal_layout_table,
+-	.sensor_id = GC16B3C_SENSOR_ID,
+-	.i2c_write_id = 0xA0,
+-	.max_size = 0x4000,
+-	.enable_preload = 1,
+-	.preload_size = 0x1500,
+-	.has_stored_data = 1,
+-};
+diff --git a/cam_cal/src_v4l2/custom/layout/gc16b3ctxd_mtk_eeprom.c b/cam_cal/src_v4l2/custom/layout/gc16b3ctxd_mtk_eeprom.c
+deleted file mode 100755
+index 7430034..0000000
+--- a/cam_cal/src_v4l2/custom/layout/gc16b3ctxd_mtk_eeprom.c
++++ /dev/null
+@@ -1,40 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0
+-/*
+- * Copyright (c) 2019 MediaTek Inc.
+- */
+-
+-#define PFX "CAM_CAL"
+-#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
+-
+-#include <linux/kernel.h>
+-#include "cam_cal_list.h"
+-#include "eeprom_i2c_common_driver.h"
+-#include "eeprom_i2c_custom_driver.h"
+-#include "cam_cal_config.h"
+-
+-static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
+-	0x0001, 0x001, CAM_CAL_SINGLE_EEPROM_DATA,
+-	{
+-		{0x00000001, 0x00000000, 0x00000008, do_module_version},
+-		{0x00000001, 0x00000008, 0x00000014, do_part_number},
+-		{0x00000001, 0x00000044, 0x0000074C, do_single_lsc},
+-		{0x00000001, 0x0000001E, 0x0000000E, do_2a_gain},
+-		{0x00000000, 0x00000763, 0x00000800, do_pdaf},
+-		{0x00000000, 0x00000FAE, 0x00000550, do_stereo_data},
+-		{0x00000001, 0x00000000, 0x00001600, do_dump_all},
+-		{0x00000000, 0x0000000, 0x0000000A, do_lens_id}
+-	}
+-};
+-
+-struct STRUCT_CAM_CAL_CONFIG_STRUCT gc16b3ctxd_mtk_eeprom = {
+-	.name = "gc16b3ctxd_mtk_eeprom",
+-	.check_layout_function = layout_check,
+-	.read_function = Common_read_region,
+-	.layout = &cal_layout_table,
+-	.sensor_id = GC16B3CTXD_SENSOR_ID,
+-	.i2c_write_id = 0xA0,
+-	.max_size = 0x4000,
+-	.enable_preload = 1,
+-	.preload_size = 0x1500,
+-	.has_stored_data = 1,
+-};
+diff --git a/cam_cal/src_v4l2/custom/layout/hi847_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/hi847_cust_eeprom.c
+new file mode 100644
+index 0000000..ba8cc8e
+--- /dev/null
++++ b/cam_cal/src_v4l2/custom/layout/hi847_cust_eeprom.c
+@@ -0,0 +1,158 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Reconstructed from GQ5012BF1 stock camera_eeprom_v4l2.ko. */
++#define PFX "CAM_CAL"
++#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
++#include <linux/kernel.h>
++#include "cam_cal_list.h"
++#include "eeprom_i2c_common_driver.h"
++#include "eeprom_i2c_custom_driver.h"
++#include "cam_cal_config.h"
++
++static unsigned int do_single_lsc_hi847(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_2a_gain_hi847(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_lens_id_hi847(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_pdaf_hi847(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++
++static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
++	0x00000000, 0x77006901, CAM_CAL_SINGLE_EEPROM_DATA,
++	{
++		{0, 0, 0, do_module_version},
++		{0, 1, 2, do_part_number},
++		{0x00000001, 0x0000001D, 0x0000074C, do_single_lsc_hi847},
++		{0x00000001, 0x0000000B, 0x00000011, do_2a_gain_hi847},
++		{0x00000001, 0x00000771, 0x000005DC, do_pdaf_hi847},
++		{0, 0, 0, do_stereo_data},
++		{0, 0, 0x8000, do_dump_all},
++		{0, 8, 2, do_lens_id_hi847}
++	}
++};
++
++struct STRUCT_CAM_CAL_CONFIG_STRUCT hi847_cust_eeprom = {
++	.name = "hi847_cust_eeprom",
++	.check_layout_function = layout_check,
++	.read_function = Common_read_region,
++	.layout = &cal_layout_table,
++	.sensor_id = 0x847,
++	.i2c_write_id = 0xA0,
++	.max_size = 0x4000,
++	.enable_preload = 1,
++	.preload_size = 0x4000,
++	.has_stored_data = 1,
++};
++
++static unsigned int do_single_lsc_hi847(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size, unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++				(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned short table_size;
++
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		err = CAM_CAL_ERR_NO_DEVICE;
++		error_log("Read Failed\n");
++		show_cmd_error_log(pCamCalData->Command);
++		return err;
++	}
++	if (block_size != CAM_CAL_SINGLE_LSC_SIZE)
++		error_log("block_size(%d) is not match (%d)\n",
++				block_size, CAM_CAL_SINGLE_LSC_SIZE);
++
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType = 2;//mtk type
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId = 8;
++
++	table_size = 1868;
++
++	printk("lsc table_size %d\n", table_size);
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.TableSize = table_size;
++	if (table_size > 0) {
++		pCamCalData->SingleLsc.TableRotation = 0;
++		printk("u4Offset=%d u4Length=%d", start_addr, table_size);
++		read_data_size = read_data(pdata,
++			pCamCalData->sensorID, pCamCalData->deviceID,
++			start_addr, table_size, (unsigned char *)
++			&pCamCalData->SingleLsc.LscTable.MtkLcsData.SlimLscType);
++		if (table_size == read_data_size)
++			err = CAM_CAL_ERR_NO_ERR;
++		else {
++			error_log("Read Failed\n");
++			err = CamCalReturnErr[pCamCalData->Command];
++			show_cmd_error_log(pCamCalData->Command);
++		}
++	}
++
++	printk("======================SingleLsc Data==================\n");
++	printk("[1st] = %x, %x, %x, %x\n",
++		pCamCalData->SingleLsc.LscTable.Data[0],
++		pCamCalData->SingleLsc.LscTable.Data[1],
++		pCamCalData->SingleLsc.LscTable.Data[2],
++		pCamCalData->SingleLsc.LscTable.Data[3]);
++	printk("[1st] = SensorLSC(1)?MTKLSC(2)?  %x\n",
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType);
++	printk("CapIspReg =0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[0],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[1],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[2],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[3],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[4]);
++	printk("RETURN = 0x%x\n", err);
++	printk("======================SingleLsc Data==================\n");
++
++
++	return err;
++}
++
++static unsigned int do_2a_gain_hi847(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++}
++
++static unsigned int do_pdaf_hi847(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	int read_data_size_2;
++	int err = CamCalReturnErr[pCamCalData->Command];
++
++	pCamCalData->PDAF.Size_of_PDAF = block_size;
++	printk("PDAF start_addr =%x table_size=%d\n", start_addr, block_size);
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x771, 0x1f0,
++		(unsigned char *)&pCamCalData->PDAF.Data[0]);
++	read_data_size_2 = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x961, 0x3ec,
++		(unsigned char *)&pCamCalData->PDAF.Data[0x1f0]);
++	if (read_data_size + read_data_size_2 > 0 || read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++
++	printk("======================PDAF Data==================\n");
++	printk("First five %x, %x, %x, %x, %x\n",
++		pCamCalData->PDAF.Data[0], pCamCalData->PDAF.Data[1],
++		pCamCalData->PDAF.Data[2], pCamCalData->PDAF.Data[3],
++		pCamCalData->PDAF.Data[4]);
++	printk("RETURN = 0x%x\n", err);
++	printk("======================PDAF Data==================\n");
++	return err;
++}
++
++static unsigned int do_lens_id_hi847(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_lens_id_base(pdata, start_addr, block_size, pGetSensorCalData);
++}
+diff --git a/cam_cal/src_v4l2/custom/layout/imx616_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/imx616_cust_eeprom.c
+new file mode 100644
+index 0000000..8378f63
+--- /dev/null
++++ b/cam_cal/src_v4l2/custom/layout/imx616_cust_eeprom.c
+@@ -0,0 +1,124 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Reconstructed from GQ5012BF1 stock camera_eeprom_v4l2.ko. */
++#define PFX "CAM_CAL"
++#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
++#include <linux/kernel.h>
++#include "cam_cal_list.h"
++#include "eeprom_i2c_common_driver.h"
++#include "eeprom_i2c_custom_driver.h"
++#include "cam_cal_config.h"
++
++static unsigned int do_single_lsc_imx616(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_2a_gain_imx616(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_lens_id_imx616(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++
++static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
++	0x00000001, 0x010B00FF, CAM_CAL_SINGLE_EEPROM_DATA,
++	{
++		{0, 0, 0, do_module_version},
++		{0, 1, 2, do_part_number},
++		{0x00000001, 0x00000016, 0x0000074C, do_single_lsc_imx616},
++		{0x00000001, 0x00000010, 0x00000008, do_2a_gain_imx616},
++		{0x00000000, 0x00000771, 0x000005DC, do_pdaf},
++		{0, 0, 0, do_stereo_data},
++		{0, 0, 0x8000, do_dump_all},
++		{0, 8, 2, do_lens_id_imx616}
++	}
++};
++
++struct STRUCT_CAM_CAL_CONFIG_STRUCT imx616_cust_eeprom = {
++	.name = "imx616_cust_eeprom",
++	.check_layout_function = layout_check,
++	.read_function = Common_read_region,
++	.layout = &cal_layout_table,
++	.sensor_id = 0x616,
++	.i2c_write_id = 0xA0,
++	.max_size = 0x4000,
++	.enable_preload = 1,
++	.preload_size = 0x4000,
++	.has_stored_data = 0,
++};
++
++static unsigned int do_single_lsc_imx616(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size, unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++				(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned short table_size;
++
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		err = CAM_CAL_ERR_NO_DEVICE;
++		error_log("Read Failed\n");
++		show_cmd_error_log(pCamCalData->Command);
++		return err;
++	}
++	if (block_size != CAM_CAL_SINGLE_LSC_SIZE)
++		error_log("block_size(%d) is not match (%d)\n",
++				block_size, CAM_CAL_SINGLE_LSC_SIZE);
++
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType = 2;//mtk type
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId = 8;
++
++	table_size = 1868;
++
++	printk("lsc table_size %d\n", table_size);
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.TableSize = table_size;
++	if (table_size > 0) {
++		pCamCalData->SingleLsc.TableRotation = 0;
++		printk("u4Offset=%d u4Length=%d", start_addr, table_size);
++		read_data_size = read_data(pdata,
++			pCamCalData->sensorID, pCamCalData->deviceID,
++			start_addr, table_size, (unsigned char *)
++			&pCamCalData->SingleLsc.LscTable.MtkLcsData.SlimLscType);
++		if (table_size == read_data_size)
++			err = CAM_CAL_ERR_NO_ERR;
++		else {
++			error_log("Read Failed\n");
++			err = CamCalReturnErr[pCamCalData->Command];
++			show_cmd_error_log(pCamCalData->Command);
++		}
++	}
++
++	printk("======================SingleLsc Data==================\n");
++	printk("[1st] = %x, %x, %x, %x\n",
++		pCamCalData->SingleLsc.LscTable.Data[0],
++		pCamCalData->SingleLsc.LscTable.Data[1],
++		pCamCalData->SingleLsc.LscTable.Data[2],
++		pCamCalData->SingleLsc.LscTable.Data[3]);
++	printk("[1st] = SensorLSC(1)?MTKLSC(2)?  %x\n",
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType);
++	printk("CapIspReg =0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[0],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[1],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[2],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[3],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[4]);
++	printk("RETURN = 0x%x\n", err);
++	printk("======================SingleLsc Data==================\n");
++
++
++	return err;
++}
++
++static unsigned int do_2a_gain_imx616(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++}
++
++static unsigned int do_lens_id_imx616(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_lens_id_base(pdata, start_addr, block_size, pGetSensorCalData);
++}
+diff --git a/cam_cal/src_v4l2/custom/layout/imx882_mtk_eeprom.c b/cam_cal/src_v4l2/custom/layout/imx882_mtk_eeprom.c
+deleted file mode 100755
+index 30654ef..0000000
+--- a/cam_cal/src_v4l2/custom/layout/imx882_mtk_eeprom.c
++++ /dev/null
+@@ -1,40 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0
+-/*
+- * Copyright (c) 2019 MediaTek Inc.
+- */
+-
+-#define PFX "CAM_CAL"
+-#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
+-
+-#include <linux/kernel.h>
+-#include "cam_cal_list.h"
+-#include "eeprom_i2c_common_driver.h"
+-#include "eeprom_i2c_custom_driver.h"
+-#include "cam_cal_config.h"
+-
+-static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
+-	0x00000001, 0x010b00ff, CAM_CAL_SINGLE_EEPROM_DATA,
+-	{
+-		{0x00000001, 0x00000000, 0x00000008, do_module_version},
+-		{0x00000001, 0x00000008, 0x00000014, do_part_number},
+-		{0x00000001, 0x00000044, 0x0000074C, do_single_lsc},
+-		{0x00000001, 0x00000026, 0x00000017, do_2a_gain},
+-		{0x00000001, 0x00001516, 0x000005DF, do_pdaf},
+-		{0x00000001, 0x00000FAE, 0x00000550, do_stereo_data},
+-		{0x00000001, 0x00000000, 0x00001600, do_dump_all},
+-		{0x00000001, 0x00000005, 0x00000001, do_lens_id}
+-	}
+-};
+-
+-struct STRUCT_CAM_CAL_CONFIG_STRUCT imx882_mtk_eeprom = {
+-	.name = "imx882_mtk_eeprom",
+-	.check_layout_function = layout_check,
+-	.read_function = Common_read_region,
+-	.layout = &cal_layout_table,
+-	.sensor_id = IMX882_SENSOR_ID,
+-	.i2c_write_id = 0xA0,
+-	.max_size = 0x4000,
+-	.enable_preload = 1,
+-	.preload_size = 0x1500,
+-	.has_stored_data = 1,
+-};
+diff --git a/cam_cal/src_v4l2/custom/layout/imx882txd_mtk_eeprom.c b/cam_cal/src_v4l2/custom/layout/imx882txd_mtk_eeprom.c
+deleted file mode 100755
+index 1d0f69f..0000000
+--- a/cam_cal/src_v4l2/custom/layout/imx882txd_mtk_eeprom.c
++++ /dev/null
+@@ -1,40 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0
+-/*
+- * Copyright (c) 2019 MediaTek Inc.
+- */
+-
+-#define PFX "CAM_CAL"
+-#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
+-
+-#include <linux/kernel.h>
+-#include "cam_cal_list.h"
+-#include "eeprom_i2c_common_driver.h"
+-#include "eeprom_i2c_custom_driver.h"
+-#include "cam_cal_config.h"
+-
+-static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
+-	0x00000001, 0x010b00ff, CAM_CAL_SINGLE_EEPROM_DATA,
+-	{
+-		{0x00000001, 0x00000000, 0x00000008, do_module_version},
+-		{0x00000001, 0x00000008, 0x00000014, do_part_number},
+-		{0x00000001, 0x00000044, 0x0000074C, do_single_lsc},
+-		{0x00000001, 0x00000026, 0x00000017, do_2a_gain},
+-		{0x00000001, 0x00001516, 0x000005DF, do_pdaf},
+-		{0x00000001, 0x00000FAE, 0x00000550, do_stereo_data},
+-		{0x00000001, 0x00000000, 0x00001600, do_dump_all},
+-		{0x00000001, 0x00000005, 0x00000001, do_lens_id}
+-	}
+-};
+-
+-struct STRUCT_CAM_CAL_CONFIG_STRUCT imx882txd_mtk_eeprom = {
+-	.name = "imx882txd_mtk_eeprom",
+-	.check_layout_function = layout_check,
+-	.read_function = Common_read_region,
+-	.layout = &cal_layout_table,
+-	.sensor_id = IMX882TXD_SENSOR_ID,
+-	.i2c_write_id = 0xA0,
+-	.max_size = 0x4000,
+-	.enable_preload = 1,
+-	.preload_size = 0x1500,
+-	.has_stored_data = 1,
+-};
+diff --git a/cam_cal/src_v4l2/custom/layout/imx989_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/imx989_cust_eeprom.c
+index 37d7df1..6f8ff3d 100644
+--- a/cam_cal/src_v4l2/custom/layout/imx989_cust_eeprom.c
++++ b/cam_cal/src_v4l2/custom/layout/imx989_cust_eeprom.c
+@@ -20,16 +20,16 @@ static unsigned int do_lens_id_imx989(struct EEPROM_DRV_FD_DATA *pdata,
+ 		unsigned int start_addr, unsigned int block_size, unsigned int *pGetSensorCalData);
+ 
+ static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
+-	0x0000000B, 0x010B00FF, CAM_CAL_SINGLE_EEPROM_DATA,
++	0x00000000, 0x77006901, CAM_CAL_SINGLE_EEPROM_DATA,
+ 	{
+-		{0x00000001, 0x00000000, 0x00000000, do_module_version},
+-		{0x00000001, 0x00000001, 0x00000002, do_part_number},
+-		{0x00000001, 0x000000C3, 0x0000074C, do_single_lsc_imx989},
++		{0x00000000, 0x00000000, 0x00000000, do_module_version},
++		{0x00000000, 0x00000001, 0x00000002, do_part_number},
++		{0x00000001, 0x0000001D, 0x0000074C, do_single_lsc_imx989},
+ 		{0x00000001, 0x00000007, 0x0000000E, do_2a_gain_imx989},
+-		{0x00000001, 0x00000820, 0x000005F9, do_pdaf},
++		{0x00000001, 0x00000771, 0x000005DC, do_pdaf},
+ 		{0x00000000, 0x00000000, 0x00000000, do_stereo_data},
+-		{0x00000001, 0x00000000, 0x00008000, do_dump_all},
+-		{0x00000001, 0x00000008, 0x00000002, do_lens_id_imx989}
++		{0x00000000, 0x00000000, 0x00008000, do_dump_all},
++		{0x00000000, 0x00000008, 0x00000002, do_lens_id_imx989}
+ 	}
+ };
+ 
+@@ -43,453 +43,160 @@ struct STRUCT_CAM_CAL_CONFIG_STRUCT imx989_cust_eeprom = {
+ 	.max_size = 0x4000,
+ 	.enable_preload = 1,
+ 	.preload_size = 0x4000,
+-	.has_stored_data = 1,
++	.has_stored_data = 0,
+ };
+ 
+ static unsigned int do_single_lsc_imx989(struct EEPROM_DRV_FD_DATA *pdata,
+-		unsigned int start_addr, unsigned int block_size, unsigned int *pGetSensorCalData)
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
+ {
+ 	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
+-				(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
+-
+-	int read_data_size;
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
+ 	unsigned int err = CamCalReturnErr[pCamCalData->Command];
+-	unsigned short table_size;
++	int read_data_size;
+ 
+ 	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
+-		err = CAM_CAL_ERR_NO_DEVICE;
+-		error_log("Read Failed\n");
+ 		show_cmd_error_log(pCamCalData->Command);
+-		return err;
++		return CAM_CAL_ERR_NO_DEVICE;
+ 	}
+-	if (block_size != CAM_CAL_SINGLE_LSC_SIZE)
+-		error_log("block_size(%d) is not match (%d)\n",
+-				block_size, CAM_CAL_SINGLE_LSC_SIZE);
+ 
+-	pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType = 2;//mtk type
++	pCamCalData->SingleLsc.TableRotation = 0;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType = 2;
+ 	pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId = 8;
+-
+-	table_size = 1868;
+-
+-	debug_log("lsc table_size %d\n", table_size);
+-	pCamCalData->SingleLsc.LscTable.MtkLcsData.TableSize = table_size;
+-	if (table_size > 0) {
+-		pCamCalData->SingleLsc.TableRotation = 0;
+-		debug_log("u4Offset=%d u4Length=%d", start_addr, table_size);
+-		read_data_size = read_data(pdata,
+-			pCamCalData->sensorID, pCamCalData->deviceID,
+-			start_addr, table_size, (unsigned char *)
+-			&pCamCalData->SingleLsc.LscTable.MtkLcsData.SlimLscType);
+-		if (table_size == read_data_size)
+-			err = CAM_CAL_ERR_NO_ERR;
+-		else {
+-			error_log("Read Failed\n");
+-			err = CamCalReturnErr[pCamCalData->Command];
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.TableSize =
++		CAM_CAL_SINGLE_LSC_SIZE;
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, start_addr, CAM_CAL_SINGLE_LSC_SIZE,
++		(unsigned char *)&pCamCalData->SingleLsc.LscTable.MtkLcsData.SlimLscType);
++	if (read_data_size == CAM_CAL_SINGLE_LSC_SIZE) {
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		err = CamCalReturnErr[pCamCalData->Command];
++		show_cmd_error_log(pCamCalData->Command);
+ 	}
+ 
+-	debug_log("======================SingleLsc Data==================\n");
+-	debug_log("[1st] = %x, %x, %x, %x\n",
+-		pCamCalData->SingleLsc.LscTable.Data[0],
+-		pCamCalData->SingleLsc.LscTable.Data[1],
+-		pCamCalData->SingleLsc.LscTable.Data[2],
+-		pCamCalData->SingleLsc.LscTable.Data[3]);
+-	debug_log("[1st] = SensorLSC(1)?MTKLSC(2)?  %x\n",
+-		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType);
+-	debug_log("CapIspReg =0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
+-		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[0],
+-		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[1],
+-		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[2],
+-		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[3],
+-		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[4]);
+-	debug_log("RETURN = 0x%x\n", err);
+-	debug_log("======================SingleLsc Data==================\n");
++	if (pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 2 &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId != 8 &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 0x4c &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 7)
++		yft_otp_state_main = 0;
+ 
+ 	return err;
+ }
+ 
+ static unsigned int do_2a_gain_imx989(struct EEPROM_DRV_FD_DATA *pdata,
+-		unsigned int start_addr, unsigned int block_size, unsigned int *pGetSensorCalData)
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
+ {
+ 	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
+-				(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
+ 	int read_data_size;
+ 	unsigned int err = CamCalReturnErr[pCamCalData->Command];
+-
+-	long long CalGain = 0, FacGain = 0;
+-	unsigned char AWBAFConfig = 0xf;
+-
+-	unsigned short AFInf = 0, AFMacro = 0;
++	unsigned long long CalGain = 0, FacGain = 0;
++	unsigned short AFMacro = 0, AFInf = 0;
+ 	int tempMax = 0;
+ 	int CalR = 1, CalGr = 1, CalGb = 1, CalG = 1, CalB = 1;
+ 	int FacR = 1, FacGr = 1, FacGb = 1, FacG = 1, FacB = 1;
+-	unsigned int awb_offset;
++	int otp_state;
+ 
+-	(void) start_addr;
+-	(void) block_size;
+-
+-	debug_log("block_size=%d sensor_id=%x\n", block_size, pCamCalData->sensorID);
+-	memset((void *)&pCamCalData->Single2A, 0, sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
+-	/* Check rule */
++	memset(&pCamCalData->Single2A, 0,
++		sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
+ 	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
+-		err = CAM_CAL_ERR_NO_DEVICE;
+-		error_log("Read Failed\n");
+ 		show_cmd_error_log(pCamCalData->Command);
+-		return err;
++		return CAM_CAL_ERR_NO_DEVICE;
+ 	}
+-	/* Check AWB & AF enable bit */
+-	pCamCalData->Single2A.S2aVer = 0x01;
+-	pCamCalData->Single2A.S2aBitEn = (0x03 & AWBAFConfig);
+-	pCamCalData->Single2A.S2aAfBitflagEn = (0x0C & AWBAFConfig);
+-	debug_log("S2aBitEn=0x%02x", pCamCalData->Single2A.S2aBitEn);
+-	/* AWB Calibration Data*/
+-	if (0x1 & AWBAFConfig) {
+-		pCamCalData->Single2A.S2aAwb.rGainSetNum = 0;
+-		/* AWB Unit Gain (5100K) */
+-		debug_log("5100K AWB\n");
+-		awb_offset = 0x8D;
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				awb_offset, 6, (unsigned char *)&CalGain);
+-		if (read_data_size > 0)	{
+-			debug_log("Read CalGain OK %x\n", read_data_size);
+-			CalR  = CalGain & 0xFFFF;
+-			CalB  = (CalGain >> 16) & 0xFFFF;
+-			CalG  = (CalGain >> 32) & 0xFFFF;
+-			/* Byte Swap */
+-			CalR  = ((CalR << 8) & 0xFF00) | ((CalR >> 8) & 0x00FF);
+-			CalB  = ((CalB << 8) & 0xFF00) | ((CalB >> 8) & 0x00FF);
+-			CalG  = ((CalG << 8) & 0xFF00) | ((CalG >> 8) & 0x00FF);
+-			if (CalR > CalG)
+-				/* R > G */
+-				if (CalR > CalB)
+-					tempMax = CalR;
+-				else
+-					tempMax = CalB;
+-			else
+-				/* G > R */
+-				if (CalG > CalB)
+-					tempMax = CalG;
+-				else
+-					tempMax = CalB;
+-			debug_log(
+-					"UnitR:%d, UnitG:%d, UnitB:%d, New Unit Max=%d",
+-					CalR, CalG, CalB, tempMax);
+-			err = CAM_CAL_ERR_NO_ERR;
+-		} else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read CalGain Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-		if (CalGain && CalR && CalG && CalB) {
+-			pCamCalData->Single2A.S2aAwb.rGainSetNum++;
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4R =
+-					(unsigned int)((tempMax * 512 + (CalR >> 1)) / CalR);
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4G =
+-					(unsigned int)((tempMax * 512 + (CalG >> 1)) / CalG);
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4B =
+-					(unsigned int)((tempMax * 512 + (CalB >> 1)) / CalB);
+-		} else
+-			error_log("Something wrong on EEPROM, plz contact module vendor\n");
+-		/* AWB Golden Gain (5100K) */
+-		awb_offset = 0x93;
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				awb_offset, 6, (unsigned char *)&FacGain);
+-		if (read_data_size > 0)	{
+-			debug_log("Read FacGain OK\n");
+-			FacR  = FacGain & 0xFFFF;
+-			FacB  = (FacGain >> 16) & 0xFFFF;
+-			FacG  = (FacGain >> 32) & 0xFFFF;
+-			/* Byte Swap */
+-			FacR  = ((FacR << 8) & 0xFF00) | ((FacR >> 8) & 0x00FF);
+-			FacB  = ((FacB << 8) & 0xFF00) | ((FacB >> 8) & 0x00FF);
+-			FacG  = ((FacG << 8) & 0xFF00) | ((FacG >> 8) & 0x00FF);
+-			if (FacR > FacG)
+-				if (FacR > FacB)
+-					tempMax = FacR;
+-				else
+-					tempMax = FacB;
+-			else
+-				if (FacG > FacB)
+-					tempMax = FacG;
+-				else
+-					tempMax = FacB;
+-			debug_log(
+-					"GoldenR:%d, GoldenG:%d, GoldenB:%d, New Golden Max=%d",
+-					FacR, FacG, FacB, tempMax);
+-			err = CAM_CAL_ERR_NO_ERR;
+-		} else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read FacGain Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-		if (FacGain && FacR && FacG && FacB) {
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4R =
+-					(unsigned int)((tempMax * 512 + (FacR >> 1)) / FacR);
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4G =
+-					(unsigned int)((tempMax * 512 + (FacG >> 1)) / FacG);
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4B =
+-					(unsigned int)((tempMax * 512 + (FacB >> 1)) / FacB);
+-		} else
+-			error_log("Something wrong on EEPROM, plz contact module vendor\n");
+-		/* Set AWB to 3A Layer */
+-		pCamCalData->Single2A.S2aAwb.rValueR   = CalR;
+-		pCamCalData->Single2A.S2aAwb.rValueGr  = CalGr;
+-		pCamCalData->Single2A.S2aAwb.rValueGb  = CalGb;
+-		pCamCalData->Single2A.S2aAwb.rValueB   = CalB;
+-		pCamCalData->Single2A.S2aAwb.rGoldenR  = FacR;
+-		pCamCalData->Single2A.S2aAwb.rGoldenGr = FacGr;
+-		pCamCalData->Single2A.S2aAwb.rGoldenGb = FacGb;
+-		pCamCalData->Single2A.S2aAwb.rGoldenB  = FacB;
+-
+-		debug_log("======================AWB CAM_CAL==================\n");
+-		debug_log("AWB Calibration @5100K\n");
+-		debug_log("[CalGain] = 0x%llx\n", CalGain);
+-		debug_log("[FacGain] = 0x%llx\n", FacGain);
+-		debug_log("[rCalGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4R);
+-		debug_log("[rCalGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4G);
+-		debug_log("[rCalGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4B);
+-		debug_log("[rFacGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4R);
+-		debug_log("[rFacGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4G);
+-		debug_log("[rFacGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4B);
+-
+-		/* AWB Unit Gain (4000K) */
+-		CalR = CalGr = CalGb = CalG = CalB = 0;
+-		tempMax = 0;
+-		debug_log("4000K AWB\n");
+-		awb_offset = 0xA5;
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				awb_offset, 6, (unsigned char *)&CalGain);
+-		if (read_data_size > 0)	{
+-			debug_log("Read CalGain OK %x\n", read_data_size);
+-			CalR  = CalGain & 0xFFFF;
+-			CalB  = (CalGain >> 16) & 0xFFFF;
+-			CalG  = (CalGain >> 32) & 0xFFFF;
+-			/* Byte Swap */
+-			CalR  = ((CalR << 8) & 0xFF00) | ((CalR >> 8) & 0x00FF);
+-			CalB  = ((CalB << 8) & 0xFF00) | ((CalB >> 8) & 0x00FF);
+-			CalG  = ((CalG << 8) & 0xFF00) | ((CalG >> 8) & 0x00FF);
+-			if (CalR > CalG)
+-				/* R > G */
+-				if (CalR > CalB)
+-					tempMax = CalR;
+-				else
+-					tempMax = CalB;
+-			else
+-				/* G > R */
+-				if (CalG > CalB)
+-					tempMax = CalG;
+-				else
+-					tempMax = CalB;
+-			debug_log(
+-					"UnitR:%d, UnitG:%d, UnitB:%d, New Unit Max=%d",
+-					CalR, CalG, CalB, tempMax);
+-			err = CAM_CAL_ERR_NO_ERR;
+-		} else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read CalGain Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-		if (CalGain && CalR && CalG && CalB) {
+-			pCamCalData->Single2A.S2aAwb.rGainSetNum++;
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4R_mid =
+-				(unsigned int)((tempMax * 512 + (CalR >> 1)) / CalR);
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4G_mid =
+-				(unsigned int)((tempMax * 512 + (CalG >> 1)) / CalG);
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4B_mid =
+-				(unsigned int)((tempMax * 512 + (CalB >> 1)) / CalB);
+-		} else
+-			error_log("Something wrong on EEPROM, plz contact module vendor\n");
+-		/* AWB Golden Gain (4000K) */
+-		FacR = FacGr = FacGb = FacG = FacB = 0;
+-		tempMax = 0;
+-		awb_offset = 0xAB;
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				awb_offset, 6, (unsigned char *)&FacGain);
+-		if (read_data_size > 0)	{
+-			debug_log("Read FacGain OK\n");
+-			FacR  = FacGain & 0xFFFF;
+-			FacB  = (FacGain >> 16) & 0xFFFF;
+-			FacG  = (FacGain >> 32) & 0xFFFF;
+-			/* Byte Swap */
+-			FacR  = ((FacR << 8) & 0xFF00) | ((FacR >> 8) & 0x00FF);
+-			FacB  = ((FacB << 8) & 0xFF00) | ((FacB >> 8) & 0x00FF);
+-			FacG  = ((FacG << 8) & 0xFF00) | ((FacG >> 8) & 0x00FF);
+-			if (FacR > FacG)
+-				if (FacR > FacB)
+-					tempMax = FacR;
+-				else
+-					tempMax = FacB;
+-			else
+-				if (FacG > FacB)
+-					tempMax = FacG;
+-				else
+-					tempMax = FacB;
+-			debug_log(
+-					"GoldenR:%d, GoldenG:%d, GoldenB:%d, New Golden Max=%d",
+-					FacR, FacG, FacB, tempMax);
+-			err = CAM_CAL_ERR_NO_ERR;
+-		} else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read FacGain Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-		if (FacGain && FacR && FacG && FacB) {
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4R_mid =
+-				(unsigned int)((tempMax * 512 + (FacR >> 1)) / FacR);
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4G_mid =
+-				(unsigned int)((tempMax * 512 + (FacG >> 1)) / FacG);
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4B_mid =
+-				(unsigned int)((tempMax * 512 + (FacB >> 1)) / FacB);
+-		} else
+-			error_log("Something wrong on EEPROM, plz contact module vendor\n");
+ 
+-		debug_log("AWB Calibration @4000K\n");
+-		debug_log("[CalGain] = 0x%llx\n", CalGain);
+-		debug_log("[FacGain] = 0x%llx\n", FacGain);
+-		debug_log("[rCalGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4R_mid);
+-		debug_log("[rCalGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4G_mid);
+-		debug_log("[rCalGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4B_mid);
+-		debug_log("[rFacGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4R_mid);
+-		debug_log("[rFacGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4G_mid);
+-		debug_log("[rFacGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4B_mid);
+-
+-		/* AWB Unit Gain (3100K) */
+-		CalR = CalGr = CalGb = CalG = CalB = 0;
+-		tempMax = 0;
+-		debug_log("3100K AWB\n");
+-		awb_offset = 0x99;
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				awb_offset, 6, (unsigned char *)&CalGain);
+-		if (read_data_size > 0)	{
+-			debug_log("Read CalGain OK %x\n", read_data_size);
+-			CalR  = CalGain & 0xFFFF;
+-			CalB  = (CalGain >> 16) & 0xFFFF;
+-			CalG  = (CalGain >> 32) & 0xFFFF;
+-			/* Byte Swap */
+-			CalR  = ((CalR << 8) & 0xFF00) | ((CalR >> 8) & 0x00FF);
+-			CalB  = ((CalB << 8) & 0xFF00) | ((CalB >> 8) & 0x00FF);
+-			CalG  = ((CalG << 8) & 0xFF00) | ((CalG >> 8) & 0x00FF);
+-			if (CalR > CalG)
+-				/* R > G */
+-				if (CalR > CalB)
+-					tempMax = CalR;
+-				else
+-					tempMax = CalB;
+-			else
+-				/* G > R */
+-				if (CalG > CalB)
+-					tempMax = CalG;
+-				else
+-					tempMax = CalB;
+-			debug_log(
+-					"UnitR:%d, UnitG:%d, UnitB:%d, New Unit Max=%d",
+-					CalR, CalG, CalB, tempMax);
+-			err = CAM_CAL_ERR_NO_ERR;
+-		} else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read CalGain Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-		if (CalGain && CalR && CalG && CalB) {
+-			pCamCalData->Single2A.S2aAwb.rGainSetNum++;
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4R_low =
+-				(unsigned int)((tempMax * 512 + (CalR >> 1)) / CalR);
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4G_low =
+-				(unsigned int)((tempMax * 512 + (CalG >> 1)) / CalG);
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4B_low =
+-				(unsigned int)((tempMax * 512 + (CalB >> 1)) / CalB);
+-		} else
+-			error_log("Something wrong on EEPROM, plz contact module vendor\n");
+-		/* AWB Golden Gain (3100K) */
+-		FacR = FacGr = FacGb = FacG = FacB = 0;
+-		tempMax = 0;
+-		awb_offset = 0x9F;
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				awb_offset, 6, (unsigned char *)&FacGain);
+-		if (read_data_size > 0)	{
+-			debug_log("Read FacGain OK\n");
+-			FacR  = FacGain & 0xFFFF;
+-			FacB  = (FacGain >> 16) & 0xFFFF;
+-			FacG  = (FacGain >> 32) & 0xFFFF;
+-			/* Byte Swap */
+-			FacR  = ((FacR << 8) & 0xFF00) | ((FacR >> 8) & 0x00FF);
+-			FacB  = ((FacB << 8) & 0xFF00) | ((FacB >> 8) & 0x00FF);
+-			FacG  = ((FacG << 8) & 0xFF00) | ((FacG >> 8) & 0x00FF);
+-			if (FacR > FacG)
+-				if (FacR > FacB)
+-					tempMax = FacR;
+-				else
+-					tempMax = FacB;
+-			else
+-				if (FacG > FacB)
+-					tempMax = FacG;
+-				else
+-					tempMax = FacB;
+-			debug_log(
+-					"GoldenR:%d, GoldenG:%d, GoldenB:%d, New Golden Max=%d",
+-					FacR, FacG, FacB, tempMax);
+-			err = CAM_CAL_ERR_NO_ERR;
+-		} else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read FacGain Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-		if (FacGain && FacR && FacG && FacB) {
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4R_low =
+-				(unsigned int)((tempMax * 512 + (FacR >> 1)) / FacR);
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4G_low =
+-				(unsigned int)((tempMax * 512 + (FacG >> 1)) / FacG);
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4B_low =
+-				(unsigned int)((tempMax * 512 + (FacB >> 1)) / FacB);
+-		} else
+-			error_log("Something wrong on EEPROM, plz contact module vendor\n");
+-
+-		debug_log("AWB Calibration @3100K\n");
+-		debug_log("[CalGain] = 0x%llx\n", CalGain);
+-		debug_log("[FacGain] = 0x%llx\n", FacGain);
+-		debug_log("[rCalGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4R_low);
+-		debug_log("[rCalGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4G_low);
+-		debug_log("[rCalGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4B_low);
+-		debug_log("[rFacGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4R_low);
+-		debug_log("[rFacGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4G_low);
+-		debug_log("[rFacGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4B_low);
+-		debug_log("======================AWB CAM_CAL==================\n");
++	pCamCalData->Single2A.S2aVer = 1;
++	pCamCalData->Single2A.S2aBitEn = 3;
++	pCamCalData->Single2A.S2aAfBitflagEn = 0x0c;
++	pCamCalData->Single2A.S2aAwb.rGainSetNum = 0;
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x0a, 1, (unsigned char *)&AFMacro);
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x0b, 8, (unsigned char *)&CalGain);
++	if (read_data_size > 0) {
++		CalR = CalGain & 0xffff;
++		CalB = (CalGain >> 16) & 0xffff;
++		CalGr = (CalGain >> 32) & 0xffff;
++		CalGb = (CalGain >> 48) & 0xffff;
++		CalG = (CalGr + CalGb + 1) >> 1;
++		tempMax = max(max(CalR, CalG), CalB);
++		err = CAM_CAL_ERR_NO_ERR;
++		otp_state = 1;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	if (CalGain && CalR && CalG && CalB) {
++		pCamCalData->Single2A.S2aAwb.rGainSetNum++;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4R =
++			(tempMax * 512 + (CalR >> 1)) / CalR;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4G =
++			(tempMax * 512 + (CalG >> 1)) / CalG;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4B =
++			(tempMax * 512 + (CalB >> 1)) / CalB;
+ 	}
+-	/* AF Calibration Data*/
+-	if (0x2 & AWBAFConfig) {
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				0x6F, 2, (unsigned char *)&AFInf);
+-		if (read_data_size > 0)
+-			err = CAM_CAL_ERR_NO_ERR;
+-		else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				0x71, 2, (unsigned char *)&AFMacro);
+-		if (read_data_size > 0)
+-			err = CAM_CAL_ERR_NO_ERR;
+-		else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-
+-		/* Byte Swap */
+-		AFInf  = ((AFInf << 8) & 0xFF00) | ((AFInf >> 8) & 0x00FF);
+-		AFMacro  = ((AFMacro << 8) & 0xFF00) | ((AFMacro >> 8) & 0x00FF);
+ 
+-		pCamCalData->Single2A.S2aAf[0] = AFInf;
+-		pCamCalData->Single2A.S2aAf[1] = AFMacro;
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x13, 8, (unsigned char *)&FacGain);
++	if (read_data_size > 0) {
++		FacR = FacGain & 0xffff;
++		FacB = (FacGain >> 16) & 0xffff;
++		FacGr = (FacGain >> 32) & 0xffff;
++		FacGb = (FacGain >> 48) & 0xffff;
++		FacG = (FacGr + FacGb + 1) >> 1;
++		tempMax = max(max(FacR, FacG), FacB);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	if (FacGain && FacR && FacG && FacB) {
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4R =
++			(tempMax * 512 + (FacR >> 1)) / FacR;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4G =
++			(tempMax * 512 + (FacG >> 1)) / FacG;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4B =
++			(tempMax * 512 + (FacB >> 1)) / FacB;
++	}
+ 
+-		debug_log("======================AF CAM_CAL==================\n");
+-		debug_log("[AFInf] = %d\n", AFInf);
+-		debug_log("[AFMacro] = %d\n", AFMacro);
+-		debug_log("======================AF CAM_CAL==================\n");
++	pCamCalData->Single2A.S2aAwb.rValueR = CalR;
++	pCamCalData->Single2A.S2aAwb.rValueGr = CalGr;
++	pCamCalData->Single2A.S2aAwb.rValueGb = CalGb;
++	pCamCalData->Single2A.S2aAwb.rValueB = CalB;
++	pCamCalData->Single2A.S2aAwb.rGoldenR = FacR;
++	pCamCalData->Single2A.S2aAwb.rGoldenGr = FacGr;
++	pCamCalData->Single2A.S2aAwb.rGoldenGb = FacGb;
++	pCamCalData->Single2A.S2aAwb.rGoldenB = FacB;
++
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x76a, 1, (unsigned char *)&AFMacro);
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76d, 2, (unsigned char *)&AFMacro);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76b, 2, (unsigned char *)&AFInf);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
+ 	}
++	pCamCalData->Single2A.S2aAf[0] = AFMacro;
++	pCamCalData->Single2A.S2aAf[1] = AFInf;
++	if (AFMacro > AFInf)
++		otp_state = 0;
++	yft_otp_state_main = otp_state;
+ 	return err;
+ }
+ 
+diff --git a/cam_cal/src_v4l2/custom/layout/imx989cts_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/imx989cts_cust_eeprom.c
+new file mode 100644
+index 0000000..c661b9f
+--- /dev/null
++++ b/cam_cal/src_v4l2/custom/layout/imx989cts_cust_eeprom.c
+@@ -0,0 +1,135 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Reconstructed from GQ5012BF1 stock camera_eeprom_v4l2.ko. */
++#define PFX "CAM_CAL"
++#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
++#include <linux/kernel.h>
++#include "cam_cal_list.h"
++#include "eeprom_i2c_common_driver.h"
++#include "eeprom_i2c_custom_driver.h"
++#include "cam_cal_config.h"
++
++static unsigned int do_single_lsc_imx989cts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_2a_gain_imx989cts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_lens_id_imx989cts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++
++static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
++	0x00000000, 0x77006901, CAM_CAL_SINGLE_EEPROM_DATA,
++	{
++		{0, 0, 0, do_module_version},
++		{0, 1, 2, do_part_number},
++		{0x00000000, 0x0000001D, 0x0000074C, do_single_lsc_imx989cts},
++		{0x00000001, 0x00000007, 0x0000000E, do_2a_gain_imx989cts},
++		{0x00000000, 0x00000771, 0x000005DC, do_pdaf},
++		{0, 0, 0, do_stereo_data},
++		{0, 0, 0x8000, do_dump_all},
++		{0, 8, 2, do_lens_id_imx989cts}
++	}
++};
++
++struct STRUCT_CAM_CAL_CONFIG_STRUCT imx989cts_cust_eeprom = {
++	.name = "imx989cts_cust_eeprom",
++	.check_layout_function = layout_check,
++	.read_function = Common_read_region,
++	.layout = &cal_layout_table,
++	.sensor_id = 0x988,
++	.i2c_write_id = 0xA0,
++	.max_size = 0x4000,
++	.enable_preload = 1,
++	.preload_size = 0x4000,
++	.has_stored_data = 0,
++};
++
++static unsigned int do_single_lsc_imx989cts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	int read_data_size;
++
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++	pCamCalData->SingleLsc.TableRotation = 0;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType = 2;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId = 8;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.TableSize = CAM_CAL_SINGLE_LSC_SIZE;
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, start_addr, CAM_CAL_SINGLE_LSC_SIZE,
++		(unsigned char *)&pCamCalData->SingleLsc.LscTable.MtkLcsData.SlimLscType);
++	if (read_data_size == CAM_CAL_SINGLE_LSC_SIZE)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		err = CamCalReturnErr[pCamCalData->Command];
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 2 &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId != 8 &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 0x4c &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 7)
++		yft_otp_state_main = 0;
++	return err;
++}
++
++static unsigned int do_2a_gain_imx989cts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned short AFMacro = 0, AFInf = 0;
++	int otp_state = 1;
++
++	memset(&pCamCalData->Single2A, 0,
++		sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++	pCamCalData->Single2A.S2aVer = 1;
++	pCamCalData->Single2A.S2aBitEn = 3;
++	pCamCalData->Single2A.S2aAfBitflagEn = 0x0c;
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x76a, 1, (unsigned char *)&AFMacro);
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76d, 2, (unsigned char *)&AFMacro);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76b, 2, (unsigned char *)&AFInf);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	pCamCalData->Single2A.S2aAf[0] = 0x0a;
++	pCamCalData->Single2A.S2aAf[1] = AFInf;
++	if (AFInf < 0x0a)
++		otp_state = 0;
++	yft_otp_state_main = otp_state;
++	return err;
++}
++
++static unsigned int do_lens_id_imx989cts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_lens_id_base(pdata, start_addr, block_size, pGetSensorCalData);
++}
+diff --git a/cam_cal/src_v4l2/custom/layout/imx989lite_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/imx989lite_cust_eeprom.c
+index 4effa2c..48ef22a 100644
+--- a/cam_cal/src_v4l2/custom/layout/imx989lite_cust_eeprom.c
++++ b/cam_cal/src_v4l2/custom/layout/imx989lite_cust_eeprom.c
+@@ -38,7 +38,7 @@ struct STRUCT_CAM_CAL_CONFIG_STRUCT imx989lite_cust_eeprom = {
+ 	.check_layout_function = layout_check,
+ 	.read_function = Common_read_region,
+ 	.layout = &cal_layout_table,
+-	.sensor_id = IMX989LITE_SENSOR_ID,
++	.sensor_id = 0x098B,
+ 	.i2c_write_id = 0xA0,
+ 	.max_size = 0x4000,
+ 	.enable_preload = 1,
+diff --git a/cam_cal/src_v4l2/custom/layout/imx989ryyb_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/imx989ryyb_cust_eeprom.c
+new file mode 100644
+index 0000000..7d428c6
+--- /dev/null
++++ b/cam_cal/src_v4l2/custom/layout/imx989ryyb_cust_eeprom.c
+@@ -0,0 +1,203 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Reconstructed from GQ5012BF1 stock camera_eeprom_v4l2.ko. */
++#define PFX "CAM_CAL"
++#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
++#include <linux/kernel.h>
++#include "cam_cal_list.h"
++#include "eeprom_i2c_common_driver.h"
++#include "eeprom_i2c_custom_driver.h"
++#include "cam_cal_config.h"
++
++static unsigned int do_single_lsc_imx989ryyb(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_2a_gain_imx989ryyb(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_lens_id_imx989ryyb(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++
++static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
++	0x00000000, 0x77007001, CAM_CAL_SINGLE_EEPROM_DATA,
++	{
++		{0, 0, 0, do_module_version},
++		{0, 1, 2, do_part_number},
++		{0x00000001, 0x0000001D, 0x0000074C, do_single_lsc_imx989ryyb},
++		{0x00000001, 0x00000007, 0x0000000E, do_2a_gain_imx989ryyb},
++		{0x00000001, 0x00000771, 0x000005DC, do_pdaf},
++		{0, 0, 0, do_stereo_data},
++		{0, 0, 0x8000, do_dump_all},
++		{0, 8, 2, do_lens_id_imx989ryyb}
++	}
++};
++
++struct STRUCT_CAM_CAL_CONFIG_STRUCT imx989ryyb_cust_eeprom = {
++	.name = "imx989ryyb_cust_eeprom",
++	.check_layout_function = layout_check,
++	.read_function = Common_read_region,
++	.layout = &cal_layout_table,
++	.sensor_id = 0x98A,
++	.i2c_write_id = 0xA0,
++	.max_size = 0x4000,
++	.enable_preload = 1,
++	.preload_size = 0x4000,
++	.has_stored_data = 0,
++};
++
++static unsigned int do_single_lsc_imx989ryyb(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	int read_data_size;
++
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++	pCamCalData->SingleLsc.TableRotation = 0;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType = 2;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId = 8;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.TableSize = CAM_CAL_SINGLE_LSC_SIZE;
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, start_addr, CAM_CAL_SINGLE_LSC_SIZE,
++		(unsigned char *)&pCamCalData->SingleLsc.LscTable.MtkLcsData.SlimLscType);
++	if (read_data_size == CAM_CAL_SINGLE_LSC_SIZE)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		err = CamCalReturnErr[pCamCalData->Command];
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 2 &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId != 8 &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 0x4c &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 7)
++		yft_otp_state_main = 0;
++	return err;
++}
++
++static unsigned int do_2a_gain_imx989ryyb(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned long long CalGain = 0, FacGain = 0;
++	unsigned short AFMacro = 0, AFInf = 0;
++	int tempMax = 0;
++	int CalR = 1, CalGr = 1, CalGb = 1, CalG = 1, CalB = 1;
++	int FacR = 1, FacGr = 1, FacGb = 1, FacG = 1, FacB = 1;
++	int otp_state;
++
++	memset(&pCamCalData->Single2A, 0,
++		sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++
++	pCamCalData->Single2A.S2aVer = 1;
++	pCamCalData->Single2A.S2aBitEn = 3;
++	pCamCalData->Single2A.S2aAfBitflagEn = 0x0c;
++	pCamCalData->Single2A.S2aAwb.rGainSetNum = 0;
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x0a, 1, (unsigned char *)&AFMacro);
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x0b, 8, (unsigned char *)&CalGain);
++	if (read_data_size > 0) {
++		CalR = CalGain & 0xffff;
++		CalB = (CalGain >> 16) & 0xffff;
++		CalGr = (CalGain >> 32) & 0xffff;
++		CalGb = (CalGain >> 48) & 0xffff;
++		CalG = (CalGr + CalGb + 1) >> 1;
++		tempMax = max(max(CalR, CalG), CalB);
++		err = CAM_CAL_ERR_NO_ERR;
++		otp_state = 1;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	if (CalGain && CalR && CalG && CalB) {
++		pCamCalData->Single2A.S2aAwb.rGainSetNum++;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4R =
++			(tempMax * 512 + (CalR >> 1)) / CalR;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4G =
++			(tempMax * 512 + (CalG >> 1)) / CalG;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4B =
++			(tempMax * 512 + (CalB >> 1)) / CalB;
++	}
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x13, 8, (unsigned char *)&FacGain);
++	if (read_data_size > 0) {
++		FacR = FacGain & 0xffff;
++		FacB = (FacGain >> 16) & 0xffff;
++		FacGr = (FacGain >> 32) & 0xffff;
++		FacGb = (FacGain >> 48) & 0xffff;
++		FacG = (FacGr + FacGb + 1) >> 1;
++		tempMax = max(max(FacR, FacG), FacB);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	if (FacGain && FacR && FacG && FacB) {
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4R =
++			(tempMax * 512 + (FacR >> 1)) / FacR;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4G =
++			(tempMax * 512 + (FacG >> 1)) / FacG;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4B =
++			(tempMax * 512 + (FacB >> 1)) / FacB;
++	}
++
++	pCamCalData->Single2A.S2aAwb.rValueR = CalR;
++	pCamCalData->Single2A.S2aAwb.rValueGr = CalGr;
++	pCamCalData->Single2A.S2aAwb.rValueGb = CalGb;
++	pCamCalData->Single2A.S2aAwb.rValueB = CalB;
++	pCamCalData->Single2A.S2aAwb.rGoldenR = FacR;
++	pCamCalData->Single2A.S2aAwb.rGoldenGr = FacGr;
++	pCamCalData->Single2A.S2aAwb.rGoldenGb = FacGb;
++	pCamCalData->Single2A.S2aAwb.rGoldenB = FacB;
++
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x76a, 1, (unsigned char *)&AFMacro);
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76d, 2, (unsigned char *)&AFMacro);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76b, 2, (unsigned char *)&AFInf);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	pCamCalData->Single2A.S2aAf[0] = AFMacro;
++	pCamCalData->Single2A.S2aAf[1] = AFInf;
++	if (AFMacro > AFInf)
++		otp_state = 0;
++	yft_otp_state_main = otp_state;
++	return err;
++}
++
++static unsigned int do_lens_id_imx989ryyb(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_lens_id_base(pdata, start_addr, block_size, pGetSensorCalData);
++}
+diff --git a/cam_cal/src_v4l2/custom/layout/ov64b_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/ov64b_cust_eeprom.c
+index 8a3db16..56ad290 100644
+--- a/cam_cal/src_v4l2/custom/layout/ov64b_cust_eeprom.c
++++ b/cam_cal/src_v4l2/custom/layout/ov64b_cust_eeprom.c
+@@ -18,16 +18,16 @@ static unsigned int do_2a_gain_ov64b(struct EEPROM_DRV_FD_DATA *pdata,
+ 		unsigned int start_addr, unsigned int block_size, unsigned int *pGetSensorCalData);
+ 
+ static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
+-	0x0000000B, 0x010B00FF, CAM_CAL_SINGLE_EEPROM_DATA,
++	0x00000000, 0x77006901, CAM_CAL_SINGLE_EEPROM_DATA,
+ 	{
+-		{0x00000001, 0x00000000, 0x00000000, do_module_version},
+-		{0x00000001, 0x00000001, 0x00000002, do_part_number},
+-		{0x00000001, 0x000000c3, 0x0000074C, do_single_lsc_ov64b},
++		{0x00000000, 0x00000000, 0x00000000, do_module_version},
++		{0x00000000, 0x00000001, 0x00000002, do_part_number},
++		{0x00000000, 0x0000001D, 0x0000074C, do_single_lsc_ov64b},
+ 		{0x00000001, 0x00000007, 0x0000000E, do_2a_gain_ov64b},
+-		{0x00000001, 0x00000820, 0x000005F9, do_pdaf},
++		{0x00000000, 0x00000820, 0x000005F9, do_pdaf},
+ 		{0x00000000, 0x00000FAE, 0x00000550, do_stereo_data},
+-		{0x00000001, 0x00000000, 0x00001600, do_dump_all},
+-		{0x00000001, 0x00000008, 0x00000002, do_lens_id}
++		{0x00000000, 0x00000000, 0x00001600, do_dump_all},
++		{0x00000000, 0x00000008, 0x00000002, do_lens_id}
+ 	}
+ };
+ 
+@@ -37,7 +37,7 @@ struct STRUCT_CAM_CAL_CONFIG_STRUCT ov64b_cust_eeprom = {
+ 	.read_function = Common_read_region,
+ 	.layout = &cal_layout_table,
+ 	.sensor_id = OV64B_SENSOR_ID,
+-	.i2c_write_id = 0xAA,
++	.i2c_write_id = 0xA6,
+ 	.max_size = 0x4000,
+ 	.enable_preload = 1,
+ 	.preload_size = 0x1500,
+@@ -105,390 +105,58 @@ static unsigned int do_single_lsc_ov64b(struct EEPROM_DRV_FD_DATA *pdata,
+ 	debug_log("RETURN = 0x%x\n", err);
+ 	debug_log("======================SingleLsc Data==================\n");
+ 
++	if (pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 2 &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId != 8 &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 0x4c &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 7)
++		yft_otp_state_main3 = 0;
++
+ 	return err;
+ }
+ 
+ static unsigned int do_2a_gain_ov64b(struct EEPROM_DRV_FD_DATA *pdata,
+-		unsigned int start_addr, unsigned int block_size, unsigned int *pGetSensorCalData)
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
+ {
+ 	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
+-				(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
+ 	int read_data_size;
+ 	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned short AFMacro = 0, AFInf = 0;
++	int otp_state;
+ 
+-	long long CalGain = 0, FacGain = 0;
+-	unsigned char AWBAFConfig = 0xf;
+-
+-	unsigned short AFInf = 0, AFMacro = 0;
+-	int tempMax = 0;
+-	int CalR = 1, CalGr = 1, CalGb = 1, CalG = 1, CalB = 1;
+-	int FacR = 1, FacGr = 1, FacGb = 1, FacG = 1, FacB = 1;
+-	unsigned int awb_offset;
+-
+-	(void) start_addr;
+-	(void) block_size;
+-
+-	debug_log("block_size=%d sensor_id=%x\n", block_size, pCamCalData->sensorID);
+-	memset((void *)&pCamCalData->Single2A, 0, sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
+-	/* Check rule */
++	memset(&pCamCalData->Single2A, 0,
++		sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
+ 	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
+-		err = CAM_CAL_ERR_NO_DEVICE;
+-		error_log("Read Failed\n");
+ 		show_cmd_error_log(pCamCalData->Command);
+-		return err;
++		return CAM_CAL_ERR_NO_DEVICE;
+ 	}
+-	/* Check AWB & AF enable bit */
+-	pCamCalData->Single2A.S2aVer = 0x01;
+-	pCamCalData->Single2A.S2aBitEn = (0x03 & AWBAFConfig);
+-	pCamCalData->Single2A.S2aAfBitflagEn = (0x0C & AWBAFConfig);
+-	debug_log("S2aBitEn=0x%02x", pCamCalData->Single2A.S2aBitEn);
+-	/* AWB Calibration Data*/
+-	if (0x1 & AWBAFConfig) {
+-		pCamCalData->Single2A.S2aAwb.rGainSetNum = 0;
+-		/* AWB Unit Gain (5100K) */
+-		debug_log("5100K AWB\n");
+-		awb_offset = 0x8D;
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				awb_offset, 6, (unsigned char *)&CalGain);
+-		if (read_data_size > 0)	{
+-			debug_log("Read CalGain OK %x\n", read_data_size);
+-			CalR  = CalGain & 0xFFFF;
+-			CalB  = (CalGain >> 16) & 0xFFFF;
+-			CalG  = (CalGain >> 32) & 0xFFFF;
+-			/* Byte Swap */
+-			CalR  = ((CalR << 8) & 0xFF00) | ((CalR >> 8) & 0x00FF);
+-			CalB  = ((CalB << 8) & 0xFF00) | ((CalB >> 8) & 0x00FF);
+-			CalG  = ((CalG << 8) & 0xFF00) | ((CalG >> 8) & 0x00FF);
+-			if (CalR > CalG)
+-				/* R > G */
+-				if (CalR > CalB)
+-					tempMax = CalR;
+-				else
+-					tempMax = CalB;
+-			else
+-				/* G > R */
+-				if (CalG > CalB)
+-					tempMax = CalG;
+-				else
+-					tempMax = CalB;
+-			debug_log(
+-					"UnitR:%d, UnitG:%d, UnitB:%d, New Unit Max=%d",
+-					CalR, CalG, CalB, tempMax);
+-			err = CAM_CAL_ERR_NO_ERR;
+-		} else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read CalGain Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-		if (CalGain && CalR && CalG && CalB) {
+-			pCamCalData->Single2A.S2aAwb.rGainSetNum++;
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4R =
+-					(unsigned int)((tempMax * 512 + (CalR >> 1)) / CalR);
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4G =
+-					(unsigned int)((tempMax * 512 + (CalG >> 1)) / CalG);
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4B =
+-					(unsigned int)((tempMax * 512 + (CalB >> 1)) / CalB);
+-		} else
+-			error_log("Something wrong on EEPROM, plz contact module vendor\n");
+-		/* AWB Golden Gain (5100K) */
+-		awb_offset = 0x93;
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				awb_offset, 6, (unsigned char *)&FacGain);
+-		if (read_data_size > 0)	{
+-			debug_log("Read FacGain OK\n");
+-			FacR  = FacGain & 0xFFFF;
+-			FacB  = (FacGain >> 16) & 0xFFFF;
+-			FacG  = (FacGain >> 32) & 0xFFFF;
+-			/* Byte Swap */
+-			FacR  = ((FacR << 8) & 0xFF00) | ((FacR >> 8) & 0x00FF);
+-			FacB  = ((FacB << 8) & 0xFF00) | ((FacB >> 8) & 0x00FF);
+-			FacG  = ((FacG << 8) & 0xFF00) | ((FacG >> 8) & 0x00FF);
+-			if (FacR > FacG)
+-				if (FacR > FacB)
+-					tempMax = FacR;
+-				else
+-					tempMax = FacB;
+-			else
+-				if (FacG > FacB)
+-					tempMax = FacG;
+-				else
+-					tempMax = FacB;
+-			debug_log(
+-					"GoldenR:%d, GoldenG:%d, GoldenB:%d, New Golden Max=%d",
+-					FacR, FacG, FacB, tempMax);
+-			err = CAM_CAL_ERR_NO_ERR;
+-		} else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read FacGain Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-		if (FacGain && FacR && FacG && FacB) {
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4R =
+-					(unsigned int)((tempMax * 512 + (FacR >> 1)) / FacR);
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4G =
+-					(unsigned int)((tempMax * 512 + (FacG >> 1)) / FacG);
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4B =
+-					(unsigned int)((tempMax * 512 + (FacB >> 1)) / FacB);
+-		} else
+-			error_log("Something wrong on EEPROM, plz contact module vendor\n");
+-		/* Set AWB to 3A Layer */
+-		pCamCalData->Single2A.S2aAwb.rValueR   = CalR;
+-		pCamCalData->Single2A.S2aAwb.rValueGr  = CalGr;
+-		pCamCalData->Single2A.S2aAwb.rValueGb  = CalGb;
+-		pCamCalData->Single2A.S2aAwb.rValueB   = CalB;
+-		pCamCalData->Single2A.S2aAwb.rGoldenR  = FacR;
+-		pCamCalData->Single2A.S2aAwb.rGoldenGr = FacGr;
+-		pCamCalData->Single2A.S2aAwb.rGoldenGb = FacGb;
+-		pCamCalData->Single2A.S2aAwb.rGoldenB  = FacB;
+-
+-		debug_log("======================AWB CAM_CAL==================\n");
+-		debug_log("AWB Calibration @5100K\n");
+-		debug_log("[CalGain] = 0x%llx\n", CalGain);
+-		debug_log("[FacGain] = 0x%llx\n", FacGain);
+-		debug_log("[rCalGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4R);
+-		debug_log("[rCalGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4G);
+-		debug_log("[rCalGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4B);
+-		debug_log("[rFacGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4R);
+-		debug_log("[rFacGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4G);
+-		debug_log("[rFacGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4B);
+-
+-		/* AWB Unit Gain (4000K) */
+-		CalR = CalGr = CalGb = CalG = CalB = 0;
+-		tempMax = 0;
+-		debug_log("4000K AWB\n");
+-		awb_offset = 0xA5;
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				awb_offset, 6, (unsigned char *)&CalGain);
+-		if (read_data_size > 0)	{
+-			debug_log("Read CalGain OK %x\n", read_data_size);
+-			CalR  = CalGain & 0xFFFF;
+-			CalB  = (CalGain >> 16) & 0xFFFF;
+-			CalG  = (CalGain >> 32) & 0xFFFF;
+-			/* Byte Swap */
+-			CalR  = ((CalR << 8) & 0xFF00) | ((CalR >> 8) & 0x00FF);
+-			CalB  = ((CalB << 8) & 0xFF00) | ((CalB >> 8) & 0x00FF);
+-			CalG  = ((CalG << 8) & 0xFF00) | ((CalG >> 8) & 0x00FF);
+-			if (CalR > CalG)
+-				/* R > G */
+-				if (CalR > CalB)
+-					tempMax = CalR;
+-				else
+-					tempMax = CalB;
+-			else
+-				/* G > R */
+-				if (CalG > CalB)
+-					tempMax = CalG;
+-				else
+-					tempMax = CalB;
+-			debug_log(
+-					"UnitR:%d, UnitG:%d, UnitB:%d, New Unit Max=%d",
+-					CalR, CalG, CalB, tempMax);
+-			err = CAM_CAL_ERR_NO_ERR;
+-		} else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read CalGain Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-		if (CalGain && CalR && CalG && CalB) {
+-			pCamCalData->Single2A.S2aAwb.rGainSetNum++;
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4R_mid =
+-				(unsigned int)((tempMax * 512 + (CalR >> 1)) / CalR);
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4G_mid =
+-				(unsigned int)((tempMax * 512 + (CalG >> 1)) / CalG);
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4B_mid =
+-				(unsigned int)((tempMax * 512 + (CalB >> 1)) / CalB);
+-		} else
+-			error_log("Something wrong on EEPROM, plz contact module vendor\n");
+-		/* AWB Golden Gain (4000K) */
+-		FacR = FacGr = FacGb = FacG = FacB = 0;
+-		tempMax = 0;
+-		awb_offset = 0xAB;
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				awb_offset, 6, (unsigned char *)&FacGain);
+-		if (read_data_size > 0)	{
+-			debug_log("Read FacGain OK\n");
+-			FacR  = FacGain & 0xFFFF;
+-			FacB  = (FacGain >> 16) & 0xFFFF;
+-			FacG  = (FacGain >> 32) & 0xFFFF;
+-			/* Byte Swap */
+-			FacR  = ((FacR << 8) & 0xFF00) | ((FacR >> 8) & 0x00FF);
+-			FacB  = ((FacB << 8) & 0xFF00) | ((FacB >> 8) & 0x00FF);
+-			FacG  = ((FacG << 8) & 0xFF00) | ((FacG >> 8) & 0x00FF);
+-			if (FacR > FacG)
+-				if (FacR > FacB)
+-					tempMax = FacR;
+-				else
+-					tempMax = FacB;
+-			else
+-				if (FacG > FacB)
+-					tempMax = FacG;
+-				else
+-					tempMax = FacB;
+-			debug_log(
+-					"GoldenR:%d, GoldenG:%d, GoldenB:%d, New Golden Max=%d",
+-					FacR, FacG, FacB, tempMax);
+-			err = CAM_CAL_ERR_NO_ERR;
+-		} else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read FacGain Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-		if (FacGain && FacR && FacG && FacB) {
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4R_mid =
+-				(unsigned int)((tempMax * 512 + (FacR >> 1)) / FacR);
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4G_mid =
+-				(unsigned int)((tempMax * 512 + (FacG >> 1)) / FacG);
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4B_mid =
+-				(unsigned int)((tempMax * 512 + (FacB >> 1)) / FacB);
+-		} else
+-			error_log("Something wrong on EEPROM, plz contact module vendor\n");
+-
+-		debug_log("AWB Calibration @4000K\n");
+-		debug_log("[CalGain] = 0x%llx\n", CalGain);
+-		debug_log("[FacGain] = 0x%llx\n", FacGain);
+-		debug_log("[rCalGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4R_mid);
+-		debug_log("[rCalGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4G_mid);
+-		debug_log("[rCalGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4B_mid);
+-		debug_log("[rFacGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4R_mid);
+-		debug_log("[rFacGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4G_mid);
+-		debug_log("[rFacGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4B_mid);
+-
+-		/* AWB Unit Gain (3100K) */
+-		CalR = CalGr = CalGb = CalG = CalB = 0;
+-		tempMax = 0;
+-		debug_log("3100K AWB\n");
+-		awb_offset = 0x99;
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				awb_offset, 6, (unsigned char *)&CalGain);
+-		if (read_data_size > 0)	{
+-			debug_log("Read CalGain OK %x\n", read_data_size);
+-			CalR  = CalGain & 0xFFFF;
+-			CalB  = (CalGain >> 16) & 0xFFFF;
+-			CalG  = (CalGain >> 32) & 0xFFFF;
+-			/* Byte Swap */
+-			CalR  = ((CalR << 8) & 0xFF00) | ((CalR >> 8) & 0x00FF);
+-			CalB  = ((CalB << 8) & 0xFF00) | ((CalB >> 8) & 0x00FF);
+-			CalG  = ((CalG << 8) & 0xFF00) | ((CalG >> 8) & 0x00FF);
+-			if (CalR > CalG)
+-				/* R > G */
+-				if (CalR > CalB)
+-					tempMax = CalR;
+-				else
+-					tempMax = CalB;
+-			else
+-				/* G > R */
+-				if (CalG > CalB)
+-					tempMax = CalG;
+-				else
+-					tempMax = CalB;
+-			debug_log(
+-					"UnitR:%d, UnitG:%d, UnitB:%d, New Unit Max=%d",
+-					CalR, CalG, CalB, tempMax);
+-			err = CAM_CAL_ERR_NO_ERR;
+-		} else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read CalGain Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-		if (CalGain && CalR && CalG && CalB) {
+-			pCamCalData->Single2A.S2aAwb.rGainSetNum++;
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4R_low =
+-				(unsigned int)((tempMax * 512 + (CalR >> 1)) / CalR);
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4G_low =
+-				(unsigned int)((tempMax * 512 + (CalG >> 1)) / CalG);
+-			pCamCalData->Single2A.S2aAwb.rUnitGainu4B_low =
+-				(unsigned int)((tempMax * 512 + (CalB >> 1)) / CalB);
+-		} else
+-			error_log("Something wrong on EEPROM, plz contact module vendor\n");
+-		/* AWB Golden Gain (3100K) */
+-		FacR = FacGr = FacGb = FacG = FacB = 0;
+-		tempMax = 0;
+-		awb_offset = 0x9F;
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				awb_offset, 6, (unsigned char *)&FacGain);
+-		if (read_data_size > 0)	{
+-			debug_log("Read FacGain OK\n");
+-			FacR  = FacGain & 0xFFFF;
+-			FacB  = (FacGain >> 16) & 0xFFFF;
+-			FacG  = (FacGain >> 32) & 0xFFFF;
+-			/* Byte Swap */
+-			FacR  = ((FacR << 8) & 0xFF00) | ((FacR >> 8) & 0x00FF);
+-			FacB  = ((FacB << 8) & 0xFF00) | ((FacB >> 8) & 0x00FF);
+-			FacG  = ((FacG << 8) & 0xFF00) | ((FacG >> 8) & 0x00FF);
+-			if (FacR > FacG)
+-				if (FacR > FacB)
+-					tempMax = FacR;
+-				else
+-					tempMax = FacB;
+-			else
+-				if (FacG > FacB)
+-					tempMax = FacG;
+-				else
+-					tempMax = FacB;
+-			debug_log(
+-					"GoldenR:%d, GoldenG:%d, GoldenB:%d, New Golden Max=%d",
+-					FacR, FacG, FacB, tempMax);
+-			err = CAM_CAL_ERR_NO_ERR;
+-		} else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read FacGain Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-		if (FacGain && FacR && FacG && FacB) {
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4R_low =
+-				(unsigned int)((tempMax * 512 + (FacR >> 1)) / FacR);
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4G_low =
+-				(unsigned int)((tempMax * 512 + (FacG >> 1)) / FacG);
+-			pCamCalData->Single2A.S2aAwb.rGoldGainu4B_low =
+-				(unsigned int)((tempMax * 512 + (FacB >> 1)) / FacB);
+-		} else
+-			error_log("Something wrong on EEPROM, plz contact module vendor\n");
+-
+-		debug_log("AWB Calibration @3100K\n");
+-		debug_log("[CalGain] = 0x%llx\n", CalGain);
+-		debug_log("[FacGain] = 0x%llx\n", FacGain);
+-		debug_log("[rCalGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4R_low);
+-		debug_log("[rCalGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4G_low);
+-		debug_log("[rCalGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rUnitGainu4B_low);
+-		debug_log("[rFacGain.u4R] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4R_low);
+-		debug_log("[rFacGain.u4G] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4G_low);
+-		debug_log("[rFacGain.u4B] = %d\n", pCamCalData->Single2A.S2aAwb.rGoldGainu4B_low);
+-		debug_log("======================AWB CAM_CAL==================\n");
++	pCamCalData->Single2A.S2aVer = 1;
++	pCamCalData->Single2A.S2aBitEn = 2;
++	pCamCalData->Single2A.S2aAfBitflagEn = 0;
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76d, 2, (unsigned char *)&AFMacro);
++	if (read_data_size > 0) {
++		err = CAM_CAL_ERR_NO_ERR;
++		otp_state = 1;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
+ 	}
+-	/* AF Calibration Data*/
+-	if (0x2 & AWBAFConfig) {
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				0x6F, 2, (unsigned char *)&AFInf);
+-		if (read_data_size > 0)
+-			err = CAM_CAL_ERR_NO_ERR;
+-		else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-
+-		read_data_size = read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
+-				0x71, 2, (unsigned char *)&AFMacro);
+-		if (read_data_size > 0)
+-			err = CAM_CAL_ERR_NO_ERR;
+-		else {
+-			pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
+-			error_log("Read Failed\n");
+-			show_cmd_error_log(pCamCalData->Command);
+-		}
+-
+-		/* Byte Swap */
+-		AFInf  = ((AFInf << 8) & 0xFF00) | ((AFInf >> 8) & 0x00FF);
+-		AFMacro  = ((AFMacro << 8) & 0xFF00) | ((AFMacro >> 8) & 0x00FF);
+-
+-		pCamCalData->Single2A.S2aAf[0] = AFInf;
+-		pCamCalData->Single2A.S2aAf[1] = AFMacro;
+-
+-		////Only AF Gathering <////
+-		debug_log("======================AF CAM_CAL==================\n");
+-		debug_log("[AFInf] = %d\n", AFInf);
+-		debug_log("[AFMacro] = %d\n", AFMacro);
+-		debug_log("======================AF CAM_CAL==================\n");
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76b, 2, (unsigned char *)&AFInf);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
+ 	}
++	pCamCalData->Single2A.S2aAf[0] = AFMacro;
++	pCamCalData->Single2A.S2aAf[1] = AFInf;
++	if (AFMacro > AFInf)
++		otp_state = 0;
++	yft_otp_state_main3 = otp_state;
+ 	return err;
+ }
+diff --git a/cam_cal/src_v4l2/custom/layout/ova0b40_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/ova0b40_cust_eeprom.c
+new file mode 100644
+index 0000000..82ea367
+--- /dev/null
++++ b/cam_cal/src_v4l2/custom/layout/ova0b40_cust_eeprom.c
+@@ -0,0 +1,67 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Reconstructed from GQ5012BF1 stock camera_eeprom_v4l2.ko. */
++#define PFX "CAM_CAL"
++#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
++#include <linux/kernel.h>
++#include "cam_cal_list.h"
++#include "eeprom_i2c_common_driver.h"
++#include "eeprom_i2c_custom_driver.h"
++#include "cam_cal_config.h"
++
++static unsigned int do_single_lsc_ova0b40(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_2a_gain_ova0b40(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_lens_id_ova0b40(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++
++static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
++	0x00000000, 0x77006901, CAM_CAL_SINGLE_EEPROM_DATA,
++	{
++		{0, 0, 0, do_module_version},
++		{0, 1, 2, do_part_number},
++		{0x00000001, 0x0000001D, 0x0000074C, do_single_lsc_ova0b40},
++		{0x00000001, 0x00000007, 0x0000000E, do_2a_gain_ova0b40},
++		{0x00000000, 0x00000771, 0x000005DC, do_pdaf},
++		{0, 0, 0, do_stereo_data},
++		{0, 0, 0x8000, do_dump_all},
++		{0, 8, 2, do_lens_id_ova0b40}
++	}
++};
++
++struct STRUCT_CAM_CAL_CONFIG_STRUCT ova0b40_cust_eeprom = {
++	.name = "ova0b40_cust_eeprom",
++	.check_layout_function = layout_check,
++	.read_function = Common_read_region,
++	.layout = &cal_layout_table,
++	.sensor_id = 0xA042,
++	.i2c_write_id = 0xA0,
++	.max_size = 0x4000,
++	.enable_preload = 1,
++	.preload_size = 0x4000,
++	.has_stored_data = 0,
++};
++
++static unsigned int do_single_lsc_ova0b40(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_single_lsc(pdata, start_addr, block_size, pGetSensorCalData);
++}
++
++static unsigned int do_2a_gain_ova0b40(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++}
++
++static unsigned int do_lens_id_ova0b40(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_lens_id_base(pdata, start_addr, block_size, pGetSensorCalData);
++}
+diff --git a/cam_cal/src_v4l2/custom/layout/ova0b40cts_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/ova0b40cts_cust_eeprom.c
+new file mode 100644
+index 0000000..bafad55
+--- /dev/null
++++ b/cam_cal/src_v4l2/custom/layout/ova0b40cts_cust_eeprom.c
+@@ -0,0 +1,101 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Reconstructed from GQ5012BF1 stock camera_eeprom_v4l2.ko. */
++#define PFX "CAM_CAL"
++#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
++#include <linux/kernel.h>
++#include "cam_cal_list.h"
++#include "eeprom_i2c_common_driver.h"
++#include "eeprom_i2c_custom_driver.h"
++#include "cam_cal_config.h"
++
++static unsigned int do_single_lsc_ova0b40cts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_2a_gain_ova0b40cts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_lens_id_ova0b40cts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_pdaf_ova0b40cts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++
++static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
++	0x00000000, 0x77006901, CAM_CAL_SINGLE_EEPROM_DATA,
++	{
++		{0, 0, 0, do_module_version},
++		{0, 1, 2, do_part_number},
++		{0x00000000, 0x0000001D, 0x0000074C, do_single_lsc_ova0b40cts},
++		{0x00000001, 0x00000007, 0x0000000E, do_2a_gain_ova0b40cts},
++		{0x00000000, 0x00000771, 0x000005DC, do_pdaf_ova0b40cts},
++		{0, 0, 0, do_stereo_data},
++		{0, 0, 0x8000, do_dump_all},
++		{0, 8, 2, do_lens_id_ova0b40cts}
++	}
++};
++
++struct STRUCT_CAM_CAL_CONFIG_STRUCT ova0b40cts_cust_eeprom = {
++	.name = "ova0b40cts_cust_eeprom",
++	.check_layout_function = layout_check,
++	.read_function = Common_read_region,
++	.layout = &cal_layout_table,
++	.sensor_id = 0xA043,
++	.i2c_write_id = 0xA0,
++	.max_size = 0x4000,
++	.enable_preload = 1,
++	.preload_size = 0x4000,
++	.has_stored_data = 0,
++};
++
++static unsigned int do_single_lsc_ova0b40cts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_single_lsc(pdata, start_addr, block_size, pGetSensorCalData);
++}
++
++static unsigned int do_2a_gain_ova0b40cts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++}
++
++static unsigned int do_pdaf_ova0b40cts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	int read_data_size_2;
++	int err = CamCalReturnErr[pCamCalData->Command];
++
++	pCamCalData->PDAF.Size_of_PDAF = block_size;
++	printk("PDAF start_addr =%x table_size=%d\n", start_addr, block_size);
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, start_addr, 0x1f0,
++		(unsigned char *)&pCamCalData->PDAF.Data[0]);
++	read_data_size_2 = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x963, block_size - 0x1f0,
++		(unsigned char *)&pCamCalData->PDAF.Data[0x1f0]);
++	if (read_data_size_2 > 0 || read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++
++	printk("======================PDAF Data==================\n");
++	printk("First five %x, %x, %x, %x, %x\n",
++		pCamCalData->PDAF.Data[0], pCamCalData->PDAF.Data[1],
++		pCamCalData->PDAF.Data[2], pCamCalData->PDAF.Data[3],
++		pCamCalData->PDAF.Data[4]);
++	printk("RETURN = 0x%x\n", err);
++	printk("======================PDAF Data==================\n");
++	return err;
++}
++
++static unsigned int do_lens_id_ova0b40cts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_lens_id_base(pdata, start_addr, block_size, pGetSensorCalData);
++}
+diff --git a/cam_cal/src_v4l2/custom/layout/s5kgn1sp_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/s5kgn1sp_cust_eeprom.c
+new file mode 100644
+index 0000000..4e409f6
+--- /dev/null
++++ b/cam_cal/src_v4l2/custom/layout/s5kgn1sp_cust_eeprom.c
+@@ -0,0 +1,203 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Reconstructed from GQ5012BF1 stock camera_eeprom_v4l2.ko. */
++#define PFX "CAM_CAL"
++#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
++#include <linux/kernel.h>
++#include "cam_cal_list.h"
++#include "eeprom_i2c_common_driver.h"
++#include "eeprom_i2c_custom_driver.h"
++#include "cam_cal_config.h"
++
++static unsigned int do_single_lsc_s5kgn1sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_2a_gain_s5kgn1sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_lens_id_s5kgn1sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++
++static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
++	0x00000000, 0x77006901, CAM_CAL_SINGLE_EEPROM_DATA,
++	{
++		{0, 0, 0, do_module_version},
++		{0, 1, 2, do_part_number},
++		{0x00000001, 0x0000001D, 0x0000074C, do_single_lsc_s5kgn1sp},
++		{0x00000001, 0x00000007, 0x0000000E, do_2a_gain_s5kgn1sp},
++		{0x00000001, 0x00000771, 0x000005DC, do_pdaf},
++		{0, 0, 0, do_stereo_data},
++		{0, 0, 0x8000, do_dump_all},
++		{0, 8, 2, do_lens_id_s5kgn1sp}
++	}
++};
++
++struct STRUCT_CAM_CAL_CONFIG_STRUCT s5kgn1sp_cust_eeprom = {
++	.name = "s5kgn1sp_cust_eeprom",
++	.check_layout_function = layout_check,
++	.read_function = Common_read_region,
++	.layout = &cal_layout_table,
++	.sensor_id = 0x8E1,
++	.i2c_write_id = 0xA0,
++	.max_size = 0x4000,
++	.enable_preload = 1,
++	.preload_size = 0x4000,
++	.has_stored_data = 0,
++};
++
++static unsigned int do_single_lsc_s5kgn1sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	int read_data_size;
++
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++	pCamCalData->SingleLsc.TableRotation = 0;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType = 2;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId = 8;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.TableSize = CAM_CAL_SINGLE_LSC_SIZE;
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, start_addr, CAM_CAL_SINGLE_LSC_SIZE,
++		(unsigned char *)&pCamCalData->SingleLsc.LscTable.MtkLcsData.SlimLscType);
++	if (read_data_size == CAM_CAL_SINGLE_LSC_SIZE)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		err = CamCalReturnErr[pCamCalData->Command];
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 2 &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId != 8 &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 0x4c &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 7)
++		yft_otp_state_main = 0;
++	return err;
++}
++
++static unsigned int do_2a_gain_s5kgn1sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned long long CalGain = 0, FacGain = 0;
++	unsigned short AFMacro = 0, AFInf = 0;
++	int tempMax = 0;
++	int CalR = 1, CalGr = 1, CalGb = 1, CalG = 1, CalB = 1;
++	int FacR = 1, FacGr = 1, FacGb = 1, FacG = 1, FacB = 1;
++	int otp_state;
++
++	memset(&pCamCalData->Single2A, 0,
++		sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++
++	pCamCalData->Single2A.S2aVer = 1;
++	pCamCalData->Single2A.S2aBitEn = 3;
++	pCamCalData->Single2A.S2aAfBitflagEn = 0x0c;
++	pCamCalData->Single2A.S2aAwb.rGainSetNum = 0;
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x0a, 1, (unsigned char *)&AFMacro);
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x0b, 8, (unsigned char *)&CalGain);
++	if (read_data_size > 0) {
++		CalR = CalGain & 0xffff;
++		CalB = (CalGain >> 16) & 0xffff;
++		CalGr = (CalGain >> 32) & 0xffff;
++		CalGb = (CalGain >> 48) & 0xffff;
++		CalG = (CalGr + CalGb + 1) >> 1;
++		tempMax = max(max(CalR, CalG), CalB);
++		err = CAM_CAL_ERR_NO_ERR;
++		otp_state = 1;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	if (CalGain && CalR && CalG && CalB) {
++		pCamCalData->Single2A.S2aAwb.rGainSetNum++;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4R =
++			(tempMax * 512 + (CalR >> 1)) / CalR;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4G =
++			(tempMax * 512 + (CalG >> 1)) / CalG;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4B =
++			(tempMax * 512 + (CalB >> 1)) / CalB;
++	}
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x13, 8, (unsigned char *)&FacGain);
++	if (read_data_size > 0) {
++		FacR = FacGain & 0xffff;
++		FacB = (FacGain >> 16) & 0xffff;
++		FacGr = (FacGain >> 32) & 0xffff;
++		FacGb = (FacGain >> 48) & 0xffff;
++		FacG = (FacGr + FacGb + 1) >> 1;
++		tempMax = max(max(FacR, FacG), FacB);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	if (FacGain && FacR && FacG && FacB) {
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4R =
++			(tempMax * 512 + (FacR >> 1)) / FacR;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4G =
++			(tempMax * 512 + (FacG >> 1)) / FacG;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4B =
++			(tempMax * 512 + (FacB >> 1)) / FacB;
++	}
++
++	pCamCalData->Single2A.S2aAwb.rValueR = CalR;
++	pCamCalData->Single2A.S2aAwb.rValueGr = CalGr;
++	pCamCalData->Single2A.S2aAwb.rValueGb = CalGb;
++	pCamCalData->Single2A.S2aAwb.rValueB = CalB;
++	pCamCalData->Single2A.S2aAwb.rGoldenR = FacR;
++	pCamCalData->Single2A.S2aAwb.rGoldenGr = FacGr;
++	pCamCalData->Single2A.S2aAwb.rGoldenGb = FacGb;
++	pCamCalData->Single2A.S2aAwb.rGoldenB = FacB;
++
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x76a, 1, (unsigned char *)&AFMacro);
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76d, 2, (unsigned char *)&AFMacro);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76b, 2, (unsigned char *)&AFInf);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	pCamCalData->Single2A.S2aAf[0] = AFMacro;
++	pCamCalData->Single2A.S2aAf[1] = AFInf;
++	if (AFMacro > AFInf)
++		otp_state = 0;
++	yft_otp_state_main = otp_state;
++	return err;
++}
++
++static unsigned int do_lens_id_s5kgn1sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_lens_id_base(pdata, start_addr, block_size, pGetSensorCalData);
++}
+diff --git a/cam_cal/src_v4l2/custom/layout/s5khp2sp_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/s5khp2sp_cust_eeprom.c
+new file mode 100644
+index 0000000..a17b6bd
+--- /dev/null
++++ b/cam_cal/src_v4l2/custom/layout/s5khp2sp_cust_eeprom.c
+@@ -0,0 +1,158 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Reconstructed from GQ5012BF1 stock camera_eeprom_v4l2.ko. */
++#define PFX "CAM_CAL"
++#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
++#include <linux/kernel.h>
++#include "cam_cal_list.h"
++#include "eeprom_i2c_common_driver.h"
++#include "eeprom_i2c_custom_driver.h"
++#include "cam_cal_config.h"
++
++static unsigned int do_single_lsc_s5khp2sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_2a_gain_s5khp2sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_lens_id_s5khp2sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_pdaf_s5khp2sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++
++static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
++	0x00000000, 0x77006901, CAM_CAL_SINGLE_EEPROM_DATA,
++	{
++		{0, 0, 0, do_module_version},
++		{0, 1, 2, do_part_number},
++		{0x00000001, 0x0000001D, 0x0000074C, do_single_lsc_s5khp2sp},
++		{0x00000001, 0x00000031, 0x0000000E, do_2a_gain_s5khp2sp},
++		{0x00000001, 0x00000771, 0x000005DC, do_pdaf_s5khp2sp},
++		{0, 0, 0, do_stereo_data},
++		{0, 0, 0x8000, do_dump_all},
++		{0, 8, 2, do_lens_id_s5khp2sp}
++	}
++};
++
++struct STRUCT_CAM_CAL_CONFIG_STRUCT s5khp2sp_cust_eeprom = {
++	.name = "s5khp2sp_cust_eeprom",
++	.check_layout_function = layout_check,
++	.read_function = Common_read_region,
++	.layout = &cal_layout_table,
++	.sensor_id = 0x1B71,
++	.i2c_write_id = 0xA0,
++	.max_size = 0x4000,
++	.enable_preload = 1,
++	.preload_size = 0x4000,
++	.has_stored_data = 1,
++};
++
++static unsigned int do_single_lsc_s5khp2sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size, unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++				(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned short table_size;
++
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		err = CAM_CAL_ERR_NO_DEVICE;
++		error_log("Read Failed\n");
++		show_cmd_error_log(pCamCalData->Command);
++		return err;
++	}
++	if (block_size != CAM_CAL_SINGLE_LSC_SIZE)
++		error_log("block_size(%d) is not match (%d)\n",
++				block_size, CAM_CAL_SINGLE_LSC_SIZE);
++
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType = 2;//mtk type
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId = 8;
++
++	table_size = 1868;
++
++	printk("lsc table_size %d\n", table_size);
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.TableSize = table_size;
++	if (table_size > 0) {
++		pCamCalData->SingleLsc.TableRotation = 0;
++		printk("u4Offset=%d u4Length=%d", start_addr, table_size);
++		read_data_size = read_data(pdata,
++			pCamCalData->sensorID, pCamCalData->deviceID,
++			start_addr, table_size, (unsigned char *)
++			&pCamCalData->SingleLsc.LscTable.MtkLcsData.SlimLscType);
++		if (table_size == read_data_size)
++			err = CAM_CAL_ERR_NO_ERR;
++		else {
++			error_log("Read Failed\n");
++			err = CamCalReturnErr[pCamCalData->Command];
++			show_cmd_error_log(pCamCalData->Command);
++		}
++	}
++
++	printk("======================SingleLsc Data==================\n");
++	printk("[1st] = %x, %x, %x, %x\n",
++		pCamCalData->SingleLsc.LscTable.Data[0],
++		pCamCalData->SingleLsc.LscTable.Data[1],
++		pCamCalData->SingleLsc.LscTable.Data[2],
++		pCamCalData->SingleLsc.LscTable.Data[3]);
++	printk("[1st] = SensorLSC(1)?MTKLSC(2)?  %x\n",
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType);
++	printk("CapIspReg =0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[0],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[1],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[2],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[3],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[4]);
++	printk("RETURN = 0x%x\n", err);
++	printk("======================SingleLsc Data==================\n");
++
++
++	return err;
++}
++
++static unsigned int do_2a_gain_s5khp2sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++}
++
++static unsigned int do_pdaf_s5khp2sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	int read_data_size_2;
++	int err = CamCalReturnErr[pCamCalData->Command];
++
++	pCamCalData->PDAF.Size_of_PDAF = block_size;
++	printk("PDAF start_addr =%x table_size=%d\n", start_addr, block_size);
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x771, 0x1f0,
++		(unsigned char *)&pCamCalData->PDAF.Data[0]);
++	read_data_size_2 = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x961, 0x3ec,
++		(unsigned char *)&pCamCalData->PDAF.Data[0x1f0]);
++	if (read_data_size + read_data_size_2 > 0 || read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++
++	printk("======================PDAF Data==================\n");
++	printk("First five %x, %x, %x, %x, %x\n",
++		pCamCalData->PDAF.Data[0], pCamCalData->PDAF.Data[1],
++		pCamCalData->PDAF.Data[2], pCamCalData->PDAF.Data[3],
++		pCamCalData->PDAF.Data[4]);
++	printk("RETURN = 0x%x\n", err);
++	printk("======================PDAF Data==================\n");
++	return err;
++}
++
++static unsigned int do_lens_id_s5khp2sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_lens_id_base(pdata, start_addr, block_size, pGetSensorCalData);
++}
+diff --git a/cam_cal/src_v4l2/custom/layout/s5khp3sp03_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/s5khp3sp03_cust_eeprom.c
+new file mode 100644
+index 0000000..043993a
+--- /dev/null
++++ b/cam_cal/src_v4l2/custom/layout/s5khp3sp03_cust_eeprom.c
+@@ -0,0 +1,158 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Reconstructed from GQ5012BF1 stock camera_eeprom_v4l2.ko. */
++#define PFX "CAM_CAL"
++#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
++#include <linux/kernel.h>
++#include "cam_cal_list.h"
++#include "eeprom_i2c_common_driver.h"
++#include "eeprom_i2c_custom_driver.h"
++#include "cam_cal_config.h"
++
++static unsigned int do_single_lsc_s5khp3sp03(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_2a_gain_s5khp3sp03(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_lens_id_s5khp3sp03(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_pdaf_s5khp3sp03(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++
++static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
++	0x0000000E, 0x010B00FF, CAM_CAL_SINGLE_EEPROM_DATA,
++	{
++		{0, 0, 0, do_module_version},
++		{0, 1, 2, do_part_number},
++		{0x00000000, 0x00000043, 0x0000074C, do_single_lsc_s5khp3sp03},
++		{0x00000001, 0x00000031, 0x0000000E, do_2a_gain_s5khp3sp03},
++		{0x00000001, 0x00000907, 0x000005DC, do_pdaf_s5khp3sp03},
++		{0, 0, 0, do_stereo_data},
++		{0, 0, 0x8000, do_dump_all},
++		{0, 8, 2, do_lens_id_s5khp3sp03}
++	}
++};
++
++struct STRUCT_CAM_CAL_CONFIG_STRUCT s5khp3sp03_cust_eeprom = {
++	.name = "s5khp3sp03_cust_eeprom",
++	.check_layout_function = layout_check,
++	.read_function = Common_read_region,
++	.layout = &cal_layout_table,
++	.sensor_id = 0x1B74,
++	.i2c_write_id = 0xA0,
++	.max_size = 0x4000,
++	.enable_preload = 1,
++	.preload_size = 0x4000,
++	.has_stored_data = 0,
++};
++
++static unsigned int do_single_lsc_s5khp3sp03(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size, unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++				(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned short table_size;
++
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		err = CAM_CAL_ERR_NO_DEVICE;
++		error_log("Read Failed\n");
++		show_cmd_error_log(pCamCalData->Command);
++		return err;
++	}
++	if (block_size != CAM_CAL_SINGLE_LSC_SIZE)
++		error_log("block_size(%d) is not match (%d)\n",
++				block_size, CAM_CAL_SINGLE_LSC_SIZE);
++
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType = 2;//mtk type
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId = 8;
++
++	table_size = 1868;
++
++	printk("lsc table_size %d\n", table_size);
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.TableSize = table_size;
++	if (table_size > 0) {
++		pCamCalData->SingleLsc.TableRotation = 0;
++		printk("u4Offset=%d u4Length=%d", start_addr, table_size);
++		read_data_size = read_data(pdata,
++			pCamCalData->sensorID, pCamCalData->deviceID,
++			start_addr, table_size, (unsigned char *)
++			&pCamCalData->SingleLsc.LscTable.MtkLcsData.SlimLscType);
++		if (table_size == read_data_size)
++			err = CAM_CAL_ERR_NO_ERR;
++		else {
++			error_log("Read Failed\n");
++			err = CamCalReturnErr[pCamCalData->Command];
++			show_cmd_error_log(pCamCalData->Command);
++		}
++	}
++
++	printk("======================SingleLsc Data==================\n");
++	printk("[1st] = %x, %x, %x, %x\n",
++		pCamCalData->SingleLsc.LscTable.Data[0],
++		pCamCalData->SingleLsc.LscTable.Data[1],
++		pCamCalData->SingleLsc.LscTable.Data[2],
++		pCamCalData->SingleLsc.LscTable.Data[3]);
++	printk("[1st] = SensorLSC(1)?MTKLSC(2)?  %x\n",
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType);
++	printk("CapIspReg =0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[0],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[1],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[2],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[3],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[4]);
++	printk("RETURN = 0x%x\n", err);
++	printk("======================SingleLsc Data==================\n");
++
++
++	return err;
++}
++
++static unsigned int do_2a_gain_s5khp3sp03(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++}
++
++static unsigned int do_pdaf_s5khp3sp03(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	int read_data_size_2;
++	int err = CamCalReturnErr[pCamCalData->Command];
++
++	pCamCalData->PDAF.Size_of_PDAF = block_size;
++	printk("PDAF start_addr =%x table_size=%d\n", start_addr, block_size);
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x907, 0x1f0,
++		(unsigned char *)&pCamCalData->PDAF.Data[0]);
++	read_data_size_2 = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0xafb, 0x3ec,
++		(unsigned char *)&pCamCalData->PDAF.Data[0x1f0]);
++	if (read_data_size + read_data_size_2 > 0 || read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++
++	printk("======================PDAF Data==================\n");
++	printk("First five %x, %x, %x, %x, %x\n",
++		pCamCalData->PDAF.Data[0], pCamCalData->PDAF.Data[1],
++		pCamCalData->PDAF.Data[2], pCamCalData->PDAF.Data[3],
++		pCamCalData->PDAF.Data[4]);
++	printk("RETURN = 0x%x\n", err);
++	printk("======================PDAF Data==================\n");
++	return err;
++}
++
++static unsigned int do_lens_id_s5khp3sp03(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_lens_id_base(pdata, start_addr, block_size, pGetSensorCalData);
++}
+diff --git a/cam_cal/src_v4l2/custom/layout/s5khp3sp23_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/s5khp3sp23_cust_eeprom.c
+new file mode 100644
+index 0000000..b10ea96
+--- /dev/null
++++ b/cam_cal/src_v4l2/custom/layout/s5khp3sp23_cust_eeprom.c
+@@ -0,0 +1,158 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Reconstructed from GQ5012BF1 stock camera_eeprom_v4l2.ko. */
++#define PFX "CAM_CAL"
++#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
++#include <linux/kernel.h>
++#include "cam_cal_list.h"
++#include "eeprom_i2c_common_driver.h"
++#include "eeprom_i2c_custom_driver.h"
++#include "cam_cal_config.h"
++
++static unsigned int do_single_lsc_s5khp3sp23(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_2a_gain_s5khp3sp23(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_lens_id_s5khp3sp23(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_pdaf_s5khp3sp23(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++
++static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
++	0x0000000E, 0x010B00FF, CAM_CAL_SINGLE_EEPROM_DATA,
++	{
++		{0, 0, 0, do_module_version},
++		{0, 1, 2, do_part_number},
++		{0x00000000, 0x00000043, 0x0000074C, do_single_lsc_s5khp3sp23},
++		{0x00000001, 0x00000031, 0x0000000E, do_2a_gain_s5khp3sp23},
++		{0x00000001, 0x00000907, 0x000005DC, do_pdaf_s5khp3sp23},
++		{0, 0, 0, do_stereo_data},
++		{0, 0, 0x8000, do_dump_all},
++		{0, 8, 2, do_lens_id_s5khp3sp23}
++	}
++};
++
++struct STRUCT_CAM_CAL_CONFIG_STRUCT s5khp3sp23_cust_eeprom = {
++	.name = "s5khp3sp23_cust_eeprom",
++	.check_layout_function = layout_check,
++	.read_function = Common_read_region,
++	.layout = &cal_layout_table,
++	.sensor_id = 0x1B75,
++	.i2c_write_id = 0xA0,
++	.max_size = 0x4000,
++	.enable_preload = 1,
++	.preload_size = 0x4000,
++	.has_stored_data = 0,
++};
++
++static unsigned int do_single_lsc_s5khp3sp23(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size, unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++				(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned short table_size;
++
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		err = CAM_CAL_ERR_NO_DEVICE;
++		error_log("Read Failed\n");
++		show_cmd_error_log(pCamCalData->Command);
++		return err;
++	}
++	if (block_size != CAM_CAL_SINGLE_LSC_SIZE)
++		error_log("block_size(%d) is not match (%d)\n",
++				block_size, CAM_CAL_SINGLE_LSC_SIZE);
++
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType = 2;//mtk type
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId = 8;
++
++	table_size = 1868;
++
++	printk("lsc table_size %d\n", table_size);
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.TableSize = table_size;
++	if (table_size > 0) {
++		pCamCalData->SingleLsc.TableRotation = 0;
++		printk("u4Offset=%d u4Length=%d", start_addr, table_size);
++		read_data_size = read_data(pdata,
++			pCamCalData->sensorID, pCamCalData->deviceID,
++			start_addr, table_size, (unsigned char *)
++			&pCamCalData->SingleLsc.LscTable.MtkLcsData.SlimLscType);
++		if (table_size == read_data_size)
++			err = CAM_CAL_ERR_NO_ERR;
++		else {
++			error_log("Read Failed\n");
++			err = CamCalReturnErr[pCamCalData->Command];
++			show_cmd_error_log(pCamCalData->Command);
++		}
++	}
++
++	printk("======================SingleLsc Data==================\n");
++	printk("[1st] = %x, %x, %x, %x\n",
++		pCamCalData->SingleLsc.LscTable.Data[0],
++		pCamCalData->SingleLsc.LscTable.Data[1],
++		pCamCalData->SingleLsc.LscTable.Data[2],
++		pCamCalData->SingleLsc.LscTable.Data[3]);
++	printk("[1st] = SensorLSC(1)?MTKLSC(2)?  %x\n",
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType);
++	printk("CapIspReg =0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[0],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[1],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[2],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[3],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[4]);
++	printk("RETURN = 0x%x\n", err);
++	printk("======================SingleLsc Data==================\n");
++
++
++	return err;
++}
++
++static unsigned int do_2a_gain_s5khp3sp23(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++}
++
++static unsigned int do_pdaf_s5khp3sp23(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	int read_data_size_2;
++	int err = CamCalReturnErr[pCamCalData->Command];
++
++	pCamCalData->PDAF.Size_of_PDAF = block_size;
++	printk("PDAF start_addr =%x table_size=%d\n", start_addr, block_size);
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x907, 0x1f0,
++		(unsigned char *)&pCamCalData->PDAF.Data[0]);
++	read_data_size_2 = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0xafb, 0x3ec,
++		(unsigned char *)&pCamCalData->PDAF.Data[0x1f0]);
++	if (read_data_size + read_data_size_2 > 0 || read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++
++	printk("======================PDAF Data==================\n");
++	printk("First five %x, %x, %x, %x, %x\n",
++		pCamCalData->PDAF.Data[0], pCamCalData->PDAF.Data[1],
++		pCamCalData->PDAF.Data[2], pCamCalData->PDAF.Data[3],
++		pCamCalData->PDAF.Data[4]);
++	printk("RETURN = 0x%x\n", err);
++	printk("======================PDAF Data==================\n");
++	return err;
++}
++
++static unsigned int do_lens_id_s5khp3sp23(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_lens_id_base(pdata, start_addr, block_size, pGetSensorCalData);
++}
+diff --git a/cam_cal/src_v4l2/custom/layout/s5khp3sp_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/s5khp3sp_cust_eeprom.c
+new file mode 100644
+index 0000000..94b6275
+--- /dev/null
++++ b/cam_cal/src_v4l2/custom/layout/s5khp3sp_cust_eeprom.c
+@@ -0,0 +1,158 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Reconstructed from GQ5012BF1 stock camera_eeprom_v4l2.ko. */
++#define PFX "CAM_CAL"
++#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
++#include <linux/kernel.h>
++#include "cam_cal_list.h"
++#include "eeprom_i2c_common_driver.h"
++#include "eeprom_i2c_custom_driver.h"
++#include "cam_cal_config.h"
++
++static unsigned int do_single_lsc_s5khp3sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_2a_gain_s5khp3sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_lens_id_s5khp3sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_pdaf_s5khp3sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++
++static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
++	0x0000000E, 0x010B00FF, CAM_CAL_SINGLE_EEPROM_DATA,
++	{
++		{0, 0, 0, do_module_version},
++		{0, 1, 2, do_part_number},
++		{0x00000001, 0x00000043, 0x0000074C, do_single_lsc_s5khp3sp},
++		{0x00000001, 0x00000031, 0x0000000E, do_2a_gain_s5khp3sp},
++		{0x00000001, 0x00000907, 0x000005DC, do_pdaf_s5khp3sp},
++		{0, 0, 0, do_stereo_data},
++		{0, 0, 0x8000, do_dump_all},
++		{0, 8, 2, do_lens_id_s5khp3sp}
++	}
++};
++
++struct STRUCT_CAM_CAL_CONFIG_STRUCT s5khp3sp_cust_eeprom = {
++	.name = "s5khp3sp_cust_eeprom",
++	.check_layout_function = layout_check,
++	.read_function = Common_read_region,
++	.layout = &cal_layout_table,
++	.sensor_id = 0x1B73,
++	.i2c_write_id = 0xA0,
++	.max_size = 0x4000,
++	.enable_preload = 1,
++	.preload_size = 0x4000,
++	.has_stored_data = 0,
++};
++
++static unsigned int do_single_lsc_s5khp3sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size, unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++				(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned short table_size;
++
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		err = CAM_CAL_ERR_NO_DEVICE;
++		error_log("Read Failed\n");
++		show_cmd_error_log(pCamCalData->Command);
++		return err;
++	}
++	if (block_size != CAM_CAL_SINGLE_LSC_SIZE)
++		error_log("block_size(%d) is not match (%d)\n",
++				block_size, CAM_CAL_SINGLE_LSC_SIZE);
++
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType = 2;//mtk type
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId = 8;
++
++	table_size = 1868;
++
++	printk("lsc table_size %d\n", table_size);
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.TableSize = table_size;
++	if (table_size > 0) {
++		pCamCalData->SingleLsc.TableRotation = 0;
++		printk("u4Offset=%d u4Length=%d", start_addr, table_size);
++		read_data_size = read_data(pdata,
++			pCamCalData->sensorID, pCamCalData->deviceID,
++			start_addr, table_size, (unsigned char *)
++			&pCamCalData->SingleLsc.LscTable.MtkLcsData.SlimLscType);
++		if (table_size == read_data_size)
++			err = CAM_CAL_ERR_NO_ERR;
++		else {
++			error_log("Read Failed\n");
++			err = CamCalReturnErr[pCamCalData->Command];
++			show_cmd_error_log(pCamCalData->Command);
++		}
++	}
++
++	printk("======================SingleLsc Data==================\n");
++	printk("[1st] = %x, %x, %x, %x\n",
++		pCamCalData->SingleLsc.LscTable.Data[0],
++		pCamCalData->SingleLsc.LscTable.Data[1],
++		pCamCalData->SingleLsc.LscTable.Data[2],
++		pCamCalData->SingleLsc.LscTable.Data[3]);
++	printk("[1st] = SensorLSC(1)?MTKLSC(2)?  %x\n",
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType);
++	printk("CapIspReg =0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[0],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[1],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[2],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[3],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[4]);
++	printk("RETURN = 0x%x\n", err);
++	printk("======================SingleLsc Data==================\n");
++
++
++	return err;
++}
++
++static unsigned int do_2a_gain_s5khp3sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++}
++
++static unsigned int do_pdaf_s5khp3sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	int read_data_size_2;
++	int err = CamCalReturnErr[pCamCalData->Command];
++
++	pCamCalData->PDAF.Size_of_PDAF = block_size;
++	printk("PDAF start_addr =%x table_size=%d\n", start_addr, block_size);
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x907, 0x1f0,
++		(unsigned char *)&pCamCalData->PDAF.Data[0]);
++	read_data_size_2 = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0xafb, 0x3ec,
++		(unsigned char *)&pCamCalData->PDAF.Data[0x1f0]);
++	if (read_data_size + read_data_size_2 > 0 || read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++
++	printk("======================PDAF Data==================\n");
++	printk("First five %x, %x, %x, %x, %x\n",
++		pCamCalData->PDAF.Data[0], pCamCalData->PDAF.Data[1],
++		pCamCalData->PDAF.Data[2], pCamCalData->PDAF.Data[3],
++		pCamCalData->PDAF.Data[4]);
++	printk("RETURN = 0x%x\n", err);
++	printk("======================PDAF Data==================\n");
++	return err;
++}
++
++static unsigned int do_lens_id_s5khp3sp(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_lens_id_base(pdata, start_addr, block_size, pGetSensorCalData);
++}
+diff --git a/cam_cal/src_v4l2/custom/layout/s5khp3spcts_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/s5khp3spcts_cust_eeprom.c
+new file mode 100644
+index 0000000..f37bb15
+--- /dev/null
++++ b/cam_cal/src_v4l2/custom/layout/s5khp3spcts_cust_eeprom.c
+@@ -0,0 +1,158 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Reconstructed from GQ5012BF1 stock camera_eeprom_v4l2.ko. */
++#define PFX "CAM_CAL"
++#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
++#include <linux/kernel.h>
++#include "cam_cal_list.h"
++#include "eeprom_i2c_common_driver.h"
++#include "eeprom_i2c_custom_driver.h"
++#include "cam_cal_config.h"
++
++static unsigned int do_single_lsc_s5khp3spcts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_2a_gain_s5khp3spcts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_lens_id_s5khp3spcts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_pdaf_s5khp3spcts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++
++static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
++	0x0000000E, 0x010B00FF, CAM_CAL_SINGLE_EEPROM_DATA,
++	{
++		{0, 0, 0, do_module_version},
++		{0, 1, 2, do_part_number},
++		{0x00000000, 0x00000043, 0x0000074C, do_single_lsc_s5khp3spcts},
++		{0x00000001, 0x00000031, 0x0000000E, do_2a_gain_s5khp3spcts},
++		{0x00000000, 0x00000907, 0x000005DC, do_pdaf_s5khp3spcts},
++		{0, 0, 0, do_stereo_data},
++		{0, 0, 0x8000, do_dump_all},
++		{0, 8, 2, do_lens_id_s5khp3spcts}
++	}
++};
++
++struct STRUCT_CAM_CAL_CONFIG_STRUCT s5khp3spcts_cust_eeprom = {
++	.name = "s5khp3spcts_cust_eeprom",
++	.check_layout_function = layout_check,
++	.read_function = Common_read_region,
++	.layout = &cal_layout_table,
++	.sensor_id = 0x1B72,
++	.i2c_write_id = 0xA0,
++	.max_size = 0x4000,
++	.enable_preload = 1,
++	.preload_size = 0x4000,
++	.has_stored_data = 0,
++};
++
++static unsigned int do_single_lsc_s5khp3spcts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size, unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++				(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned short table_size;
++
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		err = CAM_CAL_ERR_NO_DEVICE;
++		error_log("Read Failed\n");
++		show_cmd_error_log(pCamCalData->Command);
++		return err;
++	}
++	if (block_size != CAM_CAL_SINGLE_LSC_SIZE)
++		error_log("block_size(%d) is not match (%d)\n",
++				block_size, CAM_CAL_SINGLE_LSC_SIZE);
++
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType = 2;//mtk type
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId = 8;
++
++	table_size = 1868;
++
++	printk("lsc table_size %d\n", table_size);
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.TableSize = table_size;
++	if (table_size > 0) {
++		pCamCalData->SingleLsc.TableRotation = 0;
++		printk("u4Offset=%d u4Length=%d", start_addr, table_size);
++		read_data_size = read_data(pdata,
++			pCamCalData->sensorID, pCamCalData->deviceID,
++			start_addr, table_size, (unsigned char *)
++			&pCamCalData->SingleLsc.LscTable.MtkLcsData.SlimLscType);
++		if (table_size == read_data_size)
++			err = CAM_CAL_ERR_NO_ERR;
++		else {
++			error_log("Read Failed\n");
++			err = CamCalReturnErr[pCamCalData->Command];
++			show_cmd_error_log(pCamCalData->Command);
++		}
++	}
++
++	printk("======================SingleLsc Data==================\n");
++	printk("[1st] = %x, %x, %x, %x\n",
++		pCamCalData->SingleLsc.LscTable.Data[0],
++		pCamCalData->SingleLsc.LscTable.Data[1],
++		pCamCalData->SingleLsc.LscTable.Data[2],
++		pCamCalData->SingleLsc.LscTable.Data[3]);
++	printk("[1st] = SensorLSC(1)?MTKLSC(2)?  %x\n",
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType);
++	printk("CapIspReg =0x%x, 0x%x, 0x%x, 0x%x, 0x%x",
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[0],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[1],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[2],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[3],
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.CapIspReg[4]);
++	printk("RETURN = 0x%x\n", err);
++	printk("======================SingleLsc Data==================\n");
++
++
++	return err;
++}
++
++static unsigned int do_2a_gain_s5khp3spcts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_2a_gain(pdata, start_addr, block_size, pGetSensorCalData);
++}
++
++static unsigned int do_pdaf_s5khp3spcts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	int read_data_size_2;
++	int err = CamCalReturnErr[pCamCalData->Command];
++
++	pCamCalData->PDAF.Size_of_PDAF = block_size;
++	printk("PDAF start_addr =%x table_size=%d\n", start_addr, block_size);
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x907, 0x1f0,
++		(unsigned char *)&pCamCalData->PDAF.Data[0]);
++	read_data_size_2 = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0xafb, 0x3ec,
++		(unsigned char *)&pCamCalData->PDAF.Data[0x1f0]);
++	if (read_data_size + read_data_size_2 > 0 || read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++
++	printk("======================PDAF Data==================\n");
++	printk("First five %x, %x, %x, %x, %x\n",
++		pCamCalData->PDAF.Data[0], pCamCalData->PDAF.Data[1],
++		pCamCalData->PDAF.Data[2], pCamCalData->PDAF.Data[3],
++		pCamCalData->PDAF.Data[4]);
++	printk("RETURN = 0x%x\n", err);
++	printk("======================PDAF Data==================\n");
++	return err;
++}
++
++static unsigned int do_lens_id_s5khp3spcts(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_lens_id_base(pdata, start_addr, block_size, pGetSensorCalData);
++}
+diff --git a/cam_cal/src_v4l2/custom/layout/s5kjn1_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/s5kjn1_cust_eeprom.c
+new file mode 100644
+index 0000000..e32ffe9
+--- /dev/null
++++ b/cam_cal/src_v4l2/custom/layout/s5kjn1_cust_eeprom.c
+@@ -0,0 +1,179 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Reconstructed from GQ5012BF1 stock camera_eeprom_v4l2.ko. */
++#define PFX "CAM_CAL"
++#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
++#include <linux/kernel.h>
++#include "cam_cal_list.h"
++#include "eeprom_i2c_common_driver.h"
++#include "eeprom_i2c_custom_driver.h"
++#include "cam_cal_config.h"
++
++static unsigned int do_single_lsc_s5kjn1(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_2a_gain_s5kjn1(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_lens_id_s5kjn1(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++
++static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
++	0x00000000, 0x77006901, CAM_CAL_SINGLE_EEPROM_DATA,
++	{
++		{0, 0, 0, do_module_version},
++		{0, 1, 2, do_part_number},
++		{0x00000001, 0x0000001D, 0x0000074C, do_single_lsc_s5kjn1},
++		{0x00000001, 0x00000007, 0x0000000E, do_2a_gain_s5kjn1},
++		{0x00000000, 0x00000771, 0x000005DC, do_pdaf},
++		{0, 0, 0, do_stereo_data},
++		{0, 0, 0x8000, do_dump_all},
++		{0, 8, 2, do_lens_id_s5kjn1}
++	}
++};
++
++struct STRUCT_CAM_CAL_CONFIG_STRUCT s5kjn1_cust_eeprom = {
++	.name = "s5kjn1_cust_eeprom",
++	.check_layout_function = layout_check,
++	.read_function = Common_read_region,
++	.layout = &cal_layout_table,
++	.sensor_id = 0x38E1,
++	.i2c_write_id = 0xA0,
++	.max_size = 0x4000,
++	.enable_preload = 1,
++	.preload_size = 0x4000,
++	.has_stored_data = 0,
++};
++
++static unsigned int do_single_lsc_s5kjn1(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	int read_data_size;
++
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++	pCamCalData->SingleLsc.TableRotation = 0;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType = 2;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId = 8;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.TableSize = CAM_CAL_SINGLE_LSC_SIZE;
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, start_addr, CAM_CAL_SINGLE_LSC_SIZE,
++		(unsigned char *)&pCamCalData->SingleLsc.LscTable.MtkLcsData.SlimLscType);
++	if (read_data_size == CAM_CAL_SINGLE_LSC_SIZE)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		err = CamCalReturnErr[pCamCalData->Command];
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 2 &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId != 8 &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 0x4c &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 7)
++		yft_otp_state_sub = 0;
++	return err;
++}
++
++static unsigned int do_2a_gain_s5kjn1(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned long long CalGain = 0, FacGain = 0;
++	unsigned short AWBAFConfig = 0;
++	int tempMax = 0;
++	int CalR = 1, CalGr = 1, CalGb = 1, CalG = 1, CalB = 1;
++	int FacR = 1, FacGr = 1, FacGb = 1, FacG = 1, FacB = 1;
++	int otp_state;
++
++	memset(&pCamCalData->Single2A, 0,
++		sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++
++	pCamCalData->Single2A.S2aVer = 1;
++	pCamCalData->Single2A.S2aBitEn = 1;
++	pCamCalData->Single2A.S2aAfBitflagEn = 0x0c;
++	pCamCalData->Single2A.S2aAwb.rGainSetNum = 0;
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x0a, 1, (unsigned char *)&AWBAFConfig);
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x0b, 8, (unsigned char *)&CalGain);
++	if (read_data_size > 0) {
++		CalR = CalGain & 0xffff;
++		CalB = (CalGain >> 16) & 0xffff;
++		CalGr = (CalGain >> 32) & 0xffff;
++		CalGb = (CalGain >> 48) & 0xffff;
++		CalG = (CalGr + CalGb + 1) >> 1;
++		tempMax = max(max(CalR, CalG), CalB);
++		err = CAM_CAL_ERR_NO_ERR;
++		otp_state = 1;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	if (CalGain && CalR && CalG && CalB) {
++		pCamCalData->Single2A.S2aAwb.rGainSetNum++;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4R =
++			(tempMax * 512 + (CalR >> 1)) / CalR;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4G =
++			(tempMax * 512 + (CalG >> 1)) / CalG;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4B =
++			(tempMax * 512 + (CalB >> 1)) / CalB;
++	}
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x13, 8, (unsigned char *)&FacGain);
++	if (read_data_size > 0) {
++		FacR = FacGain & 0xffff;
++		FacB = (FacGain >> 16) & 0xffff;
++		FacGr = (FacGain >> 32) & 0xffff;
++		FacGb = (FacGain >> 48) & 0xffff;
++		FacG = (FacGr + FacGb + 1) >> 1;
++		tempMax = max(max(FacR, FacG), FacB);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	if (FacGain && FacR && FacG && FacB) {
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4R =
++			(tempMax * 512 + (FacR >> 1)) / FacR;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4G =
++			(tempMax * 512 + (FacG >> 1)) / FacG;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4B =
++			(tempMax * 512 + (FacB >> 1)) / FacB;
++	}
++
++	pCamCalData->Single2A.S2aAwb.rValueR = CalR;
++	pCamCalData->Single2A.S2aAwb.rValueGr = CalGr;
++	pCamCalData->Single2A.S2aAwb.rValueGb = CalGb;
++	pCamCalData->Single2A.S2aAwb.rValueB = CalB;
++	pCamCalData->Single2A.S2aAwb.rGoldenR = FacR;
++	pCamCalData->Single2A.S2aAwb.rGoldenGr = FacGr;
++	pCamCalData->Single2A.S2aAwb.rGoldenGb = FacGb;
++	pCamCalData->Single2A.S2aAwb.rGoldenB = FacB;
++
++	yft_otp_state_sub = otp_state;
++	return err;
++}
++
++static unsigned int do_lens_id_s5kjn1(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_lens_id_base(pdata, start_addr, block_size, pGetSensorCalData);
++}
+diff --git a/cam_cal/src_v4l2/custom/layout/s5kjn1main2_cust_eeprom.c b/cam_cal/src_v4l2/custom/layout/s5kjn1main2_cust_eeprom.c
+new file mode 100644
+index 0000000..86d1a9b
+--- /dev/null
++++ b/cam_cal/src_v4l2/custom/layout/s5kjn1main2_cust_eeprom.c
+@@ -0,0 +1,203 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Reconstructed from GQ5012BF1 stock camera_eeprom_v4l2.ko. */
++#define PFX "CAM_CAL"
++#define pr_fmt(fmt) PFX "[%s] " fmt, __func__
++#include <linux/kernel.h>
++#include "cam_cal_list.h"
++#include "eeprom_i2c_common_driver.h"
++#include "eeprom_i2c_custom_driver.h"
++#include "cam_cal_config.h"
++
++static unsigned int do_single_lsc_s5kjn1main2(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_2a_gain_s5kjn1main2(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++static unsigned int do_lens_id_s5kjn1main2(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData);
++
++static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
++	0x00000000, 0x77006901, CAM_CAL_SINGLE_EEPROM_DATA,
++	{
++		{0, 0, 0, do_module_version},
++		{0, 1, 2, do_part_number},
++		{0x00000001, 0x0000001D, 0x0000074C, do_single_lsc_s5kjn1main2},
++		{0x00000001, 0x00000007, 0x0000000E, do_2a_gain_s5kjn1main2},
++		{0x00000001, 0x00000771, 0x000005DC, do_pdaf},
++		{0, 0, 0, do_stereo_data},
++		{0, 0, 0x8000, do_dump_all},
++		{0, 8, 2, do_lens_id_s5kjn1main2}
++	}
++};
++
++struct STRUCT_CAM_CAL_CONFIG_STRUCT s5kjn1main2_cust_eeprom = {
++	.name = "s5kjn1main2_cust_eeprom",
++	.check_layout_function = layout_check,
++	.read_function = Common_read_region,
++	.layout = &cal_layout_table,
++	.sensor_id = 0x38E2,
++	.i2c_write_id = 0xA0,
++	.max_size = 0x4000,
++	.enable_preload = 1,
++	.preload_size = 0x4000,
++	.has_stored_data = 0,
++};
++
++static unsigned int do_single_lsc_s5kjn1main2(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	int read_data_size;
++
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++	pCamCalData->SingleLsc.TableRotation = 0;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType = 2;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId = 8;
++	pCamCalData->SingleLsc.LscTable.MtkLcsData.TableSize = CAM_CAL_SINGLE_LSC_SIZE;
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, start_addr, CAM_CAL_SINGLE_LSC_SIZE,
++		(unsigned char *)&pCamCalData->SingleLsc.LscTable.MtkLcsData.SlimLscType);
++	if (read_data_size == CAM_CAL_SINGLE_LSC_SIZE)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		err = CamCalReturnErr[pCamCalData->Command];
++		show_cmd_error_log(pCamCalData->Command);
++	}
++	if (pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 2 &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.PixId != 8 &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 0x4c &&
++		pCamCalData->SingleLsc.LscTable.MtkLcsData.MtkLscType != 7)
++		yft_otp_state_main2 = 0;
++	return err;
++}
++
++static unsigned int do_2a_gain_s5kjn1main2(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	struct STRUCT_CAM_CAL_DATA_STRUCT *pCamCalData =
++		(struct STRUCT_CAM_CAL_DATA_STRUCT *)pGetSensorCalData;
++	int read_data_size;
++	unsigned int err = CamCalReturnErr[pCamCalData->Command];
++	unsigned long long CalGain = 0, FacGain = 0;
++	unsigned short AFMacro = 0, AFInf = 0;
++	int tempMax = 0;
++	int CalR = 1, CalGr = 1, CalGb = 1, CalG = 1, CalB = 1;
++	int FacR = 1, FacGr = 1, FacGb = 1, FacG = 1, FacB = 1;
++	int otp_state;
++
++	memset(&pCamCalData->Single2A, 0,
++		sizeof(struct STRUCT_CAM_CAL_SINGLE_2A_STRUCT));
++	if (pCamCalData->DataVer >= CAM_CAL_TYPE_NUM) {
++		show_cmd_error_log(pCamCalData->Command);
++		return CAM_CAL_ERR_NO_DEVICE;
++	}
++
++	pCamCalData->Single2A.S2aVer = 1;
++	pCamCalData->Single2A.S2aBitEn = 3;
++	pCamCalData->Single2A.S2aAfBitflagEn = 0x0c;
++	pCamCalData->Single2A.S2aAwb.rGainSetNum = 0;
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x0a, 1, (unsigned char *)&AFMacro);
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x0b, 8, (unsigned char *)&CalGain);
++	if (read_data_size > 0) {
++		CalR = CalGain & 0xffff;
++		CalB = (CalGain >> 16) & 0xffff;
++		CalGr = (CalGain >> 32) & 0xffff;
++		CalGb = (CalGain >> 48) & 0xffff;
++		CalG = (CalGr + CalGb + 1) >> 1;
++		tempMax = max(max(CalR, CalG), CalB);
++		err = CAM_CAL_ERR_NO_ERR;
++		otp_state = 1;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	if (CalGain && CalR && CalG && CalB) {
++		pCamCalData->Single2A.S2aAwb.rGainSetNum++;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4R =
++			(tempMax * 512 + (CalR >> 1)) / CalR;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4G =
++			(tempMax * 512 + (CalG >> 1)) / CalG;
++		pCamCalData->Single2A.S2aAwb.rUnitGainu4B =
++			(tempMax * 512 + (CalB >> 1)) / CalB;
++	}
++
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x13, 8, (unsigned char *)&FacGain);
++	if (read_data_size > 0) {
++		FacR = FacGain & 0xffff;
++		FacB = (FacGain >> 16) & 0xffff;
++		FacGr = (FacGain >> 32) & 0xffff;
++		FacGb = (FacGain >> 48) & 0xffff;
++		FacG = (FacGr + FacGb + 1) >> 1;
++		tempMax = max(max(FacR, FacG), FacB);
++		err = CAM_CAL_ERR_NO_ERR;
++	} else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	if (FacGain && FacR && FacG && FacB) {
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4R =
++			(tempMax * 512 + (FacR >> 1)) / FacR;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4G =
++			(tempMax * 512 + (FacG >> 1)) / FacG;
++		pCamCalData->Single2A.S2aAwb.rGoldGainu4B =
++			(tempMax * 512 + (FacB >> 1)) / FacB;
++	}
++
++	pCamCalData->Single2A.S2aAwb.rValueR = CalR;
++	pCamCalData->Single2A.S2aAwb.rValueGr = CalGr;
++	pCamCalData->Single2A.S2aAwb.rValueGb = CalGb;
++	pCamCalData->Single2A.S2aAwb.rValueB = CalB;
++	pCamCalData->Single2A.S2aAwb.rGoldenR = FacR;
++	pCamCalData->Single2A.S2aAwb.rGoldenGr = FacGr;
++	pCamCalData->Single2A.S2aAwb.rGoldenGb = FacGb;
++	pCamCalData->Single2A.S2aAwb.rGoldenB = FacB;
++
++	read_data(pdata, pCamCalData->sensorID, pCamCalData->deviceID,
++		0x76a, 1, (unsigned char *)&AFMacro);
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76d, 2, (unsigned char *)&AFMacro);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	read_data_size = read_data(pdata, pCamCalData->sensorID,
++		pCamCalData->deviceID, 0x76b, 2, (unsigned char *)&AFInf);
++	if (read_data_size > 0)
++		err = CAM_CAL_ERR_NO_ERR;
++	else {
++		pCamCalData->Single2A.S2aBitEn = CAM_CAL_NONE_BITEN;
++		show_cmd_error_log(pCamCalData->Command);
++		otp_state = 0;
++	}
++	pCamCalData->Single2A.S2aAf[0] = AFMacro;
++	pCamCalData->Single2A.S2aAf[1] = AFInf;
++	if (AFMacro > AFInf)
++		otp_state = 0;
++	yft_otp_state_main2 = otp_state;
++	return err;
++}
++
++static unsigned int do_lens_id_s5kjn1main2(struct EEPROM_DRV_FD_DATA *pdata,
++		unsigned int start_addr, unsigned int block_size,
++		unsigned int *pGetSensorCalData)
++{
++	return do_lens_id_base(pdata, start_addr, block_size, pGetSensorCalData);
++}
+-- 
+2.56.0
+

@@ -1,0 +1,28 @@
+From 72361fdd2676cd4ceb27d9e02b01f39a9fd7f3ba Mon Sep 17 00:00:00 2001
+From: re <re@local>
+Date: Fri, 2 Oct 2026 14:48:28 +0300
+Subject: [PATCH 1/5] revert NothingOSS 'kcalloc memory faill' vmalloc
+ fallbacks (43 sites; absent from all GQ5012BF1 stock modules)
+
+---
+ cam_cal/src_v4l2/common/v2/eeprom_driver.c | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/cam_cal/src_v4l2/common/v2/eeprom_driver.c b/cam_cal/src_v4l2/common/v2/eeprom_driver.c
+index 0ad6937..42c6ae4 100644
+--- a/cam_cal/src_v4l2/common/v2/eeprom_driver.c
++++ b/cam_cal/src_v4l2/common/v2/eeprom_driver.c
+@@ -354,10 +354,6 @@ static inline int eeprom_driver_register(struct i2c_client *client,
+ 	ret = 0;
+ 	pinst = devm_kzalloc(&client->dev, sizeof(*pinst), GFP_KERNEL);
+ 
+-	if (!pinst){
+-		dev_info(&client->dev, "kcalloc memory faill %d", __LINE__);
+-		pinst = vmalloc(sizeof(*pinst));	
+-	}
+ 
+ 	if (!pinst)
+ 		return -ENOMEM;
+-- 
+2.56.0
+
