@@ -61,3 +61,7 @@ S=drivers/misc/mediatek/geniezone/gz-trusty
 ```
 
 (`sb.sh` = `reverse-engineering/power/rt5133/scripts/sb.sh`.)
+
+## Workspace
+
+Moved `Reverse Engineer - PARTIAL/GZ-TRANSPORT` → `Reverse Engineer - DONE/GZ-TRANSPORT` on 2026-10-06 (103 manifest entries hash-verified; exact sources under `source/exact-5e415e059253/`).

@@ -17,3 +17,7 @@
 
 Not required for static DONE and not attempted: physical BOM inspection of the
 footprint, any register access.
+
+## Workspace
+
+Moved `Reverse Engineer - PARTIAL/RT5133-POWER-IC` → `Reverse Engineer - DONE/RT5133-POWER-IC` on 2026-10-06 (this move: DONE 65→66, PARTIAL 65→64; with the GZ-TRANSPORT move the same day: 67/63/3; 44 manifest entries hash-verified).
