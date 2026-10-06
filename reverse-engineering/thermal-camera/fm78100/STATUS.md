@@ -14,3 +14,7 @@
 | userspace | sysfs only; no `/dev/i2c` use, no ioctl, no daemon |
 | stale claims corrected | FM78100 identity; "GPIO55 = thermal D+/D- mux, GPIO152 = camera power"; "640×512 native"; "5 V rail phandle not recovered" (property absent); "sensor_id not captured" (0x4c59 known) |
 | open | physical D+/D- wiring (board); ASCII "LY" interpretation (inference); none affect Linux/control behaviour |
+
+## Workspace
+
+Moved `Reverse Engineer - PARTIAL/FM78100-COMPANION` → `Reverse Engineer - DONE/FM78100-COMPANION` on 2026-10-06 (index totals 71/59/3 → 72/58/3; pack populated with source/parity/hardware/kernel/userspace/notes/scripts, 31 manifest rows replacing 4; AC020-UVC stays PARTIAL with an update note; manifest-audit: 3801/3801 rows resolve, status trees 72/58/3, no new drift).
