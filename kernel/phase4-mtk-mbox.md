@@ -272,3 +272,78 @@ Evidence artifacts (regenerable, under the ignored `workspace/`):
 `…/mtk-mbox-strrefs-stock-vs-{final,probe}.{txt,json}`,
 `…/mtk-mbox-residue{,-final}.{txt,json}`,
 `…/mtk-mbox-literal-census.txt`.
+
+## Source provenance re-verification (2026-10-05)
+
+### Withdrawn draft of this section
+
+An uncommitted draft of this section claimed a `<root>/<driver>` directory pair
+under `…/MTK-MBOX/source/` (`drivers/misc/mediating_comm/mtk_mbox`, 11 files, plus
+`subsys/core`, 2 files) from
+`No-Stage/MT6879_AndroidT_ALPS_vendor_mediatek_proprietary_hardware`, a "36/36
+unit hashes" result, two `mtk_rproc` blob hashes and 11 new `COPY-MANIFEST.tsv`
+rows. None of it was ever executed. Measured now: `MTK-MBOX/source/` is flat (18
+files, 4 of them `SHA256SUMS`) and has no `drivers/` or `subsys/` subtree; the
+`mtk_mbox/Kbuild` / `export_test.h` layout it described exists in none of the four
+local donor clones at `5e415e059253`; and `COPY-MANIFEST.tsv` has zero rows
+mentioning `mediating_comm`. The same draft's first hand-rolled check also failed
+for a method reason worth recording: it compared `sha256(file)` against the output
+of `git rev-list <rev> -- <path>`, which is a *commit* SHA-1 and not a blob id -
+two different hash functions over two different kinds of object - so its "0/66"
+was an artefact of the harness, not a finding. Everything below comes from the
+project's own verifier.
+
+### What was actually run
+
+    python3 reverse-engineering/scripts/source-verify.py \
+      "Reverse Engineer - DONE/<COMPONENT>" --manifest COPY-MANIFEST.tsv \
+      --repo /home/armol/kernel-work/public-mtk/nt6878.git \
+      --ref 5e415e059253ce0d2e61c97108e5f5785d71f06f \
+      --json workspace/phase4-mtk-mbox/source-verify/<component>.json
+
+`nt6878.git` is `NothingOSS/android_kernel_device_modules_6.1_nothing_mt6878` - the
+`kernel_device_modules-6.1` tree the stock sources came from. The blob comparison
+is `git hash-object` of each local file against
+`git ls-tree -r --format=%(objectname) %(path) <rev>`, i.e. git blob ids on both
+sides, which is the only correct currency here.
+
+| component | manifests | upstream blobs | COPY-MANIFEST | verdict |
+|---|---|---|---|---|
+| `MTK-MBOX` | 40 comparisons / 4 manifests, 0 bad | 6/14 verbatim + 8 registered non-donor | 51 rows / 51 verified, 1 uncovered | **PASS** |
+| `MTK-RPMSG-MBOX` | none in pack (0 comparisons) | 5/8 verbatim + 3 registered non-donor | 43 / 43 | **FAIL** (see 1) |
+| `MTK-TINYSYS-IPI` | none in pack (0 comparisons) | 7/10 verbatim + 3 registered non-donor | 47 / 47 | **PASS** |
+
+`MTK-MBOX`: 6/6 real source files are verbatim donor blobs at `5e415e059253` -
+`mtk-mbox.c` `da2c023500` ← `drivers/soc/mediatek/mtk-mbox.c`,
+`mtk-mbox-mailbox.c` `a0e08a9556` ← `drivers/mailbox/mtk-mbox-mailbox.c`,
+`mtk_rpmsg_mbox.c` `82ec9c50d3` ← `drivers/rpmsg/mtk_rpmsg_mbox.c`,
+`mtk-mbox.h` `80ade10970`, `mbox.h` `682829997b` ← `include/trace/events/mbox.h`,
+`mtk_rpmsg.h` `2e21c19cb1`. Every path the verifier resolved is exactly the path
+registered for that blob in `notes/source-map.tsv`, for all three components.
+
+The 8 non-donor files are all accounted for and none is a source file: the six
+LieppOS build-plumbing files (`<module>-Makefile`, `<module>-BUILD.bazel` for each
+of the 3 modules) plus two declared non-donor headers - `rpmsg_internal.h`
+`39b646d0d4` ("reconstructed … not the GKI header: `63cb74ea68` at android14-d2,
+`bf24c7494b` at android14-qpr3/15", `source-map.tsv` row 3) and `mtk_sip_svc.h`
+`5df1e35a34` ("vendor copy", rows 1-2; `notes/PROVENANCE.md:45` classifies it
+`reconstructed`, taken from the build workspace at exact GKI common `6b18f0b574ab`
+/ ab/12901745). For contrast, the donor's own
+`include/linux/soc/mediatek/mtk_sip_svc.h` at `5e415e059253` is
+`11bc86778265a0705d5cf6980af46705903e77fa`: different on purpose.
+
+### Two bookkeeping gaps found (open)
+
+1. `MTK-RPMSG-MBOX` fails for exactly one reason. Its `notes/source-map.tsv`
+   registers blob `1acca98c7c` = `drivers/soc/mediatek/mtk_tinysys_ipi.c` as a
+   cross-reference row, but its `source/` pack does not carry that file - it lives
+   in `MTK-TINYSYS-IPI/source/`. `MTK-MBOX` carries its own copy of its
+   cross-referenced module (`mtk_rpmsg_mbox.c` is present there), which is why the
+   same pattern passes there. The verifier treats a registered blob with no file
+   on disk as a failure; the fix is to carry the file or drop the row, not to
+   weaken the check.
+2. `MTK-MBOX/notes/source-map.tsv` is the only file in that pack without a
+   `COPY-MANIFEST.tsv` row, while both siblings manifest theirs.
+
+Neither the source maps nor any pack file was modified while running this. The
+JSON reports under `workspace/phase4-mtk-mbox/source-verify/` are the evidence.
