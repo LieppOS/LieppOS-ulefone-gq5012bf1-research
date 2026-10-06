@@ -18,3 +18,7 @@
 | OIS | no OIS calibration read or consumed anywhere |
 | HAL boundary | `libfeatureiodrv_mem.so` CamCalHelper (QUERY / NEED_POWER_ON / GKI_READ; S_SENSOR_INFO + read) |
 | firmware | none |
+
+## Workspace
+
+Moved `Reverse Engineer - PARTIAL/CAMERA-EEPROMS` → `Reverse Engineer - DONE/CAMERA-EEPROMS` on 2026-10-06 (index totals 70/60/3 → 71/59/3; 115 manifest entries hash-verified; dirs == rows in all three states).
