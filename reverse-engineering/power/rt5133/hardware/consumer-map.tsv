@@ -1,0 +1,15 @@
+output	regulator_name	dt_phandle	voltage_dt	volt_table	enable_reg_bit	supply	boot_on_always_on	dt_consumers	kernel_consumers	runtime_toggling_gq5012bf1	role_class	confidence	evidence
+BASE	rt5133,base	-	-	-	0x09[1] inverted (FOFF_BASE)	-	no/no	LDO1..LDO6 (internal supply_name)	none	never (not registered)	PLATFORM_CAPABILITY_INACTIVE	proven	source+exact binary; probe aborts before devm_regulator_register
+LDO1	rt5133-ldo1	0xea	2.800 V fixed	vout_type1	0x20[7]	rt5133,base	no/no	rt5133@18 gpio-supply; rt5133-gpio1/2/3 vin-supply; LDO7/LDO8 internal supply	none	never (not registered)	PLATFORM_CAPABILITY_INACTIVE	proven	live FDT phandle scan; stock-live-dt-rt5133-node.dts
+LDO2	rt5133-ldo2	0x24b	1.800-3.200 V	vout_type1	0x24[7]	rt5133,base	no/no	none	none	never	PLATFORM_CAPABILITY_INACTIVE	proven	live FDT phandle scan
+LDO3	rt5133-ldo3	0x24c	1.700-3.000 V	vout_type2	0x28[7]	rt5133,base	no/no	none	none	never	PLATFORM_CAPABILITY_INACTIVE	proven	live FDT phandle scan
+LDO4	rt5133-ldo4	0x24d	1.700-3.000 V	vout_type2	0x2C[7]	rt5133,base	no/no	none	none	never	PLATFORM_CAPABILITY_INACTIVE	proven	live FDT phandle scan
+LDO5	rt5133-ldo5	0x24e	1.700-3.000 V	vout_type2	0x30[7]	rt5133,base	no/no	none	none	never	PLATFORM_CAPABILITY_INACTIVE	proven	live FDT phandle scan
+LDO6	rt5133-ldo6	0x24f	1.700-3.000 V	vout_type2	0x34[7]	rt5133,base	no/no	none	none	never	PLATFORM_CAPABILITY_INACTIVE	proven	live FDT phandle scan
+LDO7	rt5133-ldo7	0x250	0.900-1.200 V	vout_type3	0x38[7]	rt5133-ldo1	no/no	none	none	never	PLATFORM_CAPABILITY_INACTIVE	proven	live FDT phandle scan
+LDO8	rt5133-ldo8	0x251	0.855-1.200 V	vout_type3 (RT5133) / vout_type4 (RT5133A)	0x3C[7]	rt5133-ldo1	no/no	none	none	never	PLATFORM_CAPABILITY_INACTIVE	proven	live FDT phandle scan; 0.855 V only in vout_type4
+GPO1	rt5133-gpio1 (regulator-fixed)	0x2b9	2.800 V fixed	-	0x0B[7]|[3]	LDO1	no/no	none	none	never (platform device stuck in deferred probe)	PLATFORM_CAPABILITY_INACTIVE	proven	pstore console 14.820265 deferred probe pending
+GPO2	rt5133-gpio2 (regulator-fixed)	0x2ba	2.800 V fixed	-	0x0B[6]|[2]	LDO1	no/no	none	none	never (platform device stuck in deferred probe)	PLATFORM_CAPABILITY_INACTIVE	proven	pstore console 14.820268 deferred probe pending
+GPO3	rt5133-gpio3 (regulator-fixed)	0x2bb	2.800 V fixed	-	0x0B[5]|[1]	LDO1	no/no	none (0x2bb also appears as numeric cable-imp-threshold, not a phandle)	none	never (platform device stuck in deferred probe)	PLATFORM_CAPABILITY_INACTIVE	proven	pstore console 14.820258 deferred probe pending
+HWEN	enable-gpio	pio GPIO1	-	-	-	-	-	shared: pmu@wl2864c reset-gpios = <&pio 1 0>	custom-ldo-wl2868.ko devm_gpiod_get("reset")	driven high once by failed RT5133 probe (first stage), then owned by WL2864C	ACTIVE_SIDE_EFFECT	proven	topology.md section 5; vendor_boot modules.load #123 vs vendor_dlkm #102
+IRQ	interrupts-extended	pio EINT19 falling	-	-	-	-	-	none	none	never requested (probe aborts before rt5133_enable_interrupts)	PLATFORM_CAPABILITY_INACTIVE	proven	fault-handling.md

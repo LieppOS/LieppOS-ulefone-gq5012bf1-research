@@ -1,0 +1,17 @@
+address	name	rw	mask	meaning	init_value_reference_dt	runtime_use	function	gq5012bf1_access	confidence
+0x00	CHIP_INFO	R	0xF0	vendor/die id nibble: 0x70 = RT5133 (regulator_data[0], LDO8 vout_type3), 0x80 = RT5133A (regulator_data[1], LDO8 vout_type4); low nibble ignored	-	probe only	rt5133_validate_vendor_info	ATTEMPTED ONCE per boot; transaction fails (no CRC-valid answer) -> probe aborts	proven (exact binary)
+0x06	RST_CTRL	W	0xFF	software reset; write code 0xB1 then udelay(2)	0xB1	probe only	rt5133_chip_reset	never reached	proven
+0x09	BASE_CTRL	RW	0x02	bit1 FOFF_BASE: 1 = base (digital/bias) off; regulator 'rt5133,base' enable_is_inverted	-	enable/disable of rt5133,base via regulator core	regulator_{enable,disable,is_enabled}_regmap	never reached	proven
+0x0B	GPIO_CTRL	RW	0xEE	GPO n (0..2): bits (7-n) and (3-n) set together = drive high; cleared = low	-	gpio_chip set/direction_output	rt5133_gpio_set / rt5133_gpio_direction_output	never reached	proven
+0x10	BASE_EVT	R/W1C	0xFF	base events; bit6 VREF_EVT (also fires when base is off, not logged); others logged 'base event occurred'	0xFF (clear)	IRQ handler bulk-read 3 bytes then write back	rt5133_intr_handler / rt5133_enable_interrupts	never reached	proven
+0x11	LDO_OC_EVT	R/W1C	0xFF	bit(n-1) = LDOn over-current -> REGULATOR_EVENT_OVER_CURRENT	0xFF (clear)	IRQ handler	rt5133_intr_handler	never reached	proven
+0x12	LDO_PGB_EVT	R/W1C	0xFF	bit(n-1) = LDOn power-good-bad -> REGULATOR_EVENT_FAIL	0xFF (clear)	IRQ handler	rt5133_intr_handler	never reached	proven
+0x16	BASE_MASK	W	0xFF	mask for 0x10; 0 = unmasked	0x00	probe only	rt5133_enable_interrupts	never reached	proven
+0x17	LDO_OC_MASK	W	0xFF	mask for 0x11; 0 = unmasked	0x00	probe only	rt5133_enable_interrupts	never reached	proven
+0x18	LDO_PGB_MASK	W	0xFF	mask for 0x12; 0 = unmasked	0x00	probe only	rt5133_enable_interrupts	never reached	proven
+0x19	LDO_SHDN	RW	0xC0	bit7 OCSHDN_ALL (OC on any LDO shuts all), bit6 PGBSHDN_ALL (PGB on any LDO shuts all)	bit7=0, bit6=0 (DT oc-/pgb-shutdown-all = 0)	of_parse_cb of BASE	rt5133_of_parse_cb	never reached	proven
+0x20+4(n-1)	LDOn_CTRL1 (n=1..8: 0x20 0x24 0x28 0x2C 0x30 0x34 0x38 0x3C)	RW	0xB3	bit7 enable; bit5 OCPTSEL; bit4 PGBPTSEL; bits1:0 STBTDSEL soft-start time	bit5=1, bit4=1, bits1:0=1 (DT oc-ptsel/pgb-ptsel/soft-start-time-sel); bit7 under regulator core	enable/disable, is_enabled	rt5133_of_parse_cb; regulator_*_regmap	never reached	proven
+0x21+4(n-1)	LDOn_CTRL2 (0x21 0x25 0x29 0x2D 0x31 0x35 0x39 0x3D)	RW	0xE0	bits7:5 VSEL index into vout_typeX table	apply_uV for every LDO: rewritten only if current index lies outside DT [min,max]; LDO1 forced to index 3 (2.80 V)	set/get_voltage_sel	regulator_{set,get}_voltage_sel_regmap	never reached	proven
+0x22+4(n-1)	LDOn_CTRL3 (0x22 0x26 0x2A 0x2E 0x32 0x36 0x3A 0x3E)	RW	0x04	bit2 active discharge	never written: DT 'regulator-active-discharge;' is valueless and GKI 6.1 of_property_read_u32 rejects it (-EOVERFLOW)	set_active_discharge (op present, never invoked by core)	regulator_set_active_discharge_regmap	never reached	proven
+0x3F	LDO8_CTRL4	-	-	defined; only used as regmap max_register	-	none	rt5133_regmap_config	never	proven
+frame	CRC-8 I2C framing	-	-	read: SMBus block read of (len+1) bytes; byte len = CRC-8 (poly 0x07, init 0) over [addr<<1|1, reg, data...]. write: SMBus block write [data..., CRC over [addr<<1|0, reg, data...], 0x00 dummy]; max 1 data byte per transfer (max_raw_read/write = 1)	-	every access	rt5133_regmap_hw_read / rt5133_regmap_hw_write	the single failed CHIP_INFO read	proven
