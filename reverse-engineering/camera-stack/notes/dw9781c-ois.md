@@ -21,8 +21,9 @@ dw9781c.c` (sha256 2391c3b1…) **without modification**:
 
 * I2C: DT node `i2c@11c23000/camera-ois-main@e` (i2c-4), but probe and
   init force `client->addr = 0x14 >> 1` = **0x0A**. The live bus entry is
-  `4-000e`; traffic goes to 0x0A on i2c-4. (`main_vcm` is also 0x0A, but on
-  i2c-7, so no conflict.)
+  `4-000e`; traffic goes to 0x0A on i2c-4. (`main_vcm`'s DT client is also 0x0A, on
+  i2c-7, but its traffic goes to 0x0C — see `../../camera/vcm/`. Note that
+  `main2_vcm` shares i2c-4 with the OIS: its traffic goes to 0x0C, so no conflict either.)
 * Supplies: `devm_regulator_get("vdd")` (no `vdd-supply` in DT → dummy) and
   `"rst"` → `rst-supply = camera-common-dovdd` (regulator-fixed 1.8 V,
   **no GPIO** — always-on/dummy-gated). No pinctrl states, no clocks used.
