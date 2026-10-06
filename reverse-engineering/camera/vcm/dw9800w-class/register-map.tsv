@@ -1,0 +1,12 @@
+register	use	rw	value_or_encoding	when	binary_source	public_name_inference	confidence
+0x02	control	W	0x02	init (every entry)	vcm_list_0[1..5].wr_table	DW9800W CONTROL: bit1 = RING (SAC) mode enable, bit0 = PD	binary-proven value; meaning datasheet-inferred
+0x02	control	W	0x01 then 0x00, mdelay 3	init prologue, sensor 0x8e1 only	vcm_list_0[5].wr_table	PD=1 then PD=0 = soft power-down/wake pulse	binary-proven value; meaning inferred
+0x06	mode	W	0x40	init (every entry)	vcm_list_0[1..5].wr_table	DW9800W MODE: SAC mode select	binary-proven value; meaning inferred
+0x07	resonance / timing	W	0x79 (0x989, 0x988, 0x38e2, 0x566442); 0x60 (0x8e1)	init	vcm_list_0[1..5].wr_table	DW9800W VCM resonance frequency (tVIB) setting	binary-proven value; meaning inferred
+0x03	position MSB	W	(pos >> 8) & 0xff	every V4L2_CID_FOCUS_ABSOLUTE and every release step	I2CSettingForMovePos(0x9800) patches I2Cfmt[0] = {Addr 0x03, BitR 8, Mask1 0xff, BitL 0, Mask2 0xff, Ctrl 0}	DAC[9:8]	binary-proven
+0x04	position LSB	W	pos & 0xff	same, second i2c_master_send	I2Cfmt[1] = {Addr 0x04, BitR 0, Mask1 0xff, BitL 0, Mask2 0xff, Ctrl 0}	DAC[7:0]	binary-proven
+0x02	control	W	0x20	release (after park to origin)	vcm_list_0[1..5].wr_rls_table	same value as ALPS dw9800w release; datasheet meaning not asserted	binary-proven value
+-	address	-	8-bit 0x18 -> 7-bit 0x0C	ioctl S_LENS_INFO -> client->addr	VcmDriverConfig.slave_addr	DW9800W fixed address	binary-proven
+-	range	-	V4L2 control 0..1023 step 1 (kernel); vcm_bits = 10, af_calib_bits = 10 (HAL)	-	main_vcm.c MAIN_VCM_MAX_FOCUS_POS; vcm_list_0	10-bit DAC	binary-proven
+-	origin / park	-	origin_focus_pos = 512; move_steps = 100; move_delay_us = 5000	release	vcm_list_0	-	binary-proven
+-	chip id	R	never read (no table command 2 or 4 in any entry)	-	vcm_list_0	DW9800W has an IC info register; unused	binary-proven absence
