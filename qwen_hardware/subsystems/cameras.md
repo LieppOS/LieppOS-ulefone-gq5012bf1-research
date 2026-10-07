@@ -93,3 +93,14 @@ Sensor vendor identity for cam00 (IMX989 vs GN1/S5KGN1 vs "GN1-class clone"): PR
   evidenced and no stock path reaches it
   (`reverse-engineering/camera-stack/dw9781c-ois/`).
 * Proof: `reverse-engineering/camera-stack/ov64b/`.
+
+## Correction (2026-10-07, CAMERA-S5KJN1MAIN2 closure)
+
+* Camera 2 (`S5KJN1MAIN2`, ultrawide) is a JN1 die (0x38E1). The driver adds 1
+  to the low ID byte, giving pseudo-ID 0x38E2, and binds only on non-CTS boards.
+  Its AF actuator is `main4_vcm` (DT `2-000d`, wire 0x0C). The kernel has 5
+  modes: 4080×3072@30, 8160×6144@10, and two hs/slim IMX989 placeholders the HAL
+  never selects. So the JN1 "4K60/1080p240" capability is not exposed in stock.
+* Its kernel EEPROM hook is the 4-cell XTC/PDXTC/GGC read from `2-0050`. QSC is
+  never applied.
+* Proof: `reverse-engineering/camera-stack/s5kjn1main2/`.

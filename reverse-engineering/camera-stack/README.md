@@ -114,10 +114,10 @@ talks to (`i2c_addr_table` write-IDs >>1; the DT `reg` only names the node).
 | PHY / lanes | **C-PHY, 3 trios** | D-PHY 4-lane | D-PHY 4-lane | D-PHY (CSI2) 4-lane |
 | MCLK (DT clk "mclk") | CAMTG3_SEL, 19.2 MHz | CAMTG2_SEL, 24 MHz | CAMTG4_SEL, 24 MHz | CAMTG2_SEL (shared w/ cam1), 24 MHz |
 | power (stock pw_seq, µV) | AVDD 2.8 (LDO3), AVDD2 1.8 (GPIO184 fixed), AFVDD 2.8 (LDO5), DOVDD 1.8 (LDO7), DVDD 1.1 (LDO2) | DOVDD 1.8 (LDO7), DVDD 1.2 (LDO1), AVDD 2.8 (LDO4), AVDD1 1.8 (GPIO76 fixed) | DOVDD 1.8 (LDO7), DVDD 1.2 (LDO1), AVDD 2.8 (LDO4), AVDD1 1.8 (`camera2-common-avdd1`, also GPIO76), AFVDD 2.8 (LDO6) | AVDD 2.8 (LDO4), AFVDD 2.8 (LDO5), DVDD 1.1 (LDO1), DOVDD 1.8 (LDO7) |
-| AF actuator (userspace lens table) | `main_vcm` i2c-7 0x0a | none (fixed focus) | `main4_vcm` i2c-2 0x0d | `main2_vcm` i2c-4 0x0b |
+| AF actuator (userspace lens table) | `main_vcm` i2c-7 0x0a | none (fixed focus) | `main4_vcm` i2c-2 DT 0x0d (wire 0x0C) | `main2_vcm` i2c-4 0x0b |
 | EEPROM node (DT) | eeprom0 i2c-7 0x51 | eeprom1 i2c-4 0x50 | eeprom2 i2c-2 0x50 | eeprom4 i2c-4 0x51 |
 | EEPROM wire address (cam_cal config) | i2c-7 0x50 | i2c-4 0x50 | i2c-2 0x50 | i2c-4 0x53 (0xA6) |
-| kernel QSC/cali hook | `set_sensor_cali` (eeprom_info, 1) | none | `set_sensor_cali` (eeprom_info, 1) | none (donor had one; removed) |
+| kernel QSC/cali hook | `set_sensor_cali` (eeprom_info, 1) | none | `set_sensor_cali` present but **dead** (own `open()`, `qsc_support` unset; see `s5kjn1main2/`); live hook = 4-cell read | none (donor had one; removed) |
 | flash | AW36515/18 group (hasFlashUnit 1) | none | hasFlashUnit 1 | hasFlashUnit 1 |
 | PDAF (static_ctx) | CAMSV_QPD | NA | CAMSV (pd_info on preview) | CAMSV type, no mode has pdaf_cap |
 | kernel modes | 33 (incl. 8192×6144 remosaic @15/24, 7680×4320@30, 1080p@480, 720p@480, stagger/DCG/LBMF HDR) | 5 | 5 | **5, max output 4624×3472** (no full-array mode) |

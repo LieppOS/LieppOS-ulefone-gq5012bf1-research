@@ -1,5 +1,11 @@
 # S5KJN1 family — camera 1 (front, `s5kjn1`) and camera 2 (rear, `s5kjn1main2`)
 
+> **Camera 2 closed 2026-10-07 (`../s5kjn1main2/`):** the TU is byte-identical to the
+> SHIPPED `imgsensor.ko` (32/32, B1==B2). Correction to the table below: QSC is
+> never applied (`qsc_support` unset, and `set_sensor_cali` is reachable only via
+> `common_open`, which this TU replaces). The live EEPROM hook is the 4-cell read
+> (`GET_4CELL_DATA`), which has a user-sized-buffer heap-overflow defect.
+
 ## Identity (PROVEN)
 
 | | camera 1 | camera 2 |
