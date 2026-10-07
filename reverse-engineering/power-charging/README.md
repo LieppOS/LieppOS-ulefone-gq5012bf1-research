@@ -14,7 +14,7 @@ function level, the data level and the ABI level.
 | adapter_class | 22/22 | 9/9 | exact |
 | charger_class | 90/90 | 9/9 | exact |
 | mtk_charger_algorithm_class | 21/21 | 6/6 | exact |
-| mt6375-battery | 332/332 | 103/103 | exact |
+| mt6375-battery | 332/332 | 103/103 | exact (2026-10-07: whole file identical except build-id after the `__bug_table` line-layout fix; see `../mt6375-pmic/`) |
 | mt6375-charger | 78/78 | 43/43 | exact |
 | mtk_chg_type_det | 8/8 | 7/7 | exact |
 | mtk_charger_framework | 130/130 | 70/72 (*) | exact (export CRCs 4/4) |
