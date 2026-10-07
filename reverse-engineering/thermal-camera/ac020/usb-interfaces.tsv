@@ -1,0 +1,6 @@
+interface	alt	class/sub/proto	iInterface	endpoint	direction	transfer	wMaxPacketSize	bInterval	purpose	endpoint_class	stock_user	source
+-	-	IAD 0E/03/00 (first 0, count 2)	2	-	-	-	-	-	video function association	-	-	F,P
+0	0	0E/01/00 VideoControl	2	EP0 (default)	both	control	64	-	UVC class requests (VS probe/commit, VC error code) + vendor vdcmd (bmRequestType 0x41/0xC1, bRequest 0x20/0x21/0x22, wValue 0, wIndex 0)	CONTROL	libusbuvccamera020 (UVC), libAC020sdk iruvc_usb_data_* (vdcmd)	F,code
+0	0	0E/01/00 VideoControl	2	0x83	IN	interrupt	64 (1x)	6 (2^5 uframes = 4 ms)	UVC status interrupt endpoint (CS_ENDPOINT wMaxTransferSize 64); polled by bundled libuvc status callback; no vendor payload found	CONTROL (UVC status)	libusbuvccamera020 _uvc_status_callback	F,P,S(1 EP)
+1	0	0E/02/00 VideoStreaming	0	-	-	-	-	-	zero-bandwidth setting; carries VS input header, 1 format, 2 frames	-	-	F,P,S
+1	1	0E/02/00 VideoStreaming	0	0x81	IN	isochronous async	1024 (1x)	1 (every uframe)	video stream: YUY2-labelled 256x194 or 256x386 frames @25 Hz (UVC payload headers)	VIDEO (+ in-band metadata/temperature lines)	libusbuvccamera020 (usbfs iso URBs)	F,P,S(alt1 1 EP)

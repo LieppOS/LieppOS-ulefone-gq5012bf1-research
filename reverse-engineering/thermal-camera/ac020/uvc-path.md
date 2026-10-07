@@ -7,12 +7,15 @@ Tiny2-C module (LWIR 256×192, shutter, flash)  — powered by GPIO 149/191/192
        └─ Android UsbHostManager → USBMonitor (app, permission) → fd
             └─ libusbuvccamera020.so (bundled libusb/libuvc, android_usbfs)
                  detach uvcvideo, claim if0 (VC) + if1 (VS), set alt 1,
-                 iso IN 0x81 → YUY2 256×386 @25 Hz (image + Y16 temperature + 2 meta lines)
-                 control EP0: UVC probe/commit + vendor vdcmd (vendor-control.md)
+                 iso IN 0x81 → YUY2-labelled 256×386 @25 Hz (image 192 rows, 2 info rows, u16 temperature 192 rows)
+                 control EP0: UVC probe/commit (libuvc)
+            └ libAC020sdk.so iruvc_usb_data_*: vendor vdcmd 0x41/0x20, 0xC1/0x22, 0xC1/0x21 (vendor-control.md)
             └─ libircmd020.so (vdcmd command layer), libAC020sdk.so (JNI, DFU)
             └─ libadvirparse / libadvirprocess / libadvirtempac020 / libcommonsdk (frame parse, radiometry)
             └─ libmnnmodel.so MNN_SR_TINY2C (super-resolution), libcolormapping, fusion libs
   └─ apps: M170infisens (com.energy.tc2c), M170infDlp (com.energy.tc2c.sop), FactoryMode
+
+Detail: `userspace-path.md`, `kernel-path.md`, `stream-sequence.md`.
 ```
 
 V4L2 is not on the stock path. `libjni_deviceAsWebcam.so` (`/dev/video*`) is the Android

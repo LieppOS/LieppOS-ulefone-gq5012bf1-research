@@ -1,54 +1,46 @@
-# Control channels
+# Control channels (summary; detail in `vendor-control-protocol.tsv`)
 
 ## UVC standard controls
 
-None of substance: IT and PU advertise `bmControls = 0` and there is no Extension Unit (P).
-Standard requests used are only the UVC VS probe/commit negotiation and SET_INTERFACE
-(alt 1) performed by the bundled libuvc.
+None. IT 1 and PU 2 advertise `bmControls = 00 00 00`, there is no Extension Unit, and no
+stock library calls the libuvc control helpers (`uvc_get_*/uvc_set_*` brightness, gain,
+exposure, focus, …) or `uvc_get_ctrl/uvc_set_ctrl`. Only VS probe/commit, the VC error-code
+query and SET_INTERFACE are issued.
 
-## Vendor control protocol ("vdcmd")
+## Vendor control ("vdcmd") — AC020 USB transport (static, from the stock libraries)
 
-Carried on EP0 with **vendor-type** requests addressed to the VideoControl interface, not to a
-UVC unit (this is why no XU is needed). Established in
-`qwen_hardware/qwen-thermal/re/protocol/vdcmd-uvc-transport.md`:
+Carried on EP0 as **vendor requests to interface 0 with wValue = wIndex = 0**:
 
-| direction | bmRequestType | bRequest | wValue | wIndex |
-|---|---|---|---|---|
-| OUT header/data | 0x41 | 0x45 | 0x0078 | selector (0x1d00 std header, 0x9d00 long header, 0x1d08 short/payload, 0x9d08 long payload) |
-| IN data | 0xC1 | 0x44 | 0x0078 | 0x1d08 (std result) / 0x1d10 (long result) |
-| IN status | 0xC1 | 0x44 | 0x0078 | 0x0200, 1 byte, ready ⇔ !(b0 & 3), error ⇔ b0 & 0xFC |
+```
+command  : OUT  0x41  bRequest 0x20  [header(+payload)]
+status   : IN   0xC1  bRequest 0x22  1 byte   1=busy  2=data ready  3=done
+response : IN   0xC1  bRequest 0x21  n bytes
+```
 
-OEM evidence: `libusbuvccamera020.so` holds 67× `#0x78`, 35× `0x200` and the 0x44/0x45 pair;
-`libircmd020.so` builds std/short/long headers (`vdcmd_*_header`), CRC helpers and exports
-~441 `adv_*`/`basic_*` commands (FFC/shutter, gain, palette, DPC, RMVC, env correction,
-TNR/DDE/gamma, zoom, flash/config file, `sys_reset_to_rom`).
+Read = OUT 0x20 header → status must be 2 → IN 0x21 → status must be 3.
+Write = OUT 0x20 header+payload → poll 0x22 every ~2 ms while 1, success on 3.
+Reset-type commands use OUT 0x20 without status.
 
-### OEM command headers (new, static, from the stock `libircmd020.so`)
+Frame header (libircmd020): byte0 frame type (0x01/0x10 standard 18 B, 0x02 short 12 B,
+0x03 long 24 B) · byte1 module · byte2 sub-command (bit7 data phase, bit6 SET) ·
+params · u32 offset · u16 chunk length · CRC16(payload) · CRC16(header). Data are
+chunked ≤ 0x800 bytes per transfer; the offset field advances per chunk.
 
-`scripts/extract_vdcmd_headers.py` walks every exported `adv_*`/`basic_*`/`sys_*`/`spi_*`/
-`test_*` function of FactoryMode's `libircmd020.so` (sha256 `0aa7d5c7…81ad`) and records the
-immediate header bytes stored into the buffer passed as `x1` to
-`standard_cmd_read/write`, `short_cmd_*`, `long_cmd_*`. Result: `vendor-opcodes.tsv`,
-257 call sites in 217 functions, 250 with a complete header (7 reuse a previous header).
+**Correction:** the earlier table here (0x41/0x45, wValue 0x0078, wIndex 0x1d00/0x9d00/
+0x1d08/0x1d10, status at 0x0200) is the P2-Pro donor protocol. In the stock AC020 SDK it
+survives only as the unreachable `iruvc_i2c_usb_*` path; the shipping USB path is the
+0x20/0x21/0x22 protocol above. The earlier "u16 command class" reading of header bytes 0–1
+is also corrected (byte0 = frame type, byte1 = module).
 
-Header layout (AC020 encoding, differs from the P2 Pro donor):
-
-| offset | field | observation |
-|---|---|---|
-| +0 | u16 LE command class | 37 classes; most used 0x0410 (45), 0x1110 (35), 0x1010 (29), 0x0310 (24), 0x0101 device (14), 0x0710 (11), 0x0210 FFC/shutter (10) |
-| +2 | u8 sub-command | bits[7:6]: `01` = SET (all 126+10 standard writes), `10` = GET (93/95 standard reads), `11` = control (e.g. `basic_preview_stop` 0xC2, 7 writes) |
-| +4.. | u8/u16 parameters | e.g. `adv_shutter_tab_open/close` 0x0F01/0x45 with +4 = 1/0 |
-
-Examples: `basic_device_info_get` 0x0101/0x81; `basic_reset_to_rom` 0x0101/0x42 (no status read);
-`basic_ffc_update` 0x0210/0x43; `adv_ffc_without_shutter` 0x1001/0x52; `adv_shutter_status_get/set`
-0x0210/0x83 / 0x44; `basic_gain_get/set` 0x2F01/0x81 / 0x41; `basic_palette_idx_get/set` 0x0310/0x85 / 0x45;
-`basic_preview_stop` 0x3001/0xC2.
-
-The donor P2 Pro opcodes (`0x8405`, `0xc10f`, …) are therefore **not** the AC020 values;
-only the EP0 framing (0x41/0x45, 0xC1/0x44, wValue 0x78, selectors) is shared. What stays
-open: mapping the selector/wIndex sequence each `*_cmd_*` emits inside
-`libusbuvccamera020.so` for this header format, and parameter/response layouts per command.
+Stock command use: `vendor-opcodes.tsv` (`stock_caller` column). M170infisens issues
+device-info, FFC (manual/auto/params/all-FFC), shutter-tab open, gain set (+ SDK
+auto-gain get/set/long-time state), mirror/flip, detail-enhance level, sun-detect,
+profession mode, NUC-T bypass, ISP param read, algorithm-parameter read/write,
+real-time status and calibration-file reads (`adv_cfg_file_*`); M170infDlp adds
+calibration (DPC, RMCover, K-value, TPD 2-point), save/restore, FFC/gain get and the
+firmware upgrade path. Parameter meanings beyond the vendor symbol names are not claimed.
 
 ## Not used
 
-No I2C (8-003c) command channel, no UART, no hidraw, no custom kernel ioctl.
+No UVC XU, no HID, no bulk endpoint, no I2C (8-003c) command channel, no UART, no hidraw,
+no kernel ioctl.
