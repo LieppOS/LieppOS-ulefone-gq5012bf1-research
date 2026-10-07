@@ -29,3 +29,20 @@ Residual, non-blocking:
 - per-command parameter meanings beyond vendor symbol names; info-line bytes not consumed
   by stock;
 - radiometry and image algorithms (proprietary).
+
+## Workspace
+
+Moved `Reverse Engineer - PARTIAL/AC020-UVC` → `Reverse Engineer - DONE/` on 2026-10-07
+(index totals 77/53/3 → 78/52/3). Earlier notes/source kept; closure files copied with
+provenance (28 manifest rows); README, EVIDENCE-INDEX, PROVENANCE regenerated;
+`notes/CLASSIFICATION-CHANGE.md` added. No other pack linked to the PARTIAL path.
+manifest-audit: 3949/3949 rows resolve, trees 78/52/3, no drift in AC020-UVC
+(pre-existing drift in 5 unrelated packs and 495 unregistered files unchanged).
+`scripts/reproduce.sh` resolves stock paths relative to this research tree.
+
+## Notes for other components (not edited)
+
+- FM78100-COMPANION `firmware-boundary.md` cites `sys_reset_to_rom 0x0805` (donor value);
+  AC020 value is frame 0x01 / module 0x01 / sub 0x42 (`stale-claims.md` #6).
+- `qwen_hardware/qwen-thermal/re/protocol/vdcmd-uvc-transport.md` describes the unreachable
+  donor framing (`stale-claims.md` #1–#2).
