@@ -23,3 +23,12 @@ No unresolved behavior remains in the normal Android external-USB integration. N
 residuals: board switch part/netlist; exact bootloader-fastboot descriptors; no runtime
 capture for every statically configured gadget composition. These do not alter the closed
 software contract.
+
+## Workspace
+
+Moved `Reverse Engineer - PARTIAL/EXTERNAL-USB` → `Reverse Engineer - DONE/EXTERNAL-USB`
+on 2026-10-07 (totals 79/51/3 → 80/50/3). The 18 canonical closure files were copied
+with provenance; the original runtime/Android notes were retained as legacy snapshots;
+README, evidence index and provenance were regenerated and classification rationale added.
+Manifest audit: 3,983/3,983 rows resolve; EXTERNAL-USB has no drift; the five pre-existing
+drift components are unchanged.
