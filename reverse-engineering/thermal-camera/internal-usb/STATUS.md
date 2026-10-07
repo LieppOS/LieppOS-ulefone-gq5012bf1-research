@@ -21,3 +21,19 @@ AC020-UVC. This component closes the *integration*: order, ownership, gates, int
 Residual, non-blocking: physical D+/D− selection element for the module (board-only,
 not software-visible); stock quirks recorded (no external-role restore, FactoryMode not in
 crash cleanup, `tiny2c_mode` reads 0, rails dropped before role change).
+
+## Workspace
+
+Moved `Reverse Engineer - PARTIAL/INTERNAL-THERMAL-USB` → `Reverse Engineer - DONE/` on
+2026-10-07 (index totals 78/52/3 → 79/51/3). Original capture note kept; closure files
+copied with provenance (15 manifest rows); README, EVIDENCE-INDEX, PROVENANCE regenerated;
+`notes/CLASSIFICATION-CHANGE.md` added. No other pack linked to the PARTIAL path.
+manifest-audit: all rows resolve, trees 79/51/3, no drift in INTERNAL-THERMAL-USB
+(pre-existing drift set unchanged).
+
+## Notes for other components (not edited)
+
+- `usb/hardware/topology.md` labels GPIO 55/152 "UVC route / UVC power … internal camera";
+  they are the uSmart accessory path (`stale-claims.md` #1).
+- `kernel/usmart-full-contract.md` §3 lists YftSuperScreen as a `tiny2c_*` writer and draws
+  the thermal module and uSmart accessory as one device (`stale-claims.md` #8–#9).
