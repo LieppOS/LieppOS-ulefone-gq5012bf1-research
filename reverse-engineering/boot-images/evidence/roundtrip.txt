@@ -1,0 +1,35 @@
+# round-trip (AOSP mkbootimg from GKI workspace tools/mkbootimg)
+boot_a           repack= 16506880 body_identical=True avb_orig=16523264 pad_zero_to_orig=False vbmeta_alg=1 | hashdesc part=boot size=16523264 digest_match=True
+    args: --header_version 4 --kernel /tmp/bi/boot_a/kernel --ramdisk /tmp/bi/boot_a/ramdisk --cmdline ''
+boot_b           repack= 16506880 body_identical=True avb_orig=16523264 pad_zero_to_orig=False vbmeta_alg=1 | hashdesc part=boot size=16523264 digest_match=True
+    args: --header_version 4 --kernel /tmp/bi/boot_b/kernel --ramdisk /tmp/bi/boot_b/ramdisk --cmdline ''
+init_boot_a      repack=  2560000 body_identical=True avb_orig=2560000 pad_zero_to_orig=True vbmeta_alg=0 | hashdesc part=init_boot size=2162688 digest_match=False
+    args: --header_version 4 --kernel /tmp/bi/init_boot_a/kernel --ramdisk /tmp/bi/init_boot_a/ramdisk --cmdline ''
+init_boot_b      repack=  2351104 body_identical=True avb_orig=2351104 pad_zero_to_orig=True vbmeta_alg=0 | hashdesc part=init_boot size=2351104 digest_match=True
+    args: --header_version 4 --os_version 15.0.0 --os_patch_level 2026-07 --kernel /tmp/bi/init_boot_b/kernel --ramdisk /tmp/bi/init_boot_b/ramdisk --cmdline ''
+vendor_boot_a    repack= 62697472 body_identical=True avb_orig=62697472 pad_zero_to_orig=True vbmeta_alg=0 | hashdesc part=vendor_boot size=62697472 digest_match=True
+    args: --header_version 4 --pagesize 0x00001000 --base 0x00000000 --kernel_offset 0x40000000 --ramdisk_offset 0x66f00000 --tags_offset 0x47c80000 --dtb_offset 0x0000000047c80000 --vendor_cmdline bootopt=64S3,32N2,64N2 --board '' --dtb /tmp/bi/vendor_boot_a/dtb --vendor_bootconfig /tmp/bi/vendor_boot_a/bootconfig --ramdisk_type 1 --ramdisk_name '' --vendor_ramdisk_fragment /tmp/bi/vendor_boot_a/vendor_ram
+vendor_boot_b    repack= 33828864 body_identical=True avb_orig=33828864 pad_zero_to_orig=True vbmeta_alg=0 | hashdesc part=vendor_boot size=33828864 digest_match=True
+    args: --header_version 4 --pagesize 0x00001000 --base 0x00000000 --kernel_offset 0x40000000 --ramdisk_offset 0x66f00000 --tags_offset 0x47c80000 --dtb_offset 0x0000000047c80000 --vendor_cmdline bootopt=64S3,32N2,64N2 --board '' --dtb /tmp/bi/vendor_boot_b/dtb --vendor_bootconfig /tmp/bi/vendor_boot_b/bootconfig --ramdisk_type 1 --ramdisk_name '' --vendor_ramdisk_fragment /tmp/bi/vendor_boot_b/vendor_ram
+
+# vbmeta descriptor check
+vbmeta_a: alg=1 chains=[('boot', 3), ('vbmeta_system', 2), ('vbmeta_vendor', 4)]
+   hash dtbo         size=    48320 matches dtbo_a.img: True
+   hash init_boot    size=  2162688 matches init_boot_a.img: False
+   hash vendor_boot  size= 33828864 matches vendor_boot_a.img: False
+vbmeta_b: alg=1 chains=[('boot', 3), ('vbmeta_system', 2), ('vbmeta_vendor', 4)]
+   hash dtbo         size=    48320 matches dtbo_b.img: True
+   hash init_boot    size=  2351104 matches init_boot_b.img: True
+   hash vendor_boot  size= 33828864 matches vendor_boot_b.img: True
+
+# init_boot_a ramdisk marker
+init
+init.real
+8648d0c9f071603ff601b49a656e1f52b5a6bae762772a4fd2cd8d73feb44927  boot_a.img
+8648d0c9f071603ff601b49a656e1f52b5a6bae762772a4fd2cd8d73feb44927  boot_b.img
+23560214615cdff7b890bcf62eb43ba913dc352d1004d41c25281164e49a45b5  init_boot_a.img
+c730a891bb93d48c41467ad00e749a9a7ae5d04695829082375974ea22b2b446  init_boot_b.img
+43e838073c3153e263173ad5fa8523b847cc5595fe7c1d2b1c3811b582b3e08b  vendor_boot_a.img
+c8953d16b7a47976362aa23b53d0a08dde451f25cab4c552fa70c43e56ee0756  vendor_boot_b.img
+c7bfa7596f974bc495f6b033c3fb209887aeea46dc4cc409955b764417e7e41f  vbmeta_a.img
+e14e11e184950d487b31def17a349f4f161e34988825bf35d85fc9bd6c3bde93  vbmeta_b.img
