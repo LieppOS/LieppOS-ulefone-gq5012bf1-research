@@ -1,0 +1,14 @@
+binary_or_service	device_node_or_api	purpose	separate_re_component
+/vendor/bin/teed (service teed, class core, user system, SYS_RAWIO; started on post-fs by trustkernel.rc)	/dev/tkcore_admin (0600 system:system) read/write mailbox + TEE_ALLOC_SHM_IOC / TEE_GET_FD_FOR_RPC_SHM_IOC; /proc/tkcore/tkcore_log, /proc/tkcore/tkcore_teed_version; /dev/rpmb0 (and /dev/mmcblk0rpmb, absent on this UFS board)	TrustKernel supplicant: secure file system (/data/vendor/t6/fs, /mnt/vendor/persist/t6, /mnt/vendor/protect_f/tee), TA loading (/vendor/app/t6, /data/vendor/t6/app), RPMB proxy, TEE log file	TRUSTKERNEL-TEE (userspace); storage RPMB side: STORAGE
+/vendor/lib64/libteec.so, /vendor/lib/libteec.so	/dev/tkcore_client (format "/dev/%s" + "tkcore_client")	GlobalPlatform TEE Client API	TRUSTKERNEL-TEE
+/vendor/lib64/libTEECommon.so, /vendor/lib/libTEECommon.so	/dev/tkcore_client	TrustKernel common client helper (used by face/DRM stacks)	TRUSTKERNEL-TEE
+/vendor/bin/tee_check_keybox (oneshot, after vendor.trustkernel.ready && fs.state=ready)	libteec	keybox provisioning check (/mnt/vendor/persist/keybox)	TRUSTKERNEL-TEE
+android.hardware.security.keymint@3.0-service.trustkernel (+ libkeymint_tool.so)	libteec / libTEECommon	KeyMint HAL backed by TrustKernel keymaster TA	KEYMINT / TRUSTKERNEL-TEE
+android.hardware.gatekeeper-service.trustkernel	libteec / libTEECommon	Gatekeeper HAL	GATEKEEPER / TRUSTKERNEL-TEE
+/vendor/lib64/libfprint-x64.so	libteec	fingerprint CA (microarray TA); kernel side microarray_fp_tee.ko uses tkcore kernel API + clkmgr	MICROARRAY-FP-TEE
+/vendor/lib64/hw/face.default.so, libGsFace_ca.so, libcv_faceid.so	libTEECommon / libteec	face unlock CA	(face stack)
+/vendor/lib64/liboemcrypto.so	libTEECommon	Widevine OEMCrypto (DRM)	(DRM stack)
+/vendor/lib64/libkphproxy.so	libteec	MTK key-protection proxy CA	(security stack)
+/vendor/bin/pld, /vendor/lib64/libpl.so	libteec	MTK provisioning/licence loader CA	(security stack)
+/vendor/bin/tlcrpmb_gp	libteec	GP RPMB client (vendor tool)	STORAGE / TRUSTKERNEL-TEE
+/dev/tkcore_fp (0660 root:system, label tkcore_client_device)	-	no stock userspace binary references it (vendor bin/lib64 scan)	-
