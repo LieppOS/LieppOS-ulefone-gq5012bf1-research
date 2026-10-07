@@ -28,3 +28,21 @@ Source: public TrustKernel 7:2.2 tree (anvil-kernel 8e1a0f39478f / 6b94428f) + r
 Not part of this scope (unchanged status): `tkcore.ko` reconstruction (BLOCKED components),
 TrustKernel secure OS/TAs (proprietary), runtime validation (FF-A probe, SMC latency, RPMB
 traffic) — none is a static blocker.
+
+## Workspace
+
+Moved `Reverse Engineer - PARTIAL/TKCORE-DRV` → `Reverse Engineer - DONE/` on 2026-10-07
+(index totals 76/54/3 → 77/53/3). Earlier notes and stock inventories kept; the September
+behavioural source moved to `source/legacy-behavioural/`; closure files copied with
+provenance (45 manifest rows); README, EVIDENCE-INDEX, PROVENANCE regenerated;
+`notes/CLASSIFICATION-CHANGE.md` added; the TKCORE-DRV links in the BLOCKED
+TRUSTKERNEL-TEE / TRUSTKERNEL-ABI-ISLAND READMEs re-pointed (only drift caused by the move).
+manifest-audit: 3921/3921 rows resolve, trees 77/53/3, no drift in TKCORE-DRV (pre-existing
+drift in 5 unrelated packs untouched).
+
+## Note for STORAGE (not edited)
+
+`reverse-engineering/storage/binary-analysis/teed-rpmb-ioctls.md` swaps two labels: the
+`0xc008b301`/`0xc048b300` rows are the eMMC `MMC_IOC_MULTI_CMD`/`MMC_IOC_CMD` path and
+`0xc01874a5`/`0xc01874a7` are tkcore `TEE_ALLOC_SHM_IOC`/`TEE_GET_FD_FOR_RPC_SHM_IOC`
+(see `rpmb-boundary.md`).
