@@ -42,7 +42,7 @@ manifest-audit: 3949/3949 rows resolve, trees 78/52/3, no drift in AC020-UVC
 
 ## Notes for other components (not edited)
 
-- FM78100-COMPANION `firmware-boundary.md` cites `sys_reset_to_rom 0x0805` (donor value);
-  AC020 value is frame 0x01 / module 0x01 / sub 0x42 (`stale-claims.md` #6).
+- FM78100-COMPANION `firmware-boundary.md` cited `sys_reset_to_rom 0x0805` (donor value);
+  corrected 2026-10-07 to the AC020 value (frame 0x01 / module 0x01 / sub 0x42).
 - `qwen_hardware/qwen-thermal/re/protocol/vdcmd-uvc-transport.md` describes the unreachable
   donor framing (`stale-claims.md` #1–#2).

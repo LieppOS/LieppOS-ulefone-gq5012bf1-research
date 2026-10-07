@@ -9,8 +9,14 @@ EEPROM/OTP access or boot-mode change ever goes over I2C. `yft_tiny2c_usb.ko` ca
 ## Thermal module (USB side, owned by AC020-UVC)
 
 The module ASIC boots from its own flash (USB enumeration ≈0.73 s after rails on, with no
-host download). Stock carries update images that are written over USB vendor commands
-(`sys_reset_to_rom 0x0805`, `adv_cfg_file_*`, `UpgradeMode`), never over I2C.
+host download). Stock carries update images that are written over USB, never over I2C:
+AC020 vdcmd on EP0 (0x41/bRequest 0x20 command, 0xC1/0x22 status, 0xC1/0x21 response;
+`basic_reset_to_rom` = frame 0x01 / module 0x01 / sub 0x42, `adv_cfg_file_*` module 0x08),
+then USB DFU in ROM mode (`UpgradeMode`). Detail: `../ac020/firmware-boundary.md`,
+`../ac020/vendor-control-protocol.tsv`.
+
+(2026-10-07 correction: the earlier value `sys_reset_to_rom 0x0805` was the P2-Pro donor
+opcode and does not apply to this module; see `../ac020/stale-claims.md` #6.)
 
 | path (inside APK) | size | sha256 | loader | consumer | expected device |
 |---|---:|---|---|---|---|
