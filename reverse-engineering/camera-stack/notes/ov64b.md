@@ -1,5 +1,11 @@
 # OV64B (camera 3, rear) — donor analysis, modes, kernel contract
 
+> **Closed 2026-10-07 (`../ov64b/`):** the TU is byte-identical to the SHIPPED
+> `imgsensor.ko` (27/27 symbols, B1==B2). The night-vision IR LEDs
+> (`aw36518` 8-0063 and `aw36518_v2` 12-0063) follow sensor4 init/power-off
+> through `yft_ctrl_nightled_by_idx`. The "Unknowns" section below is resolved;
+> tuning is an external boundary.
+
 ## Identity (PROVEN)
 
 * Runtime HAL `[03] BACK SENSOR_DRVNAME_OV64B_MIPI_RAW`, hasFlashUnit 1.

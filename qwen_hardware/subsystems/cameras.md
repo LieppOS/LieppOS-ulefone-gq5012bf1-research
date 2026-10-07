@@ -77,3 +77,19 @@ Sensor vendor identity for cam00 (IMX989 vs GN1/S5KGN1 vs "GN1-class clone"): PR
 * Runtime OIS association: enable `dw9781c` via a custom sensor driver/OIS provider hook and measure which lens group moves (or read module BOM from Ulefone service info).
 * IMX989 datasheet-level ceilings (needs NDA/leaked datasheet; currently press-quality B/C).
 * Per-channel flash current codes vs AW36515/AW36518 datasheet maxima.
+
+## Correction (2026-10-07, CAMERA-OV64B closure)
+
+* Camera 3 (OV64B) is the night-vision camera, not a macro. The kernel's
+  largest mode is 4624×3472, and the HAL publishes 9216×6912 BLOB; the "max
+  8192×6144" value above is wrong for this camera.
+* The night-vision IR pair is `aw36518` `8-0063` (ct 0) plus `aw36518_v2`
+  `12-0063` (ct 1), both flashlight part 1. The shipped `imgsensor.ko` switches
+  them on at OV64B (`sensor4`) init and off at its power-off, through
+  `flashlight_drvctrl(1/11)` and `(0/10)`. `aw36515` `6-0063` is the ordinary
+  flash and is not part of the IR array. The "third flash channel …
+  auxiliary light" reading is withdrawn.
+* DW9781C "populated, stock-disabled" is superseded: physical presence is not
+  evidenced and no stock path reaches it
+  (`reverse-engineering/camera-stack/dw9781c-ois/`).
+* Proof: `reverse-engineering/camera-stack/ov64b/`.

@@ -1,8 +1,8 @@
 # GQ5012BF1 normal camera stack — status matrix (2026-10-02)
 
 Authoritative detail: `README.md` (this directory). Workspace copy: `../../../CAMERA-STACK-STATUS.md`.
-Component folders: `Reverse Engineer - DONE/{CAMERA-IMX989,DW9781C-OIS}`, `Reverse Engineer -
-PARTIAL/{CAMERA-HAL-ISP,CAMERA-OV64B,CAMERA-S5KJN1,CAMERA-S5KJN1MAIN2}`.
+Component folders: `Reverse Engineer - DONE/{CAMERA-IMX989,CAMERA-OV64B,DW9781C-OIS}`, `Reverse Engineer -
+PARTIAL/{CAMERA-HAL-ISP,CAMERA-S5KJN1,CAMERA-S5KJN1MAIN2}`.
 ThermoVue excluded. EEPROM/VCM internals belong to other tracks.
 
 ## Cameras
@@ -12,7 +12,7 @@ ThermoVue excluded. EEPROM/VCM internals belong to other tracks.
 | 0 | rear main | IMX989 — **PROVEN** (chip-ID 0x0989 bind) | imx989_mipi_raw | i2c-7 / 0x1A | port 3 / C-PHY 3-trio | CAMTG3 19.2 MHz | a3 d2 io7 af5 + GPIO184 | main_vcm 7-0x0a | none in stock path | CAMSV_QPD | 33 | **source, byte-exact** (NothingOSS donor + stock data/ODM edits) |
 | 1 | front | S5KJN1 — PROVEN (0x38E1) | s5kjn1_mipi_raw | i2c-4 / 0x3D | port 2 / D-PHY 4L | CAMTG2 24 MHz | d1(1.2V) a4 io7 + GPIO76 | none | – | none | 5 | **source, byte-exact** (generated from stock) |
 | 2 | rear | S5KJN1 die, driver pseudo-ID 0x38E2 — PROVEN | s5kjn1main2_mipi_raw | i2c-2 / 0x2D | port 1 / D-PHY 4L | CAMTG4 24 MHz | d1 a4 io7 af6 + GPIO76 | main4_vcm 2-0x0d | – | CAMSV | 5 | **source, byte-exact** (generated from stock) |
-| 3 | rear | OV64B — PROVEN (0x566442) | ov64b_mipi_raw | i2c-4 / 0x10 (+0x22) | port 0 / D-PHY 4L | CAMTG2 24 MHz | a4 af5 d1(1.1V) io7 | main2_vcm 4-0x0b | – | type CAMSV, unused | 5 (max 4624×3472) | **source, byte-exact** (older NothingOSS revision + stock data) |
+| 3 | rear | OV64B — PROVEN (0x566442) | ov64b_mipi_raw | i2c-4 / 0x10 (+0x22) | port 0 / D-PHY 4L | CAMTG2 24 MHz | a4 af5 d1(1.1V) io7 | main2_vcm 4-0x0b | – | type CAMSV, unused | 5 (max 4624×3472) | **source, byte-exact vs the SHIPPED module: 27/27 TU symbols; B1==B2 — DONE** (`ov64b/`) |
 | – | OIS | DW9781C — DT client bound; physical presence not evidenced (no stock I2C access) | dw9781c.ko | i2c-4 / **0x0A** (DT @0e) | – | – | rst = camera-common-dovdd (fixed, no GPIO); no vdd | – | – | – | – | **EXACT NothingOSS source; stock file identical except build-id — DONE** (`dw9781c-ois/`) |
 
 ## Layers
@@ -31,6 +31,17 @@ ThermoVue excluded. EEPROM/VCM internals belong to other tracks.
 | HAL lens/OIS tables | OIS deliberately Dummy in `libcameracustom.lens.so` | – |
 
 ## Status changes
+
+> **Correction 2026-10-07 (`ov64b/stale-claims.md` #2):** the "reproducibility"
+> relabel below is wrong. The comparison operand behind the module-wide numbers
+> is the shipped `vendor_dlkm/lib/modules/imgsensor.ko` (sha256 `9243061c…`):
+> `cmp` against the rebuild (`imgsensor.parity.stripped.ko`, sha256
+> `a4364973…`, B1==B2) gives 70 bytes, which are 20 build-id bytes and 50 bytes
+> in `yft_ctrl_nightled_by_idx`. That function is mechanically proven
+> equivalent for both of its constant call sites. Every sub-driver TU is
+> therefore byte-identical to the shipped module. Per-component closure
+> still needs its own TU proof and integration review: done for `CAMERA-OV64B`
+> (`ov64b/README.md`).
 
 Two different claims were previously merged into one sentence here; they are now
 separated.
