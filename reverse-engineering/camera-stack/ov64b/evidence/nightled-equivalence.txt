@@ -1,0 +1,16 @@
+call sites in shipped module:
+  imgsensor_set_ctrl @9878: state(w1) = 1
+  imgsensor_set_ctrl @9fe8: state(w1) = 0
+relocations naming yft_ctrl_nightled_by_idx: 0 (address never taken)
+
+idx state led | shipped trace / led' || rebuilt trace / led' | equal
+  4   -1   0 | [('_printk', None, 4294967295), ('flashlight_drvctrl', 1, None), ('flashlight_drvctrl', 11, None)] / 1 || [('_printk', None, 4294967295), ('flashlight_drvctrl', 1, None), ('flashlight_drvctrl', 11, None)] / 1 | yes (state not passed by any caller)
+  4   -1   1 | [('_printk', None, 4294967295), ('flashlight_drvctrl', 1, None), ('flashlight_drvctrl', 11, None)] / 1 || [('_printk', None, 4294967295)] / 1 | NO (state not passed by any caller)
+  4    0   0 | [('_printk', None, 0)] / 0 || [('_printk', None, 0)] / 0 | yes
+  4    0   1 | [('_printk', None, 0), ('flashlight_drvctrl', 0, None), ('flashlight_drvctrl', 10, None)] / 0 || [('_printk', None, 0), ('flashlight_drvctrl', 0, None), ('flashlight_drvctrl', 10, None)] / 0 | yes
+  4    1   0 | [('_printk', None, 1), ('flashlight_drvctrl', 1, None), ('flashlight_drvctrl', 11, None)] / 1 || [('_printk', None, 1), ('flashlight_drvctrl', 1, None), ('flashlight_drvctrl', 11, None)] / 1 | yes
+  4    1   1 | [('_printk', None, 1)] / 1 || [('_printk', None, 1)] / 1 | yes
+  4    2   0 | [('_printk', None, 2), ('flashlight_drvctrl', 1, None), ('flashlight_drvctrl', 11, None)] / 1 || [('_printk', None, 2), ('flashlight_drvctrl', 1, None), ('flashlight_drvctrl', 11, None)] / 1 | yes (state not passed by any caller)
+  4    2   1 | [('_printk', None, 2), ('flashlight_drvctrl', 1, None), ('flashlight_drvctrl', 11, None)] / 1 || [('_printk', None, 2)] / 1 | NO (state not passed by any caller)
+
+VERDICT: EQUIVALENT for every state passed by the shipped callers [0, 1]
