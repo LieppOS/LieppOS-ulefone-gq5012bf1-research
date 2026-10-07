@@ -1,0 +1,1122 @@
+From ff135eeceeb5a6c5c43d3a38fc69fe15e4de040b Mon Sep 17 00:00:00 2001
+From: ArnoldasMk <arnoldas.kanobi@gmail.com>
+Date: Wed, 7 Oct 2026 11:45:10 +0300
+Subject: [PATCH] tee/tkcore: GQ5012BF1 stock (6:1.1-era) tkcore_drv delta over
+ public 7:2.2 donor - 50/50 functions byte-identical,
+ data/KCFI/relocs/__versions exact; srcversion+build-id differ
+
+---
+ drivers/tee/tkcore/armtz/tee_mem.c      |  35 +--
+ drivers/tee/tkcore/armtz/tee_mem.h      |   2 -
+ drivers/tee/tkcore/armtz/tee_smc_xfer.c | 328 ++++++++++++------------
+ drivers/tee/tkcore/armtz/tee_tz_drv.c   | 175 +++----------
+ drivers/tee/tkcore/armtz/tee_tz_priv.h  |   9 +-
+ drivers/tee/tkcore/core/tee_supp_com.h  |   2 -
+ 6 files changed, 215 insertions(+), 336 deletions(-)
+
+diff --git a/drivers/tee/tkcore/armtz/tee_mem.c b/drivers/tee/tkcore/armtz/tee_mem.c
+index db9aee1..c5b4c4d 100644
+--- a/drivers/tee/tkcore/armtz/tee_mem.c
++++ b/drivers/tee/tkcore/armtz/tee_mem.c
+@@ -272,21 +272,19 @@ void tee_shm_pool_reset(struct device *dev, struct shm_pool *pool)
+ }
+ 
+ /**
+- * \brief Return the logical address for a buffer, if it's within
+- * range of addresses managed by the shm pool
++ * \brief Return the logical address
+  *
+  * \param pool          Pointer on the pool
+- * \param paddr         Physical address of buffer's starting
+- * \param length        Length of buffer
++ * \param paddr         Physical address
+  *
+  * \return Virtual/logical address
+  *
+- * Return the associated virtual/logical address. The given buffer
+- * should reside within the range of addresses managed by the shm pool.
++ * Return the associated virtual/logical address. The address should be inside
++ * the range of addresses managed by the shm pool.
+  *
+  */
+-void *tee_shm_pool_p2v_range(struct device *dev, struct shm_pool *pool,
+-	unsigned long paddr, size_t length)
++void *tee_shm_pool_p2v(struct device *dev, struct shm_pool *pool,
++		       unsigned long paddr)
+ {
+ 	unsigned long offset;
+ 	void *p;
+@@ -295,8 +293,7 @@ void *tee_shm_pool_p2v_range(struct device *dev, struct shm_pool *pool,
+ 		return NULL;
+ 
+ 	mutex_lock(&pool->lock);
+-	if (!is_valid_paddr(pool, paddr) ||
+-			(pool->paddr + pool->size - paddr < length)) {
++	if (!is_valid_paddr(pool, paddr)) {
+ 		mutex_unlock(&pool->lock);
+ 		pr_err("%s() paddr=0x%p not in the shm pool\n",
+ 			__func__,
+@@ -312,24 +309,6 @@ void *tee_shm_pool_p2v_range(struct device *dev, struct shm_pool *pool,
+ 	return p;
+ }
+ 
+-/**
+- * \brief Return the logical address
+- *
+- * \param pool          Pointer on the pool
+- * \param paddr         Physical address
+- *
+- * \return Virtual/logical address
+- *
+- * Return the associated virtual/logical address. The address should be inside
+- * the range of addresses managed by the shm pool.
+- *
+- */
+-void *tee_shm_pool_p2v(struct device *dev, struct shm_pool *pool,
+-		       unsigned long paddr)
+-{
+-	return tee_shm_pool_p2v_range(dev, pool, paddr, 1);
+-}
+-
+ /**
+  * \brief Return the physical address
+  *
+diff --git a/drivers/tee/tkcore/armtz/tee_mem.h b/drivers/tee/tkcore/armtz/tee_mem.h
+index 4e8c495..22c8482 100644
+--- a/drivers/tee/tkcore/armtz/tee_mem.h
++++ b/drivers/tee/tkcore/armtz/tee_mem.h
+@@ -25,8 +25,6 @@ struct shm_pool *tee_shm_pool_create(struct device *dev, size_t shm_size,
+ 
+ void tee_shm_pool_destroy(struct device *dev, struct shm_pool *pool);
+ 
+-void *tee_shm_pool_p2v_range(struct device *dev, struct shm_pool *pool,
+-	unsigned long paddr, size_t length);
+ 
+ void *tee_shm_pool_p2v(struct device *dev, struct shm_pool *pool,
+ 	unsigned long paddr);
+diff --git a/drivers/tee/tkcore/armtz/tee_smc_xfer.c b/drivers/tee/tkcore/armtz/tee_smc_xfer.c
+index 28c49b0..8e79a80 100644
+--- a/drivers/tee/tkcore/armtz/tee_smc_xfer.c
++++ b/drivers/tee/tkcore/armtz/tee_smc_xfer.c
+@@ -12,8 +12,6 @@
+  * GNU General Public License for more details.
+  */
+ 
+-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+-
+ #include <linux/spinlock.h>
+ #include <linux/wait.h>
+ #include <linux/slab.h>
+@@ -57,19 +55,24 @@
+ static int nr_cpus __read_mostly;
+ 
+ /*
+- * if a smc_task waits over 100ms
++ * if a smc_task waits over 2ms
+  * for one available core, we give up
+- * and choose any core that is available
+- * at this moment of time
++ * and run the smc on the current core
+  */
+-static const s64 tee_task_timeout_us = 100000LL;
++static const s64 tee_task_timeout_us = 2000LL;
+ 
+ struct tee_task {
+ 	struct tee_tz *ptee;
+ 	struct invoke_tee_response *param;
+ 	struct invoke_tee_response *last_param;
+ 
+-	struct work_struct work;
++	struct list_head entry;
++	struct completion done;
++};
++
++struct tee_smc_thread {
++	struct task_struct *task;
++	wait_queue_head_t thread_wq;
+ };
+ 
+ #endif
+@@ -85,19 +88,15 @@ struct tee_task_ctl {
+ 	struct completion smc_comp;
+ 
+ #ifdef TKCORE_BL
+-	/*
+-	 * records information for the big cpus that are locked
+-	 * in the online state due to running smc commands
+-	 */
+-	int *tasks;
++	/* bit n is set while tkcore_smc_task.n is busy */
++	uint32_t cpu_mask;
++	struct list_head tasks;
+ 	spinlock_t task_lock;
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
+-	struct notifier_block cpu_notifier;
+-#else
+ 	enum cpuhp_state tkcore_cpuhp_state;
+-#endif
+-	struct workqueue_struct *wq;
++
++	struct tee_smc_thread *threads;
++	int nr_threads;
+ #endif
+ 
+ 	/* statistics information */
+@@ -145,10 +144,10 @@ static void backup_call(struct invoke_tee_response *call,
+ 	last_call->a1 = call->a1;
+ }
+ 
+-static void do_smc(struct tee_tz *ptee, struct tee_task_ctl *ctl,
+-				struct invoke_tee_response *call,
++static void do_smc(struct tee_tz *ptee, struct invoke_tee_response *call,
+ 				struct invoke_tee_response *last_call)
+ {
++	struct tee_task_ctl *ctl = &tee_task_ctl;
+ 	int r;
+ 	unsigned long a0 = rpc_ret_by_cmd_id(call->a0);
+ 	s64 task_start, task_end, call_start, call_end;
+@@ -163,7 +162,7 @@ static void do_smc(struct tee_tz *ptee, struct tee_task_ctl *ctl,
+ 
+ 		call_start = ktime_to_us(ktime_get());
+ 		r = ptee->invoke_tee(ptee, call->a0,
+-			call->a1, call->a2, call->a3, call->a4, call);
++			call->a1, call->a2, call->a3, call);
+ 		call_end = ktime_to_us(ktime_get());
+ 
+ 		if (r != 0) {
+@@ -196,120 +195,125 @@ static void do_smc(struct tee_tz *ptee, struct tee_task_ctl *ctl,
+ /* callers shall hold cpu->task_lock */
+ static inline void lock_cpu(struct tee_task_ctl *ctl, int cpu)
+ {
+-	++ctl->tasks[cpu];
++	ctl->cpu_mask |= (1U << cpu);
+ 	smp_mb();
+ }
+ 
+ /* callers shall hold cpu->task_lock */
+ static inline void unlock_cpu(struct tee_task_ctl *ctl, int cpu)
+ {
+-	--ctl->tasks[cpu];
+-	WARN_ON(ctl->tasks[cpu] < 0);
+ 	smp_mb();
++	ctl->cpu_mask &= ~(1U << cpu);
+ }
+ 
+-/*
+- * can only be called in cpu hp callback or w/ ctl->task_lock
+- *
+- * It's OK to call cpu_locked from cpuhp callback w/o
+- * ctl->task_lock, because we already grab cpus_read_lock()
+- * before lock_cpu()
+- */
+ static inline bool cpu_locked(struct tee_task_ctl *ctl, int cpu)
+ {
+-	bool locked = !!ctl->tasks[cpu];
+-	smp_mb();
+-	return locked;
++	return !!(ctl->cpu_mask & (1U << cpu));
+ }
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
+-static int
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 11, 0)
+-__cpuinit
+-#endif
+-tee_cpu_callback(struct notifier_block *self,
+-		unsigned long action, void *hcpu)
++static int tee_cpu_online(unsigned int cpu)
+ {
+-	int cpu = (int) ((unsigned long) hcpu);
++	return 0;
++}
++
++static void rebind_smc_thread(struct tee_task_ctl *ctl, int cpu)
++{
++	kthread_bind(ctl->threads[cpu].task, cpu);
++}
+ 
++static int tee_cpu_prepare_down(unsigned int cpu)
++{
+ 	struct tee_task_ctl *ctl = &tee_task_ctl;
+ 
+ 	if (unlikely(cpu >= nr_cpus)) {
+ 		pr_err("Bad cpu: %d\n", cpu);
+-		return NOTIFY_BAD;
++		return -1;
+ 	}
+ 
+-	switch (action) {
+-		case CPU_DOWN_PREPARE:
+-		/* fall-through */
+-		case CPU_DOWN_PREPARE_FROZEN:
+-			return cpu_locked(ctl, cpu) ? NOTIFY_BAD : NOTIFY_OK;
+-		default:
+-			break;
+-	}
++	if (cpu_locked(ctl, cpu))
++		return -1;
++
++	rebind_smc_thread(ctl, cpu);
+ 
+-	return NOTIFY_OK;
++	return 0;
+ }
+-#else
+-static int tee_cpu_prepare_down(unsigned int cpu)
++
++static int tkcore_smc_task(void *data)
+ {
++	int cpu = (int) (unsigned long) data;
+ 	struct tee_task_ctl *ctl = &tee_task_ctl;
+ 
+-	if (unlikely(cpu >= nr_cpus)) {
+-		pr_err("Bad cpu: %d\n", cpu);
+-		return -1;
++	if (cpu < 0 || cpu >= nr_cpus) {
++		pr_err("bad cpu: %d\n", cpu);
++		return 0;
+ 	}
+ 
+-	return cpu_locked(ctl, cpu) ? -1 : 0;
+-}
+-#endif
++	while (!kthread_should_stop()) {
++		struct tee_task *task = NULL;
+ 
+-extern void handle_rpc(struct tee_tz *ptee, struct invoke_tee_response *resp);
++		spin_lock(&ctl->task_lock);
++		for (;;) {
++			DEFINE_WAIT(wait);
+ 
+-static void do_run_tee_task(struct work_struct *w)
+-{
+-	struct tee_task *task = container_of(w, struct tee_task, work);
+-	u32 rpc_ret_fid = rpc_ret_by_cmd_id(task->param->a0);
++			prepare_to_wait(&ctl->threads[cpu].thread_wq,
++				&wait, TASK_INTERRUPTIBLE);
+ 
+-	for (;;) {
+-		do_smc(task->ptee, &tee_task_ctl,
+-			task->param, task->last_param);
+-		if (!TEESMC_RETURN_IS_RPC(task->param->a0) ||
+-				(task->param->a0 == TEESMC_RETURN_ETHREAD_LIMIT) ||
+-				(task->param->a0 == TEESMC_RETURN_TKCORE_RPC_BIND_CPU) ||
+-				(task->param->a0 == TEESMC_RETURN_EAFFINITY)) {
+-			break;
++			if (!list_empty(&ctl->tasks)) {
++				task = list_first_entry(&ctl->tasks,
++					struct tee_task, entry);
++				list_del(&task->entry);
++			}
++
++			if (task) {
++				finish_wait(&ctl->threads[cpu].thread_wq, &wait);
++				break;
++			}
++
++			unlock_cpu(ctl, cpu);
++			spin_unlock(&ctl->task_lock);
++
++			schedule();
++
++			spin_lock(&ctl->task_lock);
++			finish_wait(&ctl->threads[cpu].thread_wq, &wait);
+ 		}
++		spin_unlock(&ctl->task_lock);
+ 
+-		handle_rpc(task->ptee, task->param);
+-		task->param->a0 = rpc_ret_fid;
++		do_smc(task->ptee, task->param, task->last_param);
++		complete(&task->done);
+ 	}
++
++	return 0;
+ }
+ 
+ static int find_matched_cpu(struct tee_task_ctl *ctl,
+-				const struct tee_task_cpu_affinity *aff)
++				const struct tee_task_cpu_affinity *aff, int *need_wakeup)
+ {
+ 	int cpu;
+ 
+ 	for_each_online_cpu(cpu) {
+-		if (aff->ops->match_cpu(aff->priv, cpu))
++		if (aff->ops->match_cpu(aff->priv, cpu)) {
++			*need_wakeup = 1;
+ 			return cpu;
++		}
+ 	}
+ 
+ 	return -1;
+ }
+ 
+-static void init_tee_task(struct tee_task *task,
+-				struct tee_tz *ptee,
+-				struct invoke_tee_response *param,
+-				struct invoke_tee_response *last_param)
++static int find_running_cpu(struct tee_task_ctl *ctl)
+ {
+-	// initialize call to tee
+-	task->ptee = ptee;
+-	task->param = param;
+-	task->last_param = last_param;
++	int cpu;
++
++	if (ctl->cpu_mask == 0)
++		return -1;
+ 
+-	INIT_WORK(&task->work, do_run_tee_task);
++	for (cpu = 0; cpu < nr_cpus; cpu++) {
++		if (cpu_locked(ctl, cpu))
++			return cpu;
++	}
++
++	return -1;
+ }
+ 
+ static int post_tee_task(struct tee_tz *ptee,
+@@ -318,72 +322,64 @@ static int post_tee_task(struct tee_tz *ptee,
+ 			struct invoke_tee_response *call,
+ 			struct invoke_tee_response *last_call)
+ {
+-	int r = 0, picked_cpu = -1;
++	int picked_cpu = -1;
++	int need_wakeup = 0;
+ 
+ 	s64 tee_task_start, tee_task_current;
+ 
+ 	struct tee_task task;
+-	init_tee_task(&task, ptee, call, last_call);
++
++	task.ptee = ptee;
++	task.param = call;
++	task.last_param = last_call;
++
++	init_completion(&task.done);
++	INIT_LIST_HEAD(&task.entry);
+ 
+ 	tee_task_start = ktime_to_us(ktime_get());
+ 
+ 	while (picked_cpu < 0) {
+-		int candidate_cpu;
++		int r, candidate_cpu;
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0)
+-		get_online_cpus();
+-#else
+ 		cpus_read_lock();
+-#endif
+-		picked_cpu = find_matched_cpu(ctl, aff);
+-
+ 		spin_lock(&ctl->task_lock);
+-		if (picked_cpu >= 0)
+-			lock_cpu(ctl, picked_cpu);
+-		spin_unlock(&ctl->task_lock);
+-
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0)
+-		put_online_cpus();
+-#else
+-		cpus_read_unlock();
+-#endif
+ 
++		picked_cpu = find_running_cpu(ctl);
+ 		if (picked_cpu >= 0) {
+-			if (WARN_ON(!queue_work_on(picked_cpu, ctl->wq, &task.work))) {
+-				r = -1;
+-				goto out;
+-			}
+-			r = 0;
++			need_wakeup = 0;
+ 		} else {
++			picked_cpu = find_matched_cpu(ctl, aff, &need_wakeup);
++			if (picked_cpu >= 0)
++				lock_cpu(ctl, picked_cpu);
++		}
++
++		cpus_read_unlock();
++
++		if (picked_cpu >= 0)
++			list_add_tail(&task.entry, &ctl->tasks);
++
++		spin_unlock(&ctl->task_lock);
++
++		if (picked_cpu < 0) {
+ 			tee_task_current = ktime_to_us(ktime_get());
+-			if (tee_task_current - tee_task_start >= tee_task_timeout_us) {
+-				pr_warn("submit tee task to target cpu timeout\n");
+-				break;
+-			}
++			if (tee_task_current - tee_task_start >= tee_task_timeout_us)
++				return -1;
+ 
+ 			candidate_cpu = aff->ops->get_candidate_cpu(aff->priv);
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 7, 0)
+-			r = cpu_up(candidate_cpu);
+-#else
+ 			r = add_cpu(candidate_cpu);
+-#endif
+ 			if (r != 0) {
+-				pr_warn("cpu_on(%d) failed with ret: %d\n",
++				pr_warn("tkcore: cpu_on(%d) failed with ret: %d\n",
+ 					candidate_cpu, r);
+ 			}
+ 		}
+ 	}
+ 
+-	if (picked_cpu < 0)
+-		return -1;
++	if (need_wakeup)
++		wake_up(&ctl->threads[picked_cpu].thread_wq);
+ 
+-	flush_work(&task.work);
++	wait_for_completion(&task.done);
+ 
+-out:
+-	spin_lock(&ctl->task_lock);
+-	unlock_cpu(ctl, picked_cpu);
+-	spin_unlock(&ctl->task_lock);
+-	return r;
++	return 0;
+ }
+ 
+ static bool tee_bind_cpu_request_need_bind_cpu(void *priv)
+@@ -433,14 +429,14 @@ static void submit_tee_task(struct tee_tz *ptee, struct tee_task_ctl *ctl,
+ 			struct invoke_tee_response *call)
+ {
+ 	int r;
+-	struct invoke_tee_response last_call;
++	struct invoke_tee_response last_call = { 0 };
+ 	unsigned long cmd_id = call->a0;
+ 
+ 	for (;;) {
+ 		r = aff->ops->need_bind_cpu(aff->priv) ?
+ 			post_tee_task(ptee, ctl, aff, call, &last_call) : -1;
+ 		if (r < 0)
+-			do_smc(ptee, ctl, call, &last_call);
++			do_smc(ptee, call, &last_call);
+ 
+ 		if (call->a0 == TEESMC_RETURN_TKCORE_RPC_BIND_CPU) {
+ 			update_tee_task_affinity(aff, (uint32_t) call->a1);
+@@ -457,7 +453,7 @@ static void submit_tee_task(struct tee_tz *ptee, struct tee_task_ctl *ctl,
+ 
+ static int platform_bl_init(struct tee_task_ctl *ctl)
+ {
+-	int r;
++	int r, cpu;
+ 
+ 	nr_cpus = num_possible_cpus();
+ 	if (nr_cpus > NR_CPUS) {
+@@ -465,45 +461,61 @@ static int platform_bl_init(struct tee_task_ctl *ctl)
+ 		return -1;
+ 	}
+ 
+-	ctl->tasks = (int *) kzalloc(nr_cpus * sizeof(int), GFP_KERNEL);
+-	if (ctl->tasks == NULL) {
+-		return -ENOMEM;
+-	}
+-
++	ctl->cpu_mask = 0;
++	INIT_LIST_HEAD(&ctl->tasks);
+ 	spin_lock_init(&ctl->task_lock);
+ 
+-	ctl->wq = alloc_workqueue("tee_work", WQ_CPU_INTENSIVE, 0);
+-	if (ctl->wq == NULL) {
+-		pr_err("bad alloc tee_work wq\n");
++	ctl->nr_threads = nr_cpus;
++	ctl->threads = kzalloc(nr_cpus * sizeof(struct tee_smc_thread),
++		GFP_KERNEL);
++	if (ctl->threads == NULL) {
++		pr_err("bad kmalloc %zu bytes for threads\n",
++			nr_cpus * sizeof(struct tee_smc_thread));
+ 		r = -ENOMEM;
+ 		goto err;
+ 	}
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
+-	memset(&ctl->cpu_notifier, 0, sizeof(ctl->cpu_notifier));
++	for_each_possible_cpu(cpu) {
++		struct task_struct *task;
++
++		init_waitqueue_head(&ctl->threads[cpu].thread_wq);
++
++		task = kthread_create(tkcore_smc_task,
++			(void *) (unsigned long) cpu, "tkcore_smc_task.%u", cpu);
++		if (IS_ERR(task)) {
++			pr_err("failed to start tkcore_smc_task.%d: %p\n",
++				cpu, ctl->threads[cpu].task);
++			r = -1;
++			goto err;
++		}
++
++		ctl->threads[cpu].task = task;
++		kthread_bind(task, cpu);
++	}
++
++	for (cpu = 0; cpu < ctl->nr_threads; cpu++)
++		wake_up_process(ctl->threads[cpu].task);
+ 
+-	ctl->cpu_notifier.notifier_call = tee_cpu_callback;
+-	register_cpu_notifier(&ctl->cpu_notifier);
+-#else
+ 	r = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN,
+ 		"tee/tkcore_tzdrv:cpu_listener",
+-		NULL, tee_cpu_prepare_down);
++		tee_cpu_online, tee_cpu_prepare_down);
+ 	if (r < 0)
+ 		goto err;
+ 
+ 	ctl->tkcore_cpuhp_state = r;
+-#endif
++
+ 	return 0;
+ 
+ err:
+-	if (ctl->tasks) {
+-		kfree(ctl->tasks);
+-		ctl->tasks = NULL;
+-	}
++	if (ctl->threads) {
++		for (cpu = 0; cpu < ctl->nr_threads; cpu++) {
++			if (IS_ERR(ctl->threads[cpu].task))
++				break;
++			kthread_stop(ctl->threads[cpu].task);
++		}
+ 
+-	if (ctl->wq) {
+-		destroy_workqueue(ctl->wq);
+-		ctl->wq = NULL;
++		kfree(ctl->threads);
++		ctl->threads = NULL;
+ 	}
+ 
+ 	return r;
+@@ -511,17 +523,15 @@ static int platform_bl_init(struct tee_task_ctl *ctl)
+ 
+ static void platform_bl_deinit(struct tee_task_ctl *ctl)
+ {
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
+-	unregister_cpu_notifier(&ctl->cpu_notifier);
+-#else
++	int cpu;
++
+ 	cpuhp_remove_state(ctl->tkcore_cpuhp_state);
+-#endif
+ 
+-	destroy_workqueue(ctl->wq);
+-	ctl->wq = NULL;
++	for (cpu = 0; cpu < ctl->nr_threads; cpu++)
++		kthread_stop(ctl->threads[cpu].task);
+ 
+-	kfree(ctl->tasks);
+-	ctl->tasks = NULL;
++	kfree(ctl->threads);
++	ctl->threads = NULL;
+ }
+ 
+ #else
+@@ -534,7 +544,7 @@ static inline void submit_tee_task(struct tee_tz *ptee,
+ 	struct invoke_tee_response last_call;
+ 
+ 	(void) aff;
+-	do_smc(ptee, ctl, p, &last_call);
++	do_smc(ptee, p, &last_call);
+ }
+ 
+ static int platform_bl_init(struct tee_task_ctl *ctl) { return 0; }
+diff --git a/drivers/tee/tkcore/armtz/tee_tz_drv.c b/drivers/tee/tkcore/armtz/tee_tz_drv.c
+index a4ff7ab..1a4211b 100644
+--- a/drivers/tee/tkcore/armtz/tee_tz_drv.c
++++ b/drivers/tee/tkcore/armtz/tee_tz_drv.c
+@@ -165,12 +165,6 @@ static void handle_rpc_func_cmd_to_supplicant(struct tee_tz *ptee,
+ 				(void *) (uintptr_t) params[n].u.memref.buf_ptr;
+ 			inv.cmds[n].size = params[n].u.memref.size;
+ 			inv.cmds[n].type = TEE_RPC_BUFFER;
+-
+-			if (params[n].attr & TEESMC_ATTR_ENABLE_NAMED_SHM) {
+-				// flag named_shm for this piece of shared memory
+-				inv.cmds[n].type |= (TEE_RPC_ENABLE_NAMED_SHM |
+-					TEE_RPC_SHM_NAME(TEESMC_ATTR_SHM_NAME_GET(params[n].attr)));
+-			}
+ 			break;
+ 		default:
+ 			arg->ret = TEEC_ERROR_GENERIC;
+@@ -315,9 +309,7 @@ static void handle_rpc_func_cmd(struct tee_tz *ptee, unsigned long parg)
+ {
+ 	struct teesmc_arg *arg;
+ 
+-	// at the most 2 params come with RPC
+-	arg = tee_shm_pool_p2v_range(DEV, ptee->shm_pool,
+-		parg, TEESMC_GET_ARG_SIZE(2));
++	arg = tee_shm_pool_p2v(DEV, ptee->shm_pool, parg);
+ 	if (!arg)
+ 		return;
+ 
+@@ -340,17 +332,12 @@ static void handle_rpc_func_cmd(struct tee_tz *ptee, unsigned long parg)
+ 	}
+ }
+ 
+-static struct tee_shm *handle_rpc_alloc(struct tee_tz *ptee,
+-		size_t size, unsigned long named_shm)
++static struct tee_shm *handle_rpc_alloc(struct tee_tz *ptee, size_t size)
+ {
+ 	struct tee_rpc_alloc rpc_alloc = {
+ 		.size = size,
+-		.named_shm = (uint16_t) named_shm
+ 	};
+ 
+-	if (named_shm >= 1024)
+-		return NULL;
+-
+ 	tee_supp_cmd(ptee->tee, TEE_RPC_ICMD_ALLOCATE,
+ 		&rpc_alloc, sizeof(rpc_alloc));
+ 	return rpc_alloc.shm;
+@@ -366,13 +353,7 @@ static void handle_rpc_free(struct tee_tz *ptee, struct tee_shm *shm)
+ 	tee_supp_cmd(ptee->tee, TEE_RPC_ICMD_FREE, &rpc_free, sizeof(rpc_free));
+ }
+ 
+-static int handle_rpc_notify_tee_log(bool flush)
+-{
+-	tkcore_notify_logger(flush);
+-	return 0;
+-}
+-
+-void handle_rpc(struct tee_tz *ptee, struct invoke_tee_response *resp)
++static void handle_rpc(struct tee_tz *ptee, struct invoke_tee_response *resp)
+ {
+ 	struct tee_shm *shm;
+ 	int cookie;
+@@ -395,7 +376,7 @@ void handle_rpc(struct tee_tz *ptee, struct invoke_tee_response *resp)
+ 		/* Can't support payload shared memory with this interface */
+ 		break;
+ 	case TEESMC_TKCORE_RPC_FUNC_ALLOC_PAYLOAD:
+-		shm = handle_rpc_alloc(ptee, resp->a1, resp->a2);
++		shm = handle_rpc_alloc(ptee, resp->a1);
+ 		if (IS_ERR_OR_NULL(shm)) {
+ 			resp->a1 = 0;
+ 			break;
+@@ -416,9 +397,6 @@ void handle_rpc(struct tee_tz *ptee, struct invoke_tee_response *resp)
+ 	case TEESMC_RPC_FUNC_CMD:
+ 		handle_rpc_func_cmd(ptee, resp->a1);
+ 		break;
+-	case TEESMC_TKCORE_RPC_FLUSH_TEE_LOG:
+-		resp->a1 = handle_rpc_notify_tee_log(resp->a1);
+-		break;
+ 	default:
+ 		pr_warn("Unknown RPC func 0x%lx\n", resp->a0);
+ 		break;
+@@ -511,7 +489,6 @@ static void fastcall_tee(struct tee_tz *ptee, uintptr_t parg,
+ static void *alloc_tee_arg(struct tee_tz *ptee, unsigned long *p, size_t l)
+ {
+ 	void *vaddr;
+-
+ 	WARN_ON(!CAPABLE(ptee->tee));
+ 
+ 	if ((p == NULL) || (l == 0))
+@@ -865,25 +842,8 @@ static int tz_close(struct tee_session *sess)
+ 	return ret;
+ }
+ 
+-static int alloc_sgt(struct tee_shm *shm)
+-{
+-	unsigned long pfn;
+-	struct page *page;
+-
+-	pfn = shm->static_shm.paddr >> PAGE_SHIFT;
+-
+-	page = pfn_to_page(pfn);
+-	if (IS_ERR_OR_NULL(page))
+-		return -EFAULT;
+-
+-	/* Only one piece of contiguous physical memory */
+-	return sg_alloc_table_from_pages(&shm->static_shm.sgt, &page,
+-					1, 0, shm->size_alloc, GFP_KERNEL);
+-}
+-
+ static struct tee_shm *tz_alloc(struct tee *tee, size_t size, uint32_t flags)
+ {
+-	int ret;
+ 	struct tee_shm *shm = NULL;
+ 	struct tee_tz *ptee;
+ 	size_t size_aligned;
+@@ -908,28 +868,23 @@ static struct tee_shm *tz_alloc(struct tee *tee, size_t size, uint32_t flags)
+ 
+ 	shm->static_shm.paddr = tkcore_shm_pool_alloc(tee->dev, ptee->shm_pool,
+ 						shm->size_alloc, ALLOC_ALIGN);
+-	if (WARN_ON(!shm->static_shm.paddr)) {
++	if (!shm->static_shm.paddr) {
++		pr_err("tz_alloc: cannot alloc memory, size 0x%lx\n",
++			(unsigned long) shm->size_alloc);
+ 		devm_kfree(tee->dev, shm);
+ 		return ERR_PTR(-ENOMEM);
+ 	}
+ 
+ 	shm->static_shm.kaddr =
+ 		tee_shm_pool_p2v(tee->dev, ptee->shm_pool, shm->static_shm.paddr);
+-	if (WARN_ON(!shm->static_shm.kaddr)) {
++	if (!shm->static_shm.kaddr) {
++		pr_err("tz_alloc: p2v(%p)=0\n", (void *) shm->static_shm.paddr);
+ 		tkcore_shm_pool_free(tee->dev,
+ 			ptee->shm_pool, shm->static_shm.paddr, NULL);
+ 		devm_kfree(tee->dev, shm);
+ 		return ERR_PTR(-EFAULT);
+ 	}
+ 
+-	ret = alloc_sgt(shm);
+-	if (WARN_ON(ret)) {
+-		tkcore_shm_pool_free(tee->dev,
+-			ptee->shm_pool, shm->static_shm.paddr, NULL);
+-		devm_kfree(tee->dev, shm);
+-		return ERR_PTR(ret);
+-	}
+-
+ 	shm->flags = flags;
+ 	if (ptee->shm_cached)
+ 		shm->flags |= TEE_SHM_CACHED;
+@@ -943,17 +898,16 @@ static void tz_free(struct tee_shm *shm)
+ 	size_t size;
+ 	struct tee *tee;
+ 	struct tee_tz *ptee;
+-
+-	if (WARN_ON(!shm->tee || !shm->tee->priv))
+-		return;
++	WARN_ON(!shm->tee);
++	WARN_ON(!shm->tee->priv);
+ 
+ 	tee = shm->tee;
+ 	ptee = tee->priv;
+ 
+ 	ret = tkcore_shm_pool_free(tee->dev, ptee->shm_pool,
+ 		shm->static_shm.paddr, &size);
++
+ 	if (!ret) {
+-		sg_free_table(&shm->static_shm.sgt);
+ 		devm_kfree(tee->dev, shm);
+ 		shm = NULL;
+ 	}
+@@ -964,8 +918,8 @@ static int tz_shm_inc_ref(struct tee_shm *shm)
+ 	struct tee *tee;
+ 	struct tee_tz *ptee;
+ 
+-	if (WARN_ON(!shm->tee || !shm->tee->priv))
+-		return -EINVAL;
++	WARN_ON(!shm->tee);
++	WARN_ON(!shm->tee->priv);
+ 
+ 	tee = shm->tee;
+ 	ptee = tee->priv;
+@@ -977,7 +931,6 @@ static int tz_shm_inc_ref(struct tee_shm *shm)
+ #define DEFAULT_SHM_LENGTH_SHIFT	22
+ 
+ #ifdef CONFIG_OF
+-
+ #define TZDRV_RESERVED_MEM_COMPAT "trustkernel,shared_mem"
+ 
+ static struct reserved_mem *tee_shared_mem = NULL;
+@@ -1066,46 +1019,34 @@ static unsigned long register_shared_mem(struct tee_tz *ptee,
+ 			unsigned long shm_base_pa, unsigned long length, bool cacheable)
+ {
+ 	int r;
+-	struct invoke_tee_response tee_resp;
+-
+-	unsigned long handle = 0ul;
+-	uint32_t register_flags;
+-
+-	r = ptee->build_mem_share_handle(ptee,
+-		shm_base_pa, length, cacheable, &handle, &register_flags);
+-	if (r != 0)
+-		return r;
++	struct invoke_tee_response tee_resp = { 0 };
+ 
+ 	r = ptee->invoke_tee(ptee, TEE_SMC(TKCORE_FASTCALL_ADD_SHM),
+-		handle, length, register_flags, 0, &tee_resp);
+-	if (r) {
+-		ptee->free_mem_share_handle(ptee, handle);
++		shm_base_pa, length, cacheable, &tee_resp);
++	if (r)
+ 		return r;
+-	}
+ 
+ 	return tee_resp.a0;
+ }
+ 
+ static unsigned long register_log_buffer(struct tee_tz *ptee,
+-			unsigned long log_buf_pa, unsigned long length,
+-			bool cacheable, bool use_ffa_mem_api)
++			void *log_buf_va, unsigned long length, bool cacheable)
+ {
+ 	int r;
+ 	unsigned long handle = 0ul;
+-	uint32_t register_flags;
++	uint32_t register_flags = 0;
+ 
+-	struct invoke_tee_response tee_resp;
++	struct invoke_tee_response tee_resp = { 0 };
+ 
+-	r = ptee->build_mem_share_handle(ptee, log_buf_pa, length,
++	r = ptee->build_mem_share_handle(ptee, log_buf_va, length,
+ 		cacheable, &handle, &register_flags);
+ 	if (r != 0)
+ 		return r;
+ 
+ 	r = ptee->invoke_tee(ptee, TEE_SMC(TKCORE_FASTCALL_SET_LOG_BUFFER),
+-		handle, length, register_flags, 0, &tee_resp);
++		handle, length, register_flags, &tee_resp);
+ 	if (r) {
+ 		pr_err("setup tee log buffer failed with 0x%x\n", r);
+-		ptee->free_mem_share_handle(ptee, handle);
+ 		return r;
+ 	}
+ 
+@@ -1116,10 +1057,10 @@ static int retrieve_tos_revision(struct tee_tz *ptee,
+ 					uint32_t *maj, uint32_t *mid, uint32_t *min)
+ {
+ 	int r;
+-	struct invoke_tee_response tee_resp;
++	struct invoke_tee_response tee_resp = { 0 };
+ 
+ 	r = ptee->invoke_tee(ptee, TEE_SMC(CALL_GET_OS_REVISION),
+-			0, 0, 0, 0, &tee_resp);
++			0, 0, 0, &tee_resp);
+ 	if (r)
+ 		return r;
+ 
+@@ -1239,8 +1180,8 @@ static int init_log(struct tee_tz *ptee)
+ 		goto err;
+ 	}
+ 
+-	ret = (int) register_log_buffer(ptee, __pa(va),
+-		length, true, false);
++	ret = (int) register_log_buffer(ptee, (void *) va,
++		length, true);
+ 	if (ret)
+ 		goto err;
+ 
+@@ -1325,34 +1266,27 @@ const struct tee_ops tee_tz_fops = {
+ };
+ 
+ static int build_mem_share_handle_smc(struct tee_tz *ptee,
+-		unsigned long mem_share_base_pa, size_t size, bool cacheable,
++		void *mem_share_base_va, size_t size, bool cacheable,
+ 		unsigned long *ptr_handle, uint32_t *ptr_flags)
+ {
+ 	(void) ptee;
+ 	(void) size;
+ 
+-	*ptr_handle = mem_share_base_pa;
++	*ptr_handle = virt_to_phys(mem_share_base_va);
+ 	*ptr_flags = !!cacheable;
+ 
+ 	return 0;
+ }
+ 
+-static void free_mem_share_handle_smc(struct tee_tz *ptee,
+-		unsigned long handle)
+-{
+-	(void) ptee;
+-	(void) handle;
+-}
+-
+ static int invoke_tee_smc(struct tee_tz *ptee, uint32_t fid,
+ 		unsigned long a1, unsigned long a2, unsigned long a3,
+-		unsigned long a4, struct invoke_tee_response *tee_resp)
++		struct invoke_tee_response *tee_resp)
+ {
+ 	struct arm_smccc_res res;
+ 
+ 	(void) ptee;
+ 
+-	arm_smccc_smc(fid, a1, a2, a3, a4, 0, 0, 0, &res);
++	arm_smccc_smc(fid, a1, a2, a3, 0, 0, 0, 0, &res);
+ 
+ 	tee_resp->a0 = res.a0;
+ 	tee_resp->a1 = res.a1;
+@@ -1364,8 +1298,7 @@ static int invoke_tee_smc(struct tee_tz *ptee, uint32_t fid,
+ 
+ static int tz_tee_init(struct tee_tz *ptee, struct tee *tee,
+ 				invoke_tee_fn invoke_tee,
+-				build_mem_share_handle_fn build_shm_handle,
+-				free_mem_share_handle_fn free_shm_handle)
++				build_mem_share_handle_fn build_shm_handle)
+ {
+ 	int ret = 0;
+ 
+@@ -1384,7 +1317,6 @@ static int tz_tee_init(struct tee_tz *ptee, struct tee *tee,
+ 
+ 	ptee->invoke_tee = invoke_tee;
+ 	ptee->build_mem_share_handle = build_shm_handle;
+-	ptee->free_mem_share_handle = free_shm_handle;
+ 
+ 	tee_wait_queue_init(&ptee->wait_queue);
+ 
+@@ -1420,7 +1352,6 @@ static void tz_tee_deinit(struct tee_tz *ptee)
+ static int tee_tz_new(struct device *dev, int dev_id,
+ 		invoke_tee_fn invoke_tee,
+ 		build_mem_share_handle_fn build_shm_handle,
+-		free_mem_share_handle_fn free_shm_handle,
+ 		struct tee **ptr_tee)
+ {
+ 	int ret = 0;
+@@ -1441,7 +1372,7 @@ static int tee_tz_new(struct device *dev, int dev_id,
+ 
+ 	ptee = tee->priv;
+ 	ret = tz_tee_init(ptee, tee, invoke_tee,
+-		build_shm_handle, free_shm_handle);
++		build_shm_handle);
+ 	if (ret)
+ 		goto bail1;
+ 
+@@ -1479,8 +1410,7 @@ static int tkcore_smc_probe(struct platform_device *pdev)
+ 	struct tee *tee;
+ 
+ 	ret = tee_tz_new(dev, pdev->id, invoke_tee_smc,
+-		build_mem_share_handle_smc, free_mem_share_handle_smc,
+-		&tee);
++		build_mem_share_handle_smc, &tee);
+ 	if (ret != 0)
+ 		return ret;
+ 
+@@ -1547,7 +1477,7 @@ static void tkcore_ffa_remove(struct ffa_device *ffa_dev)
+ //#define USE_FFA_MEM_SHARE_API
+ 
+ static int build_mem_share_handle_ffa(struct tee_tz *ptee,
+-		unsigned long mem_share_base_pa, size_t size, bool cacheable,
++		void *mem_share_base_va, size_t size, bool cacheable,
+ 		unsigned long *ptr_handle, uint32_t *ptr_flags)
+ {
+ 	/* we currently do not use memory sharing via FFA abi */
+@@ -1593,34 +1523,14 @@ static int build_mem_share_handle_ffa(struct tee_tz *ptee,
+ 
+ 	return 0;
+ #else
+-	return build_mem_share_handle_smc(ptee, mem_share_base_pa,
++	return build_mem_share_handle_smc(ptee, mem_share_base_va,
+ 		size, cacheable, ptr_handle, ptr_flags);
+ #endif
+ }
+ 
+-static void free_mem_share_handle_ffa(struct tee_tz *ptee,
+-		unsigned long handle)
+-{
+-#if defined(USE_FFA_MEM_SHARE_API)
+-	int r;
+-
+-	struct ffa_device *ffa_dev = to_ffa_dev(ptee->tee->dev);
+-	const struct ffa_mem_ops *mem_ops = ffa_dev->ops->mem_ops;
+-
+-	r = mem_ops->memory_reclaim(handle, 0);
+-	if (r != 0) {
+-		pr_err("reclaim memory failed with %d\n", r);
+-		return;
+-	}
+-
+-#else
+-	free_mem_share_handle_smc(ptee, handle);
+-#endif
+-}
+-
+ static int invoke_tee_ffa(struct tee_tz *ptee, uint32_t fid,
+ 		unsigned long a1, unsigned long a2, unsigned long a3,
+-		unsigned long a4, struct invoke_tee_response *tee_resp)
++		struct invoke_tee_response *tee_resp)
+ {
+ 	int rc;
+ 	struct ffa_device *ffa_dev = to_ffa_dev(ptee->tee->dev);
+@@ -1631,7 +1541,6 @@ static int invoke_tee_ffa(struct tee_tz *ptee, uint32_t fid,
+ 		.data1 = a1,
+ 		.data2 = a2,
+ 		.data3 = a3,
+-		.data4 = a4,
+ 	};
+ 
+ 	msg_ops = ffa_dev->ops->msg_ops;
+@@ -1648,8 +1557,6 @@ static int invoke_tee_ffa(struct tee_tz *ptee, uint32_t fid,
+ 	return 0;
+ }
+ 
+-static struct ffa_device *tkcore_ffa_dev = NULL;
+-
+ static int tkcore_ffa_probe(struct ffa_device *ffa_dev)
+ {
+ 	int rc;
+@@ -1660,13 +1567,11 @@ static int tkcore_ffa_probe(struct ffa_device *ffa_dev)
+ #endif
+ 
+ 	rc = tee_tz_new(&ffa_dev->dev, ffa_dev->id, invoke_tee_ffa,
+-		build_mem_share_handle_ffa, free_mem_share_handle_ffa,
+-		&tee);
++		build_mem_share_handle_ffa, &tee);
+ 	if (rc != 0)
+ 		return rc;
+ 
+ 	ffa_dev_set_drvdata(ffa_dev, tee);
+-	tkcore_ffa_dev = ffa_dev;
+ 
+ 	pr_info("ffa: initialized driver\n");
+ 	return 0;
+@@ -1700,12 +1605,6 @@ static void tkcore_ffa_abi_unregister(void)
+ 		ffa_unregister(&tkcore_ffa_driver);
+ }
+ 
+-struct ffa_device *get_tee_ffa_dev(void)
+-{
+-	return tkcore_ffa_dev;
+-}
+-EXPORT_SYMBOL(get_tee_ffa_dev);
+-
+ #else
+ static int tkcore_ffa_abi_register(void)
+ {
+diff --git a/drivers/tee/tkcore/armtz/tee_tz_priv.h b/drivers/tee/tkcore/armtz/tee_tz_priv.h
+index 5ed6649..5bb6007 100644
+--- a/drivers/tee/tkcore/armtz/tee_tz_priv.h
++++ b/drivers/tee/tkcore/armtz/tee_tz_priv.h
+@@ -26,22 +26,18 @@ struct invoke_tee_response {
+ 	unsigned long a1;
+ 	unsigned long a2;
+ 	unsigned long a3;
+-	unsigned long a4;
+ };
+ 
+ struct tee_tz;
+ 
+ typedef int (* invoke_tee_fn) (struct tee_tz *ptee, uint32_t fid,
+ 		unsigned long a0, unsigned long a1, unsigned long a2,
+-		unsigned long a3, struct invoke_tee_response *resp);
++		struct invoke_tee_response *resp);
+ 
+ typedef int (* build_mem_share_handle_fn) (struct tee_tz *ptee,
+-		unsigned long base_pa, size_t size, bool cacheable,
++		void *base_va, size_t size, bool cacheable,
+ 		unsigned long *ptr_handle, uint32_t *ptr_flags);
+ 
+-typedef void (* free_mem_share_handle_fn) (struct tee_tz *ptee,
+-		unsigned long handle);
+-
+ struct tee;
+ struct shm_pool;
+ 
+@@ -59,7 +55,6 @@ struct tee_tz {
+ 
+ 	invoke_tee_fn invoke_tee;
+ 	build_mem_share_handle_fn build_mem_share_handle;
+-	free_mem_share_handle_fn free_mem_share_handle;
+ 
+ 	struct tee_wait_queue_private wait_queue;
+ 
+diff --git a/drivers/tee/tkcore/core/tee_supp_com.h b/drivers/tee/tkcore/core/tee_supp_com.h
+index 6d17d8c..93ee923 100644
+--- a/drivers/tee/tkcore/core/tee_supp_com.h
++++ b/drivers/tee/tkcore/core/tee_supp_com.h
+@@ -70,8 +70,6 @@ struct tee_rpc_bf {
+ 
+ struct tee_rpc_alloc {
+ 	uint32_t size; /* size of block */
+-	uint16_t named_shm;
+-
+ 	void *data; /* pointer to data */
+ 	void *shm; /* pointer to an opaque data, being shm structure */
+ };
+-- 
+2.56.0
+
