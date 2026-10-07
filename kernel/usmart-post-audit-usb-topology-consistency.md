@@ -1,5 +1,12 @@
 # uSmart post-audit USB-topology documentation consistency
 
+> **Historical audit, superseded in part on 2026-10-07.** Its single-USB-fabric and
+> SC851x-negative conclusions remain valid. Its diagrams/invariants that place MT6375
+> `usb-otg-vbus` directly in the uSmart power chain are retracted: exact source shows the
+> GPIO28 worker controls only GPIO152 and never invokes the regulator/GPIO37 Type-C VBUS
+> path. Its thermal wording is also superseded by `kernel/usmart/thermal-interaction.md`.
+> Current authority: `kernel/usmart/README.md` and `kernel/usmart/power-path.md`.
+
 ## 1. Scope
 
 Documentation-only synchronization removing stale current-state wording that

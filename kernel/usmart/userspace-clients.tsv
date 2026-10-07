@@ -1,0 +1,12 @@
+artifact	package_or_component	installed_state	interface	operation	purpose	verdict
+YftSystemUI.apk	com.android.systemui SystemUIService	priv-app	/sys/devices/platform/extcon-usb/uvc_insert_status	read after USB attach/detach broadcast (resource gate config_endoscope_uninstall_prompt_support=true)	if status=1 and any USB device exists, suppress in FactoryMode; otherwise prompt only when com.endoscope.otgcamera is missing	GENUINE uSmart observer; does not power/route/launch
+FactoryMode.apk	com.yft.factorymode.EndoscopeCustomTest	system app	uvc_insert_status + UsbManager device list	read after attach; display first VID/PID; clear UI after detach	factory pass gate requires physical status 1 plus any enumerated device	GENUINE reader/test
+FactoryMode.apk	com.yft.factorymode.EndoscopeTest	system app	explicit activity com.endoscope.otgcamera/.initframe.ListenPopupActivity	launch	manual endoscope test UI	GENUINE launcher; no GPIO/sysfs control
+uSmartCamera.apk	com.endoscope.otgcamera	download resource under system/media, not preinstalled app	UsbManager broadcasts/fd; usbfs via libusb/libuvc; vendor control/bulk paths	open/claim/stream/control	uSmart endoscope/microscope preview, photo/video and vendor-device support	GENUINE accessory app; does not read uvc_insert_status
+init.yft.rc	init	boot config	uvc_insert_status	chmod 0777	legacy accessibility	CONFIGURATION, not runtime client
+vendor_file_contexts	SELinux policy	boot policy	uvc_insert_status	label yft_fmt_device	allow intended readers	CONFIGURATION
+YftSuperScreen.apk	com.yft.superscreen	system app	none	none	screenshot/screen-record UI	FALSE ATTRIBUTION: tiny2c strings only in bundled com.android.server.am stub
+M170infisens.apk	com.energy.tc2c	system app	tiny2c_* only	write thermal power/role	internal Tiny2-C thermal camera	NOT uSmart
+M170infDlp.apk	com.energy.tc2c.sop	system app	tiny2c_* only	write thermal power/role	internal Tiny2-C upgrade/test	NOT uSmart
+services.jar	ActivityManagerService	system framework	tiny2c_* only	write 0 on selected thermal app death	thermal cleanup	NOT uSmart
+native daemon	(none found)	-	uvc_insert_status/GPIO28/55/152	-	-	NO STOCK CLIENT
