@@ -40,6 +40,7 @@ Across all 13 modules: 947/947 import CRCs, 975/975 KCFI type IDs, 18 635/18 635
 | Type-C role path, TCPC boundary | [`typec/`](typec/) |
 | host path | [`host/topology.md`](host/topology.md) |
 | gadget / configfs / functions | [`gadget/`](gadget/) |
+| external USB-C integration closure | [`external/`](external/) |
 | init/property flow, USB HAL | [`userspace/`](userspace/) |
 | accessories / alt modes | [`binary-analysis/accessory-altmode.md`](binary-analysis/accessory-altmode.md) |
 | board deltas | [`yft-usb-deltas.md`](yft-usb-deltas.md) |

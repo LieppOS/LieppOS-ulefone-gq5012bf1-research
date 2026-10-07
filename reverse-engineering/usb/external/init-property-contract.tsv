@@ -1,0 +1,32 @@
+property_or_trigger	owner	stock_value_or_condition	action	classification
+sys.usb.configfs	system init then vendor init	0 on init; 1 on boot	select legacy android_usb vs configfs property triggers	ACTIVE configfs=1
+vendor.usb.controller	vendor init	11201000.usb0	UDC name used by vendor composition triggers	ACTIVE
+sys.usb.controller	vendor init	11201000.usb0	UDC name used by AOSP configfs triggers/HAL	ACTIVE
+vendor.usb.vid	vendor init	0x0E8D	base MediaTek gadget VID; reset on config=none	ACTIVE
+persist.sys.usb.config	framework/data persistence	dynamic, not baked in stock partition	copied to sys.usb.config on boot	ACTIVE
+sys.usb.config	framework/gadget HAL/init	function string	request teardown/composition; `none` unbinds UDC and removes links	ACTIVE
+sys.usb.state	init	set to requested config after UDC action	reports applied composition (init does not branch on write failure)	ACTIVE
+vendor.usb.config	gadget HAL	function string	HAL-side requested state, coordinated with sys.usb.config	ACTIVE
+sys.usb.ffs.ready	adbd/FunctionFS	0/1	gates UDC binding for ADB-containing compositions	ACTIVE
+vendor.usb.ffs.mtp.ready	gadget HAL MTP server	0/1	gates vendor ffs.mtp compositions	ACTIVE
+vendor.usb.ffs.ptp.ready	gadget HAL MTP/PTP server	0/1	gates vendor ffs.ptp compositions	ACTIVE
+sys.usb.config=adb && ffs.ready=1	init	-	PID 201c (acm_cnt=0), link ffs.adb, bind UDC, state=adb	ACTIVE; runtime proven
+sys.usb.config=mtp[,adb]	init	-	PID/function table, link ffs.mtp (+adb), bind after readiness	ACTIVE static
+sys.usb.config=ptp[,adb]	init	-	PID/function table, link ffs.ptp (+adb), bind after readiness	ACTIVE static
+sys.usb.config=rndis[,adb]	init	-	create/link mtk_rndis.gs4 (+adb), bind	ACTIVE static
+sys.usb.config=ncm[,adb]	init	-	create/link ncm.gs6 (+adb), bind	ACTIVE static
+sys.usb.config=accessory/audio_source variants	init	-	set Google VID 18d1/PID 2d00..2d05, link AOA functions (+adb), bind	ACTIVE static
+sys.usb.config=midi[,adb]	init	-	link midi.gs5 (+adb), PID 2046/2048, bind	ACTIVE static
+sys.usb.config=mass_storage/bicr variants	init	-	configure/link mass_storage.usb0 (+adb/ACM), bind	ACTIVE static
+sys.usb.config=via_bypass variants	init	-	link C2K rawbulk functions (+adb/ACM), bind	ACTIVE static factory
+sys.usb.config=charging_yes|charging_no	init	-	no data function; charge-only state	ACTIVE static
+vendor.usb.acm_cnt / acm_enable / acm_port0/1	MTK engineering framework/init	default count 0 / enable 0	adds ACM instances and selects alternate PIDs	ACTIVE engineering
+vendor.usb.pid	vendor init	per gadget-functions.tsv	written to configfs idProduct before bind	ACTIVE
+vendor.usb.device.wakeup	IUsb HAL	0/1	MTU3 device wakeup control	ACTIVE
+vendor.sys.usb.adb.disabled → sys.usb.adb.disabled	init/framework	0/1	ADB policy gate	ACTIVE
+persist.adb.tls_server.enable	adbd/framework	0/1	when 1, config=none does not stop Wi-Fi adbd; wired UDC still unbound	ACTIVE
+ro.debuggable	build	0 (user build)	KPOC/debug and framework ADB policy input	ACTIVE
+ro.vendor.usb.kpoc_adb	vendor build	0	KPOC uses MIDI, not ADB	ACTIVE
+sys.usb.config=kpoc_midi	KPOC init	-	PID 2046, MIDI function, bind UDC	ACTIVE
+sys.usb.typec.mode/data_role/power_role	AOSP legacy init	values dfp/ufp/host/device/source/sink	writes `/sys/class/dual_role_usb/otg_default/*`	DEAD (class absent); AIDL HAL uses Type-C class
+/sys/devices/platform/soc/11211000.usb1/mode chmod	init.yft.rc	-	permissions only	DEAD (no such controller/node)
