@@ -26,3 +26,12 @@ reconstruction (`source-lineage.md`).
 Runtime validation only (not RE blockers): SOC/voltage/current/temperature accuracy vs reference,
 FCC aging, low-SOC behaviour, AFI programming path on a unit whose profile ≠ 0x5A93
 (DO_NOT_RUNTIME_TEST without a recovery plan), actual i2c-9 SCL rate (static: 100 kHz).
+
+## Workspace
+
+Moved `Reverse Engineer - PARTIAL/SH366003-FUEL-GAUGE` → `Reverse Engineer - DONE/` on 2026-10-07
+(index totals 75/55/3 → 76/54/3). Earlier notes kept; the September behaviour-equivalent source
+moved to `source/legacy-behavioural/`; closure files copied with provenance; README,
+EVIDENCE-INDEX, PROVENANCE regenerated; `notes/CLASSIFICATION-CHANGE.md` added.
+manifest-audit: 3876/3876 rows resolve, trees 76/54/3, no drift in this pack (pre-existing drift in
+5 unrelated packs untouched).
