@@ -1,5 +1,7 @@
 # Internal thermal-camera USB path
 
+> **2026-10-07:** integration closed in `reverse-engineering/thermal-camera/internal-usb/` (INTERNAL-THERMAL-USB DONE). That folder supersedes the GPIO 55/152, `tiny2c_mode` and FM78100 statements below; see its `stale-claims.md`. The runtime capture here remains the primary enumeration evidence.
+
 ## Verdict
 
 The ThermoVue module is a normal **USB 2.0 High-Speed UVC 1.10 device** directly attached to root port 1 of `11200000.xhci0`, the host-controller child of `11201000.usb0`.
