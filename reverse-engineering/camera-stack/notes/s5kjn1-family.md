@@ -1,5 +1,12 @@
 # S5KJN1 family — camera 1 (front, `s5kjn1`) and camera 2 (rear, `s5kjn1main2`)
 
+> **Camera 1 slot closed 2026-10-07 (`../s5kjn1/`):** s5kjn1 32/32, s5kjn1cts 28/28 and
+> ov32b40 24/24 byte-identical to the SHIPPED module. Correction to the table
+> below: camera 1 *does* have an EEPROM hook (the 4-cell read from `4-0050`, with
+> the same overflow defect). `s5kjn1cts` also uses custom stream control, and
+> `common_close` writes 0 to reg 0x0000 in both. On this unit `s5kjn1cts` cannot
+> bind and `ov32b40` is never probed.
+>
 > **Camera 2 closed 2026-10-07 (`../s5kjn1main2/`):** the TU is byte-identical to the
 > SHIPPED `imgsensor.ko` (32/32, B1==B2). Correction to the table below: QSC is
 > never applied (`qsc_support` unset, and `set_sensor_cali` is reachable only via

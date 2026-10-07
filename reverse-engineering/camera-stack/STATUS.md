@@ -1,8 +1,8 @@
 # GQ5012BF1 normal camera stack — status matrix (2026-10-02)
 
 Authoritative detail: `README.md` (this directory). Workspace copy: `../../../CAMERA-STACK-STATUS.md`.
-Component folders: `Reverse Engineer - DONE/{CAMERA-IMX989,CAMERA-OV64B,CAMERA-S5KJN1MAIN2,DW9781C-OIS}`,
-`Reverse Engineer - PARTIAL/{CAMERA-HAL-ISP,CAMERA-S5KJN1}`.
+Component folders: `Reverse Engineer - DONE/{CAMERA-IMX989,CAMERA-OV64B,CAMERA-S5KJN1,CAMERA-S5KJN1MAIN2,DW9781C-OIS}`,
+`Reverse Engineer - PARTIAL/{CAMERA-HAL-ISP}`.
 ThermoVue excluded. EEPROM/VCM internals belong to other tracks.
 
 ## Cameras
@@ -10,7 +10,7 @@ ThermoVue excluded. EEPROM/VCM internals belong to other tracks.
 | ID | role | sensor (evidence) | kernel subdrv | bus / 7-bit addr | seninf / PHY | MCLK | rails (WL2864C ch / fixed) | AF | OIS | PDAF | stock modes | kernel source |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 0 | rear main | IMX989 — **PROVEN** (chip-ID 0x0989 bind) | imx989_mipi_raw | i2c-7 / 0x1A | port 3 / C-PHY 3-trio | CAMTG3 19.2 MHz | a3 d2 io7 af5 + GPIO184 | main_vcm 7-0x0a | none in stock path | CAMSV_QPD | 33 | **source, byte-exact** (NothingOSS donor + stock data/ODM edits) |
-| 1 | front | S5KJN1 — PROVEN (0x38E1) | s5kjn1_mipi_raw | i2c-4 / 0x3D | port 2 / D-PHY 4L | CAMTG2 24 MHz | d1(1.2V) a4 io7 + GPIO76 | none | – | none | 5 | **source, byte-exact** (generated from stock) |
+| 1 | front | S5KJN1 — PROVEN (0x38E1) | s5kjn1_mipi_raw | i2c-4 / 0x3D | port 2 / D-PHY 4L | CAMTG2 24 MHz | d1(1.2V) a4 io7 + GPIO76 | none | – | none | 5 | **source, byte-exact vs the SHIPPED module: s5kjn1 32/32, s5kjn1cts 28/28, ov32b40 24/24; B1==B2 — DONE** (`s5kjn1/`) |
 | 2 | rear | S5KJN1 die, driver pseudo-ID 0x38E2 — PROVEN | s5kjn1main2_mipi_raw | i2c-2 / 0x2D | port 1 / D-PHY 4L | CAMTG4 24 MHz | d1 a4 io7 af6 + GPIO76 | main4_vcm 2-000d (wire 0x0C) | – | CAMSV (QSC dead) | 5 | **source, byte-exact vs the SHIPPED module: 32/32 TU symbols; B1==B2 — DONE** (`s5kjn1main2/`) |
 | 3 | rear | OV64B — PROVEN (0x566442) | ov64b_mipi_raw | i2c-4 / 0x10 (+0x22) | port 0 / D-PHY 4L | CAMTG2 24 MHz | a4 af5 d1(1.1V) io7 | main2_vcm 4-0x0b | – | type CAMSV, unused | 5 (max 4624×3472) | **source, byte-exact vs the SHIPPED module: 27/27 TU symbols; B1==B2 — DONE** (`ov64b/`) |
 | – | OIS | DW9781C — DT client bound; physical presence not evidenced (no stock I2C access) | dw9781c.ko | i2c-4 / **0x0A** (DT @0e) | – | – | rst = camera-common-dovdd (fixed, no GPIO); no vdd | – | – | – | – | **EXACT NothingOSS source; stock file identical except build-id — DONE** (`dw9781c-ois/`) |

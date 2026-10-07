@@ -104,3 +104,13 @@ Sensor vendor identity for cam00 (IMX989 vs GN1/S5KGN1 vs "GN1-class clone"): PR
 * Its kernel EEPROM hook is the 4-cell XTC/PDXTC/GGC read from `2-0050`. QSC is
   never applied.
 * Proof: `reverse-engineering/camera-stack/s5kjn1main2/`.
+
+## Correction (2026-10-07, CAMERA-S5KJN1 closure)
+
+* On this unit camera 1 (front) is always `s5kjn1` (0x38E1 at `4-0010`, fixed
+  focus). The DT alternates do not occur here: `s5kjn1cts` needs a CTS board,
+  and `ov32b40` is never probed and is missing from the HAL sensor list.
+* Kernel modes stop at 4080×3072@30 and 8160×6144@10. The JN1 "4K60 / 1080p240"
+  capability is not exposed in stock.
+* Its kernel EEPROM hook is the 4-cell read from `4-0050`.
+* Proof: `reverse-engineering/camera-stack/s5kjn1/`.
