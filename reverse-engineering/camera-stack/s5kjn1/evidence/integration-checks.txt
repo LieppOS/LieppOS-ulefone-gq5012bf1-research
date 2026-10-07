@@ -1,0 +1,25 @@
+PASS  DT sensor1 sensor-names order: s5kjn1, ov32b40, s5kjn1cts        probe order
+PASS  DT sensor1: no reindex-to; dvdd1 avdd4 dovdd7 + avdd1-supply; no afvdd idx = 1, fixed focus
+PASS  search_sensor stops at the first sub-driver whose get_id succeeds later names are never probed once one binds
+PASS  s5kjn1: sensor_id 0x38E1, write-ID 0x7A (7-bit 0x3D)             
+PASS  s5kjn1: binds only if !is_yft_cts_board()                        
+PASS  s5kjn1cts: sensor_id 0x38E0 = die-1, binds only if is_yft_cts_board()==1 
+PASS  ov32b40: 0x563242 via regs 0x300A-C, write-ID 0x6C, common_get_imgsensor_id (no CTS gate) 
+PASS  is_yft_cts_board()==0 on this unit (s5kjn1 + s5kjn1main2 bound, both need !cts) => s5kjn1cts can never bind here
+PASS  live: 4-0010 bound to imgsensor (of:Nsensor1)                    
+PASS  live: 4-0050 bound to camera_eeprom                              
+PASS  HAL: [01] FRONT SENSOR_DRVNAME_S5KJN1_MIPI_RAW (=> s5kjn1 matched first) ov32b40 / s5kjn1cts never probed
+PASS  s5kjn1: output format 35 RAW_4CELL_BAYER_Gr; no PDAF, no eeprom_info 
+PASS  s5kjn1: no reg_addr_stream; SUSPEND/RESUME -> custom 0x0100 + 10 ms 
+PASS  QUIRK: close = common_close -> streaming_control(FALSE) -> wr_u8(reg_addr_stream=0x0000, 0) stream-off on close lands on chip-ID reg, not 0x0100
+PASS  s5kjn1: 4-cell read via sensor adapter (i2c-4) EEPROM 0x50, 4 windows 4-0050
+PASS  DEFECT (shared with s5kjn1main2): fixed 9492 B copy into user-sized buffer 
+PASS  s5kjn1: seamless switch inert (no seamless_switch_group)         
+PASS  s5kjn1/s5kjn1cts: hs/slim carry IMX989 placeholder pclk 4390400000/4352000000 
+PASS  cam_cal layout s5kjn1: sensor 0x38E1, 0xA0, header 0x77006901    
+PASS  s5kjn1cts: output format 2 (plain Bayer), no 4-cell / seamless handlers 
+PASS  ov32b40: common_open + eeprom_info xtalk 0x800@0x150F, mode tables 10-pair placeholders 
+PASS  HAL tuning blobs: s5kjn1, s5kjn1cts, ov32b40 *_tuning.so present 
+PASS  HAL imgsensor.core: sensor-list entries s5kjn1/s5kjn1cts, ov32b40 only as IdxMgr .so ov32b40 = dormant option
+
+ALL PASS
