@@ -1,0 +1,77 @@
+== K: stock dw9781c.ko — paths to i2c_transfer
+  cleanup_module           no   module unload
+  dw9781c_batch            no   hf_manager batch
+  dw9781c_close            no   v4l2-subdev close
+  dw9781c_custom_cmd       YES  hf_manager custom_cmd
+  dw9781c_enable           YES  hf_manager enable(SENSOR_TYPE_OIS1)
+  dw9781c_ois_resume       no   runtime-PM resume
+  dw9781c_ois_suspend      no   runtime-PM suspend
+  dw9781c_open             no   v4l2-subdev open (/dev/v4l-subdevN)
+  dw9781c_ops_core_ioctl   YES  v4l2-subdev ioctl (VIDIOC_MTK_S_OIS_INIT/UNINIT reach I2C)
+  dw9781c_probe            no   i2c_driver.probe_new (DT bind 4-000e)
+  dw9781c_remove           no   i2c_driver.remove
+  dw9781c_sample           YES  hf_manager poll sample (only while enabled)
+  init_module              no   module load
+  ois_init_fx              YES  workqueue queued by dw9781c_enable(en=1)
+  dw9781c_init             YES  internal
+  dw9781c_power_off        no   internal
+  dw9781c_power_on         no   internal
+  dw9781c_release          YES  internal
+  fixmode                  YES  internal
+
+== U5: support_sensors[0].sensor_type = 74 (SENSOR_TYPE_OIS1), name 'ois1'
+
+== U1: libcameracustom.lens.so ois_list_N
+  ois_list_0: 0xffff:Dummy
+  ois_list_1: 0xffff:Dummy
+  ois_list_2: 0xffff:Dummy
+  ois_list_3: 0xffff:Dummy
+  ois_list_4: 0xffff:Dummy
+  ois_list_5: 0xffff:Dummy
+
+== U2: availableOisModes (0x80070004) static metadata per sensor driver
+  SENSOR_DRVNAME_GC02M1_MIPI_RAW           3
+  SENSOR_DRVNAME_IMX350_MIPI_RAW           3
+  SENSOR_DRVNAME_IMX616_MIPI_RAW           3
+  SENSOR_DRVNAME_IMX758_MIPI_RAW           5
+  SENSOR_DRVNAME_IMX758LITE_MIPI_RAW       5
+  SENSOR_DRVNAME_IMX766_MIPI_RAW           3
+  SENSOR_DRVNAME_IMX989_MIPI_RAW           3
+  SENSOR_DRVNAME_IMX989LITE_MIPI_RAW       3
+  SENSOR_DRVNAME_IMX989LITE_MIPI_RAW_multicam 3
+  SENSOR_DRVNAME_OV64B_MIPI_RAW            6
+  SENSOR_DRVNAME_OVA0B40_MIPI_RAW          3
+  SENSOR_DRVNAME_S5KGN1SP_MIPI_RAW         3
+  SENSOR_DRVNAME_S5KHP3SP_MIPI_RAW         3
+
+== U3: availableOisModes -> eSensorType mapping sites
+  libmtkcam_hal_core_featurepolicy.so FeatureSettingPolicy::emplaceStreamData @d592c: mov	w1, wzr | bl	0x158030 <_ZNK5NSCam9IMetadata6IEntry6itemAtIiEET_jNS_9Type2TypeIS3_EE@plt> | sub	w9, w0, #0x4 | mov	w8, #0xd                // =13 | add	w10, w0, #0xa
+  libfeature_eis.so EisHalImp::Init @1276c: ldr	w8, [x0, #0x14] | sub	w9, w8, #0x3 | cmp	w9, #0x4 | b.hs	0x12774 <EisHalImp::Init()+0xba4> | add	w8, w8, #0xa
+  libmtkcam_p1node.so P1NodeImp::check_config @5d834: ldr	w8, [x20, #0x2fc] | sub	w9, w8, #0x3 | cmp	w9, #0x3 | b.hi	0x5d844 <NSCam::v3::pipeline::NSP1Node::P1NodeImp::check_config(NSCam::v3::pipeline::P1Node::ConfigParams const&)+0x1094> | add	w9, w8, #0xa
+
+== U4: SensorProviderService::mapSensorType (eSensorType -> hf SENSOR_TYPE)
+  eSensorType 13 -> 73 (SENSOR_TYPE_OIS)
+  eSensorType 14 -> 75 (SENSOR_TYPE_OIS2)
+  eSensorType 15 -> 74 (SENSOR_TYPE_OIS1)
+  eSensorType 16 -> 75 (SENSOR_TYPE_OIS2)
+
+== U6: literal sensor-type arguments at SensorProvider call sites in /vendor/lib64/mt6878
+  literal-arg histogram: {'0': 23, '1': 25, '10': 4, '2': 4, '3': 4, '4': 4, '5': 4, '6': 3, '7': 3, '8': 4, '9': 4, 'dynamic': 29}
+
+== U7: subdev ioctl numbers handled by dw9781c_ops_core_ioctl, users in /vendor + /odm
+  0xc00456c7 VIDIOC_MTK_S_OIS_INIT -> dw9781c_init (I2C)             users: none
+  0xc00456c8 VIDIOC_MTK_S_OIS_UNINIT -> dw9781c_release (I2C)        users: none
+  0xc00856c2 VIDIOC_MTK_S_OIS_MODE (log only)                        users: none
+  0xc00856c3 VIDIOC_MTK_G_OIS_POS_INFO (memset+copy_to_user, no I2C) users: ['vendor/lib64/mt6878/libcam.hal3a.oisdrv.so', 'vendor/lib64/mt6878/libcam.hal3a.tofdrv.so']
+
+== verdict
+  stock sensors' availableOisModes: {'SENSOR_DRVNAME_IMX989_MIPI_RAW': 3, 'SENSOR_DRVNAME_OV64B_MIPI_RAW': 6, 'SENSOR_DRVNAME_S5KJN1_MIPI_RAW': 'absent->13', 'SENSOR_DRVNAME_S5KJN1MAIN2_MIPI_RAW': 'absent->13'}
+  [OK] probe/runtime-PM/open/close do no I2C: True
+  [OK] I2C reachable only via ioctl/hf enable,sample,custom_cmd/ois_init_fx: True
+  [OK] dw9781c hf type is SENSOR_TYPE_OIS1: True
+  [OK] every ois_list_N is only the Dummy entry: True
+  [OK] OIS1 is reachable only from availableOisModes value(s): [5]
+  [OK] no stock sensor selects an OIS1 mode: True
+  [OK] no literal OIS1 eSensorType at any SensorProvider call site: True
+  [OK] ioctl table is exactly the four known commands: True
+  [OK] no /vendor or /odm binary encodes S_OIS_INIT/UNINIT: True
