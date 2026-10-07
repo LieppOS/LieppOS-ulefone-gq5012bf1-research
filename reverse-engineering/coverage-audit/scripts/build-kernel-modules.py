@@ -75,6 +75,14 @@ CURATED = {
                       "MTK USB composite gadget function provider; MTU3-SSUSB scope covers the gadget-side vendor modules but its inventory does not name mtk-composite.ko"),
     "hbt": ("MTK-MODULE-LOADER", "C", "MediaTek HBT tracer: vendor debug tooling, not part of a ROM port"),
     "met": ("MTK-MODULE-LOADER", "C", "MediaTek MEU micro-tracer: vendor debug tooling, not part of a ROM port"),
+    "mali_kbase_mt6878_r44": ("UNMAPPED", "E",
+                                "active Mali Valhall KMD has no current RE ownership scope; proposed MALI-GPU-KERNEL"),
+    "mali_mgm_mt6878_r44": ("UNMAPPED", "E",
+                              "active Mali memory-group manager belongs to the uncovered Mali KMD scope"),
+    "mali_prot_alloc_mt6878_r44": ("UNMAPPED", "E",
+                                     "active Mali protected allocator belongs to the uncovered Mali KMD scope"),
+    "mali_dmabuf_test_mt6878_r44": ("COVERED-GENERIC", "D",
+                                     "Mali DMA-BUF test helper is shipped in modules.load but is diagnostic support, not a distinct device subsystem"),
 }
 
 # a component's own per-module state column, when it says the module does not

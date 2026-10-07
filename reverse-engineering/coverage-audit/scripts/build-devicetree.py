@@ -28,8 +28,8 @@ Coverage classes (device-tree axis)
   D node shipped but disabled on this board - no port work implied
   E unmapped - genuine coverage gap
 
-Output: coverage-audit/device-tree.tsv (+ summary block appended to
-notes/DEVICE-TREE.md by --summary).
+Output: coverage-audit/device-tree.tsv plus notes/DEVICE-TREE.md, which is
+regenerated from the TSV on every run so its totals cannot drift from the data.
 """
 from __future__ import annotations
 
@@ -39,12 +39,18 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_fdt as libfdt  # noqa: E402
+
 ROOT = "/home/armol/androido_dalykai/LieppOS custom ROM"
 AUDIT = os.path.join(ROOT, "ulefone-gq5012bf1-research/reverse-engineering/"
                             "coverage-audit")
-MERGED_DTS = os.path.join(
-    ROOT, "ulefone-gq5012bf1-research/workspace/phase4-connfem-hardware/"
-          "offline-dt/gq5012bf1-merged.dts")
+OFFLINE_DT = os.path.join(
+    ROOT, "ulefone-gq5012bf1-research/workspace/phase4-connfem-hardware/offline-dt")
+MERGED_DTB = os.path.join(OFFLINE_DT, "gq5012bf1-merged.dtb")
+BASE_DTB = os.path.join(OFFLINE_DT, "vendor_boot/fdt-00-off-03b76040.dtb")
+OVERLAY_DTBO = os.path.join(
+    OFFLINE_DT, "dtbo/entry-00-id-00000000-rev-00000000.dtbo")
 CLAIMS = os.path.join(AUDIT, "audit-evidence/harvested-pack-dt-claims.tsv")
 MODULES = os.path.join(AUDIT, "kernel-modules.tsv")
 OUT = os.path.join(AUDIT, "device-tree.tsv")
@@ -146,57 +152,185 @@ CURATED = {
 }
 
 
-def parse(path: str):
-    """return {node_path: {"c": [compatibles], "st": status}}"""
-    stack: list[str] = []
+# Physical function for the board-specific hardware nodes, keyed by compatible.
+# Anything not listed gets the honest "see <owner> inventory" placeholder instead
+# of an invented function; axis 3 (hardware.tsv) carries the per-device detail.
+FUNCTIONS = [
+    (r"^mediatek,mt6375$", "main PMIC: charger/PE/PD/regulators/TCPC host"),
+    (r"^mediatek,mt6375-(chg|gauge)$", "PMIC charging controller / fuel gauge"),
+    (r"^mediatek,mt6375-tcpc$", "USB Type-C Port Controller (PMIC-embedded)"),
+    (r"^richtek,rt5133$", "reference-board 4-phase buck controller (no hardware binds)"),
+    (r"^richtek,rt6160", "RF transceiver aux/IBAT debug interface"),
+    (r"^mediatek,mt63(19|63|69)", "secondary PMIC (MT6319/MT6363/MT6369) regulator/keys/audio"),
+    (r"^mediatek,mt6685", "core PMIC/clock-buffer/RTC companion"),
+    (r"^(chipone-tddi|hynitron,hyn_ts|tchip,ilitek)$", "display touch controller"),
+    (r"^mediatek,imgsensor$", "camera image sensor (CCI-probed)"),
+    (r"^mediatek,camera_eeprom$", "camera module EEPROM"),
+    (r"^mediatek,(main|main2|main4)_vcm$", "camera voice-coil-motor autofocus driver"),
+    (r"^mediatek,dw9781c$", "camera OIS/VCM driver (DW9781C)"),
+    (r"^sh,sh366003$", "backlight/LED/OLED supplier IC"),
+    (r"^awinic,rgb,aw2013$", "RGB indicator LED driver"),
+    (r"^will,wl2864c_pmu$", "rear/aux display power-and-reset IC"),
+    (r"^sc,sc8571", "co-processor (thermal-camera companion) I2C endpoint"),
+    (r"^mediatek,aw3651[58]", "haptic/LED driver (AW3651x family)"),
+    (r"^mediatek,i2c_lcd_bias$", "display bias (OCP2131) power IC"),
+    (r"^sc,sc8510$", "bidirectional charge pump"),
+    (r"^mediatek,speaker_amp$", "smart speaker amplifier"),
+    (r"^st,st21nfc$", "NFC controller (ST21NFC)"),
+    (r"^mediatek,tiny2c_usb$", "USB2 TinyIPC bridge (FM78100 reader/adapter)"),
+    (r"^mediatek,mt63(69|63)-sound$", "audio codec (MT6369)"),
+]
+
+
+def parse(path: str) -> dict[str, dict]:
+    """return {node_path: {"c": [compatibles], "st": status, "bus", "addr", "name"}}
+
+    Uses the authoritative binary device tree (`lib-fdt`), so bus/address and
+    `status` come from the blob the bootloader actually installs rather than from
+    a re-parse of dtc text.
+    """
     nodes: dict[str, dict] = {}
-    buf: str | None = None
-    for raw in open(path, encoding="utf-8", errors="replace"):
-        s = raw.strip()
-        if not s or s.startswith(("//", "/*", "*", "#")):
+    for n in libfdt.walk(path):
+        if "compatible" not in n["props"]:
             continue
-        m = NODE.match(s)
-        if m and not s.startswith("}"):
-            stack.append(m.group(1))
-            nodes.setdefault("/".join(stack), {"c": [], "st": ""})
-            buf = None
+        par_name = n["path"].rsplit("/", 2)[-2]
+        m = re.match(r"^([A-Za-z0-9_\-]+)(@.*)?$", par_name)
+        bus = m.group(1).lower() if m else ""
+        nodes[n["path"]] = {
+            "c": n["props"]["compatible"],
+            "st": (n["props"].get("status") or [""])[0],
+            "bus": bus if re.match(r"^(i2c|spi|spmi|smbi2c|uart|usb|gpio)", bus) else "",
+            "addr": libfdt.unit_addr(n["name"]) or (n["props"].get("reg") or [""])[0],
+            "name": n["name"],
+        }
+    return nodes
+
+
+# Device-tree state overrides that the blob alone cannot express.
+NODE_STATE = {
+    "richtek,rt5133": "PRESENT-NOT-BOUND",
+}
+
+
+MARK = "<!-- hand-written analysis below this line is preserved on regeneration -->"
+
+
+def summarise(rows: list[dict]) -> None:
+    """Regenerate notes/DEVICE-TREE.md from the rows just written."""
+    n = lambda k, pred=lambda r: True: sum(int(r[k]) for r in rows if pred(r))  # noqa: E731
+    C = collections.Counter(r["coverage"] for r in rows)
+    out = ["# Axis 2 - device-tree coverage (authoritative)", "",
+           "Generated by `scripts/build-devicetree.py` from the binary device trees "
+           "via `scripts/lib_fdt.py`, with per-compatible claims harvested by "
+           "`scripts/harvest-pack-dt-claims.py`. The per-row detail is in "
+           f"[`../device-tree.tsv`](../device-tree.tsv) ({len(rows)} rows).", "",
+           "Reproduce: `python3 reverse-engineering/coverage-audit/scripts/"
+           "harvest-pack-dt-claims.py && python3 reverse-engineering/coverage-audit/"
+           "scripts/build-devicetree.py`", "",
+           "## Universe", "",
+           "| source | nodes | carrying `compatible` | distinct compatibles |",
+           "|---|---:|---:|---:|",
+       ]
+    for label, path in (("`gq5012bf1-merged.dtb` (live, installed tree)", MERGED_DTB),
+                       ("`fdt-00-off-03b76040.dtb` (base FDT from `vendor_boot`)", BASE_DTB),
+                       ("`entry-00-id-00000000-rev-00000000.dtbo` (the single DTBO table entry)",
+                        OVERLAY_DTBO)):
+        ns = libfdt.walk(path)
+        out.append(f"| {label} | {len(ns)} | {sum(1 for x in ns if 'compatible' in x['props'])}"
+                   f" | {len({c for x in ns for c in x['props'].get('compatible', [])})} |")
+    out += [f"| workspace claim sources | - | - | "
+            f"{sum(1 for r in rows if int(r['claim_count']) > 0)} quoted |", "",
+            "Provenance of the merge is `extraction-manifest.txt` beside the blobs: one "
+            "valid FDT at `vendor_boot` offset `0x3b76040` (342 331 B) plus a DTBO table "
+            "with `entry_count=1`. The bulk dump `docs/dt-module-matching.md` (526 "
+            "compatibles) is deliberately not a claim source: a device-tree dump cannot "
+            "own the tree it dumps.", "",
+            "## Coverage classes", "",
+            "| class | meaning | compatibles | node instances |",
+            "|---|---|---:|---:|"]
+    for k, label in (("A", "dedicated component documents it"),
+                    ("B", "covered by a broader documented subsystem scope"),
+                    ("C", "generic platform-internals - no device-specific RE needed"),
+                    ("D", "node present but disabled on this board"),
+                    ("E", "unmapped - genuine coverage gap")):
+        out.append(f"| {k} | {label} | {C[k]} | {n('nodes', lambda r, k=k: r['coverage'] == k)} |")
+    out += [f"| **total** |  | **{sum(C.values())}** | **{n('nodes')}** |", "",
+            "## Node state and provenance", "",
+            "| node_state | compatibles |", "|---|---:|"]
+    for k, v in collections.Counter(r["node_state"] for r in rows).most_common():
+        out.append(f"| `{k}` | {v} |")
+    out += ["", "| dt_source | compatibles | meaning |", "|---|---:|---|"]
+    mean = {"base": "declared by the base FDT installed by `vendor_boot`",
+            "overlay": "added by the board DTBO overlay only",
+            "base+overlay": "declared in both (the overlay refines the base node)",
+            "merged-only": "visible only after the merge - needs review"}
+    for k, v in collections.Counter(r["dt_source"] for r in rows).most_common():
+        out.append(f"| `{k}` | {v} | {mean.get(k, '')} |")
+    out += ["", "### Bus-attached hardware (the axis-3 seed)", "",
+            "| bus | compatibles | node instances |", "|---|---:|---:|"]
+    busc = collections.Counter(r["bus"] for r in rows)
+    for k, v in busc.most_common():
+        out.append(f"| `{k}` | {v} | {n('nodes', lambda r, k=k: r['bus'] == k)} |")
+    out += ["", "Overlay-only (board payload) compatibles:", ""]
+    out.append(", ".join(f"`{r['compatible']}`" for r in rows
+                         if r["dt_source"] == "overlay"))
+    out += ["", "## Owners", "",
+            "| owner | compatibles | class split |", "|---|---:|---|"]
+    byc = collections.defaultdict(collections.Counter)
+    for r in rows:
+        byc[r["component"]][r["coverage"]] += 1
+    for comp, cnt in sorted(((c, x) for c, x in byc.items()
+                             if c not in ("COVERED-GENERIC", "UNMAPPED")),
+                            key=lambda kv: -sum(kv[1].values())):
+        if sum(cnt.values()) < 3:
             continue
-        if s.startswith("}"):
-            if stack:
-                stack.pop()
-            buf = None
-            continue
-        key = "/".join(stack) or "/"
-        if buf is not None:
-            nodes[buf]["c"] += re.findall(r'"([^"]+)"', s)
-            if s.rstrip().endswith(";"):
-                buf = None
-            continue
-        if s.startswith("compatible"):
-            node = nodes.setdefault(key, {"c": [], "st": ""})
-            node["c"] += re.findall(r'"([^"]+)"', s)
-            buf = None if s.rstrip().endswith(";") else key
-            continue
-        pm = PROP.match(s.rstrip(";"))
-        if pm and pm.group(1) == "status":
-            mm = re.match(r'^"([^"]*)"', pm.group(2))
-            if mm and key in nodes:
-                nodes[key]["st"] = mm.group(1)
-    return {k: v for k, v in nodes.items() if v["c"]}
+        out.append(f"| `{comp}` | {sum(cnt.values())} | "
+                   f"{','.join(f'{k}{v}' for k, v in sorted(cnt.items()))} |")
+    g = byc["COVERED-GENERIC"]
+    out += [f"| `COVERED-GENERIC` (platform-internals families) | {sum(g.values())} | "
+            f"{','.join(f'{k}{v}' for k, v in sorted(g.items()))} |",
+            f"| `UNMAPPED` (class E) | {sum(byc['UNMAPPED'].values())} | E"
+            f"{sum(byc['UNMAPPED'].values())} |", "",
+            "Every class-C row carries its family justification verbatim in `evidence`, so "
+            "the classification is auditable per row instead of asserted in prose.", "",
+            "## Class D and dead-hardware rows", "",
+            "| compatible | nodes | enabled/disabled | node_state | sample node |",
+            "|---|---:|---|---|---|"]
+    for r in rows:
+        if r["coverage"] == "D" or r["node_state"] in ("DISABLED", "PRESENT-NOT-BOUND",
+                                                      "REFERENCE-BOARD-BAGGAGE", "UNKNOWN"):
+            out.append(f"| `{r['compatible']}` | {r['nodes']} | {r['nodes_enabled']}"
+                       f"/{r['nodes_disabled']} | `{r['node_state']}` | `{r['sample_node']}` |")
+    doc = os.path.join(AUDIT, "notes", "DEVICE-TREE.md")
+    manual = ""
+    if os.path.exists(doc):
+        body = open(doc).read()
+        if MARK in body:
+            manual = "\n" + body.split(MARK, 1)[1].strip() + "\n"
+    open(doc, "w").write("\n".join(out) + "\n" + MARK + manual)
 
 
 def main() -> int:
-    nodes = parse(MERGED_DTS)
+    nodes = parse(MERGED_DTB)
+    in_base = {c for info in parse(BASE_DTB).values() for c in info["c"]}
+    in_overlay = {c for info in parse(OVERLAY_DTBO).values() for c in info["c"]}
     uni: dict[str, dict] = {}
     for path, info in nodes.items():
         for c in info["c"]:
-            r = uni.setdefault(c, {"n": 0, "enabled": 0, "disabled": 0, "sample": path})
+            r = uni.setdefault(c, {"n": 0, "enabled": 0, "disabled": 0, "sample": path,
+                                   "buses": set(), "addrs": set(), "names": set()})
             r["n"] += 1
-            st = info["st"].lower()
-            if st.startswith("disabled"):
+            if info["st"].lower().startswith("disabled"):
                 r["disabled"] += 1
             else:
                 r["enabled"] += 1
+            if info["bus"]:
+                r["buses"].add(info["bus"])
+            if info["addr"]:
+                r["addrs"].add(info["addr"] if info["addr"].startswith("0x")
+                               else f"0x{int(info['addr'], 16):x}" if re.fullmatch(
+                                   r"[0-9a-fA-F]+", info["addr"]) else info["addr"])
+            r["names"].add(info["name"].split("@")[0])
 
     claims: dict[str, list[tuple[str, str]]] = collections.defaultdict(list)
     for r in csv.DictReader(open(CLAIMS), delimiter="\t"):
@@ -205,10 +339,10 @@ def main() -> int:
     modtoks: dict[str, set[str]] = collections.defaultdict(set)
     modrow: dict[str, dict] = {}
     for r in csv.DictReader(open(MODULES), delimiter="\t"):
-        base = r["module"][:-3].lower()
-        modrow[base] = r
-        for t in {x for x in re.split(r"[-_]", base) if len(x) >= 5} | {base.replace("-", "_")}:
-            modtoks[t].add(base)
+        modbase = r["module"][:-3].lower()  # noqa: PLW2901
+        modrow[modbase] = r
+        for t in {x for x in re.split(r"[-_]", modbase) if len(x) >= 5} | {modbase.replace("-", "_")}:
+            modtoks[t].add(modbase)
 
     breadth = collections.Counter()
     for c, cs in claims.items():
@@ -272,6 +406,19 @@ def main() -> int:
             "nodes_enabled": str(info["enabled"]),
             "nodes_disabled": str(info["disabled"]),
             "sample_node": info["sample"],
+            "bus": ",".join(sorted(info["buses"])) or "platform",
+            "bus_address": ",".join(sorted(info["addrs"])[:6]),
+            "node_names": ",".join(sorted(info["names"]))[:90],
+            "dt_source": ("base+overlay" if c in in_base and c in in_overlay else
+                          "overlay" if c in in_overlay else
+                          "base" if c in in_base else "merged-only"),
+            "node_state": NODE_STATE.get(c) or (
+                "DISABLED" if info["disabled"] and not info["enabled"]
+                else "REFERENCE-BOARD-BAGGAGE" if drv and all(
+                    modrow[m]["coverage"] == "D" for m in drv)
+                else "ACTIVE" if info["enabled"] else "UNKNOWN"),
+            "physical_function": next((f for p, f in FUNCTIONS if re.match(p, c)),
+                                      f"see {comp or 'UNMAPPED'} inventory"),
             "driver_candidates": ",".join(drv[:4]),
             "claim_count": str(len(claims.get(c, []))),
             "evidence": ";".join(ev),
@@ -286,6 +433,7 @@ def main() -> int:
           f"coverage={dict(cov)}")
     for k in ("D", "E"):
         print(k, [r["compatible"] for r in rows if r["coverage"] == k][:12])
+    summarise(rows)
     return 0
 
 
