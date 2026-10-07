@@ -16,7 +16,7 @@ snapshots. Nothing was triggered on the device.
 | SC8571 **master** | 2S 2:1 switched-cap direct charger | `/soc/i2c@11d71000/sc8571@66` (**i2c-11**) | **0x66** | GPIO **4**, falling (`<&pio 4 2>`), thread `sc8571-master-irq` | charger_class **`primary_dvchg`**, psy `sc-cp-master` | sc8571_charger (34/34 exact) |
 | SC8571 **slave** | same, parallel | `/soc/i2c@11e01000/sc8571@67` (**i2c-6**) | **0x67** | GPIO **18**, falling, `sc8571-slave-irq` | **`secondary_dvchg`**, psy `sc-cp-slave` | same module |
 | SC8510 | 2S↔1S bidirectional 2:1/1:2 switched-cap converter + load switch | `/soc/i2c@11e01000/sc851x-charger@6f` (i2c-6), `reg=<0x69>` | **0x69** (`@6f` suffix is stale) | GPIO **12**, falling, `sc851x-irq` | none (no charger/psy/regulator) | sc851x_charger (11/11 exact) |
-| SH366003 | 2S pack fuel gauge | `/soc/i2c@11c24000/sh366003@55` (i2c-9, 400 kHz) | 0x55 | none | psy **`3rd-gauge`** | sh366003_fg (PARTIAL) |
+| SH366003 | 2S pack fuel gauge | `/soc/i2c@11c24000/sh366003@55` (i2c-9; child `clock-frequency` 400 kHz is unconsumed, bus default 100 kHz) | 0x55 | none | psy **`3rd-gauge`** | sh366003_fg (DONE, binary-equivalent) |
 
 Bus numbers come from DT `aliases` (`i2c6 = /soc/i2c@11e01000`,
 `i2c9 = /soc/i2c@11c24000`, `i2c11 = /soc/i2c@11d71000`). They agree with the

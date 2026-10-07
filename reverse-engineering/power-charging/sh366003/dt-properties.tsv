@@ -1,0 +1,10 @@
+node	property	stock_value	driver_field	purpose	donor_reference_value	gq5012bf1_delta	confidence
+/soc/i2c@11c24000/sh366003@55	compatible	"sh,sh366003"	of_device_id sh_fg_match_table	OF match (modalias of:N*T*Csh,sh366003)	no public donor DT (SinoWealth template; OnePlus sh366002 uses a bq27541 node + battery_params)	YFT board node	PROVEN (base DTB + modinfo alias)
+/soc/i2c@11c24000/sh366003@55	reg	<0x55>	i2c_client->addr	7-bit address	SBS gauges conventionally 0x55	-	PROVEN (live 9-0055; AFI records use 8-bit 0xAA)
+/soc/i2c@11c24000/sh366003@55	status	"okay"	-	enable	-	-	PROVEN
+/soc/i2c@11c24000/sh366003@55	clock-frequency	<400000>	NOT CONSUMED	none: i2c core does not parse client clock-frequency, sh366003_fg reads no node property, i2c-mt65xx reads clock-frequency from the ADAPTER node only	-	ineffective board value (earlier notes called the bus 400 kHz; corrected)	PROVEN for sh366003_fg (no of_property imports); STRONGLY SUPPORTED for the bus (i2c-mt65xx.c:2160 reads the adapter np)
+/soc/i2c@11c24000 (adapter)	clock-frequency	absent	mtk_i2c.speed_hz	bus speed	-	-> I2C_MAX_STANDARD_MODE_FREQ = 100 kHz default	STRONGLY SUPPORTED (i2c-mt65xx source; stock i2c-mt65xx.ko not separately parity-checked here)
+/soc/i2c@11c24000 (adapter)	alias	i2c9 = "/soc/i2c@11c24000"	adapter nr	bus number 9	-	-	PROVEN
+/soc/i2c@11c24000/sh366003@55	interrupts / *-gpios / *-supply	absent	-	no IRQ, GPIO or regulator; driver polls	-	-	PROVEN (no request_irq/gpiod/regulator imports)
+/soc/i2c@11c24000/sh366003@55	battery profile / design capacity / sense resistor / termination voltage	absent	-	all battery data is inside the gauge (AFI programmed from the module)	OnePlus sh366002: AFI in DT "battery_params"	profile compiled into the module instead of DT	PROVEN
+/chosen (or /chosen@0)	atag,boot	16 bytes; captured 10000000 02080041 00000000 02000000	tag->bootmode (offset 8)	get_sh366003_boot_mode_from_dts: AFI update refused for bootmode 8 or 9 (KPOC)	MTK log_store helper (copied, log text still says log_store)	YFT copy of MTK helper	PROVEN

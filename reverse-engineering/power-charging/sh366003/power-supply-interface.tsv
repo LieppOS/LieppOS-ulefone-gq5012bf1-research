@@ -1,0 +1,21 @@
+property	enum	read_write	source_register_or_state	unit_conversion	userspace_exposure
+POWER_SUPPLY_PROP_STATUS	0	R	adapter_status (primary_chg ONLINE) + batt_soc	online(adapter_status 1 or 2): soc==100 -> FULL else CHARGING; offline -> DISCHARGING. adapter_status is only ever 0 or 2	/sys/class/power_supply/3rd-gauge/status; not the Android battery status (that comes from mt6375 "battery")
+POWER_SUPPLY_PROP_PRESENT	3	R	constant	1	3rd-gauge/present
+POWER_SUPPLY_PROP_VOLTAGE_NOW	12	R	SBS 0x08	raw mV (non-standard; Linux expects uV)	3rd-gauge/voltage_now; mt6375-battery multiplies by 1000 for "battery"
+POWER_SUPPLY_PROP_CURRENT_NOW	17	R	SBS 0x0C	abs((s16)raw) * 1000 -> uA, sign lost	3rd-gauge/current_now; proxied into "battery" by mt6375-battery (yft-power-deltas #14)
+POWER_SUPPLY_PROP_CAPACITY	47	R	SBS 0x2C	raw %	3rd-gauge/capacity; consumed by mt6375-battery, mtk_charger get_uisoc, PE/PD/PE5 SOC windows
+POWER_SUPPLY_PROP_TEMP	52	R	SBS 0x06	raw - 2731 (0.1 degC)	3rd-gauge/temp
+POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN	22	R	SBS 0x12 (FullChargeCapacity)	raw mAh (non-standard; learned FCC, not design)	3rd-gauge/charge_full_design; mt6375-battery republishes as uAh
+POWER_SUPPLY_PROP_TECHNOLOGY	6	R	constant	POWER_SUPPLY_TECHNOLOGY_LION (2)	3rd-gauge/technology
+POWER_SUPPLY_PROP_CYCLE_COUNT	7	R	SBS 0x2A	raw	3rd-gauge/cycle_count; proxied into "battery"
+POWER_SUPPLY_PROP_HEALTH	2	R	constant	1 (GOOD)	3rd-gauge/health
+(any other)	-	-	-	-EINVAL	-
+(descriptor)	-	-	name "3rd-gauge", type BATTERY, 10 properties in order STATUS,PRESENT,VOLTAGE_NOW,CURRENT_NOW,CAPACITY,TEMP,CHARGE_FULL_DESIGN,TECHNOLOGY,CYCLE_COUNT,HEALTH; no set_property/property_is_writeable	supplied_from = {"usb","charger","ac"}; external_power_changed -> queue monitor work immediately	registered with devm_power_supply_register at the end of probe (return value ignored)
+class /sys/class/3rd-gauge/chipid	-	R (0664, store is a no-op returning 0)	probe chipid (CNTL 0x0001)	"%d\n"	sysfs class attr
+class /sys/class/3rd-gauge/force_upgrade	-	R/W (0664)	force_upgrade	store: sscanf %d, queue update work after 20 ms; show "%d" (no newline)	manual AFI trigger; reset to -1 after every update run
+class /sys/class/3rd-gauge/fw_version	-	R (0664, no store)	fuelgauge_fw_version (yft_devinfo data)	"%s\n"	"Vno:0x<date>-<2 ASCII>00(MMDD)\n"
+class /sys/class/3rd-gauge/manufacturing_date	-	R/W (0664)	MAC 0x004D	show "%u\n"; store "YYYYMMDD" (>=8 chars) -> raw register 0x4D write only if current date is 0	sysfs
+class /sys/class/3rd-gauge/manufacturing_year|month|day	-	R (0444)	MAC 0x004D fields	"%u\n", "%02u\n", "%02u\n"	sysfs
+class /sys/class/3rd-gauge/manufacturename	-	R (0444)	MAC 0x004C	7 chars + "\n"	sysfs
+class /sys/class/3rd-gauge/serialnum	-	R (0444)	MAC 0x004E	"%04d\n"	sysfs
+class /sys/class/3rd-gauge/soh	-	R (0444) with side effect	cycle count + display_soh	each read: display_soh -= cycles/40 (cycles<400) or (cycles-400)/60+10; starts at 100	sysfs; stateful, decreases on every read

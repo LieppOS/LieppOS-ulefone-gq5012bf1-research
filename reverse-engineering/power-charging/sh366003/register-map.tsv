@@ -1,0 +1,36 @@
+register	name	read_write	width	mask	meaning	caller	runtime_purpose	confidence
+0x00	Control / ManufacturerAccess (SBS 0x00)	R/W	16 (SMBus word, LE)	-	control-subcommand port and unseal-key port	fg_read_sbs_word (CNTL branch, descriptor bit 26); fg_gauge_unseal; AFI record (write 45 00)	probe identity: write 0x0001, mdelay(10) ONLY if the write failed, read back word; unseal: 0x5678,0x1234,0xCDEF,0x90AB (3 ms each); AFI activation 0x0045	PROVEN (byte-exact rebuild)
+0x00 sub 0x0001	DeviceType (control)	R	16	== 0x0603	chip identity	sh_fg_probe via regs[15]=0x04000001	probe fails with -ENOMEM if value != 0x0603; value exported as /sys/class/3rd-gauge/chipid (decimal)	PROVEN
+0x06	Temperature (SBS)	R	16	signed	pack NTC temperature, 0.1 K	fg_read_ExtTemperature (probe, monitor)	batt_temp = (s16)raw - 2731 (0.1 degC); also read via regs[9] in runstate check (raw-2731 into local, unused)	PROVEN
+0x08	Voltage (SBS)	R	16	-	pack voltage, mV (2S)	fg_read_Voltage (probe, monitor, runstate)	batt_volt = raw mV (exported unchanged as VOLTAGE_NOW, i.e. mV not uV)	PROVEN
+0x0A	BatteryStatus (SBS)	R	16	-	status flags	fg_read_BatteryStatus (monitor)	logged only (BatS:0x%04x)	PROVEN
+0x0C	Current (SBS)	R	16	sign bit 15	pack current, mA, signed	fg_read_Current (probe, monitor, runstate); monitor re-reads raw for the log	batt_curr = |(s16)raw| * 1000 (uA, sign discarded); log prints signed mA	PROVEN
+0x10	RemainingCapacity (SBS)	R	16	-	remaining capacity, mAh	fg_read_rc (monitor)	logged only	PROVEN
+0x12	FullChargeCapacity (SBS)	R	16	-	learned FCC, mAh	fg_read_fcc (monitor, Check_Chip_Version)	CHARGE_FULL_DESIGN = FCC mAh; AFI auto-update when FCC < 3500	PROVEN
+0x28	Internal temperature	R	16	signed	die temperature, 0.1 K	fg_read_IntTemperature (probe, monitor)	result discarded (return value unused)	PROVEN
+0x2A	CycleCount (SBS)	R	16	-	cycle count	fg_read_cycnt (monitor)	CYCLE_COUNT; input of synthetic sysfs soh	PROVEN
+0x2C	RelativeStateOfCharge (SBS)	R	16	-	RSOC %	fg_read_SOC (probe, monitor, runstate)	CAPACITY; STATUS FULL when ==100 and charger online	PROVEN
+0x2E	StateOfHealth (SBS)	R	16	-	SOH %	fg_read_soh (monitor)	logged only (not the sysfs soh)	PROVEN
+0x30	ChargingVoltage (SBS)	R	16	-	requested charge voltage, mV	fg_read_VCHG (monitor)	logged only; not used for charging policy	PROVEN
+0x32	ChargingCurrent (SBS)	R	16	-	requested charge current, mA	fg_read_ICHG (monitor)	logged only; not used for charging policy	PROVEN
+0x3E	AltManufacturerAccess (MAC selector)	R/W	16 write / block read	-	MAC subcommand selector; AFI data-flash address+payload port	fg_read_sbs_word (ALTMAC branch, bit 27); fg_read_block; fg_write_word (seal/reset/enable); AFI records	write subcommand, msleep(3), read response	PROVEN
+0x40	MACData	R	16 or block	-	MAC response data	fg_read_sbs_word; fg_read_block (I2C combined read, len 2..32)	response payload	PROVEN
+0x60	MACDataChecksum / MACDataLength	R/W	16	low byte = checksum, high byte = length	block checksum check; AFI commit port	fg_read_block (read); AFI records (51 embedded writes)	block valid iff length>4 and ~(cmd_lo + sum(data[0..len-5])) == checksum; length<=4 is accepted without check	PROVEN
+0x4D (raw register)	ManufactureDate write (raw, not MAC)	W	2-byte block	-	manufacture date, written MSB first	fg_write_IntManufactureTimedate (sysfs manufacturing_date store)	only if MAC 0x004D reads 0; unseal, up to 5 attempts, seal. Writes buf[0]=date>>8, buf[1]=date&0xff to I2C register 0x4D	PROVEN
+MAC 0x0001	DeviceType (MAC)	R	16	-	device type	fg_get_device_id via regs[0]=0x08000001 (hal_fg_init after update work)	logged only (device_id = 0x%04X)	PROVEN
+MAC 0x0021	Gauging enable (stock log: "gauge disable")	W	16	-	enable impedance-track gauging	fg_gauge_runstate_check	sent when OEMFlag bit 14 clear; msleep(1000)	PROVEN (name inferred)
+MAC 0x0030	Seal	W	16	-	seal device	fg_gauge_seal (end of Check_Chip_Version, file_decode_process, runstate check, date write)	followed by OperationStatus read + log	PROVEN
+MAC 0x0041	Reset	W	16	-	gauge reset	fg_gauge_runstate_check	only when batt_curr<=0 and (volt>4000000&&soc<10 | volt>3850000&&soc<3 | soc==0&&volt-term_volt>200000); with mV/|uA| caches this is unreachable on GQ5012BF1 (see yft-sh366003-deltas.md D7)	PROVEN
+MAC 0x0046	AFI static checksum	R	16	-	installed AFI/profile checksum	Check_Chip_Version; AFI final compare (raw 0x3E read of 4 bytes == 46 00 d3 8c)	target 0x8CD3; logged, not used for the auto-update decision	PROVEN
+MAC 0x004C	ManufacturerName	R	block 32	first 7 bytes	manufacturer name	fg_read_IntManufacturename (probe)	/sys/class/3rd-gauge/manufacturename	PROVEN
+MAC 0x004D	ManufactureDate / profile date (stock calls it fwno)	R	16 (and block 2 for date)	day[4:0] month[8:5] year[15:9]+1980	profile/date word	Check_Chip_Version (fwno); fg_read_IntManufacturedate (block read, 2 bytes)	auto-update if != 0x5A93 (2025-04-19); manufacturing_date/year/month/day sysfs; fw_version string	PROVEN
+MAC 0x004E	SerialNumber	R	16	-	serial number	fg_read_Intserialnum (probe)	/sys/class/3rd-gauge/serialnum (%04d)	PROVEN
+MAC 0x0050..0x0057	SafetyAlert, SafetyStatus, PFAlert, PFStatus, OperationStatus, ChargingStatus, GaugingStatus, ManufacturingStatus	R	16 each	-	status words	sh_fg_get_batt_info (monitor, every 5 s)	logged only; read aborts on first failure	PROVEN
+MAC 0x0054	OperationStatus	R	16	0x0300 (SEC bits)	security state	fg_gauge_unseal; fg_gauge_seal	unseal "ok" iff (val & 0x0300)==0; unseal ALWAYS returns 0 once the key writes succeeded	PROVEN
+MAC 0x0060	Max cell voltages (block)	R	block 32	two LE u16	per-cell maximum voltage	fg_read_maxvoltage (probe)	maxvoltage = v1 + v2 (2S); stored, not exported	PROVEN
+MAC 0x0071	DAStatus1	R	block 32	two LE u16	cell 1 / cell 2 voltage	sh_fg_get_batt_info (monitor)	logged as da_status1=[0x%04X(%d),0x%04X(%d)]	PROVEN
+MAC 0x00C1	OEM flags	R	16	bit 14 (QEN), bit 15 (lifetime)	gauging / lifetime-data enable state	fg_gauge_runstate_check	bit14 clear -> MAC 0x0021; bit15 clear -> MAC 0x0067	PROVEN (bit names from stock log)
+MAC 0x00C5	Run-state block	R	block 32	-	post-update verification	fg_gauge_runstate_check	loop ends on first successful block read (checksummed)	PROVEN
+MAC 0x0067	Lifetime data enable	W	16	-	enable lifetime collection	fg_gauge_runstate_check	when OEMFlag bit 15 clear; msleep(1000)	PROVEN (name from stock log)
+MAC 0x40D9	Manufacturer info ASCII	R	16	2 ASCII bytes	2-char tag	sh_fg_probe	fuelgauge_fw_version "Vno:0x%02x-%s(%02d%02d)\n" (exported to yft_devinfo)	PROVEN
+AFI (I2C 0x55)	SinoFS AFI data-flash program	W	1..32-byte records	-	battery model/profile data flash 0x4000..0x47B8	file_decode_process	104 writes (51 via 0x3E, 51 via 0x60, 0x00 <- 45 00, 0x3E <- 46 00), 104 waits, 1 compare; see battery-profile.md	PROVEN
