@@ -158,6 +158,29 @@ def init_services() -> list[dict]:
     for r in rows:
         for k in SVC_KEYS:
             r.setdefault(k, "")
+        # Freeze executable-presence evidence so classification remains
+        # reproducible without reopening the private stock tree.  Init exec
+        # syntax may start with uid/gid/seclabel options; the first absolute
+        # path is the executable.
+        m = re.search(r"(?:^|\s)(/(?:vendor|odm|system_ext|system|product)/[^\s]+)", r["exec"])
+        if m:
+            runtime_path = m.group(1)
+            logical_path = runtime_path
+            # Dynamic partitions are mounted below /system in Android's merged
+            # namespace, but extracted as top-level partition directories.
+            for mounted, extracted in (("/system/system_ext/", "/system_ext/"),
+                                       ("/system/product/", "/product/"),
+                                       ("/system/vendor/", "/vendor/"),
+                                       ("/odm/", "/vendor/odm/")):
+                if logical_path.startswith(mounted):
+                    logical_path = extracted + logical_path[len(mounted):]
+                    break
+            resolved = os.path.join(P, logical_path.lstrip("/"))
+            r["resolved_exec"] = runtime_path
+            r["exec_present"] = "yes" if os.path.lexists(resolved) else "no"
+        else:
+            r["resolved_exec"] = ""
+            r["exec_present"] = "unknown"
     return rows
 
 

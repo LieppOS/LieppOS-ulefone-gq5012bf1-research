@@ -754,11 +754,12 @@ def main() -> int:
         else:
             key = s["service"]
         d = grouped.setdefault(key, {"exe": set(), "rc": set(), "sec": set(), "iface": set(),
-                                    "user": set(), "flag": set()})
+                                    "user": set(), "flag": set(), "present": set()})
         if seclabel:
             d["sec"].add(seclabel.strip())
         if exe:
             d["exe"].add(exe)
+        d["present"].add(s.get("exec_present", "unknown"))
         d["rc"].add(s["rc"])
         d["iface"].add(s["interface"])
         d["user"].add(s["user"])
@@ -772,12 +773,18 @@ def main() -> int:
         d = grouped[name]
         exes = " ".join(sorted(x for x in d["exe"] if x))
         comp, cov, dom, why = classify_service(name, exes)
-        rows.append([name, exes[:200], " ".join(sorted(d["rc"]))[:400], " ".join(sorted(d["sec"])),
-                     join(d["iface"])[:200], " ".join(sorted(x for x in d["user"] if x))[:120],
+        binary_present = "/".join(sorted(d["present"]))
+        if binary_present == "no" and not name.startswith("[exec]"):
+            cov = "D"
+            why = ("init declaration points to an executable absent from every extracted stock partition; "
+                   "reference-board/stale rc baggage unless runtime evidence proves an alternate mount")
+        rows.append([name, exes[:200], binary_present, " ".join(sorted(d["rc"]))[:400],
+                     " ".join(sorted(d["sec"])), join(d["iface"])[:200],
+                     " ".join(sorted(x for x in d["user"] if x))[:120],
                      " ".join(sorted(f[:40] for f in d["flag"]))[:300], dom, comp, status_of(comp), cov,
                      device_access(comp), why, "raw-init-services.tsv"])
     write_rows("vendor-services.tsv",
-               ["service", "executable", "rc_files", "seclabel", "declared_interface", "user",
+               ["service", "executable", "binary_present", "rc_files", "seclabel", "declared_interface", "user",
                 "flags", "subsystem", "component", "component_status", "coverage", "device_access",
                 "purpose", "evidence"], rows)
 

@@ -20,7 +20,7 @@ No proprietary payload is copied into this repository. Coverage assignment is an
 | Axis | Rows | A | B | C | D | E |
 |---|---:|---:|---:|---:|---:|---:|
 | VINTF families + legacy HAL libraries | 272 | 69 | 126 | 74 | 1 | 2 |
-| Init services + trigger executables | 253 | 10 | 120 | 118 | 3 | 2 |
+| Init services + trigger executables | 253 | 10 | 103 | 114 | 24 | 2 |
 | Firmware/calibration payloads | 80 | 45 | 30 | 4 | 1 | 0 |
 | Secure-world surfaces | 13 | 5 | 1 | 5 | 2 | 0 |
 | Scatter/ABOTA partition families | 61 | 20 | 40 | 1 | 0 | 0 |
@@ -38,6 +38,7 @@ They converge with the three uncovered Mali modules and three uncovered GPU DT c
 
 - Compatibility-matrix-only declarations are framework requirements, not proof that the device provides an implementation. `hals-services.tsv` records manifest counts separately.
 - AOSP/example services are retained as `C` or `D`, rather than being mistaken for phone-specific implementations.
+- Executable presence is frozen in `raw-init-services.tsv`. Twenty-two non-trigger service declarations point to binaries absent from every extracted stock partition and are `D`; this exposes vendor-template/reference-board baggage rather than inventing active implementations.
 - SCP, modem, connectivity, camera tuning, GPU firmware and secure-world images are represented but are not claimed source-reconstructable.
 - Trigger-time init `exec` parsing resolves the first absolute executable path after optional uid/gid/seclabel arguments. This avoids fake artifacts named `-` or `--`.
 - `secure-world.tsv` deliberately separates normal-world transport closure from signed TA/hypervisor source availability.
@@ -46,7 +47,8 @@ They converge with the three uncovered Mali modules and three uncovered GPU DT c
 ## Reference-board / example findings
 
 - `vendor.face-default` is the AOSP face example service with no matching face hardware (`D`).
-- Camera P1 self-test and virtual-camera services remain diagnostic/reference baggage (`D`).
+- Virtual-camera remains diagnostic/reference baggage (`D`) even though its AOSP example executable is present.
+- Five alternative fingerprint service declarations point to missing executables and are reference-board baggage (`D`); the MicroArray legacy backend/TEE path is the represented fitted implementation.
 - The DOOGEE-named Morpho EIS calibration payload is carried-over reference-board tuning data (`D`), not evidence of an additional fitted camera.
 
 ## Rebuild
