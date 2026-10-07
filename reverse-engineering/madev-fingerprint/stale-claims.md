@@ -1,0 +1,9 @@
+# MADEV-FINGERPRINT — stale / wrong claims corrected (2026-10-07)
+
+| # | claim (where) | verdict | correction / evidence |
+|---|---|---|---|
+| 1 | "What the MAdEv/QxpAct fingerprint inputs (`sys1134_irq`, `home_sensor`, `fp_work/ft5xxx_irq`) … prove" (workspace README question) | **WRONG** | None of `sys1134_irq`, `home_sensor`, `ft5xxx_irq`, `QxpAct` occurs anywhere in stock vendor partitions or vendor_boot ramdisks (recursive grep, 2026-10-07). The stack is YFT `fingerprint.ko` + MicroArray `microarray_fp_tee.ko`. |
+| 2 | "All 16/16 sizes, KCFI IDs, and relocatable function bytes are identical" / `STOCK_BEHAVIORAL_RECONSTRUCTION_COMPLETE` (`phase4-fingerprint-reconstruction.md`) | **INCOMPLETE** | Function bodies were equal, but relocations were not: only 6/16 functions had identical relocations, and `.rodata.str1.1`, symtab and strtab differed (1 746 bytes). Causes: 5 format strings with a spurious `\n`, and `__COUNTER__` 21 low. Fixed, so the module is now identical except the build-id. |
+| 3 | "`microarray_fp_tee` and `tkcore` remain separate, unresolved/stock-held modules" (`reconstruction.md`) | **SUPERSEDED** | `microarray_fp_tee` is byte-identical (MICROARRAY-FP-TEE DONE, 2026-10-07). `tkcore.ko` stays in TRUSTKERNEL-TEE, but its FP/SPI export CRCs reproduce from public source. |
+| 4 | "Still required: sensor protocol, templates/TA behavior and complete stock-free stack" (status row) | **RECLASSIFIED** | The Linux-visible sensor protocol (chip-ID sequences, SPI read/write, ioctl ABI) is closed in MICROARRAY-FP-TEE. Templates and TA are secure world, an external boundary. Every Linux module in the stack now has source except `tkcore.ko` (separate component). |
+| 5 | Source provenance `NO_PUBLIC_DONOR_FOUND` | **CONFIRMED** | Still no public YFT glue. The reconstruction is binary-equivalent, and the include set is declared non-unique (see README). |
