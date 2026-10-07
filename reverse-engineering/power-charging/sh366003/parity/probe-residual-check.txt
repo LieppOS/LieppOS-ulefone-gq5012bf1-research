@@ -1,0 +1,15 @@
+instructions 809; differing 11 in window [395,539]
+after x22<->x25 renaming inside the window: 4 differ at [395, 396, 397, 398]
+after swapping the two independent adrp/add pairs: 0 differ
+VERDICT: REGISTER-ALLOCATION PERMUTATION ONLY
+  395: A adrp x23, 0x1000 <fg_gauge_seal+0xdc> ; R_AARCH64_ADR_PREL_PG_HI21	.ro | B adrp x22, 0x1000 <fg_gauge_seal+0xdc> ; R_AARCH64_ADR_PREL_PG_HI21	.ro
+  396: A add x23, x23, #0x0 ; R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x2126 | B add x22, x22, #0x0 ; R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xa29
+  397: A adrp x25, 0x1000 <fg_gauge_seal+0xdc> ; R_AARCH64_ADR_PREL_PG_HI21	.ro | B adrp x23, 0x1000 <fg_gauge_seal+0xdc> ; R_AARCH64_ADR_PREL_PG_HI21	.ro
+  398: A add x25, x25, #0x0 ; R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xa29 | B add x23, x23, #0x0 ; R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x2126
+  412: A mov w22, wzr | B mov w25, wzr
+  428: A mov w22, #-0x1 | B mov w25, #-0x1
+  442: A mov x0, x25 | B mov x0, x22
+  454: A mov w22, #-0x1 | B mov w25, #-0x1
+  535: A mov w22, w27 | B mov w25, w27
+  538: A cbz w22, 0x1ca4 <sh_fg_probe+0x904> | B cbz w25, 0x1ca4 <sh_fg_probe+0x904>
+  539: A cmn w22, #0x1 | B cmn w25, #0x1
