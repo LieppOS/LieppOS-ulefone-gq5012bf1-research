@@ -1,0 +1,25 @@
+PASS  static_ctx.sensor_id = 0x38E2                              14562
+PASS  i2c_addr_table = {0x5A, end} (7-bit 0x2D)                  write-ID 0x5A
+PASS  probe: low byte +1 (pseudo-ID) in both byte orders         0x38E1 die -> 0x38E2
+PASS  probe: binds only when !is_yft_cts_board()                 CTS gate
+PASS  output format 35 = RAW_4CELL_BAYER_Gr (tetra-cell)         kd_imgsensor_define_v4l2.h enum index 35
+PASS  eeprom_info: header 0x77006901, no *_support flag set      qsc_support=0 -> QSC never preloaded or written
+PASS  s_cali (set_sensor_cali) called only from common_open      callers=['common_open']
+PASS  TU ops.open is its own open() (never calls s_cali)         set_sensor_cali unreachable
+PASS  no mode has a seamless_switch_group                        seamless_switch always returns 'not supported'
+PASS  feature list: GET_4CELL_DATA -> read_4cell_from_eeprom     
+PASS  4-cell read: EEPROM 0xA0>>1 on the sensor's own adapter    i2c-2 0x50 = 2-0050
+PASS  4-cell regions end at QSC base 0x300F, inside 0x4000       0x0D4F..0x300F
+PASS  DEFECT: g_4cell_data kmallocs user-chosen info->size       
+PASS  DEFECT: read_4cell memcpys FOUR_CELL_SIZE+2 (9492) unconditionally heap overflow if info->size < 9492
+PASS  DEFECT: EEPROM read results ignored, cache latched         partial read cached until reboot
+PASS  only slot-specific framework hook is idx 4 (night LED)     sensor2 has none
+PASS  DT sensor2: sensor-names s5kjn1main2, no reindex-to        idx = 2
+PASS  DT sensor2 LDO channels dvdd1 avdd4 afvdd6 dovdd7 + avdd1-supply 
+PASS  live: 2-0010 bound to imgsensor (of:Nsensor2)              
+PASS  live: 2-0050 bound to camera_eeprom                        
+PASS  live: 2-000d bound to main4_vcm (DT placeholder; wire 0x0C) 
+PASS  HAL: [02] BACK SENSOR_DRVNAME_S5KJN1MAIN2_MIPI_RAW         chip-ID matched
+PASS  cam_cal layout: sensor 0x38E2, 0xA0, header 0x77006901, 0x4000 
+
+ALL PASS
