@@ -1,0 +1,871 @@
+diff -ruN a/drivers/mfd/mt6375.c b/drivers/mfd/mt6375.c
+--- a/drivers/mfd/mt6375.c	2026-10-07 22:13:23.415935972 +0300
++++ b/drivers/mfd/mt6375.c	2026-10-07 22:13:23.417224569 +0300
+@@ -246,8 +246,10 @@
+ {
+ 	struct mt6375_data *ddata = data;
+ 	u8 evt[MT6375_IRQ_REGS];
++	unsigned long evt_bitmap = 0;
+ 	bool handled = false;
+-	int i, j, ret;
++	int i, j, ret, start, end;
++	size_t evt_count;
+ 
+ 	ret = regmap_bulk_read(ddata->rmap, MT6375_REG_CHG_IRQ0, evt,
+ 			       MT6375_IRQ_REGS);
+@@ -257,10 +259,20 @@
+ 	}
+ 
+ 	/* ignore masked irq and ack */
+-	for (i = 0; i < MT6375_IRQ_REGS; i++)
++	for (i = 0; i < MT6375_IRQ_REGS; i++) {
+ 		evt[i] &= ~ddata->mask_buf[i];
+-	ret = regmap_bulk_write(ddata->rmap, MT6375_REG_CHG_IRQ0, evt,
+-				MT6375_IRQ_REGS);
++		if (evt[i])
++			set_bit(i, &evt_bitmap);
++	}
++	if (!evt_bitmap)
++		return IRQ_NONE;
++	start = ffs(evt_bitmap) - 1;
++	end = fls(evt_bitmap) - 1;
++	evt_count = end - start + 1;
++	if (start + evt_count > MT6375_IRQ_REGS)
++		evt_count = MT6375_IRQ_REGS - start;
++	ret = regmap_bulk_write(ddata->rmap, MT6375_REG_CHG_IRQ0 + start, evt + start,
++				evt_count);
+ 	if (ret < 0)
+ 		dev_err(ddata->dev, "failed to ack irq status\n");
+ 
+diff -ruN a/drivers/power/supply/charger_class.h b/drivers/power/supply/charger_class.h
+--- a/drivers/power/supply/charger_class.h	2026-10-07 22:13:23.444497078 +0300
++++ b/drivers/power/supply/charger_class.h	2026-10-07 22:13:23.446002255 +0300
+@@ -51,6 +51,13 @@
+ 	CHARGER_DEV_NOTIFY_DPDM_OVP,
+ };
+ 
++enum {
++	CP_DEV_REVISION,
++	CP_DEV_OVPGATE,
++	CP_DEV_WPCGATE,
++	CP_DEV_WORKMODE,
++};
++
+ struct charger_device {
+ 	struct charger_properties props;
+ 	struct chgdev_notify noti;
+@@ -163,6 +170,7 @@
+ 
+ 	/* OTG */
+ 	int (*enable_otg)(struct charger_device *dev, bool en);
++	int (*is_otg_enabled)(struct charger_device *dev, bool *en);
+ 	int (*enable_discharge)(struct charger_device *dev, bool en);
+ 	int (*set_boost_current_limit)(struct charger_device *dev, u32 uA);
+ 
+@@ -188,6 +196,8 @@
+ 	int (*get_vbus_adc)(struct charger_device *dev, u32 *vbus);
+ 	int (*get_ibus_adc)(struct charger_device *dev, u32 *ibus);
+ 	int (*get_ibat_adc)(struct charger_device *dev, u32 *ibat);
++#if IS_ENABLED(CONFIG_NT_USB_TS)
++#endif /* CONFIG_NT_USB_TS */
+ 	int (*get_tchg_adc)(struct charger_device *dev, int *tchg_min,
+ 		int *tchg_max);
+ 	int (*get_zcv)(struct charger_device *dev, u32 *uV);
+@@ -304,6 +314,8 @@
+ 	struct charger_device *charger_dev, bool en);
+ extern int charger_dev_enable_otg(
+ 	struct charger_device *charger_dev, bool en);
++extern int charger_dev_is_otg_enabled(
++	struct charger_device *charger_dev, bool *en);
+ extern int charger_dev_enable_discharge(
+ 	struct charger_device *charger_dev, bool en);
+ extern int charger_dev_set_boost_current_limit(
+@@ -347,6 +359,8 @@
+ extern int charger_dev_get_adc_accuracy(struct charger_device *charger_dev,
+ 	enum adc_channel chan, int *min, int *max);
+ /* Prefer use charger_dev_get_adc api */
++#if IS_ENABLED(CONFIG_NT_USB_TS)
++#endif /* CONFIG_NT_USB_TS */
+ extern int charger_dev_get_vbus(
+ 	struct charger_device *charger_dev, u32 *vbus);
+ extern int charger_dev_get_ibus(
+@@ -405,5 +419,4 @@
+ extern int charger_dev_notify(
+ 	struct charger_device *charger_dev, int event);
+ 
+-
+ #endif /*LINUX_POWER_CHARGER_CLASS_H*/
+diff -ruN a/drivers/power/supply/mt6375-charger.c b/drivers/power/supply/mt6375-charger.c
+--- a/drivers/power/supply/mt6375-charger.c	2026-10-07 22:13:23.422710496 +0300
++++ b/drivers/power/supply/mt6375-charger.c	2026-10-07 22:13:23.424155506 +0300
+@@ -25,9 +25,12 @@
+ 
+ #include "charger_class.h"
+ #include "mtk_charger.h"
++#include "tcpm.h"
+ 
+ static bool dbg_log_en;
+ module_param(dbg_log_en, bool, 0644);
++int yft_usb_flag;
++EXPORT_SYMBOL_GPL(yft_usb_flag);
+ #define mt_dbg(dev, fmt, ...) \
+ 	do { \
+ 		if (dbg_log_en) \
+@@ -254,6 +257,9 @@
+ 	atomic_t tchg;
+ 	int vbat0_flag;
+ 	atomic_t no_6pin_used;
++	struct tcpc_device *tcpc;
++	struct notifier_block pd_nb;
++	bool pd_status;
+ };
+ 
+ struct mt6375_chg_platform_data {
+@@ -851,12 +857,12 @@
+ 		if (chg_en)
+ 			return POWER_SUPPLY_STATUS_CHARGING;
+ 		else
+-			return POWER_SUPPLY_STATUS_NOT_CHARGING;
++			return POWER_SUPPLY_STATUS_CHARGING;
+ 	case CHG_STAT_DONE:
+ 		return POWER_SUPPLY_STATUS_FULL;
+ 	case CHG_STAT_SLEEP:
+ 	case CHG_STAT_FAULT:
+-		return POWER_SUPPLY_STATUS_NOT_CHARGING;
++		return POWER_SUPPLY_STATUS_CHARGING;
+ 	default:
+ 		return POWER_SUPPLY_STATUS_UNKNOWN;
+ 	}
+@@ -951,6 +957,11 @@
+ 		}
+ 	}
+ 	ddata->psy_desc.type = ddata->psy_type[active_idx];
++	if (ddata->pd_status) {
++		ddata->psy_desc.type = POWER_SUPPLY_TYPE_USB_CDP;
++		ddata->psy_type[idx] = POWER_SUPPLY_TYPE_USB_CDP;
++		ddata->psy_usb_type[idx] = POWER_SUPPLY_USB_TYPE_CDP;
++	}
+ 
+ 	ddata->active_idx = active_idx;
+ 
+@@ -983,6 +994,44 @@
+ 				val ? ATTACH_TYPE_PWR_RDY : ATTACH_TYPE_NONE);
+ }
+ 
++static int mt6375_tcp_notifier_call(struct notifier_block *nb,
++				    unsigned long event, void *data)
++{
++	struct tcp_notify *noti = data;
++	struct mt6375_chg_data *ddata = container_of(nb, struct mt6375_chg_data,
++						     pd_nb);
++
++	switch (event) {
++	case TCP_NOTIFY_PD_STATE:
++		switch (noti->pd_state.connected) {
++		case PD_CONNECT_NONE:
++			ddata->pd_status = false;
++			break;
++		case PD_CONNECT_PE_READY_SNK:
++		case PD_CONNECT_PE_READY_SNK_PD30:
++		case PD_CONNECT_PE_READY_SNK_APDO:
++			ddata->pd_status = true;
++			if (yft_usb_flag == 1) {
++				if (!queue_work(ddata->wq, &ddata->bc12_work))
++					mt_dbg(ddata->dev, "%s bc12 work already queued\n",
++					       __func__);
++			}
++			break;
++		case PD_CONNECT_HARD_RESET:
++			ddata->pd_status = false;
++			break;
++		default:
++			break;
++		}
++		printk("%s  event=%ld, pd state=%d, pd_status=%d\n", __func__,
++		       event, noti->pd_state.connected, ddata->pd_status);
++		break;
++	default:
++		break;
++	}
++	return NOTIFY_OK;
++}
++
+ static void mt6375_chg_pwr_rdy_dwork_func(struct work_struct *work)
+ {
+ 	struct delayed_work *dwork = to_delayed_work(work);
+@@ -997,6 +1046,14 @@
+ 		complete(&ddata->pe_done);
+ 	}
+ 	mutex_unlock(&ddata->pwr_rdy_dwork_lock);
++
++	ddata->tcpc = tcpc_dev_get_by_name("type_c_port0");
++	if (!ddata->tcpc)
++		dev_err(ddata->dev, "mt6375 tcpc_dev_get_by_name failed\n");
++	ddata->pd_nb.notifier_call = mt6375_tcp_notifier_call;
++	if (register_tcp_dev_notifier(ddata->tcpc, &ddata->pd_nb,
++				      TCP_NOTIFY_TYPE_ALL) < 0)
++		dev_err(ddata->dev, "%s: register tcpc notifer fail\n", __func__);
+ }
+ 
+ static int mt6375_chg_set_usbsw(struct mt6375_chg_data *ddata,
+@@ -1006,6 +1063,10 @@
+ 	int ret, mode = (usbsw == USBSW_CHG) ? PHY_MODE_BC11_SET :
+ 					       PHY_MODE_BC11_CLR;
+ 
++	if (yft_usb_flag == 1) {
++		printk("[%s]yft_drv mode=%d\n", __func__, mode);
++		return 0;
++	}
+ 	mt_dbg(ddata->dev, "usbsw=%d\n", usbsw);
+ 	phy = phy_get(ddata->dev, "usb2-phy");
+ 	if (IS_ERR_OR_NULL(phy)) {
+@@ -1167,6 +1228,11 @@
+ 	}
+ 	mt_dbg(ddata->dev, "port stat = %s\n", mt6375_port_stat_names[val]);
+ out:
++	if (ddata->pd_status) {
++		ddata->psy_desc.type = POWER_SUPPLY_TYPE_USB_CDP;
++		ddata->psy_type[active_idx] = POWER_SUPPLY_TYPE_USB_CDP;
++		ddata->psy_usb_type[active_idx] = POWER_SUPPLY_USB_TYPE_CDP;
++	}
+ 	mutex_unlock(&ddata->attach_lock);
+ 	if (bc12_ctrl) {
+ 		mt6375_chg_check_dpdm_ov(ddata, attach);
+@@ -1226,8 +1292,10 @@
+ {
+ 	struct mt6375_chg_data *ddata = power_supply_get_drvdata(psy);
+ 	int ret = 0;
+-	u16 data;
++	u16 data = 0;
+ 	u32 _val = 0;
++	union power_supply_propval pval = {0};
++	struct power_supply *fg_psy = power_supply_get_by_name("3rd-gauge");
+ 
+ 	mt_dbg(ddata->dev, "psp=%d\n", psp);
+ 	switch (psp) {
+@@ -1274,20 +1342,15 @@
+ 		mutex_unlock(&ddata->attach_lock);
+ 		break;
+ 	case POWER_SUPPLY_PROP_CURRENT_MAX:
+-		if (ddata->psy_usb_type[ddata->active_idx] == POWER_SUPPLY_USB_TYPE_SDP)
+-			val->intval = 500000;
+-		else if (ddata->psy_usb_type[ddata->active_idx] == POWER_SUPPLY_USB_TYPE_DCP)
+-			val->intval = 3225000;
+-		else if (ddata->psy_usb_type[ddata->active_idx] == POWER_SUPPLY_USB_TYPE_CDP)
+-			val->intval = 1500000;
+-		else
+-			val->intval = 500000;
++		if (!fg_psy) {
++			printk("[%s] fg_3rd_psy  get error.\n", __func__);
++			break;
++		}
++		power_supply_get_property(fg_psy, POWER_SUPPLY_PROP_CURRENT_NOW, &pval);
++		val->intval = pval.intval;
+ 		break;
+ 	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
+-		if (ddata->psy_usb_type[ddata->active_idx] == POWER_SUPPLY_USB_TYPE_DCP)
+-			val->intval = 22000000;
+-		else
+-			val->intval = 5000000;
++		val->intval = 5000000;
+ 		break;
+ 	case POWER_SUPPLY_PROP_TYPE:
+ 		mutex_lock(&ddata->attach_lock);
+@@ -1341,39 +1404,34 @@
+ 	case POWER_SUPPLY_PROP_ONLINE:
+ 		mt6375_chg_attach_pre_process(ddata, ATTACH_TRIG_TYPEC,
+ 					      val->intval);
+-		break;
++		return 0;
+ 	case POWER_SUPPLY_PROP_STATUS:
+-		ret = mt6375_chg_enable_charging(ddata, val->intval);
+-		break;
++		return mt6375_chg_enable_charging(ddata, val->intval);
+ 	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+ 		mutex_lock(&ddata->pe_lock);
+ 		ret = mt6375_chg_field_set(ddata, F_CC, val->intval);
+ 		mutex_unlock(&ddata->pe_lock);
+-		break;
++		return ret;
+ 	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+-		ret = mt6375_chg_set_cv(ddata, val->intval);
+-		break;
++		return mt6375_chg_set_cv(ddata, val->intval);
+ 	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+ 		mutex_lock(&ddata->pe_lock);
+ 		ret = mt6375_chg_field_set(ddata, F_IAICR, val->intval);
+ 		mutex_unlock(&ddata->pe_lock);
+-		break;
++		return ret;
+ 	case POWER_SUPPLY_PROP_INPUT_VOLTAGE_LIMIT:
+ 		mutex_lock(&ddata->pe_lock);
+ 		ret = mt6375_chg_field_set(ddata, F_VMIVR, val->intval);
+ 		mutex_unlock(&ddata->pe_lock);
+-		break;
++		return ret;
+ 	case POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT:
+-		ret = mt6375_chg_field_set(ddata, F_IEOC, val->intval);
+-		break;
++		return mt6375_chg_field_set(ddata, F_IEOC, val->intval);
+ 	case POWER_SUPPLY_PROP_ENERGY_EMPTY:
+ 		ddata->vbat0_flag = val->intval;
+-		break;
++		return 0;
+ 	default:
+-		ret = -EINVAL;
+-		break;
++		return -EINVAL;
+ 	}
+-	return ret;
+ }
+ 
+ static char *mt6375_psy_supplied_to[] = {
+@@ -2336,6 +2394,28 @@
+ 	return mt6375_chg_field_set(ddata, F_USBID_FLOATING, en ? 1 : 0);
+ }
+ 
++static int mt6375_is_otg_enabled(struct charger_device *chgdev, bool *en)
++{
++	int i, ret = 0;
++	u32 val = 0;
++	struct mt6375_chg_data *ddata = charger_get_data(chgdev);
++
++	for (i = 0; i < 3; i++) {
++		ret = mt6375_chg_field_get(ddata, F_FORCE_VBUS_SINK, &val);
++		if (ret < 0)
++			val = 0;
++		printk("%s: enabled=%d\n", __func__, val);
++		if (ret < 0)
++			continue;
++		if (val) {
++			*en = true;
++			return 0;
++		}
++		*en = false;
++	}
++	return ret;
++}
++
+ static const struct charger_properties mt6375_chg_props = {
+ 	.alias_name = "mt6375_chg",
+ };
+@@ -2391,6 +2471,7 @@
+ 	.reset_ta = mt6375_reset_pe_ta,
+ 	.enable_cable_drop_comp = mt6375_enable_pe_cable_drop_comp,
+ 	/* OTG */
++	.is_otg_enabled = mt6375_is_otg_enabled,
+ 	.enable_discharge = mt6375_enable_discharge,
+ 	/* charger type detection */
+ 	.enable_chg_type_det = mt6375_enable_chg_type_det,
+@@ -2701,6 +2782,7 @@
+ static int mt6375_chg_init_setting(struct mt6375_chg_data *ddata)
+ {
+ 	int ret;
++	u32 val;
+ 	struct mt6375_chg_platform_data *pdata = dev_get_platdata(ddata->dev);
+ 
+ 	mt_dbg(ddata->dev, "%s: entry. Init setting now.\n", __func__);
+@@ -2747,6 +2829,17 @@
+ 		dev_err(ddata->dev, "failed to disable WDT\n");
+ 		return ret;
+ 	}
++
++	ret = regmap_read(ddata->rmap, MT6375_REG_CHG_TMR, &val);
++	printk("%s:yft_drv F_IEOC_DEG=%x, ret=%d\n", __func__, val, ret);
++	val |= BIT(1);
++	ret = regmap_write(ddata->rmap, MT6375_REG_CHG_TMR, val);
++	if (ret < 0) {
++		dev_err(ddata->dev, "failed to disable WDT\n");
++		return ret;
++	}
++	ret = regmap_read(ddata->rmap, MT6375_REG_CHG_TMR, &val);
++	printk("%s:yft_drv_2 F_IEOC_DEG=%x, ret=%d\n", __func__, val, ret);
+ 	return 0;
+ }
+ 
+@@ -3046,7 +3139,7 @@
+ 		goto out_chgdev;
+ 	}
+ 	queue_delayed_work(system_freezable_wq, &ddata->pwr_rdy_dwork,
+-			   msecs_to_jiffies(2000));
++			   msecs_to_jiffies(4000));
+ 	mt_dbg(dev, "successfully\n");
+ 
+ 	return 0;
+diff -ruN a/drivers/power/supply/mtk_battery.c b/drivers/power/supply/mtk_battery.c
+--- a/drivers/power/supply/mtk_battery.c	2026-10-07 22:13:23.429425176 +0300
++++ b/drivers/power/supply/mtk_battery.c	2026-10-07 22:13:23.430991225 +0300
+@@ -614,9 +614,10 @@
+ 	union power_supply_propval *val)
+ {
+ 	int ret = 0;
+-	int curr_now = 0, curr_avg = 0, voltage_now = 0;
+ 	struct mtk_battery *gm;
+ 	struct battery_data *bs_data;
++	union power_supply_propval pval = {0};
++	struct power_supply *fg_psy = power_supply_get_by_name("3rd-gauge");
+ 
+ 	gm = (struct mtk_battery *)power_supply_get_drvdata(psy);
+ 	bs_data = &gm->bs_data;
+@@ -652,7 +653,8 @@
+ 		val->intval = bs_data->bat_technology;
+ 		break;
+ 	case POWER_SUPPLY_PROP_CYCLE_COUNT:
+-		val->intval = 1;
++		power_supply_get_property(fg_psy, POWER_SUPPLY_PROP_CYCLE_COUNT, &pval);
++		val->intval = pval.intval;
+ 		break;
+ 	case POWER_SUPPLY_PROP_CAPACITY:
+ 		/* 1 = META_BOOT, 4 = FACTORY_BOOT 5=ADVMETA_BOOT */
+@@ -662,35 +664,22 @@
+ 			val->intval = 75;
+ 			break;
+ 		}
+-
+-		if (gm->fixed_uisoc != 0xffff)
+-			val->intval = gm->fixed_uisoc;
+-		else
+-			val->intval = bs_data->bat_capacity;
++		power_supply_get_property(fg_psy, POWER_SUPPLY_PROP_CAPACITY, &pval);
++		val->intval = pval.intval;
+ 		break;
+ 	case POWER_SUPPLY_PROP_CURRENT_NOW:
+-		ret = gauge_get_property_control(gm, GAUGE_PROP_BATTERY_CURRENT,
+-			&curr_now, 1);
+-
+-		if (ret == -EHOSTDOWN)
+-			val->intval = gm->ibat * 100;
+-		else {
+-			val->intval = curr_now * 100;
+-			gm->ibat = curr_now;
+-		}
+-
+-		ret = 0;
++		power_supply_get_property(fg_psy, POWER_SUPPLY_PROP_CURRENT_NOW, &pval);
++		val->intval = pval.intval;
++		bm_debug("current_1: %d\n", val->intval);
+ 		break;
+ 	case POWER_SUPPLY_PROP_CURRENT_AVG:
+-		ret = gauge_get_property_control(gm, GAUGE_PROP_AVERAGE_CURRENT,
+-			&curr_avg, 1);
+-
+-		if (ret == -EHOSTDOWN)
+-			val->intval = gm->ibat * 100;
+-		else
+-			val->intval = curr_avg * 100;
+-
+-		ret = 0;
++		power_supply_get_property(fg_psy, POWER_SUPPLY_PROP_CURRENT_NOW, &pval);
++		val->intval = pval.intval;
++		bm_debug("current_2: %d\n", val->intval);
++		break;
++	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
++		power_supply_get_property(fg_psy, POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN, &pval);
++		val->intval = pval.intval * 1000;
+ 		break;
+ 	case POWER_SUPPLY_PROP_CHARGE_FULL:
+ 		val->intval =
+@@ -711,20 +700,9 @@
+ 			break;
+ 		}
+ 
+-		if (gm->disableGM30)
+-			voltage_now = 4000;
+-		else
+-			ret = gauge_get_property_control(gm, GAUGE_PROP_BATTERY_VOLTAGE,
+-				&voltage_now, 1);
+-
+-		if (ret == -EHOSTDOWN)
+-			val->intval = gm->vbat * 1000;
+-		else {
+-			bs_data->bat_batt_vol = voltage_now;
+-			gm->vbat = bs_data->bat_batt_vol;
+-			val->intval = bs_data->bat_batt_vol * 1000;
+-		}
+-		ret = 0;
++		power_supply_get_property(fg_psy, POWER_SUPPLY_PROP_VOLTAGE_NOW, &pval);
++		val->intval = pval.intval * 1000;
++		bm_debug("vol_1: %d\n", val->intval);
+ 		break;
+ 	case POWER_SUPPLY_PROP_TEMP:
+ 		val->intval = force_get_tbat(gm, false) * 10;
+@@ -762,27 +740,6 @@
+ 		}
+ 		ret = 0;
+ 		break;
+-	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
+-		if (check_cap_level(bs_data->bat_capacity) ==
+-			POWER_SUPPLY_CAPACITY_LEVEL_UNKNOWN)
+-			val->intval = 0;
+-		else {
+-			int q_max_mah = 0;
+-			int q_max_uah = 0;
+-
+-			q_max_mah =
+-				gm->fg_table_cust_data.fg_profile[
+-				gm->battery_id].q_max / 10;
+-
+-			q_max_uah = q_max_mah * 1000;
+-			if (q_max_uah <= 100000) {
+-				bm_debug("%s q_max_mah:%d q_max_uah:%d\n",
+-					__func__, q_max_mah, q_max_uah);
+-				q_max_uah = 100001;
+-			}
+-			val->intval = q_max_uah;
+-		}
+-		break;
+ 	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+ 		bs_data = &gm->bs_data;
+ 		if (IS_ERR_OR_NULL(bs_data->chg_psy)) {
+@@ -1065,6 +1022,195 @@
+ 	return sbattmp;
+ }
+ 
++/* GQ5012BF1 stock line layout: 189 non-code lines (count proven by __bug_table lines 1343/3544/3557; text not recoverable) */
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++
+ int force_get_tbat_internal(struct mtk_battery *gm)
+ {
+ 	int bat_temperature_volt = 2;
+@@ -1196,7 +1342,6 @@
+ 				/*pmic_auxadc_debug(1);*/
+ 				WARN_ON(1);
+ 			}
+-
+ 			pre_bat_temperature_volt_temp =
+ 				bat_temperature_volt_temp;
+ 			pre_bat_temperature_volt = bat_temperature_volt;
+@@ -1205,7 +1350,6 @@
+ 			pre_fg_r_value = fg_r_value;
+ 			pre_bat_temperature_val2 = bat_temperature_val;
+ 			pre_time = ctime;
+-
+ 			tmp_time = ktime_to_timespec64(dtime);
+ 
+ 			bm_trace("[%s] current:%d,%d,%d,%d,%d,%d pre:%d,%d,%d,%d,%d,%d time:%llu\n",
+@@ -2789,11 +2933,11 @@
+ {
+ 	struct battery_data *bat_data = &gm->bs_data;
+ 
+-	if (gm->disableGM30)
+-		bat_data->bat_batt_vol = 4000;
+-	else
+-		gauge_get_property_control(gm, GAUGE_PROP_BATTERY_VOLTAGE,
+-			&bat_data->bat_batt_vol, 0);
++	union power_supply_propval pval = {0};
++
++	power_supply_get_property(power_supply_get_by_name("3rd-gauge"),
++		POWER_SUPPLY_PROP_VOLTAGE_NOW, &pval);
++	bat_data->bat_batt_vol = pval.intval;
+ 
+ 	bat_data->bat_batt_temp = force_get_tbat(gm, true);
+ }
+@@ -3216,6 +3360,16 @@
+ 	BAT_SYSFS_FIELD_RW(log_level, BAT_PROP_LOG_LEVEL),
+ };
+ 
++static ssize_t show_BAT_TEMP(struct device *dev,
++			     struct device_attribute *attr, char *buf)
++{
++	int tbat = force_get_tbat_internal(get_mtk_battery());
++
++	bm_err("%s: %d\n", __func__, tbat);
++	return sprintf(buf, "%d\n", tbat);
++}
++static DEVICE_ATTR(BAT_TEMP, 0444, show_BAT_TEMP, NULL);
++
+ int battery_get_property(enum battery_property bp,
+ 			    int *val)
+ {
+@@ -4380,9 +4534,10 @@
+ 	gm->bs_data.bat_batt_temp = force_get_tbat(gm, true);
+ 	mtk_power_misc_init(gm);
+ 
+-	ret = mtk_battery_daemon_init(pdev);
++	mtk_battery_daemon_init(pdev);
+ 	b_recovery_mode = is_recovery_mode();
+ 	gm->is_probe_done = true;
++	ret = device_create_file(&pdev->dev, &dev_attr_BAT_TEMP);
+ 
+ 	if (ret == 0 && b_recovery_mode == 0)
+ 		bm_err("[%s]: daemon mode DONE\n", __func__);
+diff -ruN a/drivers/power/supply/mtk_battery_daemon.c b/drivers/power/supply/mtk_battery_daemon.c
+--- a/drivers/power/supply/mtk_battery_daemon.c	2026-10-07 22:13:23.436544916 +0300
++++ b/drivers/power/supply/mtk_battery_daemon.c	2026-10-07 22:13:23.438084713 +0300
+@@ -2644,6 +2644,8 @@
+ 	static int ptim_vbat, ptim_i;
+ 	int int_value;
+ 	static int badcmd;
++	union power_supply_propval pval = {0};
++	struct power_supply *fg_psy = power_supply_get_by_name("3rd-gauge");
+ 
+ 	if (gm == NULL)
+ 		gm = get_mtk_battery();
+@@ -3522,8 +3524,8 @@
+ 		soc_type = msg->fgd_subcmd_para1;
+ 
+ 		memcpy(&daemon_soc, &msg->fgd_data[0], sizeof(daemon_soc));
+-		if (soc_type == 0)
+-			gm->soc = (daemon_soc + 50) / 100;
++		power_supply_get_property(fg_psy, POWER_SUPPLY_PROP_CAPACITY, &pval);
++		gm->soc = pval.intval;
+ 
+ 		bm_debug(
+ 		"[K]FG_DAEMON_CMD_SET_KERNEL_SOC = %d %d, type:%d\n",
+@@ -3554,6 +3556,8 @@
+ 			gm->ui_soc = 50;
+ 		else
+ 			gm->ui_soc = (daemon_ui_soc + 50) / 100;
++		power_supply_get_property(fg_psy, POWER_SUPPLY_PROP_CAPACITY, &pval);
++		gm->ui_soc = pval.intval;
+ 
+ 		/* when UISOC changes, check the diff time for smooth */
+ 		if (old_uisoc != gm->ui_soc) {
+@@ -3683,7 +3687,8 @@
+ 	{
+ 		int rtc_ui_soc;
+ 
+-		rtc_ui_soc = gauge_get_int_property(GAUGE_PROP_RTC_UI_SOC);
++		power_supply_get_property(fg_psy, POWER_SUPPLY_PROP_CAPACITY, &pval);
++		rtc_ui_soc = pval.intval;
+ 
+ 		ret_msg->fgd_data_len += sizeof(rtc_ui_soc);
+ 		memcpy(ret_msg->fgd_data, &rtc_ui_soc,
+@@ -3697,7 +3702,8 @@
+ 	{
+ 		int rtc_ui_soc;
+ 
+-		memcpy(&rtc_ui_soc, &msg->fgd_data[0], sizeof(rtc_ui_soc));
++		power_supply_get_property(fg_psy, POWER_SUPPLY_PROP_CAPACITY, &pval);
++		rtc_ui_soc = pval.intval;
+ 
+ 		if (rtc_ui_soc < 0) {
+ 			bm_err("[K]FG_DAEMON_CMD_SET_RTC_UI_SOC error,rtc_ui_soc=%d\n",
+@@ -3715,7 +3721,8 @@
+ 	{
+ 		int _soc = 0;
+ 
+-		memcpy(&_soc, &msg->fgd_data[0], sizeof(_soc));
++		power_supply_get_property(fg_psy, POWER_SUPPLY_PROP_CAPACITY, &pval);
++		_soc = pval.intval;
+ 		gauge_set_property(GAUGE_PROP_CON0_SOC, _soc);
+ 		bm_debug("[K]FG_DAEMON_CMD_SET_CON0_SOC = %d\n", _soc);
+ 	}
+@@ -3725,7 +3732,8 @@
+ 	{
+ 		int _soc = 0;
+ 
+-		_soc = gauge_get_int_property(GAUGE_PROP_CON0_SOC);
++		power_supply_get_property(fg_psy, POWER_SUPPLY_PROP_CAPACITY, &pval);
++		_soc = pval.intval;
+ 		ret_msg->fgd_data_len += sizeof(_soc);
+ 		memcpy(ret_msg->fgd_data, &_soc, sizeof(_soc));
+ 		bm_debug("[K]FG_DAEMON_CMD_GET_CON0_SOC = %d\n", _soc);
+@@ -3938,8 +3946,8 @@
+ 	break;
+ 	case FG_DAEMON_CMD_SET_SOC:
+ 	{
+-		memcpy(&int_value, &msg->fgd_data[0], sizeof(int_value));
+-		gm->soc = (int_value + 50) / 100;
++		power_supply_get_property(fg_psy, POWER_SUPPLY_PROP_CAPACITY, &pval);
++		gm->soc = pval.intval;
+ 		bm_debug("[K]FG_DAEMON_CMD_SET_SOC %d\n",
+ 			gm->soc);
+ 	}
+diff -ruN a/drivers/power/supply/mtk_charger.h b/drivers/power/supply/mtk_charger.h
+--- a/drivers/power/supply/mtk_charger.h	2026-10-07 22:13:23.451445828 +0300
++++ b/drivers/power/supply/mtk_charger.h	2026-10-07 22:13:23.452720385 +0300
+@@ -69,6 +69,7 @@
+ /* battery warning */
+ #define BATTERY_NOTIFY_CASE_0001_VCHARGER
+ #define BATTERY_NOTIFY_CASE_0002_VBATTEMP
++#define BAT_LOW_TEMP_PROTECT_ENABLE	/* GQ5012BF1 (YFT) */
+ 
+ /* charging abnormal status */
+ #define CHG_VBUS_OV_STATUS	(1 << 0)
