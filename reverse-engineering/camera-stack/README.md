@@ -234,6 +234,16 @@ Physical module: UNKNOWN (INFERRED leaning OV64B: same i2c-4 segment,
 `main_af_cam1`; against: node name `camera-ois-main`, `sensor0`
 `oisvdd_*` pinctrl).
 
+**Closure 2026-10-07 (`dw9781c-ois/`):** the stock file is identical to the
+unmodified source except for the build-id (B1==B2). No stock path ever
+reaches the chip: the `ois_list` tables are Dummy, and per-sensor
+`availableOisModes` (IMX989 3, OV64B 6) map to `OIS`/`OIS2`, never to the
+DW9781C's `OIS1`, which only mode 5 selects. No binary issues
+`S_OIS_INIT/UNINIT`. Probe and runtime PM do no I2C. The alias and pinctrl
+hints above are inherited from the MediaTek reference cam4 block, so they are
+not ODM evidence. Physical population and lens are a hardware-only boundary;
+see `dw9781c-ois/stale-claims.md`.
+
 ## 6. Exact proprietary boundary
 
 Reconstructable from source now (open):

@@ -1,8 +1,8 @@
 # GQ5012BF1 normal camera stack — status matrix (2026-10-02)
 
 Authoritative detail: `README.md` (this directory). Workspace copy: `../../../CAMERA-STACK-STATUS.md`.
-Component folders: `Reverse Engineer - DONE/CAMERA-IMX989`, `Reverse Engineer -
-PARTIAL/{CAMERA-HAL-ISP,CAMERA-OV64B,CAMERA-S5KJN1,CAMERA-S5KJN1MAIN2,DW9781C-OIS}`.
+Component folders: `Reverse Engineer - DONE/{CAMERA-IMX989,DW9781C-OIS}`, `Reverse Engineer -
+PARTIAL/{CAMERA-HAL-ISP,CAMERA-OV64B,CAMERA-S5KJN1,CAMERA-S5KJN1MAIN2}`.
 ThermoVue excluded. EEPROM/VCM internals belong to other tracks.
 
 ## Cameras
@@ -13,7 +13,7 @@ ThermoVue excluded. EEPROM/VCM internals belong to other tracks.
 | 1 | front | S5KJN1 — PROVEN (0x38E1) | s5kjn1_mipi_raw | i2c-4 / 0x3D | port 2 / D-PHY 4L | CAMTG2 24 MHz | d1(1.2V) a4 io7 + GPIO76 | none | – | none | 5 | **source, byte-exact** (generated from stock) |
 | 2 | rear | S5KJN1 die, driver pseudo-ID 0x38E2 — PROVEN | s5kjn1main2_mipi_raw | i2c-2 / 0x2D | port 1 / D-PHY 4L | CAMTG4 24 MHz | d1 a4 io7 af6 + GPIO76 | main4_vcm 2-0x0d | – | CAMSV | 5 | **source, byte-exact** (generated from stock) |
 | 3 | rear | OV64B — PROVEN (0x566442) | ov64b_mipi_raw | i2c-4 / 0x10 (+0x22) | port 0 / D-PHY 4L | CAMTG2 24 MHz | a4 af5 d1(1.1V) io7 | main2_vcm 4-0x0b | – | type CAMSV, unused | 5 (max 4624×3472) | **source, byte-exact** (older NothingOSS revision + stock data) |
-| – | OIS | DW9781C — PROVEN | dw9781c.ko | i2c-4 / **0x0A** (DT @0e) | – | – | rst = camera-common-dovdd | – | – | – | – | **EXACT NothingOSS source** |
+| – | OIS | DW9781C — DT client bound; physical presence not evidenced (no stock I2C access) | dw9781c.ko | i2c-4 / **0x0A** (DT @0e) | – | – | rst = camera-common-dovdd (fixed, no GPIO); no vdd | – | – | – | – | **EXACT NothingOSS source; stock file identical except build-id — DONE** (`dw9781c-ois/`) |
 
 ## Layers
 
@@ -22,7 +22,7 @@ ThermoVue excluded. EEPROM/VCM internals belong to other tracks.
 | sensor sub-driver data (IDs, modes, tables, pw_seq, VC) | **complete** for all 9 compiled sub-drivers (`stock-imgsensor-oracle/`) | yes |
 | **imgsensor.ko (framework + 9 sub-drivers)** | **reconstructed to source** (`reconstruction/imgsensor/`): 618/619 functions and 394/394 data objects byte-identical; modversions, KCFI, modinfo, symtab identical; whole stripped file differs in 70 bytes (one function, explained in `binary-analysis/README.md`) | **yes — done (parity build)** |
 | custom-LDO / WL2864C, AW365xx flash | reconstructed earlier (DONE/PARTIAL tracks) | yes |
-| DW9781C OIS | exact | yes |
+| DW9781C OIS | **DONE**: byte-identical except build-id, B1==B2; no stock path reaches the chip (`dw9781c-ois/`) | yes |
 | **camsys/ISP kernel modules** — `mtk-cam-isp7sp` (1220/1220 fn, 579/579 data), `mtk_imgsys_v4l2` (185/185, 139/139), `mtk_imgsys_isp7sp` (85/85, 119/119), `mtk_imgsys_cmdq` (165/165, 171/171), `mtk_hcp` (169/169, 53/53), `mtk_ccuv` (45/45, 22/22), `ccd_rpmsg` (29/29, 13/13), `mtk_ccd_remoteproc` (25/25, 13/13), `mtk_aie` (135/135, 116/116) + `mtk_aie_debug_7sp_2`, `camera_dpe_isp7sp` (96/96, 118/118), `mtk-ipesys-me` (14/14, 8/8), `mtk_c2ps` (106/106, 144/144), `c2ps_perf_ioctl`, `imgsensor-glue` | **reconstructed to source, every function and data object byte-identical** (`kernel-isp-imgsys/binary-analysis/per-module/*.tsv`; tree: `gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam`) | **yes — done (parity build)** |
 | **`camera_eeprom_v4l2.ko`** (cam_cal / OTP) | **126/126 functions, 127/127 data byte-identical**: stock `cam_cal_format.h` ABI (24-byte part number, `sensorID` @0x20, no `FuseId`), all 37 layout tables/config records decoded from relocations, ODM 2A/LSC/PDAF parsers for imx989(cts)/ov64b/s5kjn1*/hi847/s5khp2sp/s5khp3sp*/imx616/ova0b40* restored, `camera_otp` sysfs class probe path | **yes — done (parity build)** |
 | CCU firmware `ccu.img` | proprietary binary | no |
@@ -53,8 +53,8 @@ crossmatch is 50/54 IDENTICAL + 4 NEAREST, i.e. the donor path alone does not
 close it). On the framework axis, stock vs recon reports 532 shared functions with
 25 byte-differing and 36 stock-only (see
 `donor-comparisons/imgsensor-stock-vs-recon-parity.txt`). Per-sensor tuning
-`.so`/DB stay blobs (`CAMERA-HAL-ISP`); DW9781C-OIS: driver exact, physical lens
-association still UNKNOWN.
+`.so`/DB stay blobs (`CAMERA-HAL-ISP`); DW9781C-OIS is DONE (`dw9781c-ois/README.md`). Its physical population and
+lens are a hardware-only boundary that no stock software observes.
 
 ## Known stock defects found
 

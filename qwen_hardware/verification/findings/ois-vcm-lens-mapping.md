@@ -74,3 +74,16 @@ The DW9781C sits on i2c-4 together with sensor1/sensor4, **not** on i2c-7 with s
   table `libcameracustom.lens.so` has only `Dummy` in every `ois_list_N` —
   the reason OIS is never exposed. See
   `reverse-engineering/camera-stack/notes/dw9781c-ois.md`.
+
+## Correction (2026-10-07, DW9781C-OIS closure)
+
+* "DW9781C fitted + bound = **PROVEN**" is withdrawn as a hardware claim.
+  `dw9781c_probe` and the runtime-PM callbacks never touch the bus, and no
+  stock path reaches `i2c_transfer`. Binding proves only that the DT client
+  matched the driver. Physical population and lens are a hardware-only fact
+  that no stock software observes.
+* The sensor4 `oisen` pinctrl and the `main_ois_cam1` label come verbatim from
+  the MediaTek/Nothing reference camera DT (`cust_mt6878_alpha_camera_v4l2.dtsi`,
+  cam4 block). The ODM removed the OIS `vdd-supply` and sensor4
+  `oisvdd-supply`.
+* Full proof: `reverse-engineering/camera-stack/dw9781c-ois/`.

@@ -55,6 +55,11 @@ therefore never opens DW9781C → `availableOpticalStabilization = [0]` on
 every camera. The kernel driver is alive (hf_manager OIS1) but no camera
 pipeline consumer exists.
 
+> **Superseded in part by `../dw9781c-ois/` (2026-10-07):** parity is now
+> identical except for the build-id. `ois_init_fx` runs on hf_manager
+> `enable`, not on stream-on. No stock path reaches the chip. Binding does not
+> prove the part is fitted. See `../dw9781c-ois/stale-claims.md`.
+
 ## Physical association
 
 UNKNOWN. For OV64B: same i2c-4, `sensor4` has `oisen_0/1` pinctrl, DT
