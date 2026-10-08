@@ -11,7 +11,7 @@ Reproduce: `python3 reverse-engineering/coverage-audit/scripts/harvest-pack-dt-c
 | `gq5012bf1-merged.dtb` (live, installed tree) | 1609 | 759 | 580 |
 | `fdt-00-off-03b76040.dtb` (base FDT from `vendor_boot`) | 1391 | 727 | 562 |
 | `entry-00-id-00000000-rev-00000000.dtbo` (the single DTBO table entry) | 410 | 32 | 19 |
-| workspace claim sources | - | - | 141 quoted |
+| workspace claim sources | - | - | 142 quoted |
 
 Provenance of the merge is `extraction-manifest.txt` beside the blobs: one valid FDT at `vendor_boot` offset `0x3b76040` (342 331 B) plus a DTBO table with `entry_count=1`. The bulk dump `docs/dt-module-matching.md` (526 compatibles) is deliberately not a claim source: a device-tree dump cannot own the tree it dumps.
 
@@ -19,10 +19,10 @@ Provenance of the merge is `extraction-manifest.txt` beside the blobs: one valid
 
 | class | meaning | compatibles | node instances |
 |---|---|---:|---:|
-| A | dedicated component documents it | 68 | 97 |
-| B | covered by a broader documented subsystem scope | 219 | 344 |
-| C | generic platform-internals - no device-specific RE needed | 290 | 484 |
-| D | node present but disabled on this board | 0 | 0 |
+| A | dedicated component documents it | 69 | 98 |
+| B | covered by a broader documented subsystem scope | 189 | 212 |
+| C | generic platform-internals - no device-specific RE needed | 315 | 611 |
+| D | node present but disabled on this board | 4 | 4 |
 | E | unmapped - genuine coverage gap | 3 | 5 |
 | **total** |  | **580** | **930** |
 
@@ -32,7 +32,7 @@ Provenance of the merge is `extraction-manifest.txt` beside the blobs: one valid
 |---|---:|
 | `ACTIVE` | 573 |
 | `DISABLED` | 6 |
-| `PRESENT-NOT-BOUND` | 1 |
+| `BOUND-IN-RUNTIME-CAPTURE` | 1 |
 
 | dt_source | compatibles | meaning |
 |---|---:|---|
@@ -47,9 +47,9 @@ Provenance of the merge is `extraction-manifest.txt` beside the blobs: one valid
 | `platform` | 546 | 889 |
 | `i2c` | 26 | 33 |
 | `spmi` | 4 | 4 |
+| `spi3` | 1 | 1 |
 | `spi0` | 1 | 1 |
 | `spi1` | 1 | 1 |
-| `spi3` | 1 | 1 |
 | `usb0` | 1 | 1 |
 
 Overlay-only (board payload) compatibles:
@@ -60,33 +60,28 @@ Overlay-only (board payload) compatibles:
 
 | owner | compatibles | class split |
 |---|---:|---|
-| `MEDIATEK-DRM` | 45 | B45 |
-| `CAMERA-HAL-ISP` | 36 | A1,B35 |
-| `research:reverse-engineering` | 16 | B16 |
-| `research:sensors` | 16 | B16 |
-| `CCCI-KERNEL` | 10 | B10 |
-| `research:qwen_hardware` | 9 | B9 |
-| `research:usb-research` | 9 | B9 |
+| `MEDIATEK-DRM` | 48 | B48 |
+| `CAMERA-HAL-ISP` | 38 | B38 |
+| `THERMAL-POWER-HAL` | 21 | B21 |
+| `CCCI-KERNEL` | 14 | B14 |
 | `MTU3-SSUSB` | 7 | B7 |
 | `MT6375-CHARGER` | 7 | B7 |
+| `GZ-TRANSPORT` | 6 | B6 |
 | `USB3-FEASIBILITY` | 6 | B6 |
-| `research:android17-hidl-fixed-build-20261002` | 6 | B6 |
 | `CONNINFRA-KERNEL` | 5 | A1,B4 |
-| `GZ-TRANSPORT` | 5 | B5 |
-| `research:modem` | 5 | B5 |
 | `VENDOR-BLOB-HAL-INVENTORY` | 5 | C5 |
 | `BACKLIGHT-DISPLAY-GLUE` | 4 | A3,B1 |
 | `AUDIO-DSP-KERNEL` | 4 | B4 |
 | `CAMERA-VCMS` | 4 | B4 |
-| `research:connectivity` | 4 | B4 |
+| `AW36515-FLASH` | 3 | A2,B1 |
 | `DPMAIF-KERNEL` | 3 | A3 |
 | `MT6878-AFE` | 3 | A3 |
 | `GZ-MAIN-MOD` | 3 | B3 |
 | `VTDR6115-DISPLAY` | 3 | B3 |
-| `TCPC-CLASS` | 3 | B3 |
+| `MODEM-KERNEL-TRANSPORT` | 3 | B3 |
 | `MTK-TINYSYS-IPI` | 3 | B3 |
 | `RT5133-POWER-IC` | 3 | B3 |
-| `COVERED-GENERIC` (platform-internals families) | 285 | C285 |
+| `COVERED-GENERIC` (platform-internals families) | 314 | C310,D4 |
 | `UNMAPPED` (class E) | 3 | E3 |
 
 Every class-C row carries its family justification verbatim in `evidence`, so the classification is auditable per row instead of asserted in prose.
@@ -96,69 +91,40 @@ Every class-C row carries its family justification verbatim in `evidence`, so th
 | compatible | nodes | enabled/disabled | node_state | sample node |
 |---|---:|---|---|---|
 | `mediatek, dsi1_te-eint` | 1 | 0/1 | `DISABLED` | `/soc/dsi1-te` |
-| `mediatek,apusys_aov-v0` | 1 | 0/1 | `DISABLED` | `/apusys-aov` |
 | `mediatek,disp_dsi1` | 1 | 0/1 | `DISABLED` | `/soc/dsi1@1401b000` |
 | `mediatek,fpga-u3phy` | 1 | 0/1 | `DISABLED` | `/usb-phy` |
 | `mediatek,geniezone-hyp` | 1 | 0/1 | `DISABLED` | `/hypervisor` |
 | `mediatek,mipi_tx_config1` | 1 | 0/1 | `DISABLED` | `/soc/mipi-tx-config1@11e10000` |
-| `richtek,rt5133` | 1 | 1/0 | `PRESENT-NOT-BOUND` | `/soc/i2c@11280000/rt5133@18` |
-<!-- hand-written analysis below this line is preserved on regeneration -->
+| `mediatek,apusys_aov-v0` | 1 | 0/1 | `DISABLED` | `/apusys-aov` |
+| `chipone-tddi` | 1 | 1/0 | `ACTIVE` | `/soc/i2c@11c20000/chipone_tddi@48` |
+| `focaltech,fp` | 1 | 1/0 | `ACTIVE` | `/ft_fingerprint` |
+| `mediatek,goodix-fp` | 1 | 1/0 | `ACTIVE` | `/fingerprint` |
+| `tchip,ilitek` | 1 | 1/0 | `ACTIVE` | `/soc/i2c@11c20000/ilitek@41` |
+
 ## Evidence strength behind the classes
 
 | strength | meaning | compatibles |
 |---|---|---:|
-| `pack-claims` | a DONE/PARTIAL pack quotes the compatible in its own README/notes/evidence | 96 |
-| `research-doc` | only a research-repo document quotes it (phase-4 investigation notes, DT dumps in `workspace/`) | 120 |
-| `driver` | no document quotes it, but a shipped kernel module name matches (axis-1 classification travels) | 122 |
-| `family` | platform-internals family with a written justification | 258 |
-| `curated` | audit override (GPU gap, TEE OS instances) | 5 |
+| `driver` | no document quotes it, but a shipped kernel module name matches (axis-1 classification travels) | 229 |
+| `family` | platform-internals family with a written justification | 207 |
+| `pack-claims` | a DONE/PARTIAL pack quotes the compatible in its own README/notes/evidence | 95 |
+| `research-family` | only a research-repo document quoted it, so the audit resolved it to a named subsystem through an explicit compatible family | 42 |
+| `curated` | audit override (GPU gap, fingerprint/TEE/PMIC instances) | 7 |
 
-Research-doc ownership is the weakest of the "documented" tiers: it proves the node was
-examined during an investigation, not that a component pack maintains it. The widest
-research owners are `research:reverse-engineering` (68), `research:kernel` (48),
-`research:workspace` (45) and `research:qwen_hardware` (43); the widest pack owners are
-`MTU3-SSUSB`/`USB-PHY` (18 each, both from `live-dt-usb-nodes.txt`), `GZ-TRANSPORT` (20 in
-`phase4-gz-transport-dt-contract.md`) and `DTB-DTBO` (19).
+`research-family` is the weakest of the documented tiers: it proves the node was examined during an investigation, not that a component pack maintains it. Those 42 rows are therefore a pack-inventory backlog, not closed ownership. Widest documented owners: `MEDIATEK-DRM` (48), `CAMERA-HAL-ISP` (38), `THERMAL-POWER-HAL` (21).
 
 ## Conclusions for this axis
 
-1. **No device-tree gap except one.** 577 of 580 compatibles resolve to a documented or
-   justified class. The three `E` rows are one subsystem: `arm,mali-valhall`,
-   `mediatek,mali` and `mediatek,g3d_brisket` (+ the `gpu_qos`/`gpu_fdvfs` perf nodes).
-   The DT axis therefore independently confirms the kernel axis: **the Mali Bifrost/Valhall
-   GPU stack has no owning component**. This is the only true coverage hole found so far
-   and it needs a decision (dedicated `GPU-KERNEL` component, or an explicit class-C record
-   saying "vendor DDK + KMD carried as-is").
-2. **The DT axis and module axis agree on the charging stack.** The PMIC charging sub-nodes
-   (`mediatek,charger,{pe,pe2,pe45,pe5p,hvbp}`) resolve to `MT6375-CHARGER` only through a
-   family rule; no pack quotes them. Same symptom as conclusion 4 of the kernel axis: the
-   charging stack is covered by six packs and by none of them as a whole.
-3. **`DTB-DTBO` (PARTIAL) does not inventory the tree it owns.** It quotes 19 of 580
-   compatibles; everything else is claimed by whichever investigation pack happened to need
-   that node, or falls into the platform-internals families. The reproducible artifact
-   exists and is good (merged DTS + dtbo table + dtc logs), but node-level ownership lives
-   in nobody's inventory. That matches the pack's own "Still required" line ("source-complete
-   DTS and physical validation for every node") and is the natural home for this table.
-4. **The display and camera pipes are carried, not documented.** `MEDIATEK-DRM` owns 50
-   display-pipeline compatibles and `CAMERA-HAL-ISP` 37 camera-pipe compatibles as class B/C:
-   they travel with the vendor DDI/mtkcam drivers. That is the right call for a same-BSP
-   port, but it must stay an explicit decision: a custom display path (or any ISP change)
-   would turn each of those rows into real work, which is exactly why they are recorded
-   per row rather than summarised away.
-5. **Sensors/TUI/APU IOMMU banks are only covered by research notes.** 18 compatibles
-   (`mediatek,smi-common`, `mediatek,common-{apu,disp}-iommu*-bank*`, `mediatek,tui_common`,
-   `mediatek,mm_vpu_m*_sub_common`, ...) are owned by `research:sensors` - i.e. documented
-   inside phase-4 investigation notes with no pack inventory row.
-6. **Legacy/inert payload is tiny.** Only `mediatek,geniezone-hyp` is disabled-as-a-class;
-   the DTB carries no dead board variants worth stripping, unlike the module axis (14 D
-   modules).
+1. **No device-tree gap except one.** 577 of 580 compatibles resolve to a documented or justified class. The 3 `E` rows are one subsystem: `arm,mali-valhall`, `mediatek,g3d_brisket`, `mediatek,mali`. The DT axis therefore independently confirms the kernel axis: the active Mali Valhall KMD has no owning component. Decision recorded in [`../MISSING-COVERAGE.md`](../MISSING-COVERAGE.md): add `MALI-GPU-KERNEL` (PARTIAL, class A).
+2. **The DT axis and module axis agree on the charging stack.** 18 PMIC charging/auxadc sub-nodes (for example `mediatek,charger`, `mediatek,mt6375-tcpc`, `mediatek,charger,hvbp`) resolve through family rules rather than a pack quoting them. Same symptom as conclusion 4 of the kernel axis: the charging stack is covered by several packs and by none of them as a whole.
+3. **`DTB-DTBO` (PARTIAL) does not inventory the tree it owns.** After the narrowest-scope rule it ends up owning only 2 of 580 compatibles; everything else is claimed by whichever investigation pack happened to need that node, travels with a driver, or falls into a platform-internals family. The reproducible artifact exists and is good (merged DTS + DTBO table + dtc logs), but node-level ownership lives in nobody's inventory - and this table is its natural home.
+4. **The display and camera pipes are carried, not documented.** `MEDIATEK-DRM` owns 48 display-pipeline compatibles and `CAMERA-HAL-ISP` 38 camera-pipe compatibles as class B/C: they travel with the vendor DDI/mtkcam drivers. That is the right call for a same-BSP port, but it must stay an explicit decision: a custom display path (or any ISP change) would turn each of those rows into real work, which is exactly why they are recorded per row rather than summarised away.
+5. **Research-note-only coverage is resolved but not owned.** 42 compatibles (SMI/APU/display IOMMU banks, TUI, PMIC charger/auxadc, modem and display platform nodes) were only quoted inside phase-4 investigation notes; the audit resolved each to a named subsystem through an explicit rule instead of inventing a pseudo-component. Pack inventories still have to adopt them.
+6. **Legacy/inert payload is small.** 4 compatibles are class D - the driverless reference-board TDDI/fingerprint nodes - against 15 dead modules on the module axis. The live tree carries no dead board variant worth stripping.
 
 ## Follow-ups produced by this axis
 
-- decide the GPU question once for both axes and record it (A with a new pack, or C with a
-  written justification);
-- move the 68 class-A "quoted by a pack" rows into that pack's inventory (or into
-  `DTB-DTBO/notes/`) so device-tree ownership is machine-checkable the way module ownership
-  now is;
-- promote the 18 `research:sensors` rows into the sensor packs' inventories;
+- create `MALI-GPU-KERNEL` (decision recorded in `../MISSING-COVERAGE.md`) and move the 3 `E` rows onto it;
+- move the 69 class-A "quoted by a pack" rows into that pack's inventory (or into `DTB-DTBO/notes/`) so device-tree ownership is machine-checkable the way module ownership now is;
+- promote the 42 `research-family` rows into the owning packs' inventories, above all the sensor/SMI and PMIC-charger groups;
 - add the charging cross-pack view requested by the kernel axis.

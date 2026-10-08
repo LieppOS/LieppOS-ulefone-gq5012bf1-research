@@ -2,46 +2,65 @@
 
 Audit date: 2026-10-07
 
-`components.tsv` is generated from the actual canonical workspace folders, not from the old typed totals. The measured current workspace is:
+`components.tsv` is generated from the actual canonical workspace folders, not from
+the old typed totals. The measured current workspace is:
 
 | Status | Count |
 |---|---:|
-| DONE | 85 |
-| PARTIAL | 45 |
+| DONE | 94 |
+| PARTIAL | 36 |
 | BLOCKED | 3 |
 | TODO | 0 |
 | **Total** | **133** |
 
-This supersedes the 71/59/3 snapshot in the original audit request. The total stayed 133 while later, independently verified closures moved nine folders from PARTIAL to DONE.
+This supersedes the 71/59/3 snapshot in the original audit request. The total stayed
+133 while 23 folders have since moved from PARTIAL to DONE through
+independently verified closures; each moved folder carries its own closure README
+with measured parity evidence.
 
 ## PARTIAL classification
 
 | Class | Meaning | Count |
 |---|---|---:|
-| A | actionable / statically closeable | 12 |
-| B | kernel/source closed, broader proprietary scope remains | 14 |
+| A | actionable / statically closeable | 7 |
+| B | kernel/source closed, broader proprietary scope remains | 12 |
 | C | proprietary boundary | 8 |
-| D | hardware/runtime/teardown gated | 5 |
+| D | hardware/runtime/teardown gated | 4 |
 | E | stale/duplicate/wrong PARTIAL scope | 0 |
-| F | intentional umbrella/tracking scope | 6 |
+| F | intentional umbrella/tracking scope | 5 |
 
-Every PARTIAL row in `components.tsv` has an explicit boundary, next action, difficulty and dependency list. The SCP-owned physical sensors are class C—not missing Linux drivers—because their register drivers and calibration live in the signed SCP image.
+Every PARTIAL row in `components.tsv` has an explicit boundary, next action,
+difficulty and dependency list, and each is expanded individually in
+[PARTIAL-TRIAGE.md](../PARTIAL-TRIAGE.md). The SCP-owned physical sensors are class
+C—not missing Linux drivers—because their register drivers and calibration live in
+the signed SCP image.
 
 ## DONE audit
 
-DONE is interpreted as **named-scope static closure**, never as a claim that every proprietary firmware/HAL/runtime behavior is open. The module, DT, HAL/service and firmware axes were joined back to every component row to expose boundaries.
+DONE is interpreted as **named-scope static closure**, never as a claim that every
+proprietary firmware/HAL/runtime behavior is open. The module, DT, HAL/service,
+firmware and hardware axes were joined back to every component row to expose
+boundaries.
 
-No evidence justifies an automatic DONE → PARTIAL move in this audit. Several DONE rows still have runtime or physical follow-up, but their READMEs explicitly exclude it from the closed static scope. Examples include MediaTek DRM runtime validation, microSD insertion/format behavior and RT5133 physical rail/BOM confirmation. These must remain visible as boundaries; they are not silently treated as source gaps.
+No evidence justifies an automatic DONE → PARTIAL move in this audit. Several DONE
+rows still have runtime or physical follow-up, but their READMEs explicitly exclude
+it from the closed static scope. Examples include MediaTek DRM runtime validation,
+microSD insertion/format behavior and RT5133 physical rail/BOM confirmation. These
+must remain visible as boundaries; they are not silently treated as source gaps.
 
-Taxonomy quality is a separate question. Some DONE folders are valid findings but poor canonical ownership boundaries (GZ per-module children, negative-absence findings, USB3 feasibility and the `vendor.all.modules.ready` property). They are recommendations in `PROPOSED-CHANGES.md`; no folder was moved or deleted.
+Taxonomy quality is a separate question. Some DONE folders are valid findings but
+poor canonical ownership boundaries (GZ per-module children, negative-absence
+findings, USB3 feasibility and the `vendor.all.modules.ready` property). They are
+recommendations in [PROPOSED-CHANGES.md](../PROPOSED-CHANGES.md); no folder was
+moved or deleted by this audit.
 
 ## BLOCKED audit
 
-All three blockers still exist:
+All 3 blockers still exist:
 
-- `RF-ANTENNAS`: requires teardown, schematic/board view, continuity or RF measurements.
-- `TRUSTKERNEL-ABI-ISLAND`: required stock ABI functions are absent from available source/donors; the private vendor island remains unavailable.
-- `TRUSTKERNEL-TEE`: TA/helper semantics and authorized secure-world runtime evidence remain unavailable. Closing TKCORE and the MicroArray normal-world client did not reconstruct the signed secure world.
+- `RF-ANTENNAS`: Requires teardown, schematic/board view, continuity or RF measurements.
+- `TRUSTKERNEL-ABI-ISLAND`: Required stock ABI functions are absent from available donor/source; private vendor island is unavailable.
+- `TRUSTKERNEL-TEE`: Private TA/helper semantics and authorized secure-world runtime evidence are unavailable.
 
 None should be moved automatically.
 
@@ -56,4 +75,5 @@ None should be moved automatically.
 - best available research-repository report path;
 - recommended taxonomy action, if any.
 
-The generator fails if any current PARTIAL lacks a curated A–F decision. This prevents a newly added/moved folder from silently disappearing from triage.
+The generator fails if any current PARTIAL lacks a curated A–F decision. This
+prevents a newly added/moved folder from silently disappearing from triage.

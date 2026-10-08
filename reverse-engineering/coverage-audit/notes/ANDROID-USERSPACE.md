@@ -52,6 +52,7 @@ Ownership is concentrated in existing integration scopes (`ANDROID-INIT`, `VINTF
 | Wi-Fi | 5 |
 | NFC | 3 |
 | Connectivity | 2 |
+| Fingerprint | 1 |
 | USB | 1 |
 
 448 are device/vendor proprietary boundaries (`B`); 90 are generic/system helpers (`C`). Same-name payloads are already represented in the current vendor/device trees for 388 rows; 150 are stock-only. Kernel closure alone is explicitly **not** claimed sufficient for the 448 proprietary rows. They must either be retained as compatible blobs or replaced through a separately demonstrated userspace contract.

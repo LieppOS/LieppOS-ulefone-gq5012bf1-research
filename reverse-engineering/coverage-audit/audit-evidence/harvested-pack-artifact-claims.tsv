@@ -1,6 +1,4 @@
 scope	tier	artifact	family	source_file	line
-BOOT-IMAGES	pack	4096	binary	Reverse Engineer - PARTIAL/BOOT-IMAGES/README.md	- `init_boot`: header v4, `kernel=0`, ramdisk at offset 4096. Slot A carries a 2,555,526-byte
-BOOT-IMAGES	pack	4096	binary	Reverse Engineer - PARTIAL/BOOT-IMAGES/README.md	- `vendor_boot`: header v4, page 4096, `header_size=2128`, DTB 342,395 bytes, ramdisk table
 notes	scope	4096	binary	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/notes/camera-hal-map.md	AE fps ranges {10,15,20,24,5-30,30}. Camera 0 pixel array 4096×3072
 notes	scope	4096	binary	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/notes/imx989.md	| custom7 (idx 11) | 4096×2304 @60 | imx989 custom23 (243/269) | new PLL (0x0307/030B/030D/030E/030F), line/frame length, 0x38xx PD/readout timing |
 notes	scope	4096	binary	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/notes/imx989.md	preview/capture 4096×3072@30 (RAW10 + PD VC 0x30 4096×768),
@@ -24,7 +22,6 @@ s5kjn1main2	scope	cache	binary	ulefone-gq5012bf1-research/reverse-engineering/ca
 BOOT-CONTROL-SLOTS	pack	checkpoint	binary	Reverse Engineer - DONE/BOOT-CONTROL-SLOTS/README.md	tiny checkpoint markers under first-stage-mounted `/metadata/lieppos-slotb/` (early-init, fs,
 UFS-STORAGE	pack	checkpoint	binary	Reverse Engineer - DONE/UFS-STORAGE/README.md	**2026-10-06 closure:** device identity is proven from the existing PL/LK capture — Micron `MT512GBCAV8U31` uMCP, 512 GB, UFS **3.1** (`wSpecVersion 0
 UFS-STORAGE	pack	checkpoint	binary	Reverse Engineer - DONE/UFS-STORAGE/README.md	- Largest: `checkpoint-storage-and-firststage-fstab.txt` (29 KB)
-VENDOR-PROPERTIES	pack	checkpoint	binary	Reverse Engineer - PARTIAL/VENDOR-PROPERTIES/README.md	| `source/device.mk` | `PRODUCT_VENDOR_PROPERTIES += ro.vndk.version=34`; `PRODUCT_USE_DYNAMIC_PARTITIONS := true`; `PRODUCT_SHIPPING_API_LEVEL := 34`
 AW2013-RGB-LED	pack	copy	binary	Reverse Engineer - DONE/AW2013-RGB-LED/README.md	| [`phase4-leds-rgb-aw2013-RED.md`](notes/phase4-leds-rgb-aw2013-RED.md) | 190 l | Phase 4 — RED (Reverse-Engineering Donor) for `leds_rgb_aw2013.ko` 
 CAMERA-HAL-ISP	pack	copy	binary	Reverse Engineer - PARTIAL/CAMERA-HAL-ISP/README.md	Authoritative copy: `ulefone-gq5012bf1-research/reverse-engineering/camera-stack/`
 CAMERA-IMX989	pack	copy	binary	Reverse Engineer - DONE/CAMERA-IMX989/README.md	Authoritative copy: `ulefone-gq5012bf1-research/reverse-engineering/camera-stack/`
@@ -35,6 +32,7 @@ MICROSD	pack	copy	binary	Reverse Engineer - DONE/MICROSD/notes/README.md	Keep a 
 MTU3-SSUSB	pack	copy	binary	Reverse Engineer - DONE/MTU3-SSUSB/notes/controller/README.md	| `xhci-mtk-hcd-v2.ko` | 357/357 | 440/440 | 202/202 | (see abi tsv) | 6462/6462 | 68/68 bar build-id | ALPS `drivers/misc/mediatek/usb/usb_xhci/` (th
 NVRAM-CALIBRATION	pack	copy	binary	Reverse Engineer - PARTIAL/NVRAM-CALIBRATION/README.md	| `nvram` | `/nvram` | raw `emmc` | shared/dangerous — factory NV | never wipe, never copy, never regenerate |
 NVRAM-CALIBRATION	pack	copy	binary	Reverse Engineer - PARTIAL/NVRAM-CALIBRATION/README.md	EEPROM). Modem NV readers/paths are now mapped; never copy or inspect their payload.
+PARTITION-OWNERSHIP	pack	copy	binary	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	1. its slotting (A/B, dual copy, or single);
 README.md	scope	copy	binary	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/README.md	`ov32b40` driver) — copy-paste placeholders; HAL never exposes 1200/2400 fps
 README.md	scope	copy	binary	ulefone-gq5012bf1-research/reverse-engineering/modem/README.md	Do not modify/re-sign the modem image and do not copy/read per-device modem NV. Exact Linux parity
 README.md	scope	copy	binary	ulefone-gq5012bf1-research/reverse-engineering/power-charging/README.md	- `get_boot_mode_from_dts()` is a copy of the log_store helper. It is stored
@@ -46,17 +44,16 @@ s5kjn1	scope	copy	binary	ulefone-gq5012bf1-research/reverse-engineering/camera-s
 s5kjn1main2	scope	copy	binary	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/s5kjn1main2/README.md	Suggested hardening (behaviour change, breaks parity): clamp the copy to the
 sc8571	scope	copy	binary	ulefone-gq5012bf1-research/reverse-engineering/power-charging/sc8571/README.md	| source | `source/sc8571_charger.c` (copy of `kernel_device_modules-6.1/drivers/power/supply/sc8571_charger.c`, DM commit `7846896`) |
 sc8571	scope	copy	binary	ulefone-gq5012bf1-research/reverse-engineering/power-charging/sc8571/README.md	copy is kept in `donor/sc8541-lkml-2025-10-13.patch.txt`. It matches the stock
+VENDOR-PROPERTIES	pack	em_hidl	binary	Reverse Engineer - DONE/VENDOR-PROPERTIES/README.md	* 179 `ro.vendor.*` MTK feature flags (read by `mtkfusionrild`, `em_hidl`,
 AVB-SIGNING-CHAIN	pack	factory	binary	Reverse Engineer - DONE/AVB-SIGNING-CHAIN/README.md	`system`, `system_ext`, `product`, `vendor` verify with SHA1 hashtree — i.e. the factory EROFS
 AVB-SIGNING-CHAIN	pack	factory	binary	Reverse Engineer - DONE/AVB-SIGNING-CHAIN/README.md	`system_ext`, yet none of those public keys exist in the factory V15 `init_boot` ramdisk, the current
 AW883XX-SPEAKER-AMP	pack	factory	binary	Reverse Engineer - DONE/AW883XX-SPEAKER-AMP/README.md	factory data in NVRAM written by `smartpa_nvtest`. Nothing about the driver is
-BOOT-IMAGES	pack	factory	binary	Reverse Engineer - PARTIAL/BOOT-IMAGES/README.md	- Stock AOSP recovery cpio per slot: A 33,566,405 bytes, B 4,714,551 bytes; factory V15 recovery
 MICROARRAY-FP-TEE	pack	factory	binary	Reverse Engineer - DONE/MICROARRAY-FP-TEE/README.md	gets `ioctl read write map open`, `factory` gets `ioctl read write open`.
 NVRAM-CALIBRATION	pack	factory	binary	Reverse Engineer - PARTIAL/NVRAM-CALIBRATION/README.md	- `/mnt/vendor/nvdata/md_cmn` and protected factory reserves `/mnt/vendor/protect_{f,s}/md`;
 NVRAM-CALIBRATION	pack	factory	binary	Reverse Engineer - PARTIAL/NVRAM-CALIBRATION/README.md	| `nvram` | `/nvram` | raw `emmc` | shared/dangerous — factory NV | never wipe, never copy, never regenerate |
-PARTITION-OWNERSHIP	pack	factory	binary	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| factory/NV/calibration | `nvram`, `nvdata`, `nvcfg`, `persist`, `protect1`, `protect2` | read-only; backup required before any authorized service ac
-VENDOR-PROPERTIES	pack	factory	binary	Reverse Engineer - PARTIAL/VENDOR-PROPERTIES/README.md	factory baseline.
-VINTF-HAL-MANIFEST	pack	factory	binary	Reverse Engineer - PARTIAL/VINTF-HAL-MANIFEST/README.md	executables, 13 references whose payload is absent from the stock image (factory-mode or
-VINTF-HAL-MANIFEST	pack	factory	binary	Reverse Engineer - PARTIAL/VINTF-HAL-MANIFEST/README.md	- Resolve the 13 absent-payload service references (decide: alternate BOM, factory-only, or gap).
+PARTITION-OWNERSHIP	pack	factory	binary	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `para` | `libsysenv_system.so` (sysenv), `ccci_rpcd`, `meta_tst`, `factory_init.rc` | bootloader message/env area shared with the modem RPC and fact
+PARTITION-OWNERSHIP	pack	factory	binary	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `proinfo` | `factory`, `meta_tst`, `factory_init.rc`/`meta_init.rc` | factory/META product-info, written only in factory/META mode |
+VINTF-HAL-MANIFEST	pack	factory	binary	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	| factory/META boot mode only (`factory_init*.rc`, `meta_init*.rc`) | `spm_script`, `thermal_manager`, `permission_check` |
 notes	scope	factory	binary	ulefone-gq5012bf1-research/reverse-engineering/sensors/notes/yft-deltas.md	"ODM ""hardware info"" node used by Ulefone's factory/engineering menus."
 MTU3-SSUSB	pack	false	binary	Reverse Engineer - DONE/MTU3-SSUSB/notes/controller/README.md	- **leaving host**: `is_host = false`, `ssusb_set_vbus(0)` (no MTU3 vbus supply, so a no-op), a 100 ms wait for host-device removal (USB audio), depop
 controller	scope	false	binary	ulefone-gq5012bf1-research/reverse-engineering/usb/controller/README.md	- **leaving host**: `is_host = false`, `ssusb_set_vbus(0)` (no MTU3 vbus supply, so a no-op), a 100 ms wait for host-device removal (USB audio), depop
@@ -68,25 +65,25 @@ module-loading	scope	init.insmod.sh	binary	ulefone-gq5012bf1-research/reverse-en
 module-loading	scope	init.insmod.sh	binary	ulefone-gq5012bf1-research/reverse-engineering/boot/module-loading/parity/README.md	- `init.insmod.sh`, `init.insmod.mt6878.cfg`, `init.mtkgki.rc`, `init.touch.rc` are stock
 KEYSTORE-VOLD-KEYMINT	pack	keymaster	binary	Reverse Engineer - PARTIAL/KEYSTORE-VOLD-KEYMINT/README.md	What the KeyMint / keymaster / gatekeeper / vold-FBE implementation surface actually is (which AIDL services, which TEE transport, which RPMB paths) i
 TRUSTKERNEL-TEE	pack	keymaster	binary	Reverse Engineer - BLOCKED/TRUSTKERNEL-TEE/README.md	The whole TrustKernel TEE chain (tz_system, tbase, drm, keymaster TA, rpmb proxy) as one integrated dependency graph with a defined exit path.
+VINTF-HAL-MANIFEST	pack	meta	binary	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	| legacy GNSS daemon (MediaTek `mnld` is the GNSS engine) | `gnss_daemon` (common + meta rc) |
 INIT-INSMOD	pack	modprobe	binary	Reverse Engineer - DONE/INIT-INSMOD/README.md	- **Proven:** Every stock init-driven insertion path inventoried (`notes/init-insmod-map.tsv`): first-stage list, `insmod_sh` (`init.insmod.sh`: `modp
 MTK-MODULE-LOADER	pack	modprobe	binary	Reverse Engineer - DONE/MTK-MODULE-LOADER/README.md	"- **Proven:** No loader `.ko` exists. The ""MTK module loader"" is the userspace chain `init.mtkgki.rc` (early-init: ready=0, bootprof Load_Module_START"
 MTK-MODULE-LOADER	pack	modprobe	binary	Reverse Engineer - DONE/MTK-MODULE-LOADER/README.md	What implements stock GQ5012BF1 kernel-module loading (no loader .ko: AOSP first-stage init + MTK insmod_sh over AOSP modprobe), from which partitions
 VENDOR-ALL-MODULES-READY	pack	modprobe	binary	Reverse Engineer - DONE/VENDOR-ALL-MODULES-READY/README.md	- **Proven:** `vendor.all.modules.ready`: 1 (`init.mt6878.rc:25` early-init) → 0 (`init.mtkgki.rc:9`, imported later) → 1 (`insmod_sh` after both modp
 VENDOR-DLKM	pack	modprobe	binary	Reverse Engineer - PARTIAL/VENDOR-DLKM/README.md	- **Interface:** EROFS dynamic partition / modprobe
-VENDOR-PROPERTIES	pack	modprobe	binary	Reverse Engineer - PARTIAL/VENDOR-PROPERTIES/README.md	| `evidence/init.insmod.mt6878.cfg` | the init module-loader contract actually shipped: `modprobe|*` then `setprop\|vendor.all.modules.ready` — a wild
 module-loading	scope	modprobe	binary	ulefone-gq5012bf1-research/reverse-engineering/boot/module-loading/README.md	with `init.insmod.mt6878.cfg`: AOSP `modprobe -a` over `/system_dlkm/lib/modules/modules.load`
 module-loading	scope	modprobe	binary	ulefone-gq5012bf1-research/reverse-engineering/boot/module-loading/README.md	after both modprobe passes); `init.mt6878.rc` `post-fs-data` waits for it with no timeout.
 notes	scope	modprobe	binary	ulefone-gq5012bf1-research/reverse-engineering/sensors/notes/scp-sensorhub-architecture.md	load is dependency-resolved through `modules.dep` (modprobe), so the file order
 gnss	scope	mtk_agpsd	binary	ulefone-gq5012bf1-research/reverse-engineering/connectivity/gnss/README.md	* Time injection / assistance: `mnld` + `mtk_agpsd` (NTP/SUPL/LPP/RTCM handlers); kernel
 RADIO-HAL-RIL	pack	mtkfusionrild	binary	Reverse Engineer - PARTIAL/RADIO-HAL-RIL/README.md	- **Still proprietary:** `mtkfusionrild`, `librilfusion`, `libmtk-ril`, `libmtkmipc-ril`, MIPC request/response implementation
 README.md	scope	mtkfusionrild	binary	ulefone-gq5012bf1-research/reverse-engineering/modem/README.md	-> mtkfusionrild + librilfusion + libmtk[mipc]-ril
+VENDOR-PROPERTIES	pack	mtkfusionrild	binary	Reverse Engineer - DONE/VENDOR-PROPERTIES/README.md	* 179 `ro.vendor.*` MTK feature flags (read by `mtkfusionrild`, `em_hidl`,
 AB-SUPER-GEOMETRY	pack	record	binary	Reverse Engineer - DONE/AB-SUPER-GEOMETRY/README.md	3. `avbtool info_image` on each dump to record hash-tree/hashtree descriptors, salt, digest and
 CAMERA-VCMS	pack	record	binary	Reverse Engineer - DONE/CAMERA-VCMS/scripts/README.md	| `decode-vcm-list.py` | decodes `vcm_list_0..5` of the stock `libcameracustom.lens.so` (record layout derived from the stock `GetVcmDriverName` disas
 FT3680-TOUCH	pack	record	binary	Reverse Engineer - PARTIAL/FT3680-TOUCH/notes/README.md	"| selection record | `upgrade_setting_list[] = { 0, """", fw_file, sizeof(fw_file) }` |"
 HYNITRON-REAR-TOUCH	pack	record	binary	Reverse Engineer - DONE/HYNITRON-REAR-TOUCH/README.md	- **Old RED record:** 8/65 byte-identical, 9/65 size-equal, `.text` 8364 vs
 IR-BLASTER	pack	record	binary	Reverse Engineer - DONE/IR-BLASTER/README.md	## Authoritative research record
 MICROPHONES	pack	record	binary	Reverse Engineer - PARTIAL/MICROPHONES/README.md	| fast / unprocessed / voice performance | 2 | distinct record profiles, no uplink offload |
-MT6375-CHARGER	pack	record	binary	Reverse Engineer - PARTIAL/MT6375-CHARGER/README.md	Iteration ladder for the record: 18 436 (RED, +8) → FOD 18 520 → PD IRQ 18 508 →
 NVRAM-CALIBRATION	pack	record	binary	Reverse Engineer - PARTIAL/NVRAM-CALIBRATION/README.md	@ `a5b0b8c`. This closes the modem *ownership/interface* question, not the private record schema.
 NVRAM-CALIBRATION	pack	record	binary	Reverse Engineer - PARTIAL/NVRAM-CALIBRATION/README.md	NV path/consumer ownership map, and dual removable-SIM DSDS configuration. The private record schema,
 README.md	pack	record	binary	Reverse Engineer - TODO/README.md	Hardware identification alone does not qualify as meaningful reconstruction. A TODO README may record known identity and existing evidence, but must c
@@ -104,18 +101,17 @@ MTU3-SSUSB	pack	root	binary	Reverse Engineer - DONE/MTU3-SSUSB/notes/usb-README/
 README.md	scope	root	binary	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/README.md	DW9781C, which is the root cause of `availableOpticalStabilization=[0]`.
 README.md	scope	root	binary	ulefone-gq5012bf1-research/reverse-engineering/usb/README.md	**USB3 verdict: D, the path is not present.** The MT6878 SSUSB instance reports 0 USB3 ports from its own capability registers (`usb3-drd: 0`, `IP ver
 USB3-FEASIBILITY	pack	root	binary	Reverse Engineer - DONE/USB3-FEASIBILITY/README.md	**2026-10-05 closure:** RESOLVED NEGATIVE (class D: path not present): the MT6878 SSUSB instance reports zero USB3 ports from its own capability regis
-VINTF-HAL-MANIFEST	pack	root	binary	Reverse Engineer - PARTIAL/VINTF-HAL-MANIFEST/README.md	`proprietary-files.txt` starts from every vendor/odm manifest and hardware init root, then adds the
 controller	scope	root	binary	ulefone-gq5012bf1-research/reverse-engineering/usb/controller/README.md	- **xHCI** (`xhci-mtk.c`): created only while host. `allow_single_roothub = 1`, so with zero USB3 Supported-Protocol ports only the USB2 HCD is regist
 eeprom	scope	root	binary	ulefone-gq5012bf1-research/reverse-engineering/camera/eeprom/scripts/README.md	| `build.sh` | isolated rebuild: `~/kernel-work/gki-12901745-workspace/lieppos/eeprom/trees/mtkcam` = `git clone --shared` of the mtkcam reconstructio
 external	scope	root	binary	ulefone-gq5012bf1-research/reverse-engineering/usb/external/README.md	└─ HOST: xHCI child 11200000.xhci0 → usb1 root port 1
 internal-usb	scope	root	binary	ulefone-gq5012bf1-research/reverse-engineering/thermal-camera/internal-usb/README.md	480 Mbit/s directly on root port `1-1` → built-in `uvcvideo` binds, then the app's bundled
+PARTITION-OWNERSHIP	pack	store	binary	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	* No Android component references a rollback store. Stock userspace has no
 notes	scope	store	binary	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/notes/dw9781c-ois.md	"* **NVM write hazard:** `dw9781c_init()` writes a ""store"" sequence"
 INIT-INSMOD	pack	u:r:vendor_modprobe:s0	binary	Reverse Engineer - DONE/INIT-INSMOD/README.md	- **Proven:** Every stock init-driven insertion path inventoried (`notes/init-insmod-map.tsv`): first-stage list, `insmod_sh` (`init.insmod.sh`: `modp
 AB-SUPER-GEOMETRY	pack	userdata	binary	Reverse Engineer - DONE/AB-SUPER-GEOMETRY/README.md	- `userdata` and `scratch` are F2FS; `/data` is mounted with `inlinecrypt` at
 AB-SUPER-GEOMETRY	pack	userdata	binary	Reverse Engineer - DONE/AB-SUPER-GEOMETRY/README.md	- `userdata` — one encrypted filesystem for both slots.
 MICROSD	pack	userdata	binary	Reverse Engineer - DONE/MICROSD/README.md	**2026-10-06 closure:** the contract is fully recorded and internally consistent. Stock first-stage fstab carries `/devices/platform/soc/11240000.mmc*
 MICROSD	pack	userdata	binary	Reverse Engineer - DONE/MICROSD/README.md	- **Stock contract:** vold-managed `sdcard1:auto`, filesystem type auto-detected, encryption tied to userdata policy
-PARTITION-OWNERSHIP	pack	userdata	binary	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| encryption/user state | `userdata`, `metadata` | never wipe or regenerate during slot development |
 AW883XX-SPEAKER-AMP	pack	AW_DSP.bin	firmware	Reverse Engineer - DONE/AW883XX-SPEAKER-AMP/README.md	SKTune (`AW_DSP.bin`, `awinic_params.bin`) arrives via the audio HAL/effect and
 bluetooth	scope	BT_FW.cfg	firmware	ulefone-gq5012bf1-research/reverse-engineering/connectivity/bluetooth/README.md	BT_FW.cfg vendor cmds, /proc/stpbt/bt_fw_version → persist.vendor.connsys.* props
 bluetooth	scope	BT_FW.cfg	firmware	ulefone-gq5012bf1-research/reverse-engineering/connectivity/bluetooth/README.md	* `BT_FW.cfg` (vendor/firmware): coex keys all 0, `bt_antswap[6878][6631]` (not matched),
@@ -149,6 +145,7 @@ README.md	scope	audio.primary.mt6878.so	legacy-hw	ulefone-gq5012bf1-research/rev
 AW883XX-SPEAKER-AMP	pack	awinic.audio.effect.so	legacy-hw	Reverse Engineer - DONE/AW883XX-SPEAKER-AMP/README.md	`libaudiosmartpamtk.so`; the SKTune effect `awinic.audio.effect.so` applies its
 IR-BLASTER	pack	consumerir.common.so	legacy-hw	Reverse Engineer - DONE/IR-BLASTER/README.md	`consumerir.common.so` backend
 IR-BLASTER	pack	consumerir.common.so	legacy-hw	Reverse Engineer - DONE/IR-BLASTER/README.md	-> consumerir.common.so (MTK IR HAL)
+MADEV-FINGERPRINT	pack	microarray.fingerprint.default.so	legacy-hw	Reverse Engineer - DONE/MADEV-FINGERPRINT/README.md	→ microarray.fingerprint.default.so → libfprint-x64.so (TEEC_*, /dev/madev0)
 MICROARRAY-FP-TEE	pack	microarray.fingerprint.default.so	legacy-hw	Reverse Engineer - DONE/MICROARRAY-FP-TEE/README.md	Consumers are `microarray.fingerprint.default.so` and `libfprint-x64.so`.
 CO5300-REAR-DISPLAY	pack	tinylcd.default.so	legacy-hw	Reverse Engineer - DONE/CO5300-REAR-DISPLAY/README.md	- **Stock artifact:** `vendor_dlkm/lib/modules/spi_tiny_co5300_lcd.ko` (SHA-256 `39eecad8…9742`) plus `tinylcd.default.so` HAL
 CO5300-REAR-DISPLAY	pack	tinylcd.default.so	legacy-hw	Reverse Engineer - DONE/CO5300-REAR-DISPLAY/README.md	- `tinylcd.default.so` (1×)
@@ -157,18 +154,27 @@ notes	scope	vendor.mediatek.hardware.camera.isphal_aidl@1.0-impl.so	legacy-hw	ul
 gnss	scope	vendor.mediatek.hardware.gnss-impl.so	legacy-hw	ulefone-gq5012bf1-research/reverse-engineering/connectivity/gnss/README.md	(+ android.hardware.gnss-impl-mediatek.so, vendor.mediatek.hardware.gnss-impl.so;
 AVB-SIGNING-CHAIN	pack	boot_a	partition	Reverse Engineer - DONE/AVB-SIGNING-CHAIN/README.md	- `boot_a`/`boot_b` and `dtbo_a`/`dtbo_b` are byte-identical, so the signed kernel and DTBO hashes are
 BOOT-CONTROL-SLOTS	pack	boot_a	partition	Reverse Engineer - DONE/BOOT-CONTROL-SLOTS/README.md	- `boot_a`, `vendor_boot_a`, `init_boot_a`, `dtbo_a` and all A `vbmeta*` live on separate physical
+BOOT-IMAGES	pack	boot_a	partition	Reverse Engineer - DONE/BOOT-IMAGES/README.md	| boot_a / boot_b | identical (16 506 880 B) | footer digest **matches** (signed footer, chained `boot`, rollback location 3) | chain descriptor |
 AVB-SIGNING-CHAIN	pack	boot_b	partition	Reverse Engineer - DONE/AVB-SIGNING-CHAIN/README.md	- `boot_a`/`boot_b` and `dtbo_a`/`dtbo_b` are byte-identical, so the signed kernel and DTBO hashes are
-PARTITION-OWNERSHIP	pack	boot_para	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| poorly documented MTK reserves | `para`, `boot_para`, `expdb`, `proinfo`, `otp` | purpose not closed; treat as read-only |
+BOOT-IMAGES	pack	boot_b	partition	Reverse Engineer - DONE/BOOT-IMAGES/README.md	| boot_a / boot_b | identical (16 506 880 B) | footer digest **matches** (signed footer, chained `boot`, rollback location 3) | chain descriptor |
+PARTITION-OWNERSHIP	pack	boot_para	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `boot_para`, `dram_para`, `flashinfo`, `md_sec`, `bootloader1/2` | none | preloader/lk-owned |
+PARTITION-OWNERSHIP	pack	dram_para	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `boot_para`, `dram_para`, `flashinfo`, `md_sec`, `bootloader1/2` | none | preloader/lk-owned |
 AVB-SIGNING-CHAIN	pack	dtbo_a	partition	Reverse Engineer - DONE/AVB-SIGNING-CHAIN/README.md	- `boot_a`/`boot_b` and `dtbo_a`/`dtbo_b` are byte-identical, so the signed kernel and DTBO hashes are
 BOOT-CONTROL-SLOTS	pack	dtbo_a	partition	Reverse Engineer - DONE/BOOT-CONTROL-SLOTS/README.md	- `boot_a`, `vendor_boot_a`, `init_boot_a`, `dtbo_a` and all A `vbmeta*` live on separate physical
+BOOT-IMAGES	pack	dtbo_a	partition	Reverse Engineer - DONE/BOOT-IMAGES/README.md	| dtbo_a / dtbo_b | — | — | vbmeta hash **matches** (48 320 B) |
 DTB-DTBO	pack	dtbo_a	partition	Reverse Engineer - PARTIAL/DTB-DTBO/README.md	- **Stock artifact:** Stock vendor_boot DTB and dtbo_a/b
 AVB-SIGNING-CHAIN	pack	dtbo_b	partition	Reverse Engineer - DONE/AVB-SIGNING-CHAIN/README.md	- `boot_a`/`boot_b` and `dtbo_a`/`dtbo_b` are byte-identical, so the signed kernel and DTBO hashes are
-PARTITION-OWNERSHIP	pack	expdb	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| poorly documented MTK reserves | `para`, `boot_para`, `expdb`, `proinfo`, `otp` | purpose not closed; treat as read-only |
+BOOT-IMAGES	pack	dtbo_b	partition	Reverse Engineer - DONE/BOOT-IMAGES/README.md	| dtbo_a / dtbo_b | — | — | vbmeta hash **matches** (48 320 B) |
+PARTITION-OWNERSHIP	pack	expdb	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `expdb` | `aee_aedv64_v2` | AEE exception database |
+PARTITION-OWNERSHIP	pack	flashinfo	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `boot_para`, `dram_para`, `flashinfo`, `md_sec`, `bootloader1/2` | none | preloader/lk-owned |
 BOOT-CONTROL-SLOTS	pack	init_boot_a	partition	Reverse Engineer - DONE/BOOT-CONTROL-SLOTS/README.md	- `boot_a`, `vendor_boot_a`, `init_boot_a`, `dtbo_a` and all A `vbmeta*` live on separate physical
+BOOT-IMAGES	pack	init_boot_a	partition	Reverse Engineer - DONE/BOOT-IMAGES/README.md	| init_boot_a | identical repack | **does not match vbmeta_a** | modified: KernelSU LKM patch (`init` → KernelSU loader, `init.real`, `kernelsu.ko`) |
 BOOT-CONTROL-SLOTS	pack	init_boot_b	partition	Reverse Engineer - DONE/BOOT-CONTROL-SLOTS/README.md	Lineage descriptors in `vbmeta_system_b`/`vbmeta_vendor_b`, `init_boot_b` ramdisk carrying the
+BOOT-IMAGES	pack	init_boot_b	partition	Reverse Engineer - DONE/BOOT-IMAGES/README.md	| init_boot_b | identical (2 351 104 B; `--os_version 15.0.0 --os_patch_level 2026-07`) | matches | vbmeta_b hash **matches** |
 AB-SUPER-GEOMETRY	pack	lk_b	partition	Reverse Engineer - DONE/AB-SUPER-GEOMETRY/README.md	17 subordinate `_b` firmware partitions plus `lk_b` were verified byte-exact against the
 FIRMWARE-INVENTORY	pack	lk_b	partition	Reverse Engineer - PARTIAL/FIRMWARE-INVENTORY/README.md	repaired TIER3 slot-B chain is intact — `lk_b` 16,777,216 bytes
 MODEM-FIRMWARE	pack	mcf_ota_a	partition	Reverse Engineer - PARTIAL/MODEM-FIRMWARE/README.md	databases. LK loads/authenticates it and reports 28 successful CCCI tags. `mcf_ota_a/b` contains
+PARTITION-OWNERSHIP	pack	md_sec	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `boot_para`, `dram_para`, `flashinfo`, `md_sec`, `bootloader1/2` | none | preloader/lk-owned |
 AB-SUPER-GEOMETRY	pack	metadata	partition	Reverse Engineer - DONE/AB-SUPER-GEOMETRY/README.md	- `super` is one block device (`/dev/block/sdc75`) of **9,663,676,416 bytes**, metadata version 10.2,
 AB-SUPER-GEOMETRY	pack	metadata	partition	Reverse Engineer - DONE/AB-SUPER-GEOMETRY/README.md	header flags `virtual_ab_device,unknown_flag_bit_1`, metadata slot count 3, and the same layout is
 AC020-UVC	pack	metadata	partition	Reverse Engineer - DONE/AC020-UVC/README.md	- **Stock artifacts:** M170infisens / M170infDlp / FactoryMode APK native libs (`libAC020sdk.so`, `libircmd020.so`, `libusbuvccamera020.so`), module f
@@ -186,17 +192,14 @@ GZ-TZ-SYSTEM	pack	metadata	partition	Reverse Engineer - DONE/GZ-TZ-SYSTEM/README
 KEYSTORE-VOLD-KEYMINT	pack	metadata	partition	Reverse Engineer - PARTIAL/KEYSTORE-VOLD-KEYMINT/README.md	- **Interface:** TEE, Binder/AIDL, metadata/FBE
 KEYSTORE-VOLD-KEYMINT	pack	metadata	partition	Reverse Engineer - PARTIAL/KEYSTORE-VOLD-KEYMINT/README.md	- **Proven so far:** Recovery-side KeyMint, Gatekeeper, metadata encryption and FBE behavior are evidenced
 MICROPHONES	pack	metadata	partition	Reverse Engineer - PARTIAL/MICROPHONES/README.md	- HAL metadata reports `SPH1642HT5H_REV_B` for main (`bottom`) and sub (`back`)
-MT6375-CHARGER	pack	metadata	partition	Reverse Engineer - PARTIAL/MT6375-CHARGER/README.md	`tcpc_mt6375` consumes differ (unrecoverable name-level vendor header metadata),
 MTK-MODULE-LOADER	pack	metadata	partition	Reverse Engineer - DONE/MTK-MODULE-LOADER/README.md	"- **Proven:** No loader `.ko` exists. The ""MTK module loader"" is the userspace chain `init.mtkgki.rc` (early-init: ready=0, bootprof Load_Module_START"
 MTK-MODULE-LOADER	pack	metadata	partition	Reverse Engineer - DONE/MTK-MODULE-LOADER/README.md	What implements stock GQ5012BF1 kernel-module loading (no loader .ko: AOSP first-stage init + MTK insmod_sh over AOSP modprobe), from which partitions
 OTA-AB-UPDATE	pack	metadata	partition	Reverse Engineer - PARTIAL/OTA-AB-UPDATE/README.md	- **Architecture:** A/B + dynamic partitions + metadata + AVB
 OTA-AB-UPDATE	pack	metadata	partition	Reverse Engineer - PARTIAL/OTA-AB-UPDATE/README.md	The current `BoardConfig.mk` enables `AB_OTA_UPDATER`, metadata and AVB, and
-PARTITION-OWNERSHIP	pack	metadata	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	independent: logical metadata, group allocation and free space remain shared.
-PARTITION-OWNERSHIP	pack	metadata	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| encryption/user state | `userdata`, `metadata` | never wipe or regenerate during slot development |
 README.md	scope	metadata	partition	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/README.md	(+ libmtkcam_metastore / libmtkcam.logicalmodule = per-DRVNAME static metadata,
 README.md	scope	metadata	partition	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/README.md	* Static metadata per DRVNAME: `libmtkcam_metastore.so`
+SYSTEM-DLKM	pack	metadata	partition	Reverse Engineer - DONE/SYSTEM-DLKM/README.md	`modules.{load,dep,softdep,alias}` metadata. This closure covers their
 THERMAL-RADIOMETRY	pack	metadata	partition	Reverse Engineer - PARTIAL/THERMAL-RADIOMETRY/README.md	- **Interface:** UVC metadata, calibration tables
-VINTF-HAL-MANIFEST	pack	metadata	partition	Reverse Engineer - PARTIAL/VINTF-HAL-MANIFEST/README.md	`vendor.yft.hardware.sensorcali` 1.0/2.0 (`source/ISensorCali.hal`), with their AIDL/HIDL metadata
 dw9781c-ois	scope	metadata	partition	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/dw9781c-ois/README.md	static metadata `com.mediatek.eisfeature.availableOisModes` (0x80070004).
 dw9781c-ois	scope	metadata	partition	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/dw9781c-ois/README.md	take their type from that same metadata mapping.
 module-loading	scope	metadata	partition	ulefone-gq5012bf1-research/reverse-engineering/boot/module-loading/README.md	| `module-metadata.tsv` | every metadata file per partition: entries, sha256, semantics, consumer, phase |
@@ -208,69 +211,78 @@ CO5300-REAR-DISPLAY	pack	misc	partition	Reverse Engineer - DONE/CO5300-REAR-DISP
 CO5300-REAR-DISPLAY	pack	misc	partition	Reverse Engineer - DONE/CO5300-REAR-DISPLAY/notes/README.md	machine, misc ioctl ABI, YFT registry calls, and Hynitron gesture/power calls.
 IR-BLASTER	pack	misc	partition	Reverse Engineer - DONE/IR-BLASTER/README.md	- [`HAPTICS`](../HAPTICS/README.md) — another rc/platform-adjacent misc hardware
 MTK-PWM	pack	misc	partition	Reverse Engineer - DONE/MTK-PWM/README.md	What the MT6878 PWM provider exposes (backlight vs misc PWM clients) and which node/provider pairing is absent in our tree.
-PARTITION-OWNERSHIP	pack	misc	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| boot/security state | `misc`, `frp`, `seccfg`, rollback state | do not modify during RE |
 REAR-RUGGED-FEATURES	pack	misc	partition	Reverse Engineer - PARTIAL/REAR-RUGGED-FEATURES/README.md	| [`misc-hardware.md`](notes/misc-hardware.md) | 31 l | Miscellaneous hardware and indicators — Illumination; Camera and auxiliary peripherals; Other;
 WL2868-CAMERA-LDO	pack	misc	partition	Reverse Engineer - DONE/WL2868-CAMERA-LDO/README.md	- **Interface:** I2C, GPIO, misc device
 WL2868-CAMERA-LDO	pack	misc	partition	Reverse Engineer - DONE/WL2868-CAMERA-LDO/README.md	| [`phase4-custom-ldo-wl2868-miscdev-contract.md`](notes/phase4-custom-ldo-wl2868-miscdev-contract.md) | 36 l | WL2868 misc-device ABI — Device and fo
 fm	scope	misc	partition	ulefone-gq5012bf1-research/reverse-engineering/connectivity/fm/README.md	| transport | `/dev/fm` ioctl (misc device) → conninfra sub-driver (`conninfra_sub_drv_ops_register`) → A-die SPI/top registers; RDS/IRQ via SPI 486 |
 notes	scope	misc	partition	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/notes/isp-stack.md	| VMM regulator/notifier (ISP vcore) | `mtk-vmm-isp71-regulator`, `mtk-vmm-notifier` | `drivers/regulator`, `misc/mediatek/vmm` | 13/18, 3/3 |
 MODEM-FIRMWARE	pack	modem_a	partition	Reverse Engineer - PARTIAL/MODEM-FIRMWARE/README.md	`modem_a/b` contains MT6878_S00 NLWCG firmware
+PARTITION-OWNERSHIP	pack	mrdump	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `mrdump` | `mrdump_tool` | MRDUMP (RAM dump) configuration |
 ccci	scope	mrdump	partition	ulefone-gq5012bf1-research/reverse-engineering/modem/ccci/README.md	mrdump (`mrdump_mini_add_extra_file`).
 AB-SUPER-GEOMETRY	pack	nvcfg	partition	Reverse Engineer - DONE/AB-SUPER-GEOMETRY/README.md	- `nvram`, `nvdata`, `nvcfg`, `protect1/2`, `persist` — non-slotted NV/calibration state.
 NVRAM-CALIBRATION	pack	nvcfg	partition	Reverse Engineer - PARTIAL/NVRAM-CALIBRATION/README.md	| `nvcfg` | `/mnt/vendor/nvcfg` | ext4 | shared/dangerous — modem NV config | never modify with development images |
-PARTITION-OWNERSHIP	pack	nvcfg	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| factory/NV/calibration | `nvram`, `nvdata`, `nvcfg`, `persist`, `protect1`, `protect2` | read-only; backup required before any authorized service ac
 AB-SUPER-GEOMETRY	pack	nvdata	partition	Reverse Engineer - DONE/AB-SUPER-GEOMETRY/README.md	- `nvram`, `nvdata`, `nvcfg`, `protect1/2`, `persist` — non-slotted NV/calibration state.
 NVRAM-CALIBRATION	pack	nvdata	partition	Reverse Engineer - PARTIAL/NVRAM-CALIBRATION/README.md	| `nvdata` | `/mnt/vendor/nvdata` | ext4 | shared/dangerous — modem NV data | never modify with development images |
-PARTITION-OWNERSHIP	pack	nvdata	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| factory/NV/calibration | `nvram`, `nvdata`, `nvcfg`, `persist`, `protect1`, `protect2` | read-only; backup required before any authorized service ac
 ims	scope	nvdata	partition	ulefone-gq5012bf1-research/reverse-engineering/modem/ims/README.md	2. persisted SBP selection (`MD_SBP`, `CXP_SBP`) under nvdata.
 AB-SUPER-GEOMETRY	pack	nvram	partition	Reverse Engineer - DONE/AB-SUPER-GEOMETRY/README.md	- `nvram`, `nvdata`, `nvcfg`, `protect1/2`, `persist` — non-slotted NV/calibration state.
 MT6637-WIFI	pack	nvram	partition	Reverse Engineer - PARTIAL/MT6637-WIFI/README.md	Kernel/source closure: [`../../Reverse Engineer - DONE/MT6637-WIFI-KERNEL/README.md`](<../../Reverse Engineer - DONE/MT6637-WIFI-KERNEL/README.md>). R
 NVRAM-CALIBRATION	pack	nvram	partition	Reverse Engineer - PARTIAL/NVRAM-CALIBRATION/README.md	| `nvram` | `/nvram` | raw `emmc` | shared/dangerous — factory NV | never wipe, never copy, never regenerate |
-PARTITION-OWNERSHIP	pack	nvram	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| factory/NV/calibration | `nvram`, `nvdata`, `nvcfg`, `persist`, `protect1`, `protect2` | read-only; backup required before any authorized service ac
 README.md	scope	nvram	partition	ulefone-gq5012bf1-research/reverse-engineering/modem/README.md	[`firmware/inventory.tsv`](firmware/inventory.tsv), [`nvram/boundary.md`](nvram/boundary.md)
 wifi	scope	nvram	partition	ulefone-gq5012bf1-research/reverse-engineering/connectivity/wifi/README.md	[`nvram-boundary.md`](nvram-boundary.md)).
-PARTITION-OWNERSHIP	pack	para	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| poorly documented MTK reserves | `para`, `boot_para`, `expdb`, `proinfo`, `otp` | purpose not closed; treat as read-only |
+PARTITION-OWNERSHIP	pack	para	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `para` | `libsysenv_system.so` (sysenv), `ccci_rpcd`, `meta_tst`, `factory_init.rc` | bootloader message/env area shared with the modem RPC and fact
+PARTITION-OWNERSHIP	pack	para	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	* Never write `seccfg`, `proinfo`, `para`, `otp`, the `nv*` partitions,
 AB-SUPER-GEOMETRY	pack	persist	partition	Reverse Engineer - DONE/AB-SUPER-GEOMETRY/README.md	- `nvram`, `nvdata`, `nvcfg`, `protect1/2`, `persist` — non-slotted NV/calibration state.
 ANDROID-INIT	pack	persist	partition	Reverse Engineer - PARTIAL/ANDROID-INIT/README.md	The concrete init boot sequence: imported rc files, per-service exec/start class, and `ro.*`/`persist.*` props that drive it - i.e. what has to be sta
 AW883XX-SPEAKER-AMP	pack	persist	partition	Reverse Engineer - DONE/AW883XX-SPEAKER-AMP/README.md	- **D2/D3 — the stock module does *not* persist calibration in the kernel.**
 NVRAM-CALIBRATION	pack	persist	partition	Reverse Engineer - PARTIAL/NVRAM-CALIBRATION/README.md	| `persist` | `/mnt/vendor/persist` | ext4 | shared/dangerous — non-slotted calibration/persistent state | never modify |
-PARTITION-OWNERSHIP	pack	persist	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| factory/NV/calibration | `nvram`, `nvdata`, `nvcfg`, `persist`, `protect1`, `protect2` | read-only; backup required before any authorized service ac
+PARTITION-OWNERSHIP	pack	persist	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	`persist` or `protect*`. Their only writers are factory/META tools or the
+VENDOR-PROPERTIES	pack	persist	partition	Reverse Engineer - DONE/VENDOR-PROPERTIES/README.md	* 37 `persist.vendor.*` (for example `persist.vendor.radio.msimmode`);
 bluetooth	scope	persist	partition	ulefone-gq5012bf1-research/reverse-engineering/connectivity/bluetooth/README.md	BT_FW.cfg vendor cmds, /proc/stpbt/bt_fw_version → persist.vendor.connsys.* props
 bluetooth	scope	persist	partition	ulefone-gq5012bf1-research/reverse-engineering/connectivity/bluetooth/README.md	* A2DP offload (`persist.bluetooth.a2dp_offload.cap=sbc-aac`) and LE Audio offload
 ims	scope	persist	partition	ulefone-gq5012bf1-research/reverse-engineering/modem/ims/README.md	| VoLTE | `persist.vendor.ims_support=1`, `persist.vendor.volte_support=1`, `persist.vendor.mtk.volte.enable=1`; `IRadioIms`; audio CCCI speech path |
 ims	scope	persist	partition	ulefone-gq5012bf1-research/reverse-engineering/modem/ims/README.md	| VoWiFi | `persist.vendor.mtk_wfc_support=1`, `persist.vendor.wfc.sys_wfc_support=1`, `ro.telephony.iwlan_operation_mode=AP-assisted`; `ipsec_mon`, `
-PARTITION-OWNERSHIP	pack	proinfo	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| poorly documented MTK reserves | `para`, `boot_para`, `expdb`, `proinfo`, `otp` | purpose not closed; treat as read-only |
+PARTITION-OWNERSHIP	pack	proinfo	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `proinfo` | `factory`, `meta_tst`, `factory_init.rc`/`meta_init.rc` | factory/META product-info, written only in factory/META mode |
+PARTITION-OWNERSHIP	pack	proinfo	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	* Never write `seccfg`, `proinfo`, `para`, `otp`, the `nv*` partitions,
 AB-SUPER-GEOMETRY	pack	protect1	partition	Reverse Engineer - DONE/AB-SUPER-GEOMETRY/README.md	- `nvram`, `nvdata`, `nvcfg`, `protect1/2`, `persist` — non-slotted NV/calibration state.
 NVRAM-CALIBRATION	pack	protect1	partition	Reverse Engineer - PARTIAL/NVRAM-CALIBRATION/README.md	| `protect1` / `protect2` | `/mnt/vendor/protect_f` / `/mnt/vendor/protect_s` | ext4 | shared factory reserves | never modify |
-PARTITION-OWNERSHIP	pack	protect1	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| factory/NV/calibration | `nvram`, `nvdata`, `nvcfg`, `persist`, `protect1`, `protect2` | read-only; backup required before any authorized service ac
 NVRAM-CALIBRATION	pack	protect2	partition	Reverse Engineer - PARTIAL/NVRAM-CALIBRATION/README.md	| `protect1` / `protect2` | `/mnt/vendor/protect_f` / `/mnt/vendor/protect_s` | ext4 | shared factory reserves | never modify |
-PARTITION-OWNERSHIP	pack	protect2	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| factory/NV/calibration | `nvram`, `nvdata`, `nvcfg`, `persist`, `protect1`, `protect2` | read-only; backup required before any authorized service ac
+PARTITION-OWNERSHIP	pack	pstore	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `vb`, `sec1`, `pstore` | declared only | firmware-owned |
 RT5133-POWER-IC	pack	pstore	partition	Reverse Engineer - DONE/RT5133-POWER-IC/README.md	**2026-10-06 closure:** rt5133-regulator.ko (13/13 functions, 34/34 data, 39/39 import CRCs in order, 13/13 KCFI, modinfo 11/11 incl. srcversion 3A1F2
-PARTITION-OWNERSHIP	pack	seccfg	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	| boot/security state | `misc`, `frp`, `seccfg`, rollback state | do not modify during RE |
+PARTITION-OWNERSHIP	pack	sec1	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `vb`, `sec1`, `pstore` | declared only | firmware-owned |
+PARTITION-OWNERSHIP	pack	seccfg	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `seccfg` | `factory_init.rc`/`meta_init.rc` only | lock-state config; normal Android never writes it |
+PARTITION-OWNERSHIP	pack	seccfg	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	* Never write `seccfg`, `proinfo`, `para`, `otp`, the `nv*` partitions,
 AB-SUPER-GEOMETRY	pack	super	partition	Reverse Engineer - DONE/AB-SUPER-GEOMETRY/README.md	- Dynamic-partition (`super`) layout: groups, per-slot logical extents, free space.
 AB-SUPER-GEOMETRY	pack	super	partition	Reverse Engineer - DONE/AB-SUPER-GEOMETRY/README.md	### Dynamic `super` layout (VERIFIED)
-BOOT-IMAGES	pack	super	partition	Reverse Engineer - PARTIAL/BOOT-IMAGES/README.md	`vendor_ramdisk00` size forces an explicit super/group budget instead of letting recovery grow
 OTA-AB-UPDATE	pack	super	partition	Reverse Engineer - PARTIAL/OTA-AB-UPDATE/README.md	`super`, and slot A is the successful safety anchor. At capture time no OTA
 OTA-AB-UPDATE	pack	super	partition	Reverse Engineer - PARTIAL/OTA-AB-UPDATE/README.md	- `super` metadata is shared even though A/B payload extents are independent.
-PARTITION-OWNERSHIP	pack	super	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	- **Proven so far:** Boot-chain pairs, current super geometry, major persistent-state owners and read/write risk are mapped
-PARTITION-OWNERSHIP	pack	super	partition	Reverse Engineer - PARTIAL/PARTITION-OWNERSHIP/README.md	One shared physical `super` container holds separate non-overlapping A/B logical
+PARTITION-OWNERSHIP	pack	super	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	* `super` is shared; only explicit suffixed logical targets may be touched.
 README.md	scope	super	partition	ulefone-gq5012bf1-research/reverse-engineering/storage/README.md	| partition / super / fstab map | [`hardware/partition-map.md`](hardware/partition-map.md) |
 UFS-RPMB-KERNEL	pack	super	partition	Reverse Engineer - DONE/UFS-RPMB-KERNEL/notes/storage-README/README.md	| partition / super / fstab map | [`hardware/partition-map.md`](hardware/partition-map.md) |
+BOOT-IMAGES	pack	vbmeta_a	partition	Reverse Engineer - DONE/BOOT-IMAGES/README.md	| init_boot_a | identical repack | **does not match vbmeta_a** | modified: KernelSU LKM patch (`init` → KernelSU loader, `init.real`, `kernelsu.ko`) |
+BOOT-IMAGES	pack	vbmeta_a	partition	Reverse Engineer - DONE/BOOT-IMAGES/README.md	| vendor_boot_a | identical repack (62 697 472 B) | **does not match vbmeta_a** | modified: OrangeFox recovery fragment (447 fox/twres entries) |
+PARTITION-OWNERSHIP	pack	vbmeta_a	partition	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	* `vbmeta_a` carries flags 3 (verification disabled), which is our
 BOOT-CONTROL-SLOTS	pack	vbmeta_b	partition	Reverse Engineer - DONE/BOOT-CONTROL-SLOTS/README.md	- B's custom chain is self-consistent: `vbmeta_b` flags=0 with a coherent custom chain, custom
+BOOT-IMAGES	pack	vbmeta_b	partition	Reverse Engineer - DONE/BOOT-IMAGES/README.md	| init_boot_b | identical (2 351 104 B; `--os_version 15.0.0 --os_patch_level 2026-07`) | matches | vbmeta_b hash **matches** |
+BOOT-IMAGES	pack	vbmeta_b	partition	Reverse Engineer - DONE/BOOT-IMAGES/README.md	| vendor_boot_b | identical (33 828 864 B; 2 fragments: PLATFORM `''` + RECOVERY `recovery`; `bootopt=64S3,32N2,64N2`) | matches | vbmeta_b hash **mat
 FIRMWARE-INVENTORY	pack	vbmeta_b	partition	Reverse Engineer - PARTIAL/FIRMWARE-INVENTORY/README.md	partitions: every row PASS, and `vbmeta_b` (audited separately) is the only intentional per-slot
 BOOT-CONTROL-SLOTS	pack	vbmeta_system_b	partition	Reverse Engineer - DONE/BOOT-CONTROL-SLOTS/README.md	Lineage descriptors in `vbmeta_system_b`/`vbmeta_vendor_b`, `init_boot_b` ramdisk carrying the
 BOOT-CONTROL-SLOTS	pack	vbmeta_vendor_b	partition	Reverse Engineer - DONE/BOOT-CONTROL-SLOTS/README.md	Lineage descriptors in `vbmeta_system_b`/`vbmeta_vendor_b`, `init_boot_b` ramdisk carrying the
 BOOT-CONTROL-SLOTS	pack	vendor_boot_a	partition	Reverse Engineer - DONE/BOOT-CONTROL-SLOTS/README.md	- `boot_a`, `vendor_boot_a`, `init_boot_a`, `dtbo_a` and all A `vbmeta*` live on separate physical
+BOOT-IMAGES	pack	vendor_boot_a	partition	Reverse Engineer - DONE/BOOT-IMAGES/README.md	| vendor_boot_a | identical repack (62 697 472 B) | **does not match vbmeta_a** | modified: OrangeFox recovery fragment (447 fox/twres entries) |
 MICROSD	pack	vendor_boot_a	partition	Reverse Engineer - DONE/MICROSD/notes/README.md	> OrangeFox is installed inside `vendor_boot_a`.
 MICROSD	pack	vendor_boot_a	partition	Reverse Engineer - DONE/MICROSD/notes/README.md	fastboot flash vendor_boot_a vendor_boot_a-orangefox-FULL64M-BUILD36.img
 RECOVERY-ORANGEFOX	pack	vendor_boot_a	partition	Reverse Engineer - PARTIAL/RECOVERY-ORANGEFOX/README.md	- Cross-check: BUILD36's full-image digest is the same value recorded for the live `vendor_boot_a`
 RECOVERY-ORANGEFOX	pack	vendor_boot_a	partition	Reverse Engineer - PARTIAL/RECOVERY-ORANGEFOX/notes/README.md	> OrangeFox is installed inside `vendor_boot_a`.
 RECOVERY-ORANGEFOX	pack	vendor_boot_a	partition	Reverse Engineer - PARTIAL/RECOVERY-ORANGEFOX/notes/README.md	fastboot flash vendor_boot_a vendor_boot_a-orangefox-FULL64M-BUILD36.img
+BOOT-IMAGES	pack	vendor_boot_b	partition	Reverse Engineer - DONE/BOOT-IMAGES/README.md	| vendor_boot_b | identical (33 828 864 B; 2 fragments: PLATFORM `''` + RECOVERY `recovery`; `bootopt=64S3,32N2,64N2`) | matches | vbmeta_b hash **mat
 BOOT-CONTROL-SLOTS	pack	vendor_dlkm_b	partition	Reverse Engineer - DONE/BOOT-CONTROL-SLOTS/README.md	chain and custom `vendor_dlkm_b`) is in `notes/FINAL-REPORT.md`.
+PARTITION-OWNERSHIP	pack	aee_aedv64_v2	service	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `expdb` | `aee_aedv64_v2` | AEE exception database |
 gnss	scope	agpsd	service	ulefone-gq5012bf1-research/reverse-engineering/connectivity/gnss/README.md	├─ AGPS: socket agpsd* ↔ /vendor/bin/mtk_agpsd (SUPL/LPP/RTCM, carrier profiles
 README.md	scope	audioserver	service	ulefone-gq5012bf1-research/reverse-engineering/audio/README.md	-> audioserver: AudioPolicyService + AudioFlinger
 bluetooth	scope	bluetooth_hal_service	service	ulefone-gq5012bf1-research/reverse-engineering/connectivity/bluetooth/README.md	└─ AIDL android.hardware.bluetooth (bluetooth_hal_service = android.hardware.bluetooth-service-mediatek)
+VINTF-HAL-MANIFEST	pack	boringssl_self_test32_vendor	service	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	| 32-bit userspace absent (64-only device) | `boringssl_self_test32_vendor` |
 conninfra	scope	bt_dump	service	ulefone-gq5012bf1-research/reverse-engineering/connectivity/conninfra/README.md	`conninfra_loader` (`/dev/conninfra_dev`) sets `vendor.connsys.driver.ready`. `bt_dump`,
+VINTF-HAL-MANIFEST	pack	btlfpserver	service	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	| alternate fingerprint BOM (MicroArray is fitted, see MICROARRAY-FP-TEE) | `btlfpserver`, `swfingerprint-hal-1.0`, `fptoolfingerprint-hal-2.0`, `vend
 notes	scope	camerahalserver	service	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/notes/camera-hal-map.md	| android.hardware.camera.provider.ICameraProvider AIDL v2 | internal/0 | camerahalserver → `libmtkcam_hal_aidl_provider.so` | the live provider (HIDL
 notes	scope	camerahalserver	service	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/notes/camera-hal-map.md	`camerahalserver`: `/vendor/bin/hw/camerahalserver`, class main, user
 README.md	scope	cameraserver	service	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/README.md	→ cameraserver (system, media.camera) [live svc list]
@@ -279,7 +291,10 @@ notes	scope	cameraserver	service	ulefone-gq5012bf1-research/reverse-engineering/
 NVRAM-CALIBRATION	pack	ccci_mdinit	service	Reverse Engineer - PARTIAL/NVRAM-CALIBRATION/README.md	- MD consumption via ccci_mdinit `/dev/ccci_fs` and `SMEM_USER_MD_NVRAM_CACHE`;
 ccci	scope	ccci_mdinit	service	ulefone-gq5012bf1-research/reverse-engineering/modem/ccci/README.md	* `/dev/ccci_monitor` (FSM monitor, `ccci_mdinit`)
 ccci	scope	ccci_mdinit	service	ulefone-gq5012bf1-research/reverse-engineering/modem/ccci/README.md	* `/dev/ccci_md1_sta`, `/dev/ccci_md3_sta`, `/dev/ccci_mdx_sta` (`ccci_md_sta` class, MD-state broadcast to ccci_mdinit, libmtk-ril and libtrm)
+PARTITION-OWNERSHIP	pack	ccci_rpcd	service	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `para` | `libsysenv_system.so` (sysenv), `ccci_rpcd`, `meta_tst`, `factory_init.rc` | bootloader message/env area shared with the modem RPC and fact
 conninfra	scope	conninfra_loader	service	ulefone-gq5012bf1-research/reverse-engineering/connectivity/conninfra/README.md	`conninfra_loader` (`/dev/conninfra_dev`) sets `vendor.connsys.driver.ready`. `bt_dump`,
+VINTF-HAL-MANIFEST	pack	fptoolfingerprint-hal-2.0	service	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	| alternate fingerprint BOM (MicroArray is fitted, see MICROARRAY-FP-TEE) | `btlfpserver`, `swfingerprint-hal-1.0`, `fptoolfingerprint-hal-2.0`, `vend
+VINTF-HAL-MANIFEST	pack	gnss_daemon	service	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	| legacy GNSS daemon (MediaTek `mnld` is the GNSS engine) | `gnss_daemon` (common + meta rc) |
 conninfra	scope	gps_dump	service	ulefone-gq5012bf1-research/reverse-engineering/connectivity/conninfra/README.md	`wifi_dump` and `gps_dump` consume the coredump netlink. `/proc/driver/conninfra_dbg` and
 wifi	scope	hostapd	service	ulefone-gq5012bf1-research/reverse-engineering/connectivity/wifi/README.md	* Hotspot: SoftAP through cfg80211 `ap0`; hostapd `android.hardware.wifi.hostapd-V1`; MDDP
 INIT-INSMOD	pack	insmod_pstore_blk	service	Reverse Engineer - DONE/INIT-INSMOD/README.md	- **Proven:** Every stock init-driven insertion path inventoried (`notes/init-insmod-map.tsv`): first-stage list, `insmod_sh` (`init.insmod.sh`: `modp
@@ -295,25 +310,34 @@ ims	scope	ipsec_mon	service	ulefone-gq5012bf1-research/reverse-engineering/modem
 IMS	pack	media	service	Reverse Engineer - PARTIAL/IMS/README.md	- **Proven:** static service, Radio HAL, RIL/MD, media, audio, Wi-Fi and carrier-config boundaries
 MICROSD	pack	media	service	Reverse Engineer - DONE/MICROSD/README.md	Research: `ulefone-gq5012bf1-research/reverse-engineering/storage/` (`microsd/`, `STATUS.md`). No removable media was written or reformatted at any po
 README.md	scope	media	service	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/README.md	→ cameraserver (system, media.camera) [live svc list]
-VINTF-HAL-MANIFEST	pack	media	service	Reverse Engineer - PARTIAL/VINTF-HAL-MANIFEST/README.md	secret / RKP / Gatekeeper; fingerprint manifest + Microarray implementation library; DRM/CAS, media
 ims	scope	media	service	ulefone-gq5012bf1-research/reverse-engineering/modem/ims/README.md	framework Java, vendor RIL implementation, media libraries and MD-resident SIP/IMS protocol
 ims	scope	media	service	ulefone-gq5012bf1-research/reverse-engineering/modem/ims/README.md	* `libvt_avsync.so` opens `/dev/ccci_imsdc`; `libimsma.so`/`libimsma_rtp.so` implement media adaptation/RTP.
 notes	scope	media	service	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/notes/camera-hal-map.md	cameraserver, groups audio camera input drmrpc sdcard_rw system media
 notes	scope	media	service	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/notes/camera-hal-map.md	## Camera IDs (PROVEN, dumpsys media.camera)
 vcm	scope	media	service	ulefone-gq5012bf1-research/reverse-engineering/camera/vcm/README.md	| `camera_af_media.ko` | ACTIVE (media aggregator) | 7/7 | 18/18 | 23/23 ✓ | 7/7 | 132/132 | 33/33 |
+PARTITION-OWNERSHIP	pack	meta_tst	service	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `para` | `libsysenv_system.so` (sysenv), `ccci_rpcd`, `meta_tst`, `factory_init.rc` | bootloader message/env area shared with the modem RPC and fact
+PARTITION-OWNERSHIP	pack	meta_tst	service	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	| `proinfo` | `factory`, `meta_tst`, `factory_init.rc`/`meta_init.rc` | factory/META product-info, written only in factory/META mode |
 GNSS	pack	mnld	service	Reverse Engineer - PARTIAL/GNSS/README.md	- **Proven so far:** Kernel scope split out and DONE (`DONE/GNSS-KERNEL-TRANSPORT`: gps_drv_dl_v051 550/550, 126/126; gps_pwr 12/12; gps_scp 15/15; co
 GNSS	pack	mnld	service	Reverse Engineer - PARTIAL/GNSS/README.md	- **Still required:** Proprietary connsys_gnss firmware and mnld/libmnl engine, runtime constellation/L5 characterisation
 GNSS-KERNEL-TRANSPORT	pack	mnld	service	Reverse Engineer - DONE/GNSS-KERNEL-TRANSPORT/README.md	- **Excluded boundary:** connsys_gnss firmware, mnld/libmnl, AGPS/SUPL and the GNSS HAL; these stay in PARTIAL/GNSS
+VENDOR-PROPERTIES	pack	mnld	service	Reverse Engineer - DONE/VENDOR-PROPERTIES/README.md	`mnld`, PQ, thermal and others);
+VINTF-HAL-MANIFEST	pack	mnld	service	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	| legacy GNSS daemon (MediaTek `mnld` is the GNSS engine) | `gnss_daemon` (common + meta rc) |
 gnss	scope	mnld	service	ulefone-gq5012bf1-research/reverse-engineering/connectivity/gnss/README.md	**Status: GNSS-KERNEL-TRANSPORT = DONE.** The GNSS firmware, `mnld`, `libmnl`, AGPS/SUPL and
 gnss	scope	mnld	service	ulefone-gq5012bf1-research/reverse-engineering/connectivity/gnss/README.md	"└─ socket ""mnld"" → /vendor/bin/mnld (libmnl.so = MTK navigation library, proprietary)"
 gnss	scope	mtk_lbs_service	service	ulefone-gq5012bf1-research/reverse-engineering/connectivity/gnss/README.md	│ vendor/etc/gnss/agps_profiles_conf2*.xml), mtk_lbs_service
+VINTF-HAL-MANIFEST	pack	permission_check	service	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	| factory/META boot mode only (`factory_init*.rc`, `meta_init*.rc`) | `spm_script`, `thermal_manager`, `permission_check` |
+VINTF-HAL-MANIFEST	pack	spm_script	service	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	| factory/META boot mode only (`factory_init*.rc`, `meta_init*.rc`) | `spm_script`, `thermal_manager`, `permission_check` |
+VINTF-HAL-MANIFEST	pack	swfingerprint-hal-1.0	service	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	| alternate fingerprint BOM (MicroArray is fitted, see MICROARRAY-FP-TEE) | `btlfpserver`, `swfingerprint-hal-1.0`, `fptoolfingerprint-hal-2.0`, `vend
 RECOVERY-ORANGEFOX	pack	teed	service	Reverse Engineer - PARTIAL/RECOVERY-ORANGEFOX/README.md	Decryption works because of a serialized TA chain, not a timeout: `teed` after stock identity/mount
 TKCORE-DRV	pack	teed	service	Reverse Engineer - DONE/TKCORE-DRV/README.md	- **Proven:** `tkcore_drv.ko` rebuilt from public TrustKernel source (anvil-kernel 8e1a0f39478f, tree 6b94428f, 7:2.2) + reconstructed 6:1.1-era delta
 UFS-RPMB-KERNEL	pack	teed	service	Reverse Engineer - DONE/UFS-RPMB-KERNEL/README.md	- **Proven:** 6 modules byte-identical to stock except build-id (ufs-mediatek-mod 98/98, ufs-mediatek-dbg 32/32, phy-mtk-ufs 11/11, rpmb 18/18, rpmb-m
-VINTF-HAL-MANIFEST	pack	teed	service	Reverse Engineer - PARTIAL/VINTF-HAL-MANIFEST/README.md	1. `teed` after stock identity/mount preparation → 2. KeyMint after TrustKernel readiness →
+VINTF-HAL-MANIFEST	pack	teed	service	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	The service-ordering result (teed → KeyMint → Gatekeeper → Keystore2) and the
 ccci	scope	thermal_core	service	ulefone-gq5012bf1-research/reverse-engineering/modem/ccci/README.md	Users: `ccci_mdinit` (boot, kcfg_setting, lk_md), `atcid` (boot, md_en), `thermal_core` and
+VINTF-HAL-MANIFEST	pack	thermal_manager	service	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	| factory/META boot mode only (`factory_init*.rc`, `meta_init*.rc`) | `spm_script`, `thermal_manager`, `permission_check` |
 OTA-AB-UPDATE	pack	update_engine	service	Reverse Engineer - PARTIAL/OTA-AB-UPDATE/README.md	- **Still required:** Produce/sign a payload and validate update_engine, slot switch, merge, rollback and recovery behavior
 OTA-AB-UPDATE	pack	update_engine	service	Reverse Engineer - PARTIAL/OTA-AB-UPDATE/README.md	end-to-end update_engine/snapshot-merge/rollback validation is documented.
+PARTITION-OWNERSHIP	pack	update_engine	service	Reverse Engineer - DONE/PARTITION-OWNERSHIP/README.md	`by-name` consumer for it, and `avbctl`/`update_engine` do not write
+VINTF-HAL-MANIFEST	pack	vendor.focaltech.fps_hal	service	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	| alternate fingerprint BOM (MicroArray is fitted, see MICROARRAY-FP-TEE) | `btlfpserver`, `swfingerprint-hal-1.0`, `fptoolfingerprint-hal-2.0`, `vend
 gnss	scope	vendor.gnss-default	service	ulefone-gq5012bf1-research/reverse-engineering/connectivity/gnss/README.md	└─ AIDL android.hardware.gnss (IGnss V3) : vendor.gnss-default =
 gnss	scope	vendor.mtkgnss-service	service	ulefone-gq5012bf1-research/reverse-engineering/connectivity/gnss/README.md	vendor.mtkgnss-service for vendor.mediatek.hardware.gnss.batching.IMtkGnssBatching)
 KEYSTORE-VOLD-KEYMINT	pack	vold	service	Reverse Engineer - PARTIAL/KEYSTORE-VOLD-KEYMINT/README.md	- **Hardware identity:** TrustKernel KeyMint/Gatekeeper with Android vold/Keystore2
@@ -327,6 +351,8 @@ ims	scope	vtservice_aidl	service	ulefone-gq5012bf1-research/reverse-engineering/
 conninfra	scope	wifi_dump	service	ulefone-gq5012bf1-research/reverse-engineering/connectivity/conninfra/README.md	`wifi_dump` and `gps_dump` consume the coredump netlink. `/proc/driver/conninfra_dbg` and
 wifi	scope	wlan_assistant	service	ulefone-gq5012bf1-research/reverse-engineering/connectivity/wifi/README.md	* MAC provisioning: `wlan_assistant` reads NVRAM `/mnt/vendor/nvdata/APCFG/APRDEB/WIFI`
 bluetooth	scope	android.hardware.bluetooth	vintf	ulefone-gq5012bf1-research/reverse-engineering/connectivity/bluetooth/README.md	└─ AIDL android.hardware.bluetooth (bluetooth_hal_service = android.hardware.bluetooth-service-mediatek)
+VINTF-HAL-MANIFEST	pack	android.hardware.bluetooth.audio	vintf	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	**The one real gap:** `aidl android.hardware.bluetooth.audio@3
+VINTF-HAL-MANIFEST	pack	android.hardware.bluetooth.audio	vintf	Reverse Engineer - DONE/VINTF-HAL-MANIFEST/README.md	* LieppOS ships the implementation (`android.hardware.bluetooth.audio-impl-mediatek.so`,
 bluetooth	scope	android.hardware.bluetooth.audio	vintf	ulefone-gq5012bf1-research/reverse-engineering/connectivity/bluetooth/README.md	go through `android.hardware.bluetooth.audio-impl-mediatek.so` and the audio HAL/ADSP
 README.md	scope	android.hardware.camera.provider	vintf	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/README.md	→ android.hardware.camera.provider.ICameraProvider/internal/0 (AIDL v2)
 notes	scope	android.hardware.camera.provider	vintf	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/notes/camera-hal-map.md	| android.hardware.camera.provider.ICameraProvider AIDL v2 | internal/0 | camerahalserver → `libmtkcam_hal_aidl_provider.so` | the live provider (HIDL
@@ -335,10 +361,8 @@ IR-BLASTER	pack	android.hardware.ir	vintf	Reverse Engineer - DONE/IR-BLASTER/REA
 IR-BLASTER	pack	android.hardware.ir	vintf	Reverse Engineer - DONE/IR-BLASTER/reconstruction/README.md	`android.hardware.ir.IConsumerIr/default`; it discovers this backend through
 README.md	scope	android.hardware.nfc	vintf	ulefone-gq5012bf1-research/reverse-engineering/nfc/README.md	→ AIDL android.hardware.nfc INfc/default (V1)
 wifi	scope	android.hardware.wifi.hostapd	vintf	ulefone-gq5012bf1-research/reverse-engineering/connectivity/wifi/README.md	* Hotspot: SoftAP through cfg80211 `ap0`; hostapd `android.hardware.wifi.hostapd-V1`; MDDP
-VINTF-HAL-MANIFEST	pack	vendor.mediatek.hardware.aee	vintf	Reverse Engineer - PARTIAL/VINTF-HAL-MANIFEST/README.md	Authored interface definitions: `vendor.mediatek.hardware.aee` 1.0/1.1 (`source/IAee.hal`) and
 notes	scope	vendor.mediatek.hardware.camera.atms	vintf	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/notes/camera-hal-map.md	| vendor.mediatek.hardware.camera.atms.IATMs | default | `…atms_aidl@1.0-impl.so` | |
 notes	scope	vendor.mediatek.hardware.camera.bgservice	vintf	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/notes/camera-hal-map.md	| vendor.mediatek.hardware.camera.bgservice.IBGService | default | `…bgservice_aidl@1.0-impl.so` | background capture service |
 notes	scope	vendor.mediatek.hardware.camera.isphal	vintf	ulefone-gq5012bf1-research/reverse-engineering/camera-stack/notes/camera-hal-map.md	| vendor.mediatek.hardware.camera.isphal.IISPModule AIDL v1 | internal/1 | `vendor.mediatek.hardware.camera.isphal_aidl@1.0-impl.so` | MTK ISP reproce
 gnss	scope	vendor.mediatek.hardware.gnss.batching	vintf	ulefone-gq5012bf1-research/reverse-engineering/connectivity/gnss/README.md	vendor.mtkgnss-service for vendor.mediatek.hardware.gnss.batching.IMtkGnssBatching)
 ims	scope	vendor.mediatek.hardware.videotelephony	vintf	ulefone-gq5012bf1-research/reverse-engineering/modem/ims/README.md	* `vendor/bin/hw/vtservice_aidl` exposes `vendor.mediatek.hardware.videotelephony`.
-VINTF-HAL-MANIFEST	pack	vendor.yft.hardware.sensorcali	vintf	Reverse Engineer - PARTIAL/VINTF-HAL-MANIFEST/README.md	`vendor.yft.hardware.sensorcali` 1.0/2.0 (`source/ISensorCali.hal`), with their AIDL/HIDL metadata

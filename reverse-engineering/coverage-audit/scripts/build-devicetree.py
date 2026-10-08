@@ -141,6 +141,10 @@ CURATED = {
     "mediatek,mali": ("UNMAPPED", "E", "see arm,mali-valhall - GPU stack has no owner"),
     "mediatek,g3d_brisket": ("UNMAPPED", "E",
                             "GPU DVFS/brisket companion of arm,mali-valhall"),
+    "chipone-tddi": ("COVERED-GENERIC", "D",
+                       "enabled reference-board TDDI node has no shipped driver; fitted main/rear touch are FT3680/Hynitron"),
+    "tchip,ilitek": ("COVERED-GENERIC", "D",
+                       "enabled reference-board TDDI node has no shipped driver; fitted main/rear touch are FT3680/Hynitron"),
     "microtrust,utos": ("COVERED-GENERIC", "C",
                         "MicroTrust UTOs TEE OS instance; CA-side interface documented "
                         "by DONE/GZ-TRANSPORT, FFA-V10, TMEM-FFA and PARTIAL/"
@@ -151,6 +155,26 @@ CURATED = {
                            "UTOs (see microtrust,utos)"),
 }
 
+# Research-document labels are evidence sources, never component names.  If a
+# compatible has only a research citation, resolve it through these explicit
+# architecture families or classify it generic/reference rather than inventing
+# a pseudo-component.
+RESEARCH_COMPAT = [
+    (r"^(focaltech,fp|mediatek,goodix-fp)$", "COVERED-GENERIC", "D", "alternative fingerprint DT baggage; fitted path is MicroArray/Madev"),
+    (r"^focaltech,fts$", "FT3680-TOUCH", "A", "fitted FocalTech touch controller"),
+    (r"^mediatek,flashlight_core$", "AW36515-FLASH", "B", "shared camera/IR flashlight framework"),
+    (r"regulator-vibrator", "HAPTICS", "B", "PMIC vibrator provider"),
+    (r"mt63(19|63|69)|mt6375|mt6685|charger|power-throttling|mtk-bp-thl|auxadc", "THERMAL-POWER-HAL", "B", "PMIC/charger/thermal-power platform node"),
+    (r"camera-pda|imgsensor|seninf", "CAMERA-HAL-ISP", "B", "camera ISP/sensor framework node"),
+    (r"ccci|md1_|md_auxadc|mdpm|mrdump", "MODEM-KERNEL-TRANSPORT", "B", "modem transport/power/debug node"),
+    (r"dsi|disp_dsi|mipi_tx", "MEDIATEK-DRM", "B", "display/DSI platform node"),
+    (r"geniezone", "GZ-TRANSPORT", "B", "GenieZone hypervisor transport node"),
+    (r"sec_video|svp_|tui_", "TRUSTKERNEL-TEE", "B", "secure display/trusted UI boundary"),
+    (r"mt6369-sound", "MT6369-AUDIO-CODEC", "B", "MT6369 audio machine node"),
+    (r"gpio_usage_mapping", "DTB-DTBO", "B", "board GPIO ownership map"),
+    (r"apusys|iommu|dramc|emichn|emiisu|emimpu|vpu|soc-offload|smi|timer|wdt|simple-mfd|syscon|scpsys", "COVERED-GENERIC", "C", "generic MTK SoC/IOMMU/memory/timer infrastructure"),
+]
+
 
 # Physical function for the board-specific hardware nodes, keyed by compatible.
 # Anything not listed gets the honest "see <owner> inventory" placeholder instead
@@ -159,7 +183,7 @@ FUNCTIONS = [
     (r"^mediatek,mt6375$", "main PMIC: charger/PE/PD/regulators/TCPC host"),
     (r"^mediatek,mt6375-(chg|gauge)$", "PMIC charging controller / fuel gauge"),
     (r"^mediatek,mt6375-tcpc$", "USB Type-C Port Controller (PMIC-embedded)"),
-    (r"^richtek,rt5133$", "reference-board 4-phase buck controller (no hardware binds)"),
+    (r"^richtek,rt5133$", "bound camera-sensor LDO/power IC; exact die, rail consumers and register behavior remain hardware-gated"),
     (r"^richtek,rt6160", "RF transceiver aux/IBAT debug interface"),
     (r"^mediatek,mt63(19|63|69)", "secondary PMIC (MT6319/MT6363/MT6369) regulator/keys/audio"),
     (r"^mediatek,mt6685", "core PMIC/clock-buffer/RTC companion"),
@@ -208,11 +232,8 @@ def parse(path: str) -> dict[str, dict]:
 
 # Device-tree state overrides that the blob alone cannot express.
 NODE_STATE = {
-    "richtek,rt5133": "PRESENT-NOT-BOUND",
+    "richtek,rt5133": "BOUND-IN-RUNTIME-CAPTURE",
 }
-
-
-MARK = "<!-- hand-written analysis below this line is preserved on regeneration -->"
 
 
 def summarise(rows: list[dict]) -> None:
@@ -301,13 +322,90 @@ def summarise(rows: list[dict]) -> None:
                                                       "REFERENCE-BOARD-BAGGAGE", "UNKNOWN"):
             out.append(f"| `{r['compatible']}` | {r['nodes']} | {r['nodes_enabled']}"
                        f"/{r['nodes_disabled']} | `{r['node_state']}` | `{r['sample_node']}` |")
+    ev_tier = collections.Counter(r["evidence"].split(":")[0] for r in rows)
+    meanings = {
+        "pack-claims": "a DONE/PARTIAL pack quotes the compatible in its own "
+                       "README/notes/evidence",
+        "research-family": "only a research-repo document quoted it, so the audit resolved "
+                           "it to a named subsystem through an explicit compatible family",
+        "driver": "no document quotes it, but a shipped kernel module name matches "
+                  "(axis-1 classification travels)",
+        "family": "platform-internals family with a written justification",
+        "curated": "audit override (GPU gap, fingerprint/TEE/PMIC instances)",
+    }
+    out += ["", "## Evidence strength behind the classes", "",
+            "| strength | meaning | compatibles |", "|---|---|---:|"]
+    out += [f"| `{k}` | {meanings.get(k, '')} | {v} |"
+            for k, v in sorted(ev_tier.items(), key=lambda kv: -kv[1])]
+    researched = [r for r in rows if r["evidence"].startswith("research-family")]
+    widest = [(c, sum(v.values())) for c, v in byc.items()
+              if c not in ("COVERED-GENERIC", "UNMAPPED") and sum(v.values()) >= 15]
+    widest.sort(key=lambda kv: (-kv[1], kv[0]))
+    dtb = sum(byc["DTB-DTBO"].values()) if "DTB-DTBO" in byc else 0
+    charging = [r["compatible"] for r in rows
+                if re.match(r"^mediatek,(charger|mt6375)", r["compatible"])]
+    with open(os.path.join(AUDIT, "kernel-modules.tsv")) as fh:
+        mod_d = sum(1 for r in csv.DictReader(fh, delimiter="\t") if r["coverage"] == "D")
+    out += ["",
+            "`research-family` is the weakest of the documented tiers: it proves the node was "
+            "examined during an investigation, not that a component pack maintains it. Those "
+            f"{len(researched)} rows are therefore a pack-inventory backlog, not closed "
+            "ownership. Widest documented owners: "
+            + ", ".join(f"`{c}` ({n})" for c, n in widest[:6]) + ".",
+            "",
+            "## Conclusions for this axis", "",
+            f"1. **No device-tree gap except one.** {len(rows) - C['E']} of {len(rows)} "
+            f"compatibles resolve to a documented or justified class. The "
+            f"{C['E']} `E` rows are one subsystem: "
+            + ", ".join(f"`{r['compatible']}`"
+                        for r in rows if r["coverage"] == "E")
+            + ". The DT axis therefore independently confirms the kernel axis: the active "
+            "Mali Valhall KMD has no owning component. Decision recorded in "
+            "[`../MISSING-COVERAGE.md`](../MISSING-COVERAGE.md): add `MALI-GPU-KERNEL` "
+            "(PARTIAL, class A).",
+            f"2. **The DT axis and module axis agree on the charging stack.** "
+            f"{len(charging)} PMIC charging/auxadc sub-nodes (for example "
+            + ", ".join(f"`{x}`" for x in charging[:3])
+            + ") resolve through family rules rather than a pack quoting them. Same symptom "
+            "as conclusion 4 of the kernel axis: the charging stack is covered by several "
+            "packs and by none of them as a whole.",
+            f"3. **`DTB-DTBO` (PARTIAL) does not inventory the tree it owns.** After the "
+            f"narrowest-scope rule it ends up owning only {dtb} of {len(rows)} compatibles; "
+            "everything else is claimed by whichever "
+            "investigation pack happened to need that node, travels with a driver, or falls "
+            "into a platform-internals family. The reproducible artifact exists and is good "
+            "(merged DTS + DTBO table + dtc logs), but node-level ownership lives in nobody's "
+            "inventory - and this table is its natural home.",
+            f"4. **The display and camera pipes are carried, not documented.** "
+            f"`MEDIATEK-DRM` owns {sum(byc['MEDIATEK-DRM'].values())} display-pipeline "
+            f"compatibles and `CAMERA-HAL-ISP` {sum(byc['CAMERA-HAL-ISP'].values())} "
+            "camera-pipe compatibles as class B/C: they travel with the vendor DDI/mtkcam "
+            "drivers. That is the right call for a same-BSP port, but it must stay an "
+            "explicit decision: a custom display path (or any ISP change) would turn each of "
+            "those rows into real work, which is exactly why they are recorded per row rather "
+            "than summarised away.",
+            f"5. **Research-note-only coverage is resolved but not owned.** "
+            f"{len(researched)} compatibles (SMI/APU/display IOMMU banks, TUI, PMIC "
+            "charger/auxadc, modem and display platform nodes) were only quoted inside phase-4 "
+            "investigation notes; the audit resolved each to a named subsystem through an "
+            "explicit rule instead of inventing a pseudo-component. Pack inventories still have "
+            "to adopt them.",
+            f"6. **Legacy/inert payload is small.** {C['D']} compatibles are class D - the "
+            "driverless reference-board TDDI/fingerprint nodes - against "
+            f"{mod_d} dead modules on the module axis. The live tree carries no dead board "
+            "variant worth stripping.",
+            "", "## Follow-ups produced by this axis", "",
+            f"- create `MALI-GPU-KERNEL` (decision recorded in `../MISSING-COVERAGE.md`) and "
+            f"move the {C['E']} `E` rows onto it;",
+            f"- move the {C['A']} class-A \"quoted by a pack\" rows into that pack's inventory "
+            "(or into `DTB-DTBO/notes/`) so device-tree ownership is machine-checkable the way "
+            "module ownership now is;",
+            f"- promote the {len(researched)} `research-family` rows into the owning packs' "
+            "inventories, above all the sensor/SMI and PMIC-charger groups;",
+            "- add the charging cross-pack view requested by the kernel axis.", ""]
     doc = os.path.join(AUDIT, "notes", "DEVICE-TREE.md")
-    manual = ""
-    if os.path.exists(doc):
-        body = open(doc).read()
-        if MARK in body:
-            manual = "\n" + body.split(MARK, 1)[1].strip() + "\n"
-    open(doc, "w").write("\n".join(out) + "\n" + MARK + manual)
+    with open(doc, "w") as fh:
+        fh.write("\n".join(out).rstrip() + "\n")
 
 
 def main() -> int:
@@ -377,8 +475,15 @@ def main() -> int:
             if researchers:
                 ev.append("research-docs:" + str(len(researchers)))
         elif researchers:
-            comp, cls = researchers[0], "B"
-            ev.append(f"research-doc:{researchers[0]}({len(researchers)}-docs)")
+            resolved = next(((owner, rcls, why) for pat, owner, rcls, why in RESEARCH_COMPAT
+                             if re.search(pat, c)), None)
+            if resolved:
+                comp, cls, why = resolved
+                ev.append(f"research-family:{why}")
+            else:
+                comp, cls = "COVERED-GENERIC", "C"
+                ev.append("research-only citation; no board-specific owner justified")
+            ev.append(f"research-docs:{len(researchers)}")
         elif drv:
             owner = modrow[drv[0]]
             comp = ("COVERED-GENERIC" if owner["component"] == "COVERED-GENERIC"
