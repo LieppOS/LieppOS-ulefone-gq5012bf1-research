@@ -7,7 +7,6 @@ All **42** current PARTIAL directories have one A–F class. Camera kernel child
 | Component | Class | Remaining boundary | Next action | Difficulty | Dependencies |
 |---|---|---|---|---|---|
 | ANDROID-INIT | A | Reconcile stock/current service ordering and validate property-trigger behavior. | KEEP PARTIAL; Diff generated service graph against LieppOS init and test one boot. | MEDIUM | BOOT-IMAGES, VENDOR-PROPERTIES, VENDOR-SEPOLICY |
-| APUSYS-NPU-KERNEL | A | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | KEEP PARTIAL; Follow canonical accelerator CLAUDE-HANDOFF; preserve already exact source/proofs. | HIGH | GKI-KMI-BASELINE; shared IOMMU/QoS/power providers; signed apusys.img retained |
 | AUDIO-DSP | B | Kernel AFE/DSP transport is closed; DSP protocol, firmware, routing and calibration remain proprietary. | KEEP PARTIAL; Map HAL-to-DSP messages and preserve stock firmware/calibration. | HARD | AUDIO-DSP-KERNEL, MT6878-AFE, MT6369-AUDIO-CODEC |
 | BATTERY-PACK | D | Cell/BMS identity, connector topology, calibration and ageing model need teardown/runtime evidence. | KEEP PARTIAL; Photograph labels/connectors and capture read-only gauge/health data. | HARD | SH366003-FUEL-GAUGE, MT6375-CHARGER |
 | BLUETOOTH | B | Kernel transport is closed; controller firmware, vendor HAL internals and LE Audio behavior remain proprietary/runtime-gated. | KEEP PARTIAL; Retain signed firmware; run HCI/LE Audio feature validation. | HARD | MT6637-BT-KERNEL, CONNINFRA-KERNEL |
@@ -64,7 +63,6 @@ All **42** current PARTIAL directories have one A–F class. Camera kernel child
 ## Ranked static targets
 
 1. **MALI-GPU-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/MALI-GPU-KERNEL/CLAUDE-HANDOFF.md).
-2. **APUSYS-NPU-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/APUSYS-NPU-KERNEL/CLAUDE-HANDOFF.md).
 3. **CAMERA-ISP-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
 4. **MTK-VCODEC-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/MTK-VCODEC-KERNEL/CLAUDE-HANDOFF.md).
 5. **MTK-MDP-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/MTK-MDP-KERNEL/CLAUDE-HANDOFF.md).

@@ -7,7 +7,6 @@ Snapshot: **2026-10-08**, source HEAD `c8de6a1`. Actual workspace directory stat
 ## Six prepared normal-world kernel owners
 
 - **MALI-GPU-KERNEL (PARTIAL)**: ged.ko, mali_kbase_mt6878_r44.ko, mali_mgm_mt6878_r44.ko, mali_prot_alloc_mt6878_r44.ko, mtk_gpu_hal.ko, mtk_gpu_qos.ko, mtk_gpufreq_mt6878.ko, mtk_gpufreq_wrapper.ko. [Handoff](../accelerator-preparation/MALI-GPU-KERNEL/CLAUDE-HANDOFF.md).
-- **APUSYS-NPU-KERNEL (PARTIAL)**: apu_top.ko, apusys.ko. [Handoff](../accelerator-preparation/APUSYS-NPU-KERNEL/CLAUDE-HANDOFF.md).
 - **CAMERA-ISP-KERNEL (PARTIAL)**: c2ps_perf_ioctl.ko, camera_dpe_isp7sp.ko, ccd_rpmsg.ko, imgsensor-glue.ko, imgsensor.ko, mtk-cam-isp7sp.ko, mtk-ipesys-me.ko, mtk-vmm-isp71-regulator.ko, mtk-vmm-notifier.ko, mtk_aie.ko, mtk_aie_debug_7sp_2.ko, mtk_c2ps.ko, mtk_ccd_remoteproc.ko, mtk_ccuv.ko, mtk_hcp.ko, mtk_imgsys_cmdq.ko, mtk_imgsys_isp7sp.ko, mtk_imgsys_v4l2.ko, pda_drv_mt6878.ko. [Handoff](../accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
 - **MTK-VCODEC-KERNEL (PARTIAL)**: clk-mt6878-vcodec.ko, mtk-vcodec-common.ko, mtk-vcodec-dec-v1.ko, mtk-vcodec-enc-v1.ko, mtk-vcu.ko. [Handoff](../accelerator-preparation/MTK-VCODEC-KERNEL/CLAUDE-HANDOFF.md).
 - **MTK-MDP-KERNEL (PARTIAL)**: clk-mt6878-mdpsys.ko, mdp_drv_mt6878.ko, mtk-mml-mt6878.ko, mtk-mml.ko. [Handoff](../accelerator-preparation/MTK-MDP-KERNEL/CLAUDE-HANDOFF.md).

@@ -25,7 +25,7 @@ Six registrations own 41 exact stock targets. Preserve 16 camera function/data p
 ## Next work
 
 1. **MALI-GPU-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/MALI-GPU-KERNEL/CLAUDE-HANDOFF.md).
-2. **APUSYS-NPU-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/APUSYS-NPU-KERNEL/CLAUDE-HANDOFF.md).
+2. **APUSYS-NPU-KERNEL** — DONE: public-source deterministic rebuild and full static parity; [reconstruction report](../accelerator-preparation/APUSYS-NPU-KERNEL/RECONSTRUCTION-REPORT.md).
 3. **CAMERA-ISP-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
 4. **MTK-VCODEC-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/MTK-VCODEC-KERNEL/CLAUDE-HANDOFF.md).
 5. **MTK-MDP-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/MTK-MDP-KERNEL/CLAUDE-HANDOFF.md).
