@@ -1,0 +1,417 @@
+From 2e0f942217c230c4b73de2186be4bd1bf4ea6c9a Mon Sep 17 00:00:00 2001
+From: recon <recon@local>
+Date: Thu, 8 Oct 2026 08:25:28 +0300
+Subject: [PATCH 3/3] donor: drivers/gpu/mediatek/{ged,gpufreq} from ALPS
+ mt6878 5e415e059253 (local pin 2ae742fda9cd, git archive)
+
+---
+ drivers/gpu/mediatek/ged/include/ged_dvfs.h   |  1 +
+ drivers/gpu/mediatek/ged/src/ged_dvfs.c       | 11 ++++
+ .../mediatek/ged/src/ged_notify_sw_vsync.c    | 41 +++++++++++-
+ .../gpu/mediatek/gpufreq/v2/gpufreq_debug.c   | 64 +++++++++++++------
+ .../gpu/mediatek/gpufreq/v2/gpufreq_mt6897.c  | 32 ++++++++++
+ drivers/gpu/mediatek/gpufreq/v2/gpufreq_v2.c  | 36 +++++++++++
+ .../gpufreq/v2/include/gpufreq_common.h       |  1 +
+ .../gpufreq/v2/include/gpufreq_reg_mt6897.h   |  3 +
+ .../mediatek/gpufreq/v2/include/gpufreq_v2.h  |  3 +
+ 9 files changed, 170 insertions(+), 22 deletions(-)
+
+diff --git a/drivers/gpu/mediatek/ged/include/ged_dvfs.h b/drivers/gpu/mediatek/ged/include/ged_dvfs.h
+index 0ad60e9..2725f9a 100644
+--- a/drivers/gpu/mediatek/ged/include/ged_dvfs.h
++++ b/drivers/gpu/mediatek/ged/include/ged_dvfs.h
+@@ -151,6 +151,7 @@ unsigned int ged_dvfs_get_custom_ceiling_gpu_freq(void);
+ unsigned int ged_dvfs_get_custom_boost_gpu_freq(void);
+ 
+ unsigned long ged_query_info(GED_INFO eType);
++bool ged_gpu_is_heavy(void);
+ 
+ void ged_dvfs_get_gpu_cur_freq(struct GED_DVFS_FREQ_DATA *psData);
+ void ged_dvfs_get_gpu_pre_freq(struct GED_DVFS_FREQ_DATA *psData);
+diff --git a/drivers/gpu/mediatek/ged/src/ged_dvfs.c b/drivers/gpu/mediatek/ged/src/ged_dvfs.c
+index 2d6cab1..caa2739 100644
+--- a/drivers/gpu/mediatek/ged/src/ged_dvfs.c
++++ b/drivers/gpu/mediatek/ged/src/ged_dvfs.c
+@@ -662,6 +662,17 @@ unsigned long ged_query_info(GED_INFO eType)
+ }
+ EXPORT_SYMBOL(ged_query_info);
+ 
++bool ged_gpu_is_heavy(void)
++{
++	unsigned int gpu_loading;
++	int freq_id = ged_get_cur_oppidx();
++
++	gpu_loading = gpu_util_history_query_loading(16 * 1000);
++
++	return ((gpu_loading >= 85) && (freq_id <= 5));
++}
++EXPORT_SYMBOL(ged_gpu_is_heavy);
++
+ void ged_opp_stat_step(void)
+ {
+ 	int cur_idx = gpufreq_get_cur_oppidx(TARGET_DEFAULT);
+diff --git a/drivers/gpu/mediatek/ged/src/ged_notify_sw_vsync.c b/drivers/gpu/mediatek/ged/src/ged_notify_sw_vsync.c
+index b7d2928..f37849f 100644
+--- a/drivers/gpu/mediatek/ged/src/ged_notify_sw_vsync.c
++++ b/drivers/gpu/mediatek/ged/src/ged_notify_sw_vsync.c
+@@ -90,6 +90,10 @@ static enum gpu_dvfs_policy_state g_prev_policy_state = POLICY_STATE_INIT;
+ #define GED_APO_THRESHOLD_US 2000
+ #define GED_APO_LP_THRESHOLD_US 4000
+ 
++#define GED_APO_THR_NS 2000000
++#define GED_APO_WAKEUP_THR_NS (GED_APO_THR_NS + 1000000)
++
++#define GED_APO_LONG_WAKEUP_THR_NS 100000000
+ static spinlock_t g_sApoLock;
+ 
+ static unsigned long long g_apo_threshold_us;
+@@ -588,6 +592,25 @@ unsigned long long ged_get_apo_wakeup_us(void)
+ }
+ EXPORT_SYMBOL(ged_get_apo_wakeup_us);
+ 
++void ged_set_apo_wakeup_ns_nolock(unsigned long long apo_wakeup_ns)
++{
++	g_apo_wakeup_ns = apo_wakeup_ns;
++	g_apo_wakeup_us = apo_wakeup_ns / 1000;
++}
++EXPORT_SYMBOL(ged_set_apo_wakeup_ns_nolock);
++
++void ged_set_apo_wakeup_ns(unsigned long long apo_wakeup_ns)
++{
++	unsigned long ulIRQFlags;
++
++	spin_lock_irqsave(&g_sApoLock, ulIRQFlags);
++
++	ged_set_apo_wakeup_ns_nolock(apo_wakeup_ns);
++
++	spin_unlock_irqrestore(&g_sApoLock, ulIRQFlags);
++}
++EXPORT_SYMBOL(ged_set_apo_wakeup_ns);
++
+ void ged_set_apo_wakeup_us(unsigned long long apo_wakeup_us)
+ {
+ 	unsigned long ulIRQFlags;
+@@ -672,14 +695,20 @@ void ged_check_power_duration(void)
+ {
+ 	long long llDiff = 0;
+ 	unsigned long ulIRQFlags;
++	bool bforce = false;
+ 
+ 	spin_lock_irqsave(&g_sApoLock, ulIRQFlags);
+ 
++	bforce = ged_gpu_is_heavy();
++	if (true == bforce)
++		goto direct_check;
++
+ 	g_ns_gpu_off_duration =
+ 		(long long)(g_ns_gpu_active_ts - g_ns_gpu_idle_ts);
+ 	llDiff = g_ns_gpu_off_duration;
+ 
+-	if ((llDiff > 0) && (llDiff < g_apo_threshold_ns))
++direct_check:
++	if (bforce || ((llDiff > 0) && (llDiff < g_apo_threshold_ns)))
+ 		g_bGPUAPO = true;
+ 	else {
+ 		g_bGPUAPO = false;
+@@ -766,14 +795,22 @@ void ged_check_predict_power_duration(void)
+ {
+ 	long long llDiff = 0;
+ 	unsigned long ulIRQFlags;
++	bool bPredict_force = false;
+ 
+ 	spin_lock_irqsave(&g_sApoLock, ulIRQFlags);
+ 
++	bPredict_force = ged_gpu_is_heavy();
++	if (true == bPredict_force) {
++		ged_set_apo_wakeup_ns_nolock(GED_APO_LONG_WAKEUP_THR_NS);
++		goto direct_check;
++	} else
++		ged_set_apo_wakeup_ns_nolock(GED_APO_WAKEUP_THR_NS);
+ 	g_ns_gpu_predict_off_duration =
+ 		(long long)(g_ns_gpu_predict_active_ts - g_ns_gpu_predict_idle_ts);
+ 	llDiff = g_ns_gpu_predict_off_duration;
+ 
+-	if ((llDiff > 0) && (llDiff < g_apo_threshold_ns))
++direct_check:
++	if (bPredict_force || ((llDiff > 0) && (llDiff < g_apo_threshold_ns)))
+ 		g_bGPUPredictAPO = true;
+ 	else {
+ 		g_bGPUPredictAPO = false;
+diff --git a/drivers/gpu/mediatek/gpufreq/v2/gpufreq_debug.c b/drivers/gpu/mediatek/gpufreq/v2/gpufreq_debug.c
+index eac47dd..61763e6 100644
+--- a/drivers/gpu/mediatek/gpufreq/v2/gpufreq_debug.c
++++ b/drivers/gpu/mediatek/gpufreq/v2/gpufreq_debug.c
+@@ -230,11 +230,17 @@ static int gpu_working_opp_table_proc_show(struct seq_file *m, void *v)
+ 	}
+ 
+ 	for (i = 0; i < opp_num; i++) {
+-		seq_printf(m,
+-			"[%02d] freq: %d, volt: %d, vsram: %d, posdiv: %d, margin: %d, power: %d\n",
+-			i, opp_table[i].freq, opp_table[i].volt,
+-			opp_table[i].vsram, opp_table[i].posdiv,
+-			opp_table[i].margin, opp_table[i].power);
++		if (g_shared_status->test_mode)
++			seq_printf(m,
++				"[%02d] freq: %7d, volt: %6d, vsram: %6d, posdiv: %1d, margin: %5d, power: %5d\n",
++				i, opp_table[i].freq, opp_table[i].volt,
++				opp_table[i].vsram, opp_table[i].posdiv,
++				opp_table[i].margin, opp_table[i].power);
++		else
++			seq_printf(m,
++				"[%02d] freq: %7d, volt: %6d, vsram: %6d\n",
++				i, opp_table[i].freq, opp_table[i].volt,
++				opp_table[i].vsram);
+ 	}
+ 
+ done:
+@@ -260,11 +266,17 @@ static int stack_working_opp_table_proc_show(struct seq_file *m, void *v)
+ 	}
+ 
+ 	for (i = 0; i < opp_num; i++) {
+-		seq_printf(m,
+-			"[%02d] freq: %d, volt: %d, vsram: %d, posdiv: %d, margin: %d, power: %d\n",
+-			i, opp_table[i].freq, opp_table[i].volt,
+-			opp_table[i].vsram, opp_table[i].posdiv,
+-			opp_table[i].margin, opp_table[i].power);
++		if (g_shared_status->test_mode)
++			seq_printf(m,
++				"[%02d] freq: %7d, volt: %6d, vsram: %6d, posdiv: %1d, margin: %5d, power: %5d\n",
++				i, opp_table[i].freq, opp_table[i].volt,
++				opp_table[i].vsram, opp_table[i].posdiv,
++				opp_table[i].margin, opp_table[i].power);
++		else
++			seq_printf(m,
++				"[%02d] freq: %7d, volt: %6d, vsram: %6d\n",
++				i, opp_table[i].freq, opp_table[i].volt,
++				opp_table[i].vsram);
+ 	}
+ 
+ done:
+@@ -295,11 +307,17 @@ static int gpu_signed_opp_table_proc_show(struct seq_file *m, void *v)
+ 	}
+ 
+ 	for (i = 0; i < opp_num; i++) {
+-		seq_printf(m,
+-			"[%02d*] freq: %d, volt: %d, vsram: %d, posdiv: %d, margin: %d, power: %d\n",
+-			i, opp_table[i].freq, opp_table[i].volt,
+-			opp_table[i].vsram, opp_table[i].posdiv,
+-			opp_table[i].margin, opp_table[i].power);
++		if (g_shared_status->test_mode)
++			seq_printf(m,
++				"[%02d*] freq: %7d, volt: %6d, vsram: %6d, posdiv: %1d, margin: %5d, power: %5d\n",
++				i, opp_table[i].freq, opp_table[i].volt,
++				opp_table[i].vsram, opp_table[i].posdiv,
++				opp_table[i].margin, opp_table[i].power);
++		else
++			seq_printf(m,
++				"[%02d*] freq: %7d, volt: %6d, vsram: %6d\n",
++				i, opp_table[i].freq, opp_table[i].volt,
++				opp_table[i].vsram);
+ 	}
+ 
+ done:
+@@ -330,11 +348,17 @@ static int stack_signed_opp_table_proc_show(struct seq_file *m, void *v)
+ 	}
+ 
+ 	for (i = 0; i < opp_num; i++) {
+-		seq_printf(m,
+-			"[%02d*] freq: %d, volt: %d, vsram: %d, posdiv: %d, margin: %d, power: %d\n",
+-			i, opp_table[i].freq, opp_table[i].volt,
+-			opp_table[i].vsram, opp_table[i].posdiv,
+-			opp_table[i].margin, opp_table[i].power);
++		if (g_shared_status->test_mode)
++			seq_printf(m,
++				"[%02d*] freq: %7d, volt: %6d, vsram: %6d, posdiv: %1d, margin: %5d, power: %5d\n",
++				i, opp_table[i].freq, opp_table[i].volt,
++				opp_table[i].vsram, opp_table[i].posdiv,
++				opp_table[i].margin, opp_table[i].power);
++		else
++			seq_printf(m,
++				"[%02d*] freq: %7d, volt: %6d, vsram: %6d\n",
++				i, opp_table[i].freq, opp_table[i].volt,
++				opp_table[i].vsram);
+ 	}
+ 
+ done:
+diff --git a/drivers/gpu/mediatek/gpufreq/v2/gpufreq_mt6897.c b/drivers/gpu/mediatek/gpufreq/v2/gpufreq_mt6897.c
+index eb384d4..d792883 100644
+--- a/drivers/gpu/mediatek/gpufreq/v2/gpufreq_mt6897.c
++++ b/drivers/gpu/mediatek/gpufreq/v2/gpufreq_mt6897.c
+@@ -38,6 +38,7 @@
+ #include <mtk_gpu_utility.h>
+ #include <gpufreq_history_common.h>
+ #include <gpufreq_history_mt6897.h>
++#include <gpueb_debug.h>
+ 
+ #if IS_ENABLED(CONFIG_MTK_STATIC_POWER)
+ #include <leakage_table_v2/mtk_static_power.h>
+@@ -174,6 +175,7 @@ static void __iomem *g_mfg_top_base;
+ static void __iomem *g_mfg_pll_base;
+ static void __iomem *g_mfgsc_pll_base;
+ static void __iomem *g_mfg_rpc_base;
++static void __iomem *g_gpueb_mbox_base;
+ static void __iomem *g_sleep;
+ static void __iomem *g_topckgen_base;
+ static void __iomem *g_nth_emicfg_base;
+@@ -264,6 +266,7 @@ static struct gpufreq_platform_fp platform_eb_fp = {
+ 	.get_dyn_pgpu = __gpufreq_get_dyn_pgpu,
+ 	.get_core_mask_table = __gpufreq_get_core_mask_table,
+ 	.get_core_num = __gpufreq_get_core_num,
++	.pdca_polling_ack = __gpufreq_pdca_polling_ack,
+ };
+ 
+ /**
+@@ -1563,6 +1566,23 @@ void __gpufreq_pdca_config(enum gpufreq_power_state power)
+ #endif /* GPUFREQ_PDCA_ENABLE */
+ }
+ 
++void __gpufreq_pdca_polling_ack(enum gpufreq_power_state power)
++{
++	int i = 0;
++
++	if (power == GPU_PWR_OFF) {
++		while (DRV_Reg32(GPUEB_MBOX_PDCA_STA) & BIT(16)) {
++			udelay(1);
++			/* polling ack 1s */
++			if (++i > 1000000) {
++				gpueb_dump_status(NULL, NULL, 0);
++				__gpufreq_abort("timeout, %s=0x%08x",
++					"GPUEB_MBOX_PDCA_STA", DRV_Reg32(GPUEB_MBOX_PDCA_STA));
++			}
++		}
++	}
++}
++
+ /* API: init first time shared status */
+ void __gpufreq_set_shared_status(struct gpufreq_shared_status *shared_status)
+ {
+@@ -4835,6 +4855,18 @@ static int __gpufreq_init_platform_info(struct platform_device *pdev)
+ 		goto done;
+ 	}
+ 
++	/* 0x13C62000 */
++	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "gpueb_mbox");
++	if (unlikely(!res)) {
++		GPUFREQ_LOGE("fail to get resource GPUEB_MBOX");
++		goto done;
++	}
++	g_gpueb_mbox_base = devm_ioremap(gpufreq_dev, res->start, resource_size(res));
++	if (unlikely(!g_gpueb_mbox_base)) {
++		GPUFREQ_LOGE("fail to ioremap GPUEB_MBOX: 0x%llx", res->start);
++		goto done;
++	}
++
+ 	/* 0x1C001000 */
+ 	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "sleep");
+ 	if (unlikely(!res)) {
+diff --git a/drivers/gpu/mediatek/gpufreq/v2/gpufreq_v2.c b/drivers/gpu/mediatek/gpufreq/v2/gpufreq_v2.c
+index 421e1a5..c6c4e8f 100644
+--- a/drivers/gpu/mediatek/gpufreq/v2/gpufreq_v2.c
++++ b/drivers/gpu/mediatek/gpufreq/v2/gpufreq_v2.c
+@@ -701,6 +701,26 @@ unsigned int gpufreq_get_dynamic_power(enum gpufreq_target target,
+ }
+ EXPORT_SYMBOL(gpufreq_get_dynamic_power);
+ 
++/***********************************************************************************
++ * Function Name      : gpufreq_get_cur_temperature
++ * Inputs             : -
++ * Outputs            : -
++ * Returns            : temper - Current temperature of GPU
++ * Description        : Query current temperature of GPU
++ ***********************************************************************************/
++int gpufreq_get_cur_temperature(void)
++{
++	int temper = -274;
++
++	if (g_shared_status)
++		temper = g_shared_status->temperature;
++	else
++		GPUFREQ_LOGE("null gpufreq shared memory (ENOENT)");
++
++	return temper;
++}
++EXPORT_SYMBOL(gpufreq_get_cur_temperature);
++
+ /***********************************************************************************
+  * Function Name      : gpufreq_power_control
+  * Inputs             : power          - Target power state
+@@ -1128,6 +1148,22 @@ void gpufreq_pdca_config(enum gpufreq_power_state power)
+ }
+ EXPORT_SYMBOL(gpufreq_pdca_config);
+ 
++/***********************************************************************************
++ * Function Name      : gpufreq_pdca_polling_ack
++ * Inputs             : power          - Target power state
++ * Outputs            : -
++ * Returns            : -
++ * Description        : Polling PDCA power on/off ACK
++ ***********************************************************************************/
++void gpufreq_pdca_polling_ack(enum gpufreq_power_state power)
++{
++	if (gpufreq_fp && gpufreq_fp->pdca_polling_ack)
++		gpufreq_fp->pdca_polling_ack(power);
++	else
++		GPUFREQ_LOGE("null gpufreq platform function pointer (ENOENT)");
++}
++EXPORT_SYMBOL(gpufreq_pdca_polling_ack);
++
+ /***********************************************************************************
+  * Function Name      : gpufreq_fake_mtcmos_control
+  * Inputs             : power          - Target power state
+diff --git a/drivers/gpu/mediatek/gpufreq/v2/include/gpufreq_common.h b/drivers/gpu/mediatek/gpufreq/v2/include/gpufreq_common.h
+index ab940c2..996870c 100644
+--- a/drivers/gpu/mediatek/gpufreq/v2/include/gpufreq_common.h
++++ b/drivers/gpu/mediatek/gpufreq/v2/include/gpufreq_common.h
+@@ -103,6 +103,7 @@ void __gpufreq_set_mfgsys_config(enum gpufreq_config_target target, enum gpufreq
+ struct gpufreq_core_mask_info *__gpufreq_get_core_mask_table(void);
+ unsigned int __gpufreq_get_core_num(void);
+ void __gpufreq_pdca_config(enum gpufreq_power_state power);
++void __gpufreq_pdca_polling_ack(enum gpufreq_power_state power);
+ void __gpufreq_update_debug_opp_info(void);
+ void __gpufreq_set_shared_status(struct gpufreq_shared_status *shared_status);
+ int __gpufreq_mssv_commit(unsigned int target, unsigned int val);
+diff --git a/drivers/gpu/mediatek/gpufreq/v2/include/gpufreq_reg_mt6897.h b/drivers/gpu/mediatek/gpufreq/v2/include/gpufreq_reg_mt6897.h
+index b17d438..93a38d1 100644
+--- a/drivers/gpu/mediatek/gpufreq/v2/include/gpufreq_reg_mt6897.h
++++ b/drivers/gpu/mediatek/gpufreq/v2/include/gpufreq_reg_mt6897.h
+@@ -156,6 +156,9 @@
+ #define MFG_RPC_PWR_CON_STATUS          (MFG_RPC_BASE + 0x1200)               /* 0x13F91200 */
+ #define MFG_RPC_PWR_CON_2ND_STATUS      (MFG_RPC_BASE + 0x1204)               /* 0x13F91204 */
+ 
++#define GPUEB_MBOX_BASE                 (g_gpueb_mbox_base)                   /* 0x13C62000 */
++#define GPUEB_MBOX_PDCA_STA             (GPUEB_MBOX_BASE + 0xA8)              /* 0x13C620A8 */
++
+ #define SPM_BASE                        (g_sleep)                             /* 0x1C001000 */
+ #define SPM_SPM2GPUPM_CON               (SPM_BASE + 0x410)                    /* 0x1C001410 */
+ #define SPM_SRC_REQ                     (SPM_BASE + 0x818)                    /* 0x1C001818 */
+diff --git a/drivers/gpu/mediatek/gpufreq/v2/include/gpufreq_v2.h b/drivers/gpu/mediatek/gpufreq/v2/include/gpufreq_v2.h
+index ad580b5..39982fc 100644
+--- a/drivers/gpu/mediatek/gpufreq/v2/include/gpufreq_v2.h
++++ b/drivers/gpu/mediatek/gpufreq/v2/include/gpufreq_v2.h
+@@ -445,6 +445,7 @@ struct gpufreq_platform_fp {
+ 	struct gpufreq_core_mask_info *(*get_core_mask_table)(void);
+ 	unsigned int (*get_core_num)(void);
+ 	void (*pdca_config)(enum gpufreq_power_state power);
++	void (*pdca_polling_ack)(enum gpufreq_power_state power);
+ 	void (*update_debug_opp_info)(void);
+ 	void (*set_shared_status)(struct gpufreq_shared_status *shared_status);
+ 	int (*mssv_commit)(unsigned int target, unsigned int val);
+@@ -546,6 +547,7 @@ int gpufreq_get_oppidx_by_freq(enum gpufreq_target target, unsigned int freq);
+ unsigned int gpufreq_get_leakage_power(enum gpufreq_target target, unsigned int volt);
+ unsigned int gpufreq_get_dynamic_power(enum gpufreq_target target,
+ 	unsigned int freq, unsigned int volt);
++int gpufreq_get_cur_temperature(void);
+ int gpufreq_set_limit(enum gpufreq_target target,
+ 	enum gpuppm_limiter limiter, int ceiling_info, int floor_info);
+ int gpufreq_get_cur_limit_idx(enum gpufreq_target target,enum gpuppm_limit_type limit);
+@@ -557,6 +559,7 @@ int gpufreq_dual_commit(int gpu_oppidx, int stack_oppidx);
+ struct gpufreq_core_mask_info *gpufreq_get_core_mask_table(void);
+ unsigned int gpufreq_get_core_num(void);
+ void gpufreq_pdca_config(enum gpufreq_power_state power);
++void gpufreq_pdca_polling_ack(enum gpufreq_power_state power);
+ void gpufreq_fake_mtcmos_control(enum gpufreq_power_state power);
+ void gpufreq_register_gpufreq_fp(struct gpufreq_platform_fp *platform_fp);
+ void gpufreq_register_gpuppm_fp(struct gpuppm_platform_fp *platform_fp);
+-- 
+2.56.0
+

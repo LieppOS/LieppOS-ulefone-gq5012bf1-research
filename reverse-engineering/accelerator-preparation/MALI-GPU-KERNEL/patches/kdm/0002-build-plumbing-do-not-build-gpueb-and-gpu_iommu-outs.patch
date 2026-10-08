@@ -1,0 +1,28 @@
+From 6f0cb00af72adfc186a525985f8cea3770a57ec9 Mon Sep 17 00:00:00 2001
+From: recon <recon@local>
+Date: Thu, 8 Oct 2026 08:24:56 +0300
+Subject: [PATCH 2/3] build plumbing: do not build gpueb/ and gpu_iommu/
+ (outside MALI-GPU-KERNEL ownership)
+
+---
+ drivers/gpu/mediatek/Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/mediatek/Makefile b/drivers/gpu/mediatek/Makefile
+index 3befca2..2b9a147 100644
+--- a/drivers/gpu/mediatek/Makefile
++++ b/drivers/gpu/mediatek/Makefile
+@@ -36,8 +36,8 @@ ifneq ($(CONFIG_MTK_GPU_SUPPORT),)
+     obj-y += hal/
+     obj-y += gpufreq/
+     obj-y += gpu_bm/
+-    obj-y += gpueb/
+-    obj-y += gpu_iommu/
++    # obj-y += gpueb/      (not owned: GPU-AI-AUX-KERNEL-INTERFACES; stock provider ABI record used)
++    # obj-y += gpu_iommu/  (mt6989-only module, not shipped on GQ5012BF1)
+ 
+ ifneq ($(CONFIG_MTK_GPU_VERSION),"")
+ # GPU R5P0
+-- 
+2.56.0
+
