@@ -1,5 +1,14 @@
 # Source lineage — MTK-VCODEC-KERNEL
 
+> **Resolved.** The exact source of all five shipped modules is the public ALPS release
+> `5e415e059253ce0d2e61c97108e5f5785d71f06f` (base tree `9c61acc3cb0d9bb7f5dbabb51adc2b3fd993810c`),
+> with **no C or header modification**. The Nothing-ROM donor `957dac18` is *not* the stock
+> source (measured differences in `mtk_vcodec_dec_drv.c`, `mtk_vcodec_drv.h`,
+> `mtk_vcodec_enc.c`, `mtk_vcodec_enc_drv.c`, `mtk_vcodec_util.c`, `vdec/vdec_vcp_if.c`,
+> `venc/venc_vcp_if.c`); it is retained only for vendor Kconfig/defconfig. The patched mixed
+> workspace `ca8b550b75e8` is unused. See [SOURCE.md](SOURCE.md) and
+> [stale-claims.md](stale-claims.md). The table below is the original triage record.
+
 Every donor directory/file exists. Commits and complete relevant-file fingerprints are in [source-candidates.tsv](source-candidates.tsv). The ALPS snapshot local commit `2ae742fda9cd461bfe8cf8a5c04f95e212f8e699` identifies a pristine archive of upstream MT6878 ALPS `5e415e059253`; it is not misrepresented as the upstream Git commit. The Nothing donor import and the patched mixed-build tree are distinct candidates. Do not reset or edit any of these shared checkouts.
 
 | Module | Local donor | Local Git commit | Starting state |
