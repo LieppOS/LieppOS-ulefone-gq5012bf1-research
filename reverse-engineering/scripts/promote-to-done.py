@@ -27,6 +27,7 @@ P = os.path.join(W, "Reverse Engineer - PARTIAL", comp)
 D = os.path.join(W, "Reverse Engineer - DONE", comp)
 assert os.path.isdir(P) and not os.path.exists(D), "bad source/target state"
 sha = lambda b: hashlib.sha256(b).hexdigest()  # noqa: E731
+DATE = os.environ.get("CLOSE_DATE", "2026-10-07")
 
 shutil.move(P, D)
 mapping = {}  # pack-relative -> research abs path
@@ -58,7 +59,7 @@ for dp, dn, fns in os.walk(D):
 rr = os.path.relpath(rdir, os.path.join(W, "ulefone-gq5012bf1-research"))
 os.makedirs(os.path.join(D, "notes"), exist_ok=True)
 open(os.path.join(D, "notes/CLASSIFICATION-CHANGE.md"), "w").write(
-    f"# Classification change — {comp}\n\nDate: 2026-10-07\n\n"
+    f"# Classification change — {comp}\n\nDate: {DATE}\n\n"
     f"`Reverse Engineer - PARTIAL/{comp}` → `Reverse Engineer - DONE/{comp}` (moved, not copied).\n\n"
     f"{reason}\n\nAuthoritative closure: `../README.md`; corrections: `stale-claims.md`.\n"
     f"Research source: `ulefone-gq5012bf1-research/{rr}/` commit `{commit}`.\n")
@@ -73,7 +74,7 @@ open(os.path.join(D, "evidence/EVIDENCE-INDEX.md"), "w").write(
     "Where they conflict with `../README.md` or `../notes/stale-claims.md`, the newer closure is "
     "authoritative. No proprietary binary, firmware or raw private dump is copied into this pack.\n")
 pv = os.path.join(D, "notes/PROVENANCE.md")
-add = (f"\n## 2026-10-07 closure addendum (authoritative)\n\nPack moved to `Reverse Engineer - DONE/{comp}`. "
+add = (f"\n## {DATE} closure addendum (authoritative)\n\nPack moved to `Reverse Engineer - DONE/{comp}`. "
        f"Closure files were copied from `ulefone-gq5012bf1-research/{rr}/` commit `{commit}` (listed in "
        "`../evidence/EVIDENCE-INDEX.md`). Older entries above are historical; their `PARTIAL` path "
        "prefixes refer to the pre-move location.\n")
@@ -129,7 +130,7 @@ for dp, _, fns in os.walk(D):
                      kind_or_provenance=rel.split("/")[0] if "/" in rel else "closure")
         else:
             x.update(artifact_origin="generated-index", original_repo="organized workspace",
-                     kind_or_provenance="generated or amended during 2026-10-07 status closure")
+                     kind_or_provenance=f"generated or amended during {DATE} status closure")
         x.update(status="DONE", component=comp, local_path=newroot + rel, current_sha256=h, bytes=str(len(b)))
         new.append(x)
 new.sort(key=lambda x: x["local_path"])
