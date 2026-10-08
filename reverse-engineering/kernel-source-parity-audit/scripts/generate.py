@@ -187,7 +187,7 @@ metrics=dict(distinct_stock_identities=len(ALL),unique_filenames=len({r['filenam
     dependency_import_records=len(EDGES),provider_resolution_counts=dict(collections.Counter(r['result'] for r in EDGES)),source_projects=len(PROJECTS),
     recorded_bound_modules=sum(r['bound_probe_status']=='RECORDED_DRIVER_MODULE_SYMLINK' for r in ALL),
     unmatched_load_list_entries=[r for r in LISTS if r['matching_module_ids']=='UNKNOWN'],
-    completed_projects=['BOOT-CLOCK-CORE (6 identities D->A, 2026-10-09)'],
+    completed_projects=['BOOT-CLOCK-CORE (6 identities D->A, 2026-10-09)','PRESERVE:STORAGE (10 identities G->A, 2026-10-09)'],
     next_project=PROJECTS[0]['project'],next_modules=PROJECTS[0]['modules'].split(';'),
     source_counts_are_not_component_DONE_counts=True)
 (AUDIT/'evidence/audit-summary.json').write_text(json.dumps(metrics,indent=2,sort_keys=True)+'\n')
@@ -197,6 +197,7 @@ queue=['# Dependency-aware kernel source reconstruction queue','',
 '','## Acceptance and order','',
 '1. Essential retained boot contract and storage; 2. radio/security interfaces; 3. active peripherals; 4. optional/diagnostic features.',
 'Completed: BOOT-CLOCK-CORE (6 first-stage clock modules, D->A on 2026-10-09; reverse-engineering/kernel-source-reconstruction/BOOT-CLOCK-CORE). It no longer appears below.',
+'Completed: PRESERVE:STORAGE (10 UFS/RPMB/MMC modules, G->A on 2026-10-09; reverse-engineering/kernel-source-reconstruction/STORAGE). It no longer appears below.',
 'The first project listed below is the current queue head.',
 '`PRESERVE:*` projects must preserve/reproduce existing exact source work, not reverse-engineer it again. `G` is a finite evidence/input-closure question, not a missing-code claim.',
 'All dependency entries below are stock symbol/CRC requirements. A provider gap is recorded separately from implementation effort; retained provider ABI records may support compilation but do not close that provider.',

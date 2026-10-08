@@ -141,6 +141,33 @@ for stock in STOCK.values():
         source_group='BOOT-CLOCK-CORE',blocker='NONE',gap_kind='NONE',
         firmware_boundary='NONE; runtime clock behaviour not validated (Slot B procedure pending)')
 
+# PRESERVE:STORAGE (2026-10-09): the historical exact storage rebuilds are now a maintained
+# pinned recipe with independent clean-checkout B1/B2 and full stock acceptance bound to each
+# exact stock SHA256. Ownership (UFS-RPMB-KERNEL, co-owner MICROSD-KERNEL) unchanged.
+STOR_REPO=WORKSPACE/'android_kernel_modules_storage_ulefone_gq5012bf1'
+STOR_PACK=ROOT/'reverse-engineering/kernel-source-reconstruction/STORAGE'
+STOR_HEAD=subprocess.check_output(['git','rev-parse','HEAD'],cwd=STOR_REPO,text=True).strip()
+assert not subprocess.check_output(['git','status','--porcelain'],cwd=STOR_REPO,text=True).strip(), 'storage repo dirty'
+stor_acceptance=json.loads((STOR_PACK/'evidence/acceptance/acceptance.json').read_text())
+stor_hashes={v['stock_sha256']:k for k,v in stor_acceptance.items()}
+assert len(stor_hashes)==10 and all(v['unresolved']==0 and v['raw_differing_bytes']<=v['allowed_range'][1]==20 for v in stor_acceptance.values())
+for stock in STOCK.values():
+    if stock['stock_sha256'] not in stor_hashes:continue
+    m=stor_hashes[stock['stock_sha256']];assert m+'.ko'==stock['filename']
+    assert stor_acceptance[m]['functions']==stock['function_count'],(m,stock['function_count'])
+    add(stock,source_status='A',source_repo=ref(STOR_REPO),source_commit=STOR_HEAD,
+        source_pin=ref(STOR_REPO/'SOURCE-PINS.tsv'),build_script=ref(STOR_REPO/'scripts/b1b2.sh'),
+        source_snapshot_path=ref(STOR_REPO/'patches'),
+        parity_evidence=[ref(STOR_PACK/'evidence/acceptance/acceptance.json'),ref(STOR_PACK/'module-parity.tsv'),
+                         ref(STOR_PACK/'evidence/build/b1b2-clean-checkout.log'),ref(STOR_PACK/'RECONSTRUCTION-REPORT.md')],
+        exact_functions=stock['function_count'],equivalent_functions=0,unresolved_functions=0,
+        historical_exact_functions=stock['function_count'],historical_parity='FULL_ACCEPTANCE (historical 2026-10-04 artifacts also re-verified exact)',
+        abi_status='VERIFIED',crc_status='VERIFIED',kcfi_status='VERIFIED',reproduction_status='INDEPENDENT_CLEAN_CHECKOUT_B1_B2',
+        verified_difference_classification='BUILD_METADATA_ONLY (20-byte GNU build ID)',
+        preservation_risk='LOW: immutable public pins, complete patches, local history and research bundle; public input availability remains a dependency',
+        source_group='PRESERVE:STORAGE',blocker='NONE',gap_kind='NONE',
+        firmware_boundary='NONE for the module source; RPMB secure-world consumers (TrustKernel teed/TAs) and ATF SiP services are outside the proof; runtime not validated')
+
 # GKI: both independently cleaned builds prove complete ELF bodies, not vendor variants.
 system=pack('SYSTEM-DLKM');gki_lines=(system/'parity/system-dlkm-parity-B1.txt').read_text().splitlines()
 proven={l.split('\t')[0] for l in gki_lines if '\tIDENTICAL BODY, signature differs' in l};assert len(proven)==60

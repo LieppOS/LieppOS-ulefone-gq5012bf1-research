@@ -3,8 +3,13 @@
 > **Update 2026-10-09 — BOOT-CLOCK-CORE completed.** `clk-common`, `clk-mt6878`,
 > `clk-mt6878-bus`, `clk-mt6878-peri`, `clk-mt6878-vlp` and `clk-fmeter-mt6878` moved
 > **D → A** (byte-exact except GNU build ID; independent clean-checkout B1/B2) via
-> `android_kernel_modules_boot_clock_ulefone_gq5012bf1`. Counts below are current:
-> **107 certified / 351 uncertified of 458**. No other row, owner or component status changed.
+> `android_kernel_modules_boot_clock_ulefone_gq5012bf1` (107 / 351).
+>
+> **Update 2026-10-09 — PRESERVE:STORAGE completed.** `ufs-mediatek-mod`, `ufs-mediatek-dbg`,
+> `phy-mtk-ufs`, `rpmb`, `rpmb-mtk`, `mtk-mmc`, `mtk-mmc-dbg`, `cqhci`, `mtk-wp` and `blocktag`
+> moved **G → A** via `android_kernel_modules_storage_ulefone_gq5012bf1`
+> (`../kernel-source-reconstruction/STORAGE/`). Counts below are current:
+> **117 certified / 341 uncertified of 458**. No other row, owner or component status changed.
 
 ## Answer and limits
 
@@ -16,29 +21,29 @@ but correctly contains **458** identity rows and every stock path.
 
 | Source class | Count | Evidence-supported interpretation |
 |---|---:|---|
-| A — VERIFIED_BYTE_EXACT | 106 | 60 system_dlkm ELF bodies; 40 accelerator modules; 6 boot-clock modules; declared nonbehavioral metadata differences |
+| A — VERIFIED_BYTE_EXACT | 116 | 60 system_dlkm ELF bodies; 40 accelerator modules; 6 boot-clock modules; 10 storage modules; declared nonbehavioral metadata differences |
 | B — VERIFIED_SEMANTIC_EQUIVALENT | 1 | imgsensor, with bounded equivalent function/moved byte-load proof |
 | C — REPRODUCIBLE_SOURCE_UNVERIFIED | 4 | FT3680, YFT devinfo, ST21NFC, tkcore source island; required stock acceptance remains incomplete |
 | D — SOURCE_CANDIDATE_ONLY | 194 | Located public targets/source candidates; no accepted independent stock-compatible build |
 | E — SOURCE_MISSING | 0 | No implementation is affirmatively classified missing; this is NOT a claim that every implementation is sufficient |
 | F — PROVEN_NOT_REQUIRED | 0 | No production exclusion meets the requested evidential standard |
-| G — UNRESOLVED | 153 | Historical source builds/parity exist, but independent recipe/input closure is not established by the reviewed records |
+| G — UNRESOLVED | 143 | Historical source builds/parity exist, but independent recipe/input closure is not established by the reviewed records |
 | **Total** | **458** | No unresolved identity dropped |
 
-**107 A/B identities are certified. 351 identities are not certified or legitimately
+**117 A/B identities are certified. 341 identities are not certified or legitimately
 excluded.** Of those, **198** are known candidate/incomplete-acceptance cases (194 D + 4 C),
-and **153 remain unclassified for independent reproducibility**. Do not describe this as
-351 new reverse-engineering projects: the 153 G cases include large, already reconstructed
+and **143 remain unclassified for independent reproducibility**. Do not describe this as
+341 new reverse-engineering projects: the 143 G cases include large, already reconstructed
 stacks whose existing code and parity must be preserved rather than redone.
 
-There are **175 uncertified identities required by the retained stock first-stage loader
+There are **165 uncertified identities required by the retained stock first-stage loader
 contract** (187 first-stage identities in total). This is a conditional boot/integration
 requirement, not proof that every driver controls indispensable physical hardware. For
 **271 identities, production/runtime necessity remains unknown**. No authorized stripped
 production configuration or removal-safety proof was supplied, so no F exclusions are made.
 
-Source is located in some form for all 351 remaining identities: 194 public candidates and
-157 reconstructed/historically built cases (153 G + 4 C). **Only four have class C's specific
+Source is located in some form for all 341 remaining identities: 194 public candidates and
+147 reconstructed/historically built cases (143 G + 4 C). **Only four have class C's specific
 incomplete stock-acceptance finding.** Availability of code is not independent reproduction;
 absence of an E finding is not evidence of complete source availability.
 
@@ -121,9 +126,9 @@ absence or negative DT alias alone supports exclusion. See `OPTIONAL-15-REVIEW.t
 ## Prioritized source gaps
 
 1. ~~**Boot clock core**~~ — **completed 2026-10-09**: all six D → A, see
-   `../kernel-source-reconstruction/BOOT-CLOCK-CORE/`. Queue head is now boot/storage preservation.
-2. **Boot/storage source preservation:** UFS/RPMB/MMC exact work exists; close immutable
-   recipe/input preservation, not another driver reconstruction.
+   `../kernel-source-reconstruction/BOOT-CLOCK-CORE/`.
+2. ~~**Boot/storage source preservation**~~ — **completed 2026-10-09**: all ten G → A, see
+   `../kernel-source-reconstruction/STORAGE/`. Queue head is now pinctrl (`RECONSTRUCTION-QUEUE.md`).
 3. **PMIC/regulator/pinctrl and boot power infrastructure:** integrate located public
    sources and measure the specific modules; keep audio/charger leaf work separate.
 4. **IOMMU/SMI/interconnect/CMDQ providers:** consumers depend on these unverified source
@@ -141,7 +146,7 @@ absence or negative DT alias alone supports exclusion. See `OPTIONAL-15-REVIEW.t
     charger and support closures; independently resolve their build inputs before certification.
 
 The complete finite map is `RECONSTRUCTION-PROJECTS.tsv` / `RECONSTRUCTION-QUEUE.md`:
-155 scoped source/preservation projects (BOOT-CLOCK-CORE completed), not 458 isolated projects and not one giant BSP project.
+154 scoped source/preservation projects (BOOT-CLOCK-CORE and PRESERVE:STORAGE completed), not 458 isolated projects and not one giant BSP project.
 
 ## Reproduction and validation
 

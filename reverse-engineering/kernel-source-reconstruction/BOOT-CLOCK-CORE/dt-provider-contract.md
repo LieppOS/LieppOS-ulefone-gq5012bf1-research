@@ -25,7 +25,9 @@ Full consumer ledger: `evidence/dt/dt-consumers.tsv`.
 | `syscon@1cb21000` | mediatek,mt6878-scp | 0x2c | clk-mt6878-vlp | 1 | 4 |
 
 Total: **67 consumer nodes, 387 clock references** into these providers; every consumer is
-`okay` (explicit or implicit). Highest provider IDs referenced: topckgen 282 and pericfg_ao 32 —
+`okay` (explicit or implicit). *Correction (PRESERVE:STORAGE, 2026-10-09):* this is the static image DT;
+in the live DT the bootloader sets `mmc@11230000` (MSDC0/eMMC) to `disabled`, so one of the 67 is
+inactive at runtime. Provider and ID conclusions are unaffected. Highest provider IDs referenced: topckgen 282 and pericfg_ao 32 —
 both exist only because of patch 0002 (`NR_CLK` 283 / 33). With the unpatched public source,
 those three DT references would resolve to an out-of-range ID.
 

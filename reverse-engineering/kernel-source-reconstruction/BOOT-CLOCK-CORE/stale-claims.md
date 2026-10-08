@@ -9,3 +9,4 @@
 | Old audit export count for clk-common: 64 | 64 exported **functions**; the module exports **87** symbols including 23 clock-ops data objects (counted from `__crc_*`). |
 | `clk-mt6878-vlp` provides the VLP clock tree | It registers only the 4 SCP gates (`mediatek,mt6878-scp`); VLP muxes/factors are registered by `clk-mt6878` (`vlp_cksys`). |
 | Clock modules must load after pinctrl because pinctrl precedes them | Stock order only; there is no symbol or DT dependency between them. |
+| (this package) every one of the 67 DT consumers is `okay` | Static DT only; `mmc@11230000` is disabled in the live DT by the bootloader (found by PRESERVE:STORAGE). |

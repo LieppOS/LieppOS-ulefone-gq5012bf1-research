@@ -6,8 +6,12 @@
 > retained as the historical brief. Two of its statements were corrected by the work:
 > the pinned public source alone did **not** reproduce stock (a display-PWM clock delta was
 > required for `clk-mt6878` and `clk-mt6878-peri`), and `clk-fmeter-mt6878` sits at normal
-> loader position 50 (recovery 49), not 51. The current queue head is the first project in
-> `RECONSTRUCTION-QUEUE.md` (`PRESERVE:STORAGE`); no new assignment has been written yet.
+> loader position 50 (recovery 49), not 51.
+>
+> **Follow-up PRESERVE:STORAGE: COMPLETED 2026-10-09** (ten storage modules G → A,
+> `../kernel-source-reconstruction/STORAGE/`). The current queue head is the first project in
+> `RECONSTRUCTION-QUEUE.md` (pinctrl: `pinctrl-mt6363`, `pinctrl-mt6878`,
+> `pinctrl-mtk-common-v2_debug`, `pinctrl-mtk-v2`); no new assignment has been written yet.
 
 ## Mission
 

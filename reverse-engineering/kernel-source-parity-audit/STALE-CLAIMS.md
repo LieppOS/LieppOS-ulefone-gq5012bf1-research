@@ -19,14 +19,15 @@ Existing records are preserved. This audit changes no component status or genera
 | Existing global workspace audit is clean | Pre-existing 19 hash/size drifts in five components, 408 unregistered files in nine components and one duplicate remain. No unrelated records are changed to conceal them. |
 | Mali is still an unfinished accelerator reconstruction | Its organized workspace/source package is DONE; the older canonical component ledger still says PARTIAL. This pre-existing drift is recorded, not repaired. |
 | BOOT-CLOCK-CORE is D: public candidate likely sufficient, "no demonstrated missing implementation or required OEM patch" | Measured 2026-10-09: four of six were exact from public ALPS `5e415e059253`; `clk-mt6878`/`clk-mt6878-peri` needed the GQ5012BF1 display-PWM clock delta (mux ID 282, gates 31/32) that upstream `591991d44aad` removed. All six are now A. |
+| PRESERVE:STORAGE is G: historical exact storage rebuilds without independent input closure | Measured 2026-10-09: the historical artifacts were exact, but the recipe depended on a since-modified shared kout, stock-harvested `stock-all.symvers`, a hand-edited `-ise` symvers and copied headers. All replaced by pinned/regenerated inputs; all ten are now A (`../kernel-source-reconstruction/STORAGE/STALE-CLAIMS.md`). |
 
 ## What the new counts do not claim
 
-- **351 uncertified/unexcluded identities (357 before BOOT-CLOCK-CORE) are not missing implementations.**
-- **0 class E is not proof that every candidate is sufficient.** The 153 G source claims
+- **341 uncertified/unexcluded identities (357 before BOOT-CLOCK-CORE, 351 before PRESERVE:STORAGE) are not missing implementations.**
+- **0 class E is not proof that every candidate is sufficient.** The 143 G source claims
   remain unresolved for independent input/recipe closure.
-- **153 G is not a reversal of measured byte/semantic parity.** Preserve that work and
+- **143 G is not a reversal of measured byte/semantic parity.** Preserve that work and
   resolve its reproduction evidence; do not reverse-engineer it again.
-- **175 boot-contract gaps (181 before BOOT-CLOCK-CORE) are conditional on retaining the stock first-stage load model**,
-  not an assertion that all 175 drivers control essential fitted hardware.
+- **165 boot-contract gaps (181 before BOOT-CLOCK-CORE, 175 before PRESERVE:STORAGE) are conditional on retaining the stock first-stage load model**,
+  not an assertion that all 165 drivers control essential fitted hardware.
 - **271 unknown necessity results must not be turned into F just to shrink the queue.**
