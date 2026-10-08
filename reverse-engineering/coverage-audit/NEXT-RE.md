@@ -32,20 +32,6 @@ Accelerator priority follows the authorized dependency-aware roadmap, not unsupp
 - **phone:** No for static parity; later hardware/runtime acceptance needs separate authorization
 - [Canonical handoff/evidence](../accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
 
-## 4. MTK-VCODEC-KERNEL — PARTIAL
-
-- **kind:** REGISTERED ACCELERATOR / MODULE PARITY
-- **scope:** mtk-vcodec-common.ko, mtk-vcodec-dec-v1.ko, mtk-vcodec-enc-v1.ko, mtk-vcu.ko, clk-mt6878-vcodec.ko; normal-world kernel/DT/ABI only
-- **difficulty:** HIGH
-- **probability:** Pinned source candidates and exact stock operands; whole-scope closure probability unmeasured
-- **evidence:** Exact module hashes, full ELF metadata, DT/providers, pinned donor files and existing proof-axis citations
-- **missing:** All-axes module acceptance; preserve existing camera function/data proofs and close unmeasured residuals
-- **closure:** Every explicitly owned module satisfies function/data/CRC/KCFI/relocation/symbol/string/modinfo/vermagic/B1-B2 and observable DT/ABI; algorithms excluded
-- **effort:** Common driver then decoder/encoder and VCU; firmware/Codec2 contracts make semantic validation substantial
-- **dependency:** GKI-KMI-BASELINE; VCP host/status; shared DMA/IOMMU/CMDQ/power
-- **phone:** No for static parity; later hardware/runtime acceptance needs separate authorization
-- [Canonical handoff/evidence](../accelerator-preparation/MTK-VCODEC-KERNEL/CLAUDE-HANDOFF.md).
-
 ## 5. MTK-MDP-KERNEL — PARTIAL
 
 - **kind:** REGISTERED ACCELERATOR / MODULE PARITY
