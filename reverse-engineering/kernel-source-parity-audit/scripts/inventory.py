@@ -5,6 +5,7 @@ import csv
 import hashlib
 import importlib.util
 import json
+import struct
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -52,12 +53,27 @@ def elf_metadata(path):
         if b'=' in entry:
             key, val = entry.decode(errors='replace').split('=', 1)
             info[key].append(val)
+    exports = {}
+    buckets = collections.defaultdict(list)
+    for sym in ko.syms:
+        if sym['n'].startswith('__ksymtab_') and sym['shndx'] not in (0, 0xfff1):
+            section = ko.secs[sym['shndx']]['n']
+            if 'ksymtab' in section and 'strings' not in section:
+                buckets[section].append(sym)
+    for section, symbols in buckets.items():
+        symbols.sort(key=lambda s:s['val'])
+        cs = ko.sec('__kcrctab_gpl' if '_gpl' in section else '__kcrctab')
+        for i, sym in enumerate(symbols):
+            value = None
+            if cs and cs['type'] == 1 and cs['size'] == len(symbols) * 4:
+                value = struct.unpack_from('<I', ko.b, cs['off'] + i*4)[0]
+            exports[sym['n'][len('__ksymtab_'):]] = dict(export_type='EXPORT_SYMBOL_GPL' if '_gpl' in section else 'EXPORT_SYMBOL', crc=value)
     return dict(function_count=sum((s['info'] & 15) == 2 and s['size'] > 0 and s['shndx'] not in (0, 0xfff1) for s in ko.syms),
                 data_count=sum((s['info'] & 15) == 1 and s['size'] > 0 and s['shndx'] not in (0, 0xfff1) for s in ko.syms),
                 kcfi_abs_count=sum(s['n'].startswith('__kcfi_typeid_') for s in ko.syms),
                 relocation_count=sum(s['size'] // 24 for s in ko.secs if s['type'] == 4),
                 section_count=len(ko.secs), imports=imports,
-                exports=[s['n'][len('__ksymtab_'):] for s in ko.syms if s['n'].startswith('__ksymtab_')],
+                exports=exports,
                 modinfo=dict(info))
 
 if __name__ == '__main__':
