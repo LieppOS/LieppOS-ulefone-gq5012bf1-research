@@ -74,7 +74,10 @@ def build_android() -> list[dict]:
     rc_owners: dict[str, Counter] = defaultdict(Counter)
     for s in services:
         for rc in s["rc_files"].split():
-            if s["component"] not in {GEN, "UNKNOWN"}:
+            # A missing service/KMD owner cannot own a config as class B.
+            # The existing ANDROID-INIT scope owns assembly of such rc files;
+            # this does not close the GPU kernel-facing service ABI gap.
+            if s["component"] not in {GEN, "UNKNOWN", "UNMAPPED"}:
                 rc_owners[rc][s["component"]] += 1
     statuses = status_map()
     out = []

@@ -1,35 +1,22 @@
-# Pack / manifest hygiene
+# Pack / manifest hygiene — historical baseline
 
-Audit run: 2026-10-07
+Run: **2026-10-07**, before the final audit correction. These are frozen historical measurements, not current status totals or a rerun against Claude's concurrent component batch.
 
-This is deliberately separate from reverse-engineering completeness.
+The read-only manifest auditor exited nonzero because bookkeeping drift remained. The audit did not edit COPY-MANIFEST.tsv, REVERSE-ENGINEERING-STATUS.md or component evidence. Coverage database consistency is checked independently.
 
-The existing `reverse-engineering/scripts/manifest-audit.py` was run against the canonical workspace and `COPY-MANIFEST.tsv`. It exited non-zero because bookkeeping drift remains; no unrelated workspace file or manifest row was fixed.
-
-| Measure | Result |
+| Measure | Historical result |
 |---|---:|
 | Manifest rows | 4153 |
-| Resolved rows | 4153 |
-| Missing files | 0 |
-| Malformed rows | 0 |
+| Resolved | 4153 |
+| Missing | 0 |
+| Malformed | 0 |
 | Hash mismatches | 19 |
 | Size mismatches | 19 |
-| Status-tree files | 4556 |
 | Unregistered files | 408 |
 | Duplicate paths | 1 |
 
-Status-tree component counts from the independent run: BLOCKED=3, DONE=85, PARTIAL=45, TODO=0.
+Historical drift owners: `CAMERA-IMX989`, `FT3680-TOUCH`, `HAPTICS`, `SENSOR-HUB`, `YFT-DEVINFO`.
 
-## Drift owners
+Do not replace the synchronized component totals with this old run's status-tree counts. Future manifest repair must preserve evidence and be performed by its owner, outside this audit.
 
-`CAMERA-IMX989` (3 hash/3 size), `FT3680-TOUCH` (10 hash/10 size), `HAPTICS` (1 hash/1 size), `SENSOR-HUB` (1 hash/1 size), `YFT-DEVINFO` (4 hash/4 size).
-
-## Unregistered-file owners
-
-`CAMERA-HAL-ISP` (26), `CAMERA-IMX989` (117), `FM-KERNEL` (9), `GNSS-KERNEL-TRANSPORT` (80), `MT6637-BT-KERNEL` (45), `MT6637-WIFI-KERNEL` (9), `MTK-MBOX` (1), `SENSOR-HUB-KERNEL` (110), `YFT-DEVINFO` (11).
-
-## Duplicate path
-
-`Reverse Engineer - DONE/HAPTICS/notes/haptics.md`.
-
-Full machine report: [`../audit-evidence/manifest-audit-2026-10-07.json`](../audit-evidence/manifest-audit-2026-10-07.json).
+[Full historical machine result](../audit-evidence/manifest-audit-2026-10-07.json).

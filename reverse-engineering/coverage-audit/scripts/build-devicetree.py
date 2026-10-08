@@ -141,6 +141,10 @@ CURATED = {
     "mediatek,mali": ("UNMAPPED", "E", "see arm,mali-valhall - GPU stack has no owner"),
     "mediatek,g3d_brisket": ("UNMAPPED", "E",
                             "GPU DVFS/brisket companion of arm,mali-valhall"),
+    "richtek,rt5133": ("RT5133-POWER-IC", "B",
+                        "declared MTK reference client at 5-0018; stock capture is unbound, "
+                        "no RT5133 rails registered/consumed; static driver scope closed; "
+                        "see notes/RT5133-CORRECTION.md"),
     "chipone-tddi": ("COVERED-GENERIC", "D",
                        "enabled reference-board TDDI node has no shipped driver; fitted main/rear touch are FT3680/Hynitron"),
     "tchip,ilitek": ("COVERED-GENERIC", "D",
@@ -183,7 +187,7 @@ FUNCTIONS = [
     (r"^mediatek,mt6375$", "main PMIC: charger/PE/PD/regulators/TCPC host"),
     (r"^mediatek,mt6375-(chg|gauge)$", "PMIC charging controller / fuel gauge"),
     (r"^mediatek,mt6375-tcpc$", "USB Type-C Port Controller (PMIC-embedded)"),
-    (r"^richtek,rt5133$", "bound camera-sensor LDO/power IC; exact die, rail consumers and register behavior remain hardware-gated"),
+    (r"^richtek,rt5133$", "inactive MTK reference LDO capability; declared client unbound, no registered rails or external consumers; physical population unproved"),
     (r"^richtek,rt6160", "RF transceiver aux/IBAT debug interface"),
     (r"^mediatek,mt63(19|63|69)", "secondary PMIC (MT6319/MT6363/MT6369) regulator/keys/audio"),
     (r"^mediatek,mt6685", "core PMIC/clock-buffer/RTC companion"),
@@ -192,10 +196,10 @@ FUNCTIONS = [
     (r"^mediatek,camera_eeprom$", "camera module EEPROM"),
     (r"^mediatek,(main|main2|main4)_vcm$", "camera voice-coil-motor autofocus driver"),
     (r"^mediatek,dw9781c$", "camera OIS/VCM driver (DW9781C)"),
-    (r"^sh,sh366003$", "backlight/LED/OLED supplier IC"),
+    (r"^sh,sh366003$", "Sino Wealth 2S battery-pack fuel gauge"),
     (r"^awinic,rgb,aw2013$", "RGB indicator LED driver"),
-    (r"^will,wl2864c_pmu$", "rear/aux display power-and-reset IC"),
-    (r"^sc,sc8571", "co-processor (thermal-camera companion) I2C endpoint"),
+    (r"^will,wl2864c_pmu$", "bound camera-rail LDO/reset provider (WL2864C/WL2868C)"),
+    (r"^sc,sc8571", "SC8571 direct-charge pump endpoint (master/slave)"),
     (r"^mediatek,aw3651[58]", "haptic/LED driver (AW3651x family)"),
     (r"^mediatek,i2c_lcd_bias$", "display bias (OCP2131) power IC"),
     (r"^sc,sc8510$", "bidirectional charge pump"),
@@ -232,7 +236,7 @@ def parse(path: str) -> dict[str, dict]:
 
 # Device-tree state overrides that the blob alone cannot express.
 NODE_STATE = {
-    "richtek,rt5133": "BOUND-IN-RUNTIME-CAPTURE",
+    "richtek,rt5133": "PRESENT-NOT-BOUND",
 }
 
 
@@ -272,7 +276,7 @@ def summarise(rows: list[dict]) -> None:
     for k, label in (("A", "dedicated component documents it"),
                     ("B", "covered by a broader documented subsystem scope"),
                     ("C", "generic platform-internals - no device-specific RE needed"),
-                    ("D", "node present but disabled on this board"),
+                    ("D", "disabled or reference-board baggage; DT enablement is not proof of binding"),
                     ("E", "unmapped - genuine coverage gap")):
         out.append(f"| {k} | {label} | {C[k]} | {n('nodes', lambda r, k=k: r['coverage'] == k)} |")
     out += [f"| **total** |  | **{sum(C.values())}** | **{n('nodes')}** |", "",

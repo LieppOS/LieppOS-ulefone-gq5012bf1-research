@@ -176,12 +176,15 @@ def field(extras: str, *keys: str) -> str:
 
 
 def component_index() -> dict:
-    """component -> (status, subsystem) from the canonical workspace index."""
+    """Workspace identity supplies status; historical index supplies domain labels only."""
     txt = open(os.path.join(WS, "REVERSE-ENGINEERING-STATUS.md"), encoding="utf8").read()
     out = {}
     for m in re.finditer(r"^\| \[`([^`]+)`\]\(<[^>]+>\) \| ([^|]+) \| (\w+) \|", txt, re.M):
         out[m.group(1)] = (m.group(3).strip(), m.group(2).strip())
-    return out
+    identity = os.path.join(CA, "audit-evidence", "pack-identity.tsv")
+    return {r["component"]: (r["status"], r["subsystem"] or
+                              out.get(r["component"], ("", r["component"]))[1])
+            for r in csv.DictReader(open(identity), delimiter="\t")}
 
 
 NOTE = os.path.join(CA, "notes", "KERNEL-MODULES.md")
@@ -347,6 +350,12 @@ def summarise(rows: list[dict], claims: list[dict]) -> None:
 def main() -> None:
     meta = json.load(open(META))
     order, deps, alias = meta["load"], meta["dep"], meta["alias"]
+    # Targeted correction: prove the RT5133 first-stage listing from the actual
+    # extracted stock list, rather than infer loading from a client name.
+    platform_load = os.path.join(WS, "ulefone-gq5012bf1-research/workspace/gq5012bf1/stock/"
+                                "vendor-ramdisks/platform-extracted/lib/modules/modules.load")
+    with open(platform_load) as fh:
+        platform_order = {line.strip(): i for i, line in enumerate(fh, 1) if line.strip()}
 
     claims = defaultdict(list)
     oemmap, bootmap = {}, {}
@@ -446,9 +455,13 @@ def main() -> None:
         rows.append({
             "module": fn,
             "partitions": field(oemmap.get(stem, ""), "locations"),
-            "in_modules_load": "yes" if fn in order else "no",
-            "load_order": str(order.get(fn, "")),
-            "load_phase": field(bootmap.get(stem, ""), "resolved_phase", "phase"),
+            # module-metadata.json covers vendor_dlkm only, not all stages.
+            "in_modules_load": ("yes" if fn in order else
+                                "yes" if stem == "rt5133-regulator" and fn in platform_order else "no"),
+            "load_order": str(order.get(fn, platform_order.get(fn, "")
+                                        if stem == "rt5133-regulator" else "")),
+            "load_phase": (field(bootmap.get(stem, ""), "resolved_phase", "phase") or
+                           ("first-stage" if stem == "rt5133-regulator" else "")),
             "loaded_in_capture": field(bootmap.get(stem, ""), "loaded_in_capture"),
             "depends": ",".join(deps.get(fn, [])),
             "oemmap_source_class": oem_cls,

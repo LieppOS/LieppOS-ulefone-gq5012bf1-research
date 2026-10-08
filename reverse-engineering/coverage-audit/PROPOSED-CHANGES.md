@@ -1,113 +1,98 @@
-# Proposed taxonomy changes
+# Final taxonomy decision document
 
+Final snapshot: **2026-10-08**, source HEAD `3abc5643e539b3f2c8565d8197091d3bb50856ff`; workspace directories are authoritative. This report is reproducible from committed metadata, not a claim that later concurrent closures never occur.
 
+**Current registered total: 133.** Recommendations only: no ADD/SPLIT/MERGE/REMOVE/RENAME has been applied by this audit. ACCEPT RECOMMENDATION is not migration approval or evidence of implementation.
 
-Audit date: 2026-10-07
+| Proposal | Operation | Decision | Conditional component-count change |
+|---|---|---|---:|
+| PC-001 | ADD | ACCEPT RECOMMENDATION | +1 |
+| PC-002 | SPLIT | ACCEPT RECOMMENDATION | +1 |
+| PC-003 | MERGE | ACCEPT RECOMMENDATION | -4 |
+| PC-004 | MERGE | ACCEPT RECOMMENDATION | -1 |
+| PC-005 | MERGE | ACCEPT RECOMMENDATION | -1 |
+| PC-006 | MERGE | ACCEPT RECOMMENDATION | -1 |
+| PC-007 | REMOVE | ACCEPT RECOMMENDATION | -1 |
+| PC-008 | REMOVE | ACCEPT RECOMMENDATION | -1 |
+| PC-009 | RENAME | REJECT | +0 |
+| PC-010 | METADATA | ACCEPT RECOMMENDATION | +0 |
 
+## PC-001: ADD — ACCEPT RECOMMENDATION
 
+- **Components:** MALI-GPU-KERNEL
+- **Evidence / rationale:** Ten E rows converge on one active source-actionable kernel/DT/platform scope, not ten components.
+- **Consequences and preservation:** Keep proprietary CSF firmware and GPU userspace outside closure; preserve source claims/metadata and add only after approval.
+- **Count change if approved and executed:** +1
 
-Recommendations only. No component folder/status was moved by this audit.
+## PC-002: SPLIT — ACCEPT RECOMMENDATION
 
+- **Components:** CAMERA-HAL-ISP → CAMERA-HAL-ISP + CAMERA-ISP-KERNEL
+- **Evidence / rationale:** Existing ISP source/module ledger proves actionable kernel work is mixed with permanently proprietary HAL/3A/tuning/CCU.
+- **Consequences and preservation:** Transfer an explicit module/DT ownership ledger to the new child without duplicating primary ownership; retain HAL scope and historical evidence.
+- **Count change if approved and executed:** +1
+- [ISP module/source and proprietary-boundary evidence](../camera-stack/notes/isp-stack.md).
 
+## PC-003: MERGE — ACCEPT RECOMMENDATION
 
-### PC-001
+- **Components:** GZ-IPC-MOD, GZ-MAIN-MOD, GZ-TRUSTY-MOD, GZ-TZ-SYSTEM → GZ-TRANSPORT
+- **Evidence / rationale:** Four exact-source transport children and their parent share a coherent normal-world transport boundary.
+- **Consequences and preservation:** Preserve all per-module parity/source/ABI subreports and provenance; do not imply signed hypervisor/TA source closure.
+- **Count change if approved and executed:** -4
 
-- **type:** ADD
-- **component(s):** MALI-GPU-KERNEL
-- **reason:** One active board-specific kernel/DT ownership scope is absent.
-- **evidence:** 3 E modules + 3 E DT compatibles + 2 E VINTF families + 2 E init services.
-- **risk:** Medium: do not absorb proprietary userspace/firmware into a source-closure claim.
-- **suggested action:** Create only after review; start PARTIAL/A and own KMD/DT ABI.
+## PC-004: MERGE — ACCEPT RECOMMENDATION
 
-### PC-002
+- **Components:** AW36518-V2-FLASH → AW36518-FLASH
+- **Evidence / rationale:** Sibling reports distinguish two shipped source variants of the AW36518 family.
+- **Consequences and preservation:** Keep both stock module variants, topology, source and parity reports as named subscopes.
+- **Count change if approved and executed:** -1
 
-- **type:** SPLIT
-- **component(s):** CAMERA-HAL-ISP → CAMERA-HAL-ISP + CAMERA-ISP-KERNEL
-- **reason:** One PARTIAL mixes statically actionable ISP modules with permanently proprietary HAL/3A/tuning/CCU.
-- **evidence:** Component README and camera axis identify mixed kernel parity and proprietary userspace.
-- **risk:** Medium: module ownership and links must move without implying open 3A parity.
-- **suggested action:** Create CAMERA-ISP-KERNEL (PARTIAL/A); narrow CAMERA-HAL-ISP to proprietary userspace boundary (C).
+## PC-005: MERGE — ACCEPT RECOMMENDATION
 
-### PC-003
+- **Components:** USB3-FEASIBILITY → USB-TYPEC
+- **Evidence / rationale:** The resolved-negative SuperSpeed board capability study is a finding under Type-C ownership.
+- **Consequences and preservation:** Preserve the USB3-port absence proof and do not discard evidence just because the component is retired.
+- **Count change if approved and executed:** -1
 
-- **type:** MERGE
-- **component(s):** GZ-IPC-MOD, GZ-MAIN-MOD, GZ-TRUSTY-MOD, GZ-TZ-SYSTEM → GZ-TRANSPORT
-- **reason:** Four per-module children share one GenieZone transport completion criterion and the parent already summarizes them.
-- **evidence:** Each child README cross-links GZ-TRANSPORT; all are DONE exact-source transport pieces.
-- **risk:** Low: preserve per-module parity reports under subdirectories.
-- **suggested action:** Use GZ-TRANSPORT as survivor; migrate evidence/manifest paths, reducing five components to one.
+## PC-006: MERGE — ACCEPT RECOMMENDATION
 
-### PC-004
+- **Components:** VENDOR-ALL-MODULES-READY → INIT-INSMOD
+- **Evidence / rationale:** The sole setter/consumer property timeline belongs to module-loader/init ordering.
+- **Consequences and preservation:** Keep the complete setter/consumer and boot-phase evidence under INIT-INSMOD; redirect old links.
+- **Count change if approved and executed:** -1
 
-- **type:** MERGE
-- **component(s):** AW36518-V2-FLASH → AW36518-FLASH
-- **reason:** Two shipped source variants implement one AW36518-family physical ownership boundary.
-- **evidence:** Sibling READMEs explicitly compare v1/v2 topology and parity.
-- **risk:** Low: preserve both module/source variants as subreports.
-- **suggested action:** Keep AW36518-FLASH and add v1/v2 subsections.
+## PC-007: REMOVE — ACCEPT RECOMMENDATION
 
-### PC-005
+- **Components:** ESIM-EUICC-ABSENCE
+- **Evidence / rationale:** A proven absence is a negative hardware finding, not an implementation target.
+- **Consequences and preservation:** Archive the original reports and retain an explicit not-fitted finding; reassign the hardware row to negative-inventory ownership before retiring its registered name.
+- **Count change if approved and executed:** -1
 
-- **type:** MERGE
-- **component(s):** USB3-FEASIBILITY → USB-TYPEC
-- **reason:** Resolved-negative capability study is a board fact, not a continuing component.
-- **evidence:** Stock boot log proves zero USB3 ports; USB-TYPEC already owns board USB capability.
-- **risk:** Low: preserve the negative proof prominently.
-- **suggested action:** Move report into USB-TYPEC and retire the standalone component.
+## PC-008: REMOVE — ACCEPT RECOMMENDATION
 
-### PC-006
+- **Components:** WIRELESS-CHARGING-ABSENCE
+- **Evidence / rationale:** No fitted wireless-charging implementation scope is established; wired reverse power is separate.
+- **Consequences and preservation:** Archive original negative evidence in power/hardware inventory and migrate references/ownership before retirement.
+- **Count change if approved and executed:** -1
 
-- **type:** MERGE
-- **component(s):** VENDOR-ALL-MODULES-READY → INIT-INSMOD
-- **reason:** A single init property lifecycle is part of the module-loader/init ownership boundary.
-- **evidence:** README proves sole setter/consumer ordering around insmod_sh.
-- **risk:** Low.
-- **suggested action:** Move the property timeline into INIT-INSMOD.
+## PC-009: RENAME — REJECT
 
-### PC-007
+- **Components:** RT5133-POWER-IC → RT5133-CAMERA-LDO-INTEGRATION
+- **Evidence / rationale:** The claimed successful binding was a client-name misread; no newer success capture exists. The observed client is unbound and camera rails use WL2864C.
+- **Consequences and preservation:** Keep the existing name, two-module static DONE scope and GPIO1 safety warning. Physical population needs evidence; do not rename on an inferred reference-board role.
+- **Count change if approved and executed:** +0
+- [Exact capture chronology and retraction](notes/RT5133-CORRECTION.md). Physical population is NEEDS EVIDENCE; the specific unsupported rename is REJECT, not silently deferred.
 
-- **type:** REMOVE
-- **component(s):** ESIM-EUICC-ABSENCE
-- **reason:** Proven absence is a finding, not an ongoing RE ownership scope.
-- **evidence:** No fitted eUICC in hardware/software inventory.
-- **risk:** Low: losing the negative conclusion if not migrated.
-- **suggested action:** Preserve in hardware.tsv/MISSING-COVERAGE.md, then retire folder.
+## PC-010: METADATA — ACCEPT RECOMMENDATION
 
-### PC-008
+- **Components:** OEM-KERNEL-MODULES, VENDOR-DLKM and inventory/umbrella labels
+- **Evidence / rationale:** Use the measured module universe and current child closures; tracking is not reconstruction. SYSTEM-DLKM is now DONE for its measured 60-module baseline, not an unfinished umbrella.
+- **Consequences and preservation:** Refresh stale metadata/checklists only after approval; preserve all registers/provenance, with no automatic status or ownership move.
+- **Count change if approved and executed:** +0
 
-- **type:** REMOVE
-- **component(s):** WIRELESS-CHARGING-ABSENCE
-- **reason:** Proven absence is a finding, not an ongoing component.
-- **evidence:** No wireless charging path in DT/modules/init/hardware evidence.
-- **risk:** Low: preserve distinction from wired reverse charging.
-- **suggested action:** Preserve in hardware/power reports, then retire folder.
+## Conditional count, not current reality
 
-### PC-009
+If all **accepted recommendations** are approved and executed: 133 -7 = **126 canonical components**. This conditional number is not the component database total. One ADD and one split-created child are offset by seven merged-away children/findings and two archived absence findings. Rejected RT5133 rename changes nothing.
 
-- **type:** RENAME
-- **component(s):** RT5133-POWER-IC → RT5133-CAMERA-LDO-INTEGRATION
-- **reason:** Current name preserves the superseded 4-phase-buck ambiguity.
-- **evidence:** Newest runtime evidence has rt5133 bound at I2C 5-0018 as a camera-sensor LDO/power path; exact die/rails remain hardware-gated.
-- **risk:** Medium: update every manifest/link without reopening proven static work.
-- **suggested action:** Rename only; keep DONE as named static scope and preserve the hardware-checkout boundary.
+## Future migration prerequisites
 
-### PC-010
-
-- **type:** STATUS
-- **component(s):** OEM-KERNEL-MODULES and VENDOR-DLKM metadata
-- **reason:** Their prose still cites a 471-module set while the authoritative union is 457.
-- **evidence:** kernel-modules.tsv reconciles all module locations and metadata to 457 distinct .ko names.
-- **risk:** Low; no directory status move.
-- **suggested action:** Refresh counts/scope prose; remain PARTIAL/F umbrella trackers.
-
-
-
-## Net component count if accepted
-
-
-
-Current 133 + one ADD + one split-created child − four GZ children − one AW36518 variant − one USB3 study − one init-property component − two absence components = **126 canonical components**.
-
-
-
-The rename and metadata/status-text refresh do not change the count. There are **two newly named scopes** after migration: one genuinely missing ADD and one split-created kernel child.
+Archive originals first; write old→new path/owner redirects; preserve parity operands, source provenance, negative findings and manifests. Update every affected module/DT/service owner, registered directory, COPY-MANIFEST and status index together **after approval**, outside this final audit. No evidence is to be deleted.

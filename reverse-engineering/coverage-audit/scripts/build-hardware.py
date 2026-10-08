@@ -57,7 +57,7 @@ CATEGORY = [
      r"mt63(19|63|69)|mt6685", r"^Fuel gauges"),
     ("power", "Richtek RT6160 PMIC debug/IBAT interface", "ic",
      r"rt6160", r"richtek,rt6160", r"rt6160", r""),
-    ("power", "Richtek RT5133 camera-sensor LDO/power IC (driver bound; exact die/BOM/rails pending)", "ic",
+    ("power", "Richtek RT5133 reference LDO client (unbound; physical population unproved)", "ic",
      r"rt5133", r"richtek,rt5133", r"rt5133", r""),
     ("power", "Sino Wealth SH366003 2S pack fuel gauge (3rd gauge)", "ic",
      r"sh366003", r"sh,sh366003", r"sh366003", r""),
@@ -268,6 +268,15 @@ def main() -> int:
             "evidence": ev,
             "sample_node": paths[0] if paths else "-",
         })
+
+    # DT presence + a shipped driver is not proof of a successful probe. Keep
+    # static coverage separate from the observed board runtime state.
+    rt = next(r for r in rows if "RT5133" in r["device"])
+    rt.update(component="RT5133-POWER-IC", coverage="A", presence="PRESENT-NOT-BOUND",
+              evidence="stock-20260831:buses.txt:79-82 unresolved driver link; "
+                       "pstore-20260829:rt5133-gpio1/2/3 deferred; no registered rails; "
+                       "camera LDO is bound WL2864C at 11-0029; "
+                       "see notes/RT5133-CORRECTION.md")
 
     # every bus-attached DT client must appear somewhere: cross-check the spine
     for n in nodes:

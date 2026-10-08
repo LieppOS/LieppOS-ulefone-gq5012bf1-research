@@ -29,6 +29,8 @@ Audit date: 2026-10-07
 
 Coverage is A=127, B=428, C=99, D=0, E=0. A same-name counterpart exists in the current device/vendor trees for 261 rows; 387 are stock-only; 6 SELinux files are current-tree-only. `stock-only` is not automatically an RE gap: many are deliberately supplied through vendor extraction. Each row says whether the port should carry the stock file or author a replacement; current-only rows require compatibility/necessity review.
 
+Final correction (2026-10-08): the two GPU init `.rc` files have class-B configuration ownership under `ANDROID-INIT`; missing GPU kernel/service implementation ownership remains E on the service/KMD/DT axes. Basename presence is not build-installation proof. External device commit `24afa6b` has since added `vendor.prop` and included `bluetooth_audio.xml`; the final handoff records those fixes separately without treating these frozen basename inventories as a successful ROM build.
+
 Ownership is concentrated in existing integration scopes (`ANDROID-INIT`, `VINTF-HAL-MANIFEST`, `VENDOR-SEPOLICY`, `VENDOR-PROPERTIES`, `PARTITION-OWNERSHIP`) and the relevant hardware scope for audio/camera/sensors/USB/power. No separate “one component per XML/RRO” taxonomy is justified.
 
 ## Significant userspace libraries
@@ -70,7 +72,7 @@ Executable-presence is frozen into `raw-init-services.tsv`. Twenty-two non-trigg
 - legacy `akmd8963`, `gnss_daemon`, `msensord`, `thermal_manager`, `permission_check` and several boot/debug helpers are absent;
 - AOSP face-example and virtual-camera services are present but reference/example paths.
 
-This is evidence of reference-board/vendor-template baggage, not evidence that six fingerprint implementations are active.
+This is evidence of reference-board/vendor-template baggage, not evidence that six fingerprint implementations are active. The 22 groups span all captured partitions. The dedicated VINTF closure's 12 absent references / 9 distinct binaries is vendor/ODM-only, so it is not an inconsistent alternative grand total; already-resolved `.mt6878` symlinks are present, not among those 22 absent groups.
 
 ## Unified artifact map
 

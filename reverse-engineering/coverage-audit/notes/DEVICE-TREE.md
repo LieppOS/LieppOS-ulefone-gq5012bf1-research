@@ -22,7 +22,7 @@ Provenance of the merge is `extraction-manifest.txt` beside the blobs: one valid
 | A | dedicated component documents it | 69 | 98 |
 | B | covered by a broader documented subsystem scope | 189 | 212 |
 | C | generic platform-internals - no device-specific RE needed | 315 | 611 |
-| D | node present but disabled on this board | 4 | 4 |
+| D | disabled or reference-board baggage; DT enablement is not proof of binding | 4 | 4 |
 | E | unmapped - genuine coverage gap | 3 | 5 |
 | **total** |  | **580** | **930** |
 
@@ -32,7 +32,7 @@ Provenance of the merge is `extraction-manifest.txt` beside the blobs: one valid
 |---|---:|
 | `ACTIVE` | 573 |
 | `DISABLED` | 6 |
-| `BOUND-IN-RUNTIME-CAPTURE` | 1 |
+| `PRESENT-NOT-BOUND` | 1 |
 
 | dt_source | compatibles | meaning |
 |---|---:|---|
@@ -95,6 +95,7 @@ Every class-C row carries its family justification verbatim in `evidence`, so th
 | `mediatek,fpga-u3phy` | 1 | 0/1 | `DISABLED` | `/usb-phy` |
 | `mediatek,geniezone-hyp` | 1 | 0/1 | `DISABLED` | `/hypervisor` |
 | `mediatek,mipi_tx_config1` | 1 | 0/1 | `DISABLED` | `/soc/mipi-tx-config1@11e10000` |
+| `richtek,rt5133` | 1 | 1/0 | `PRESENT-NOT-BOUND` | `/soc/i2c@11280000/rt5133@18` |
 | `mediatek,apusys_aov-v0` | 1 | 0/1 | `DISABLED` | `/apusys-aov` |
 | `chipone-tddi` | 1 | 1/0 | `ACTIVE` | `/soc/i2c@11c20000/chipone_tddi@48` |
 | `focaltech,fp` | 1 | 1/0 | `ACTIVE` | `/ft_fingerprint` |
@@ -107,9 +108,9 @@ Every class-C row carries its family justification verbatim in `evidence`, so th
 |---|---|---:|
 | `driver` | no document quotes it, but a shipped kernel module name matches (axis-1 classification travels) | 229 |
 | `family` | platform-internals family with a written justification | 207 |
-| `pack-claims` | a DONE/PARTIAL pack quotes the compatible in its own README/notes/evidence | 95 |
+| `pack-claims` | a DONE/PARTIAL pack quotes the compatible in its own README/notes/evidence | 94 |
 | `research-family` | only a research-repo document quoted it, so the audit resolved it to a named subsystem through an explicit compatible family | 42 |
-| `curated` | audit override (GPU gap, fingerprint/TEE/PMIC instances) | 7 |
+| `curated` | audit override (GPU gap, fingerprint/TEE/PMIC instances) | 8 |
 
 `research-family` is the weakest of the documented tiers: it proves the node was examined during an investigation, not that a component pack maintains it. Those 42 rows are therefore a pack-inventory backlog, not closed ownership. Widest documented owners: `MEDIATEK-DRM` (48), `CAMERA-HAL-ISP` (38), `THERMAL-POWER-HAL` (21).
 

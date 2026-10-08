@@ -16,7 +16,7 @@ CA = os.path.dirname(HERE)
 RAW = os.path.join(CA, "audit-evidence")
 OUT = os.path.join(CA, "components.tsv")
 NOTE = os.path.join(CA, "notes", "COMPONENT-AUDIT.md")
-DATE = "2026-10-07"
+DATE = "2026-10-08"
 
 
 def read_tsv(path: str) -> list[dict]:
@@ -46,8 +46,8 @@ P: dict[str, tuple[str, str, str, str, str, str, str, str, str]] = {
     "BOOT-IMAGES": ("A", "PARTIAL", "N/A", "SOURCE/BINARY", "N/A",
         "Stock geometry is known; booting a custom kernel/GKI ramdisk within the exact image contract remains open.",
         "Produce a reproducible stock-size boot/vendor_boot/init_boot set and boot-test Slot B.", "MEDIUM", "AVB-SIGNING-CHAIN, DTB-DTBO, ANDROID-INIT"),
-    "CAMERA-HAL-ISP": ("B", "PARTIAL", "PROPRIETARY", "SIGNED/BINARY", "PROVEN",
-        "Sensor-side kernel work is closed, but ISP kernel parity remains mixed and HAL/3A/tuning/CCU are proprietary.",
+    "CAMERA-HAL-ISP": ("A", "PARTIAL", "PROPRIETARY", "SIGNED/BINARY", "PROVEN",
+        "Actionable ISP kernel parity is not closed (A, pending approved split); whole HAL/3A/tuning/CCU scope cannot close statically and remains proprietary.",
         "Split actionable ISP-kernel closure from the permanently proprietary HAL/tuning scope.", "HARD", "CAMERA-* sensors, CAMERA-VCMS, CAMERA-EEPROMS, DW9781C-OIS"),
     "COOLING-HARDWARE": ("D", "CLOSED", "PARTIAL", "N/A", "TEARDOWN",
         "Material stack, heat spreaders, contact paths and measured thermal model require physical inspection.",
@@ -106,7 +106,7 @@ P: dict[str, tuple[str, str, str, str, str, str, str, str, str]] = {
     "OEM-KERNEL-MODULES": ("F", "MIXED", "N/A", "N/A", "N/A",
         "Persistent whole-module-set tracker; child components have mixed closure. Its documented 471 count is stale versus the measured 457-module universe.",
         "Regenerate inventory from kernel-modules.tsv and keep only unresolved children actionable.", "QUICK", "VENDOR-DLKM, SYSTEM-DLKM, MTK-MODULE-LOADER"),
-    "OTA-AB-UPDATE": ("A", "N/A", "PARTIAL", "N/A", "RUNTIME",
+    "OTA-AB-UPDATE": ("D", "N/A", "PARTIAL", "N/A", "RUNTIME",
         "Payload signing, update_engine application, slot switch, snapshot merge and rollback need an end-to-end test.",
         "Build one signed test payload and validate entirely on the development slot.", "MEDIUM", "BOOT-CONTROL-SLOTS, AB-SUPER-GEOMETRY, AVB-SIGNING-CHAIN"),
     "PARTITION-OWNERSHIP": ("A", "N/A", "N/A", "N/A", "PROVEN",
@@ -121,7 +121,7 @@ P: dict[str, tuple[str, str, str, str, str, str, str, str, str]] = {
     "REAR-RUGGED-FEATURES": ("F", "MIXED", "MIXED", "MIXED", "PROVEN",
         "Intentional integration umbrella over rear display/touch, keys, lights and YFT services; children have mixed closure.",
         "Keep as an integration checklist, not as a duplicate source-reconstruction target.", "QUICK", "CO5300-REAR-DISPLAY, HYNITRON-REAR-TOUCH, PROGRAMMABLE-KEYS, LN2403-CAMPLIGHT"),
-    "RECOVERY-ORANGEFOX": ("A", "N/A", "PARTIAL", "N/A", "RUNTIME",
+    "RECOVERY-ORANGEFOX": ("D", "N/A", "PARTIAL", "N/A", "RUNTIME",
         "Core recovery works, but package flashing, backup/restore matrix, Magisk and USB identity behavior are not fully tested.",
         "Run a non-destructive recovery acceptance matrix on Slot B.", "MEDIUM", "BOOT-IMAGES, OTA-AB-UPDATE, MICROSD"),
     "SENSOR-HUB": ("B", "CLOSED (transport)", "PROPRIETARY", "SIGNED", "PROVEN",
@@ -165,7 +165,7 @@ P: dict[str, tuple[str, str, str, str, str, str, str, str, str]] = {
         "Generate manifests/matrices from hals-services.tsv and run vintf compatibility checks.", "QUICK", "VENDOR-BLOB-HAL-INVENTORY, VENDOR-SEPOLICY"),
     "YFT-DEVINFO": ("A", "PARTIAL", "PARTIAL", "N/A", "PROVEN",
         "One vendor enum spelling still shifts exported CRC/KCFI identities; probe/sysfs path is not byte-exact.",
-        "Finish the remaining enum/probe parity without disturbing the active owner workspace.", "QUICK", "ANDROID-INIT, VENDOR-PROPERTIES"),
+        "Finish the remaining enum/probe parity without disturbing the active owner workspace.", "HARD", "ANDROID-INIT, VENDOR-PROPERTIES"),
 }
 
 SCOPE = {
@@ -230,7 +230,7 @@ TAXONOMY = {
     "WIRELESS-CHARGING-ABSENCE": "REMOVE as component; preserve negative finding in hardware/audit docs",
     "USB3-FEASIBILITY": "MERGE negative capability finding into USB-TYPEC",
     "VENDOR-ALL-MODULES-READY": "MERGE init-property finding into INIT-INSMOD",
-    "RT5133-POWER-IC": "RENAME to RT5133-CAMERA-LDO-INTEGRATION (status unchanged)",
+    "RT5133-POWER-IC": "KEEP name; REJECT unverified camera-LDO rename; static DONE, client unbound",
     "CAMERA-HAL-ISP": "SPLIT actionable CAMERA-ISP-KERNEL from proprietary HAL/3A scope",
 }
 
@@ -266,7 +266,36 @@ def subsystem_for(comp: str, raw: str) -> str:
 
 
 def research_for(comp: str, sub: str) -> str:
+    # Prefer an existing dedicated authoritative research directory (including
+    # new closures) over the historical subsystem fallback.
+    repo = os.path.dirname(os.path.dirname(CA))
+    for leaf in ("STATUS.md", "README.md"):
+        dedicated = f"reverse-engineering/{comp.lower()}/{leaf}"
+        if os.path.isfile(os.path.join(repo, dedicated)):
+            return dedicated
     exact = {
+        "AVB-SIGNING-CHAIN": "slot-b-investigation/untouched-b-early-boot-forensics/FIRST-STAGE-AVB-KEY-CONCLUSION.md",
+        "ANDROID-INIT": "docs/service-map.md",
+        "BOOT-CONTROL-SLOTS": "reverse-engineering/storage/ab-ota/boot-control.md",
+        "DRAM-MEMORY": "qwen_hardware/verification/findings/dram.md",
+        "DTB-DTBO": "docs/dt-module-matching.md",
+        "FIRMWARE-INVENTORY": "docs/blob-map.md",
+        "GKI-KMI-BASELINE": "kernel/exact-gki-build-inputs.md",
+        "INIT-INSMOD": "reverse-engineering/boot/module-loading/README.md",
+        "IR-BLASTER": "docs/ir-blaster.md",
+        "LN2403-CAMPLIGHT": "kernel/phase4-leds-ln2403-reconstruction.md",
+        "MTK-MODULE-LOADER": "reverse-engineering/boot/module-loading/README.md",
+        "NVRAM-CALIBRATION": "reverse-engineering/modem/nvram/boundary.md",
+        "OEM-KERNEL-MODULES": "docs/module-map.md",
+        "OTA-AB-UPDATE": "reverse-engineering/storage/ab-ota/boot-control.md",
+        "REAR-RUGGED-FEATURES": "reverse-engineering/display-input/rear-display-input/README.md",
+        "RECOVERY-ORANGEFOX": "reverse-engineering/boot/module-loading/recovery-module-loading.md",
+        "SPI-MT65XX": "kernel/phase4-spi-mt65xx-reconstruction.md",
+        "VENDOR-ALL-MODULES-READY": "reverse-engineering/boot/module-loading/vendor-all-modules-ready.md",
+        "VENDOR-BLOB-HAL-INVENTORY": "docs/blob-map.md",
+        "VENDOR-DLKM": "reverse-engineering/boot/module-loading/README.md",
+        "VENDOR-SEPOLICY": "reverse-engineering/boot/module-loading/sepolicy.md",
+        "YFT-DEVINFO": "kernel/phase4-yft-devinfo-reconstruction.md",
         "CAMERA-EEPROMS": "reverse-engineering/camera/eeprom/STATUS.md",
         "CAMERA-VCMS": "reverse-engineering/camera/vcm/STATUS.md",
         "CAMERA-OV64B": "reverse-engineering/camera-stack/ov64b/STATUS.md",
@@ -310,7 +339,7 @@ def research_for(comp: str, sub: str) -> str:
     for key, path in mapping:
         if key in sub:
             return path
-    return "reverse-engineering/coverage-audit/SUMMARY.md"
+    raise ValueError(f"no canonical research path for {comp} ({sub})")
 
 
 def main() -> int:
@@ -384,7 +413,8 @@ def main() -> int:
             cls = "SCOPE-CLOSED"
             no_kernel_scope = {
                 "AB-SUPER-GEOMETRY", "AC020-UVC", "AVB-SIGNING-CHAIN",
-                "BOOT-CONTROL-SLOTS", "ESIM-EUICC-ABSENCE", "MICROSD",
+                "BOOT-CONTROL-SLOTS", "BOOT-IMAGES", "PARTITION-OWNERSHIP",
+                "VENDOR-PROPERTIES", "VINTF-HAL-MANIFEST", "ESIM-EUICC-ABSENCE", "MICROSD",
                 "USB3-FEASIBILITY", "VENDOR-ALL-MODULES-READY",
                 "WIRELESS-CHARGING-ABSENCE",
             }
@@ -399,7 +429,27 @@ def main() -> int:
             blocker = ""
             action = TAXONOMY.get(comp, "KEEP")
             rem = r["remaining"] or "Named static scope closed; runtime/system integration is outside this DONE scope."
-            notes = rem
+            # DONE claims must describe the actual closed named scope, not
+            # promote integration inventories into kernel/source parity.
+            overrides = {
+                "SYSTEM-DLKM": ("CLOSED (60 GKI module ELF bodies)", "N/A", "N/A", "N/A",
+                    "60/60 stock ELF bodies incl. build-id reproduced; appended signing key differs. Custom-kernel/KMI packaging and boot remain integration."),
+                "BOOT-IMAGES": ("N/A (image containers)", "N/A", "N/A", "N/A",
+                    "Six stock container round-trips byte-identical; Slot B stock verified, Slot A modified. Custom-kernel boot/recovery acceptance is NOT closed."),
+                "VENDOR-PROPERTIES": ("N/A", "CLOSED (747-key ledger)", "N/A", "N/A",
+                    "747-key ledger closed; external 24afa6b installs 327 vendor keys with 16 exclusions/one EGL rewrite from the original 343-key gap. Verify emitted-image/generated definitions and SELinux/runtime; not applied by audit."),
+                "VINTF-HAL-MANIFEST": ("N/A", "CLOSED (instance reconciliation)", "PROPRIETARY (outside scope)", "N/A",
+                    "199 instances reconciled: 146 present, 48 SKU-only, 5 source-built, 0 dropped after external 24afa6b includes bluetooth_audio.xml. checkvintf/SELinux/HAL runtime remain; not applied by audit."),
+                "PARTITION-OWNERSHIP": ("N/A", "CLOSED (consumer/rollback ledger)", "SIGNED (bootloader-private)", "N/A",
+                    "61 partition groups and rollback locations 0/2/3/4 mapped. Private payload semantics and destructive rollback/OTA tests outside scope."),
+                "RT5133-POWER-IC": ("CLOSED (two modules)", "N/A", "N/A", "PRESENT-NOT-BOUND",
+                    "Inactive reference capability: probe unsuccessful, no registered/consumed rails; physical population unproved. GPIO1 conflicts with bound WL2864C camera LDO; no rename."),
+                "USB-CHARGER-INTEGRATION": ("CLOSED (charger arbitration modules)", "PARTIAL (ROM integration)", "N/A", "PROVEN (topology only)",
+                    "Framework/class/type-detect module parity closed; 120 W/reverse-power negotiation and safety transitions NOT runtime-validated."),
+                "INTERNAL-THERMAL-USB": ("CLOSED (USB/power path)", "PARTIAL (viewer integration)", "PROPRIETARY (radiometry)", "PROVEN (topology only)",
+                    "Kernel USB/UVC/power contract closed; viewer/command/radiometry and runtime thermal-camera acceptance remain separate scopes."),
+            }
+            ks, us, fs, hs, notes = overrides.get(comp, (ks, us, fs, hs, rem))
             diff, deps = "N/A", ""
             justified = "yes — scope-specific static closure"
         rows.append({
@@ -484,7 +534,7 @@ boundaries.
 No evidence justifies an automatic DONE → PARTIAL move in this audit. Several DONE
 rows still have runtime or physical follow-up, but their READMEs explicitly exclude
 it from the closed static scope. Examples include MediaTek DRM runtime validation,
-microSD insertion/format behavior and RT5133 physical rail/BOM confirmation. These
+microSD insertion/format behavior and RT5133 physical population confirmation (not an active camera LDO). These
 must remain visible as boundaries; they are not silently treated as source gaps.
 
 Taxonomy quality is a separate question. Some DONE folders are valid findings but

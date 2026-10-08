@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import re
 from collections import Counter
 from pathlib import Path
+from urllib.parse import unquote
+
+from audit_policy import CANDIDATES, PROPOSALS
 
 HERE = Path(__file__).resolve().parent
 CA = HERE.parent
@@ -30,12 +34,13 @@ def check_links(path: Path) -> list[str]:
     bad = []
     text = path.read_text(encoding="utf8")
     for target in re.findall(r"\[[^\]]*\]\(([^)]+)\)", text):
-        target = target.strip().split("#", 1)[0]
+        target = unquote(target.strip().strip("<>").split("#", 1)[0])
         if not target or target.startswith(("http://", "https://", "mailto:", "data:")):
             continue
         resolved = (path.parent / target).resolve()
         if not resolved.exists():
-            bad.append(f"{path.relative_to(REPO)} -> {target}")
+            label = path.relative_to(REPO) if path.is_relative_to(REPO) else path
+            bad.append(f"{label} -> {target}")
     return bad
 
 
@@ -57,8 +62,17 @@ def main() -> int:
     require(status_totals["TODO"] == 0, "an untriaged TODO component folder exists")
 
     partials = [r for r in comps if r["status"] == "PARTIAL"]
-    require(Counter(r["partial_class"] for r in partials)["E"] == 0,
-            "a PARTIAL is still classified E (stale/duplicate/wrong scope) instead of re-scoped")
+    require(all(r["partial_class"] in set("ABCDEF") for r in partials),
+            "every PARTIAL must have exactly one A–F class")
+    require(sum(Counter(r["partial_class"] for r in partials).values()) == status_totals["PARTIAL"],
+            "PARTIAL class totals do not reconcile")
+    require(all(r["partial_class"] == "SCOPE-CLOSED" for r in comps if r["status"] == "DONE"),
+            "a DONE row is classified as PARTIAL")
+    snapshot = json.loads((CA / "audit-evidence/final-snapshot.json").read_text())
+    fingerprint = hashlib.sha256("".join(f"{n}\t{workspace[n]}\n" for n in sorted(workspace)).encode()).hexdigest()
+    require(snapshot["workspace_status_sha256"] == fingerprint and
+            Counter(snapshot["status"]) == status_totals and snapshot["registered_components"] == len(comps),
+            "workspace moved since final snapshot; reconcile once before final commit")
     require(all(r["blocker"] and r["recommended_action"] and r["difficulty"] and r["dependencies"]
                 for r in partials), "PARTIAL triage fields")
 
@@ -80,7 +94,16 @@ def main() -> int:
     hw = rows("hardware.tsv")
     require(len(hw) == 44 and not any(r["coverage"] == "E" for r in hw), "physical hardware accounting")
     rt = next(r for r in hw if "RT5133" in r["device"])
-    require(rt["presence"] == "PROVEN" and "camera-sensor" in rt["device"], "RT5133 newest-evidence correction")
+    require(rt["presence"] == "PRESENT-NOT-BOUND" and rt["component"] == "RT5133-POWER-IC" and
+            "unbound" in rt["device"], "RT5133 client-name misread has returned")
+    rtdt = next(r for r in dt if r["compatible"] == "richtek,rt5133")
+    require(rtdt["node_state"] == "PRESENT-NOT-BOUND" and "inactive" in rtdt["physical_function"],
+            "RT5133 DT state must distinguish declaration from binding")
+    require(by_name["RT5133-POWER-IC"]["hardware_state"] == "PRESENT-NOT-BOUND" and
+            "REJECT" in by_name["RT5133-POWER-IC"]["recommended_action"], "unsupported RT5133 rename")
+    rtko = next(r for r in km if r["module"] == "rt5133-regulator.ko")
+    require(rtko["in_modules_load"] == "yes" and rtko["load_phase"] == "first-stage",
+            "RT5133 module loads despite unsuccessful probe")
 
     hs, vs = rows("hals-services.tsv"), rows("vendor-services.tsv")
     require(len(hs) == 272 and len(vs) == 253, "HAL/service universe")
@@ -92,7 +115,8 @@ def main() -> int:
     require(len(fw) == 80 and not any(r["coverage"] == "E" for r in fw), "firmware accounting")
     require(len(sw) == 13 and not any(r["coverage"] == "E" for r in sw), "secure-world accounting")
     require(len(bs) == 61 and not any(r["coverage"] == "E" for r in bs), "boot/storage accounting")
-    require(all(len(r["sha256"].split(";")) >= 1 for r in fw), "firmware hashes")
+    require(all(re.fullmatch(r"[0-9a-f]{64}", h) for r in fw for h in r["sha256"].split(";")),
+            "invalid firmware metadata hashes")
 
     ai, ul, art = rows("android-integration.tsv"), rows("userspace-libraries.tsv"), rows("artifact-map.tsv")
     require(len(ai) == 654 and len(ul) == 538 and len(art) == 2952, "integration/artifact totals")
@@ -106,9 +130,32 @@ def main() -> int:
                  "vendor-services.tsv", "firmware.tsv", "secure-world.tsv", "boot-storage.tsv",
                  "android-integration.tsv", "userspace-libraries.tsv", "artifact-map.tsv"):
         data = rows(name)
-        require(all(r["coverage"] in "ABCDE" for r in data), f"bad coverage in {name}")
+        require(all(r["coverage"] in set("ABCDE") for r in data), f"bad coverage in {name}")
         bad = {r["component"] for r in data if r["component"] not in allowed}
         require(not bad, f"noncanonical component references in {name}: {bad}")
+        require(all(r.get("component_status", workspace.get(r["component"])) == workspace[r["component"]]
+                    for r in data if r["component"] in workspace), f"stale owner status in {name}")
+        require(all((r["coverage"] == "E") == (r["component"] == "UNMAPPED") for r in data),
+                f"unmapped owner/coverage contradiction in {name}")
+
+    # Reconcile every normalized row back to an axis, not just the grand total.
+    def sig(kind, artifact, source, row):
+        return kind, artifact, source, row["component"], row["coverage"]
+    expected = []
+    for table, kind, artifact_key, source_key in (
+        (km, "kernel-module", "module", "partitions"), (dt, "dt-compatible", "compatible", "dt_source"),
+        (hw, "physical-hardware", "device", "inventory"), (vs, "init-service", "service", "rc_files"),
+        (fw, "firmware", "artifact", "partition_or_source"), (sw, "secure-world", "area", "partition"),
+        (bs, "partition", "artifact", "partition_or_source"),
+        (ai, "android-integration", "artifact", "partition"), (ul, "userspace-library", "library", "partitions")):
+        expected.extend(sig(kind, r[artifact_key], r[source_key], r) for r in table)
+    expected.extend(sig(r["artifact_type"], r["artifact"],
+                        r["declaring_docs"] if r["artifact_type"] == "hw-backend-lib" else r["partition"], r)
+                    for r in hs)
+    actual = [sig(r["artifact_type"], r["artifact"], r["partition_or_source"], r) for r in art]
+    require(Counter(expected) == Counter(actual), "normalized map disagrees with its artifact axes")
+    require({(r["artifact_type"], r["artifact"]) for r in art if r["coverage"] == "E"} ==
+            {(k, a) for k, a, _, _, cov in expected if cov == "E"}, "unexplained normalized E row")
 
     for note, table in (("notes/KERNEL-MODULES.md", km), ("notes/DEVICE-TREE.md", dt)):
         text = (CA / note).read_text(encoding="utf8")
@@ -158,9 +205,46 @@ def main() -> int:
 
     index = (RE / "index.md").read_text(encoding="utf8")
     index_rows = re.findall(r"^\| ([^|]+) \| (DONE|PARTIAL|BLOCKED|TODO) \|", index, re.M)
-    require(len(index_rows) == 133 and {x[0].strip() for x in index_rows} == set(by_name), "index master table completeness")
+    require(len(index_rows) == len(comps) and dict((n.strip(), s) for n, s in index_rows) == workspace,
+            "index master table status/set mismatch")
     for r in comps:
-        require((REPO / r["research_path"]).exists(), f"missing research path {r['component']} -> {r['research_path']}")
+        require((REPO / r["research_path"]).is_file(), f"missing research path {r['component']} -> {r['research_path']}")
+        require(not r["research_path"].endswith("coverage-audit/SUMMARY.md"), "circular research-summary fallback")
+        require((WORKSPACE / r["workspace_path"] / "README.md").is_file(), f"missing workspace path {r['component']}")
+        require(r["workspace_path"] == f"Reverse Engineer - {r['status']}/{r['component']}",
+                f"workspace path/status disagree for {r['component']}")
+    for filename, key in (("harvested-pack-module-claims.tsv", "source_file"),
+                          ("harvested-pack-dt-claims.tsv", "path"),
+                          ("harvested-pack-artifact-claims.tsv", "source_file")):
+        sources = {r[key] for r in rows("audit-evidence/" + filename) if r[key]}
+        require(all((WORKSPACE / p).exists() for p in sources), f"nonexistent evidence source in {filename}")
+
+    ranked = rows("next-re.tsv")
+    names = [r["component"] for r in ranked]
+    expected_names = [r["component"] for r in CANDIDATES if
+                      r["component"] in {"MALI-GPU-KERNEL", "CAMERA-ISP-KERNEL"} or
+                      (r["component"] in by_name and by_name[r["component"]]["status"] == "PARTIAL" and
+                       by_name[r["component"]]["partial_class"] == "A")]
+    require(names == expected_names and len(names) == len(set(names)), "ranked list is stale/duplicated")
+    for n, r in enumerate(ranked, 1):
+        require(int(r["rank"]) == n and all(r[k] for k in
+                ("scope", "difficulty", "evidence", "missing", "closure", "effort", "dependency", "phone")),
+                "incomplete next-RE closure criteria")
+        if r["component"] in by_name:
+            require(r["status"] == "PARTIAL" and by_name[r["component"]]["status"] == "PARTIAL",
+                    "an already-DONE target is recommended as PARTIAL→DONE")
+        else:
+            require(r["status"] == "PROPOSED", "an unapplied proposal is listed as registered")
+        require((REPO / r["research_path"]).is_file(), "ranked evidence path is missing")
+    readme = (CA / "README.md").read_text()
+    require(f"all {status_totals['PARTIAL']} current PARTIAL components" in readme, "stale README PARTIAL count")
+    for doc in (RE / "index.md", CA / "PARTIAL-TRIAGE.md"):
+        text = doc.read_text()
+        for s in ("DONE", "PARTIAL", "BLOCKED", "TODO") if doc == RE / "index.md" else ():
+            require(f"| {s} | {status_totals[s]} |" in text, "stale index headline count")
+        for c in "ABCDEF":
+            require(re.search(rf"^\| {c} — [^|]+\| {class_want[c]} \|$", text, re.M),
+                    f"stale A–F total in {doc.name}")
 
     markdown = [RE / "index.md"] + sorted(CA.glob("*.md")) + sorted((CA / "notes").glob("*.md"))
     bad_links = [x for p in markdown for x in check_links(p)]
@@ -174,14 +258,24 @@ def main() -> int:
     for report in ("README.md", "SUMMARY.md", "PARTIAL-TRIAGE.md", "MISSING-COVERAGE.md", "PORT-READINESS.md", "PROPOSED-CHANGES.md"):
         require((CA / report).exists(), f"missing report {report}")
     require((CA / "SUMMARY.md").read_text().startswith("# Coverage verdict: NEAR-COMPLETE"), "summary verdict heading")
-    require("**126 canonical components**" in (CA / "PROPOSED-CHANGES.md").read_text(), "proposed component total")
+    proposed = (CA / "PROPOSED-CHANGES.md").read_text()
+    conditional = len(comps) + sum(p[4] for p in PROPOSALS if p[3] == "ACCEPT RECOMMENDATION")
+    require(f"**{conditional} canonical components**" in proposed and "not current reality" in proposed,
+            "conditional taxonomy count is mistaken for an implemented migration")
+    require("PC-009: RENAME — REJECT" in proposed, "RT5133 unsupported rename not retracted")
+    for f in CA.rglob("*"):
+        require(not (f.is_file() and f.suffix.lower() in
+                     {".ko", ".so", ".img", ".bin", ".dtb", ".dtbo", ".elf", ".zip"}),
+                f"payload copied into audit: {f}")
 
     print("PASS: axis notes regenerate from their tables with no stale numbers")
     print("PASS: userspace/integration note tables sum to their source row counts")
     print(f"PASS: component status {dict(sorted(status_totals.items()))} matches the workspace")
     print(f"PASS: {len(km)} modules, {len(dt)} compatibles/{sum(int(r['nodes']) for r in dt)} nodes, "
           f"{len(ai)} integration + {len(ul)} library rows, {len(art)} artifact rows")
-    print("PASS: only 10 E rows, all one MALI-GPU-KERNEL gap")
+    print("PASS: all normalized rows reconcile with their axes; only 10 E rows, one Mali scope")
+    print("PASS: status-filtered static ranking, proposal decisions and RT5133 retraction")
+    print("PASS: no firmware/module/library payloads in coverage-audit")
     print("PASS: all index/report relative links resolve")
     print("PASS: manifest hygiene recorded separately (4153 resolve, 19 stale, 408 unregistered, 1 duplicate)")
     return 0

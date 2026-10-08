@@ -1,6 +1,6 @@
 # Axis 11: canonical component-folder audit
 
-Audit date: 2026-10-07
+Audit date: 2026-10-08
 
 `components.tsv` is generated from the actual canonical workspace folders, not from
 the old typed totals. The measured current workspace is:
@@ -22,10 +22,10 @@ with measured parity evidence.
 
 | Class | Meaning | Count |
 |---|---|---:|
-| A | actionable / statically closeable | 7 |
-| B | kernel/source closed, broader proprietary scope remains | 12 |
+| A | actionable / statically closeable | 6 |
+| B | kernel/source closed, broader proprietary scope remains | 11 |
 | C | proprietary boundary | 8 |
-| D | hardware/runtime/teardown gated | 4 |
+| D | hardware/runtime/teardown gated | 6 |
 | E | stale/duplicate/wrong PARTIAL scope | 0 |
 | F | intentional umbrella/tracking scope | 5 |
 
@@ -45,7 +45,7 @@ boundaries.
 No evidence justifies an automatic DONE → PARTIAL move in this audit. Several DONE
 rows still have runtime or physical follow-up, but their READMEs explicitly exclude
 it from the closed static scope. Examples include MediaTek DRM runtime validation,
-microSD insertion/format behavior and RT5133 physical rail/BOM confirmation. These
+microSD insertion/format behavior and RT5133 physical population confirmation (not an active camera LDO). These
 must remain visible as boundaries; they are not silently treated as source gaps.
 
 Taxonomy quality is a separate question. Some DONE folders are valid findings but
