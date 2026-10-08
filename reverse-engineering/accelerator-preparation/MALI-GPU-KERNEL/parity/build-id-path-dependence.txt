@@ -1,0 +1,10 @@
+# Build-id path dependence (2026-10-08)
+Same pinned sources, same toolchain and flags, built in two directories (build/kdm vs clean/kdm),
+then llvm-strip --strip-debug:
+  ged.ko          differing bytes 20 (all in .note.gnu.build-id)  cbe47282... vs f31eb925...
+  mtk_gpu_hal.ko  differing bytes 19 (all in .note.gnu.build-id)  63b32c6e... vs cea29f5d...
+lld computes --build-id=sha1 over the pre-strip output, whose .debug_* sections carry build paths.
+Stripping removes the DWARF but keeps the note. The stock modules are already stripped, so MTK's build
+paths cannot be recovered. MTK builds with Kleaf (-ffile-prefix-map=$ROOT_DIR/...=), whose sandbox
+layout is not part of any published source. The build-id is therefore provenance, as in the earlier
+DONE vendor-module closures (MICROARRAY-FP-TEE, MT6375-PMIC, ...).

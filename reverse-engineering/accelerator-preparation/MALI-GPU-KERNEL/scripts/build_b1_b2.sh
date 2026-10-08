@@ -2,7 +2,8 @@
 # MALI-GPU-KERNEL deterministic clean builds B1 and B2 of all 8 owned modules.
 # Each build: wipe $CLEAN, git-archive the pinned reconstruction trees, fresh copy of the
 # prepared vendor kout, build kdm (ged, hal, gpu_bm, gpufreq) then gpu (mali r44p1) against
-# kdm's natural Module.symvers + the stock external-provider ABI record. Same absolute paths
+# kdm natural Module.symvers + natural external-provider CRCs (genksyms over public ALPS 5e41;
+# byte-identical to the CRCs the stock providers publish). Same absolute paths
 # for B1 and B2 (DWARF paths feed the build-id).
 set -euo pipefail
 W=${W:-/home/armol/kernel-work/accelerator-mali-gpu-kernel}
@@ -18,8 +19,8 @@ for b in B1 B2; do
   git -C $W/build/gpu archive $GPU_REV | tar -x -C $CLEAN/gpu
   rm -rf $W/kout-clean; cp -a $W/kout-base $W/kout-clean   # same depth as common: kbuild resolves relative M= against O=
   export KO=$W/kout-clean KDM_DIR=$CLEAN/kdm GPU_DIR=$CLEAN/gpu
-  $W/scripts/kb.sh kdm -j16 modules KBUILD_EXTRA_SYMBOLS=$W/symvers/stock-external-provider.symvers > $OUT/$b.kdm.log 2>&1
-  $W/scripts/kb.sh gpu -j16 modules KBUILD_EXTRA_SYMBOLS="$CLEAN/kdm/Module.symvers $W/symvers/stock-external-provider.symvers" > $OUT/$b.gpu.log 2>&1
+  $W/scripts/kb.sh kdm -j16 modules KBUILD_EXTRA_SYMBOLS=${PROVIDER_SYMVERS:-$W/symvers/natural-external-provider.symvers} > $OUT/$b.kdm.log 2>&1
+  $W/scripts/kb.sh gpu -j16 modules KBUILD_EXTRA_SYMBOLS="$CLEAN/kdm/Module.symvers ${PROVIDER_SYMVERS:-$W/symvers/natural-external-provider.symvers}" > $OUT/$b.gpu.log 2>&1
   mkdir -p $OUT/$b
   for m in $mods; do cp $CLEAN/kdm/$m.ko $OUT/$b/; done
   for m in $gmods; do cp $CLEAN/gpu/$m.ko $OUT/$b/; done
