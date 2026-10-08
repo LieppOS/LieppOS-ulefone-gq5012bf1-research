@@ -15,7 +15,7 @@
 * `reconstruction/acceptance/sections-parity.tsv` — every ELF section and build-ID-only residue.
 * `reconstruction/acceptance/abi-parity.tsv` — every import CRC, export bucket/CRC, KCFI ID and modinfo record.
 * `reconstruction/acceptance/relocations-parity.tsv` — every raw and semantic relocation.
-* `reconstruction/build/b1b2-final.log` — independent clean clone, source assembly, provider derivation, B1/B2 and acceptance run.
+* `reconstruction/build/b1b2-final.txt` — independent clean clone, source assembly, provider derivation, B1/B2 and acceptance run.
 * `reconstruction/build/INTERMEDIATE-SHA256SUMS`, `SHA256SUMS`, `SOURCE-TREE` — deterministic object/output/tree evidence.
 * `reconstruction/build/provider-crc-witnesses.tsv` and `external-provider.symvers` — source-generated 13-provider ABI proof.
 * root `SHA256SUMS` — integrity for every file above.
