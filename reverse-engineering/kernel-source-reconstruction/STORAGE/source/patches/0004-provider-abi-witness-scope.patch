@@ -1,0 +1,220 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: lieppos <lieppos@localhost>
+Date: Fri, 9 Oct 2026 01:34:33 +0300
+Subject: [PATCH] provider-ABI witness scope for the storage modules (genksyms
+ CRC generation only)
+
+---
+ Kbuild                                  | 109 +++---------------------
+ drivers/mailbox/Kbuild                  |   5 ++
+ drivers/misc/mediatek/aee/Kbuild        |   5 ++
+ drivers/misc/mediatek/aee/aed/Kbuild    |   5 ++
+ drivers/misc/mediatek/aee/mrdump/Kbuild |   5 ++
+ drivers/misc/mediatek/ise_lpm/Kbuild    |   5 ++
+ drivers/misc/mediatek/sda/Kbuild        |   5 ++
+ drivers/pinctrl/mediatek/Kbuild         |   5 ++
+ 8 files changed, 45 insertions(+), 99 deletions(-)
+ create mode 100644 drivers/mailbox/Kbuild
+ create mode 100644 drivers/misc/mediatek/aee/Kbuild
+ create mode 100644 drivers/misc/mediatek/aee/aed/Kbuild
+ create mode 100644 drivers/misc/mediatek/aee/mrdump/Kbuild
+ create mode 100644 drivers/misc/mediatek/ise_lpm/Kbuild
+ create mode 100644 drivers/misc/mediatek/sda/Kbuild
+ create mode 100644 drivers/pinctrl/mediatek/Kbuild
+
+diff --git a/Kbuild b/Kbuild
+index 2f13dd0..67846a2 100644
+--- a/Kbuild
++++ b/Kbuild
+@@ -1,101 +1,12 @@
+-# SPDX-License-Identifier: GPL-2.0
+-
+-ifneq ($(CONFIG_DEVICE_MODULES_ALLOW_BUILTIN),y)
+-
+-LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
+-
+-subdir-ccflags-y += -Werror \
+-		-I$(srctree)/$(src)/include \
+-		-I$(srctree)/$(src)/include/uapi \
+-
+-obj-y += drivers/memory/
+-
+-obj-y += drivers/iio/adc/
+-
+-obj-y += drivers/mfd/
+-
+-obj-y += drivers/nvmem/
+-
+-obj-y += drivers/dma/mediatek/
+-
+-obj-y += drivers/ufs/
+-
+-obj-y += drivers/char/
+-
+-obj-y += drivers/clk/mediatek/
+-
+-obj-y += drivers/clocksource/
+-
+-obj-y += drivers/cpufreq/
+-
+-obj-y += drivers/soc/mediatek/
+-
+-obj-y += drivers/watchdog/
+-
+-obj-y += drivers/dma-buf/heaps/
+-
+-obj-y += drivers/regulator/
+-
+-obj-y += drivers/leds/
+-
++# LieppOS provider-ABI witness scope for the storage modules: compile only the vendor
++# sources that define the external exports the storage build links against, so their
++# modversion CRCs are generated naturally by genksyms. No provider module is shipped,
++# owned or certified here.
++#   stock-referenced: aee_aed (2), mrdump (1), irq-dbg (1), pinctrl-mtk-common-v2_debug (1)
++#   build-only:       mtk-ise-mailbox (1), ise_lpm (2) - consumed only by the unshipped
++#                     ufs-mediatek-mod-ise companion module
++obj-y += drivers/misc/mediatek/aee/
++obj-y += drivers/misc/mediatek/sda/
++obj-y += drivers/misc/mediatek/ise_lpm/
+ obj-y += drivers/pinctrl/mediatek/
+-
+-obj-y += drivers/power/supply/
+-
+-obj-y += drivers/rtc/
+-
+-obj-y += drivers/remoteproc/
+-
+-obj-y += drivers/rpmsg/
+-
+-obj-y += drivers/input/keyboard/
+-
+-obj-y += drivers/phy/mediatek/
+-
+-obj-y += drivers/thermal/mediatek/
+-
+-obj-y += drivers/spmi/
+-
+-obj-y += drivers/tty/serial/8250/
+-
+-obj-y += drivers/reset/
+-
+ obj-y += drivers/mailbox/
+-
+-obj-y += drivers/interconnect/
+-
+-obj-y += drivers/i2c/busses/
+-
+-obj-y += drivers/pwm/
+-
+-obj-y += drivers/spi/
+-
+-obj-y += drivers/iommu/
+-
+-obj-y += drivers/mmc/host/
+-
+-obj-y += drivers/tee/
+-
+-obj-y += drivers/gpu/drm/mediatek/
+-
+-obj-y += drivers/input/touchscreen/
+-
+-obj-y += drivers/gpu/drm/panel/
+-
+-obj-y += drivers/gpu/mediatek/
+-
+-obj-y += drivers/media/platform/
+-
+-obj-y += drivers/usb/
+-
+-obj-y += drivers/devfreq/
+-
+-obj-y += drivers/misc/mediatek/
+-
+-obj-y += sound/soc/codecs/
+-
+-obj-y += sound/soc/mediatek/
+-
+-obj-y += drivers/pci/controller/
+-
+-endif
+diff --git a/drivers/mailbox/Kbuild b/drivers/mailbox/Kbuild
+new file mode 100644
+index 0000000..ffafeb9
+--- /dev/null
++++ b/drivers/mailbox/Kbuild
+@@ -0,0 +1,5 @@
++# LieppOS provider witness scope (see top-level Kbuild).
++LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
++include $(src)/Makefile
++obj-y :=
++obj-m := mtk-ise-mailbox.o
+diff --git a/drivers/misc/mediatek/aee/Kbuild b/drivers/misc/mediatek/aee/Kbuild
+new file mode 100644
+index 0000000..33d845d
+--- /dev/null
++++ b/drivers/misc/mediatek/aee/Kbuild
+@@ -0,0 +1,5 @@
++# LieppOS provider witness scope (see top-level Kbuild).
++LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
++include $(src)/Makefile
++obj-y :=
++obj-m := aed/ mrdump/
+diff --git a/drivers/misc/mediatek/aee/aed/Kbuild b/drivers/misc/mediatek/aee/aed/Kbuild
+new file mode 100644
+index 0000000..a5eb133
+--- /dev/null
++++ b/drivers/misc/mediatek/aee/aed/Kbuild
+@@ -0,0 +1,5 @@
++# LieppOS provider witness scope (see top-level Kbuild).
++LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
++include $(src)/Makefile
++obj-y :=
++obj-m := aee_aed.o
+diff --git a/drivers/misc/mediatek/aee/mrdump/Kbuild b/drivers/misc/mediatek/aee/mrdump/Kbuild
+new file mode 100644
+index 0000000..b8528e1
+--- /dev/null
++++ b/drivers/misc/mediatek/aee/mrdump/Kbuild
+@@ -0,0 +1,5 @@
++# LieppOS provider witness scope (see top-level Kbuild).
++LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
++include $(src)/Makefile
++obj-y :=
++obj-m := mrdump.o
+diff --git a/drivers/misc/mediatek/ise_lpm/Kbuild b/drivers/misc/mediatek/ise_lpm/Kbuild
+new file mode 100644
+index 0000000..93faa24
+--- /dev/null
++++ b/drivers/misc/mediatek/ise_lpm/Kbuild
+@@ -0,0 +1,5 @@
++# LieppOS provider witness scope (see top-level Kbuild).
++LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
++include $(src)/Makefile
++obj-y :=
++obj-m := ise_lpm.o
+diff --git a/drivers/misc/mediatek/sda/Kbuild b/drivers/misc/mediatek/sda/Kbuild
+new file mode 100644
+index 0000000..f8bf908
+--- /dev/null
++++ b/drivers/misc/mediatek/sda/Kbuild
+@@ -0,0 +1,5 @@
++# LieppOS provider witness scope (see top-level Kbuild).
++LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
++include $(src)/Makefile
++obj-y :=
++obj-m := irq-dbg.o
+diff --git a/drivers/pinctrl/mediatek/Kbuild b/drivers/pinctrl/mediatek/Kbuild
+new file mode 100644
+index 0000000..8a4e597
+--- /dev/null
++++ b/drivers/pinctrl/mediatek/Kbuild
+@@ -0,0 +1,5 @@
++# LieppOS provider witness scope (see top-level Kbuild).
++LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
++include $(src)/Makefile
++obj-y :=
++obj-m := pinctrl-mtk-common-v2_debug.o
+-- 
+2.56.0
+

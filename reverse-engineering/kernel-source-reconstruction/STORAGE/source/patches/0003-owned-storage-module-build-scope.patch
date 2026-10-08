@@ -1,0 +1,245 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: lieppos <lieppos@localhost>
+Date: Fri, 9 Oct 2026 01:33:57 +0300
+Subject: [PATCH 3/3] storage: owned GQ5012BF1 storage-module build scope
+ (Kbuild wrappers, board config)
+
+---
+ Kbuild                                     | 107 ++-------------------
+ drivers/char/rpmb/Kbuild                   |  11 +++
+ drivers/char/rpmb/gq5012bf1-board-config.h |   6 ++
+ drivers/misc/mediatek/blocktag/Kbuild      |   7 ++
+ drivers/mmc/host/Kbuild                    |   7 ++
+ drivers/phy/mediatek/Kbuild                |   7 ++
+ drivers/ufs/Kbuild                         |   7 ++
+ drivers/ufs/vendor/Kbuild                  |  17 ++++
+ 8 files changed, 70 insertions(+), 99 deletions(-)
+ create mode 100644 drivers/char/rpmb/Kbuild
+ create mode 100644 drivers/char/rpmb/gq5012bf1-board-config.h
+ create mode 100644 drivers/misc/mediatek/blocktag/Kbuild
+ create mode 100644 drivers/mmc/host/Kbuild
+ create mode 100644 drivers/phy/mediatek/Kbuild
+ create mode 100644 drivers/ufs/Kbuild
+ create mode 100644 drivers/ufs/vendor/Kbuild
+
+diff --git a/Kbuild b/Kbuild
+index 2f13dd0..9e9f31f 100644
+--- a/Kbuild
++++ b/Kbuild
+@@ -1,101 +1,10 @@
+-# SPDX-License-Identifier: GPL-2.0
+-
+-ifneq ($(CONFIG_DEVICE_MODULES_ALLOW_BUILTIN),y)
+-
+-LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
+-
+-subdir-ccflags-y += -Werror \
+-		-I$(srctree)/$(src)/include \
+-		-I$(srctree)/$(src)/include/uapi \
+-
+-obj-y += drivers/memory/
+-
+-obj-y += drivers/iio/adc/
+-
+-obj-y += drivers/mfd/
+-
+-obj-y += drivers/nvmem/
+-
+-obj-y += drivers/dma/mediatek/
+-
++# LieppOS build-scope wrapper for the ten GQ5012BF1 storage modules (UFS, UFS M-PHY, RPMB,
++# MSDC/microSD, CQHCI, write-protect, block-I/O tracer). It replaces the vendor top-level
++# list with the owned directories only. Every owned directory has its own Kbuild wrapper
++# that reuses the unchanged vendor Makefile for flags and object composition.
++# No C source is modified by this patch.
++obj-y += drivers/misc/mediatek/blocktag/
++obj-y += drivers/char/rpmb/
+ obj-y += drivers/ufs/
+-
+-obj-y += drivers/char/
+-
+-obj-y += drivers/clk/mediatek/
+-
+-obj-y += drivers/clocksource/
+-
+-obj-y += drivers/cpufreq/
+-
+-obj-y += drivers/soc/mediatek/
+-
+-obj-y += drivers/watchdog/
+-
+-obj-y += drivers/dma-buf/heaps/
+-
+-obj-y += drivers/regulator/
+-
+-obj-y += drivers/leds/
+-
+-obj-y += drivers/pinctrl/mediatek/
+-
+-obj-y += drivers/power/supply/
+-
+-obj-y += drivers/rtc/
+-
+-obj-y += drivers/remoteproc/
+-
+-obj-y += drivers/rpmsg/
+-
+-obj-y += drivers/input/keyboard/
+-
+-obj-y += drivers/phy/mediatek/
+-
+-obj-y += drivers/thermal/mediatek/
+-
+-obj-y += drivers/spmi/
+-
+-obj-y += drivers/tty/serial/8250/
+-
+-obj-y += drivers/reset/
+-
+-obj-y += drivers/mailbox/
+-
+-obj-y += drivers/interconnect/
+-
+-obj-y += drivers/i2c/busses/
+-
+-obj-y += drivers/pwm/
+-
+-obj-y += drivers/spi/
+-
+-obj-y += drivers/iommu/
+-
+ obj-y += drivers/mmc/host/
+-
+-obj-y += drivers/tee/
+-
+-obj-y += drivers/gpu/drm/mediatek/
+-
+-obj-y += drivers/input/touchscreen/
+-
+-obj-y += drivers/gpu/drm/panel/
+-
+-obj-y += drivers/gpu/mediatek/
+-
+-obj-y += drivers/media/platform/
+-
+-obj-y += drivers/usb/
+-
+-obj-y += drivers/devfreq/
+-
+-obj-y += drivers/misc/mediatek/
+-
+-obj-y += sound/soc/codecs/
+-
+-obj-y += sound/soc/mediatek/
+-
+-obj-y += drivers/pci/controller/
+-
+-endif
++obj-y += drivers/phy/mediatek/
+diff --git a/drivers/char/rpmb/Kbuild b/drivers/char/rpmb/Kbuild
+new file mode 100644
+index 0000000..a69ae1f
+--- /dev/null
++++ b/drivers/char/rpmb/Kbuild
+@@ -0,0 +1,11 @@
++# LieppOS storage build scope. DEVCIE_MODULES_INCLUDE (vendor spelling) is what the vendor
++# top-level Kbuild prepends to LINUXINCLUDE; it is restated here because each directory is a
++# separate Kbuild invocation. The unchanged vendor Makefile supplies flags and composition.
++LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
++include $(src)/Makefile
++obj-y :=
++obj-m := rpmb.o rpmb-mtk.o
++# GQ5012BF1 board configuration: the device uses TrustKernel, not Trustonic. The stock
++# rpmb-mtk.ko imports no MobiCore (mc_*) symbol, so it was built with
++# CONFIG_TRUSTONIC_TEE_SUPPORT unset, while the shared vendor defconfig sets it =m.
++CFLAGS_rpmb-mtk.o += -include $(src)/gq5012bf1-board-config.h
+diff --git a/drivers/char/rpmb/gq5012bf1-board-config.h b/drivers/char/rpmb/gq5012bf1-board-config.h
+new file mode 100644
+index 0000000..ac8450b
+--- /dev/null
++++ b/drivers/char/rpmb/gq5012bf1-board-config.h
+@@ -0,0 +1,6 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/* GQ5012BF1 board configuration for rpmb-mtk.o (force-included after kconfig.h).
++ * The board ships the TrustKernel TEE (tkcore) and no Trustonic MobiCore driver; the stock
++ * rpmb-mtk.ko imports no mc_* symbol. The shared vendor defconfig sets Trustonic =m. */
++#undef CONFIG_TRUSTONIC_TEE_SUPPORT
++#undef CONFIG_TRUSTONIC_TEE_SUPPORT_MODULE
+diff --git a/drivers/misc/mediatek/blocktag/Kbuild b/drivers/misc/mediatek/blocktag/Kbuild
+new file mode 100644
+index 0000000..37dad27
+--- /dev/null
++++ b/drivers/misc/mediatek/blocktag/Kbuild
+@@ -0,0 +1,7 @@
++# LieppOS storage build scope. DEVCIE_MODULES_INCLUDE (vendor spelling) is what the vendor
++# top-level Kbuild prepends to LINUXINCLUDE; it is restated here because each directory is a
++# separate Kbuild invocation. The unchanged vendor Makefile supplies flags and composition.
++LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
++include $(src)/Makefile
++obj-y :=
++obj-m := blocktag.o
+diff --git a/drivers/mmc/host/Kbuild b/drivers/mmc/host/Kbuild
+new file mode 100644
+index 0000000..9914a92
+--- /dev/null
++++ b/drivers/mmc/host/Kbuild
+@@ -0,0 +1,7 @@
++# LieppOS storage build scope. DEVCIE_MODULES_INCLUDE (vendor spelling) is what the vendor
++# top-level Kbuild prepends to LINUXINCLUDE; it is restated here because each directory is a
++# separate Kbuild invocation. The unchanged vendor Makefile supplies flags and composition.
++LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
++include $(src)/Makefile
++obj-y :=
++obj-m := mtk-mmc.o mtk-wp.o mtk-mmc-dbg.o cqhci.o
+diff --git a/drivers/phy/mediatek/Kbuild b/drivers/phy/mediatek/Kbuild
+new file mode 100644
+index 0000000..df58ff6
+--- /dev/null
++++ b/drivers/phy/mediatek/Kbuild
+@@ -0,0 +1,7 @@
++# LieppOS storage build scope. DEVCIE_MODULES_INCLUDE (vendor spelling) is what the vendor
++# top-level Kbuild prepends to LINUXINCLUDE; it is restated here because each directory is a
++# separate Kbuild invocation. The unchanged vendor Makefile supplies flags and composition.
++LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
++include $(src)/Makefile
++obj-y :=
++obj-m := phy-mtk-ufs.o
+diff --git a/drivers/ufs/Kbuild b/drivers/ufs/Kbuild
+new file mode 100644
+index 0000000..b33015d
+--- /dev/null
++++ b/drivers/ufs/Kbuild
+@@ -0,0 +1,7 @@
++# LieppOS storage build scope. DEVCIE_MODULES_INCLUDE (vendor spelling) is what the vendor
++# top-level Kbuild prepends to LINUXINCLUDE; it is restated here because each directory is a
++# separate Kbuild invocation. The unchanged vendor Makefile supplies flags and composition.
++LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
++include $(src)/Makefile
++obj-y :=
++obj-m := ufs-mediatek-dbg.o vendor/
+diff --git a/drivers/ufs/vendor/Kbuild b/drivers/ufs/vendor/Kbuild
+new file mode 100644
+index 0000000..41eae2c
+--- /dev/null
++++ b/drivers/ufs/vendor/Kbuild
+@@ -0,0 +1,17 @@
++# LieppOS storage build scope. DEVCIE_MODULES_INCLUDE (vendor spelling) is what the vendor
++# top-level Kbuild prepends to LINUXINCLUDE; it is restated here because each directory is a
++# separate Kbuild invocation. The unchanged vendor Makefile supplies flags and composition.
++LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
++include $(src)/Makefile
++obj-y :=
++# GQ5012BF1 composition: the shipped ufs-mediatek-mod.ko contains no UFS-feature objects
++# (ufsfeature/ufshid/ufsshpb/ufstw/ufsringbuf) although the shared vendor defconfig enables
++# CONFIG_UFSFEATURE/CONFIG_UFSHID. Both vendor variants are built, as the vendor Makefile
++# does: ufs-mediatek-mod (ise-dummy; shipped) and ufs-mediatek-mod-ise (not shipped on this
++# board). The companion is required for build parity only: it is the module the stock
++# rpmb-mtk.ko records in depends= (ufs-mediatek-mod-ise,rpmb) for ufs_mtk_rpmb_get_raw_dev.
++obj-m := ufs-mediatek-mod.o ufs-mediatek-mod-ise.o
++ufs-mediatek-mod-y := ../ufs-mediatek.o ../ufs-mediatek-sysfs.o ../ufs-mediatek-mimic.o \
++                      ../ufs-mediatek-btag.o ../ufs-mediatek-rpmb.o ../ufs-mediatek-ise-dummy.o
++ufs-mediatek-mod-ise-y := ../ufs-mediatek.o ../ufs-mediatek-sysfs.o ../ufs-mediatek-mimic.o \
++                          ../ufs-mediatek-btag.o ../ufs-mediatek-rpmb.o ../ufs-mediatek-ise.o
+-- 
+2.56.0
+
