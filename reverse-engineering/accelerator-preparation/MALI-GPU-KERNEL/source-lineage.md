@@ -8,17 +8,21 @@ is measured on the stripped clean build B1 against stock (`function-parity.tsv`,
 |---|---|---|---|
 | `mtk_gpu_hal.ko` | DIRECT_SOURCE_MATCH | NothingOSS `android_kernel_device_modules_6.1_nothing_mt6878` `957dac185efe` `drivers/gpu/mediatek/hal` (identical in ALPS 5e41) | whole file = stock except the build-id |
 | `mtk_gpu_qos.ko` | DIRECT_SOURCE_MATCH | same tree, `drivers/gpu/mediatek/gpu_bm` (identical in ALPS 5e41) | whole file = stock except the build-id |
-| `mtk_gpufreq_wrapper.ko` | DIRECT_SOURCE_MATCH | MT6878 ALPS `5e415e059253` (local pristine archive commit `2ae742fda9cd`) `drivers/gpu/mediatek/gpufreq` | whole file = stock except the build-id |
+| `mtk_gpufreq_wrapper.ko` | DIRECT_SOURCE_MATCH | MT6878 ALPS `5e415e059253` (NothingOSS device_modules, mt6878/*/16b) `drivers/gpu/mediatek/gpufreq` | whole file = stock except the build-id |
 | `mtk_gpufreq_mt6878.ko` | DIRECT_SOURCE_MATCH | same as above | whole file = stock except the build-id |
 | `ged.ko` | DIRECT_SOURCE_MATCH | ALPS `5e415e059253` `drivers/gpu/mediatek/ged` | whole file = stock except the build-id |
 | `mali_mgm_mt6878_r44.ko` | DIRECT_SOURCE_MATCH | NothingOSS `android_kernel_modules_nothing_mt6878` `580d08eac018` `gpu/gpu_mali/mali_avalon/mali-r44p1/drivers/base/arm/memory_group_manager` | whole file = stock except the build-id; **srcversion reproduced** |
 | `mali_prot_alloc_mt6878_r44.ko` | DIRECT_SOURCE_MATCH | same tree, `.../protected_memory_allocator` | whole file = stock except the build-id; **srcversion reproduced** |
-| `mali_kbase_mt6878_r44.ko` | DONOR_PLUS_DEVICE_PATCHES (file-level graft of two public revisions) | `580d08eac018` + 4 files from `c3d070e9f373` (`mali_kbase_mem_migrate.[ch]`, `mmu/mali_kbase_mmu.c`, `backend/gpu/mali_kbase_pm_driver.c`) | every function/data/relocation/ABI byte = stock; residue is the build-id plus `srcversion` (see below) |
+| `mali_kbase_mt6878_r44.ko` | DONOR_PLUS_DEVICE_PATCHES (file-level graft of two public revisions) | `580d08eac018` + 4 files from `c3d070e6155c` (`mali_kbase_mem_migrate.[ch]`, `mmu/mali_kbase_mmu.c`, `backend/gpu/mali_kbase_pm_driver.c`) | every function/data/relocation/ABI byte = stock; residue is the build-id plus `srcversion` (see below) |
 
-The trees and patches are in `patches/kdm/*.patch` and `patches/gpu/*.patch`. Each file is
-recorded with its git blob in `parity/source-manifest.tsv`. The source repositories were
-not modified: the build trees were made by `git archive` into
-`/home/armol/kernel-work/accelerator-mali-gpu-kernel/build/{kdm,gpu}`.
+**Maintained source:** `android_kernel_modules_gpu_ulefone_gq5012bf1`, which holds the pins,
+the complete patch series and a clean-checkout build. See `SOURCE.md`, for full commit ids
+(`c3d070e` = `c3d070e6155c9f373224fa2b17027d07583c37bc`) and the verification record.
+
+The original working trees (`/home/armol/kernel-work/accelerator-mali-gpu-kernel/build/{kdm,gpu}`)
+and their exported patches (`patches/`) are historical; `parity/source-manifest.tsv` records
+their files by git blob. `evidence/source-preservation/tree-equivalence.md` shows that they
+equal the pins + patches.
 
 ## How each lineage was established
 

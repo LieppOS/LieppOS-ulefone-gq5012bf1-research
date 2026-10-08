@@ -34,3 +34,14 @@ Moved `Reverse Engineer - PARTIAL/MALI-GPU-KERNEL` -> `Reverse Engineer - DONE/M
   design.
 * `validate.py` is left unmodified because it is shared by all six accelerator scopes.
   Making it closure-aware is a separate tooling change.
+
+## Source preservation (2026-10-08)
+
+* Maintained source: `android_kernel_modules_gpu_ulefone_gq5012bf1` @ `9d05ae8`. It holds the
+  pinned public commits, the complete patch series (4 patches) and the build/verify scripts.
+  It is local only (not pushed). See `SOURCE.md`.
+* **Independently reproduced:** a clean clone and empty workspace, every pin fetched from
+  upstream, with the old `build/` hidden. Result: B1 == B2, and 8/8 modules stock-identical
+  except the build-id (+ kbase srcversion). Also repeated from an offline mirror.
+* The DONE claim stands; no correction to the parity result. Documentation corrections are
+  in `stale-claims.md` rows 9–13.

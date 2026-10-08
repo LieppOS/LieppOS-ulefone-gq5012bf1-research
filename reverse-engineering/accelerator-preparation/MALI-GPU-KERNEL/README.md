@@ -2,6 +2,9 @@
 
 Status: DONE
 
+**Source:** `android_kernel_modules_gpu_ulefone_gq5012bf1` (pinned public commits + complete
+patches + clean-checkout build, independently verified). See **`SOURCE.md`**.
+
 - **Subsystem:** Accelerators / Mali GPU (Valhall CSF, DDK r44p1) + MediaTek GED, GPU HAL, GPU QoS, gpufreq v2
 - **Stock artifact:** the 8 vendor_dlkm modules `mali_kbase_mt6878_r44`, `mali_mgm_mt6878_r44`,
   `mali_prot_alloc_mt6878_r44`, `ged`, `mtk_gpu_hal`, `mtk_gpu_qos`,
@@ -47,7 +50,8 @@ In the workspace pack, top-level research files are under `notes/`.
 | CSF and GPUEB firmware | `firmware-boundary.md` |
 | OEM/board deltas (none in code) | `board-specific-deltas.md` |
 | corrected preparation claims | `stale-claims.md` |
-| source patches (git format-patch over pristine archives) | `patches/kdm/`, `patches/gpu/`, `parity/source-manifest.tsv` |
+| **maintained source: repository, pins, patches, build** | **`SOURCE.md`**, `source/` (bundle + copies), `evidence/source-preservation/` |
+| historical patch export of the original working trees | `patches/` (see `patches/README.md`), `parity/source-manifest.tsv` |
 | srcversion tooling and search | `scripts/srcversion.py`, `tools/sv/`, `scripts/sv_search*.py`, `parity/srcversion-search.txt` |
 | full report | `FINAL-REPORT.md` |
 

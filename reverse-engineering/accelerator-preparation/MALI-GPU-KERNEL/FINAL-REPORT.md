@@ -20,10 +20,10 @@ semantic-equivalence argument.
 
 * **NothingOSS `android_kernel_modules_nothing_mt6878`** `580d08eac018`, mali r44p1, with
   `mali_kbase_mem_migrate.[ch]`, `mmu/mali_kbase_mmu.c` and
-  `backend/gpu/mali_kbase_pm_driver.c` taken from `c3d070e9f373`.
+  `backend/gpu/mali_kbase_pm_driver.c` taken from `c3d070e6155c`.
 * **NothingOSS `android_kernel_device_modules_6.1_nothing_mt6878`** `957dac185efe` for
   hal and gpu_bm.
-* **MT6878 ALPS `5e415e059253`** (local archive `2ae742fda9cd`) for ged, gpufreq, and the
+* **MT6878 ALPS `5e415e059253`** (NothingOSS device_modules, mt6878/*/16b) for ged, gpufreq, and the
   external-provider CRC derivation.
 
 Details: `source-lineage.md`.
@@ -138,9 +138,21 @@ stripped `.ko` and `Module.symvers` are identical
 ## 14. Commits
 
 * Research repository: see the git log (checkpoints 1–3).
-* Source trees: isolated git repos at
-  `/home/armol/kernel-work/accelerator-mali-gpu-kernel/build/{kdm,gpu}`; their patches are
-  copied into `patches/`.
+* Source: maintained repository `android_kernel_modules_gpu_ulefone_gq5012bf1` @ `9d05ae8`
+  (pins + complete patches + build). See `SOURCE.md`. The original working trees under
+  `/home/armol/kernel-work/accelerator-mali-gpu-kernel/build/` are historical.
+
+## 15. Source preservation (2026-10-08)
+
+A clean clone of the source repository, fetching every pin from upstream into an empty
+workspace with the old `build/` directory hidden, gave:
+* B1 == B2;
+* 30/30 provider CRCs re-derived from source;
+* all 8 modules identical to stock except the build-id (plus kbase `srcversion`);
+* acceptance ledgers equal to the closure ledgers.
+
+The same result was repeated offline from a pin mirror, and from a fresh clone of the final
+commit. See `SOURCE.md` and `evidence/source-preservation/`.
 
 ## 18. Runtime-only validation still open
 

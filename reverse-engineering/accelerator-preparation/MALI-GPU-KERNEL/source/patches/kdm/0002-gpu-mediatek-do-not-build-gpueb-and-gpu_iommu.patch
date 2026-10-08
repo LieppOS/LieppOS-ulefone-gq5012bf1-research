@@ -1,0 +1,31 @@
+From 0b2f28068b28c60c619f56af53d34ac26f6c81b8 Mon Sep 17 00:00:00 2001
+From: ArnoldasMk <arnoldas.kanobi@gmail.com>
+Date: Thu, 8 Oct 2026 12:00:00 +0000
+Subject: [PATCH 2/3] gpu/mediatek: do not build gpueb/ and gpu_iommu/
+
+Build plumbing only. gpueb.ko is owned by a different GQ5012BF1 component
+(GPU-AI-AUX-KERNEL-INTERFACES); the GPU modules link against its exports
+through the provider CRC file (reference/natural-external-provider.symvers).
+gpu_iommu/ is an mt6989-only module and is not shipped on GQ5012BF1.
+---
+ drivers/gpu/mediatek/Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/mediatek/Makefile b/drivers/gpu/mediatek/Makefile
+index 3befca2..2b9a147 100644
+--- a/drivers/gpu/mediatek/Makefile
++++ b/drivers/gpu/mediatek/Makefile
+@@ -36,8 +36,8 @@ ifneq ($(CONFIG_MTK_GPU_SUPPORT),)
+     obj-y += hal/
+     obj-y += gpufreq/
+     obj-y += gpu_bm/
+-    obj-y += gpueb/
+-    obj-y += gpu_iommu/
++    # obj-y += gpueb/      (not owned: GPU-AI-AUX-KERNEL-INTERFACES; stock provider ABI record used)
++    # obj-y += gpu_iommu/  (mt6989-only module, not shipped on GQ5012BF1)
+ 
+ ifneq ($(CONFIG_MTK_GPU_VERSION),"")
+ # GPU R5P0
+-- 
+2.56.0
+

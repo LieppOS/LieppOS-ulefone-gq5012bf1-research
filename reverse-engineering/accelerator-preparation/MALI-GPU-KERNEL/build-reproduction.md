@@ -1,5 +1,12 @@
 # Build reproduction — MALI-GPU-KERNEL
 
+> **Current build path:** `android_kernel_modules_gpu_ulefone_gq5012bf1`, with
+> `scripts/bootstrap.sh` + `scripts/b1b2.sh`; see `SOURCE.md`. It needs no file from
+> `/home/armol/kernel-work/accelerator-mali-gpu-kernel/`. The original procedure below is
+> kept as history. It depended on that work directory: the `build/` trees, `kout-base`
+> (whose `Module.symvers` is the GKI 12901745 `vmlinux.symvers`) and a borrowed
+> `resolve_btfids`.
+
 ## One command
 
 ```
