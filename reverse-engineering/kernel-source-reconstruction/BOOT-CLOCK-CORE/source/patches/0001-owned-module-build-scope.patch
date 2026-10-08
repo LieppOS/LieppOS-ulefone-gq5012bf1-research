@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LieppOS <lieppos@localhost>
+Date: Fri, 9 Oct 2026 01:00:06 +0300
+Subject: [PATCH] build: restrict drivers/clk/mediatek to the six owned
+ boot-clock modules
+
+---
+ drivers/clk/mediatek/Kbuild | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+ create mode 100644 drivers/clk/mediatek/Kbuild
+
+diff --git a/drivers/clk/mediatek/Kbuild b/drivers/clk/mediatek/Kbuild
+new file mode 100644
+index 0000000..74aeddf
+--- /dev/null
++++ b/drivers/clk/mediatek/Kbuild
+@@ -0,0 +1,8 @@
++# LieppOS build-scope wrapper: the six GQ5012BF1 boot-clock modules only; the unchanged
++# vendor Makefile is reused for object composition. obj-m is restated because the
++# vendor Makefile guards clk-mt6878* with $(wildcard $(srctree)/$(src)/...), which does
++# not resolve for an out-of-tree M= build. No C or header file is modified here.
++LINUXINCLUDE := -I$(DEVICE_MODULES_PATH)/include $(LINUXINCLUDE)
++include $(src)/Makefile
++obj-y :=
++obj-m := clk-common.o clk-mt6878.o clk-mt6878-bus.o clk-mt6878-peri.o clk-mt6878-vlp.o clk-fmeter-mt6878.o

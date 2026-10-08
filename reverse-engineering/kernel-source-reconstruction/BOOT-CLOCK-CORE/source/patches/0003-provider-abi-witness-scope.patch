@@ -1,0 +1,142 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LieppOS <lieppos@localhost>
+Date: Fri, 9 Oct 2026 01:00:06 +0300
+Subject: [PATCH] build: provider-ABI witness scope for the AEE exports used by
+ clk-common
+
+---
+ Kbuild                               | 108 ++-------------------------
+ drivers/misc/mediatek/aee/aed/Kbuild |  11 +++
+ 2 files changed, 18 insertions(+), 101 deletions(-)
+ create mode 100644 drivers/misc/mediatek/aee/aed/Kbuild
+
+diff --git a/Kbuild b/Kbuild
+index 2f13dd0..0a35ddc 100644
+--- a/Kbuild
++++ b/Kbuild
+@@ -1,101 +1,7 @@
+-# SPDX-License-Identifier: GPL-2.0
+-
+-ifneq ($(CONFIG_DEVICE_MODULES_ALLOW_BUILTIN),y)
+-
+-LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
+-
+-subdir-ccflags-y += -Werror \
+-		-I$(srctree)/$(src)/include \
+-		-I$(srctree)/$(src)/include/uapi \
+-
+-obj-y += drivers/memory/
+-
+-obj-y += drivers/iio/adc/
+-
+-obj-y += drivers/mfd/
+-
+-obj-y += drivers/nvmem/
+-
+-obj-y += drivers/dma/mediatek/
+-
+-obj-y += drivers/ufs/
+-
+-obj-y += drivers/char/
+-
+-obj-y += drivers/clk/mediatek/
+-
+-obj-y += drivers/clocksource/
+-
+-obj-y += drivers/cpufreq/
+-
+-obj-y += drivers/soc/mediatek/
+-
+-obj-y += drivers/watchdog/
+-
+-obj-y += drivers/dma-buf/heaps/
+-
+-obj-y += drivers/regulator/
+-
+-obj-y += drivers/leds/
+-
+-obj-y += drivers/pinctrl/mediatek/
+-
+-obj-y += drivers/power/supply/
+-
+-obj-y += drivers/rtc/
+-
+-obj-y += drivers/remoteproc/
+-
+-obj-y += drivers/rpmsg/
+-
+-obj-y += drivers/input/keyboard/
+-
+-obj-y += drivers/phy/mediatek/
+-
+-obj-y += drivers/thermal/mediatek/
+-
+-obj-y += drivers/spmi/
+-
+-obj-y += drivers/tty/serial/8250/
+-
+-obj-y += drivers/reset/
+-
+-obj-y += drivers/mailbox/
+-
+-obj-y += drivers/interconnect/
+-
+-obj-y += drivers/i2c/busses/
+-
+-obj-y += drivers/pwm/
+-
+-obj-y += drivers/spi/
+-
+-obj-y += drivers/iommu/
+-
+-obj-y += drivers/mmc/host/
+-
+-obj-y += drivers/tee/
+-
+-obj-y += drivers/gpu/drm/mediatek/
+-
+-obj-y += drivers/input/touchscreen/
+-
+-obj-y += drivers/gpu/drm/panel/
+-
+-obj-y += drivers/gpu/mediatek/
+-
+-obj-y += drivers/media/platform/
+-
+-obj-y += drivers/usb/
+-
+-obj-y += drivers/devfreq/
+-
+-obj-y += drivers/misc/mediatek/
+-
+-obj-y += sound/soc/codecs/
+-
+-obj-y += sound/soc/mediatek/
+-
+-obj-y += drivers/pci/controller/
+-
+-endif
++# LieppOS provider-ABI witness scope: compile only the source that defines the external
++# exports consumed by the owned boot-clock modules (AEE: aee_is_printk_too_much,
++# aee_kernel_warning_api_func), so their modversion CRCs are generated naturally by
++# genksyms. No provider module is shipped or owned here.
++LINUXINCLUDE := -I$(src)/include $(LINUXINCLUDE)
++subdir-ccflags-y += -Werror -I$(src)/include -I$(src)/include/uapi
++obj-y += drivers/misc/mediatek/aee/aed/
+diff --git a/drivers/misc/mediatek/aee/aed/Kbuild b/drivers/misc/mediatek/aee/aed/Kbuild
+new file mode 100644
+index 0000000..055cf4e
+--- /dev/null
++++ b/drivers/misc/mediatek/aee/aed/Kbuild
+@@ -0,0 +1,11 @@
++LINUXINCLUDE := -I$(DEVICE_MODULES_PATH)/include $(LINUXINCLUDE)
++ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/gpu/drm/mediatek/mediatek_v2/ \
++             -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/aee/mrdump \
++             -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/aee/aed \
++             -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/aee \
++             -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include \
++             -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat/ \
++             -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mmp/ \
++             -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/log_store/
++obj-m := aee_aed.o
++aee_aed-y := aed-main.o aed-debug.o aee-common.o slog.o

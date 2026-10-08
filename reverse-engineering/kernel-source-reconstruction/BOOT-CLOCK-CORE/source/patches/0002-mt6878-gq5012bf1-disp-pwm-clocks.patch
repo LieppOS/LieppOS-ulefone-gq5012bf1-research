@@ -1,0 +1,130 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LieppOS <lieppos@localhost>
+Date: Fri, 9 Oct 2026 01:00:06 +0300
+Subject: [PATCH] clk: mediatek: mt6878: keep the GQ5012BF1 display-PWM clock
+ path
+
+ALPS 591991d44aad ("update clk data", "remove no owner clock node") dropped
+top_disp_pwm_sel and renamed the top_disp_pwm_ck factor parent. The
+GQ5012BF1 stock modules and board device tree still use that path:
+
+  disp-pwm0@1100e000 clocks = <&pericfg_ao 31>, <&topckgen 282>, <&topckgen 184>
+  disp-pwm1@1100f000 clocks = <&pericfg_ao 32>, <&topckgen 282>, <&topckgen 184>
+
+Restore, verbatim from the pre-591991d ALPS source, the DISP_PWM mux
+(CLK_CFG_7 lsb 24 width 3, pdn 31, CLK_CFG_UPDATE1 shift 0), its seven
+parents and the original factor parent name, add the two PERICFG_AO
+display-PWM gates (bits 10 and 11, parent top_disp_pwm_ck), and append the
+three binding IDs after the existing ones (CLK_TOP_DISP_PWM_SEL 282,
+CLK_PERAOP_DISP_PWM0/1 31/32; CLK_TOP_NR_CLK 283, CLK_PERAO_NR_CLK 33).
+
+Every value is fixed by the stock clk-mt6878.ko / clk-mt6878-peri.ko data
+tables and the board DT; the result is byte-identical to stock except the
+GNU build ID.
+---
+ drivers/clk/mediatek/clk-mt6878-peri.c |  4 ++++
+ drivers/clk/mediatek/clk-mt6878.c      | 22 +++++++++++++++++++++-
+ include/dt-bindings/clock/mt6878-clk.h |  7 +++++--
+ 3 files changed, 30 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/clk/mediatek/clk-mt6878-peri.c b/drivers/clk/mediatek/clk-mt6878-peri.c
+index 7b1a6ae..e9f2e36 100644
+--- a/drivers/clk/mediatek/clk-mt6878-peri.c
++++ b/drivers/clk/mediatek/clk-mt6878-peri.c
+@@ -211,6 +211,10 @@ static const struct mtk_gate perao_clks[] = {
+ 			"top_pwm_ck"/* parent */, 8),
+ 	GATE_PERAO0(CLK_PERAOP_PWM_FB4, "peraop_pwm_fb4",
+ 			"top_pwm_ck"/* parent */, 9),
++	GATE_PERAO0(CLK_PERAOP_DISP_PWM0, "peraop_disp_pwm0",
++			"top_disp_pwm_ck"/* parent */, 10),
++	GATE_PERAO0(CLK_PERAOP_DISP_PWM1, "peraop_disp_pwm1",
++			"top_disp_pwm_ck"/* parent */, 11),
+ 	GATE_PERAO0(CLK_PERAOP_SPI0_B, "peraop_spi0_b",
+ 			"top_spi0_ck"/* parent */, 12),
+ 	GATE_PERAO0(CLK_PERAOP_SPI1_B, "peraop_spi1_b",
+diff --git a/drivers/clk/mediatek/clk-mt6878.c b/drivers/clk/mediatek/clk-mt6878.c
+index 433f4a8..dc77c19 100644
+--- a/drivers/clk/mediatek/clk-mt6878.c
++++ b/drivers/clk/mediatek/clk-mt6878.c
+@@ -140,6 +140,7 @@
+ #define TOP_MUX_MSDC30_1_HCLK_SHIFT		28
+ #define TOP_MUX_AUD_INTBUS_SHIFT		29
+ #define TOP_MUX_ATB_SHIFT			30
++#define TOP_MUX_DISP_PWM_SHIFT			0
+ #define TOP_MUX_USB_TOP_SHIFT			1
+ #define TOP_MUX_SSUSB_XHCI_SHIFT		2
+ #define TOP_MUX_I2C_SHIFT			3
+@@ -616,7 +617,7 @@ static const struct mtk_fixed_factor top_divs[] = {
+ 	FACTOR(CLK_TOP_ATB, "top_atb_ck",
+ 			"top_atb_sel", 1, 1),
+ 	FACTOR(CLK_TOP_DISP_PWM, "top_disp_pwm_ck",
+-			"disp_pwm_sel", 1, 1),
++			"top_disp_pwm_sel", 1, 1),
+ 	FACTOR(CLK_TOP_USB_TOP, "top_usb_ck",
+ 			"top_usb_sel", 1, 1),
+ 	FACTOR(CLK_TOP_USB_XHCI, "top_usb_xhci_ck",
+@@ -1329,6 +1330,16 @@ static const char * const top_atb_parents[] = {
+ 	"top_mainpll_d5_d2"
+ };
+ 
++static const char * const top_disp_pwm_parents[] = {
++	"top_tck_26m_mx9_ck",
++	"top_univpll_d6_d4",
++	"top_osc_d2",
++	"top_osc_d4",
++	"top_osc_d16",
++	"top_univpll_d5_d4",
++	"top_mainpll_d4_d4"
++};
++
+ static const char * const top_usb_parents[] = {
+ 	"top_tck_26m_mx9_ck",
+ 	"top_univpll_d5_d4",
+@@ -1893,6 +1904,10 @@ static const struct mtk_mux top_muxes[] = {
+ 		top_atb_parents/* parent */, CLK_CFG_7, CLK_CFG_7_SET,
+ 		CLK_CFG_7_CLR/* set parent */, 16/* lsb */, 2/* width */,
+ 		CLK_CFG_UPDATE/* upd ofs */, TOP_MUX_ATB_SHIFT/* upd shift */),
++	MUX_CLR_SET_UPD(CLK_TOP_DISP_PWM_SEL/* dts */, "top_disp_pwm_sel",
++		top_disp_pwm_parents/* parent */, CLK_CFG_7, CLK_CFG_7_SET,
++		CLK_CFG_7_CLR/* set parent */, 24/* lsb */, 3/* width */,
++		CLK_CFG_UPDATE1/* upd ofs */, TOP_MUX_DISP_PWM_SHIFT/* upd shift */),
+ 	/* CLK_CFG_8 */
+ 	MUX_CLR_SET_UPD(CLK_TOP_USB_TOP_SEL/* dts */, "top_usb_sel",
+ 		top_usb_parents/* parent */, CLK_CFG_8, CLK_CFG_8_SET,
+@@ -2223,6 +2238,11 @@ static const struct mtk_mux top_muxes[] = {
+ 		top_atb_parents/* parent */, CLK_CFG_7, CLK_CFG_7_SET,
+ 		CLK_CFG_7_CLR/* set parent */, 16/* lsb */, 2/* width */,
+ 		CLK_CFG_UPDATE/* upd ofs */, TOP_MUX_ATB_SHIFT/* upd shift */),
++	MUX_GATE_CLR_SET_UPD(CLK_TOP_DISP_PWM_SEL/* dts */, "top_disp_pwm_sel",
++		top_disp_pwm_parents/* parent */, CLK_CFG_7, CLK_CFG_7_SET,
++		CLK_CFG_7_CLR/* set parent */, 24/* lsb */, 3/* width */,
++		31/* pdn */, CLK_CFG_UPDATE1/* upd ofs */,
++		TOP_MUX_DISP_PWM_SHIFT/* upd shift */),
+ 	/* CLK_CFG_8 */
+ 	MUX_GATE_CLR_SET_UPD(CLK_TOP_USB_TOP_SEL/* dts */, "top_usb_sel",
+ 		top_usb_parents/* parent */, CLK_CFG_8, CLK_CFG_8_SET,
+diff --git a/include/dt-bindings/clock/mt6878-clk.h b/include/dt-bindings/clock/mt6878-clk.h
+index a4c24e7..7da0997 100644
+--- a/include/dt-bindings/clock/mt6878-clk.h
++++ b/include/dt-bindings/clock/mt6878-clk.h
+@@ -290,7 +290,8 @@
+ #define CLK_TOP_APLL12_DIV_SO2				279
+ #define CLK_TOP_APLL12_DIV_SO4				280
+ #define CLK_TOP_APLL12_DIV_FMI2S			281
+-#define CLK_TOP_NR_CLK					282
++#define CLK_TOP_DISP_PWM_SEL				282
++#define CLK_TOP_NR_CLK					283
+ 
+ /* INFRA_AO_REG */
+ #define CLK_IFRAO_CQ_DMA_FPC				0
+@@ -354,7 +355,9 @@
+ #define CLK_PERAOP_AUDIO0				28
+ #define CLK_PERAOP_AUDIO1				29
+ #define CLK_PERAOP_AUDIO2				30
+-#define CLK_PERAO_NR_CLK				31
++#define CLK_PERAOP_DISP_PWM0				31
++#define CLK_PERAOP_DISP_PWM1				32
++#define CLK_PERAO_NR_CLK				33
+ 
+ /* AFE */
+ #define CLK_AFE_DL0_DAC_TML				0
