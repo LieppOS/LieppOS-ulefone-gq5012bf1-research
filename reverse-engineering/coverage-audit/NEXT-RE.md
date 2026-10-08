@@ -32,20 +32,6 @@ Accelerator priority follows the authorized dependency-aware roadmap, not unsupp
 - **phone:** No for static parity; later hardware/runtime acceptance needs separate authorization
 - [Canonical handoff/evidence](../accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
 
-## 5. MTK-MDP-KERNEL — PARTIAL
-
-- **kind:** REGISTERED ACCELERATOR / MODULE PARITY
-- **scope:** mdp_drv_mt6878.ko, mtk-mml.ko, mtk-mml-mt6878.ko, clk-mt6878-mdpsys.ko; normal-world kernel/DT/ABI only
-- **difficulty:** HIGH
-- **probability:** Pinned source candidates and exact stock operands; whole-scope closure probability unmeasured
-- **evidence:** Exact module hashes, full ELF metadata, DT/providers, pinned donor files and existing proof-axis citations
-- **missing:** All-axes module acceptance; preserve existing camera function/data proofs and close unmeasured residuals
-- **closure:** Every explicitly owned module satisfies function/data/CRC/KCFI/relocation/symbol/string/modinfo/vermagic/B1-B2 and observable DT/ABI; algorithms excluded
-- **effort:** Four bounded module targets; tile/PQ/CMDQ buffer and display-consumer ABI must be reconciled
-- **dependency:** GKI-KMI-BASELINE; existing DRM; generic CMDQ/SMI/IOMMU; VCP host/status
-- **phone:** No for static parity; later hardware/runtime acceptance needs separate authorization
-- [Canonical handoff/evidence](../accelerator-preparation/MTK-MDP-KERNEL/CLAUDE-HANDOFF.md).
-
 ## 6. GPU-AI-AUX-KERNEL-INTERFACES — PARTIAL
 
 - **kind:** REGISTERED ACCELERATOR / MODULE PARITY

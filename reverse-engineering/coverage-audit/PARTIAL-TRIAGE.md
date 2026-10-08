@@ -28,7 +28,6 @@ All **42** current PARTIAL directories have one A–F class. Camera kernel child
 | MMC5603-MAGNETOMETER | C | Register driver and fusion/calibration are inside signed SCP firmware. | KEEP PARTIAL; Validate Android heading/calibration; preserve SCP firmware. | PROPRIETARY-GATED | SENSOR-HUB, SENSOR-HUB-KERNEL |
 | MODEM-FIRMWARE | C | MD1 code, carrier configuration, RF calibration and signing keys are proprietary. | KEEP PARTIAL; Hash/retain stock images and map version/band metadata without payload redistribution. | PROPRIETARY-GATED | MODEM-KERNEL-TRANSPORT, RADIO-HAL-RIL |
 | MT6637-WIFI | B | Kernel path is closed; controller firmware, NVRAM/calibration and vendor HAL internals remain proprietary. | KEEP PARTIAL; Preserve firmware/NVRAM and validate bands, 6E, roaming and suspend. | HARD | MT6637-WIFI-KERNEL, CONNINFRA-KERNEL, CONNFEM |
-| MTK-MDP-KERNEL | A | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | KEEP PARTIAL; Follow canonical accelerator CLAUDE-HANDOFF; preserve already exact source/proofs. | HIGH | GKI-KMI-BASELINE; existing DRM; generic CMDQ/SMI/IOMMU; VCP host/status |
 | NFC-SECURE-ELEMENT | B | ST21 controller kernel is closed; NCI HAL, secure-element applets/access rules and firmware stay proprietary. | KEEP PARTIAL; Validate NCI/eSE flows with retained blobs; do not claim applet source closure. | PROPRIETARY-GATED | ST21NFC, TRUSTKERNEL-TEE |
 | NVRAM-CALIBRATION | C | Partition/consumer paths are mapped; per-unit values and vendor calibration logic are private/device-specific. | KEEP PARTIAL; Complete ownership labels and back up values; never publish or synthesize per-unit calibration. | PROPRIETARY-GATED | PARTITION-OWNERSHIP and all calibrated subsystems |
 | OEM-KERNEL-MODULES | F | Persistent whole-module-set tracker; child components have mixed closure. Its documented 471 count is stale versus the measured 457-module universe. | KEEP PARTIAL; Regenerate inventory from kernel-modules.tsv and keep only unresolved children actionable. | QUICK | VENDOR-DLKM, SYSTEM-DLKM, MTK-MODULE-LOADER |
@@ -63,7 +62,6 @@ All **42** current PARTIAL directories have one A–F class. Camera kernel child
 
 1. **MALI-GPU-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/MALI-GPU-KERNEL/CLAUDE-HANDOFF.md).
 3. **CAMERA-ISP-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
-5. **MTK-MDP-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/MTK-MDP-KERNEL/CLAUDE-HANDOFF.md).
 6. **GPU-AI-AUX-KERNEL-INTERFACES** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/GPU-AI-AUX-KERNEL-INTERFACES/CLAUDE-HANDOFF.md).
 7. **DTB-DTBO** — STATIC SOURCE CONTRACT; [handoff/evidence](../../docs/dt-module-matching.md).
 8. **FT3680-TOUCH** — KERNEL MODULE PARITY; [handoff/evidence](../display-input/ft3680/parity-report.md).
