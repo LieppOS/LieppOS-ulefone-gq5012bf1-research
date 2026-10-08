@@ -2,7 +2,11 @@
 
 Snapshot: **2026-10-08**, source HEAD `c8de6a1`. Actual workspace directory status is authoritative; scope registration is not kernel reconstruction.
 
-All **42** current PARTIAL directories have one A–F class. Camera kernel child is A; HAL/3A/firmware algorithms remain C. Existing static DONE scopes stay DONE.
+The canonical ledger contains **37** PARTIAL records with one A–F class; the organized
+workspace has **36** PARTIAL directories after camera promotion. Mali's pre-existing
+canonical-PARTIAL/workspace-DONE discrepancy is not repaired here. The camera kernel
+child is now statically DONE; HAL/3A/firmware algorithms remain C. Existing static DONE
+scopes stay DONE.
 
 | Component | Class | Remaining boundary | Next action | Difficulty | Dependencies |
 |---|---|---|---|---|---|
@@ -11,7 +15,6 @@ All **42** current PARTIAL directories have one A–F class. Camera kernel child
 | BATTERY-PACK | D | Cell/BMS identity, connector topology, calibration and ageing model need teardown/runtime evidence. | KEEP PARTIAL; Photograph labels/connectors and capture read-only gauge/health data. | HARD | SH366003-FUEL-GAUGE, MT6375-CHARGER |
 | BLUETOOTH | B | Kernel transport is closed; controller firmware, vendor HAL internals and LE Audio behavior remain proprietary/runtime-gated. | KEEP PARTIAL; Retain signed firmware; run HCI/LE Audio feature validation. | HARD | MT6637-BT-KERNEL, CONNINFRA-KERNEL |
 | CAMERA-HAL-ISP | C | HAL/3A/tuning/calibration interpretation and firmware algorithms remain proprietary; normal-world kernel ownership transferred to child. | KEEP PARTIAL proprietary HAL/3A scope; authorized kernel split APPLIED to CAMERA-ISP-KERNEL | PROPRIETARY-GATED | CAMERA-ISP-KERNEL; camera sensor/VCM/EEPROM/OIS/rail DONE scopes |
-| CAMERA-ISP-KERNEL | A | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | KEEP PARTIAL; Follow canonical accelerator CLAUDE-HANDOFF; preserve already exact source/proofs. | MEDIUM/HIGH | GKI-KMI-BASELINE; camera sensor/VCM/EEPROM/OIS DONE children; shared CMDQ/IOMMU/SMI; VCP client ABI |
 | COOLING-HARDWARE | D | Material stack, heat spreaders, contact paths and measured thermal model require physical inspection. | KEEP PARTIAL; Teardown and correlate sustained-load temperatures with thermal zones. | HARD | THERMAL-POWER-HAL, BATTERY-PACK |
 | DRAM-MEMORY | D | Exact package/topology/timings and training firmware cannot be recovered from normal Android artifacts alone. | KEEP PARTIAL; Read package markings or schematics; retain signed preloader/training data. | HARD | BOOT-IMAGES, PARTITION-OWNERSHIP |
 | DTB-DTBO | A | Effective tree is inventoried; source-complete DTS and bootloader mutation/runtime validation remain. | KEEP PARTIAL; Decompile/normalize each selected DTB/DTBO and reconcile the three Mali nodes after GPU ownership is added. | MEDIUM | BOOT-IMAGES, PARTITION-OWNERSHIP |

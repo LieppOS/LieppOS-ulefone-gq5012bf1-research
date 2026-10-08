@@ -2,7 +2,10 @@
 
 Snapshot: **2026-10-08**, source HEAD `c8de6a1`. Actual workspace directory status is authoritative; scope registration is not kernel reconstruction.
 
-Accelerator priority follows the authorized dependency-aware roadmap, not unsupported closure-probability or hour estimates. Remaining general static targets follow it. DONE and non-A targets are automatically omitted. No reconstruction is performed here.
+Accelerator priority follows the authorized dependency-aware roadmap, not unsupported
+closure-probability or hour estimates. CAMERA-ISP-KERNEL is now DONE. Mali's remaining
+section reflects pre-existing canonical drift: its organized workspace is already DONE,
+so that section must not be executed as a new reconstruction task.
 
 ## 1. MALI-GPU-KERNEL — PARTIAL
 
@@ -17,20 +20,6 @@ Accelerator priority follows the authorized dependency-aware roadmap, not unsupp
 - **dependency:** GKI-KMI-BASELINE; TMEM-FFA; GZ-TRANSPORT; MTK-TINYSYS-IPI; GPUEB client ABI
 - **phone:** No for static parity; later hardware/runtime acceptance needs separate authorization
 - [Canonical handoff/evidence](../accelerator-preparation/MALI-GPU-KERNEL/CLAUDE-HANDOFF.md).
-
-## 3. CAMERA-ISP-KERNEL — PARTIAL
-
-- **kind:** REGISTERED ACCELERATOR / MODULE PARITY
-- **scope:** mtk_hcp.ko, mtk-ipesys-me.ko, mtk_imgsys_cmdq.ko, mtk_imgsys_v4l2.ko, mtk_imgsys_isp7sp.ko, ccd_rpmsg.ko, mtk_ccd_remoteproc.ko, mtk_ccuv.ko, mtk-cam-isp7sp.ko, mtk_aie.ko, mtk_aie_debug_7sp_2.ko, camera_dpe_isp7sp.ko, pda_drv_mt6878.ko, mtk-vmm-isp71-regulator.ko, mtk-vmm-notifier.ko, imgsensor-glue.ko, imgsensor.ko, c2ps_perf_ioctl.ko, mtk_c2ps.ko; normal-world kernel/DT/ABI only
-- **difficulty:** MEDIUM/HIGH
-- **probability:** Pinned source candidates and exact stock operands; whole-scope closure probability unmeasured
-- **evidence:** Exact module hashes, full ELF metadata, DT/providers, pinned donor files and existing proof-axis citations
-- **missing:** All-axes module acceptance; preserve existing camera function/data proofs and close unmeasured residuals
-- **closure:** Every explicitly owned module satisfies function/data/CRC/KCFI/relocation/symbol/string/modinfo/vermagic/B1-B2 and observable DT/ABI; algorithms excluded
-- **effort:** Reuse existing function/data-exact sources; bounded PDA/VMM residuals and whole-module acceptance
-- **dependency:** GKI-KMI-BASELINE; camera sensor/VCM/EEPROM/OIS DONE children; shared CMDQ/IOMMU/SMI; VCP client ABI
-- **phone:** No for static parity; later hardware/runtime acceptance needs separate authorization
-- [Canonical handoff/evidence](../accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
 
 ## 7. DTB-DTBO — PARTIAL
 
@@ -90,4 +79,4 @@ Accelerator priority follows the authorized dependency-aware roadmap, not unsupp
 | OTA-AB-UPDATE | PARTIAL | End-to-end signing/snapshot/merge/rollback acceptance is runtime-gated, not a static PARTIAL-to-DONE shortcut. |
 | RECOVERY-ORANGEFOX | PARTIAL | Backup/restore/flashing/FBE/USB acceptance remains runtime-gated; do not put the stock anchor at risk. |
 
-[Accelerator roadmap](../accelerator-re-roadmap.md): six prepared scopes, precise reconstruction order and proprietary exclusions. Runtime/HAL/SELinux, proprietary and inventory tracking are not module-parity shortcuts.
+[Accelerator roadmap](../accelerator-re-roadmap.md): all six registered scopes are workspace-DONE; Mali's older canonical-PARTIAL entry is stale, not a new module-parity target. Runtime/HAL/SELinux, proprietary and inventory tracking are not module-parity shortcuts.

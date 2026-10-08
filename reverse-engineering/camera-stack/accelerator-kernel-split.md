@@ -1,6 +1,10 @@
 # CAMERA-HAL-ISP / CAMERA-ISP-KERNEL ownership split
 
-Authorized accelerator preparation, 2026-10-08. Parent **CAMERA-HAL-ISP stays PARTIAL**. New kernel child **CAMERA-ISP-KERNEL starts PARTIAL**. No reconstruction, destructive move or deletion was performed.
+The initial 2026-10-08 preparation registered the child as PARTIAL. Subsequent
+reconstruction closes **CAMERA-ISP-KERNEL as DONE** for all nineteen normal-world kernel
+modules: pinned source, explicit patches, complete parity ledgers and independent B1/B2.
+Parent **CAMERA-HAL-ISP stays PARTIAL**. See the
+[reconstruction report](../accelerator-preparation/CAMERA-ISP-KERNEL/RECONSTRUCTION-REPORT.md).
 
 ## Current authoritative scopes
 
@@ -12,8 +16,14 @@ Authorized accelerator preparation, 2026-10-08. Parent **CAMERA-HAL-ISP stays PA
 
 ## Evidence preserved
 
-Existing sources, build recipes, stock operands and all camera history stay in their original paths, including `kernel-isp-imgsys/`, the grafted private mtkcam tree and old pack evidence. The child has inventories and links, not duplicated private source or firmware. Ownership was transferred explicitly through the canonical coverage policy and preparation ledgers.
+Existing sources, build recipes, stock operands and all camera history stay in their original paths, including `kernel-isp-imgsys/`, the grafted private mtkcam tree and old pack evidence. The child now preserves its public-source reconstruction recipe, explicit source patches
+and full acceptance evidence, but no duplicated proprietary firmware or HAL payload. Ownership was transferred explicitly through the canonical coverage policy and preparation ledgers.
 
-Sixteen owned modules have published function/data proof pairs. These include the 1220-function camsys report and imgsensor's one documented semantic residual. Do not repeat this reconstruction or downgrade the measured axes. PDA and VMM regulator/notifier lack those proof pairs; full per-module CRC/KCFI/relocation/symbol/string/.modinfo/vermagic/B1-B2 and observable DT/ABI acceptance must be certified independently. No new parity was measured by this preparation.
+The initial sixteen function/data proof pairs are historical evidence, not the current
+acceptance ceiling. All nineteen modules now have independent complete acceptance;
+PDA/VMM match unmodified public source. The current ledgers cover 2,971 functions,
+2,474 data objects, 2,530 ABI records, 978 sections and 71,991 relocations with zero
+unresolved. The one imgsensor function/moved byte-load and the cmdq private-name residues
+are bounded and proved in the reconstruction report. Do not restart the closed subscopes.
 
 [Roadmap](../accelerator-re-roadmap.md). Whole proprietary camera algorithms and later phone streaming/quality validation are not kernel-source DONE requirements, and source parity does not prove a finished runtime camera feature.

@@ -4,12 +4,17 @@ Snapshot: **2026-10-08**, source HEAD `c8de6a1`. Actual workspace directory stat
 
 Phone: Ulefone Armor 29 Pro Thermal / GQ5012BF1 / MT6878T. DONE is named static/source/inventory closure, not proprietary openness or runtime readiness. `component` is singleton primary ownership; co-mentions/umbrellas are references only. Accelerator registrations were authorized preparation, not reconstruction.
 
-## Current totals
+## Canonical ledger totals
+
+These counts are derived from `coverage-audit/components.tsv`. The organized workspace
+has **100 DONE / 36 PARTIAL / 3 BLOCKED / 0 TODO** after camera promotion. The one-record
+difference is pre-existing: Mali is already workspace-DONE but still canonical-PARTIAL.
+That unrelated ledger drift is documented, not silently repaired by this camera closure.
 
 | Status | Count |
 |---|---:|
-| DONE | 94 |
-| PARTIAL | 42 |
+| DONE | 99 |
+| PARTIAL | 37 |
 | BLOCKED | 3 |
 | TODO | 0 |
 | **TOTAL** | **139** |
@@ -18,7 +23,7 @@ Phone: Ulefone Armor 29 Pro Thermal / GQ5012BF1 / MT6878T. DONE is named static/
 
 | Classification | Count |
 |---|---:|
-| A — Actionable static RE; runtime acceptance separate | 11 |
+| A — Actionable static RE; runtime acceptance separate | 6 |
 | B — Closed kernel/source boundary; proprietary integration remains | 11 |
 | C — Proprietary boundary | 9 |
 | D — Hardware/runtime/teardown gated | 6 |
@@ -49,7 +54,7 @@ Phone: Ulefone Armor 29 Pro Thermal / GQ5012BF1 / MT6878T. DONE is named static/
 | CAMERA-EEPROMS | DONE | CAMERA | 4 external camera-module EEPROMs: cam0 7-0050, cam1 4-0050, cam2 2-0050, cam3 4-0053 | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | None for the static kernel/DT/HAL-interface scope; EEPROM die/capacity not electronically identifiable (no ID register), per-unit calibration bytes out of scope | [report](camera/eeprom/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/CAMERA-EEPROMS/README.md) |
 | CAMERA-HAL-ISP | PARTIAL | CAMERA | Proprietary CameraProvider/HAL, 3A, tuning/calibration interpretation and ISP/CCU algorithms; kernel owned by CAMERA-ISP-KERNEL | C | OWNED BY CAMERA-ISP-KERNEL | PROPRIETARY | SIGNED/BINARY | EXISTING CAMERA CAPTURES | HAL/3A/tuning/calibration interpretation and firmware algorithms remain proprietary; normal-world kernel ownership transferred to child. | [report](camera-stack/accelerator-kernel-split.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/CAMERA-HAL-ISP/README.md) |
 | CAMERA-IMX989 | DONE | CAMERA | Sony IMX989 (chip-ID 0x0989 PROVEN on this unit); the same slot also carries the CTS-board sub-driver `imx989cts` reporting **0x0988 = chip-ID − 1** (same silicon, gated by `is_yft_cts_board()`), and accepts S5KGN1SP/S5KGM2SP | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | no driver RE left. The frame-descriptor keep/fix decision is now an explicit build flag, not an unknown; the five family functions the 2026-10-02 donor pass reported `(stock-only)` (`imx989_awb_gain` + four `imx989cts_*`) are present at matching sizes against the shipped module and byte-identical on the reproducibility axis; tuning blobs are proprietary (ISP/tuning track); on-device validation rem | [report](camera-stack/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/CAMERA-IMX989/README.md) |
-| CAMERA-ISP-KERNEL | PARTIAL | ACCELERATOR KERNEL | Camera ISP kernel normal-world kernel / exact module, DT and observable ABI parity; proprietary algorithms excluded | A | PARTIAL (existing measured axes preserved) | PROPRIETARY CONSUMERS / kernel ABI | BINARY/SIGNED (excluded) | DT/STATIC; execution unproved | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | [report](accelerator-preparation/CAMERA-ISP-KERNEL/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/CAMERA-ISP-KERNEL/README.md) |
+| CAMERA-ISP-KERNEL | DONE | ACCELERATOR KERNEL | Camera ISP normal-world kernel: 19 public-source rebuilds with full static parity; HAL/3A/firmware excluded | A | FULL STATIC PARITY; public-source clean B1/B2 | KERNEL ABI MAPPED; PROPRIETARY CONSUMERS RETAINED | BINARY/SIGNED (excluded) | DT/STATIC exact; execution unproved | Runtime-only probe, firmware handshake, media topology, capture/streaming, recovery and image quality. | [report](accelerator-preparation/CAMERA-ISP-KERNEL/RECONSTRUCTION-REPORT.md) | [scope](../../Reverse%20Engineer%20-%20DONE/CAMERA-ISP-KERNEL/README.md) |
 | CAMERA-OV64B | DONE | CAMERA | OmniVision OV64B, chip-ID 0x566442 (bound on this unit), camera 3 rear, the 64 MP night-vision camera. DT `sensor4` on i2c-4 (`4-0020`), write-IDs 0x20/0x44, seninf csi-port-0 D-PHY 4-lane, MCLK CAMTG2 24 MHz, WL2864C avdd4/afvdd5/dvdd1/dovdd7 | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](camera-stack/ov64b/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/CAMERA-OV64B/README.md) |
 | CAMERA-S5KJN1 | DONE | CAMERA | Samsung S5KJN1 front camera (chip-ID 0x38E1) at write-ID 0x7A. DT `sensor1` on i2c-4 (`4-0010`), csi-port-2 D-PHY 4-lane, MCLK CAMTG2 24 MHz, WL2864C dvdd1/avdd4/dovdd7 + GPIO76 AVDD1, fixed focus | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](camera-stack/s5kjn1/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/CAMERA-S5KJN1/README.md) |
 | CAMERA-S5KJN1MAIN2 | DONE | CAMERA | Samsung S5KJN1 die (0x38E1). The driver pseudo-ID is 0x38E2 (low byte +1, non-CTS boards only). Camera 2, the rear 16 mm ultrawide | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](camera-stack/s5kjn1main2/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/CAMERA-S5KJN1MAIN2/README.md) |
@@ -191,7 +196,7 @@ Phone: Ulefone Armor 29 Pro Thermal / GQ5012BF1 / MT6878T. DONE is named static/
 
 1. **MALI-GPU-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](accelerator-preparation/MALI-GPU-KERNEL/CLAUDE-HANDOFF.md).
 2. **APUSYS-NPU-KERNEL** — DONE: both owned modules rebuild deterministically from public source and match stock except GNU build IDs; [closure/evidence](accelerator-preparation/APUSYS-NPU-KERNEL/RECONSTRUCTION-REPORT.md).
-3. **CAMERA-ISP-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
+3. **CAMERA-ISP-KERNEL** — DONE: nineteen public-source module rebuilds, clean B1/B2 and complete static parity; [reconstruction report](accelerator-preparation/CAMERA-ISP-KERNEL/RECONSTRUCTION-REPORT.md).
 4. **MTK-VCODEC-KERNEL** — DONE: all five owned modules rebuild deterministically from unmodified public ALPS source and match stock except GNU build IDs; [closure/evidence](accelerator-preparation/MTK-VCODEC-KERNEL/RECONSTRUCTION-REPORT.md).
 5. **MTK-MDP-KERNEL** — DONE: all four owned modules rebuild deterministically from unmodified public ALPS source and match stock except GNU build IDs; [closure/evidence](accelerator-preparation/MTK-MDP-KERNEL/RECONSTRUCTION-REPORT.md).
 6. **GPU-AI-AUX-KERNEL-INTERFACES** — DONE: all three owned modules rebuild deterministically from unmodified public ALPS source and match stock except GNU build IDs; [closure/evidence](accelerator-preparation/GPU-AI-AUX-KERNEL-INTERFACES/RECONSTRUCTION-REPORT.md).
