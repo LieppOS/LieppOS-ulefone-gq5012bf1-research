@@ -4,7 +4,7 @@
 
 `/home/armol/androido_dalykai/LieppOS custom ROM/android_kernel_modules_apusys_ulefone_gq5012bf1`
 
-* branch `master`, verified commit `924f66b779a64ae0b05f89e233ff2317866050ba`;
+* branch `main`, verified commit `924f66b779a64ae0b05f89e233ff2317866050ba`;
 * intended remote: `LieppOS/android_kernel_modules_apusys_ulefone_gq5012bf1`;
 * no remote is configured and nothing was pushed;
 * complete local backup: `source/android_kernel_modules_apusys_ulefone_gq5012bf1.bundle`.
