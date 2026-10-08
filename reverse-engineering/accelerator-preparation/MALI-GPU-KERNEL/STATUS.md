@@ -19,3 +19,7 @@
 * actual DVFS and thermal behaviour;
 * protected-mode execution;
 * behaviour of the rebuilt modules when loaded on the device (not done: no device interaction).
+
+## Workspace move (2026-10-08)
+
+Moved `Reverse Engineer - PARTIAL/MALI-GPU-KERNEL` -> `Reverse Engineer - DONE/MALI-GPU-KERNEL` via `reverse-engineering/scripts/promote-to-done.py` (research commit cf0a994); 93 COPY-MANIFEST rows, 0 drift / 0 unregistered for this component. Totals: 95 DONE / 41 PARTIAL / 3 BLOCKED / 0 TODO.
