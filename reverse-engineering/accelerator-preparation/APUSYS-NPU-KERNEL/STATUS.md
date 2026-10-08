@@ -1,15 +1,14 @@
 # APUSYS-NPU-KERNEL status — 2026-10-08
 
-**PARTIAL / actionable kernel RE (class A).** 2 exact stock targets located; 6 pinned donor candidates. 0 modules have existing published function/data evidence, reproduced as citations—not new measurements.
+**DONE — scoped normal-world kernel reconstruction.**
 
-Dedicated NPU model execution, actual exposed inference throughput, signed payload algorithms and secure internals are UNKNOWN. DT enablement, loaded apusys and runtime library presence are not inference-execution proof.
+| Target | Source | Fresh B1/B2 | Static stock parity | Unresolved |
+|---|---|---|---|---:|
+| `apu_top.ko` | public ALPS `5e415e059253` | byte-deterministic | all bytes except 20-byte build ID | 0 |
+| `apusys.ko` | public ALPS `5e415e059253` + explicit stock MDLA object order | byte-deterministic | all bytes except 20-byte build ID | 0 |
 
-apusys and apu_top are normal-world source-actionable kernel code, not proprietary algorithms. Prior class-C blob-inventory ownership did not establish source parity; APU/MDLA RPMsg nodes were incorrectly attributed to camera consumers.
+Maintained local source: `android_kernel_modules_apusys_ulefone_gq5012bf1` commit `924f66b779a64ae0b05f89e233ff2317866050ba`; no remote and no push. A complete Git bundle and plain pin/patch/reference copies are under `source/`.
 
-**Next action:** Close apu_top power initialization, OPP/DVFS/thermal callbacks, unwind and suspend/reset state machine.
+Acceptance covers 2,308 defined function occurrences, 1,643 data objects, 555 imports, 32 exports, 171 KCFI absolute IDs and 56,399 relocations. All are exact. Thirteen external provider CRCs are naturally regenerated from public source on every build. Clean checkout B1/B2 includes all target object intermediates and symvers.
 
-**Blockers:** full acceptance packet and target-specific donor/config/ABI reconciliation. Signed algorithms and runtime tests are excluded, not a reason to fake static closure.
-
-**Definition of DONE:** all owned modules satisfy the complete [parity standard](../PARITY-STANDARD.md), plus the normal-world DT/ABI contract; retained firmware and userspace boundaries remain explicit.
-
-No ADD elsewhere, merge, removal, rename or unrelated status move is authorized by this pack.
+Runtime inference remains **UNTESTED**, not a static reconstruction blocker. Required future tests are enumerated in `source-to-userspace-contract.md`. Proprietary signed firmware/algorithms remain explicitly excluded.

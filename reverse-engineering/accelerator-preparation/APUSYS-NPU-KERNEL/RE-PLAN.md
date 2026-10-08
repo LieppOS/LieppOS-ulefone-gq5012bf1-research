@@ -1,5 +1,7 @@
 # Source-parity reconstruction sequence — APUSYS-NPU-KERNEL
 
+> Historical plan, completed. See `RECONSTRUCTION-REPORT.md` for the accepted result and `source-to-userspace-contract.md` for the runtime work that intentionally remains.
+
 1. Close apu_top power initialization, OPP/DVFS/thermal callbacks, unwind and suspend/reset state machine.
 2. Split the existing apusys Kbuild object list into middleware, remoteproc/RPMsg, APUMMU/reviser, EDMA, MDLA and MVPU work units; do not invent standalone mdla.ko or mvpu.ko.
 3. Reconstruct shared-memory and command-submit/complete/error ABI, including compat ioctls and secure-boundary calls.

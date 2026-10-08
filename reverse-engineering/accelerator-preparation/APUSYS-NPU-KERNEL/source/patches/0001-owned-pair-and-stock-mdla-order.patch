@@ -1,0 +1,174 @@
+diff --git a/Kbuild b/Kbuild
+index 2f13dd0..3b89558 100644
+--- a/Kbuild
++++ b/Kbuild
+@@ -1,101 +1,9 @@
+ # SPDX-License-Identifier: GPL-2.0
+-
++# Preserve the vendor include/diagnostic flags, build only the owned APUSYS pair.
+ ifneq ($(CONFIG_DEVICE_MODULES_ALLOW_BUILTIN),y)
+-
+ LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
+-
+ subdir-ccflags-y += -Werror \
+ 		-I$(srctree)/$(src)/include \
+-		-I$(srctree)/$(src)/include/uapi \
+-
+-obj-y += drivers/memory/
+-
+-obj-y += drivers/iio/adc/
+-
+-obj-y += drivers/mfd/
+-
+-obj-y += drivers/nvmem/
+-
+-obj-y += drivers/dma/mediatek/
+-
+-obj-y += drivers/ufs/
+-
+-obj-y += drivers/char/
+-
+-obj-y += drivers/clk/mediatek/
+-
+-obj-y += drivers/clocksource/
+-
+-obj-y += drivers/cpufreq/
+-
+-obj-y += drivers/soc/mediatek/
+-
+-obj-y += drivers/watchdog/
+-
+-obj-y += drivers/dma-buf/heaps/
+-
+-obj-y += drivers/regulator/
+-
+-obj-y += drivers/leds/
+-
+-obj-y += drivers/pinctrl/mediatek/
+-
+-obj-y += drivers/power/supply/
+-
+-obj-y += drivers/rtc/
+-
+-obj-y += drivers/remoteproc/
+-
+-obj-y += drivers/rpmsg/
+-
+-obj-y += drivers/input/keyboard/
+-
+-obj-y += drivers/phy/mediatek/
+-
+-obj-y += drivers/thermal/mediatek/
+-
+-obj-y += drivers/spmi/
+-
+-obj-y += drivers/tty/serial/8250/
+-
+-obj-y += drivers/reset/
+-
+-obj-y += drivers/mailbox/
+-
+-obj-y += drivers/interconnect/
+-
+-obj-y += drivers/i2c/busses/
+-
+-obj-y += drivers/pwm/
+-
+-obj-y += drivers/spi/
+-
+-obj-y += drivers/iommu/
+-
+-obj-y += drivers/mmc/host/
+-
+-obj-y += drivers/tee/
+-
+-obj-y += drivers/gpu/drm/mediatek/
+-
+-obj-y += drivers/input/touchscreen/
+-
+-obj-y += drivers/gpu/drm/panel/
+-
+-obj-y += drivers/gpu/mediatek/
+-
+-obj-y += drivers/media/platform/
+-
+-obj-y += drivers/usb/
+-
+-obj-y += drivers/devfreq/
+-
+-obj-y += drivers/misc/mediatek/
+-
+-obj-y += sound/soc/codecs/
+-
+-obj-y += sound/soc/mediatek/
+-
+-obj-y += drivers/pci/controller/
+-
++		-I$(srctree)/$(src)/include/uapi
++obj-y += drivers/misc/mediatek/apusys/
+ endif
+diff --git a/drivers/misc/mediatek/apusys/Makefile b/drivers/misc/mediatek/apusys/Makefile
+index c14350d..5157465 100644
+--- a/drivers/misc/mediatek/apusys/Makefile
++++ b/drivers/misc/mediatek/apusys/Makefile
+@@ -202,7 +202,43 @@ apusys-objs += pbm/apu_power_budget.o
+ # mdla
+ MDLA=$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/apusys
+ ccflags-y += -I$(srctree)/$(src)/mdla/
+-apusys-objs += $(shell cd $(MDLA) && find mdla -name "*.c" | sed 's/\.c/\.o/g')
++# Explicit shipped order: upstream find(1) depended on filesystem enumeration.
++apusys-objs += \
++	mdla/interface/mdla_power_ctrl_v1_0.o \
++	mdla/interface/mdla_cmd_proc_v1_x.o \
++	mdla/interface/mdla_power_ctrl_v2_0.o \
++	mdla/interface/mdla_cmd_proc_v2_0.o \
++	mdla/interface/mdla_cmd_proc_v1_0.o \
++	mdla/interface/mdla_power_ctrl_v1_x.o \
++	mdla/interface/mdla_cmd_proc_v2_0_sw_sched.o \
++	mdla/interface/mdla_cmd_proc_v1_x_sched.o \
++	mdla/interface/mdla_cmd_proc_v2_0_hw_sched.o \
++	mdla/platform/rv/mdla_data.o \
++	mdla/platform/rv/mdla_rv.o \
++	mdla/platform/v2_0/mdla_v2_0.o \
++	mdla/platform/v2_0/mdla_irq_v2_0.o \
++	mdla/platform/v2_0/mdla_sched_v2_0.o \
++	mdla/platform/v2_0/mdla_pmu_v2_0.o \
++	mdla/platform/v1_x/mdla_v1_x.o \
++	mdla/platform/v1_x/mdla_pmu_v1_x.o \
++	mdla/platform/v1_x/mdla_sched_v1_x.o \
++	mdla/platform/v1_x/mdla_irq_v1_x.o \
++	mdla/platform/mdla_plat_driver.o \
++	mdla/platform/v1_0/mdla_irq_v1_0.o \
++	mdla/platform/v1_0/mdla_v1_0.o \
++	mdla/platform/v1_0/mdla_pmu_v1_0.o \
++	mdla/platform/mdla_plat_device.o \
++	mdla/utilities/mdla_debug.o \
++	mdla/utilities/mdla_util.o \
++	mdla/utilities/mdla_trace.o \
++	mdla/utilities/mdla_ipi.o \
++	mdla/utilities/mdla_profile.o \
++	mdla/common/mdla_driver.o \
++	mdla/common/mdla_main.o \
++	mdla/common/mdla_power_ctrl.o \
++	mdla/common/mdla_cmd_proc.o \
++	mdla/common/mdla_scheduler.o \
++	mdla/common/mdla_ioctl.o
+ 
+ # vpu
+ VPU = vpu/$(APUSYS_VERSION_VPU)
+@@ -314,7 +350,7 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/apusys/hw_logger/
+ apusys-objs += hw_logger/hw_logger.o
+ 
+ # sapu
+-obj-$(CONFIG_MTK_APUSYS_SUPPORT) += sapu/
++# sapu.ko is owned by GZ-TZ-SYSTEM, not this reconstruction.
+ 
+ # hw_sema
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/apusys/power/3.0/inc/
+@@ -336,5 +372,4 @@ AOV_SRC += aov/plat/v2/aov_mem_service_v2.o
+ AOV_SRC += aov/plat/v2/aov_recovery_v2.o
+ AOV_SRC += aov/plat/aov_plat.o
+ 
+-obj-$(CONFIG_MTK_APUSYS_SUPPORT) += apu_aov.o
+-apu_aov-objs = $(AOV_SRC)
++# apu_aov.ko is not shipped in the GQ5012BF1 stock inventory.

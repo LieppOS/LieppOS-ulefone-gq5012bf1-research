@@ -1,5 +1,7 @@
 # Claude executable handoff — APUSYS-NPU-KERNEL
 
+> **Historical preparation (fulfilled 2026-10-08).** The accepted result is in `RECONSTRUCTION-REPORT.md`, `SOURCE.md`, `parity-report.md`, and `evidence/reconstruction/`. Statements below that parity was unknown describe the pre-reconstruction state; see `stale-claims.md`.
+
 ## 1. Exact target and authority
 
 Research repository: `/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research`. Canonical preparation: `/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/reverse-engineering/accelerator-preparation/APUSYS-NPU-KERNEL`. Organized pack: `/home/armol/androido_dalykai/LieppOS custom ROM/Reverse Engineer - PARTIAL/APUSYS-NPU-KERNEL`. Primary ownership is the explicit 2-module set below, not every dependency mentioned in this document.

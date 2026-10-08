@@ -1,23 +1,21 @@
-# APUSYS-NPU-KERNEL — PARTIAL preparation
+# APUSYS-NPU-KERNEL — DONE
 
-Status: PARTIAL
+**Scope:** the two normal-world GQ5012BF1 modules `apu_top.ko` and `apusys.ko`; proprietary firmware/algorithms and modules owned elsewhere are excluded.
 
-- **Subsystem:** Accelerators / APUSYS/NPU
-- **Hardware identity:** MT6878 APU RV complex at apusys-rv@190e1000, apu-top-3@1c000000, APUMMU, APU IOMMU banks and MDLA/MVPU/EDMA/RPMsg channel declarations. The monolithic apusys.ko contains multiple IP generations: alias presence does not mean every generation is enabled. Separate board DT instances from dormant code.
-- **Stock artifact:** `apu_top.ko`, `apusys.ko`
-- **Interfaces:** apu_top power/DVFS callbacks; apusys middleware command submission, buffer/shared-memory management, APUMMU/reviser translation, RPMsg/mailbox/interrupt transport, EDMA/MDLA/MVPU completion and recovery. Extract APUSYS ioctl command numbers and native/compat layouts from source witnesses and compare stock switch paths. Recover ownership of each buffer through allocation, map, submit, ACK, abort/reset and release. APUSYS uses its own RPMsg implementation; do not assign it to TinySys IPI merely because both exchange messages.
-- **Still required:** Complete per-module source/parity and observable DT/ABI acceptance; proprietary algorithms excluded
+Both modules are reconstructed from public source. A fresh independent checkout rebuilt them twice deterministically and matched every stock function, data object, import/export CRC, KCFI ID, relocation, section, symbol, string, and modinfo byte. Each raw installed ELF differs only in its 20-byte GNU build ID. There are zero unresolved compiled behavioral or ABI differences.
 
-**Purpose:** APUSYS/NPU normal-world kernel source/parity closure, not firmware reconstruction.
+* [Source repository and build instructions](SOURCE.md)
+* [Full parity result](parity-report.md)
+* [Normal-world userspace/firmware contract and future runtime tests](source-to-userspace-contract.md)
+* [Exact DT rows](dt-nodes.tsv) and [provider resolutions](dt-providers.tsv)
+* [Stock module inventory](stock-modules.tsv), [imports](imports.tsv), [exports](exports.tsv)
+* [Machine-readable reconstruction evidence](evidence/reconstruction/)
+* [Corrections to preparation claims](stale-claims.md)
 
-**Decision:** REGISTER PARTIAL. apusys and apu_top are normal-world source-actionable kernel code, not proprietary algorithms. Prior class-C blob-inventory ownership did not establish source parity; APU/MDLA RPMsg nodes were incorrectly attributed to camera consumers.
+## Device result
 
-**Entry point:** [CLAUDE-HANDOFF.md](CLAUDE-HANDOFF.md). Canonical research: `reverse-engineering/accelerator-preparation/APUSYS-NPU-KERNEL/`. Workspace pack: `Reverse Engineer - PARTIAL/APUSYS-NPU-KERNEL/`.
+The merged DT describes the MT6878 APU RV complex, APU top/power, APUMMU/IOMMU, one MDLA core, MVPU/EDMA and RPMsg/shared-memory channels. Stock loads `apu_top` immediately before `apusys`; `/dev/apusys` exposes handshake, dma-buf memory, graph command/fence, and utility ioctls to the APUware/NeuroPilot stack. This proves the exact shipped normal-world implementation and static reachability—not successful on-device firmware boot, NPU inference, performance or power behavior.
 
-**Exclusive primary kernel modules (2):** `apu_top.ko`, `apusys.ko`. Dependencies are references, not additional ownership.
+## Boundaries
 
-[stock modules](stock-modules.tsv), [DT nodes](dt-nodes.tsv), [source candidates](source-candidates.tsv), [parity gaps](parity-gaps.tsv), [imports](imports.tsv), [exports](exports.tsv), [functions](functions.tsv), [data symbols](data-symbols.tsv), [donor ABI witnesses](abi-source-witnesses.tsv).
-
-All APU/MDLA/MVPU RPMsg accelerator nodes previously attributed to CAMERA-HAL-ISP move to this kernel owner. Camera AIE/FD hardware stays CAMERA-ISP-KERNEL. GenieZone trusty-sapu remains the existing secure transport. Shared generic IOMMU/QoS/SSPM providers remain dependencies. APUware/NeuroPilot/neuron/NNAPI libraries and signed apusys firmware algorithms are retained binaries, not a claim of proven model execution.
-
-No module rebuilt, hardware command executed or parity result created by this preparation. Published proof rows are preserved and labeled by axis; the component starts PARTIAL, never DONE.
+`firmware/apusys.img` and proprietary APUware/NeuroPilot algorithms remain retained binaries. `sapu.ko` remains `GZ-TZ-SYSTEM`; `apu_aov.ko` is not shipped. Generic AEE, QoS, SLBC, peak-power, mrdump and IOMMU providers retain their canonical owners. No device was connected, module loaded, partition written, firmware modified or hardware command issued.

@@ -1,20 +1,17 @@
 # Source lineage — APUSYS-NPU-KERNEL
 
-Every donor directory/file exists. Commits and complete relevant-file fingerprints are in [source-candidates.tsv](source-candidates.tsv). The ALPS snapshot local commit `2ae742fda9cd461bfe8cf8a5c04f95e212f8e699` identifies a pristine archive of upstream MT6878 ALPS `5e415e059253`; it is not misrepresented as the upstream Git commit. The Nothing donor import and the patched mixed-build tree are distinct candidates. Do not reset or edit any of these shared checkouts.
+The accepted source is public NothingOSS/MediaTek ALPS commit `5e415e059253ce0d2e61c97108e5f5785d71f06f` from `android_kernel_device_modules_6.1_nothing_mt6878`. Its complete Git tree is `9c61acc3cb0d9bb7f5dbabb51adc2b3fd993810c`. The candidate `957dac185efe46cbf6336b0fff9516d84c8cd78f` was tested first and rejected as the module source: `apu_top` had 272/276 name-keyed bodies identical and `apusys` 1,739/1,773; ALPS 5e41 closed those source changes. The 957dac tree remains the exact vendor config/Kconfig pin.
 
-| Module | Local donor | Local Git commit | Starting state |
-|---|---|---|---|
-| `apu_top.ko` | `/home/armol/androido_dalykai/LieppOS custom ROM/kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/apusys/power` | `957dac185efe46cbf6336b0fff9516d84c8cd78f` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `apu_top.ko` | `/home/armol/kernel-work/gki-12901745-workspace/lieppos/tinysys/trees/5e41/drivers/misc/mediatek/apusys/power` | `2ae742fda9cd461bfe8cf8a5c04f95e212f8e699` | ALTERNATIVE PINNED LOCAL CANDIDATE; ALPS archive origin 5e415e059253 |
-| `apu_top.ko` | `/home/armol/kernel-work/gki-12901745-workspace/kernel_device_modules-6.1/drivers/misc/mediatek/apusys/power` | `ca8b550b75e8b49f403f0097e8323c4a930bad79` | EXISTING PATCHED WORKSPACE; read-only candidate, do not edit |
-| `apusys.ko` | `/home/armol/androido_dalykai/LieppOS custom ROM/kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/apusys` | `957dac185efe46cbf6336b0fff9516d84c8cd78f` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `apusys.ko` | `/home/armol/kernel-work/gki-12901745-workspace/lieppos/tinysys/trees/5e41/drivers/misc/mediatek/apusys` | `2ae742fda9cd461bfe8cf8a5c04f95e212f8e699` | ALTERNATIVE PINNED LOCAL CANDIDATE; ALPS archive origin 5e415e059253 |
-| `apusys.ko` | `/home/armol/kernel-work/gki-12901745-workspace/kernel_device_modules-6.1/drivers/misc/mediatek/apusys` | `ca8b550b75e8b49f403f0097e8323c4a930bad79` | EXISTING PATCHED WORKSPACE; read-only candidate, do not edit |
+Unmodified 5e41 initially produced complete `apu_top` code and apparent `apusys` MDLA differences. Mapping each output `.text` function occurrence back to all 164 constituent objects proved 1,963/1,963 sequences were present; only 35 MDLA objects had moved. Root cause was the Makefile expression `$(shell ... find mdla -name "*.c")`, whose output follows filesystem enumeration. The stock order was recovered from the ELF function sequence and made explicit. After that build-only correction, both modules became whole-file identical except build ID.
 
-**Build baseline:** Android CI 12901745; `common` `6b18f0b574ab3267615ae6ce642d5a7c3c21ac09`; stock vermagic `6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64`; Android Clang 17.0.2 `clang-r487747c` (10087095), LLVM integrated assembler/lld, exact GKI/KMI and vendor config. Recorded config: `reverse-engineering/camera-stack/kernel-isp-imgsys/build/vendor-kernel.config`; CI pins: `kernel/exact-gki-build-inputs.md`. Inspect CONFIG_CFI_CLANG/MODVERSIONS and effective per-object LTO/visibility flags. `-faddrsig` was necessary in existing parity builds; verify rather than broadly changing compiler flags. Legacy camera scripts depend on `/tmp/ispenv.sh` and enable modpost warnings; do not call them blindly or count ignored unresolved symbols as success.
+No C or header file differs from 5e41. The final source tree after scope/order patch is `4e308365cd59051c937f8fb76c221a80496e31b7`; base tree is recorded in `source/reference/source-trees.txt`. The exact patch is preserved both in the maintained repository and `source/patches/`.
 
-Dedicated NPU model execution, actual exposed inference throughput, signed payload algorithms and secure internals are UNKNOWN. DT enablement, loaded apusys and runtime library presence are not inference-execution proof.
+Build baseline:
 
-Input fingerprints identify actual local donor bytes, including grafted/patch worktree files. The enclosing Git pin alone does not prove every donor file is committed; archive only verified tracked inputs, or copy exact fingerprint-checked inputs into isolated scratch space without touching the source.
+* GKI common `6b18f0b574ab3267615ae6ce642d5a7c3c21ac09`, Android CI 12901745;
+* official GKI `vmlinux.symvers` SHA-256 `61933b61252e3311bd8c3bf2c179270ba21ae5bf99a4ece3b88d2e9d9dc1c548`;
+* Android Clang 17.0.2 `r487747c`, prebuilts commit `7775eb113f960bc69a780b621d03a715914d4bca`;
+* vendor config from 957dac, SHA-256 `8f9d1d2901dfbc77062764b4f9e21bc1000097392a36f8ba1eebd9c47d35f50e`;
+* release `6.1.115-android14-11-g945dff7bc1bf`, `-D__ANDROID_COMMON_KERNEL__`, `-faddrsig`, and path-only prefix mapping.
 
-Exact source candidates, build targets and object composition remain subject to stock function/data/CRC/KCFI evidence; namespace/name overlap is triage, never parity.
+The earlier local archive commit `2ae742f...` and patched mixed-tree commit `ca8b550...` were preparation conveniences, not authoritative source pins. The maintained recipe reconstructs directly from public commits and needs no prior `/home/armol/kernel-work` tree.

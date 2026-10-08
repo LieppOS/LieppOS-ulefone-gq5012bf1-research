@@ -1,9 +1,13 @@
-# Kernel/userspace ABI — APUSYS-NPU-KERNEL
+# Kernel and userspace ABI — APUSYS-NPU-KERNEL
 
-apu_top power/DVFS callbacks; apusys middleware command submission, buffer/shared-memory management, APUMMU/reviser translation, RPMsg/mailbox/interrupt transport, EDMA/MDLA/MVPU completion and recovery. Extract APUSYS ioctl command numbers and native/compat layouts from source witnesses and compare stock switch paths. Recover ownership of each buffer through allocation, map, submit, ACK, abort/reset and release. APUSYS uses its own RPMsg implementation; do not assign it to TinySys IPI merely because both exchange messages.
+Binary acceptance proves the exact stock ABI, not merely matching prototypes:
 
-**Static witnesses:** [functions.tsv](functions.tsv) identifies each exact symbol/section/offset/size; [imports.tsv](imports.tsv) pins modversion CRCs and known stock providers; [exports.tsv](exports.tsv) pins export buckets/CRCs; [abi-source-witnesses.tsv](abi-source-witnesses.tsv) gives precise source file/line/hash for IOCTLs, fops, buffers, IRQ, power, recovery, firmware and transport candidates. Source lines are explicitly DONOR—not accepted stock behavior.
+* `apu_top.ko`: 180 import CRCs, 21 exports/buckets/CRCs, 19 KCFI IDs and 9,752 relocations exact;
+* `apusys.ko`: 375 import CRCs, 11 exports/buckets/CRCs, 152 KCFI IDs and 46,647 relocations exact;
+* every `.modinfo` record, alias, dependency, symbol/string table and compiler/vermagic record exact.
 
-**Remaining contract work:** enumerate each device node, ioctl direction/number/struct size and compat layout, mmap offset/cache behavior, poll/fence semantics, queue states, buffer ownership, error returns and teardown. Recover stock call sites and data/relocations before asserting numerical equivalence. Read the [userspace consumer list](userspace-consumers.tsv); it is not proof of every edge or live use.
+Thirteen non-GKI vendor import CRCs are generated from the actual public provider declarations during every clean build and checked against stock. Provider ownership remains external; see `dependencies.md` and `dependency-edges.tsv`. No CRC or KCFI constant is stamped into a built object.
 
-Kernel release is the exact stock GKI/KMI baseline, not the host kernel. Do not replace natural CRC/KCFI generation with forced constants or CRC stamping as a proof of reconstructed types.
+The principal userspace surface is `/dev/apusys`, with native/compat `_IOWR('A',32..35)` handshake, memory, command and utility layouts. Its dma-buf/map/submit/fence/completion/error lifetime and the negotiated RPMsg firmware protocol are documented in `source-to-userspace-contract.md`. Exact source and full ELF equality together prove these layouts and handlers correspond to stock. Existence still does not prove a shipped service successfully executed them on this phone.
+
+Complete occurrence-aware function/data, ABI, section and relocation ledgers are under `evidence/reconstruction/acceptance/`; the original preparation inventories remain as independent stock baselines.
