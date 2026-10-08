@@ -1,0 +1,3093 @@
+From a26b9752e5ee35e218cdfe330054cfde8cb3f261 Mon Sep 17 00:00:00 2001
+From: recon <recon@local>
+Date: Thu, 8 Oct 2026 08:49:09 +0300
+Subject: [PATCH 1/2] donor: kernel_modules/gpu mali r44p1 from NothingOSS
+ android_kernel_modules_nothing_mt6878 580d08eac018 (Galaga NOS 3.2 sync,
+ 2025-05-06)
+
+---
+ .../memory_group_manager.c                    | 521 +++++++++++-------
+ .../gpu/arm/midgard/Kbuild-mtk-custom-env     |   7 +-
+ .../drivers/gpu/arm/midgard/Makefile          |   5 +
+ .../backend/gpu/mali_kbase_pm_backend.c       |  41 +-
+ .../midgard/backend/gpu/mali_kbase_pm_defs.h  |  23 +
+ .../backend/gpu/mali_kbase_pm_driver.c        | 142 ++++-
+ .../gpu/arm/midgard/csf/mali_kbase_csf.c      |  73 ++-
+ .../arm/midgard/csf/mali_kbase_csf_firmware.c |  30 +
+ .../arm/midgard/csf/mali_kbase_csf_firmware.h |   2 +
+ .../midgard/csf/mali_kbase_csf_reset_gpu.c    |  36 +-
+ .../midgard/csf/mali_kbase_csf_scheduler.c    |  26 +-
+ .../midgard/csf/mali_kbase_csf_scheduler.h    |   5 +-
+ .../midgard/csf/mali_kbase_csf_tiler_heap.c   |   9 +-
+ .../arm/midgard/mali_base_hwconfig_issues.h   |  16 +
+ .../drivers/gpu/arm/midgard/mali_kbase.h      |   4 +
+ .../arm/midgard/mali_kbase_config_defaults.h  |   2 +-
+ .../gpu/arm/midgard/mali_kbase_ctx_sched.c    |  16 +-
+ .../gpu/arm/midgard/mali_kbase_ctx_sched.h    |  14 +
+ .../drivers/gpu/arm/midgard/mali_kbase_mem.c  |  23 +-
+ .../drivers/gpu/arm/midgard/mali_kbase_mem.h  |   5 +-
+ .../gpu/arm/midgard/mali_kbase_mem_linux.c    |   4 +-
+ .../gpu/arm/midgard/mali_kbase_mem_lowlevel.h |   5 +
+ .../gpu/arm/midgard/mmu/mali_kbase_mmu.c      | 156 ++++--
+ .../mt6989/mali_kbase_config_mt6989.c         |  51 +-
+ .../midgard/platform/mtk_platform_common.h    |   4 +
+ .../mtk_platform_common/mtk_platform_common.c |  80 ++-
+ .../arm/midgard/thirdparty/mali_kbase_mmap.c  | 272 ++++++---
+ 27 files changed, 1202 insertions(+), 370 deletions(-)
+
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/base/arm/memory_group_manager/memory_group_manager.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/base/arm/memory_group_manager/memory_group_manager.c
+index a44357e..d3936da 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/base/arm/memory_group_manager/memory_group_manager.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/base/arm/memory_group_manager/memory_group_manager.c
+@@ -34,15 +34,29 @@
+ #if IS_ENABLED(CONFIG_MALI_MTK_MGMM)
+ #include <linux/shrinker.h>
+ #include <linux/ktime.h>
++#include <linux/random.h>
++#include <linux/kthread.h>
++#include <linux/sched.h>
++#include <uapi/linux/sched/types.h>
+ #include <soc/mediatek/emi.h>
+-#define MTK_EMI_DRAM_OFFSET 0x40000000
+-#define PREFILL_TARGET (0)
++#define MTK_EMI_DRAM_OFFSET (ARCH_PFN_OFFSET << PAGE_SHIFT)
+ #define RANK_POOL_LIMIT (SZ_256M >> PAGE_SHIFT)
+ #define X_GUARD (SZ_16M >> PAGE_SHIFT)
+ #define REFILL_TARGET (X_GUARD << 1)
++#define PREFILL_TARGET (REFILL_TARGET << 1)
+ #define NORMAL_MODE (3)
+ #define RELAX_MODE (4)
+ #define BYPASS_MODE (5)
++enum lp_alloc_mode {
++	MODE_DEFAULT = 0,
++	MODE_ALWAYS_FAIL = 1,
++	MODE_RANDOM_FAIL = 2,
++};
++/*
++ * kbase LargePage using 2MB page order, SmallPage refers to base page order (SP_ORDER)
++ */
++#define SP_ORDER 0
++#define LP_ORDER (__builtin_ffs(SZ_2M / PAGE_SIZE) - 1)
+ #endif /* CONFIG_MALI_MTK_MGMM */
+ #if IS_ENABLED(CONFIG_MALI_MTK_SLC_ALL_CACHE_MODE)
+ #include <mtk_heap.h>
+@@ -109,9 +123,10 @@ struct mgm_groups {
+ 
+ #if IS_ENABLED(CONFIG_MALI_MTK_MGMM)
+ 	spinlock_t MGMFree_lst_lk;
+-	spinlock_t free_4K_lst_lk;
+-	struct list_head free_4K_lst;
++	spinlock_t free_SP_lst_lk;
++	struct list_head free_SP_lst;
+ 	struct list_head free_list_r[2][2];
++	size_t nr_free_SP_lst;
+ 	size_t nr_rank[2][2];
+ 	size_t max_pool[2];
+ 	bool bRank0[2]; // true: rank0, false: rank1
+@@ -122,6 +137,9 @@ struct mgm_groups {
+ 	uint64_t ui64RankBoundary;
+ 	size_t szRefillTarget;
+ 	size_t szSelectTarget;
++	unsigned int lp_alloc;
++	struct kthread_worker *refill_worker;
++	struct kthread_work refill_work;
+ #endif /* CONFIG_MALI_MTK_MGMM */
+ };
+ 
+@@ -157,11 +175,10 @@ static int mgm_update_gpu_pte_get(void *data, u64 *val)
+ 	return 0;
+ }
+ 
+-
+ #if IS_ENABLED(CONFIG_MALI_MTK_MGMM)
+ static int rank_mode_get(void *data, u64 *val)
+ {
+-	int rank_mode = *(int*)data;
++	int rank_mode = *(int *)data;
+ 	*val = rank_mode;
+ 
+ 	return 0;
+@@ -196,9 +213,9 @@ static int rank0_set(void *data, u64 val)
+ 	tmp = val - mgm_data->nr_rank[0][0];
+ 
+ 	if (tmp > 0)
+-		mtk_mgm_pool_fill(mgm_data, 0, 0, val);
++		mtk_mgm_pool_fill(mgm_data, SP_ORDER, 0, val);
+ 	else
+-		mtk_mgm_pool_flush(mgm_data, 0, 0, val, 0);
++		mtk_mgm_pool_flush(mgm_data, SP_ORDER, 0, val, 0);
+ 
+ 	return 0;
+ }
+@@ -222,9 +239,9 @@ static int rank1_set(void *data, u64 val)
+ 	tmp = val - mgm_data->nr_rank[0][1];
+ 
+ 	if (tmp > 0)
+-		mtk_mgm_pool_fill(mgm_data, 0, 1, val);
++		mtk_mgm_pool_fill(mgm_data, SP_ORDER, 1, val);
+ 	else
+-		mtk_mgm_pool_flush(mgm_data, 0, 1, val, 0);
++		mtk_mgm_pool_flush(mgm_data, SP_ORDER, 1, val, 0);
+ 
+ 	return 0;
+ }
+@@ -248,9 +265,9 @@ static int lp_rank0_set(void *data, u64 val)
+ 	tmp = val - mgm_data->nr_rank[1][0];
+ 
+ 	if (tmp > 0)
+-		mtk_mgm_pool_fill(mgm_data, 9, 0, val);
++		mtk_mgm_pool_fill(mgm_data, LP_ORDER, 0, val);
+ 	else
+-		mtk_mgm_pool_flush(mgm_data, 9, 0, val, 0);
++		mtk_mgm_pool_flush(mgm_data, LP_ORDER, 0, val, 0);
+ 
+ 	return 0;
+ }
+@@ -274,9 +291,9 @@ static int lp_rank1_set(void *data, u64 val)
+ 	tmp = val - mgm_data->nr_rank[1][1];
+ 
+ 	if (tmp > 0)
+-		mtk_mgm_pool_fill(mgm_data, 9, 1, val);
++		mtk_mgm_pool_fill(mgm_data, LP_ORDER, 1, val);
+ 	else
+-		mtk_mgm_pool_flush(mgm_data, 9, 1, val, 0);
++		mtk_mgm_pool_flush(mgm_data, LP_ORDER, 1, val, 0);
+ 
+ 	return 0;
+ }
+@@ -348,21 +365,43 @@ static int sel_get(void *data, u64 *val)
+ static int max_pool_mb_set(void *data, u64 val)
+ {
+ 	struct mgm_groups *mgm_data;
++	unsigned long long mb_order = __builtin_ffs(SZ_1M / PAGE_SIZE) - 1;
+ 
+ 	mgm_data = (struct mgm_groups *)data;
+ 
+-	mgm_data->max_pool[0] = (val & 0xffffffff) << 8;
+-	mgm_data->max_pool[1] = ((val >> 32) << 8);
++	mgm_data->max_pool[0] = (val & 0xffffffff) << mb_order;
++	mgm_data->max_pool[1] = ((val >> 32) << mb_order);
+ 
+ 	return 0;
+ }
+ 
+ static int max_pool_mb_get(void *data, u64 *val)
++{
++	struct mgm_groups *mgm_data;
++	unsigned long long mb_order = __builtin_ffs(SZ_1M / PAGE_SIZE) - 1;
++
++	mgm_data = (struct mgm_groups *)data;
++	*val = ((u64)mgm_data->max_pool[1] >> mb_order) << 32 | ((u64)mgm_data->max_pool[0] >> mb_order);
++
++	return 0;
++}
++
++static int lp_alloc_get(void *data, u64 *val)
+ {
+ 	struct mgm_groups *mgm_data;
+ 
+ 	mgm_data = (struct mgm_groups *)data;
+-	*val = (mgm_data->max_pool[1] >> 8) << 32 | (mgm_data->max_pool[0] >> 8);
++	*val = mgm_data->lp_alloc;
++
++	return 0;
++}
++
++static int lp_alloc_set(void *data, u64 val)
++{
++	struct mgm_groups *mgm_data;
++
++	mgm_data = (struct mgm_groups *)data;
++	mgm_data->lp_alloc = val;
+ 
+ 	return 0;
+ }
+@@ -377,6 +416,7 @@ DEFINE_DEBUGFS_ATTRIBUTE(fops_sel_target, sel_target_get, sel_target_set, "%llu\
+ DEFINE_DEBUGFS_ATTRIBUTE(fops_sel_count, sel_count_get, NULL, "%#2llx\n");
+ DEFINE_DEBUGFS_ATTRIBUTE(fops_sel, sel_get, NULL, "%llx\n");
+ DEFINE_DEBUGFS_ATTRIBUTE(fops_max_pool_mb, max_pool_mb_get, max_pool_mb_set, "%#2llx\n");
++DEFINE_DEBUGFS_ATTRIBUTE(fops_lp_alloc, lp_alloc_get, lp_alloc_set, "%llu\n");
+ #endif /* CONFIG_MALI_MTK_MGMM */
+ DEFINE_DEBUGFS_ATTRIBUTE(fops_mgm_size, mgm_size_get, NULL, "%llu\n");
+ DEFINE_DEBUGFS_ATTRIBUTE(fops_mgm_lp_size, mgm_lp_size_get, NULL, "%llu\n");
+@@ -450,7 +490,6 @@ static int mgm_initialize_debugfs(struct mgm_groups *mgm_data)
+ 		}
+ 	}
+ 
+-
+ #if IS_ENABLED(CONFIG_MALI_MTK_MGMM)
+ 	e = debugfs_create_file("rank_mode", 0444, mgm_data->mgm_debugfs_root, &mgm_data->rank_mode,
+ 			&fops_rank_mode);
+@@ -521,7 +560,15 @@ static int mgm_initialize_debugfs(struct mgm_groups *mgm_data)
+ 		dev_vdbg(mgm_data->dev, "fail to create max_pool_mb\n");
+ 		goto remove_debugfs;
+ 	}
++
++	e = debugfs_create_file("lp_alloc", 0444, mgm_data->mgm_debugfs_root, mgm_data,
++			&fops_lp_alloc);
++	if (IS_ERR_OR_NULL(e)) {
++		dev_vdbg(mgm_data->dev, "fail to create lp_alloc\n");
++		goto remove_debugfs;
++	}
+ #endif /* CONFIG_MALI_MTK_MGMM */
++
+ 	return 0;
+ 
+ remove_debugfs:
+@@ -583,7 +630,7 @@ struct page* mtk_fetch_page(struct mgm_groups *data, int order, int i32Rank)
+ 	spin_lock(&data->MGMFree_lst_lk);
+ 	i = i32Rank;
+ 
+-	if (order == 9)
++	if (order == LP_ORDER)
+ 		o = 1;
+ 
+ 	if (data->nr_rank[o][i]) {
+@@ -596,22 +643,22 @@ struct page* mtk_fetch_page(struct mgm_groups *data, int order, int i32Rank)
+ 	spin_unlock(&data->MGMFree_lst_lk);
+ 
+ 	if (!p) {
+-		if (order == 0) { /* tried borrow from higher order */
+-			p = mtk_fetch_page(data, 9, i32Rank);
++		if (order == SP_ORDER) { /* tried borrow from higher order */
++			p = mtk_fetch_page(data, LP_ORDER, i32Rank);
+ 
+ 			if (p) {
+-				split_page(p, 9);
+-				count = (1 << 9) - 1;
++				split_page(p, LP_ORDER);
++				count = (1 << LP_ORDER) - 1;
+ 				spin_lock(&data->MGMFree_lst_lk);
+ 				pp = p + 1;
+ 				while (count--) {
+ 					list_add(&pp->lru, data->free_list_r[o] + i);
+ 					pp++;
+ 				}
+-				data->nr_rank[o][i] += 511;
++				data->nr_rank[o][i] += (1 << LP_ORDER) - 1;
+ 				spin_unlock(&data->MGMFree_lst_lk);
+ 				/* Add remaining page records back to cache pool */
+-				mod_node_page_state(page_pgdat(p), NR_KERNEL_MISC_RECLAIMABLE, 511);
++				mod_node_page_state(page_pgdat(p), NR_KERNEL_MISC_RECLAIMABLE, (1 << LP_ORDER) - 1);
+ 			}
+ 		}
+ 	}
+@@ -619,11 +666,9 @@ struct page* mtk_fetch_page(struct mgm_groups *data, int order, int i32Rank)
+ 	return p;
+ }
+ 
+-
+ static struct page *__MTKAllocPage(struct mgm_groups *data,
+ 									gfp_t gfp_mask, unsigned int order)
+ {
+-	static size_t nr_4Kfree_lst = 0;
+ 	static unsigned int try_order = 10;
+ 	unsigned int order_scan_walk;
+ 	unsigned int count;
+@@ -631,63 +676,67 @@ static struct page *__MTKAllocPage(struct mgm_groups *data,
+ 	struct page* p = NULL;
+ 	struct page* pp = NULL;
+ 
+-	/*As now we only support pre-alloc for order 0 */
+-	if (order!=0)
+-		goto FALLBACK;
++	if (data->rank_mode == RELAX_MODE)
++		horder_gfp_mask = ((gfp_mask & ~(__GFP_RECLAIM | __GFP_NOFAIL | __GFP_RETRY_MAYFAIL)) |
++			__GFP_NORETRY | __GFP_NOWARN);
++	else
++		horder_gfp_mask = ((gfp_mask & ~__GFP_DIRECT_RECLAIM) | __GFP_NOWARN);
++	/* If kbase really issues to allocate with huge page order */
++	if (order == LP_ORDER)
++		gfp_mask = horder_gfp_mask;
+ 
++	/* As now we only support pre-alloc for order SP_ORDER */
++	if (order != SP_ORDER)
++		goto FALLBACK;
+ 
+-	/* if pre-alloc list pool got available 4K page */
+-	spin_lock(&data->free_4K_lst_lk);
++	/* if pre-alloc list pool got available SP page */
++	spin_lock(&data->free_SP_lst_lk);
+ 	order_scan_walk = try_order;
+-	if (nr_4Kfree_lst) {
+-		p = list_first_entry(&data->free_4K_lst, struct page, lru);
++	if (data->nr_free_SP_lst) {
++		p = list_first_entry(&data->free_SP_lst, struct page, lru);
+ 		if (p) {
+ 			list_del_init(&p->lru);
+-			nr_4Kfree_lst--;
+-			spin_unlock(&data->free_4K_lst_lk);
++			data->nr_free_SP_lst--;
++			spin_unlock(&data->free_SP_lst_lk);
+ 			return p;
+ 		}
+ 		else
+ 			dev_err(data->dev, "Impossible! This is a bug\n");
+ 	}
+-	spin_unlock(&data->free_4K_lst_lk);
+-
+-	/* Try to alloc big page start from 10 */
+-	if (data->rank_mode == RELAX_MODE)
+-		horder_gfp_mask = ((gfp_mask & ~__GFP_RECLAIM) | __GFP_NORETRY | __GFP_NOWARN);
+-	else
+-		horder_gfp_mask = ((gfp_mask & ~__GFP_DIRECT_RECLAIM) | __GFP_NOWARN);
++	spin_unlock(&data->free_SP_lst_lk);
+ 
++	/* Try to alloc big page start from try_order */
+ 	while (order_scan_walk > order) {
+-
+ 		p = alloc_pages(horder_gfp_mask, order_scan_walk);
+ 		if (p) {
+ 			/* add batch records from system to cache memory */
+ 			mod_node_page_state(page_pgdat(p), NR_KERNEL_MISC_RECLAIMABLE, (1 << order_scan_walk));
+ 			split_page(p, order_scan_walk);
+-			count = (1 << order_scan_walk ) - 1;
+-			spin_lock(&data->free_4K_lst_lk);
+-			nr_4Kfree_lst += count;
++			count = (1 << order_scan_walk) - 1;
++			spin_lock(&data->free_SP_lst_lk);
++			data->nr_free_SP_lst += count;
+ 
+ 			pp = p + 1;
+ 			while (count--) {
+-				list_add(&pp->lru, &data->free_4K_lst);
++				list_add(&pp->lru, &data->free_SP_lst);
+ 				pp++;
+ 			}
+ 			if (order_scan_walk != 10)
+ 				try_order = order_scan_walk + 1;
+-			spin_unlock(&data->free_4K_lst_lk);
++			spin_unlock(&data->free_SP_lst_lk);
+ 			return p;
+ 		}
+ 		order_scan_walk--;
+-		dev_dbg(data->dev, "Order: empty; Try next order %u \n", order_scan_walk);
++		dev_dbg(data->dev, "Order: empty; Try next order %u\n", order_scan_walk);
+ 	}
+ 
+ FALLBACK:
+ 	p = alloc_pages(gfp_mask, order);
+ 	/* This page would insert into high order rank pool */
+ 	if (p)
+-	mod_node_page_state(page_pgdat(p), NR_KERNEL_MISC_RECLAIMABLE, (1 << order));
++		mod_node_page_state(page_pgdat(p), NR_KERNEL_MISC_RECLAIMABLE, (1 << order));
++	else if (order == SP_ORDER)
++		dev_err(data->dev, "alloc_pages (%u) failed, gfp_mask=0x%x\n", order, gfp_mask);
+ 	return p;
+ }
+ 
+@@ -701,7 +750,7 @@ static unsigned int MTKAllocPage(struct mgm_groups *data, gfp_t gfp_mask, int or
+ 	int i, o = 0;
+ 	unsigned int total_count = 0;
+ 
+-	if (order == 9)
++	if (order == LP_ORDER)
+ 		o = 1;
+ 
+ 	do {
+@@ -733,7 +782,7 @@ void mtk_mgm_pool_flush(struct mgm_groups *data, int order, int rank, size_t tar
+ 	size_t nr_pages_in;
+ 	size_t w_count = 0;
+ 
+-	if (order == 9)
++	if (order == LP_ORDER)
+ 		o = 1;
+ 
+ 	nr_pages_in = data->nr_rank[o][rank];
+@@ -744,13 +793,15 @@ void mtk_mgm_pool_flush(struct mgm_groups *data, int order, int rank, size_t tar
+ 	while (data->nr_rank[o][rank] > target && (nr_pages_in - count)){
+ 		pp = mtk_fetch_page(data, order, rank);
+ 
+-		if (bFlip || target_waste <= (nr_pages_in - count)) {
+-			__free_pages(pp, order);
+-			count++;
++		if (bFlip || target_waste < (nr_pages_in - count)) {
++			if (pp) {
++				__free_pages(pp, order);
++				count++;
++			}
+ 		} else
+ 			w_count++;
+ 
+-		if (ktime_get()&0x1)
++		if (ktime_get() & 0x1)
+ 			bFlip = true;
+ 		else
+ 			bFlip = false;
+@@ -764,17 +815,6 @@ void mtk_mgm_pool_flush(struct mgm_groups *data, int order, int rank, size_t tar
+ 	dev_dbg(data->dev, "Flush %d-pool[%d]: %zu freed, (%zu / %zu) pages wasted\n", order, rank, count, w_count, target_waste);
+ }
+ 
+-
+-void mtk_mgm_pool_trim(struct mgm_groups *data, int order, int rank, size_t nr_pages)
+-{
+-	int o = 0;
+-
+-	if (order == 9)
+-		o = 1;
+-	while (data->nr_rank[o][rank] > nr_pages)
+-			__free_pages(mtk_fetch_page(data, order, rank), order);
+-}
+-
+ static unsigned long mtk_mgm_pool_reclaim_count_objects_local(size_t nr_rank, size_t target)
+ {
+ 	unsigned long ret;
+@@ -783,8 +823,8 @@ static unsigned long mtk_mgm_pool_reclaim_count_objects_local(size_t nr_rank, si
+ 	} else
+ 		ret = nr_rank >> 3;
+ 
+-	if (ret >= (SZ_64M >> PAGE_SHIFT))
+-		 ret = (SZ_64M >> PAGE_SHIFT);
++	if (ret > (SZ_64M >> PAGE_SHIFT))
++		ret = (SZ_64M >> PAGE_SHIFT);
+ 
+ 	 return ret;
+ }
+@@ -798,16 +838,15 @@ static unsigned long mtk_mgm_pool_reclaim_count_objects(struct shrinker *s,
+ 	data = container_of(s, struct mgm_groups, reclaim);
+ 	ret = 0;
+ 
+-	ret += mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[0][0], data->szRefillTarget);
+-	ret += mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[0][1], data->szRefillTarget);
++	ret += (data->nr_rank[0][0] < data->szSelectTarget) ? 0 : mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[0][0], data->szRefillTarget);
++	ret += (data->nr_rank[0][1] < data->szSelectTarget) ? 0 : mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[0][1], data->szRefillTarget);
+ 
+-	ret += ((mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[1][0], data->szRefillTarget >> 9)) << 9);
+-	ret += ((mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[1][1], data->szRefillTarget >> 9)) << 9);
++	ret += ((mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[1][0], data->szRefillTarget >> LP_ORDER)) << LP_ORDER);
++	ret += ((mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[1][1], data->szRefillTarget >> LP_ORDER)) << LP_ORDER);
+ 
+ 	return ret;
+ }
+ 
+-
+ static unsigned long mtk_mgm_pool_reclaim_scan_objects(struct shrinker *s,
+ 		struct shrink_control *sc)
+ {
+@@ -820,48 +859,48 @@ static unsigned long mtk_mgm_pool_reclaim_scan_objects(struct shrinker *s,
+ 
+ 	data = container_of(s, struct mgm_groups, reclaim);
+ 
+-	target = mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[0][0], data->szRefillTarget);
++	target = (data->nr_rank[0][0] < data->szSelectTarget) ? 0 : mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[0][0], data->szRefillTarget);
+ 	for (i = 0; i < target; i++){
+-		p = mtk_fetch_page(data, 0, 0);
++		p = mtk_fetch_page(data, SP_ORDER, 0);
+ 		if (p) {
+ 			ret++;
+-			__free_pages(p, 0);
++			__free_pages(p, SP_ORDER);
+ 		} else
+ 			break;
+ 	}
+ 
+ 	j = i;
+-	target = mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[0][1], data->szRefillTarget);
++	target = (data->nr_rank[0][1] < data->szSelectTarget) ? 0 : mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[0][1], data->szRefillTarget);
+ 
+ 	for (i = 0; i < target; i++){
+-		p = mtk_fetch_page(data, 0, 1);
++		p = mtk_fetch_page(data, SP_ORDER, 1);
+ 		if (p) {
+ 			ret++;
+-			__free_pages(p, 0);
++			__free_pages(p, SP_ORDER);
+ 		} else
+ 			break;
+ 	}
+ 
+ 	dev_dbg(data->dev, "mGMM pool[0]: reclaimed %zu (rank0:%zu, rank1:%zu)\n", j+i, j ,i);
+ 
+-	target = mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[1][0], data->szRefillTarget >> 9);
++	target = mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[1][0], data->szRefillTarget >> LP_ORDER);
+ 	for (i = 0; i < target; i++){
+-		p = mtk_fetch_page(data, 9, 0);
++		p = mtk_fetch_page(data, LP_ORDER, 0);
+ 		if (p) {
+-			ret+=512;
+-			__free_pages(p, 9);
++			ret += (1 << LP_ORDER);
++			__free_pages(p, LP_ORDER);
+ 		} else
+ 			break;
+ 	}
+ 
+ 	j = i;
+-	target = mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[1][1], data->szRefillTarget >> 9);
++	target = mtk_mgm_pool_reclaim_count_objects_local(data->nr_rank[1][1], data->szRefillTarget >> LP_ORDER);
+ 
+ 	for (i = 0; i < target; i++){
+-		p = mtk_fetch_page(data, 9, 1);
++		p = mtk_fetch_page(data, LP_ORDER, 1);
+ 		if (p) {
+-			ret+=512;
+-			__free_pages(p, 9);
++			ret += (1 << LP_ORDER);
++			__free_pages(p, LP_ORDER);
+ 		} else
+ 			break;
+ 	}
+@@ -877,7 +916,7 @@ void mtk_mgm_pool_fill(struct mgm_groups *data, int order, int i32Rank, size_t t
+ 	size_t total_nr_pages = 0, in_nr_pages;
+ 	int o = 0;
+ 
+-	if (order == 9)
++	if (order == LP_ORDER)
+ 		o = 1;
+ 
+ 	in_nr_pages = data->nr_rank[o][i32Rank];
+@@ -892,109 +931,166 @@ void mtk_mgm_pool_fill(struct mgm_groups *data, int order, int i32Rank, size_t t
+ 	}
+ 	dev_dbg(data->dev, "%s %d-pool[%d]: %zu -> %zu\n", __func__, order, i32Rank, in_nr_pages, target);
+ }
++
++static unsigned int mtk_need_to_alloc(struct mgm_groups const *data, unsigned int order)
++{
++	unsigned int ret = true;
++	unsigned int random;
++
++	if (order == SP_ORDER)
++		ret = true;
++	else {
++		if (data->lp_alloc == MODE_DEFAULT)
++			ret = true;
++		else if (data->lp_alloc == MODE_ALWAYS_FAIL)
++			ret = false;
++		else {
++			get_random_bytes(&random, sizeof(random));
++			ret = random % data->lp_alloc;
++		}
++	}
++
++	return ret;
++}
++
++static void mtk_refill_work_handler(struct kthread_work *pWork)
++{
++	struct mgm_groups *const data = container_of(pWork, struct mgm_groups, refill_work);
++	size_t refill, tmp;
++
++	if ((data->nr_rank[1][0] < (data->szSelectTarget >> LP_ORDER)) &&
++		(data->nr_rank[1][1] < (data->szSelectTarget >> LP_ORDER))) {
++		refill = 0;
++		while (refill < data->szRefillTarget) {
++			tmp = MTKAllocPage(data, data->gfp_mask, LP_ORDER, 0);
++			if (tmp == 0) {
++				dev_dbg(data->dev, "pool refill encounter OOM\n");
++				break;
++			}
++			refill += (tmp << LP_ORDER);
++		}
++		dev_dbg(data->dev, "Refill %d-pool[%d]: (%zu) / (%zu)\n", LP_ORDER, !data->bRank0[1], refill, data->szRefillTarget);
++	}
++	if ((data->nr_rank[0][0] < (data->szSelectTarget >> SP_ORDER)) &&
++		(data->nr_rank[0][1] < (data->szSelectTarget >> SP_ORDER))) {
++		refill = 0;
++		while (refill < data->szRefillTarget) {
++			tmp = MTKAllocPage(data, data->gfp_mask, SP_ORDER, 0);
++			if (tmp == 0) {
++				dev_dbg(data->dev, "pool refill encounter OOM\n");
++				break;
++			}
++			refill += (tmp << SP_ORDER);
++		}
++		dev_dbg(data->dev, "Refill %d-pool[%d]: (%zu) / (%zu)\n", SP_ORDER, !data->bRank0[0], refill, data->szRefillTarget);
++	}
++}
+ #endif /* CONFIG_MALI_MTK_MGMM */
+ 
+-/*
+-mode 0: rank0 first
+-mode 1: rank1 first
+-mode 2: rank0, rank1 cross per-page
+-...
+-*/
+ static struct page *example_mgm_alloc_page(
+ 	struct memory_group_manager_device *mgm_dev, int group_id,
+ 	gfp_t gfp_mask, unsigned int order)
+ {
+ 	struct mgm_groups *const data = mgm_dev->data;
+ 	struct page *p;
+-
+ #if IS_ENABLED(CONFIG_MALI_MTK_MGMM)
+-	bool* pbRank0;
++	bool *pbRank0;
+ 	int rank, o = 0;
+ 	static int count = 0;
+-	int refill = 0;
+-	size_t tmp;
+ #endif /* CONFIG_MALI_MTK_MGMM */
++
+ 	dev_vdbg(data->dev, "%s(mgm_dev=%pK, group_id=%d gfp_mask=0x%x order=%u\n", __func__,
+ 		(void *)mgm_dev, group_id, gfp_mask, order);
+ 
+ 	if (WARN_ON(group_id < 0) ||
+ 		WARN_ON(group_id >= MEMORY_GROUP_MANAGER_NR_GROUPS))
+ 		return NULL;
++
+ #if IS_ENABLED(CONFIG_MALI_MTK_MGMM)
+ 	p = NULL;
+-	if (order == 0 || order == 9) { /* not support LP mode */
+-
+-		if (data->gfp_mask != gfp_mask && ((data->gfp_mask | __GFP_NOWARN) != gfp_mask)) {
+-			dev_info(data->dev, "Change gfp_mask, drop all cached pool\n");
+-			mtk_mgm_pool_flush(data, 9, 0, 0, 0);
+-			mtk_mgm_pool_flush(data, 9, 1, 0, 0);
+-			mtk_mgm_pool_flush(data, 0, 0, 0, 0);
+-			mtk_mgm_pool_flush(data, 0, 1, 0, 0);
+-			data->gfp_mask = gfp_mask;
+-		}
++	if (mtk_need_to_alloc(data, order)) {
++		if (order == SP_ORDER || order == LP_ORDER) {
++			if ((data->gfp_mask ^ gfp_mask) & ~(__GFP_NOWARN | __GFP_RETRY_MAYFAIL)) {
++				dev_info(data->dev, "Change gfp_mask 0x%x -> 0x%x, drop all cached pool\n",
++					data->gfp_mask, gfp_mask);
++				mtk_mgm_pool_flush(data, LP_ORDER, 0, 0, 0);
++				mtk_mgm_pool_flush(data, LP_ORDER, 1, 0, 0);
++				mtk_mgm_pool_flush(data, SP_ORDER, 0, 0, 0);
++				mtk_mgm_pool_flush(data, SP_ORDER, 1, 0, 0);
++				data->gfp_mask = gfp_mask;
++			}
+ 
+-		if (order == 9)
+-			o = 1;
++			if (order == LP_ORDER)
++				o = 1;
+ 
+-		pbRank0 = data->bRank0 + o;
+-		rank = (*pbRank0) ? 0 : 1;
++			pbRank0 = data->bRank0 + o;
++			rank = (*pbRank0) ? 0 : 1;
+ 
+-		if (data->rank_mode == 0) { /* rank-0 only */
+-			p = mtk_fetch_page(data, order, 0);
+-			if (!p)
+-				p = mtk_fetch_page(data, order, 1);
+-		} else if(data->rank_mode == 1) { /* rank-1 only */
+-			p = mtk_fetch_page(data, order, 1);
+-			if (!p)
++			/*
++			mode 0: rank0 first
++			mode 1: rank1 first
++			mode 2: rank0, rank1 cross per-page
++			...
++			*/
++			if (data->rank_mode == 0) { /* rank-0 only */
+ 				p = mtk_fetch_page(data, order, 0);
+-		} else if (data->rank_mode == 2) { /* per-4K flip */
+-			p = mtk_fetch_page(data, order, rank);
+-			*pbRank0 = !(*pbRank0);
+-		} else if (data->rank_mode >= 512) { /* per-rank_mode size flip */
+-			p = mtk_fetch_page(data, order, rank);
+-			count++;
+-			if (count == data->rank_mode) {
+-				count = 0;
++				if (!p)
++					p = mtk_fetch_page(data, order, 1);
++			} else if(data->rank_mode == 1) { /* rank-1 only */
++				p = mtk_fetch_page(data, order, 1);
++				if (!p)
++					p = mtk_fetch_page(data, order, 0);
++			} else if (data->rank_mode == 2) { /* per-page flip */
++				p = mtk_fetch_page(data, order, rank);
++				spin_lock(&data->MGMFree_lst_lk);
+ 				*pbRank0 = !(*pbRank0);
+-			}
+-		} else if(data->rank_mode < BYPASS_MODE) { /* production mode */
+-			p = mtk_fetch_page(data, order, rank);
+-			if (!p) {
+-				refill = 0;
+-				while (refill < data->szRefillTarget) {
+-					tmp = MTKAllocPage(data, gfp_mask, order, 0);
+-					if (tmp == 0) {
+-						dev_dbg(data->dev, "pool refill encounter OOM\n");
+-						break;
++				spin_unlock(&data->MGMFree_lst_lk);
++			} else if (data->rank_mode >= 512) { /* per-rank_mode pages flip */
++				p = mtk_fetch_page(data, order, rank);
++				spin_lock(&data->MGMFree_lst_lk);
++				count++;
++				if (count == data->rank_mode) {
++					count = 0;
++					*pbRank0 = !(*pbRank0);
++				}
++				spin_unlock(&data->MGMFree_lst_lk);
++			} else if (data->rank_mode < BYPASS_MODE) { /* production mode */
++				if (((data->nr_rank[0][0] < (data->szSelectTarget >> SP_ORDER)) &&
++					 (data->nr_rank[0][1] < (data->szSelectTarget >> SP_ORDER))) ||
++					((data->nr_rank[1][0] < (data->szSelectTarget >> LP_ORDER)) &&
++					 (data->nr_rank[1][1] < (data->szSelectTarget >> LP_ORDER)))) {
++					if (!kthread_queue_work(data->refill_worker, &data->refill_work)) {
++						dev_dbg(data->dev, "Failed to queue refill_work\n");
+ 					}
+-					refill += (tmp << order);
+ 				}
+-				dev_dbg(data->dev, "Refill %d-pool[%d]: (%d) / (%zu)\n", order, rank, refill, data->szRefillTarget);
+ 
+-				spin_lock(&data->MGMFree_lst_lk);
+-				if (*pbRank0) {// rank 0
+-					if (data->nr_rank[o][0] < (data->szSelectTarget >> order)) {
+-						*pbRank0 = !(*pbRank0);
+-						data->count++;
+-						dev_dbg(data->dev, "Select rank0->1 (%zu)\n", data->count);
++				p = mtk_fetch_page(data, order, rank);
++				if (!p) {
++					if (data->nr_rank[o][!rank] >= (data->szSelectTarget >> order)) {
++						spin_lock(&data->MGMFree_lst_lk);
++						if (!(*pbRank0) == rank) {
++							*pbRank0 = !(*pbRank0);
++							data->count++;
++							dev_info(data->dev, "switch rank%u->%u (%zu) order=%u nr_rank={%zu,%zu}\n",
++								*pbRank0, !(*pbRank0), data->count, order, data->nr_rank[o][0], data->nr_rank[o][1]);
++						}
++						rank = (*pbRank0) ? 0 : 1;
++						spin_unlock(&data->MGMFree_lst_lk);
++						p = mtk_fetch_page(data, order, rank);
+ 					}
+-				} else {
+-					if (data->nr_rank[o][1] < (data->szSelectTarget >> order)) {
+-						*pbRank0 = !(*pbRank0);
+-						data->count++;
+-						dev_dbg(data->dev, "Select rank1->0 (%zu)\n", data->count);
++					if (!p) {
++						if (order == SP_ORDER) {
++							dev_dbg(data->dev, "alloc from system directly, nr_rank={%zu,%zu}\n",
++								data->nr_rank[o][0], data->nr_rank[o][1]);
++							p = alloc_pages(gfp_mask, order);
++						}
+ 					}
+ 				}
+-				spin_unlock(&data->MGMFree_lst_lk);
+-
+-				rank = (*pbRank0) ? 0 : 1;
+-				p = mtk_fetch_page(data, order, rank);
+-			}
+-		}
++			} else
++				p = alloc_pages(gfp_mask, order);
++		} else
++			p = alloc_pages(gfp_mask, order);
+ 	}
+-
+-	if (!p)
+-		p = alloc_pages(gfp_mask, order);
+ #else /* CONFIG_MALI_MTK_MGMM */
+ 	p = alloc_pages(gfp_mask, order);
+ #endif /* CONFIG_MALI_MTK_MGMM */
+@@ -1004,11 +1100,27 @@ static struct page *example_mgm_alloc_page(
+ 	} else {
+ 		struct mgm_groups *data = mgm_dev->data;
+ 
++#if IS_ENABLED(CONFIG_MALI_MTK_MGMM)
++		if (order)
++			dev_info(data->dev, "Return no order %u, let kbase fallback\n", order);
++		else {
++			dev_err(data->dev, "mtk_fetch_page (%u) failed\n", order);
++			dev_err(data->dev, "rank_mode=%d gfp_mask=0x%x(0x%x) nr_free_SP_lst=%zu bRank0={%u,%u} nr_rank={%zu,%zu,%zu,%zu} max_pool={%zu,%zu}\n",
++				data->rank_mode,
++				gfp_mask, data->gfp_mask,
++				data->nr_free_SP_lst,
++				data->bRank0[0], data->bRank0[1],
++				data->nr_rank[0][0], data->nr_rank[0][1], data->nr_rank[1][0], data->nr_rank[1][1],
++				data->max_pool[0], data->max_pool[1]);
++		}
++#else /* CONFIG_MALI_MTK_MGMM */
+ 		dev_err(data->dev, "alloc_pages failed\n");
++#endif /* CONFIG_MALI_MTK_MGMM */
+ 	}
+ 
+ 	return p;
+ }
++
+ #if IS_ENABLED(CONFIG_MALI_MTK_MGMM)
+ static size_t mgmm_cache_pool_size(struct memory_group_manager_device *mgm_dev)
+ {
+@@ -1016,11 +1128,11 @@ static size_t mgmm_cache_pool_size(struct memory_group_manager_device *mgm_dev)
+ 	size_t ret;
+ 
+ 	ret = data->nr_rank[0][0] + data->nr_rank[0][1];
+-	ret += ((data->nr_rank[1][0] + data->nr_rank[1][1]) << 9);
++	ret += ((data->nr_rank[1][0] + data->nr_rank[1][1]) << LP_ORDER);
+ 
+ 	return ret;
+ }
+-#endif
++#endif /* CONFIG_MALI_MTK_MGMM */
+ 
+ static void example_mgm_free_page(
+ 	struct memory_group_manager_device *mgm_dev, int group_id,
+@@ -1028,36 +1140,42 @@ static void example_mgm_free_page(
+ {
+ 	struct mgm_groups *const data = mgm_dev->data;
+ #if IS_ENABLED(CONFIG_MALI_MTK_MGMM)
+-	int i;
++	int r, i;
+ #endif /* CONFIG_MALI_MTK_MGMM */
++
+ 	dev_vdbg(data->dev, "%s(mgm_dev=%pK, group_id=%d page=%pK order=%u\n", __func__,
+ 		(void *)mgm_dev, group_id, (void *)page, order);
+ 
+ 	if (WARN_ON(group_id < 0) ||
+ 		WARN_ON(group_id >= MEMORY_GROUP_MANAGER_NR_GROUPS))
+ 		return;
++
+ #if IS_ENABLED(CONFIG_MALI_MTK_MGMM)
+-	if (data->rank_mode >= 0) {
+-		i = (page_to_phys(page) < data->ui64RankBoundary) ? 0 : 1; // true: rank0, false: rank1
++	if (data->rank_mode >= 0 && data->rank_mode != BYPASS_MODE) {
++		r = (page_to_phys(page) < data->ui64RankBoundary) ? 0 : 1; // true: rank0, false: rank1
+ 		spin_lock(&data->MGMFree_lst_lk);
+-		if (order == 0) {
+-			if (data->nr_rank[0][i] < data->max_pool[0]) {
++		if (order == SP_ORDER) {
++			if (data->nr_rank[0][r] < data->max_pool[0]) {
+ 				clear_highpage(page);
+-				list_add(&page->lru, &data->free_list_r[0][i]);
+-				data->nr_rank[0][i]++;
++				list_add(&page->lru, &data->free_list_r[0][r]);
++				data->nr_rank[0][r]++;
+ 			} else  {
+ 				spin_unlock(&data->MGMFree_lst_lk);
+ 				goto BUD_SYS;
+ 			}
+-		} else if (order == 9) {
+-			if (data->nr_rank[1][i] < (data->max_pool[1] >> 9)) {
+-				clear_highpage(page);
+-				list_add(&page->lru, &data->free_list_r[1][i]);
+-				data->nr_rank[1][i]++;
++		} else if (order == LP_ORDER) {
++			if (data->nr_rank[1][r] < (data->max_pool[1] >> LP_ORDER)) {
++				for (i = 0; i < (1 << LP_ORDER); i++)
++					clear_highpage(page + i);
++				list_add(&page->lru, &data->free_list_r[1][r]);
++				data->nr_rank[1][r]++;
+ 			} else {
+ 				spin_unlock(&data->MGMFree_lst_lk);
+ 				goto BUD_SYS;
+ 			}
++		} else {
++			spin_unlock(&data->MGMFree_lst_lk);
++			goto BUD_SYS;
+ 		}
+ 		/* If pool is not full, add records to cache memory */
+ 		mod_node_page_state(page_pgdat(page), NR_KERNEL_MISC_RECLAIMABLE, 1 << order);
+@@ -1104,6 +1222,7 @@ static int example_mgm_get_import_memory_id(
+ 	}
+ 	return group_id;
+ #endif
++
+ 	return IMPORTED_MEMORY_ID;
+ }
+ 
+@@ -1198,7 +1317,6 @@ static void mgm_term_data(struct mgm_groups *data)
+ 	mgm_term_debugfs(data);
+ }
+ 
+-
+ static int memory_group_manager_probe(struct platform_device *pdev)
+ {
+ 	struct memory_group_manager_device *mgm_dev;
+@@ -1208,6 +1326,7 @@ static int memory_group_manager_probe(struct platform_device *pdev)
+ 	size_t *nr_rank;
+ 	size_t *nr_LP_rank;
+ #endif /* CONFIG_MALI_MTK_MGMM */
++
+ 	mgm_dev = kzalloc(sizeof(*mgm_dev), GFP_KERNEL);
+ 	if (!mgm_dev)
+ 		return -ENOMEM;
+@@ -1222,7 +1341,7 @@ static int memory_group_manager_probe(struct platform_device *pdev)
+ 	mgm_dev->ops.mgm_pte_to_original_pte = example_mgm_pte_to_original_pte;
+ #if IS_ENABLED(CONFIG_MALI_MTK_MGMM)
+ 	mgm_dev->ops.mgm_mtk_cache_pool_size = mgmm_cache_pool_size;
+-#endif
++#endif /* CONFIG_MALI_MTK_MGMM */
+ 
+ 	mgm_data = kzalloc(sizeof(*mgm_data), GFP_KERNEL);
+ 	if (!mgm_data) {
+@@ -1244,16 +1363,19 @@ static int memory_group_manager_probe(struct platform_device *pdev)
+ 
+ #if IS_ENABLED(CONFIG_MALI_MTK_MGMM)
+ 	si_meminfo(&info);
+-	dev_info(&pdev->dev,"Total kmem: %zu (pages) [%d] %llx \n", info.totalram,  mtk_emicen_get_rk_cnt(), mtk_emicen_get_rk_size(0));
++	dev_info(&pdev->dev, "Total kmem: %llu (pages) [%d] 0x%llx, offset: 0x%lx, LP_ORDER=%d SP_ORDER=%d\n",
++		(unsigned long long)info.totalram, mtk_emicen_get_rk_cnt(), mtk_emicen_get_rk_size(0), MTK_EMI_DRAM_OFFSET, LP_ORDER, SP_ORDER);
+ 	spin_lock_init(&mgm_data->MGMFree_lst_lk);
+-	spin_lock_init(&mgm_data->free_4K_lst_lk);
+-	mgm_data->free_4K_lst.next = mgm_data->free_4K_lst.prev = &mgm_data->free_4K_lst;
++	spin_lock_init(&mgm_data->free_SP_lst_lk);
++	mgm_data->free_SP_lst.next = mgm_data->free_SP_lst.prev = &mgm_data->free_SP_lst;
+ 
+ 	mgm_data->free_list_r[0][0].next = mgm_data->free_list_r[0][0].prev = &mgm_data->free_list_r[0][0];
+ 	mgm_data->free_list_r[0][1].next = mgm_data->free_list_r[0][1].prev = &mgm_data->free_list_r[0][1];
+ 	mgm_data->free_list_r[1][0].next = mgm_data->free_list_r[1][0].prev = &mgm_data->free_list_r[1][0];
+ 	mgm_data->free_list_r[1][1].next = mgm_data->free_list_r[1][1].prev = &mgm_data->free_list_r[1][1];
+ 
++	mgm_data->nr_free_SP_lst = 0;
++
+ 	nr_rank = mgm_data->nr_rank[0];
+ 	nr_LP_rank = mgm_data->nr_rank[1];
+ 	nr_rank[0] = nr_rank[1] = 0;
+@@ -1262,7 +1384,7 @@ static int memory_group_manager_probe(struct platform_device *pdev)
+ 	mgm_data->bRank0[0] = mgm_data->bRank0[1] = true;
+ 	mgm_data->max_pool[0] = mgm_data->max_pool[1] = RANK_POOL_LIMIT;
+ 	mgm_data->count = 0;
+-	mgm_data->gfp_mask = GFP_HIGHUSER|__GFP_ZERO;
++	mgm_data->gfp_mask = GFP_HIGHUSER | __GFP_ZERO;
+ 	mgm_data->reclaim.count_objects = mtk_mgm_pool_reclaim_count_objects;
+ 	mgm_data->reclaim.scan_objects = mtk_mgm_pool_reclaim_scan_objects;
+ 	mgm_data->reclaim.seeks = DEFAULT_SEEKS;
+@@ -1273,6 +1395,27 @@ static int memory_group_manager_probe(struct platform_device *pdev)
+ 	register_shrinker(&mgm_data->reclaim, "mali-mGMM");
+ #endif
+ 	mgm_data->szSelectTarget = X_GUARD;
++	mgm_data->lp_alloc = MODE_DEFAULT;
++	{
++		int ret;
++		struct sched_param param = { .sched_priority = 2 };
++		mgm_data->refill_worker = kthread_create_worker(0, "mgm_refill_worker");
++		if (IS_ERR(mgm_data->refill_worker)) {
++			dev_err(&pdev->dev, "Failed to create mgm_refill_worker\n");
++			unregister_shrinker(&mgm_data->reclaim);
++			mgm_term_data(mgm_data);
++			kfree(mgm_data);
++			kfree(mgm_dev);
++			return -ENOMEM;
++		}
++		ret = sched_setscheduler_nocheck(mgm_data->refill_worker->task, SCHED_FIFO, &param);
++		if (ret != 0) {
++			dev_warn(&pdev->dev, "Failed to set priority mgm_refill_worker %d\n", ret);
++		}
++
++		kthread_init_work(&mgm_data->refill_work, mtk_refill_work_handler);
++	}
++
+ 	/*
+ 	 * Enable only in multiple rank env
+ 	 */
+@@ -1282,12 +1425,8 @@ static int memory_group_manager_probe(struct platform_device *pdev)
+ 		mgm_data->rank_mode = RELAX_MODE;
+ 		mgm_data->szRefillTarget = REFILL_TARGET;
+ 
+-
+-		mtk_mgm_pool_fill(mgm_data, 9, 1, PREFILL_TARGET >> 9);
+-		mtk_mgm_pool_fill(mgm_data, 9, 0, PREFILL_TARGET >> 9);
+-
+-		mtk_mgm_pool_trim(mgm_data, 9, 0, PREFILL_TARGET >> 9);
+-		mtk_mgm_pool_trim(mgm_data, 9, 1, PREFILL_TARGET >> 9);
++		mtk_mgm_pool_fill(mgm_data, LP_ORDER, 0, PREFILL_TARGET >> LP_ORDER);
++		mtk_mgm_pool_flush(mgm_data, LP_ORDER, 0, PREFILL_TARGET >> LP_ORDER, 0);
+ 	} else {
+ 		mgm_data->ui64RankBoundary = MTK_EMI_DRAM_OFFSET;
+ 		mgm_data->rank_mode = BYPASS_MODE;
+@@ -1296,8 +1435,8 @@ static int memory_group_manager_probe(struct platform_device *pdev)
+ 	dev_info(&pdev->dev,
+ 		"mGMM init completed(%d): [0] {%zu, %zu}, [1] {%zu, %zu}\n",
+ 		mgm_data->rank_mode, nr_rank[0], nr_rank[1], nr_LP_rank[0], nr_LP_rank[1]);
+-
+ #endif	/* CONFIG_MALI_MTK_MGMM */
++
+ 	return 0;
+ }
+ 
+@@ -1307,6 +1446,12 @@ static int memory_group_manager_remove(struct platform_device *pdev)
+ 		platform_get_drvdata(pdev);
+ 	struct mgm_groups *mgm_data = mgm_dev->data;
+ 
++#if IS_ENABLED(CONFIG_MALI_MTK_MGMM)
++	if (mgm_data->refill_worker)
++		kthread_destroy_worker(mgm_data->refill_worker);
++	unregister_shrinker(&mgm_data->reclaim);
++#endif	/* CONFIG_MALI_MTK_MGMM */
++
+ 	mgm_term_data(mgm_data);
+ 	kfree(mgm_data);
+ 
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/Kbuild-mtk-custom-env b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/Kbuild-mtk-custom-env
+index f6d0728..1babac4 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/Kbuild-mtk-custom-env
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/Kbuild-mtk-custom-env
+@@ -114,11 +114,14 @@ ccflags-$(CONFIG_MALI_MTK_GPU_DVFS_ASYNC) += -DCONFIG_MALI_MTK_GPU_DVFS_ASYNC
+ ccflags-$(CONFIG_MALI_MTK_TRIGGER_KE) += -DCONFIG_MALI_MTK_TRIGGER_KE
+ ccflags-$(CONFIG_MALI_MTK_PREVENT_PRINTK_TOO_MUCH) += -DCONFIG_MALI_MTK_PREVENT_PRINTK_TOO_MUCH
+ ccflags-$(CONFIG_MALI_MTK_MFG2_BACKDOOR) += -DCONFIG_MALI_MTK_MFG2_BACKDOOR
++ccflags-$(CONFIG_MALI_MTK_MFG2_BACKDOOR_ACK) += -DCONFIG_MALI_MTK_MFG2_BACKDOOR_ACK
+ ccflags-$(CONFIG_MALI_MTK_UNHANDLED_PAGE_FAULT_DEBUG) +=-DCONFIG_MALI_MTK_UNHANDLED_PAGE_FAULT_DEBUG
+ ccflags-$(CONFIG_MALI_MTK_UNHANDLED_PAGE_FAULT_DEBUG_NO_KLOG) +=-DCONFIG_MALI_MTK_UNHANDLED_PAGE_FAULT_DEBUG_NO_KLOG
+ ccflags-$(CONFIG_MALI_MTK_CREATE_KCPU_QUEUE_DEBUG) += -DCONFIG_MALI_MTK_CREATE_KCPU_QUEUE_DEBUG
+ ccflags-$(CONFIG_MALI_MTK_BLOCKED_RESOURCE_DEBUG) += -DCONFIG_MALI_MTK_BLOCKED_RESOURCE_DEBUG
+ ccflags-$(CONFIG_MALI_MTK_CSG_ERROR_HANDLING) += -DCONFIG_MALI_MTK_CSG_ERROR_HANDLING
++ccflags-$(CONFIG_MALI_MTK_POWER_RESET) += -DCONFIG_MALI_MTK_POWER_RESET
++ccflags-$(CONFIG_MALI_MTK_KBASE_MMU_DBG_LOG) += -DCONFIG_MALI_MTK_KBASE_MMU_DBG_LOG
+ 
+ # kernel config
+ $(info *GPU [mtk-Kbuild] CONFIG_DEBUG_FS = $(CONFIG_DEBUG_FS))
+@@ -182,8 +185,10 @@ $(info *GPU [mtk-Kbuild] CONFIG_MALI_MTK_MGMM = $(CONFIG_MALI_MTK_MGMM))
+ $(info *GPU [mtk-Kbuild] CONFIG_MALI_MTK_GPU_DVFS_ASYNC = $(CONFIG_MALI_MTK_GPU_DVFS_ASYNC))
+ $(info *GPU [mtk-Kbuild] CONFIG_MALI_MTK_TRIGGER_KE = $(CONFIG_MALI_MTK_TRIGGER_KE))
+ $(info *GPU [mtk-Kbuild] CONFIG_MALI_MTK_MFG2_BACKDOOR = $(CONFIG_MALI_MTK_MFG2_BACKDOOR))
++$(info *GPU [mtk-Kbuild] CONFIG_MALI_MTK_MFG2_BACKDOOR_ACK = $(CONFIG_MALI_MTK_MFG2_BACKDOOR_ACK))
+ $(info *GPU [mtk-Kbuild] CONFIG_MALI_MTK_UNHANDLED_PAGE_FAULT_DEBUG = $(CONFIG_MALI_MTK_UNHANDLED_PAGE_FAULT_DEBUG))
+ $(info *GPU [mtk-Kbuild] CONFIG_MALI_MTK_UNHANDLED_PAGE_FAULT_DEBUG_NO_KLOG = $(CONFIG_MALI_MTK_UNHANDLED_PAGE_FAULT_DEBUG_NO_KLOG))
+ $(info *GPU [mtk-Kbuild] CONFIG_MALI_MTK_CREATE_KCPU_QUEUE_DEBUG = $(CONFIG_MALI_MTK_CREATE_KCPU_QUEUE_DEBUG))
+ $(info *GPU [mtk-Kbuild] CONFIG_MALI_MTK_BLOCKED_RESOURCE_DEBUG = $(CONFIG_MALI_MTK_BLOCKED_RESOURCE_DEBUG))
+-
++$(info *GPU [mtk-Kbuild] CONFIG_MALI_MTK_POWER_RESET = $(CONFIG_MALI_MTK_POWER_RESET))
++$(info *GPU [mtk-Kbuild] CONFIG_MALI_MTK_KBASE_MMU_DBG_LOG = $(CONFIG_MALI_MTK_KBASE_MMU_DBG_LOG))
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/Makefile b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/Makefile
+index 2622ad4..048c5b5 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/Makefile
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/Makefile
+@@ -72,6 +72,7 @@ ifeq ($(BUILD_RULE),OOT)
+         CONFIG_MALI_MTK_CREATE_KCPU_QUEUE_DEBUG := y
+         CONFIG_MALI_MTK_CSG_ERROR_HANDLING := y
+         CONFIG_MALI_MTK_NO_THERMAL := n
++        CONFIG_MALI_MTK_KBASE_MMU_DBG_LOG := n
+     endif ## mt6878 ##
+ endif
+ 
+@@ -123,10 +124,13 @@ ifeq ($(BUILD_RULE),OOT)
+         CONFIG_MALI_MTK_TRIGGER_KE := n
+         CONFIG_MALI_MTK_PREVENT_PRINTK_TOO_MUCH := y
+         CONFIG_MALI_MTK_MFG2_BACKDOOR := n
++        CONFIG_MALI_MTK_MFG2_BACKDOOR_ACK := y
+         CONFIG_MALI_MTK_UNHANDLED_PAGE_FAULT_DEBUG := y
+         CONFIG_MALI_MTK_UNHANDLED_PAGE_FAULT_DEBUG_NO_KLOG := n
+         CONFIG_MALI_MTK_CREATE_KCPU_QUEUE_DEBUG := y
+         CONFIG_MALI_MTK_CSG_ERROR_HANDLING := y
++        CONFIG_MALI_MTK_POWER_RESET := y
++        CONFIG_MALI_MTK_KBASE_MMU_DBG_LOG := n
+     endif ## mt6897 ##
+ endif
+ 
+@@ -188,6 +192,7 @@ ifeq ($(BUILD_RULE),OOT)
+         CONFIG_MALI_MTK_CREATE_KCPU_QUEUE_DEBUG := y
+         CONFIG_MALI_MTK_BLOCKED_RESOURCE_DEBUG := y
+         CONFIG_MALI_MTK_CSG_ERROR_HANDLING := y
++        CONFIG_MALI_MTK_KBASE_MMU_DBG_LOG := y
+     endif ## mt6989 ##
+ endif
+ 
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_pm_backend.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_pm_backend.c
+index fd630ee..d5898cb 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_pm_backend.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_pm_backend.c
+@@ -717,6 +717,7 @@ int kbase_hwaccess_pm_powerup(struct kbase_device *kbdev,
+ 	ret = kbase_pm_init_hw(kbdev, flags);
+ 	if (ret) {
+ 		kbase_pm_unlock(kbdev);
++		WARN_ON(1);
+ 		return ret;
+ 	}
+ #if MALI_USE_CSF
+@@ -1031,6 +1032,7 @@ int kbase_pm_force_mcu_wakeup_after_sleep(struct kbase_device *kbdev)
+ 	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
+ 	/* Set the override flag to force the power up of L2 cache */
+ 	kbdev->pm.backend.gpu_wakeup_override = true;
++	kbdev->pm.backend.runtime_suspend_abort_reason = ABORT_REASON_NONE;
+ 	kbase_pm_update_state(kbdev);
+ 	spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+ 
+@@ -1068,14 +1070,27 @@ static int pm_handle_mcu_sleep_on_runtime_suspend(struct kbase_device *kbdev)
+ 		return ret;
+ 	}
+ 
+-	/* Check if a Doorbell mirror interrupt occurred meanwhile */
++	/* Check if a Doorbell mirror interrupt occurred meanwhile.
++	 * Also check if GPU idle work item is pending. If FW had sent the GPU idle notification
++	 * after the wake up of MCU then it can be assumed that Userspace submission didn't make
++	 * GPU non-idle, so runtime suspend doesn't need to be aborted.
++         */
+ 	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
+-	if (kbdev->pm.backend.gpu_sleep_mode_active &&
+-	    kbdev->pm.backend.exit_gpu_sleep_mode) {
+-		dev_dbg(kbdev->dev, "DB mirror interrupt occurred during runtime suspend after L2 power up");
+-		kbdev->pm.backend.gpu_wakeup_override = false;
+-		spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+-		return -EBUSY;
++	if (kbdev->pm.backend.gpu_sleep_mode_active && kbdev->pm.backend.exit_gpu_sleep_mode &&
++	    !work_pending(&kbdev->csf.scheduler.gpu_idle_work)) {
++		u32 glb_req =
++			kbase_csf_firmware_global_input_read(&kbdev->csf.global_iface, GLB_REQ);
++		u32 glb_ack = kbase_csf_firmware_global_output(&kbdev->csf.global_iface, GLB_ACK);
++
++		/* Only abort the runtime suspend if GPU idle event is not pending */
++		if (!((glb_req ^ glb_ack) & GLB_REQ_IDLE_EVENT_MASK)) {
++			dev_dbg(kbdev->dev,
++				"DB mirror interrupt occurred during runtime suspend after L2 power up");
++			kbdev->pm.backend.gpu_wakeup_override = false;
++			kbdev->pm.backend.runtime_suspend_abort_reason = ABORT_REASON_DB_MIRROR_IRQ;
++			spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
++			return -EBUSY;
++		}
+ 	}
+ 	spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+ 	/* Need to release the kbdev->pm.lock to avoid lock ordering issue
+@@ -1189,6 +1204,18 @@ int kbase_pm_handle_runtime_suspend(struct kbase_device *kbdev)
+ 
+ 	mcu_state = kbdev->pm.backend.mcu_state;
+ 	WARN_ON(!kbase_pm_is_mcu_inactive(kbdev, mcu_state));
++	if (unlikely(!kbase_pm_is_mcu_inactive(kbdev, mcu_state))) {
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++		kbase_pm_debug_status(kbdev);
++		dev_err(kbdev->dev, "MCU SM in unexpected state %d on runtime suspend", mcu_state);
++#else
++		dev_WARN_ONCE(kbdev->dev, 1, "MCU SM in unexpected state %d on runtime suspend", mcu_state);
++#endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
++		ret = -EBUSY;
++		spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
++		goto unlock;
++	}
++
+ 	spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+ 
+ 	if (mcu_state == KBASE_MCU_IN_SLEEP) {
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_pm_defs.h b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_pm_defs.h
+index 81e7a07..69c3ec9 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_pm_defs.h
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_pm_defs.h
+@@ -104,6 +104,21 @@ enum kbase_shader_core_state {
+ #undef KBASEP_SHADER_STATE
+ };
+ 
++/**
++ * enum kbase_pm_runtime_suspend_abort_reason - Reason why runtime suspend was aborted
++ *                                              after the wake up of MCU.
++ *
++ * @ABORT_REASON_NONE:          Not aborted
++ * @ABORT_REASON_DB_MIRROR_IRQ: Runtime suspend was aborted due to DB_MIRROR irq.
++ * @ABORT_REASON_NON_IDLE_CGS:  Runtime suspend was aborted as CSGs were detected as non-idle after
++ *                              their suspension.
++ */
++enum kbase_pm_runtime_suspend_abort_reason {
++	ABORT_REASON_NONE,
++	ABORT_REASON_DB_MIRROR_IRQ,
++	ABORT_REASON_NON_IDLE_CGS
++};
++
+ /**
+  * struct kbasep_pm_metrics - Metrics data collected for use by the power
+  *                            management framework.
+@@ -390,6 +405,12 @@ union kbase_pm_policy_data {
+  *				 immediately after the MCU halt and cleared
+  *				 after the L2 cache power down. MCU can't be
+  *				 re-enabled whilst the flag is set.
++ * @runtime_suspend_abort_reason: Tracks if the runtime suspend was aborted,
++ *                                after the wake up of MCU, due to the DB_MIRROR irq
++ *                                or non-idle CSGs. Tracking is done to avoid
++ *                                redundant transition of MCU to sleep state after the
++ *                                abort of runtime suspend and before the resumption
++ *                                of scheduling.
+  * @in_reset: True if a GPU is resetting and normal power manager operation is
+  *            suspended
+  * @partial_shaderoff: True if we want to partial power off shader cores,
+@@ -510,6 +531,7 @@ struct kbase_pm_backend_data {
+ 	bool gpu_idled;
+ 	bool gpu_wakeup_override;
+ 	bool db_mirror_interrupt_enabled;
++	enum kbase_pm_runtime_suspend_abort_reason runtime_suspend_abort_reason;
+ #endif
+ 	bool l2_force_off_after_mcu_halt;
+ #endif
+@@ -518,6 +540,7 @@ struct kbase_pm_backend_data {
+ 	bool shaders_desired;
+ 
+ 	bool in_reset;
++	bool fw_reload_on_reset_worker;
+ 
+ #if !MALI_USE_CSF
+ 	bool partial_shaderoff;
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_pm_driver.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_pm_driver.c
+index 3c7423f..46d604e 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_pm_driver.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/backend/gpu/mali_kbase_pm_driver.c
+@@ -139,7 +139,8 @@ bool kbase_pm_is_mcu_desired(struct kbase_device *kbdev)
+ 		return true;
+ 
+ #ifdef KBASE_PM_RUNTIME
+-	if (kbdev->pm.backend.gpu_wakeup_override)
++	if (kbdev->pm.backend.gpu_wakeup_override ||
++	    kbdev->pm.backend.runtime_suspend_abort_reason != ABORT_REASON_NONE)
+ 		return true;
+ #endif
+ 
+@@ -619,7 +620,11 @@ static void kbase_pm_control_gpu_clock(struct kbase_device *kbdev)
+ 
+ #if MALI_USE_CSF
+ #if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
+-u64 mcu_state_history = 0;
++#define MAX_STATES_NUM 16
++u8 mcu_state_array[MAX_STATES_NUM];
++int mcu_history_idx = 0;
++u8 l2_state_array[MAX_STATES_NUM];
++int l2_history_idx = 0;
+ #endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ static const char *kbase_mcu_state_to_string(enum kbase_mcu_state state)
+ {
+@@ -1140,6 +1145,12 @@ static int kbase_pm_mcu_update_state(struct kbase_device *kbdev)
+ 			break;
+ #endif
+ 		case KBASE_MCU_RESET_WAIT:
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++			if (mcu_history_idx >= MAX_STATES_NUM)
++				mcu_history_idx = 0;
++			mcu_state_array[mcu_history_idx] = (u8)(backend->mcu_state & 0xFF);
++			mcu_history_idx++;
++#endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ 			/* Reset complete  */
+ 			if (!backend->in_reset)
+ 				backend->mcu_state = KBASE_MCU_OFF;
+@@ -1161,8 +1172,10 @@ static int kbase_pm_mcu_update_state(struct kbase_device *kbdev)
+ 				kbase_mcu_state_to_string(backend->mcu_state));
+ 			kbase_ktrace_log_mcu_state(kbdev, backend->mcu_state);
+ #if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
+-			mcu_state_history = mcu_state_history << 8;
+-			mcu_state_history |= (u8)(backend->mcu_state & 0xFF);
++			if (mcu_history_idx >= MAX_STATES_NUM)
++				mcu_history_idx = 0;
++			mcu_state_array[mcu_history_idx] = (u8)(backend->mcu_state & 0xFF);
++			mcu_history_idx++;
+ #endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ 		}
+ 
+@@ -1661,6 +1674,12 @@ static int kbase_pm_l2_update_state(struct kbase_device *kbdev)
+ 		case KBASE_L2_RESET_WAIT:
+ 			/* Reset complete  */
+ 			if (!backend->in_reset) {
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++				if (l2_history_idx >= MAX_STATES_NUM)
++					l2_history_idx = 0;
++				l2_state_array[l2_history_idx] = (u8)(backend->l2_state & 0xFF);
++				l2_history_idx++;
++#endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ #if MALI_USE_CSF
+ 				backend->l2_force_off_after_mcu_halt = false;
+ #endif
+@@ -1686,8 +1705,13 @@ static int kbase_pm_l2_update_state(struct kbase_device *kbdev)
+ 				kbase_l2_core_state_to_string(
+ 					backend->l2_state));
+ 			kbase_ktrace_log_l2_core_state(kbdev, backend->l2_state);
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++			if (l2_history_idx >= MAX_STATES_NUM)
++				l2_history_idx = 0;
++			l2_state_array[l2_history_idx] = (u8)(backend->l2_state & 0xFF);
++			l2_history_idx++;
++#endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ 		}
+-
+ 	} while (backend->l2_state != prev_state);
+ 
+ #if IS_ENABLED(CONFIG_MALI_MTK_IRQ_TRACE)
+@@ -2384,7 +2408,10 @@ void kbase_pm_reset_start_locked(struct kbase_device *kbdev)
+ #ifdef KBASE_PM_RUNTIME
+ 		backend->exit_gpu_sleep_mode = true;
+ #endif
+-		kbdev->csf.firmware_reload_needed = true;
++		if (backend->fw_reload_on_reset_worker == false)
++			kbdev->csf.firmware_reload_needed = true;
++		else
++			kbdev->csf.firmware_reload_needed = false;
+ 	} else {
+ 		WARN_ON(backend->mcu_state != KBASE_MCU_OFF);
+ 	}
+@@ -2685,6 +2712,49 @@ static void mtk_kbase_pm_timed_out_mcu_transition_check(struct kbase_device *kbd
+ 		WARN(1, "Power transition:Invalid mcu_state\n");
+ 	}
+ }
++
++void kbase_pm_debug_status(struct kbase_device *kbdev)
++{
++#if !MALI_USE_CSF
++		dev_err(kbdev->dev, "Desired state :\n");
++		dev_err(kbdev->dev, "\tShader=%016llx\n",
++			kbdev->pm.backend.shaders_desired ? kbdev->pm.backend.shaders_avail : 0);
++#else
++		dev_err(kbdev->dev, "\tMCU desired = %d\n", kbase_pm_is_mcu_desired(kbdev));
++		dev_err(kbdev->dev, "\tMCU sw state = %d\n", kbdev->pm.backend.mcu_state);
++#endif
++		if (kbdev->pm.backend.gpu_powered) {
++			dev_err(kbdev->dev, "Current state :\n");
++			dev_err(kbdev->dev, "\tShader=%08x%08x\n",
++				kbase_reg_read(kbdev, GPU_CONTROL_REG(SHADER_READY_HI)),
++				kbase_reg_read(kbdev, GPU_CONTROL_REG(SHADER_READY_LO)));
++			dev_err(kbdev->dev, "\tTiler =%08x%08x\n",
++				kbase_reg_read(kbdev, GPU_CONTROL_REG(TILER_READY_HI)),
++				kbase_reg_read(kbdev, GPU_CONTROL_REG(TILER_READY_LO)));
++			dev_err(kbdev->dev, "\tL2    =%08x%08x\n",
++				kbase_reg_read(kbdev, GPU_CONTROL_REG(L2_READY_HI)),
++				kbase_reg_read(kbdev, GPU_CONTROL_REG(L2_READY_LO)));
++#if MALI_USE_CSF
++			dev_err(kbdev->dev, "\tMCU status = %d\n",
++				kbase_reg_read(kbdev, GPU_CONTROL_REG(MCU_STATUS)));
++#endif
++			dev_err(kbdev->dev, "Cores transitioning :\n");
++			dev_err(kbdev->dev, "\tShader=%08x%08x\n",
++				kbase_reg_read(kbdev, GPU_CONTROL_REG(SHADER_PWRTRANS_HI)),
++				kbase_reg_read(kbdev, GPU_CONTROL_REG(SHADER_PWRTRANS_LO)));
++			dev_err(kbdev->dev, "\tTiler =%08x%08x\n",
++				kbase_reg_read(kbdev, GPU_CONTROL_REG(TILER_PWRTRANS_HI)),
++				kbase_reg_read(kbdev, GPU_CONTROL_REG(TILER_PWRTRANS_LO)));
++			dev_err(kbdev->dev, "\tL2    =%08x%08x\n",
++				kbase_reg_read(kbdev, GPU_CONTROL_REG(L2_PWRTRANS_HI)),
++				kbase_reg_read(kbdev, GPU_CONTROL_REG(L2_PWRTRANS_LO)));
++		}
++#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG_DUMP)
++		mtk_common_debug(MTK_COMMON_DBG_DUMP_DB_BY_SETTING, NULL, MTK_DBG_HOOK_PM_TIMEOUT);
++		mtk_common_debug(MTK_COMMON_DBG_DUMP_PM_STATUS, NULL, MTK_DBG_HOOK_PM_TIMEOUT);
++		mtk_common_debug(MTK_COMMON_DBG_DUMP_INFRA_STATUS, NULL, MTK_DBG_HOOK_PM_TIMEOUT);
++#endif /* CONFIG_MALI_MTK_DEBUG_DUMP */
++}
+ #endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ 
+ static void kbase_pm_timed_out(struct kbase_device *kbdev, const char *timeout_msg)
+@@ -3167,6 +3237,7 @@ void kbase_pm_clock_on(struct kbase_device *kbdev, bool is_resume)
+ 			kbase_pm_enable_interrupts(kbdev);
+ 		kbdev->poweroff_pending = false;
+ 		KBASE_DEBUG_ASSERT(!is_resume);
++		WARN_ON(!kbdev->pm.backend.gpu_ready);
+ 		return;
+ 	}
+ 
+@@ -3622,11 +3693,16 @@ static int kbase_pm_do_reset(struct kbase_device *kbdev)
+ {
+ 	struct kbasep_reset_timeout_data rtdata;
+ 	int ret;
+-#if defined(CONFIG_MTK_GPUFREQ_V2) && IS_ENABLED(CONFIG_MALI_MTK_MFG2_BACKDOOR)
++#if defined(CONFIG_MTK_GPUFREQ_V2)
++#if IS_ENABLED(CONFIG_MALI_MTK_MFG2_BACKDOOR)
+ 	u64 l2_present = kbdev->gpu_props.curr_config.l2_present;
+ 	u64 l2_trans = 0, l2_ready = 0;
+ 	int retry_count = 0;
+-#endif /* CONFIG_MTK_GPUFREQ_V2 && CONFIG_MALI_MTK_MFG2_BACKDOOR */
++#endif /* CONFIG_MALI_MTK_MFG2_BACKDOOR */
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_RESET)
++	unsigned long irq_flags = 0;
++#endif /* CONFIG_MALI_MTK_POWER_RESET */
++#endif /* CONFIG_MTK_GPUFREQ_V2 */
+ 
+ 	KBASE_KTRACE_ADD(kbdev, CORE_GPU_SOFT_RESET, NULL, 0);
+ 
+@@ -3695,6 +3771,28 @@ static int kbase_pm_do_reset(struct kbase_device *kbdev)
+ 		mtk_logbuffer_type_print(kbdev, MTK_LOGBUFFER_TYPE_CRITICAL,
+ 			"GPU soft reset completed\n");
+ #endif /* CONFIG_MALI_MTK_LOG_BUFFER */
++
++#if defined(CONFIG_MTK_GPUFREQ_V2) && IS_ENABLED(CONFIG_MALI_MTK_POWER_RESET)
++#if MALI_USE_CSF
++		/* GPU is about to be turned off, switch to dummy page */
++		update_user_reg_page_mapping(kbdev);
++#endif
++		spin_lock_irqsave(&kbdev->hwaccess_lock, irq_flags);
++		/* power off and on once to reset MFG1 */
++		gpufreq_power_control(GPU_PWR_OFF);
++		gpufreq_power_control(GPU_PWR_ON);
++		spin_unlock_irqrestore(&kbdev->hwaccess_lock, irq_flags);
++#if MALI_USE_CSF
++		/* GPU has been turned on, can switch to actual register page */
++		update_user_reg_page_mapping(kbdev);
++#endif
++		dev_info(kbdev->dev, "GPU soft power reset completed");
++#if IS_ENABLED(CONFIG_MALI_MTK_LOG_BUFFER)
++		mtk_logbuffer_type_print(kbdev, MTK_LOGBUFFER_TYPE_CRITICAL,
++			"GPU soft power reset completed\n");
++#endif /* CONFIG_MALI_MTK_LOG_BUFFER */
++#endif /* CONFIG_MTK_GPUFREQ_V2 && CONFIG_MALI_MTK_POWER_RESET */
++
+ 		return 0;
+ 	}
+ #if IS_ENABLED(CONFIG_MALI_MTK_TIMEOUT_RESET)
+@@ -3728,6 +3826,7 @@ static int kbase_pm_do_reset(struct kbase_device *kbdev)
+ 						kbase_reg_read(kbdev, GPU_CONTROL_REG(GPU_IRQ_STATUS)));
+ 		mtk_common_debug(MTK_COMMON_DBG_DUMP_PM_STATUS, -1, MTK_DBG_HOOK_PM_RESET_FAIL);
+ 		mtk_common_debug(MTK_COMMON_DBG_DUMP_INFRA_STATUS, -1, MTK_DBG_HOOK_PM_RESET_FAIL);
++		mtk_common_debug(MTK_COMMON_DBG_DUMP_GIC_STATUS, -1, MTK_DBG_HOOK_RESET_FAIL);
+ #endif /* CONFIG_MALI_MTK_DEBUG */
+ 		/* If interrupts aren't working we can't continue. */
+ 		destroy_hrtimer_on_stack(&rtdata.timer);
+@@ -3766,6 +3865,11 @@ static int kbase_pm_do_reset(struct kbase_device *kbdev)
+ 		/* Wait for the RESET_COMPLETED interrupt to be raised */
+ 		kbase_pm_wait_for_reset(kbdev);
+ 
++#if defined(CONFIG_MTK_GPUFREQ_V2) && IS_ENABLED(CONFIG_MALI_MTK_MFG2_BACKDOOR_ACK)
++		/* polling pdca pwr down ack finished */
++		gpufreq_pdca_polling_ack(GPU_PWR_OFF);
++#endif /* CONFIG_MTK_GPUFREQ_V2 && CONFIG_MALI_MTK_MFG2_BACKDOOR_ACK */
++
+ #if IS_ENABLED(CONFIG_MALI_MTK_TIMEOUT_RESET)
+ 		spin_lock(&kbdev->reset_force_change);
+ 		kbdev->reset_force_hard_reset = false;
+@@ -3781,6 +3885,28 @@ static int kbase_pm_do_reset(struct kbase_device *kbdev)
+ 			mtk_logbuffer_type_print(kbdev, MTK_LOGBUFFER_TYPE_CRITICAL,
+ 				"GPU hard reset completed\n");
+ #endif /* CONFIG_MALI_MTK_LOG_BUFFER */
++
++#if defined(CONFIG_MTK_GPUFREQ_V2) && IS_ENABLED(CONFIG_MALI_MTK_POWER_RESET)
++#if MALI_USE_CSF
++			/* GPU is about to be turned off, switch to dummy page */
++			update_user_reg_page_mapping(kbdev);
++#endif
++			spin_lock_irqsave(&kbdev->hwaccess_lock, irq_flags);
++			/* power off and on once to reset MFG1 */
++			gpufreq_power_control(GPU_PWR_OFF);
++			gpufreq_power_control(GPU_PWR_ON);
++			spin_unlock_irqrestore(&kbdev->hwaccess_lock, irq_flags);
++#if MALI_USE_CSF
++			/* GPU has been turned on, can switch to actual register page */
++			update_user_reg_page_mapping(kbdev);
++#endif
++			dev_info(kbdev->dev, "GPU hard power reset completed");
++#if IS_ENABLED(CONFIG_MALI_MTK_LOG_BUFFER)
++			mtk_logbuffer_type_print(kbdev, MTK_LOGBUFFER_TYPE_CRITICAL,
++				"GPU hard power reset completed\n");
++#endif /* CONFIG_MALI_MTK_LOG_BUFFER */
++#endif /* CONFIG_MTK_GPUFREQ_V2 && CONFIG_MALI_MTK_POWER_RESET */
++
+ 			return 0;
+ 		}
+ 
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf.c
+index 39f387a..eae4bc6 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf.c
+@@ -22,6 +22,7 @@
+ #include <mali_kbase.h>
+ #include <gpu/mali_kbase_gpu_fault.h>
+ #include <mali_kbase_reset_gpu.h>
++#include <mali_kbase_ctx_sched.h>
+ #include "mali_kbase_csf.h"
+ #include "backend/gpu/mali_kbase_pm_internal.h"
+ #include <linux/export.h>
+@@ -289,6 +290,7 @@ static bool release_queue(struct kbase_queue *queue);
+ void kbase_csf_free_command_stream_user_pages(struct kbase_context *kctx, struct kbase_queue *queue)
+ {
+ 	kernel_unmap_user_io_pages(kctx, queue);
++	queue->user_io_addr = NULL;
+ 
+ 	kbase_mem_pool_free_pages(
+ 		&kctx->mem_pools.small[KBASE_MEM_GROUP_CSF_IO],
+@@ -757,6 +759,12 @@ int kbase_csf_queue_bind(struct kbase_context *kctx, union kbase_ioctl_cs_queue_
+ 	if (bind->in.csi_index >= max_streams)
+ 		goto out;
+ 
++	if (queue->user_io_addr != NULL) {
++		dev_err(kctx->kbdev->dev, "Queue with stale user_io address: %pK",
++			(void *)queue->user_io_addr);
++		goto out;
++	}
++
+ 	if (group->run_state == KBASE_CSF_GROUP_TERMINATED)
+ 		goto out;
+ 
+@@ -1831,8 +1839,6 @@ void kbase_csf_ctx_handle_fault(struct kbase_context *kctx,
+ void kbase_csf_ctx_term(struct kbase_context *kctx)
+ {
+ 	struct kbase_device *kbdev = kctx->kbdev;
+-	struct kbase_as *as = NULL;
+-	unsigned long flags;
+ 	u32 i;
+ 	int err;
+ 	bool reset_prevented = false;
+@@ -1883,15 +1889,57 @@ void kbase_csf_ctx_term(struct kbase_context *kctx)
+ 	flush_work(&kctx->kbdev->csf.fw_error_work);
+ 
+ 	/* A work item to handle page_fault/bus_fault/gpu_fault could be
+-	 * pending for the outgoing context. Flush the workqueue that will
+-	 * execute that work item.
++	 * pending for the outgoing context which we no longer care about.
++	 * Ensure that the context won't be accessed anymore by the fault
++	 * workers.
+ 	 */
+-	spin_lock_irqsave(&kctx->kbdev->hwaccess_lock, flags);
+-	if (kctx->as_nr != KBASEP_AS_NR_INVALID)
+-		as = &kctx->kbdev->as[kctx->as_nr];
+-	spin_unlock_irqrestore(&kctx->kbdev->hwaccess_lock, flags);
+-	if (as)
+-		flush_workqueue(as->pf_wq);
++	while (true) {
++		unsigned long flags;
++		int refcount;
++
++		mutex_lock(&kbdev->mmu_hw_mutex);
++		spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
++
++		refcount = atomic_read(&kctx->refcount);
++		if ((refcount != 0) && !WARN_ON_ONCE(kctx->as_nr == KBASEP_AS_NR_INVALID)) {
++			struct kbase_as *as = &kctx->kbdev->as[kctx->as_nr];
++			int new_refcount;
++
++			dev_dbg(kbdev->dev,
++				"Waiting for pending fault worker to complete when terminating context (%d_%d)",
++				kctx->tgid, kctx->id);
++			spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
++			mutex_unlock(&kbdev->mmu_hw_mutex);
++			flush_workqueue(as->pf_wq);
++
++			new_refcount = atomic_read(&kctx->refcount);
++			if (refcount != new_refcount) {
++				/* Fault workers executed and released some references, re-check */
++				continue;
++			} else {
++				/* Waiting for pending fault workers to execute was not effective,
++				 * we're going to forcefully de-assign the AS from this context
++				 * because nothing else should still be accessing the context at
++				 * this point.
++				 *
++				 * This should never happen and a WARN_ON() would be printed by
++				 * kbase_ctx_sched_remove_ctx() if the refcount is non-zero.
++				 */
++				dev_warn(
++					kbdev->dev,
++					"No fault workers executed, %d refs remain for terminating context (%d_%d)",
++					new_refcount, kctx->tgid, kctx->id);
++				kbase_ctx_sched_remove_ctx(kctx);
++			}
++		} else {
++			kbase_ctx_sched_remove_ctx_nolock(kctx);
++
++			spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
++			mutex_unlock(&kbdev->mmu_hw_mutex);
++		}
++
++		break;
++	}
+ 
+ 	mutex_lock(&kctx->csf.lock);
+ 
+@@ -3390,10 +3438,13 @@ void kbase_csf_interrupt(struct kbase_device *kbdev, u32 val)
+ #endif /* CONFIG_MALI_MTK_IRQ_TRACE */
+ 	if (deferred_handling_glb_idle_irq) {
+ 		unsigned long flags;
++		bool invoke_pm_state_machine;
+ 
+ 		kbase_csf_scheduler_spin_lock(kbdev, &flags);
+-		kbase_csf_scheduler_process_gpu_idle_event(kbdev);
++		invoke_pm_state_machine = kbase_csf_scheduler_process_gpu_idle_event(kbdev);
+ 		kbase_csf_scheduler_spin_unlock(kbdev, flags);
++		if (unlikely(invoke_pm_state_machine))
++			kbase_pm_update_state(kbdev);
+ 	}
+ #if IS_ENABLED(CONFIG_MALI_MTK_IRQ_TRACE)
+ 		mtk_debug_irq_trace_record_end(KBASE_IRQ_JOB, 4);
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_firmware.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_firmware.c
+index 39af84b..b58d2ce 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_firmware.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_firmware.c
+@@ -2049,6 +2049,36 @@ static void kbase_csf_firmware_reload_worker(struct work_struct *work)
+ 	kbase_csf_firmware_enable_mcu(kbdev);
+ }
+ 
++void kbase_csf_firmware_reload(struct kbase_device *kbdev)
++{
++	unsigned long flags;
++	int err;
++
++	dev_info(kbdev->dev, "reloading firmware");
++
++	KBASE_TLSTREAM_TL_KBASE_CSFFW_FW_RELOADING(kbdev, kbase_backend_get_cycle_cnt(kbdev));
++
++	/* Reload just the data sections from firmware binary image */
++	err = reload_fw_image(kbdev);
++	if (err) {
++#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG_DUMP)
++		dev_info(kbdev->dev, "Reload of FW had failed, MCU won't be re-enabled !!\n");
++#if IS_ENABLED(CONFIG_MALI_MTK_LOG_BUFFER)
++		mtk_logbuffer_type_print(kbdev, MTK_LOGBUFFER_TYPE_CRITICAL | MTK_LOGBUFFER_TYPE_EXCEPTION,
++			"Reload of FW had failed, MCU won't be re-enabled !!\n");
++#endif /* CONFIG_MALI_MTK_LOG_BUFFER */
++		mtk_common_debug(MTK_COMMON_DBG_DUMP_DB_BY_SETTING, NULL, MTK_DBG_HOOK_FWRELOAD_FAIL);
++#endif /* CONFIG_MALI_MTK_DEBUG_DUMP */
++		return;
++	}
++
++	kbase_csf_tl_reader_reset(&kbdev->timeline->csf_tl_reader);
++
++	err = kbase_csf_firmware_cfg_fw_wa_enable(kbdev);
++	if (WARN_ON(err))
++		return;
++}
++
+ void kbase_csf_firmware_trigger_reload(struct kbase_device *kbdev)
+ {
+ 	lockdep_assert_held(&kbdev->hwaccess_lock);
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_firmware.h b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_firmware.h
+index bd31863..6d724aa 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_firmware.h
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_firmware.h
+@@ -617,6 +617,8 @@ void kbase_csf_firmware_trigger_mcu_sleep(struct kbase_device *kbdev);
+ bool kbase_csf_firmware_is_mcu_in_sleep(struct kbase_device *kbdev);
+ #endif
+ 
++void kbase_csf_firmware_reload(struct kbase_device *kbdev);
++
+ /**
+  * kbase_csf_firmware_trigger_reload() - Trigger the reboot of MCU firmware, for
+  *                                       the cold boot case firmware image would
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_reset_gpu.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_reset_gpu.c
+index de9c511..4b470f0 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_reset_gpu.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_reset_gpu.c
+@@ -391,6 +391,13 @@ static enum kbasep_soft_reset_status kbase_csf_reset_gpu_once(struct kbase_devic
+ 
+ 	mutex_unlock(&kbdev->pm.lock);
+ 
++	if (kbdev->pm.backend.fw_reload_on_reset_worker == true)
++	{
++		kbdev->csf.firmware_reload_needed = false;
++		kbase_csf_firmware_reload(kbdev);
++		dev_info(kbdev->dev, "Reload fw on reset worker.");
++	}
++
+ 	if (WARN_ON(err)) {
+ #if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
+ 		mtk_common_debug(MTK_COMMON_DBG_DUMP_PM_STATUS, -1, MTK_DBG_HOOK_RESET_FAIL);
+@@ -463,6 +470,8 @@ static int kbase_csf_reset_gpu_now(struct kbase_device *kbdev, bool firmware_ini
+ 	/* This call will block until counters are disabled. */
+ 	kbase_hwcnt_context_disable(kbdev->hwcnt_gpu_ctx);
+ 
++	kbdev->pm.backend.fw_reload_on_reset_worker = false;
++
+ 	ret = kbase_csf_reset_gpu_once(kbdev, firmware_inited, silent);
+ 	if (ret == SOFT_RESET_FAILED) {
+ 		dev_err(kbdev->dev, "Soft-reset failed");
+@@ -471,17 +480,26 @@ static int kbase_csf_reset_gpu_now(struct kbase_device *kbdev, bool firmware_ini
+ 		dev_err(kbdev->dev, "L2 power up failed after the soft-reset");
+ 		goto err;
+ 	} else if (ret == MCU_REINIT_FAILED) {
+-		dev_err(kbdev->dev, "MCU re-init failed trying full firmware reload");
+-		/* Since MCU reinit failed despite successful soft reset, we can try
+-		 * the firmware full reload.
+-		 */
+-		kbdev->csf.firmware_full_reload_needed = true;
++		dev_err(kbdev->dev, "[1]MCU re-init failed, trying reload firmware on reset worker[%d]",ret);
++		cancel_work_sync(&kbdev->csf.firmware_reload_work);
++		kbdev->pm.backend.fw_reload_on_reset_worker = true;
+ 		ret = kbase_csf_reset_gpu_once(kbdev, firmware_inited, true);
++		dev_err(kbdev->dev,"Reload fw on reset worker ret = [%d]",ret);
+ 		if (ret != RESET_SUCCESS) {
+-			dev_err(kbdev->dev,
+-				"MCU Re-init failed even after trying full firmware reload, ret = [%d]",
+-				ret);
+-			goto err;
++			dev_err(kbdev->dev, "[2]MCU re-init failed trying full firmware reload[%d]",ret);
++			/* Since MCU reinit failed despite successful soft reset, we can try
++			* the firmware full reload.
++			*/
++			kbdev->csf.firmware_full_reload_needed = true;
++			kbdev->pm.backend.fw_reload_on_reset_worker = false;
++			ret = kbase_csf_reset_gpu_once(kbdev, firmware_inited, true);
++			if (ret != RESET_SUCCESS) {
++				kbdev->csf.firmware_full_reload_needed = false;
++				dev_err(kbdev->dev,
++					"[3]MCU Re-init failed even after trying full firmware reload, ret = [%d]",
++					ret);
++				goto err;
++			}
+ 		}
+ 	}
+ 
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_scheduler.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_scheduler.c
+index feacd9f..6079815 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_scheduler.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_scheduler.c
+@@ -760,11 +760,12 @@ static void enqueue_gpu_idle_work(struct kbase_csf_scheduler *const scheduler)
+ 	queue_work(scheduler->idle_wq, &scheduler->gpu_idle_work);
+ }
+ 
+-void kbase_csf_scheduler_process_gpu_idle_event(struct kbase_device *kbdev)
++bool kbase_csf_scheduler_process_gpu_idle_event(struct kbase_device *kbdev)
+ {
+ 	struct kbase_csf_scheduler *scheduler = &kbdev->csf.scheduler;
+ 	int non_idle_offslot_grps;
+ 	bool can_suspend_on_idle;
++	bool invoke_pm_state_machine = false;
+ #if IS_ENABLED(CONFIG_MALI_MTK_ADAPTIVE_POWER_POLICY)
+ 	ktime_t expiry_time;
+ #endif /* CONFIG_MALI_MTK_ADAPTIVE_POWER_POLICY */
+@@ -788,6 +789,23 @@ void kbase_csf_scheduler_process_gpu_idle_event(struct kbase_device *kbdev)
+ 				(kbdev->csf.gpu_idle_hysteresis_ns == 0) ||
+ 				!kbase_csf_scheduler_all_csgs_idle(kbdev);
+ 
++			/* If GPU idle event occurred after the runtime suspend was aborted due to
++			 * DB_MIRROR irq then it suggests that Userspace submission didn't make GPU
++			 * non-idle. So the planned resumption of scheduling can be cancelled and
++			 * MCU can be put back to sleep state to re-trigger the runtime suspend.
++			 */
++			if (unlikely(kbdev->pm.backend.exit_gpu_sleep_mode &&
++				     kbdev->pm.backend.runtime_suspend_abort_reason ==
++					     ABORT_REASON_DB_MIRROR_IRQ)) {
++				/* Cancel the planned resumption of scheduling */
++				kbdev->pm.backend.exit_gpu_sleep_mode = false;
++				kbdev->pm.backend.runtime_suspend_abort_reason = ABORT_REASON_NONE;
++				/* PM state machine can be invoked to put MCU back to the sleep
++				 * state right away and thereby re-trigger the runtime suspend.
++				 */
++				invoke_pm_state_machine = true;
++			}
++
+ 			/* The GPU idle worker relies on update_on_slot_queues_offsets() to have
+ 			 * finished. It's queued before to reduce the time it takes till execution
+ 			 * but it'll eventually be blocked by the scheduler->interrupt_lock.
+@@ -824,6 +842,8 @@ void kbase_csf_scheduler_process_gpu_idle_event(struct kbase_device *kbdev)
+ 		/* Invoke the scheduling tick to get the non-idle suspended groups loaded soon */
+ 		kbase_csf_scheduler_invoke_tick(kbdev);
+ 	}
++
++	return invoke_pm_state_machine;
+ }
+ 
+ u32 kbase_csf_scheduler_get_nr_active_csgs_locked(struct kbase_device *kbdev)
+@@ -1087,6 +1107,8 @@ static int scheduler_pm_active_after_sleep(struct kbase_device *kbdev,
+ 	if (!WARN_ON(prev_count == U32_MAX))
+ 		kbdev->csf.scheduler.pm_active_count++;
+ 
++	kbdev->pm.backend.runtime_suspend_abort_reason = ABORT_REASON_NONE;
++
+ 	/* On 0 => 1, make a pm_ctx_active request */
+ 	if (!prev_count) {
+ 		spin_unlock_irqrestore(&kbdev->hwaccess_lock, *flags);
+@@ -6932,7 +6954,6 @@ void kbase_csf_scheduler_context_term(struct kbase_context *kctx)
+ 	cancel_work_sync(&kctx->csf.sched.sync_update_work);
+ 	destroy_workqueue(kctx->csf.sched.sync_update_wq);
+ 
+-	kbase_ctx_sched_remove_ctx(kctx);
+ #if IS_ENABLED(CONFIG_MALI_TRACE_POWER_GPU_WORK_PERIOD)
+ 	gpu_metrics_ctx_term(kctx);
+ #endif /* CONFIG_MALI_TRACE_POWER_GPU_WORK_PERIOD */
+@@ -7475,6 +7496,7 @@ int kbase_csf_scheduler_handle_runtime_suspend(struct kbase_device *kbdev)
+ 
+ 		spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
+ 		kbdev->pm.backend.exit_gpu_sleep_mode = true;
++		kbdev->pm.backend.runtime_suspend_abort_reason = ABORT_REASON_NON_IDLE_CGS;
+ 		spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+ 
+ 		kbase_csf_scheduler_invoke_tick(kbdev);
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_scheduler.h b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_scheduler.h
+index b13a25c..c1bb21c 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_scheduler.h
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_scheduler.h
+@@ -607,8 +607,11 @@ int kbase_csf_scheduler_handle_runtime_suspend(struct kbase_device *kbdev);
+  * @kbdev: Pointer to the device
+  *
+  * This function is called when a GPU idle IRQ has been raised.
++ *
++ * Return: true if the PM state machine needs to be invoked after the processing
++ *         of GPU idle irq, otherwise false.
+  */
+-void kbase_csf_scheduler_process_gpu_idle_event(struct kbase_device *kbdev);
++bool kbase_csf_scheduler_process_gpu_idle_event(struct kbase_device *kbdev);
+ 
+ /**
+  * kbase_csf_scheduler_get_nr_active_csgs() - Get the number of active CSGs
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_tiler_heap.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_tiler_heap.c
+index e2b9972..89a1183 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_tiler_heap.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/csf/mali_kbase_csf_tiler_heap.c
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note
+ /*
+  *
+- * (C) COPYRIGHT 2019-2023 ARM Limited. All rights reserved.
++ * (C) COPYRIGHT 2019-2024 ARM Limited. All rights reserved.
+  *
+  * This program is free software and is provided to you under the terms of the
+  * GNU General Public License version 2 as published by the Free Software
+@@ -358,13 +358,14 @@ static struct kbase_csf_tiler_heap_chunk *alloc_new_chunk(struct kbase_context *
+ 	}
+ 
+ 	remove_external_chunk_mappings(kctx, chunk);
+-	kbase_gpu_vm_unlock(kctx);
+ 
+ 	/* If page migration is enabled, we don't want to migrate tiler heap pages.
+ 	 * This does not change if the constituent pages are already marked as isolated.
+ 	 */
+ 	if (kbase_is_page_migration_enabled())
+-		kbase_set_phy_alloc_page_status(chunk->region->gpu_alloc, NOT_MOVABLE);
++		kbase_set_phy_alloc_page_status(kctx, chunk->region->gpu_alloc, NOT_MOVABLE);
++
++	kbase_gpu_vm_unlock(kctx);
+ 
+ 	return chunk;
+ 
+@@ -750,7 +751,7 @@ int kbase_csf_tiler_heap_init(struct kbase_context *const kctx, u32 const chunk_
+ 					  KBASE_VMAP_FLAG_PERMANENT_MAP_ACCOUNTING);
+ 
+ 		if (kbase_is_page_migration_enabled())
+-			kbase_set_phy_alloc_page_status(buf_desc_reg->gpu_alloc, NOT_MOVABLE);
++			kbase_set_phy_alloc_page_status(kctx, buf_desc_reg->gpu_alloc, NOT_MOVABLE);
+ 
+ 		kbase_gpu_vm_unlock(kctx);
+ 
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_base_hwconfig_issues.h b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_base_hwconfig_issues.h
+index 79ff38e..bb9a924 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_base_hwconfig_issues.h
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_base_hwconfig_issues.h
+@@ -69,6 +69,7 @@ enum base_hw_issue {
+ 	BASE_HW_ISSUE_GPU2022PRO_148,
+ 	BASE_HW_ISSUE_TITANHW_2922,
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -703,6 +704,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_tODx_r0p0
+ 	BASE_HW_ISSUE_TITANHW_2710,
+ 	BASE_HW_ISSUE_GPU2022PRO_148,
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -715,6 +717,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_model_tOD
+ 	BASE_HW_ISSUE_TITANHW_2710,
+ 	BASE_HW_ISSUE_GPU2022PRO_148,
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -726,6 +729,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_tGRx_r0p0
+ 	BASE_HW_ISSUE_TITANHW_2710,
+ 	BASE_HW_ISSUE_GPU2022PRO_148,
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -737,6 +741,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_model_tGR
+ 	BASE_HW_ISSUE_TITANHW_2710,
+ 	BASE_HW_ISSUE_GPU2022PRO_148,
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -748,6 +753,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_tVAx_r0p0
+ 	BASE_HW_ISSUE_TITANHW_2710,
+ 	BASE_HW_ISSUE_GPU2022PRO_148,
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -759,6 +765,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_model_tVA
+ 	BASE_HW_ISSUE_TITANHW_2710,
+ 	BASE_HW_ISSUE_GPU2022PRO_148,
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -777,6 +784,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_tTUx_r0p0
+ 	BASE_HW_ISSUE_TITANHW_2922,
+ #endif
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -795,6 +803,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_tTUx_r0p1
+ 	BASE_HW_ISSUE_TITANHW_2922,
+ #endif
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -812,6 +821,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_model_tTU
+ 	BASE_HW_ISSUE_TITANHW_2922,
+ #endif
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -829,6 +839,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_tTUx_r1p0
+ 	BASE_HW_ISSUE_TITANHW_2922,
+ #endif
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -846,6 +857,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_tTUx_r1p1
+ 	BASE_HW_ISSUE_TITANHW_2922,
+ #endif
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -863,6 +875,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_tTUx_r1p2
+ 	BASE_HW_ISSUE_TITANHW_2922,
+ #endif
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -880,6 +893,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_tTUx_r1p3
+ 	BASE_HW_ISSUE_TITANHW_2922,
+ #endif
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -895,6 +909,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_model_tTI
+ 	BASE_HW_ISSUE_TITANHW_2922,
+ #endif
+ 	BASE_HW_ISSUE_TITANHW_2938,
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+@@ -909,6 +924,7 @@ __attribute__((unused)) static const enum base_hw_issue base_hw_issues_tTIx_r0p0
+ #if 0 //mtk modified, only for mt6878
+ 	BASE_HW_ISSUE_TITANHW_2922,
+ #endif
++	BASE_HW_ISSUE_KRAKEHW_2321,
+ 	BASE_HW_ISSUE_END
+ };
+ 
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase.h b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase.h
+index 8761cb3..eff9803 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase.h
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase.h
+@@ -572,6 +572,10 @@ void kbase_pm_metrics_start(struct kbase_device *kbdev);
+  */
+ void kbase_pm_metrics_stop(struct kbase_device *kbdev);
+ 
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++void kbase_pm_debug_status(struct kbase_device *kbdev);
++#endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG*/
++
+ #if MALI_USE_CSF && defined(KBASE_PM_RUNTIME)
+ /**
+  * kbase_pm_handle_runtime_suspend - Handle the runtime suspend of GPU
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_config_defaults.h b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_config_defaults.h
+index 1ec303a..a176d1c 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_config_defaults.h
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_config_defaults.h
+@@ -222,7 +222,7 @@ enum {
+  *
+  * Based on 6000ms timeout at 100MHz, scaled from a 50MHz GPU system.
+  */
+-#define CSF_FIRMWARE_PING_TIMEOUT_CYCLES (600000000ull)
++#define CSF_FIRMWARE_PING_TIMEOUT_CYCLES (100000000ull)
+ 
+ /* Waiting timeout for a pmode_enter request to be acknowledged, in clock cycles.
+  *
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_ctx_sched.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_ctx_sched.c
+index ea4f300..372d0ef 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_ctx_sched.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_ctx_sched.c
+@@ -215,6 +215,19 @@ void kbase_ctx_sched_remove_ctx(struct kbase_context *kctx)
+ 	mutex_lock(&kbdev->mmu_hw_mutex);
+ 	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
+ 
++	kbase_ctx_sched_remove_ctx_nolock(kctx);
++
++	spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
++	mutex_unlock(&kbdev->mmu_hw_mutex);
++}
++
++void kbase_ctx_sched_remove_ctx_nolock(struct kbase_context *kctx)
++{
++	struct kbase_device *const kbdev = kctx->kbdev;
++
++	lockdep_assert_held(&kbdev->mmu_hw_mutex);
++	lockdep_assert_held(&kbdev->hwaccess_lock);
++
+ 	WARN_ON(atomic_read(&kctx->refcount) != 0);
+ 
+ 	if ((kctx->as_nr >= 0) && (kctx->as_nr < BASE_MAX_NR_AS)) {
+@@ -225,9 +238,6 @@ void kbase_ctx_sched_remove_ctx(struct kbase_context *kctx)
+ 		kbdev->as_to_kctx[kctx->as_nr] = NULL;
+ 		kctx->as_nr = KBASEP_AS_NR_INVALID;
+ 	}
+-
+-	spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+-	mutex_unlock(&kbdev->mmu_hw_mutex);
+ }
+ 
+ void kbase_ctx_sched_restore_all_as(struct kbase_device *kbdev)
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_ctx_sched.h b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_ctx_sched.h
+index 5a8d175..3e22a05 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_ctx_sched.h
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_ctx_sched.h
+@@ -125,6 +125,20 @@ void kbase_ctx_sched_release_ctx(struct kbase_context *kctx);
+  */
+ void kbase_ctx_sched_remove_ctx(struct kbase_context *kctx);
+ 
++/**
++ * kbase_ctx_sched_remove_ctx_nolock - Unassign previously assigned address space
++ * @kctx: The context to be removed
++ *
++ * The following lock must be held by the caller:
++ * kbase_device::mmu_hw_mutex
++ * kbase_device::hwaccess_lock
++ *
++ * This function should be called when a context is being destroyed. The
++ * context must no longer have any reference. If it has been assigned an
++ * address space before then the AS will be unprogrammed.
++ */
++void kbase_ctx_sched_remove_ctx_nolock(struct kbase_context *kctx);
++
+ /**
+  * kbase_ctx_sched_restore_all_as - Reprogram all address spaces
+  * @kbdev: The device for which address spaces to be reprogrammed
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem.c
+index 7d90c55..ca204f8 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem.c
+@@ -3530,11 +3530,13 @@ out_term:
+ }
+ KBASE_EXPORT_TEST_API(kbase_alloc_phy_pages);
+ 
+-void kbase_set_phy_alloc_page_status(struct kbase_mem_phy_alloc *alloc,
++void kbase_set_phy_alloc_page_status(struct kbase_context *kctx, struct kbase_mem_phy_alloc *alloc,
+ 				     enum kbase_page_status status)
+ {
+ 	u32 i = 0;
+ 
++	lockdep_assert_held(&kctx->reg_lock);
++
+ 	for (; i < alloc->nents; i++) {
+ 		struct tagged_addr phys = alloc->pages[i];
+ 		struct kbase_page_metadata *page_md = kbase_page_private(as_page(phys));
+@@ -4806,7 +4808,8 @@ struct kbase_va_region *kbase_jit_allocate(struct kbase_context *kctx,
+ 			if (kbase_is_page_migration_enabled()) {
+ 				kbase_gpu_vm_lock(kctx);
+ 				mutex_lock(&kctx->jit_evict_lock);
+-				kbase_set_phy_alloc_page_status(reg->gpu_alloc, ALLOCATED_MAPPED);
++				kbase_set_phy_alloc_page_status(kctx, reg->gpu_alloc,
++								ALLOCATED_MAPPED);
+ 				mutex_unlock(&kctx->jit_evict_lock);
+ 				kbase_gpu_vm_unlock(kctx);
+ 			}
+@@ -4959,9 +4962,18 @@ void kbase_jit_free(struct kbase_context *kctx, struct kbase_va_region *reg)
+ 	kbase_mem_evictable_mark_reclaim(reg->gpu_alloc);
+ 
+ 	kbase_gpu_vm_lock(kctx);
++
+ 	reg->flags |= KBASE_REG_DONT_NEED;
+ 	reg->flags &= ~KBASE_REG_ACTIVE_JIT_ALLOC;
+ 	kbase_mem_shrink_cpu_mapping(kctx, reg, 0, reg->gpu_alloc->nents);
++
++	/* Inactive JIT regions should be freed by the shrinker and not impacted
++	 * by page migration. Once freed, they will enter into the page migration
++	 * state machine via the mempools.
++	 */
++	if (kbase_is_page_migration_enabled())
++		kbase_set_phy_alloc_page_status(kctx, reg->gpu_alloc, NOT_MOVABLE);
++
+ 	kbase_gpu_vm_unlock(kctx);
+ 
+ 	/*
+@@ -4977,13 +4989,6 @@ void kbase_jit_free(struct kbase_context *kctx, struct kbase_va_region *reg)
+ 
+ 	list_move(&reg->jit_node, &kctx->jit_pool_head);
+ 
+-	/* Inactive JIT regions should be freed by the shrinker and not impacted
+-	 * by page migration. Once freed, they will enter into the page migration
+-	 * state machine via the mempools.
+-	 */
+-	if (kbase_is_page_migration_enabled())
+-		kbase_set_phy_alloc_page_status(reg->gpu_alloc, NOT_MOVABLE);
+-	
+ #if IS_ENABLED(CONFIG_MALI_MTK_JIT_RECLAIM_ANTITHRASHING)
+ 	reg->last_used_ts = ktime_get_raw_ns();
+ #endif /* CONFIG_MALI_MTK_JIT_RECLAIM_ANTITHRASHING */
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem.h b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem.h
+index 7742b14..1ee184a 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem.h
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem.h
+@@ -48,7 +48,7 @@ static inline void kbase_process_page_usage_inc(struct kbase_context *kctx,
+ 		int pages);
+ 
+ #if IS_ENABLED(CONFIG_MALI_MTK_PAGE_TABLE_CLUSTERING)
+-#define MTK_EMI_DRAM_OFFSET 0x40000000
++#define MTK_EMI_DRAM_OFFSET (ARCH_PFN_OFFSET << PAGE_SHIFT)
+ 
+ /* struct alloc_pages_ctx - context for tracking
+  *                          page allocation state.
+@@ -568,6 +568,7 @@ char *kbase_reg_zone_get_name(enum kbase_memory_zone zone);
+ /**
+  * kbase_set_phy_alloc_page_status - Set the page migration status of the underlying
+  *                                   physical allocation.
++ * @kctx:   Pointer to Kbase context.
+  * @alloc:  the physical allocation containing the pages whose metadata is going
+  *          to be modified
+  * @status: the status the pages should end up in
+@@ -576,7 +577,7 @@ char *kbase_reg_zone_get_name(enum kbase_memory_zone zone);
+  * proper states are set. Instead, it is only used when we change the allocation
+  * to NOT_MOVABLE or from NOT_MOVABLE to ALLOCATED_MAPPED
+  */
+-void kbase_set_phy_alloc_page_status(struct kbase_mem_phy_alloc *alloc,
++void kbase_set_phy_alloc_page_status(struct kbase_context *kctx, struct kbase_mem_phy_alloc *alloc,
+ 				     enum kbase_page_status status);
+ 
+ static inline void kbase_mem_phy_alloc_gpu_mapped(struct kbase_mem_phy_alloc *alloc)
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem_linux.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem_linux.c
+index 458f583..d543b48 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem_linux.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem_linux.c
+@@ -960,7 +960,7 @@ int kbase_mem_evictable_make(struct kbase_mem_phy_alloc *gpu_alloc)
+ 	/* Indicate to page migration that the memory can be reclaimed by the shrinker.
+ 	 */
+ 	if (kbase_is_page_migration_enabled())
+-		kbase_set_phy_alloc_page_status(gpu_alloc, NOT_MOVABLE);
++		kbase_set_phy_alloc_page_status(kctx, gpu_alloc, NOT_MOVABLE);
+ 
+ #if IS_ENABLED(CONFIG_MALI_MTK_JIT_RECLAIM_ANTITHRASHING)
+ 	gpu_alloc->reg->last_used_ts = 0;
+@@ -1025,7 +1025,7 @@ bool kbase_mem_evictable_unmake(struct kbase_mem_phy_alloc *gpu_alloc)
+ 			 * from.
+ 			 */
+ 			if (kbase_is_page_migration_enabled())
+-				kbase_set_phy_alloc_page_status(gpu_alloc, ALLOCATED_MAPPED);
++				kbase_set_phy_alloc_page_status(kctx, gpu_alloc, ALLOCATED_MAPPED);
+ 		}
+ 	}
+ 
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem_lowlevel.h b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem_lowlevel.h
+index 5a1bb16..1de2fcb 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem_lowlevel.h
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mali_kbase_mem_lowlevel.h
+@@ -28,6 +28,11 @@
+ 
+ #include <linux/dma-mapping.h>
+ 
++/* Kernel/CPU page size can be 4/16/64KB whereas GPU page size is fixed as 4KB */
++#define GPU_PAGE_SIZE SZ_4K
++#define GPU_PAGE_MASK (~(SZ_4K - 1))
++#define GPU_PAGES_PER_CPU_PAGE (PAGE_SIZE / GPU_PAGE_SIZE)
++
+ /* Flags for kbase_phy_allocator_pages_alloc */
+ #define KBASE_PHY_PAGES_FLAG_DEFAULT (0)	/** Default allocation flag */
+ #define KBASE_PHY_PAGES_FLAG_CLEAR   (1 << 0)	/** Clear the pages after allocation */
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mmu/mali_kbase_mmu.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mmu/mali_kbase_mmu.c
+index aa43659..061eda3 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mmu/mali_kbase_mmu.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/mmu/mali_kbase_mmu.c
+@@ -2008,7 +2008,8 @@ failure_recovery:
+  * @level_high: The higher bound for the levels for which the PGD allocs are required
+  * @new_pgds:   Ptr to an array (size MIDGARD_MMU_BOTTOMLEVEL+1) to write the
+  *              newly allocated PGD addresses to.
+- *
++ * @pool_grown: True if new PGDs required the memory pool to grow to allocate more pages,
++ *              or false otherwise
+  * Numerically, level_low < level_high, not to be confused with top level and
+  * bottom level concepts for MMU PGDs. They are only used as low and high bounds
+  * in an incrementing for-loop.
+@@ -2018,14 +2019,17 @@ failure_recovery:
+  * * -ENOMEM - allocation failed for a PGD.
+  */
+ static int mmu_insert_alloc_pgds(struct kbase_device *kbdev, struct kbase_mmu_table *mmut,
+-				 phys_addr_t *new_pgds, int level_low, int level_high)
++				 phys_addr_t *new_pgds, int level_low, int level_high,                                                                                                                                                                                                                              bool *pool_grown)
+ {
+ 	int err = 0;
+ 	int i;
+ 
+ 	lockdep_assert_held(&mmut->mmu_lock);
+ 
++	*pool_grown = false;
+ 	for (i = level_low; i <= level_high; i++) {
++		if (new_pgds[i] != KBASE_MMU_INVALID_PGD_ADDRESS)
++			continue;
+ 		do {
+ 			new_pgds[i] = kbase_mmu_alloc_pgd(kbdev, mmut);
+ 			if (new_pgds[i] != KBASE_MMU_INVALID_PGD_ADDRESS)
+@@ -2039,16 +2043,10 @@ static int mmu_insert_alloc_pgds(struct kbase_device *kbdev, struct kbase_mmu_ta
+ 				dev_err(kbdev->dev, "%s: kbase_mem_pool_grow() returned error %d",
+ 					__func__, err);
+ 
+-				/* Free all PGDs allocated in previous successful iterations
+-				 * from (i-1) to level_low
+-				 */
+-				for (i = (i - 1); i >= level_low; i--) {
+-					if (new_pgds[i] != KBASE_MMU_INVALID_PGD_ADDRESS)
+-						kbase_mmu_free_pgd(kbdev, mmut, new_pgds[i]);
+-				}
+ 
+ 				return err;
+ 			}
++			*pool_grown = true;
+ 		} while (1);
+ 	}
+ 
+@@ -2077,6 +2075,8 @@ static int kbase_mmu_insert_single_page(struct kbase_context *kctx, u64 start_vp
+ 	if (WARN_ON(kctx == NULL))
+ 		return -EINVAL;
+ 
++	lockdep_assert_held(&kctx->reg_lock);
++
+ 	/* 64-bit address range is the max */
+ 	KBASE_DEBUG_ASSERT(start_vpfn <= (U64_MAX / PAGE_SIZE));
+ 
+@@ -2108,6 +2108,7 @@ static int kbase_mmu_insert_single_page(struct kbase_context *kctx, u64 start_vp
+ 		struct page *p;
+ 		register unsigned int num_of_valid_entries;
+ 		bool newly_created_pgd = false;
++                bool pool_grown;
+ 
+ 		if (count > remain)
+ 			count = remain;
+@@ -2115,6 +2116,9 @@ static int kbase_mmu_insert_single_page(struct kbase_context *kctx, u64 start_vp
+ 		cur_level = MIDGARD_MMU_BOTTOMLEVEL;
+ 		insert_level = cur_level;
+ 
++		for (l = MIDGARD_MMU_TOPLEVEL + 1; l <= cur_level; l++)
++			new_pgds[l] = KBASE_MMU_INVALID_PGD_ADDRESS;
++repeat_page_table_walk:
+ 		/*
+ 		 * Repeatedly calling mmu_get_lowest_valid_pgd() is clearly
+ 		 * suboptimal. We don't have to re-parse the whole tree
+@@ -2129,7 +2133,7 @@ static int kbase_mmu_insert_single_page(struct kbase_context *kctx, u64 start_vp
+ 		if (err) {
+ 			dev_err(kbdev->dev, "%s: mmu_get_lowest_valid_pgd() returned error %d",
+ 				__func__, err);
+-			goto fail_unlock;
++			goto fail_unlock_free_pgds;
+ 		}
+ 
+ 		/* No valid pgd at cur_level */
+@@ -2138,9 +2142,12 @@ static int kbase_mmu_insert_single_page(struct kbase_context *kctx, u64 start_vp
+ 			 * down to the lowest valid pgd at insert_level
+ 			 */
+ 			err = mmu_insert_alloc_pgds(kbdev, mmut, new_pgds, (insert_level + 1),
+-						    cur_level);
++						    cur_level, &pool_grown);
+ 			if (err)
+-				goto fail_unlock;
++				goto fail_unlock_free_pgds;
++
++			if (pool_grown)
++				goto repeat_page_table_walk;
+ 
+ 			newly_created_pgd = true;
+ 
+@@ -2223,9 +2230,10 @@ static int kbase_mmu_insert_single_page(struct kbase_context *kctx, u64 start_vp
+ fail_unlock_free_pgds:
+ 	/* Free the pgds allocated by us from insert_level+1 to bottom level */
+ 	for (l = cur_level; l > insert_level; l--)
+-		kbase_mmu_free_pgd(kbdev, mmut, new_pgds[l]);
++		if (new_pgds[l] != KBASE_MMU_INVALID_PGD_ADDRESS)
++			kbase_mmu_free_pgd(kbdev, mmut, new_pgds[l]);
++
+ 
+-fail_unlock:
+ 	if (insert_vpfn != start_vpfn) {
+ 		/* Invalidate the pages we have partially completed */
+ 		mmu_insert_pages_failure_recovery(kbdev, mmut, start_vpfn, insert_vpfn, &dirty_pgds,
+@@ -2371,6 +2379,11 @@ static int mmu_insert_pages_no_flush(struct kbase_device *kbdev, struct kbase_mm
+ 	phys_addr_t new_pgds[MIDGARD_MMU_BOTTOMLEVEL + 1];
+ 	int l, cur_level, insert_level;
+ 	struct tagged_addr *start_phys = phys;
++#if IS_ENABLED(CONFIG_MALI_MTK_KBASE_MMU_DBG_LOG)
++	int page_num = 0;
++#endif /* CONFIG_MALI_MTK_KBASE_MMU_DBG_LOG */
++	if (mmut->kctx)
++		lockdep_assert_held(&mmut->kctx->reg_lock);
+ 
+ 	/* Note that 0 is a valid start_vpfn */
+ 	/* 64-bit address range is the max */
+@@ -2384,6 +2397,25 @@ static int mmu_insert_pages_no_flush(struct kbase_device *kbdev, struct kbase_mm
+ 
+ 	mutex_lock(&mmut->mmu_lock);
+ 
++#if IS_ENABLED(CONFIG_MALI_MTK_KBASE_MMU_DBG_LOG)
++	if(phys) {
++#if 0
++		dev_err(kbdev->dev, "[MMU][map] va 0x%llx, phys 0x%llx, flag 0x%lx, nr 0x%lx, ctx %d_%d, as %d\n",
++			start_vpfn, as_phys_addr_t(phys[0]), flags, nr,
++			mmut->kctx ? mmut->kctx->tgid : 0,
++			mmut->kctx ? mmut->kctx->id : 0,
++			mmut->kctx ? mmut->kctx->as_nr : MCU_AS_NR);
++#endif
++ 		for(page_num = 0; page_num < nr; page_num++) {
++			phys_addr_t gpu_pa = as_phys_addr_t(phys[page_num]);
++			if(((phys_addr_t)(0x8ea00000) <= gpu_pa && gpu_pa < (phys_addr_t)(0x8f000000)) ||
++				((phys_addr_t)(0xca000000) <= gpu_pa && gpu_pa < (phys_addr_t)(0xce360000))) {
++				dev_err(kbdev->dev, "[MMU][map] %4u: pa violation range<23>(0x8ea00000~0x8f000000)<43>(0xca000000~0xce360000) %llx(%llu) , f 0x%lx\n", page_num, as_phys_addr_t(phys[page_num]), gpu_pa, flags);
++				dump_stack();
++			}
++ 		}
++	}
++#endif /* CONFIG_MALI_MTK_KBASE_MMU_DBG_LOG */
+ 	while (remain) {
+ 		unsigned int vindex = insert_vpfn & 0x1FF;
+ 		unsigned int count = KBASE_MMU_PAGE_ENTRIES - vindex;
+@@ -2391,6 +2423,7 @@ static int mmu_insert_pages_no_flush(struct kbase_device *kbdev, struct kbase_mm
+ 		register unsigned int num_of_valid_entries;
+ 		bool newly_created_pgd = false;
+ 		enum kbase_mmu_op_type flush_op;
++                bool pool_grown;
+ 
+ 		if (count > remain)
+ 			count = remain;
+@@ -2410,6 +2443,10 @@ static int mmu_insert_pages_no_flush(struct kbase_device *kbdev, struct kbase_mm
+ 
+ 		insert_level = cur_level;
+ 
++		for (l = MIDGARD_MMU_TOPLEVEL + 1; l <= cur_level; l++)
++			new_pgds[l] = KBASE_MMU_INVALID_PGD_ADDRESS;
++
++repeat_page_table_walk:
+ 		/*
+ 		 * Repeatedly calling mmu_get_lowest_valid_pgd() is clearly
+ 		 * suboptimal. We don't have to re-parse the whole tree
+@@ -2424,7 +2461,7 @@ static int mmu_insert_pages_no_flush(struct kbase_device *kbdev, struct kbase_mm
+ 		if (err) {
+ 			dev_err(kbdev->dev, "%s: mmu_get_lowest_valid_pgd() returned error %d",
+ 				__func__, err);
+-			goto fail_unlock;
++			goto fail_unlock_free_pgds;
+ 		}
+ 
+ 		/* No valid pgd at cur_level */
+@@ -2433,9 +2470,12 @@ static int mmu_insert_pages_no_flush(struct kbase_device *kbdev, struct kbase_mm
+ 			 * down to the lowest valid pgd at insert_level
+ 			 */
+ 			err = mmu_insert_alloc_pgds(kbdev, mmut, new_pgds, (insert_level + 1),
+-						    cur_level);
++						    cur_level, &pool_grown);
+ 			if (err)
+-				goto fail_unlock;
++				goto fail_unlock_free_pgds;
++
++			if (pool_grown)
++				goto repeat_page_table_walk;
+ 
+ 			newly_created_pgd = true;
+ 
+@@ -2540,9 +2580,10 @@ static int mmu_insert_pages_no_flush(struct kbase_device *kbdev, struct kbase_mm
+ fail_unlock_free_pgds:
+ 	/* Free the pgds allocated by us from insert_level+1 to bottom level */
+ 	for (l = cur_level; l > insert_level; l--)
+-		kbase_mmu_free_pgd(kbdev, mmut, new_pgds[l]);
++		if (new_pgds[l] != KBASE_MMU_INVALID_PGD_ADDRESS)
++			kbase_mmu_free_pgd(kbdev, mmut, new_pgds[l]);
++
+ 
+-fail_unlock:
+ 	if (insert_vpfn != start_vpfn) {
+ 		/* Invalidate the pages we have partially completed */
+ 		mmu_insert_pages_failure_recovery(kbdev, mmut, start_vpfn, insert_vpfn, dirty_pgds,
+@@ -3047,6 +3088,11 @@ static int mmu_teardown_pages(struct kbase_device *kbdev, struct kbase_mmu_table
+ 	struct kbase_mmu_debug_info mmu_debug_info;
+ 	u64 time_in_ns;
+ #endif /* CONFIG_MALI_MTK_UNHANDLED_PAGE_FAULT_DEBUG */
++#if IS_ENABLED(CONFIG_MALI_MTK_KBASE_MMU_DBG_LOG)
++#if 0 // disable
++	int page_num = 0;
++#endif
++#endif /* CONFIG_MALI_MTK_KBASE_MMU_DBG_LOG */
+ 	LIST_HEAD(free_pgds_list);
+ 
+ 	/* Calls to this function are inherently asynchronous, with respect to
+@@ -3090,6 +3136,21 @@ static int mmu_teardown_pages(struct kbase_device *kbdev, struct kbase_mmu_table
+ 
+ 	mutex_lock(&mmut->mmu_lock);
+ 
++#if IS_ENABLED(CONFIG_MALI_MTK_KBASE_MMU_DBG_LOG)
++#if 0 // disable
++	if(phys) {
++		dev_err(kbdev->dev, "[MMU][unmap] va 0x%llx, phys 0x%llx, nr 0x%lx, ctx %d_%d, as %d\n",
++			start_vpfn, as_phys_addr_t(phys[0]), nr_phys_pages,
++			mmut->kctx ? mmut->kctx->tgid : 0,
++			mmut->kctx ? mmut->kctx->id : 0,
++			mmut->kctx ? mmut->kctx->as_nr : MCU_AS_NR);
++		for(page_num = 0; page_num < nr_phys_pages; page_num++) {
++			dev_err(kbdev->dev, "[MMU][unmap] %4u: pa %llx\n", page_num, as_phys_addr_t(phys[page_num]));
++		}
++	}
++#endif
++#endif /* CONFIG_MALI_MTK_KBASE_MMU_DBG_LOG */
++
+ 	err = kbase_mmu_teardown_pgd_pages(kbdev, mmut, vpfn, nr_virt_pages, &dirty_pgds,
+ 					   &free_pgds_list, flush_op);
+ 
+@@ -3619,24 +3680,30 @@ int kbase_mmu_migrate_page(struct tagged_addr old_phys, struct tagged_addr new_p
+ 
+ 	/* Unlock MMU region.
+ 	 *
+-	 * Notice that GPUs which don't issue flush commands via GPU control
+-	 * still need an additional GPU cache flush here, this time only
+-	 * for the page table, because the function call above to sync PGDs
+-	 * won't have any effect on them.
++	 * For GPUs without FLUSH_PA_RANGE support, the GPU caches were completely
++	 * cleaned and invalidated after locking the virtual address range affected
++	 * by the migration. As long as the lock is in place, GPU access to the
++	 * locked range would remain blocked. So there is no need to clean and
++	 * invalidate the GPU caches again after the copying the page contents
++	 * of old page and updating the page table entry to point to new page.
++	 *
++	 * For GPUs with FLUSH_PA_RANGE support, the contents of old page would
++	 * have been evicted from the GPU caches after locking the virtual address
++	 * range. The page table entry contents also would have been invalidated
++	 * from the GPU's L2 cache by kbase_mmu_sync_pgd() after the page table
++	 * update.
++	 *
++	 * If kbase_mmu_hw_do_unlock_no_addr() fails, GPU reset will be triggered which
++	 * would remove the MMU lock and so there is no need to rollback page migration
++	 * and the failure can be ignored.
+ 	 */
+ 	spin_lock_irqsave(&kbdev->hwaccess_lock, hwaccess_flags);
+ 	if (kbdev->pm.backend.gpu_ready && mmut->kctx->as_nr >= 0) {
+ 		int as_nr = mmut->kctx->as_nr;
+ 		struct kbase_as *as = &kbdev->as[as_nr];
++		int local_ret = kbase_mmu_hw_do_unlock_no_addr(kbdev, as, &op_param);
+ 
+-		if (mmu_flush_cache_on_gpu_ctrl(kbdev)) {
+-			ret = kbase_mmu_hw_do_unlock(kbdev, as, &op_param);
+-		} else {
+-			ret = kbase_gpu_cache_flush_and_busy_wait(kbdev,
+-								  GPU_COMMAND_CACHE_CLN_INV_L2);
+-			if (!ret)
+-				ret = kbase_mmu_hw_do_unlock_no_addr(kbdev, as, &op_param);
+-		}
++		CSTD_UNUSED(local_ret);
+ 	}
+ 	spin_unlock_irqrestore(&kbdev->hwaccess_lock, hwaccess_flags);
+ 	/* Releasing locks before checking the migration transaction error state */
+@@ -3647,22 +3714,27 @@ int kbase_mmu_migrate_page(struct tagged_addr old_phys, struct tagged_addr new_p
+ 	mmu_page_migration_transaction_end(kbdev);
+ 	spin_unlock_irqrestore(&kbdev->hwaccess_lock, hwaccess_flags);
+ 
+-	/* Checking the final migration transaction error state */
+-	if (ret < 0) {
+-		dev_err(kbdev->dev, "%s: failed to unlock MMU region.", __func__);
+-		goto undo_mappings;
+-	}
+-
+ 	/* Undertaking metadata transfer, while we are holding the mmu_lock */
+ 	spin_lock(&page_md->migrate_lock);
+ 	if (level == MIDGARD_MMU_BOTTOMLEVEL) {
+-		size_t page_array_index =
+-			page_md->data.mapped.vpfn - page_md->data.mapped.reg->start_pfn;
++		enum kbase_page_status page_status = PAGE_STATUS_GET(page_md->status);
+ 
+-		WARN_ON(PAGE_STATUS_GET(page_md->status) != ALLOCATED_MAPPED);
++		if (page_status == ALLOCATED_MAPPED) {
++			/* Replace page in array of pages of the physical allocation. */
++			size_t page_array_index =
++				div_u64(page_md->data.mapped.vpfn, GPU_PAGES_PER_CPU_PAGE) -
++				page_md->data.mapped.reg->start_pfn;
+ 
+-		/* Replace page in array of pages of the physical allocation. */
+-		page_md->data.mapped.reg->gpu_alloc->pages[page_array_index] = new_phys;
++			page_md->data.mapped.reg->gpu_alloc->pages[page_array_index] = new_phys;
++		} else if (page_status == NOT_MOVABLE) {
++			dev_dbg(kbdev->dev,
++				"%s: migration completed and page has become NOT_MOVABLE.",
++				__func__);
++		} else {
++			dev_WARN(kbdev->dev,
++				 "%s: migration completed but page has moved to status %d.",
++				 __func__, page_status);
++		}
+ 	}
+ 	/* Update the new page dma_addr with the transferred metadata from the old_page */
+ 	page_md->dma_addr = new_dma_addr;
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/platform/mt6989/mali_kbase_config_mt6989.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/platform/mt6989/mali_kbase_config_mt6989.c
+index b42a63e..421434c 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/platform/mt6989/mali_kbase_config_mt6989.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/platform/mt6989/mali_kbase_config_mt6989.c
+@@ -178,6 +178,9 @@ static int pm_callback_power_on(struct kbase_device *kbdev)
+ {
+ 	int ret = 1;
+ 	unsigned long flags;
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++	int ret_warn = 0;
++#endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ #if IS_ENABLED(CONFIG_MALI_MTK_SLC_ALL_CACHE_MODE)
+ 	int gid = slbc_gid_val(ID_GPU);
+ 	struct slbc_gid_data slbc_data = {0x51ca11ca,0,0,0,0,0,0,0,0};
+@@ -186,12 +189,22 @@ static int pm_callback_power_on(struct kbase_device *kbdev)
+ 	dev_dbg(kbdev->dev, "%s %pK\n", __func__, (void *)kbdev->dev->pm_domain);
+ 
+ 	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++	ret_warn = WARN_ON(kbdev->pm.backend.gpu_powered);
++	if (likely(kbdev->csf.firmware_inited)) {
++		ret_warn |= WARN_ON(!kbdev->pm.active_count);
++		ret_warn |= WARN_ON(kbdev->pm.runtime_active);
++	}
++	if (ret_warn)
++		kbase_pm_debug_status(kbdev);
++#else
+ 	WARN_ON(kbdev->pm.backend.gpu_powered);
+ 
+ 	if (likely(kbdev->csf.firmware_inited)) {
+ 		WARN_ON(!kbdev->pm.active_count);
+ 		WARN_ON(kbdev->pm.runtime_active);
+ 	}
++#endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ 	spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+ 
+ #if IS_ENABLED(CONFIG_MALI_MTK_SLC_ALL_CACHE_MODE)
+@@ -211,16 +224,28 @@ static void pm_callback_power_off(struct kbase_device *kbdev)
+ {
+ 	unsigned long flags;
+ 	struct arm_smccc_res res;
+-
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++	int ret_warn = 0;
++#endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ 	dev_dbg(kbdev->dev, "%s\n", __func__);
+ 
+ 	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++	ret_warn = WARN_ON(kbdev->pm.backend.gpu_powered);
++	if (likely(kbdev->csf.firmware_inited)) {
++		ret_warn |= WARN_ON(kbase_csf_scheduler_get_nr_active_csgs(kbdev));
++		ret_warn |= WARN_ON(kbdev->pm.backend.mcu_state != KBASE_MCU_OFF);
++	}
++	if (ret_warn)
++		kbase_pm_debug_status(kbdev);
++#else
+ 	WARN_ON(kbdev->pm.backend.gpu_powered);
+ 
+ 	if (likely(kbdev->csf.firmware_inited)) {
+ 		WARN_ON(kbase_csf_scheduler_get_nr_active_csgs(kbdev));
+ 		WARN_ON(kbdev->pm.backend.mcu_state != KBASE_MCU_OFF);
+ 	}
++#endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ 	spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+ 
+ 	/* Power down the GPU immediately */
+@@ -239,6 +264,9 @@ static void pm_callback_runtime_gpu_active(struct kbase_device *kbdev)
+ {
+ 	unsigned long flags;
+ 	int error;
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++	int ret_warn = 0;
++#endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ #if IS_ENABLED(CONFIG_MALI_MTK_AUTOSUSPEND_DELAY)
+ 	int target_fps = 0;
+ 	int temp_autosuspend_delay_ms = 0;
+@@ -252,9 +280,17 @@ static void pm_callback_runtime_gpu_active(struct kbase_device *kbdev)
+ 	mtk_common_ged_dvfs_write_sysram_last_commit_dual();
+ 
+ 	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++	ret_warn = WARN_ON(!kbdev->pm.backend.gpu_powered);
++	ret_warn |= WARN_ON(!kbdev->pm.active_count);
++	ret_warn |= WARN_ON(kbdev->pm.runtime_active);
++	if (ret_warn)
++		kbase_pm_debug_status(kbdev);
++#else
+ 	WARN_ON(!kbdev->pm.backend.gpu_powered);
+ 	WARN_ON(!kbdev->pm.active_count);
+ 	WARN_ON(kbdev->pm.runtime_active);
++#endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ 	spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+ 
+ 	if (pm_runtime_status_suspended(kbdev->dev)) {
+@@ -301,7 +337,9 @@ static void pm_callback_runtime_gpu_active(struct kbase_device *kbdev)
+ static void pm_callback_runtime_gpu_idle(struct kbase_device *kbdev)
+ {
+ 	unsigned long flags;
+-
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++	int ret_warn = 0;
++#endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ 	dev_dbg(kbdev->dev, "%s", __func__);
+ 
+ 	lockdep_assert_held(&kbdev->pm.lock);
+@@ -314,10 +352,19 @@ static void pm_callback_runtime_gpu_idle(struct kbase_device *kbdev)
+ #endif
+ 
+ 	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++	ret_warn = WARN_ON(!kbdev->pm.backend.gpu_powered);
++	ret_warn |= WARN_ON(kbdev->pm.backend.l2_state != KBASE_L2_OFF);
++	ret_warn |= WARN_ON(kbdev->pm.active_count);
++	ret_warn |= WARN_ON(!kbdev->pm.runtime_active);
++	if (ret_warn)
++		kbase_pm_debug_status(kbdev);
++#else
+ 	WARN_ON(!kbdev->pm.backend.gpu_powered);
+ 	WARN_ON(kbdev->pm.backend.l2_state != KBASE_L2_OFF);
+ 	WARN_ON(kbdev->pm.active_count);
+ 	WARN_ON(!kbdev->pm.runtime_active);
++#endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ 	spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+ 
+ 	pm_runtime_mark_last_busy(kbdev->dev);
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/platform/mtk_platform_common.h b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/platform/mtk_platform_common.h
+index 98cabf2..48db722 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/platform/mtk_platform_common.h
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/platform/mtk_platform_common.h
+@@ -17,6 +17,7 @@ enum mtk_common_debug_types {
+ 	MTK_COMMON_DBG_TRIGGER_BUG_ON,
+ 	MTK_COMMON_DBG_DUMP_FULL_DB,
+ 	MTK_COMMON_DBG_DUMP_DB_BY_SETTING,
++	MTK_COMMON_DBG_DUMP_GIC_STATUS,
+ };
+ 
+ #define MTK_DBG_HOOK_NA                                        ((u64)0x0)
+@@ -67,6 +68,9 @@ int mtk_common_ged_dvfs_get_last_commit_idx(void);
+ int mtk_common_ged_dvfs_get_last_commit_top_idx(void);
+ int mtk_common_ged_dvfs_get_last_commit_stack_idx(void);
+ 
++/* Dump gic status */
++void mtk_debug_dump_gic_status(struct kbase_device *kbdev);
++
+ unsigned long mtk_common_ged_dvfs_write_sysram_last_commit_idx(void);
+ unsigned long mtk_common_ged_dvfs_write_sysram_last_commit_top_idx(void);
+ unsigned long mtk_common_ged_dvfs_write_sysram_last_commit_stack_idx(void);
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/platform/mtk_platform_common/mtk_platform_common.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/platform/mtk_platform_common/mtk_platform_common.c
+index f8a4618..01d2d4e 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/platform/mtk_platform_common/mtk_platform_common.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/platform/mtk_platform_common/mtk_platform_common.c
+@@ -76,6 +76,9 @@ static struct proc_dir_entry *proc_root;
+ #include <platform/mtk_platform_common/mtk_platform_irq_trace.h>
+ #endif /* CONFIG_MALI_MTK_IRQ_TRACE */
+ 
++#include <linux/of_irq.h>
++extern void mt_irq_dump_status(unsigned int irq);
++
+ static bool mfg_powered;
+ static DEFINE_MUTEX(mfg_pm_lock);
+ static DEFINE_MUTEX(common_debug_lock);
+@@ -108,7 +111,15 @@ void mtk_common_pm_mfg_idle(void)
+ 	mfg_powered = false;
+ 	mutex_unlock(&mfg_pm_lock);
+ }
+-
++#if IS_ENABLED(CONFIG_MALI_MTK_DIAGNOSIS_MODE)
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++#define MAX_STATES_NUM 16
++extern u8 mcu_state_array[MAX_STATES_NUM];
++extern u8 l2_state_array[MAX_STATES_NUM];
++extern int mcu_history_idx;
++extern int l2_history_idx;
++#endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
++#endif /* CONFIG_MALI_MTK_DIAGNOSIS_MODE */
+ #if IS_ENABLED(CONFIG_MALI_MTK_DIAGNOSIS_MODE)
+ #if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
+ extern u64 mcu_state_history;
+@@ -128,6 +139,11 @@ void mtk_common_debug(enum mtk_common_debug_types type, int pid, u64 hook_point)
+ #if IS_ENABLED(CONFIG_MALI_MTK_DIAGNOSIS_MODE)
+ 	u64 diagnosis_mode = 0;
+ 	u64 diagnosis_dump_mask = 0;
++#if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
++	u8 tmp_state_array[MAX_STATES_NUM];
++	int tmp_idx = 0 ;
++	int i = 0 ;
++#endif
+ #endif /* CONFIG_MALI_MTK_DIAGNOSIS_MODE */
+ 
+ 	if (IS_ERR_OR_NULL(kbdev))
+@@ -139,15 +155,41 @@ void mtk_common_debug(enum mtk_common_debug_types type, int pid, u64 hook_point)
+ 		diagnosis_mode = mtk_diagnosis_mode_get_mode();
+ 		diagnosis_dump_mask = mtk_diagnosis_mode_get_dump_mask();
+ #if IS_ENABLED(CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG)
+-		dev_info(kbdev->dev, "mcu state back trace %llu->%llu->%llu->%llu->%llu->%llu->%llu->%llu\n",
+-			((mcu_state_history >> 56) & 0xFF),
+-			((mcu_state_history >> 48) & 0xFF),
+-			((mcu_state_history >> 40) & 0xFF),
+-			((mcu_state_history >> 32) & 0xFF),
+-			((mcu_state_history >> 24) & 0xFF),
+-			((mcu_state_history >> 16) & 0xFF),
+-			((mcu_state_history >>  8) & 0xFF),
+-			((mcu_state_history >>  0) & 0xFF));
++		tmp_idx = mcu_history_idx;
++		for (i = 0; i < MAX_STATES_NUM; i++) {
++			if (tmp_idx >= MAX_STATES_NUM)
++				tmp_idx = 0;
++			tmp_state_array[i] = mcu_state_array[tmp_idx];
++			tmp_idx ++;
++		}
++		dev_info(kbdev->dev, "mcu state back trace %hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu\n",
++			tmp_state_array[0],tmp_state_array[1],tmp_state_array[2],tmp_state_array[3],tmp_state_array[4],tmp_state_array[5],tmp_state_array[6],tmp_state_array[7],
++			tmp_state_array[8],tmp_state_array[9],tmp_state_array[10],tmp_state_array[11],tmp_state_array[12],tmp_state_array[13],tmp_state_array[14],tmp_state_array[15]);
++
++#if IS_ENABLED(CONFIG_MALI_MTK_LOG_BUFFER)
++		mtk_logbuffer_type_print(kbdev, MTK_LOGBUFFER_TYPE_CRITICAL | MTK_LOGBUFFER_TYPE_EXCEPTION,
++		"mcu state back trace %hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu\n",
++			tmp_state_array[0],tmp_state_array[1],tmp_state_array[2],tmp_state_array[3],tmp_state_array[4],tmp_state_array[5],tmp_state_array[6],tmp_state_array[7],
++			tmp_state_array[8],tmp_state_array[9],tmp_state_array[10],tmp_state_array[11],tmp_state_array[12],tmp_state_array[13],tmp_state_array[14],tmp_state_array[15]);
++#endif /* CONFIG_MALI_MTK_LOG_BUFFER */
++		tmp_idx = l2_history_idx;
++		for (i = 0; i < MAX_STATES_NUM; i++) {
++			if (tmp_idx >= MAX_STATES_NUM)
++				tmp_idx = 0;
++			tmp_state_array[i] = l2_state_array[tmp_idx];
++			tmp_idx ++;
++		}
++		dev_info(kbdev->dev, "l2 state back trace %hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu\n",
++			tmp_state_array[0],tmp_state_array[1],tmp_state_array[2],tmp_state_array[3],tmp_state_array[4],tmp_state_array[5],tmp_state_array[6],tmp_state_array[7],
++			tmp_state_array[8],tmp_state_array[9],tmp_state_array[10],tmp_state_array[11],tmp_state_array[12],tmp_state_array[13],tmp_state_array[14],tmp_state_array[15]);
++
++#if IS_ENABLED(CONFIG_MALI_MTK_LOG_BUFFER)
++		mtk_logbuffer_type_print(kbdev, MTK_LOGBUFFER_TYPE_CRITICAL | MTK_LOGBUFFER_TYPE_EXCEPTION,
++		"l2 state back trace %hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu->%hhu\n",
++			tmp_state_array[0],tmp_state_array[1],tmp_state_array[2],tmp_state_array[3],tmp_state_array[4],tmp_state_array[5],tmp_state_array[6],tmp_state_array[7],
++			tmp_state_array[8],tmp_state_array[9],tmp_state_array[10],tmp_state_array[11],tmp_state_array[12],tmp_state_array[13],tmp_state_array[14],tmp_state_array[15]);
++
++#endif /* CONFIG_MALI_MTK_LOG_BUFFER */
+ #endif /* CONFIG_MALI_MTK_POWER_TRANSITION_TIMEOUT_DEBUG */
+ 		dev_info(kbdev->dev, "diagnosis hook = 0x%08llx, mode = %llu, mask = 0x%08llx", hook_point, diagnosis_mode, diagnosis_dump_mask);
+ 		if (hook_point & diagnosis_dump_mask) {
+@@ -176,6 +218,9 @@ void mtk_common_debug(enum mtk_common_debug_types type, int pid, u64 hook_point)
+ 	}
+ 
+ 	switch (type) {
++	case MTK_COMMON_DBG_DUMP_GIC_STATUS:
++		mtk_debug_dump_gic_status(kbdev);
++		break;
+ 	case MTK_COMMON_DBG_DUMP_INFRA_STATUS:
+ 		mtk_common_gpufreq_dump_infra_status(kbdev);
+ 		break;
+@@ -288,6 +333,21 @@ void mtk_common_gpufreq_dump_infra_status(struct kbase_device *kbdev)
+ 	}
+ }
+ 
++void mtk_debug_dump_gic_status(struct kbase_device *kbdev)
++{
++	int i = 0;
++	unsigned int irq = 0;
++	if(kbdev && kbdev->dev && kbdev->dev->of_node) {
++		/* Dump gic information */
++		for (i = 0; i < 3; i++) {
++			/* 0: GPU, 1: MMU, 2: JOB */
++			irq = irq_of_parse_and_map(kbdev->dev->of_node, i);
++			if (irq)
++				mt_irq_dump_status(irq);
++		}
++	}
++}
++
+ int mtk_common_gpufreq_commit(int opp_idx)
+ {
+ 	int ret = -1;
+diff --git a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/thirdparty/mali_kbase_mmap.c b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/thirdparty/mali_kbase_mmap.c
+index 16e0f56..a1a6bb7 100644
+--- a/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/thirdparty/mali_kbase_mmap.c
++++ b/gpu_mali/mali_avalon/mali-r44p1/drivers/gpu/arm/midgard/thirdparty/mali_kbase_mmap.c
+@@ -20,18 +20,103 @@
+  */
+ 
+ 
++/**
++ * shader_code_align_and_check() - Align the specified pointer according to shader code
++ *                     requirement.
++ *
++ * @gap_end:           Highest possible start address for alignment. The caller must ensure
++ *                     the input has already been properly aligned with info contained fields.
++ * @info:              vm_unmapped_area_info structure passed, containing alignment, length
++ *                     and limits for the allocation
++ *
++ * The function only undertakes the shader code alignment adjustment. It's the caller's
++ * responsibility that the input value provided via gap_end has already been properly aligned
++ * in compliance to the fields specified in the info structure. Irrespective the return result,
++ * the value of the variable pointed by the pointer gap_end may have been decreased in
++ * reaching the required alignment, but will not drop below info->low_limit.
++ *
++ * Return: true if gap_end is now aligned correctly, false otherwise
++ */
++static bool shader_code_align_and_check(unsigned long *gap_end, struct vm_unmapped_area_info *info)
++{
++	unsigned long align_adjust = (info->align_offset ? info->align_offset : info->length);
++	unsigned long align_floor = info->low_limit + align_adjust;
++
++	/* Check for 4GB address inner high-bit pattern, make adjustment if all zeros */
++	if (0 == (*gap_end & BASE_MEM_MASK_4GB) && *gap_end >= align_floor)
++		(*gap_end) -= align_adjust;
++	if (0 == ((*gap_end + info->length) & BASE_MEM_MASK_4GB) && *gap_end >= align_floor)
++		(*gap_end) -= align_adjust;
++
++	return ((*gap_end & BASE_MEM_MASK_4GB) && ((*gap_end + info->length) & BASE_MEM_MASK_4GB));
++}
++
++/**
++ * align_4gb_no_straddle() - Align the specified pointer not to straddle over a 4_GB boundary.
++ *
++ * @gap_end:           Highest possible start address for alignment. The caller must ensure
++ *                     the input has already been properly aligned with info contained fields.
++ * @info:              vm_unmapped_area_info structure passed, containing alignment, length
++ *                     and limits for the allocation
++ *
++ * The function only undertakes the 4GB boundary alignment adjustment. It's the caller's
++ * responsibility that the input value provided via gap_end has already been properly aligned
++ * in compliance to the fields specified in the info structure.
++ *
++ * Return: true is always expected and the gap_end is aligned correctly, false can only
++ *         be possible when the code has been wrongly modified.
++ */
++static bool align_4gb_no_straddle(unsigned long *gap_end, struct vm_unmapped_area_info *info)
++{
++	unsigned long start = *gap_end;
++	unsigned long end = *gap_end + info->length;
++	unsigned long mask = ~((unsigned long)U32_MAX);
++
++	/* Check if 4GB boundary is straddled */
++	if ((start & mask) != ((end - 1) & mask)) {
++		unsigned long offset = end - (end & mask);
++		/* This is to ensure that alignment doesn't get
++		 * disturbed in an attempt to prevent straddling at
++		 * 4GB boundary. The GPU VA is aligned to 2MB when the
++		 * allocation size is > 2MB and there is enough CPU &
++		 * GPU virtual space.
++		 */
++		unsigned long rounded_offset = ALIGN(offset, info->align_mask + 1);
++
++		start -= rounded_offset;
++		end -= rounded_offset;
++
++		/* Patch gap_end to use new starting address for VA region */
++		*gap_end = start;
++
++		/* The preceding 4GB boundary shall not get straddled,
++		 * even after accounting for the alignment, as the
++		 * size of allocation is limited to 4GB and the initial
++		 * start location was already aligned.
++		 */
++		if (WARN_ONCE((start & mask) != ((end - 1) & mask),
++			      "Alignment unexpected straddles over 4GB boundary!"))
++			return false;
++	}
++
++	return true;
++}
++
++#if (KERNEL_VERSION(6, 1, 0) > LINUX_VERSION_CODE) || !defined(__ANDROID_COMMON_KERNEL__)
+ /**
+  * align_and_check() - Align the specified pointer to the provided alignment and
+- *                     check that it is still in range.
+- * @gap_end:        Highest possible start address for allocation (end of gap in
+- *                  address space)
+- * @gap_start:      Start address of current memory area / gap in address space
+- * @info:           vm_unmapped_area_info structure passed to caller, containing
+- *                  alignment, length and limits for the allocation
+- * @is_shader_code: True if the allocation is for shader code (which has
+- *                  additional alignment requirements)
+- * @is_same_4gb_page: True if the allocation needs to reside completely within
+- *                    a 4GB chunk
++ *                     check that it is still in range. For Kernel versions below
++ *                     6.1, it requires that the length of the alignment is already
++ *                     extended by a worst-case alignment mask.
++ * @gap_end:           Highest possible start address for allocation (end of gap in
++ *                     address space)
++ * @gap_start:         Start address of current memory area / gap in address space
++ * @info:              vm_unmapped_area_info structure passed to caller, containing
++ *                     alignment, length and limits for the allocation
++ * @is_shader_code:    True if the allocation is for shader code (which has
++ *                     additional alignment requirements)
++ * @is_same_4gb_page:  True if the allocation needs to reside completely within
++ *                     a 4GB chunk
+  *
+  * Return: true if gap_end is now aligned correctly and is still in range,
+  *         false otherwise
+@@ -41,58 +126,22 @@ static bool align_and_check(unsigned long *gap_end, unsigned long gap_start,
+ 		bool is_same_4gb_page)
+ {
+ 	/* Compute highest gap address at the desired alignment */
+-	(*gap_end) -= info->length;
+-	(*gap_end) -= (*gap_end - info->align_offset) & info->align_mask;
++	*gap_end -= info->length;
++	*gap_end -= (*gap_end - info->align_offset) & info->align_mask;
+ 
+ 	if (is_shader_code) {
+-		/* Check for 4GB boundary */
+-		if (0 == (*gap_end & BASE_MEM_MASK_4GB))
+-			(*gap_end) -= (info->align_offset ? info->align_offset :
+-					info->length);
+-		if (0 == ((*gap_end + info->length) & BASE_MEM_MASK_4GB))
+-			(*gap_end) -= (info->align_offset ? info->align_offset :
+-					info->length);
+-
+-		if (!(*gap_end & BASE_MEM_MASK_4GB) || !((*gap_end +
+-				info->length) & BASE_MEM_MASK_4GB))
++		if (!shader_code_align_and_check(gap_end, info))
++			return false;
++	} else if (is_same_4gb_page)
++		if (!align_4gb_no_straddle(gap_end, info))
+ 			return false;
+-	} else if (is_same_4gb_page) {
+-		unsigned long start = *gap_end;
+-		unsigned long end = *gap_end + info->length;
+-		unsigned long mask = ~((unsigned long)U32_MAX);
+-
+-		/* Check if 4GB boundary is straddled */
+-		if ((start & mask) != ((end - 1) & mask)) {
+-			unsigned long offset = end - (end & mask);
+-			/* This is to ensure that alignment doesn't get
+-			 * disturbed in an attempt to prevent straddling at
+-			 * 4GB boundary. The GPU VA is aligned to 2MB when the
+-			 * allocation size is > 2MB and there is enough CPU &
+-			 * GPU virtual space.
+-			 */
+-			unsigned long rounded_offset =
+-					ALIGN(offset, info->align_mask + 1);
+-
+-			start -= rounded_offset;
+-			end -= rounded_offset;
+-
+-			*gap_end = start;
+-
+-			/* The preceding 4GB boundary shall not get straddled,
+-			 * even after accounting for the alignment, as the
+-			 * size of allocation is limited to 4GB and the initial
+-			 * start location was already aligned.
+-			 */
+-			WARN_ON((start & mask) != ((end - 1) & mask));
+-		}
+-	}
+-
+ 
+ 	if ((*gap_end < info->low_limit) || (*gap_end < gap_start))
+ 		return false;
+ 
+ 	return true;
+ }
++#endif
+ 
+ /**
+  * kbase_unmapped_area_topdown() - allocates new areas top-down from
+@@ -226,37 +275,124 @@ check_current:
+ 			}
+ 		}
+ 	}
+-#else
+-	unsigned long length, high_limit, gap_start, gap_end;
++#else /* KERNEL_VERSION(6, 1, 0) > LINUX_VERSION_CODE */
++#ifdef __ANDROID_COMMON_KERNEL__
++	struct vm_unmapped_area_info tmp_info = *info;
++	unsigned long length;
++
++	tmp_info.flags |= VM_UNMAPPED_AREA_TOPDOWN;
++	if (!(is_shader_code || is_same_4gb_page))
++		return vm_unmapped_area(&tmp_info);
++
++	length = info->length + info->align_mask;
++
++	/* Due to additional alignment requirement, shader_code or same_4gb_page
++	 * needs iterations for alignment search and confirmation check.
++	 */
++	while (true) {
++		unsigned long saved_high_lmt = tmp_info.high_limit;
++		unsigned long gap_end, start, rev_high_limit;
++
++		gap_end = vm_unmapped_area(&tmp_info);
++		if (IS_ERR_VALUE(gap_end))
++			return gap_end;
++
++		start = gap_end;
++		if (is_shader_code) {
++			bool shader_code_aligned;
++			unsigned long align_cmp_ref;
++
++			while (true) {
++				/* Save the start value for progress check. the loop needs
++				 * to end if the alignment can't progress any further.
++				 * In summary, the loop ends condition here is either:
++				 *  1. shader_code_aligned is true; or
++				 *  2. align_cmp_ref == gap_end.
++				 */
++				align_cmp_ref = gap_end;
++
++				shader_code_aligned =
++					shader_code_align_and_check(&gap_end, &tmp_info);
++				if (shader_code_aligned || (align_cmp_ref == gap_end))
++					break;
++			}
++
++			if (shader_code_aligned) {
++				if (start == gap_end)
++					return gap_end;
++
++				rev_high_limit = gap_end + length;
++			} else
++				break;
++		} else {
++			/* must be same_4gb_page case */
++			if (likely(align_4gb_no_straddle(&gap_end, &tmp_info))) {
++				if (start == gap_end)
++					return gap_end;
++
++				rev_high_limit = gap_end + length;
++			} else
++				break;
++		}
++
++		if (rev_high_limit < info->low_limit)
++			break;
++
++		if (WARN_ONCE(rev_high_limit >= saved_high_lmt,
++			      "Unexpected recurring high_limit in search, %lx => %lx\n"
++			      "\tinfo-input: limit=[%lx, %lx], mask=%lx, len=%lx\n",
++			      saved_high_lmt, rev_high_limit, info->low_limit, info->high_limit,
++			      info->align_mask, info->length))
++			rev_high_limit = saved_high_lmt -
++					 (info->align_offset ? info->align_offset : info->length);
++
++		/* Repeat the search with a decreasing rev_high_limit */
++		tmp_info.high_limit = rev_high_limit;
++	}
++#else /* __ANDROID_COMMON_KERNEL__ */
++	unsigned long length, high_limit;
+ 
+ 	MA_STATE(mas, &current->mm->mm_mt, 0, 0);
++
+ 	/* Adjust search length to account for worst case alignment overhead */
+ 	length = info->length + info->align_mask;
+ 	if (length < info->length)
+ 		return -ENOMEM;
+ 
+-	/*
+-	 * Adjust search limits by the desired length.
+-	 * See implementation comment at top of unmapped_area().
+-	 */
+-	gap_end = info->high_limit;
+-	if (gap_end < length)
+-		return -ENOMEM;
+-	high_limit = gap_end - length;
+-
+-	if (info->low_limit > high_limit)
++	high_limit = info->high_limit;
++	if ((high_limit - info->low_limit) < length)
+ 		return -ENOMEM;
+ 
+ 	while (true) {
+-		if (mas_empty_area_rev(&mas, info->low_limit, info->high_limit - 1, length))
++		unsigned long gap_start, gap_end;
++		unsigned long saved_high_lmt = high_limit;
++
++		if (mas_empty_area_rev(&mas, info->low_limit, high_limit - 1, length))
+ 			return -ENOMEM;
++
+ 		gap_end = mas.last + 1;
+-		gap_start = mas.min;
++		gap_start = mas.index;
+ 
+ 		if (align_and_check(&gap_end, gap_start, info, is_shader_code, is_same_4gb_page))
+ 			return gap_end;
++
++		if (gap_end < info->low_limit)
++			return -ENOMEM;
++
++		/* Adjust next search high limit */
++		high_limit = gap_end + length;
++
++		if (WARN_ONCE(high_limit >= saved_high_lmt,
++			      "Unexpected recurring high_limit in search, %lx => %lx\n"
++			      "\tinfo-input: limit=[%lx, %lx], mask=%lx, len=%lx\n",
++			      saved_high_lmt, high_limit, info->low_limit, info->high_limit,
++			      info->align_mask, info->length))
++			high_limit = saved_high_lmt -
++				     (info->align_offset ? info->align_offset : info->length);
++		mas_reset(&mas);
+ 	}
+-#endif
++#endif /* __ANDROID_COMMON_KERNEL__ */
++#endif /* KERNEL_VERSION(6, 1, 0) > LINUX_VERSION_CODE */
+ 	return -ENOMEM;
+ }
+ 
+-- 
+2.56.0
+

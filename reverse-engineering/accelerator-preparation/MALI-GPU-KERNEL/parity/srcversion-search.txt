@@ -1,0 +1,25 @@
+# mali_kbase_mt6878_r44 srcversion residue — search record (2026-10-08)
+stock srcversion            2DB292FCC397C627E83ED2F
+reconstruction srcversion   0BDF5EC8C8FB49D6C80ED00 (hyb2 / final tree; reproduced by scripts/srcversion.py == modpost)
+mali_mgm / mali_prot_alloc  stock srcversion reproduced exactly (04E00BE5176E1282B6F63CF / C72AFDC31F88CEA57063F0F)
+
+srcversion = modpost MD4 (non-standard: ntohl word order) over each object's source + same-directory
+deps, whitespace and /* */ comments removed; // comments, string literals and #if'd-out text count.
+scripts/srcversion.py reproduces modpost bit-exactly (validated on 9 builds; C harness tools/sv).
+
+Searched (no match):
+  * every file combination of NothingOSS 580d08e x c3d070e (12 differing files, 4096 combinations)
+  * fixed final tree, varying mem_migrate.[ch], mmu.c, pm_driver.c, irq_linux.c over NothingOSS
+    580d08e, c3d070e, 02bc041, 2ed40ed, b57446c and MiCode malachite-u-oss / lapis-v-oss (360 combinations)
+  * whole MiCode malachite-u-oss (62e229f) and lapis-v-oss (9f8716d) trees: code further from stock
+    (1121 / 1137 identical kbase functions) - not the stock lineage
+
+Why the residue is code-invisible (proven, not assumed):
+  * all 1826 functions, all 672 other data objects, every section except .modinfo/.note.gnu.build-id,
+    all 21 relocation sections (semantic), 443 import CRCs, 145 export CRCs, 98 KCFI type ids identical;
+  * __bug_table (WARN/BUG file+line records) identical after taking pm_driver.c from c3d070e
+    (its lockdep_assert_held + blank line: +2 lines, the exact stock shift for lines >= 1166);
+  * CONFIG_PAGE_MIGRATION_SUPPORT is off in this build, so the c3d070e page-migration bodies compile
+    to stubs; dozens of text-only variants of those regions are indistinguishable in the binary.
+Conclusion: stock was built from MTK alps-mp-u0.mp1.rc-V10.29 text that is not published in any
+located source; it differs from the recovered tree only in text this configuration does not compile.
