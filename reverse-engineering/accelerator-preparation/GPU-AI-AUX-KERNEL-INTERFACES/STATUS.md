@@ -1,15 +1,39 @@
-# GPU-AI-AUX-KERNEL-INTERFACES status — 2026-10-08
+# GPU-AI-AUX-KERNEL-INTERFACES status — DONE
 
-**PARTIAL / actionable kernel RE (class A).** 3 exact stock targets located; 9 pinned donor candidates. 0 modules have existing published function/data evidence, reproduced as citations—not new measurements.
+**DONE (class A).** All three owned modules — `gpueb.ko`, `vcp.ko`, `vcp_status.ko` —
+rebuild from **unmodified public MediaTek ALPS source** (`5e415e059253`) and are identical
+to the shipped stock binaries except each module's 20-byte GNU build-ID descriptor.
 
-GPUEB/VCP target rebuild parity is not yet measured. Secure firmware internals, runtime message timing and remote algorithm behavior cannot be settled by this static preparation. MCUPM/SSPM client parity is UNKNOWN outside the owned GPU/video targets, not falsely counted as DONE.
+Closed axes, measured on a clean checkout: 183 functions, 222 data objects, 142 sections
+(layout and content), 7 867 relocations (raw **and** semantic), 203 import CRCs, 60 export
+CRCs with licence buckets, 13 KCFI type ids, 18 `.modinfo` records, `vermagic`,
+`srcversion`, module aliases, the external provider ABI (16/16 CRCs regenerated from
+source) and B1 == B2 determinism including every intermediate `.o`.
 
-GPUEB and VCP host/status clients were only referenced by MTK-TINYSYS-IPI. Its explicit DONE scope proves the transport module, not these client implementations. SCP and ADSP host code are already DONE elsewhere and are not duplicated.
+Additionally: **67 cross-component ABI edges verified, 67 MATCH, 0 mismatch** — the
+symbols MTK-VCODEC-KERNEL (26), MALI-GPU-KERNEL (15) and MEDIATEK-DRM (1) import from this
+component are produced here with the exact CRCs those DONE modules record.
 
-**Next action:** Reuse DONE mailbox/RPMsg/IPI source and exact provider CRC/KCFI evidence; freeze all client-facing headers.
+* Report: [RECONSTRUCTION-REPORT.md](RECONSTRUCTION-REPORT.md)
+* Source recipe: [SOURCE.md](SOURCE.md) → `android_kernel_modules_gpu_ai_aux_ulefone_gq5012bf1`
+* Rebuild procedure and transcripts: [build-reproduction.md](build-reproduction.md)
+* ABI: [abi-parity.md](abi-parity.md) · [cross-component-abi.tsv](cross-component-abi.tsv)
+* Hardware: [hardware-contract.md](hardware-contract.md)
+* Firmware/ownership: [firmware-boundary.md](firmware-boundary.md)
+* Userspace: [source-to-userspace-contract.md](source-to-userspace-contract.md)
+* Corrections: [stale-claims.md](stale-claims.md)
 
-**Blockers:** full acceptance packet and target-specific donor/config/ABI reconciliation. Signed algorithms and runtime tests are excluded, not a reason to fake static closure.
+**Retained boundaries.** `gpueb.img` and `vcp.img` stay proprietary, unmodified and
+unanalysed — recovering the kernel host does **not** recover firmware algorithms, signing
+or the secure boot chain. MTK-MBOX, MTK-RPMSG-MBOX and MTK-TINYSYS-IPI keep their DONE
+transport ownership; SCP (SENSOR-HUB-KERNEL) and ADSP (AUDIO-DSP-KERNEL) host code was not
+duplicated; MCUPM/SSPM, CCU and APUSYS remain outside this scope. Only the export ABI of
+the 9 provider modules was verified here.
 
-**Definition of DONE:** all owned modules satisfy the complete [parity standard](../PARITY-STANDARD.md), plus the normal-world DT/ABI contract; retained firmware and userspace boundaries remain explicit.
+**Not established.** Nothing was executed on hardware: no probe, firmware boot, IPI
+exchange, mailbox interrupt, feature vote, suspend transition, watchdog or recovery.
+Runtime acceptance items are listed in
+[source-to-userspace-contract.md](source-to-userspace-contract.md) §4 and require separate
+authorisation.
 
 No ADD elsewhere, merge, removal, rename or unrelated status move is authorized by this pack.

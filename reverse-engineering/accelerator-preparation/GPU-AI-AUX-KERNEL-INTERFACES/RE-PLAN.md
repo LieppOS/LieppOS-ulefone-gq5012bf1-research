@@ -1,5 +1,12 @@
 # Source-parity reconstruction sequence — GPU-AI-AUX-KERNEL-INTERFACES
 
+> **Executed and closed.** The steps below were completed by the reconstruction recorded in
+> [RECONSTRUCTION-REPORT.md](RECONSTRUCTION-REPORT.md): all three modules were accepted on
+> every axis of [PARITY-STANDARD.md](../PARITY-STANDARD.md) plus the observable DT/ABI
+> contract, from unmodified public source, with clean-checkout B1/B2 determinism and 67
+> verified cross-component ABI edges. Runtime tests remain a separate, later authorized
+> phase; none was performed.
+
 1. Reuse DONE mailbox/RPMsg/IPI source and exact provider CRC/KCFI evidence; freeze all client-facing headers.
 2. Close gpueb probe/shared-memory/IRQ/channel table/power/readiness/reset/recovery and exported callback interfaces.
 3. Close vcp_status early provider and vcp host boot/reserved-memory/mailbox/feature/suspend/recovery code in dependency order.
