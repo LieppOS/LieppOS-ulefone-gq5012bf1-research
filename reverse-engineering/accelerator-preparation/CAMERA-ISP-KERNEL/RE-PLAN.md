@@ -1,11 +1,17 @@
-# Source-parity reconstruction sequence — CAMERA-ISP-KERNEL
+# CAMERA-ISP-KERNEL — completed reconstruction plan
 
-1. Read the 16 published function/data proof pairs first; match their stock hashes and preserve the existing grafted mtkcam 133c6c1 source. Do not replace byte-exact work with a pristine donor.
-2. Prioritize PDA and VMM regulator/notifier: no function/data proof pair exists for these three owned targets. Recover their source/struct/callback deltas and compile separately.
-3. Certify the already reconstructed HCP → imgsys command/ISP/V4L2 → CCD/RPMsg → CCU → camsys → AIE/DPE stack on full module axes, not function tables alone.
-4. Certify imgsensor framework/glue and C2PS without reopening closed sensor TUs; preserve the one documented imgsensor semantic-equivalence residual.
-5. Close CSI/SENINF, power/IRQ/DMA/IOMMU/media/IOCTL and HAL-consumer boundaries with the preserved stock contract.
+The 2026-10-08 PARTIAL plan is complete for its registered nineteen-module normal-world
+kernel scope.
 
-For **each** target in stock-modules.tsv, create its own function/data/ABI/residual ledger and isolated source patch series. Do not bulk-mark a scope DONE after compiling one binary. Preserve existing exact camera data/function proofs and closed provider source.
+1. **Inventory and ownership** — complete (`module-ownership.tsv`).
+2. **Pinned public donor selection** — complete (NothingOSS kmod/kdm + exact GKI/clang).
+3. **GQ5012BF1 source recovery** — complete (three explicit patches; fixed tree ids).
+4. **All module builds** — complete (19/19).
+5. **Whole-module acceptance** — complete: functions, data, ABI/CRC/KCFI, sections,
+   relocations, symbols, strings and `.modinfo`; zero unresolved.
+6. **Independent B1/B2** — complete, including 225 intermediate objects.
+7. **DT/firmware/userspace boundaries** — documented; runtime remains NOT TESTED.
 
-Apply [PARITY-STANDARD.md](../PARITY-STANDARD.md) completely, then verify imports/exports across the source-built provider graph and DT/observable ABI. Report new results in authoritative research commits before scoped workspace synchronization. Runtime tests are a separate, later authorized phase; none is permitted by this preparation assignment.
+See [RECONSTRUCTION-REPORT.md](RECONSTRUCTION-REPORT.md). Future work is on-device
+acceptance or the separate proprietary `CAMERA-HAL-ISP` scope; neither reopens this static
+kernel closure.

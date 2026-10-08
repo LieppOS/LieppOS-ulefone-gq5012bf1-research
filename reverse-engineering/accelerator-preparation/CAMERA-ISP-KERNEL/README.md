@@ -1,23 +1,50 @@
-# CAMERA-ISP-KERNEL — PARTIAL preparation
+# CAMERA-ISP-KERNEL — DONE
 
-Status: PARTIAL
+Scoped static reconstruction of the Ulefone Armor 29 Pro Thermal / GQ5012BF1 normal-world
+MediaTek MT6878T camera/ISP kernel stack.
 
-- **Subsystem:** Accelerators / Camera ISP kernel
-- **Hardware identity:** ISP7sp FE/RAW/YUV/RMS/MRAW/CAMSV and P2 DIP/TRAW/WPE/ME/PQDIP, SENINF/CSI, CCD/CCU, AIE/FD, DPE, PDA and VMM interfaces. Existing camera-stack/notes/isp-stack.md specifies four CSI ports, nvmem PHY tuning and camera power domains. Sensor dies, EEPROMs, lens/VCM/OIS and camera rails retain their named DONE owners.
-- **Stock artifact:** `mtk_hcp.ko`, `mtk-ipesys-me.ko`, `mtk_imgsys_cmdq.ko`, `mtk_imgsys_v4l2.ko`, `mtk_imgsys_isp7sp.ko`, `ccd_rpmsg.ko`, `mtk_ccd_remoteproc.ko`, `mtk_ccuv.ko`, `mtk-cam-isp7sp.ko`, `mtk_aie.ko`, `mtk_aie_debug_7sp_2.ko`, `camera_dpe_isp7sp.ko`, `pda_drv_mt6878.ko`, `mtk-vmm-isp71-regulator.ko`, `mtk-vmm-notifier.ko`, `imgsensor-glue.ko`, `imgsensor.ko`, `c2ps_perf_ioctl.ko`, `mtk_c2ps.ko`
-- **Interfaces:** Camsys/media/V4L2 scheduling, request/buffer DMA lifecycle and camera IOMMU integration; IMG_SYS/HCP command/tuning buffers and CMDQ; CCD/CCU normal-world communication; DPE/PDA/AIE vendor ioctls; VMM voltage/notifier ABI; imgsensor framework/glue and C2PS scheduling hooks. Sensor TUs are named subscopes inside imgsensor.ko, not duplicate whole-module ownership. Stock .modinfo includes legacy CCU dependency names; actual CRC-resolved exports point to mtk_ccuv.ko—do not invent mtk_ccu.ko or mtk_ccu_mssv.ko absent from the 457-module universe.
-- **Still required:** Complete per-module source/parity and observable DT/ABI acceptance; proprietary algorithms excluded
+## Result
 
-**Purpose:** Camera ISP kernel normal-world kernel source/parity closure, not firmware reconstruction.
+All nineteen owned stock modules rebuild from pinned public source plus explicit device
+patches and pass clean-checkout B1/B2 acceptance. The proof covers every function, data
+object, section, import/export CRC, KCFI id, `.modinfo` record and relocation. There are
+zero unresolved rows; the two bounded non-byte residues are documented and accepted.
 
-**Decision:** REGISTER PARTIAL CHILD. Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed.
+Start here:
 
-**Entry point:** [CLAUDE-HANDOFF.md](CLAUDE-HANDOFF.md). Canonical research: `reverse-engineering/accelerator-preparation/CAMERA-ISP-KERNEL/`. Workspace pack: `Reverse Engineer - PARTIAL/CAMERA-ISP-KERNEL/`.
+* [reconstruction report](RECONSTRUCTION-REPORT.md) — per-module results and residues;
+* [source recipe](SOURCE.md) and [lineage](source-lineage.md);
+* [build reproduction](build-reproduction.md);
+* [ABI parity](abi-parity.md);
+* [hardware contract](hardware-contract.md) and [DT-to-driver contract](device-tree-contract.md);
+* [kernel-to-userspace contract](source-to-userspace-contract.md);
+* [firmware/proprietary boundary](firmware-boundary.md);
+* [evidence index](evidence/EVIDENCE-INDEX.md) and [status](STATUS.md).
 
-**Exclusive primary kernel modules (19):** `mtk_hcp.ko`, `mtk-ipesys-me.ko`, `mtk_imgsys_cmdq.ko`, `mtk_imgsys_v4l2.ko`, `mtk_imgsys_isp7sp.ko`, `ccd_rpmsg.ko`, `mtk_ccd_remoteproc.ko`, `mtk_ccuv.ko`, `mtk-cam-isp7sp.ko`, `mtk_aie.ko`, `mtk_aie_debug_7sp_2.ko`, `camera_dpe_isp7sp.ko`, `pda_drv_mt6878.ko`, `mtk-vmm-isp71-regulator.ko`, `mtk-vmm-notifier.ko`, `imgsensor-glue.ko`, `imgsensor.ko`, `c2ps_perf_ioctl.ko`, `mtk_c2ps.ko`. Dependencies are references, not additional ownership.
+## Owned modules
 
-[stock modules](stock-modules.tsv), [DT nodes](dt-nodes.tsv), [source candidates](source-candidates.tsv), [parity gaps](parity-gaps.tsv), [imports](imports.tsv), [exports](exports.tsv), [functions](functions.tsv), [data symbols](data-symbols.tsv), [donor ABI witnesses](abi-source-witnesses.tsv).
+`mtk_hcp.ko`, `mtk-ipesys-me.ko`, `mtk_imgsys_cmdq.ko`, `mtk_imgsys_v4l2.ko`,
+`mtk_imgsys_isp7sp.ko`, `ccd_rpmsg.ko`, `mtk_ccd_remoteproc.ko`, `mtk_ccuv.ko`,
+`mtk-cam-isp7sp.ko`, `mtk_aie.ko`, `mtk_aie_debug_7sp_2.ko`,
+`camera_dpe_isp7sp.ko`, `pda_drv_mt6878.ko`, `mtk-vmm-isp71-regulator.ko`,
+`mtk-vmm-notifier.ko`, `imgsensor-glue.ko`, `imgsensor.ko`, `c2ps_perf_ioctl.ko`,
+`mtk_c2ps.ko`.
 
-CAMERA-HAL-ISP stays PARTIAL for proprietary CameraProvider/HAL, 3A, tuning, calibration interpretation and CCU/ISP firmware algorithms. The child owns the explicit 19-module ledger only. Keep all parent historical evidence and source material where it is; its references become historical/cross-links, not a second primary owner. CAMERA-EEPROMS/VCMS/OIS/flash/LDO and closed sensor TUs are dependencies, never restarted.
+[module ownership](module-ownership.tsv), [function parity](function-parity.tsv),
+[data parity](data-parity.tsv), [stock modules](stock-modules.tsv),
+[DT nodes](dt-nodes.tsv), [imports](imports.tsv), [exports](exports.tsv).
 
-No module rebuilt, hardware command executed or parity result created by this preparation. Published proof rows are preserved and labeled by axis; the component starts PARTIAL, never DONE.
+## Pack synchronization
+
+Use the established `promote-to-done.py` / `sync-done-pack.py` utilities. After each sync,
+run `python3 scripts/relocate-pack-links.py <canonical CAMERA-ISP-KERNEL directory>` from
+this package (or the copied pack) to adapt Markdown links to the utilities' `notes/` layout.
+It refreshes only adapted camera manifest rows; generated indexes/provenance are untouched.
+`--check` verifies that no further adaptation is necessary.
+
+## Boundary
+
+This DONE status is deliberately narrow. It does **not** claim source for proprietary
+CCU/ISP firmware, CameraProvider/HAL, 3A, tuning, calibration interpretation or image
+quality algorithms; `CAMERA-HAL-ISP` remains PARTIAL. It also does not claim on-device
+probe or streaming: runtime acceptance is still required.

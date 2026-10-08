@@ -1,15 +1,30 @@
 # CAMERA-ISP-KERNEL status — 2026-10-08
 
-**PARTIAL / actionable kernel RE (class A).** 19 exact stock targets located; 25 pinned donor candidates. 16 modules have existing published function/data evidence, reproduced as citations—not new measurements.
+**DONE — scoped static normal-world kernel reconstruction (class A).**
 
-Existing camera reports prove measured function/data axes, not a complete full-module acceptance packet for every owned target. No new camera parity is claimed here. On-device streaming, tuning/quality and firmware algorithms remain outside static DONE.
+All nineteen registered GQ5012BF1 camera/ISP kernel modules rebuild reproducibly from
+public pinned source plus explicit device patches. Fresh-checkout B1/B2 acceptance covers:
 
-Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed.
+* 2 970/2 971 exact functions; the remaining function is proven semantically equivalent;
+* 2 474/2 474 exact data objects;
+* 2 530/2 530 ABI records, including 1 792 import CRCs, 204 exports, 218 KCFI ids and
+  316 `.modinfo` records;
+* 978/978 identical section headers (955 exact contents, 19 build-ID-only and four
+  declared residue rows); 71 990/71 991 exact relocations plus one proven moved byte load;
+* all 225 participating intermediate objects reproducible; zero unresolved rows.
 
-**Next action:** Read the 16 published function/data proof pairs first; match their stock hashes and preserve the existing grafted mtkcam 133c6c1 source. Do not replace byte-exact work with a pristine donor.
+Seventeen modules have build-ID-only residue. `mtk_imgsys_cmdq` has one bounded
+COMPILER_ONLY local symbol/string-table residue and `imgsensor` one bounded
+PROVEN_SEMANTIC_EQUIVALENT codegen residue. Details and ledgers:
+[RECONSTRUCTION-REPORT.md](RECONSTRUCTION-REPORT.md).
 
-**Blockers:** full acceptance packet and target-specific donor/config/ABI reconciliation. Signed algorithms and runtime tests are excluded, not a reason to fake static closure.
+**Retained boundaries:** CCU/ISP firmware, CameraProvider/HAL, 3A, tuning, calibration
+interpretation and image-quality algorithms remain proprietary under `CAMERA-HAL-ISP`
+(PARTIAL). Sensor/EEPROM/VCM/OIS/flash/LDO scopes keep their existing owners.
 
-**Definition of DONE:** all owned modules satisfy the complete [parity standard](../PARITY-STANDARD.md), plus the normal-world DT/ABI contract; retained firmware and userspace boundaries remain explicit.
+**Runtime:** NOT TESTED. Probe, firmware boot, media topology, streaming, capture quality,
+power/performance and failure recovery require the device acceptance plan in
+[source-to-userspace-contract.md](source-to-userspace-contract.md).
 
-No ADD elsewhere, merge, removal, rename or unrelated status move is authorized by this pack.
+Maintained recipe: `android_kernel_modules_camera_isp_ulefone_gq5012bf1` (local `main`,
+not pushed); preserved bundle in `source/`.

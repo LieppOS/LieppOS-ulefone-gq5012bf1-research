@@ -1,13 +1,34 @@
 # Dependencies and singleton ownership — CAMERA-ISP-KERNEL
 
-**Prerequisites:** GKI-KMI-BASELINE; camera sensor/VCM/EEPROM/OIS DONE children; shared CMDQ/IOMMU/SMI; VCP client ABI.
+**Owned and closed here:** exactly the nineteen modules in
+[module-ownership.tsv](module-ownership.tsv). Dependencies are references, never implicit
+additional ownership.
 
-**Owned modules:** `mtk_hcp.ko`, `mtk-ipesys-me.ko`, `mtk_imgsys_cmdq.ko`, `mtk_imgsys_v4l2.ko`, `mtk_imgsys_isp7sp.ko`, `ccd_rpmsg.ko`, `mtk_ccd_remoteproc.ko`, `mtk_ccuv.ko`, `mtk-cam-isp7sp.ko`, `mtk_aie.ko`, `mtk_aie_debug_7sp_2.ko`, `camera_dpe_isp7sp.ko`, `pda_drv_mt6878.ko`, `mtk-vmm-isp71-regulator.ko`, `mtk-vmm-notifier.ko`, `imgsensor-glue.ko`, `imgsensor.ko`, `c2ps_perf_ioctl.ko`, `mtk_c2ps.ko`.
+## External prerequisites
 
-CAMERA-HAL-ISP stays PARTIAL for proprietary CameraProvider/HAL, 3A, tuning, calibration interpretation and CCU/ISP firmware algorithms. The child owns the explicit 19-module ledger only. Keep all parent historical evidence and source material where it is; its references become historical/cross-links, not a second primary owner. CAMERA-EEPROMS/VCMS/OIS/flash/LDO and closed sensor TUs are dependencies, never restarted.
+* exact GKI/KMI baseline (`6.1.115-android14-11-g945dff7bc1bf`);
+* CMDQ, IOMMU/SMI/MMQoS, memory heaps, clocks, regulators and VCP/tinysys providers;
+* camera sensor/EEPROM/VCM/OIS/flash/LDO components under their existing DONE owners;
+* retained CCU/CCD firmware and proprietary CameraProvider/HAL userspace.
 
-[Master dependency edges](../dependency-edges.tsv) resolve stock imports by symbol and CRC; each row carries consumer/provider/owner. The load order and legacy modinfo dependencies are recorded separately in stock-modules.tsv. `modules.dep` can be transitive and legacy modinfo can name obsolete provider identities; neither overrides the actual export/CRC graph.
+The complete resolved stock symbol graph remains in
+[../dependency-edges.tsv](../dependency-edges.tsv). Build acceptance regenerates 97 vendor
+provider CRCs from public source and explicitly retains ten non-public stock-provider export
+CRCs; see [abi-parity.md](abi-parity.md).
 
-Raw direct modinfo dependency sets: `mtk_slbc,system_heap; mtk-mmdvfs-v3,mtk-cmdq-drv-ext,mtk-smi-dbg,mtk-icc-core,cmdq-sec-drv,aee_aed,vcp_status; mtk_hcp,iommu_debug,mtk_imgsys_cmdq,mtk-ipesys-me,mtk-mmdvfs-v3,mtk-smi; mtk_imgsys_v4l2,mtk-smi,mtk-cmdq-drv-ext,mtk_hcp; ccd_rpmsg; mtk-smi-dbg,mtk-icc-core,system_heap,mrdump,aee_aed; mtk_slbc,system_heap,mtk-cmdq-drv-ext,ccd_rpmsg,aee_aed,mtk-smi-dbg,clk-common,mtk-mmdvfs-v3,gz_tz_system,mtk-smi,mtk_printk_ctrl,iommu_debug,mtk-icc-core,mmqos-common,mtk_sec_heap,mtk_ccu_mssv; mtk-cmdq-drv-ext,cmdq-sec-drv,system_heap; iommu_debug,mtk_aie; mtk-cmdq-drv-ext,mtk-mmdvfs-v3; mtk-mmdvfs-v3,mtk-icc-core; mtk_ccu_mssv,mtk_ccu; mtk-mmdvfs-v3; aee_aed,custom-ldo,yft_devinfo,mtk_charger_framework,flashlight,mtk_ccu_mssv,imgsensor-glue; cpufreq_sugov_ext,c2ps_perf_ioctl,scheduler`. These names are not a list of new targets. UNKNOWN provider/type provenance must be resolved against existing stock export/KMI ledgers, not fabricated. Preserve generic platform providers and explicitly closed modules.
+## Cycles and historical dependency names
 
-For cycles, freeze mutually shared headers/provider ABI, use unchanged stock provider operands during initial isolation, then verify the assembled reconstructed graph; copied stock symvers is an oracle, not source/type proof.
+Camera packages have legitimate internal cycles and package-level modpost coupling. The
+reproducible build uses package scopes and the stock sibling symvers set, then verifies the
+assembled nineteen-module graph.
+
+`modules.dep` is transitive, and `.modinfo depends=` can preserve historical names. In
+particular, stock names `mtk_ccu`/`mtk_ccu_mssv` do not correspond to files in the device's
+457-module universe; matching exports/CRCs are supplied by `mtk_ccuv.ko`. Do not invent
+provider modules or treat a dependency string as stronger than the resolved symbol graph.
+
+## Boundary
+
+`CAMERA-HAL-ISP` remains PARTIAL for HAL/3A/tuning/calibration and firmware algorithms.
+This child is DONE for its normal-world kernel scope without taking ownership of those
+artifacts or of already-closed camera peripherals.

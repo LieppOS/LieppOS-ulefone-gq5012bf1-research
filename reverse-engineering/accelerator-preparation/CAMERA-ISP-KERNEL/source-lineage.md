@@ -1,39 +1,55 @@
 # Source lineage — CAMERA-ISP-KERNEL
 
-Every donor directory/file exists. Commits and complete relevant-file fingerprints are in [source-candidates.tsv](source-candidates.tsv). The ALPS snapshot local commit `2ae742fda9cd461bfe8cf8a5c04f95e212f8e699` identifies a pristine archive of upstream MT6878 ALPS `5e415e059253`; it is not misrepresented as the upstream Git commit. The Nothing donor import and the patched mixed-build tree are distinct candidates. Do not reset or edit any of these shared checkouts.
+The reproducible source of truth is the repository described in [SOURCE.md](SOURCE.md),
+not any mutable scratch worktree.
 
-| Module | Local donor | Local Git commit | Starting state |
-|---|---|---|---|
-| `mtk_hcp.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/mtk-hcp` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `mtk-ipesys-me.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/mtk-ipesys-me` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `mtk_imgsys_cmdq.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/imgsys/platforms/isp7sp` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `mtk_imgsys_v4l2.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/imgsys` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `mtk_imgsys_isp7sp.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/imgsys/platforms/isp7sp/modules` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `ccd_rpmsg.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/camsys/rpmsg` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `mtk_ccd_remoteproc.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/camsys/remoteproc` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `mtk_ccuv.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/ccusys` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `mtk-cam-isp7sp.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/camsys/isp7sp/cam` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `mtk_aie.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/mtk-aie` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `mtk_aie_debug_7sp_2.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/mtk-aie` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `camera_dpe_isp7sp.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/mtk-dpe/isp_7sp` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `pda_drv_mt6878.ko` | `/home/armol/androido_dalykai/LieppOS custom ROM/kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/cameraisp/pda` | `957dac185efe46cbf6336b0fff9516d84c8cd78f` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `pda_drv_mt6878.ko` | `/home/armol/kernel-work/gki-12901745-workspace/lieppos/tinysys/trees/5e41/drivers/misc/mediatek/cameraisp/pda` | `2ae742fda9cd461bfe8cf8a5c04f95e212f8e699` | ALTERNATIVE PINNED LOCAL CANDIDATE; ALPS archive origin 5e415e059253 |
-| `pda_drv_mt6878.ko` | `/home/armol/kernel-work/gki-12901745-workspace/kernel_device_modules-6.1/drivers/misc/mediatek/cameraisp/pda` | `ca8b550b75e8b49f403f0097e8323c4a930bad79` | EXISTING PATCHED WORKSPACE; read-only candidate, do not edit |
-| `mtk-vmm-isp71-regulator.ko` | `/home/armol/androido_dalykai/LieppOS custom ROM/kernel-research/nothing-mt6878/device_modules/drivers/regulator/mtk-vmm-isp71-regulator.c` | `957dac185efe46cbf6336b0fff9516d84c8cd78f` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `mtk-vmm-isp71-regulator.ko` | `/home/armol/kernel-work/gki-12901745-workspace/lieppos/tinysys/trees/5e41/drivers/regulator/mtk-vmm-isp71-regulator.c` | `2ae742fda9cd461bfe8cf8a5c04f95e212f8e699` | ALTERNATIVE PINNED LOCAL CANDIDATE; ALPS archive origin 5e415e059253 |
-| `mtk-vmm-isp71-regulator.ko` | `/home/armol/kernel-work/gki-12901745-workspace/kernel_device_modules-6.1/drivers/regulator/mtk-vmm-isp71-regulator.c` | `ca8b550b75e8b49f403f0097e8323c4a930bad79` | EXISTING PATCHED WORKSPACE; read-only candidate, do not edit |
-| `mtk-vmm-notifier.ko` | `/home/armol/androido_dalykai/LieppOS custom ROM/kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/vmm` | `957dac185efe46cbf6336b0fff9516d84c8cd78f` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `mtk-vmm-notifier.ko` | `/home/armol/kernel-work/gki-12901745-workspace/lieppos/tinysys/trees/5e41/drivers/misc/mediatek/vmm` | `2ae742fda9cd461bfe8cf8a5c04f95e212f8e699` | ALTERNATIVE PINNED LOCAL CANDIDATE; ALPS archive origin 5e415e059253 |
-| `mtk-vmm-notifier.ko` | `/home/armol/kernel-work/gki-12901745-workspace/kernel_device_modules-6.1/drivers/misc/mediatek/vmm` | `ca8b550b75e8b49f403f0097e8323c4a930bad79` | EXISTING PATCHED WORKSPACE; read-only candidate, do not edit |
-| `imgsensor-glue.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/imgsensor/src-v4l2/imgsensor-glue` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `imgsensor.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/imgsensor/src-v4l2` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `c2ps_perf_ioctl.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/sched/c2ps_ioctl` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
-| `mtk_c2ps.ko` | `/home/armol/kernel-work/gki-12901745-workspace/vendor/mediatek/kernel_modules/mtkcam/sched/c2ps` | `133c6c15184a92aaee11d73800923d507ca0f9e8` | LOCAL SOURCE CANDIDATE; parity not implied |
+## Public base
 
-**Build baseline:** Android CI 12901745; `common` `6b18f0b574ab3267615ae6ce642d5a7c3c21ac09`; stock vermagic `6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64`; Android Clang 17.0.2 `clang-r487747c` (10087095), LLVM integrated assembler/lld, exact GKI/KMI and vendor config. Recorded config: `reverse-engineering/camera-stack/kernel-isp-imgsys/build/vendor-kernel.config`; CI pins: `kernel/exact-gki-build-inputs.md`. Inspect CONFIG_CFI_CLANG/MODVERSIONS and effective per-object LTO/visibility flags. `-faddrsig` was necessary in existing parity builds; verify rather than broadly changing compiler flags. Legacy camera scripts depend on `/tmp/ispenv.sh` and enable modpost warnings; do not call them blindly or count ignored unresolved symbols as success.
+| package | upstream commit | subtree / use |
+|---|---|---|
+| AOSP common kernel | `6b18f0b574ab3267615ae6ce642d5a7c3c21ac09` | exact Android 14 GKI 6.1 baseline |
+| Android clang prebuilt | `7775eb113f960bc69a780b621d03a715914d4bca` | `clang-r487747c` |
+| NothingOSS kernel modules | `5f75a3b13e8135d45b4b0b70ec893345144f70df` | `mtkcam` base |
+| NothingOSS device modules | `957dac185efe46cbf6336b0fff9516d84c8cd78f` | PDA, VMM and shared headers |
+| Android CI KMI | build `12901745` | `vmlinux.symvers` |
 
-Existing camera reports prove measured function/data axes, not a complete full-module acceptance packet for every owned target. No new camera parity is claimed here. On-device streaming, tuning/quality and firmware algorithms remain outside static DONE.
+The recipe checks git tree ids, not just commit names. Expected pristine trees and SHA-256
+values are recorded in the source repository and summarized in [SOURCE.md](SOURCE.md).
 
-Input fingerprints identify actual local donor bytes, including grafted/patch worktree files. The enclosing Git pin alone does not prove every donor file is committed; archive only verified tracked inputs, or copy exact fingerprint-checked inputs into isolated scratch space without touching the source.
+## Device reconstruction
 
-Exact source candidates, build targets and object composition remain subject to stock function/data/CRC/KCFI evidence; namespace/name overlap is triage, never parity.
+Three reviewable patches create the GQ5012BF1 source. Their assembled tree ids are fixed:
+
+* `mtkcam`: `4b75fc209a4b8a608aec9dc5b86d29fa095646fe`;
+* kdm: `ceab410136a0542d16d3654bb73634cef09ff1f8`.
+
+The largest patch supplies the device's nine imgsensor translation-unit families and
+frame-sync/YFT integration. The other changes reconcile the MT6878 camera packages and
+vendor headers with measured stock functions, objects, strings, source-line `BUG()`
+records, relocations and object layout. See [RECONSTRUCTION-REPORT.md](RECONSTRUCTION-REPORT.md)
+§3 for the behavioural groups.
+
+## Unmodified public-source closures
+
+The following stock modules require no device source delta:
+
+* `pda_drv_mt6878.ko`;
+* `mtk-vmm-isp71-regulator.ko`;
+* `mtk-vmm-notifier.ko`.
+
+Their exact match is useful lineage evidence: the Ulefone build shares those NothingOSS
+MT6878 implementations directly.
+
+## Historical candidates
+
+[source-candidates.tsv](source-candidates.tsv) and the previous 133c6c1/ALPS worktrees are
+retained as discovery provenance. Candidate name overlap never constituted parity. The
+accepted source is only the pinned recipe whose B1/B2 outputs pass the complete ledgers.
+
+## Binary-independent reproduction
+
+Stock modules are comparison operands, not source inputs. Their only build-time use is
+outside the build itself: `scripts/verify.py` compares the already-built outputs. External
+provider CRC input is either naturally regenerated from public provider source (97 rows)
+or explicitly retained from the corresponding stock provider export (10 rows); see
+[abi-parity.md](abi-parity.md).
