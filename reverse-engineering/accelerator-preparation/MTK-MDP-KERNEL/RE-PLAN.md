@@ -1,5 +1,11 @@
 # Source-parity reconstruction sequence — MTK-MDP-KERNEL
 
+> **Executed and closed.** The steps below were completed by the reconstruction recorded in
+> [RECONSTRUCTION-REPORT.md](RECONSTRUCTION-REPORT.md): all four modules were accepted on
+> every axis of [PARITY-STANDARD.md](../PARITY-STANDARD.md) plus the observable DT/ABI
+> contract, from unmodified public source, with clean-checkout B1/B2 determinism. Runtime
+> tests remain a separate, later authorized phase; none was performed.
+
 1. Close clk-mt6878-mdpsys and mdp_drv object/target composition against stock.
 2. Close mtk-mml common interfaces, job/tile/config lifetime and shared-resource arbitration.
 3. Close mtk-mml-mt6878 block tables, per-engine clock/IRQ programming, platform quirks and command generation.
