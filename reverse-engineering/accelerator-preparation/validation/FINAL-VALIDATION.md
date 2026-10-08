@@ -1,6 +1,6 @@
 # Accelerator preparation final validation — 2026-10-08
 
-This is offline **preparation**, not source reconstruction or hardware validation. Discovery baseline `3bb6db32de2c5f312be31265482a7f8539145b62`; inventories committed as `3c48e19`, initial packs/handoffs as `c8de6a1`. The coverage/registration correction commit contains this report. Final source-pin/manifest attestation is recorded by the following local validation commit; no push.
+This is offline **preparation**, not source reconstruction or hardware validation. Discovery baseline `3bb6db32de2c5f312be31265482a7f8539145b62`; inventories committed as `3c48e19`, initial packs/handoffs as `c8de6a1`. Coverage/registration correction commit: `e03ad56`. All 146 copied metadata sources are pinned to and byte-verified against its committed Git blobs. [Final source-pin/manifest attestation](FINAL-ATTESTATION.json) and the replay log are recorded by the following local validation commit; no push.
 
 ## Measured result
 
