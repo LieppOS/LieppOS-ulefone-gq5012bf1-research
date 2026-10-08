@@ -17,6 +17,7 @@ Authoritative component:
 | `reconstruction/acceptance/relocations-parity.tsv.xz` | 71 990 raw + semantic identical rows and one proven moved byte-load relocation |
 | `reconstruction/acceptance/imgsensor-residue-proof.md` | closed boolean domains, two literal call sites and four-case branch-equivalence proof |
 | `reconstruction/manifest-validation.json` | aggregate invariants; `PASS` |
+| `reconstruction/pack-manifest-validation.json` | camera-specific workspace manifest/status/link validation; zero component drift; unrelated drift unchanged |
 | `reconstruction/SHA256SUMS` | checksums for all retained reconstruction evidence |
 
 ## Reproduction

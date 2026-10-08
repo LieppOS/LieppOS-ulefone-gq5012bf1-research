@@ -38,7 +38,15 @@ for row in rows:
     dst = workspace / row['local_path']
     if src.is_relative_to(research) and src.is_file():
         assert dst.is_relative_to(pack), dst
-        pairs.append((src, dst, row))
+        relative = src.relative_to(research)
+        expected = (str(relative) if len(relative.parts) > 1 else
+                    {'README.md': 'README.md', 'SOURCE.md': 'SOURCE.md',
+                     'STATUS.md': 'notes/research-STATUS.md',
+                     'stale-claims.md': 'notes/stale-claims.md'}.get(src.name, 'notes/' + src.name))
+        # Historical root-level copies retain their old source hashes/provenance.
+        # They are not the documents copied by the current synchronization mapping.
+        if str(dst.relative_to(pack)) == expected:
+            pairs.append((src, dst, row))
 # Prefer sync-done-pack.py's root SOURCE.md over the older promoted notes/SOURCE.md.
 mapping = {src.resolve(): dst for src, dst, row in pairs}
 if (pack / 'SOURCE.md').exists():
