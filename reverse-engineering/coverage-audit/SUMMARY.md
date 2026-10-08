@@ -28,7 +28,6 @@ Six registrations own 41 exact stock targets. Preserve 16 camera function/data p
 2. **APUSYS-NPU-KERNEL** — DONE: public-source deterministic rebuild and full static parity; [reconstruction report](../accelerator-preparation/APUSYS-NPU-KERNEL/RECONSTRUCTION-REPORT.md).
 3. **CAMERA-ISP-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
 4. **MTK-VCODEC-KERNEL** — DONE: public-source deterministic rebuild and full static parity; [reconstruction report](../accelerator-preparation/MTK-VCODEC-KERNEL/RECONSTRUCTION-REPORT.md).
-6. **GPU-AI-AUX-KERNEL-INTERFACES** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/GPU-AI-AUX-KERNEL-INTERFACES/CLAUDE-HANDOFF.md).
 7. **DTB-DTBO** — STATIC SOURCE CONTRACT; [handoff/evidence](../../docs/dt-module-matching.md).
 8. **FT3680-TOUCH** — KERNEL MODULE PARITY; [handoff/evidence](../display-input/ft3680/parity-report.md).
 9. **YFT-DEVINFO** — KERNEL MODULE PARITY; [handoff/evidence](../../kernel/phase4-yft-devinfo-kcfi-typeid.md).

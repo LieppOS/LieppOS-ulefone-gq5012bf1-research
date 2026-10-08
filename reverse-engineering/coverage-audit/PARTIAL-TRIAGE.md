@@ -19,7 +19,6 @@ All **42** current PARTIAL directories have one A–F class. Camera kernel child
 | FM-RADIO-HEADSET | B | Kernel/headset path is closed; FM app/JNI/patch, LNA/antenna identity and RF performance remain. | KEEP PARTIAL; Read-only runtime FM validation and teardown-only LNA/antenna confirmation. | HARD | FM-KERNEL, FM78100-COMPANION, MT6369-AUDIO-CODEC |
 | FT3680-TOUCH | A | Core contract is recovered, but 40 functions remain size-different and 68 remain outside normalized parity classes. | KEEP PARTIAL; Continue static parity on FHP/FWDBG/flash/IRQ residuals without modifying live firmware. | MEDIUM | SPI-MT65XX, YFT-TPD-GESTURE |
 | GNSS | B | Kernel transport is closed; connsys GNSS firmware, mnld/libmnl and live L1/L5 behavior remain proprietary/runtime-gated. | KEEP PARTIAL; Retain signed image and capture read-only constellation/L5 behavior. | HARD | GNSS-KERNEL-TRANSPORT, CONNINFRA-KERNEL |
-| GPU-AI-AUX-KERNEL-INTERFACES | A | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | KEEP PARTIAL; Follow canonical accelerator CLAUDE-HANDOFF; preserve already exact source/proofs. | MEDIUM/HIGH | MTK-MBOX; MTK-RPMSG-MBOX; MTK-TINYSYS-IPI; exact GKI; preserve SCP/ADSP DONE owners |
 | ICM4N607-IMU | C | The physical sensor driver lives inside signed SCP firmware; exact register protocol and calibration are unavailable. | KEEP PARTIAL; Do not invent a Linux I2C driver; validate Android sensor outputs and preserve SCP firmware. | PROPRIETARY-GATED | SENSOR-HUB, SENSOR-HUB-KERNEL |
 | IMS | C | VoLTE/VoWiFi/RCS/video-telephony implementation is a proprietary modem/RIL/IMS island. | KEEP PARTIAL; Map service/property contracts and validate carrier behavior using retained vendor blobs. | PROPRIETARY-GATED | RADIO-HAL-RIL, MODEM-FIRMWARE |
 | KEYSTORE-VOLD-KEYMINT | B | Normal-world FBE/RPMB/KeyMint integration is mapped; TA semantics, keys and provisioning remain proprietary. | KEEP PARTIAL; Validate FBE, credential unlock and OTA key continuity on the target ROM. | HARD | TKCORE-DRV, UFS-RPMB-KERNEL, TRUSTKERNEL-TEE |
@@ -62,7 +61,6 @@ All **42** current PARTIAL directories have one A–F class. Camera kernel child
 
 1. **MALI-GPU-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/MALI-GPU-KERNEL/CLAUDE-HANDOFF.md).
 3. **CAMERA-ISP-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
-6. **GPU-AI-AUX-KERNEL-INTERFACES** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/GPU-AI-AUX-KERNEL-INTERFACES/CLAUDE-HANDOFF.md).
 7. **DTB-DTBO** — STATIC SOURCE CONTRACT; [handoff/evidence](../../docs/dt-module-matching.md).
 8. **FT3680-TOUCH** — KERNEL MODULE PARITY; [handoff/evidence](../display-input/ft3680/parity-report.md).
 9. **YFT-DEVINFO** — KERNEL MODULE PARITY; [handoff/evidence](../../kernel/phase4-yft-devinfo-kcfi-typeid.md).

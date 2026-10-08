@@ -32,20 +32,6 @@ Accelerator priority follows the authorized dependency-aware roadmap, not unsupp
 - **phone:** No for static parity; later hardware/runtime acceptance needs separate authorization
 - [Canonical handoff/evidence](../accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
 
-## 6. GPU-AI-AUX-KERNEL-INTERFACES — PARTIAL
-
-- **kind:** REGISTERED ACCELERATOR / MODULE PARITY
-- **scope:** gpueb.ko, vcp_status.ko, vcp.ko; normal-world kernel/DT/ABI only
-- **difficulty:** MEDIUM/HIGH
-- **probability:** Pinned source candidates and exact stock operands; whole-scope closure probability unmeasured
-- **evidence:** Exact module hashes, full ELF metadata, DT/providers, pinned donor files and existing proof-axis citations
-- **missing:** All-axes module acceptance; preserve existing camera function/data proofs and close unmeasured residuals
-- **closure:** Every explicitly owned module satisfies function/data/CRC/KCFI/relocation/symbol/string/modinfo/vermagic/B1-B2 and observable DT/ABI; algorithms excluded
-- **effort:** Three host modules; finite transport contracts, proprietary remote firmware excluded
-- **dependency:** MTK-MBOX; MTK-RPMSG-MBOX; MTK-TINYSYS-IPI; exact GKI; preserve SCP/ADSP DONE owners
-- **phone:** No for static parity; later hardware/runtime acceptance needs separate authorization
-- [Canonical handoff/evidence](../accelerator-preparation/GPU-AI-AUX-KERNEL-INTERFACES/CLAUDE-HANDOFF.md).
-
 ## 7. DTB-DTBO — PARTIAL
 
 - **kind:** STATIC SOURCE CONTRACT
