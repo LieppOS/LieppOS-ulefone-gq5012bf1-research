@@ -1,16 +1,18 @@
 # PARTIAL triage
 
-Final snapshot: **2026-10-08**, source HEAD `3abc5643e539b3f2c8565d8197091d3bb50856ff`; workspace directories are authoritative. This report is reproducible from committed metadata, not a claim that later concurrent closures never occur.
+Snapshot: **2026-10-08**, source HEAD `c8de6a1`. Actual workspace directory status is authoritative; scope registration is not kernel reconstruction.
 
-All **36** current PARTIAL directories have exactly one A–F class. A denotes actionable static work, not permission to claim untested end-to-end acceptance. OTA and recovery acceptance are D, not source-parity shortcuts. DONE rows are excluded.
+All **42** current PARTIAL directories have one A–F class. Camera kernel child is A; HAL/3A/firmware algorithms remain C. Existing static DONE scopes stay DONE.
 
 | Component | Class | Remaining boundary | Next action | Difficulty | Dependencies |
-|---|:---:|---|---|---|---|
+|---|---|---|---|---|---|
 | ANDROID-INIT | A | Reconcile stock/current service ordering and validate property-trigger behavior. | KEEP PARTIAL; Diff generated service graph against LieppOS init and test one boot. | MEDIUM | BOOT-IMAGES, VENDOR-PROPERTIES, VENDOR-SEPOLICY |
+| APUSYS-NPU-KERNEL | A | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | KEEP PARTIAL; Follow canonical accelerator CLAUDE-HANDOFF; preserve already exact source/proofs. | HIGH | GKI-KMI-BASELINE; shared IOMMU/QoS/power providers; signed apusys.img retained |
 | AUDIO-DSP | B | Kernel AFE/DSP transport is closed; DSP protocol, firmware, routing and calibration remain proprietary. | KEEP PARTIAL; Map HAL-to-DSP messages and preserve stock firmware/calibration. | HARD | AUDIO-DSP-KERNEL, MT6878-AFE, MT6369-AUDIO-CODEC |
 | BATTERY-PACK | D | Cell/BMS identity, connector topology, calibration and ageing model need teardown/runtime evidence. | KEEP PARTIAL; Photograph labels/connectors and capture read-only gauge/health data. | HARD | SH366003-FUEL-GAUGE, MT6375-CHARGER |
 | BLUETOOTH | B | Kernel transport is closed; controller firmware, vendor HAL internals and LE Audio behavior remain proprietary/runtime-gated. | KEEP PARTIAL; Retain signed firmware; run HCI/LE Audio feature validation. | HARD | MT6637-BT-KERNEL, CONNINFRA-KERNEL |
-| CAMERA-HAL-ISP | A | Actionable ISP kernel parity is not closed (A, pending approved split); whole HAL/3A/tuning/CCU scope cannot close statically and remains proprietary. | SPLIT actionable CAMERA-ISP-KERNEL from proprietary HAL/3A scope | HARD | CAMERA-* sensors, CAMERA-VCMS, CAMERA-EEPROMS, DW9781C-OIS |
+| CAMERA-HAL-ISP | C | HAL/3A/tuning/calibration interpretation and firmware algorithms remain proprietary; normal-world kernel ownership transferred to child. | KEEP PARTIAL proprietary HAL/3A scope; authorized kernel split APPLIED to CAMERA-ISP-KERNEL | PROPRIETARY-GATED | CAMERA-ISP-KERNEL; camera sensor/VCM/EEPROM/OIS/rail DONE scopes |
+| CAMERA-ISP-KERNEL | A | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | KEEP PARTIAL; Follow canonical accelerator CLAUDE-HANDOFF; preserve already exact source/proofs. | MEDIUM/HIGH | GKI-KMI-BASELINE; camera sensor/VCM/EEPROM/OIS DONE children; shared CMDQ/IOMMU/SMI; VCP client ABI |
 | COOLING-HARDWARE | D | Material stack, heat spreaders, contact paths and measured thermal model require physical inspection. | KEEP PARTIAL; Teardown and correlate sustained-load temperatures with thermal zones. | HARD | THERMAL-POWER-HAL, BATTERY-PACK |
 | DRAM-MEMORY | D | Exact package/topology/timings and training firmware cannot be recovered from normal Android artifacts alone. | KEEP PARTIAL; Read package markings or schematics; retain signed preloader/training data. | HARD | BOOT-IMAGES, PARTITION-OWNERSHIP |
 | DTB-DTBO | A | Effective tree is inventoried; source-complete DTS and bootloader mutation/runtime validation remain. | KEEP PARTIAL; Decompile/normalize each selected DTB/DTBO and reconcile the three Mali nodes after GPU ownership is added. | MEDIUM | BOOT-IMAGES, PARTITION-OWNERSHIP |
@@ -18,13 +20,17 @@ All **36** current PARTIAL directories have exactly one A–F class. A denotes a
 | FM-RADIO-HEADSET | B | Kernel/headset path is closed; FM app/JNI/patch, LNA/antenna identity and RF performance remain. | KEEP PARTIAL; Read-only runtime FM validation and teardown-only LNA/antenna confirmation. | HARD | FM-KERNEL, FM78100-COMPANION, MT6369-AUDIO-CODEC |
 | FT3680-TOUCH | A | Core contract is recovered, but 40 functions remain size-different and 68 remain outside normalized parity classes. | KEEP PARTIAL; Continue static parity on FHP/FWDBG/flash/IRQ residuals without modifying live firmware. | MEDIUM | SPI-MT65XX, YFT-TPD-GESTURE |
 | GNSS | B | Kernel transport is closed; connsys GNSS firmware, mnld/libmnl and live L1/L5 behavior remain proprietary/runtime-gated. | KEEP PARTIAL; Retain signed image and capture read-only constellation/L5 behavior. | HARD | GNSS-KERNEL-TRANSPORT, CONNINFRA-KERNEL |
+| GPU-AI-AUX-KERNEL-INTERFACES | A | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | KEEP PARTIAL; Follow canonical accelerator CLAUDE-HANDOFF; preserve already exact source/proofs. | MEDIUM/HIGH | MTK-MBOX; MTK-RPMSG-MBOX; MTK-TINYSYS-IPI; exact GKI; preserve SCP/ADSP DONE owners |
 | ICM4N607-IMU | C | The physical sensor driver lives inside signed SCP firmware; exact register protocol and calibration are unavailable. | KEEP PARTIAL; Do not invent a Linux I2C driver; validate Android sensor outputs and preserve SCP firmware. | PROPRIETARY-GATED | SENSOR-HUB, SENSOR-HUB-KERNEL |
 | IMS | C | VoLTE/VoWiFi/RCS/video-telephony implementation is a proprietary modem/RIL/IMS island. | KEEP PARTIAL; Map service/property contracts and validate carrier behavior using retained vendor blobs. | PROPRIETARY-GATED | RADIO-HAL-RIL, MODEM-FIRMWARE |
 | KEYSTORE-VOLD-KEYMINT | B | Normal-world FBE/RPMB/KeyMint integration is mapped; TA semantics, keys and provisioning remain proprietary. | KEEP PARTIAL; Validate FBE, credential unlock and OTA key continuity on the target ROM. | HARD | TKCORE-DRV, UFS-RPMB-KERNEL, TRUSTKERNEL-TEE |
+| MALI-GPU-KERNEL | A | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | KEEP PARTIAL; Follow canonical accelerator CLAUDE-HANDOFF; preserve already exact source/proofs. | HIGH | GKI-KMI-BASELINE; TMEM-FFA; GZ-TRANSPORT; MTK-TINYSYS-IPI; GPUEB client ABI |
 | MICROPHONES | D | Package/acoustic-port confirmation plus enforcing-SELinux and full Audio HAL tests remain. | KEEP PARTIAL; Teardown/board-view inspection, then end-to-end recording/call tests. | HARD | MT6369-AUDIO-CODEC, MT6878-AFE, AUDIO-DSP |
 | MMC5603-MAGNETOMETER | C | Register driver and fusion/calibration are inside signed SCP firmware. | KEEP PARTIAL; Validate Android heading/calibration; preserve SCP firmware. | PROPRIETARY-GATED | SENSOR-HUB, SENSOR-HUB-KERNEL |
 | MODEM-FIRMWARE | C | MD1 code, carrier configuration, RF calibration and signing keys are proprietary. | KEEP PARTIAL; Hash/retain stock images and map version/band metadata without payload redistribution. | PROPRIETARY-GATED | MODEM-KERNEL-TRANSPORT, RADIO-HAL-RIL |
 | MT6637-WIFI | B | Kernel path is closed; controller firmware, NVRAM/calibration and vendor HAL internals remain proprietary. | KEEP PARTIAL; Preserve firmware/NVRAM and validate bands, 6E, roaming and suspend. | HARD | MT6637-WIFI-KERNEL, CONNINFRA-KERNEL, CONNFEM |
+| MTK-MDP-KERNEL | A | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | KEEP PARTIAL; Follow canonical accelerator CLAUDE-HANDOFF; preserve already exact source/proofs. | HIGH | GKI-KMI-BASELINE; existing DRM; generic CMDQ/SMI/IOMMU; VCP host/status |
+| MTK-VCODEC-KERNEL | A | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | KEEP PARTIAL; Follow canonical accelerator CLAUDE-HANDOFF; preserve already exact source/proofs. | HIGH | GKI-KMI-BASELINE; VCP host/status; shared DMA/IOMMU/CMDQ/power |
 | NFC-SECURE-ELEMENT | B | ST21 controller kernel is closed; NCI HAL, secure-element applets/access rules and firmware stay proprietary. | KEEP PARTIAL; Validate NCI/eSE flows with retained blobs; do not claim applet source closure. | PROPRIETARY-GATED | ST21NFC, TRUSTKERNEL-TEE |
 | NVRAM-CALIBRATION | C | Partition/consumer paths are mapped; per-unit values and vendor calibration logic are private/device-specific. | KEEP PARTIAL; Complete ownership labels and back up values; never publish or synthesize per-unit calibration. | PROPRIETARY-GATED | PARTITION-OWNERSHIP and all calibrated subsystems |
 | OEM-KERNEL-MODULES | F | Persistent whole-module-set tracker; child components have mixed closure. Its documented 471 count is stale versus the measured 457-module universe. | KEEP PARTIAL; Regenerate inventory from kernel-modules.tsv and keep only unresolved children actionable. | QUICK | VENDOR-DLKM, SYSTEM-DLKM, MTK-MODULE-LOADER |
@@ -47,20 +53,22 @@ All **36** current PARTIAL directories have exactly one A–F class. A denotes a
 
 | Classification | Count |
 |---|---:|
-| A — Actionable static RE (whole-scope runtime acceptance may still be separate) | 6 |
-| B — Kernel/source closed; broader proprietary boundary remains | 11 |
-| C — Proprietary boundary | 8 |
+| A — Actionable static RE; runtime acceptance separate | 11 |
+| B — Closed kernel/source boundary; proprietary integration remains | 11 |
+| C — Proprietary boundary | 9 |
 | D — Hardware/runtime/teardown gated | 6 |
 | E — Stale/duplicate/wrong scope | 0 |
-| F — Broad umbrella/tracking scope | 5 |
-| **Total PARTIAL** | **36** |
+| F — Umbrella/tracking scope | 5 |
+| **Total PARTIAL** | **42** |
 
 ## Ranked static targets
 
-1. **DTB-DTBO** (PARTIAL; STATIC SOURCE CONTRACT) — Highest: bounded blobs and selection metadata already exist. [Evidence](../../docs/dt-module-matching.md).
-2. **FT3680-TOUCH** (PARTIAL; KERNEL MODULE PARITY) — Good but uncertain: bounded, buildable 166-function reconstruction. [Evidence](../display-input/ft3680/parity-report.md).
-3. **YFT-DEVINFO** (PARTIAL; KERNEL MODULE PARITY) — Moderate: small residual but unknown enum spelling may resist exact closure. [Evidence](../../kernel/phase4-yft-devinfo-kcfi-typeid.md).
-4. **CAMERA-ISP-KERNEL** (PROPOSED; PROPOSED SPLIT / KERNEL MODULE PARITY) — Moderate/lower: source coverage exists, but entire ISP set has not been parity-built. [Evidence](../camera-stack/notes/isp-stack.md).
-5. **MALI-GPU-KERNEL** (PROPOSED; PROPOSED ADD / KERNEL MODULE PARITY) — Lowest of this list: ownership absent and matched platform source/parity not established. [Evidence](MISSING-COVERAGE.md).
-
-See [NEXT-RE.md](NEXT-RE.md) for exact closure criteria, source residuals, effort, dependencies, phone requirements and separate integration/proprietary/tracking queues.
+1. **MALI-GPU-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/MALI-GPU-KERNEL/CLAUDE-HANDOFF.md).
+2. **APUSYS-NPU-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/APUSYS-NPU-KERNEL/CLAUDE-HANDOFF.md).
+3. **CAMERA-ISP-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
+4. **MTK-VCODEC-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/MTK-VCODEC-KERNEL/CLAUDE-HANDOFF.md).
+5. **MTK-MDP-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/MTK-MDP-KERNEL/CLAUDE-HANDOFF.md).
+6. **GPU-AI-AUX-KERNEL-INTERFACES** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](../accelerator-preparation/GPU-AI-AUX-KERNEL-INTERFACES/CLAUDE-HANDOFF.md).
+7. **DTB-DTBO** — STATIC SOURCE CONTRACT; [handoff/evidence](../../docs/dt-module-matching.md).
+8. **FT3680-TOUCH** — KERNEL MODULE PARITY; [handoff/evidence](../display-input/ft3680/parity-report.md).
+9. **YFT-DEVINFO** — KERNEL MODULE PARITY; [handoff/evidence](../../kernel/phase4-yft-devinfo-kcfi-typeid.md).

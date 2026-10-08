@@ -1,76 +1,138 @@
-# Final next-RE priority list
+# Next-RE handoff priorities
 
-Final snapshot: **2026-10-08**, source HEAD `3abc5643e539b3f2c8565d8197091d3bb50856ff`; workspace directories are authoritative. This report is reproducible from committed metadata, not a claim that later concurrent closures never occur.
+Snapshot: **2026-10-08**, source HEAD `c8de6a1`. Actual workspace directory status is authoritative; scope registration is not kernel reconstruction.
 
-Ranked by qualitative probability of defensible closure of the entire named **static** scope, not document-writing speed. Effort is an estimate, not a guarantee. No reconstruction is performed by this audit. A matched source donor is not assumed where none is proved.
+Accelerator priority follows the authorized dependency-aware roadmap, not unsupported closure-probability or hour estimates. Remaining general static targets follow it. DONE and non-A targets are automatically omitted. No reconstruction is performed here.
 
-Only remaining registered PARTIAL static targets and the two proposed kernel scopes appear below. A newly DONE target is automatically omitted. Static DTS contract closure is distinct from module parity; init/policy assembly, boot, SELinux, HAL registration and hardware acceptance are separate integration work.
+## 1. MALI-GPU-KERNEL — PARTIAL
 
-## 1. DTB-DTBO — PARTIAL
+- **kind:** REGISTERED ACCELERATOR / MODULE PARITY
+- **scope:** mali_kbase_mt6878_r44.ko, mali_mgm_mt6878_r44.ko, mali_prot_alloc_mt6878_r44.ko, ged.ko, mtk_gpu_hal.ko, mtk_gpu_qos.ko, mtk_gpufreq_wrapper.ko, mtk_gpufreq_mt6878.ko; normal-world kernel/DT/ABI only
+- **difficulty:** HIGH
+- **probability:** Pinned source candidates and exact stock operands; whole-scope closure probability unmeasured
+- **evidence:** Exact module hashes, full ELF metadata, DT/providers, pinned donor files and existing proof-axis citations
+- **missing:** All-axes module acceptance; preserve existing camera function/data proofs and close unmeasured residuals
+- **closure:** Every explicitly owned module satisfies function/data/CRC/KCFI/relocation/symbol/string/modinfo/vermagic/B1-B2 and observable DT/ABI; algorithms excluded
+- **effort:** Large KMD plus coupled platform ABI; donor-to-stock deltas unmeasured
+- **dependency:** GKI-KMI-BASELINE; TMEM-FFA; GZ-TRANSPORT; MTK-TINYSYS-IPI; GPUEB client ABI
+- **phone:** No for static parity; later hardware/runtime acceptance needs separate authorization
+- [Canonical handoff/evidence](../accelerator-preparation/MALI-GPU-KERNEL/CLAUDE-HANDOFF.md).
 
-- **Work type:** STATIC SOURCE CONTRACT
-- **Scope:** Selected base DTB/DTBO sources, overlay selection and bootloader mutation contract
-- **Difficulty / closure outlook:** MEDIUM; Highest: bounded blobs and selection metadata already exist
-- **Existing evidence:** Merged/base/overlay DT inventory and exact boot-container/partition ledgers. [Canonical report](../../docs/dt-module-matching.md).
-- **Missing source/behavior:** Reproducible source-complete DTS/DTBO build and explicit reconciliation of observed bootloader changes
-- **Closure criterion:** All selected blobs rebuild with documented property/phandle/selection equivalence; every observed mutation classified. No unobserved runtime behavior claimed.
-- **Expected effort:** Several days to two weeks
-- **Dependency:** BOOT-IMAGES; PARTITION-OWNERSHIP; proposed Mali contract for GPU-specific source details
-- **Phone necessary:** No for static closure using existing dumps; yes only for new runtime/boot acceptance
+## 2. APUSYS-NPU-KERNEL — PARTIAL
 
-## 2. FT3680-TOUCH — PARTIAL
+- **kind:** REGISTERED ACCELERATOR / MODULE PARITY
+- **scope:** apu_top.ko, apusys.ko; normal-world kernel/DT/ABI only
+- **difficulty:** HIGH
+- **probability:** Pinned source candidates and exact stock operands; whole-scope closure probability unmeasured
+- **evidence:** Exact module hashes, full ELF metadata, DT/providers, pinned donor files and existing proof-axis citations
+- **missing:** All-axes module acceptance; preserve existing camera function/data proofs and close unmeasured residuals
+- **closure:** Every explicitly owned module satisfies function/data/CRC/KCFI/relocation/symbol/string/modinfo/vermagic/B1-B2 and observable DT/ABI; algorithms excluded
+- **effort:** Large multi-object APU stack; power and command/remoteproc ABI first
+- **dependency:** GKI-KMI-BASELINE; shared IOMMU/QoS/power providers; signed apusys.img retained
+- **phone:** No for static parity; later hardware/runtime acceptance needs separate authorization
+- [Canonical handoff/evidence](../accelerator-preparation/APUSYS-NPU-KERNEL/CLAUDE-HANDOFF.md).
 
-- **Work type:** KERNEL MODULE PARITY
-- **Scope:** focaltech_touch_spi_ft3680.ko host driver (not proprietary embedded firmware)
-- **Difficulty / closure outlook:** MEDIUM/HARD; Good but uncertain: bounded, buildable 166-function reconstruction
-- **Existing evidence:** 166/166 functions; 105/105 import CRCs; 67 raw, 69 normalized and 29 order-only functions. [Canonical report](../display-input/ft3680/parity-report.md).
-- **Missing source/behavior:** 40 size-different functions; 68 outside normalized/order-only classes; FHP/FWDBG, flash, IRQ and cleanup residuals
-- **Closure criterion:** All function/data/ABI/relocation differences closed against stock, with independently reproducible build and only explicitly proved build-provenance/firmware boundary residuals.
-- **Expected effort:** One to several weeks
-- **Dependency:** SPI-MT65XX; YFT-TPD-GESTURE; retained firmware metadata
-- **Phone necessary:** No for module parity; hardware tests remain a separate acceptance gate
+## 3. CAMERA-ISP-KERNEL — PARTIAL
 
-## 3. YFT-DEVINFO — PARTIAL
+- **kind:** REGISTERED ACCELERATOR / MODULE PARITY
+- **scope:** mtk_hcp.ko, mtk-ipesys-me.ko, mtk_imgsys_cmdq.ko, mtk_imgsys_v4l2.ko, mtk_imgsys_isp7sp.ko, ccd_rpmsg.ko, mtk_ccd_remoteproc.ko, mtk_ccuv.ko, mtk-cam-isp7sp.ko, mtk_aie.ko, mtk_aie_debug_7sp_2.ko, camera_dpe_isp7sp.ko, pda_drv_mt6878.ko, mtk-vmm-isp71-regulator.ko, mtk-vmm-notifier.ko, imgsensor-glue.ko, imgsensor.ko, c2ps_perf_ioctl.ko, mtk_c2ps.ko; normal-world kernel/DT/ABI only
+- **difficulty:** MEDIUM/HIGH
+- **probability:** Pinned source candidates and exact stock operands; whole-scope closure probability unmeasured
+- **evidence:** Exact module hashes, full ELF metadata, DT/providers, pinned donor files and existing proof-axis citations
+- **missing:** All-axes module acceptance; preserve existing camera function/data proofs and close unmeasured residuals
+- **closure:** Every explicitly owned module satisfies function/data/CRC/KCFI/relocation/symbol/string/modinfo/vermagic/B1-B2 and observable DT/ABI; algorithms excluded
+- **effort:** Reuse existing function/data-exact sources; bounded PDA/VMM residuals and whole-module acceptance
+- **dependency:** GKI-KMI-BASELINE; camera sensor/VCM/EEPROM/OIS DONE children; shared CMDQ/IOMMU/SMI; VCP client ABI
+- **phone:** No for static parity; later hardware/runtime acceptance needs separate authorization
+- [Canonical handoff/evidence](../accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
 
-- **Work type:** KERNEL MODULE PARITY
-- **Scope:** yft_devinfo.ko provider, exported registry ABI and probe/sysfs logic
-- **Difficulty / closure outlook:** HARD (not a quick enum edit); Moderate: small residual but unknown enum spelling may resist exact closure
-- **Existing evidence:** 54/72 byte-identical functions, 61/72 KCFI IDs, 40/40 import CRCs, 17/27 export CRCs; large enum-search exclusions already recorded. [Canonical report](../../kernel/phase4-yft-devinfo-kcfi-typeid.md).
-- **Missing source/behavior:** Vendor enum identity affecting ten device_add exports plus probe/sysfs codegen residuals
-- **Closure criterion:** 72/72 function behavior/bytes and all data, 27 export CRCs and KCFI identities proven; reproduce from source with explicit provenance residuals only.
-- **Expected effort:** Days to weeks; unbounded donor/enum risk
-- **Dependency:** Existing registry consumers; source/donor ABI evidence (not more documentation)
-- **Phone necessary:** No for static parity; runtime registry validation is separate
+## 4. MTK-VCODEC-KERNEL — PARTIAL
 
-## 4. CAMERA-ISP-KERNEL — PROPOSED
+- **kind:** REGISTERED ACCELERATOR / MODULE PARITY
+- **scope:** mtk-vcodec-common.ko, mtk-vcodec-dec-v1.ko, mtk-vcodec-enc-v1.ko, mtk-vcu.ko, clk-mt6878-vcodec.ko; normal-world kernel/DT/ABI only
+- **difficulty:** HIGH
+- **probability:** Pinned source candidates and exact stock operands; whole-scope closure probability unmeasured
+- **evidence:** Exact module hashes, full ELF metadata, DT/providers, pinned donor files and existing proof-axis citations
+- **missing:** All-axes module acceptance; preserve existing camera function/data proofs and close unmeasured residuals
+- **closure:** Every explicitly owned module satisfies function/data/CRC/KCFI/relocation/symbol/string/modinfo/vermagic/B1-B2 and observable DT/ABI; algorithms excluded
+- **effort:** Common driver then decoder/encoder and VCU; firmware/Codec2 contracts make semantic validation substantial
+- **dependency:** GKI-KMI-BASELINE; VCP host/status; shared DMA/IOMMU/CMDQ/power
+- **phone:** No for static parity; later hardware/runtime acceptance needs separate authorization
+- [Canonical handoff/evidence](../accelerator-preparation/MTK-VCODEC-KERNEL/CLAUDE-HANDOFF.md).
 
-- **Work type:** PROPOSED SPLIT / KERNEL MODULE PARITY
-- **Scope:** CAMERA-HAL-ISP's ISP7sp/imgsensor framework kernel modules and DT/normal-world ABI only
-- **Difficulty / closure outlook:** HARD; Moderate/lower: source coverage exists, but entire ISP set has not been parity-built
-- **Existing evidence:** Existing ISP module/source-coverage ledger and imgsensor framework 507/532 byte-identical with one struct delta. [Canonical report](../camera-stack/notes/isp-stack.md).
-- **Missing source/behavior:** ISP framework/provider source builds and module-by-module ABI/function/data parity; explicit ownership transfer list
-- **Closure criterion:** Enumerated ISP kernel set closes with reproducible parity and DT/platform contract; HAL, 3A, tuning DB and signed CCU remain explicitly outside scope.
-- **Expected effort:** Several weeks to months
-- **Dependency:** Approved split; existing camera sensor/VCM/OIS/EEPROM children; source donors and exact GKI
-- **Phone necessary:** No for static kernel closure; camera runtime/quality validation needs phone later
+## 5. MTK-MDP-KERNEL — PARTIAL
 
-## 5. MALI-GPU-KERNEL — PROPOSED
+- **kind:** REGISTERED ACCELERATOR / MODULE PARITY
+- **scope:** mdp_drv_mt6878.ko, mtk-mml.ko, mtk-mml-mt6878.ko, clk-mt6878-mdpsys.ko; normal-world kernel/DT/ABI only
+- **difficulty:** HIGH
+- **probability:** Pinned source candidates and exact stock operands; whole-scope closure probability unmeasured
+- **evidence:** Exact module hashes, full ELF metadata, DT/providers, pinned donor files and existing proof-axis citations
+- **missing:** All-axes module acceptance; preserve existing camera function/data proofs and close unmeasured residuals
+- **closure:** Every explicitly owned module satisfies function/data/CRC/KCFI/relocation/symbol/string/modinfo/vermagic/B1-B2 and observable DT/ABI; algorithms excluded
+- **effort:** Four bounded module targets; tile/PQ/CMDQ buffer and display-consumer ABI must be reconciled
+- **dependency:** GKI-KMI-BASELINE; existing DRM; generic CMDQ/SMI/IOMMU; VCP host/status
+- **phone:** No for static parity; later hardware/runtime acceptance needs separate authorization
+- [Canonical handoff/evidence](../accelerator-preparation/MTK-MDP-KERNEL/CLAUDE-HANDOFF.md).
 
-- **Work type:** PROPOSED ADD / KERNEL MODULE PARITY
-- **Scope:** Active r44 Valhall KMD, MGM/protected allocator, Mali/G3D DT and normal-world GPU platform ABI
-- **Difficulty / closure outlook:** HARD / source availability uncertain; Lowest of this list: ownership absent and matched platform source/parity not established
-- **Existing evidence:** Three shipped KMD/support modules, three enabled DT compatibles, two GPU HAL families and two init services. [Canonical report](MISSING-COVERAGE.md).
-- **Missing source/behavior:** Matched r44/MT6878 KMD and board glue source, builds, ABI and function/data parity; do not assume a source donor exists
-- **Closure criterion:** All three active modules and GPU DT/platform ABI reproducibly reconstructed; proprietary userspace/CSF firmware retained and not claimed open.
-- **Expected effort:** Several weeks to months; source-access risk
-- **Dependency:** Approved ADD; GKI-KMI-BASELINE; TMEM-FFA; retained GPU userspace/CSF firmware
-- **Phone necessary:** No for static parity if stock operands/source suffice; required later for graphics/secure-buffer/runtime tests
+## 6. GPU-AI-AUX-KERNEL-INTERFACES — PARTIAL
 
-## Separate ROM integration queue (not ranked RE)
+- **kind:** REGISTERED ACCELERATOR / MODULE PARITY
+- **scope:** gpueb.ko, vcp_status.ko, vcp.ko; normal-world kernel/DT/ABI only
+- **difficulty:** MEDIUM/HIGH
+- **probability:** Pinned source candidates and exact stock operands; whole-scope closure probability unmeasured
+- **evidence:** Exact module hashes, full ELF metadata, DT/providers, pinned donor files and existing proof-axis citations
+- **missing:** All-axes module acceptance; preserve existing camera function/data proofs and close unmeasured residuals
+- **closure:** Every explicitly owned module satisfies function/data/CRC/KCFI/relocation/symbol/string/modinfo/vermagic/B1-B2 and observable DT/ABI; algorithms excluded
+- **effort:** Three host modules; finite transport contracts, proprietary remote firmware excluded
+- **dependency:** MTK-MBOX; MTK-RPMSG-MBOX; MTK-TINYSYS-IPI; exact GKI; preserve SCP/ADSP DONE owners
+- **phone:** No for static parity; later hardware/runtime acceptance needs separate authorization
+- [Canonical handoff/evidence](../accelerator-preparation/GPU-AI-AUX-KERNEL-INTERFACES/CLAUDE-HANDOFF.md).
 
-DONE here means named-scope static closure, not a finished LieppOS feature.
+## 7. DTB-DTBO — PARTIAL
 
-| Component | Current status | Remaining ROM/acceptance action |
+- **kind:** STATIC SOURCE CONTRACT
+- **scope:** Selected base DTB/DTBO sources, overlay selection and bootloader mutation contract
+- **difficulty:** MEDIUM
+- **probability:** Highest: bounded blobs and selection metadata already exist
+- **evidence:** Merged/base/overlay DT inventory and exact boot-container/partition ledgers
+- **missing:** Reproducible source-complete DTS/DTBO build and explicit reconciliation of observed bootloader changes
+- **closure:** All selected blobs rebuild with documented property/phandle/selection equivalence; every observed mutation classified. No unobserved runtime behavior claimed.
+- **effort:** Several days to two weeks
+- **dependency:** BOOT-IMAGES; PARTITION-OWNERSHIP; proposed Mali contract for GPU-specific source details
+- **phone:** No for static closure using existing dumps; yes only for new runtime/boot acceptance
+- [Canonical handoff/evidence](../../docs/dt-module-matching.md).
+
+## 8. FT3680-TOUCH — PARTIAL
+
+- **kind:** KERNEL MODULE PARITY
+- **scope:** focaltech_touch_spi_ft3680.ko host driver (not proprietary embedded firmware)
+- **difficulty:** MEDIUM/HARD
+- **probability:** Good but uncertain: bounded, buildable 166-function reconstruction
+- **evidence:** 166/166 functions; 105/105 import CRCs; 67 raw, 69 normalized and 29 order-only functions
+- **missing:** 40 size-different functions; 68 outside normalized/order-only classes; FHP/FWDBG, flash, IRQ and cleanup residuals
+- **closure:** All function/data/ABI/relocation differences closed against stock, with independently reproducible build and only explicitly proved build-provenance/firmware boundary residuals.
+- **effort:** One to several weeks
+- **dependency:** SPI-MT65XX; YFT-TPD-GESTURE; retained firmware metadata
+- **phone:** No for module parity; hardware tests remain a separate acceptance gate
+- [Canonical handoff/evidence](../display-input/ft3680/parity-report.md).
+
+## 9. YFT-DEVINFO — PARTIAL
+
+- **kind:** KERNEL MODULE PARITY
+- **scope:** yft_devinfo.ko provider, exported registry ABI and probe/sysfs logic
+- **difficulty:** HARD (not a quick enum edit)
+- **probability:** Moderate: small residual but unknown enum spelling may resist exact closure
+- **evidence:** 54/72 byte-identical functions, 61/72 KCFI IDs, 40/40 import CRCs, 17/27 export CRCs; large enum-search exclusions already recorded
+- **missing:** Vendor enum identity affecting ten device_add exports plus probe/sysfs codegen residuals
+- **closure:** 72/72 function behavior/bytes and all data, 27 export CRCs and KCFI identities proven; reproduce from source with explicit provenance residuals only.
+- **effort:** Days to weeks; unbounded donor/enum risk
+- **dependency:** Existing registry consumers; source/donor ABI evidence (not more documentation)
+- **phone:** No for static parity; runtime registry validation is separate
+- [Canonical handoff/evidence](../../kernel/phase4-yft-devinfo-kcfi-typeid.md).
+
+## Separate ROM integration queue
+
+| Component | Status | Remaining action |
 |---|---|---|
 | SYSTEM-DLKM | DONE | Use the 60/60 reproducible GKI module ELF-body baseline; match custom GKI/KMI, signing, packaging and load order. A stock rebuild does not prove a custom kernel boots. |
 | BOOT-IMAGES | DONE | Use the exact recorded container geometry; test custom boot separately. Slot B is the stock-integrity anchor, not a disposable development slot. |
@@ -84,14 +146,4 @@ DONE here means named-scope static closure, not a finished LieppOS feature.
 | OTA-AB-UPDATE | PARTIAL | End-to-end signing/snapshot/merge/rollback acceptance is runtime-gated, not a static PARTIAL-to-DONE shortcut. |
 | RECOVERY-ORANGEFOX | PARTIAL | Backup/restore/flashing/FBE/USB acceptance remains runtime-gated; do not put the stock anchor at risk. |
 
-## Proprietary or runtime-only boundaries
-
-`AUDIO-DSP`, `BATTERY-PACK`, `BLUETOOTH`, `COOLING-HARDWARE`, `DRAM-MEMORY`, `FM-RADIO-HEADSET`, `GNSS`, `ICM4N607-IMU`, `IMS`, `KEYSTORE-VOLD-KEYMINT`, `MICROPHONES`, `MMC5603-MAGNETOMETER`, `MODEM-FIRMWARE`, `MT6637-WIFI`, `NFC-SECURE-ELEMENT`, `NVRAM-CALIBRATION`, `OTA-AB-UPDATE`, `RADIO-HAL-RIL`, `RECOVERY-ORANGEFOX`, `SENSOR-HUB`, `SPL07-BAROMETER`, `STK3A5X-ALS-PS`, `THERMAL-POWER-HAL`, `THERMAL-RADIOMETRY`, `THERMOVUE-T2`
-
-Do not convert these into kernel-module parity targets or claim whole-scope closure by updating documentation.
-
-## Umbrella/tracking scopes
-
-`FIRMWARE-INVENTORY`, `OEM-KERNEL-MODULES`, `REAR-RUGGED-FEATURES`, `VENDOR-BLOB-HAL-INVENTORY`, `VENDOR-DLKM`
-
-Do not convert these into kernel-module parity targets or claim whole-scope closure by updating documentation.
+[Accelerator roadmap](../accelerator-re-roadmap.md): six prepared scopes, precise reconstruction order and proprietary exclusions. Runtime/HAL/SELinux, proprietary and inventory tracking are not module-parity shortcuts.

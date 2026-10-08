@@ -20,24 +20,24 @@ No payload is copied into this repository; only module names and metadata.
 
 | class | meaning | count |
 |---|---|---:|
-| A | dedicated component (owns <=2 shipped modules) | 66 |
-| B | covered as part of a broader component scope | 166 |
-| C | generic upstream/GKI/vendor-platform module - no dedicated RE component needed | 207 |
+| A | dedicated component (owns <=2 shipped modules) | 71 |
+| B | covered as part of a broader component scope | 172 |
+| C | generic upstream/GKI/vendor-platform module - no dedicated RE component needed | 199 |
 | D | shipped but dead on this board (debug/eng or absent-hardware baggage) | 15 |
-| E | unmapped - genuine coverage gap | 3 |
+| E | unmapped - genuine coverage gap | 0 |
 | **total** |  | **457** |
 
-Class C is justified per row by the OEM module-map source-provenance class (`DIRECT_SOURCE_MATCH` 35, `LIKELY_PLATFORM_MATCH` 172) - the module has an upstream/GKI/MTK-platform source match and carries no board-specific logic to reverse-engineer.
+Class C is justified per row by the OEM module-map source-provenance class (`DIRECT_SOURCE_MATCH` 35, `LIKELY_PLATFORM_MATCH` 164) - the module has an upstream/GKI/MTK-platform source match and carries no board-specific logic to reverse-engineer.
 
 ### Class by partition
 
 | partitions | A | B | C | D | total |
 |---|---|---|---|---|---|
 | `system_dlkm` | 1 | 15 | 43 | 1 | 60 |
-| `vendor_boot_platform` | 27 | 62 | 94 | 0 | 183 |
+| `vendor_boot_platform` | 27 | 58 | 98 | 0 | 183 |
 | `vendor_boot_platform;vendor_dlkm` | 2 | 9 | 2 | 0 | 13 |
-| `vendor_dlkm` | 36 | 80 | 68 | 14 | 201 |
-| **total** | **66** | **166** | **207** | **15** | **457** |
+| `vendor_dlkm` | 41 | 90 | 56 | 14 | 201 |
+| **total** | **71** | **172** | **199** | **15** | **457** |
 
 ## D - shipped but dead (no port work implied)
 
@@ -63,13 +63,10 @@ Class C is justified per row by the OEM module-map source-provenance class (`DIR
 
 | module | evidence |
 |---|---|
-| `mali_kbase_mt6878_r44.ko` | active Mali Valhall KMD has no current RE ownership scope |
-| `mali_mgm_mt6878_r44.ko` | active Mali memory-group manager belongs to the uncovered Mali KMD scope |
-| `mali_prot_alloc_mt6878_r44.ko` | active Mali protected allocator belongs to the uncovered Mali KMD scope |
 
 ## Ownership evidence strength
 
-71 of the 232 modules that have a component owner rest on *prose or own-source* evidence: the pack names the module in its README/notes, or carries `<module>.c`, but has no module-inventory row for it. The owner is right; the claim is just not machine-checkable. This is the pack-hygiene backlog (add a `kernel/module-inventory.tsv` row per owned module):
+71 of the 243 modules that have a component owner rest on *prose or own-source* evidence: the pack names the module in its README/notes, or carries `<module>.c`, but has no module-inventory row for it. The owner is right; the claim is just not machine-checkable. This is the pack-hygiene backlog (add a `kernel/module-inventory.tsv` row per owned module):
 
 | component | modules owned by prose/source evidence only |
 |---|---|
@@ -116,75 +113,113 @@ Class C is justified per row by the OEM module-map source-provenance class (`DIR
 
 | module | owner | class | reason |
 |---|---|:---:|---|
+| `adsp.ko` | `AUDIO-DSP-KERNEL` | B | existing ADSP host source scope; not transport framework ownership |
 | `aee_aed.ko` | `COVERED-GENERIC` | C | MTK exception-engine infrastructure |
-| `apu_top.ko` | `VENDOR-BLOB-HAL-INVENTORY` | C | APU DVFS/thermal client |
-| `apusys.ko` | `VENDOR-BLOB-HAL-INVENTORY` | C | APU/Neuropilot kernel transport; behaviour lives in the proprietary APU HAL stack |
+| `apu_top.ko` | `APUSYS-NPU-KERNEL` | B | authorized accelerator preparation: apusys and apu_top are normal-world source-actionable kernel code, not proprietary algorithms. Prior class-C blob-inventory ownership did not establish source parity; APU/MDLA RPMsg nodes were incorrectly attributed to camera consumers. |
+| `apusys.ko` | `APUSYS-NPU-KERNEL` | B | authorized accelerator preparation: apusys and apu_top are normal-world source-actionable kernel code, not proprietary algorithms. Prior class-C blob-inventory ownership did not establish source parity; APU/MDLA RPMsg nodes were incorrectly attributed to camera consumers. |
+| `aw36515.ko` | `AW36515-FLASH` | A | existing named flash driver scope; preserve DONE |
 | `btbcm.ko` | `COVERED-GENERIC` | C | upstream Bluetooth helper; fitted controller uses the MT6637 stack |
 | `btqca.ko` | `COVERED-GENERIC` | C | upstream Bluetooth helper; reference controller baggage |
 | `btsdio.ko` | `COVERED-GENERIC` | C | generic Bluetooth SDIO helper |
 | `c2k_usb_f_via_atc.ko` | `MODEM-KERNEL-TRANSPORT` | B | C2K modem USB function |
 | `c2k_usb_f_via_ets.ko` | `MODEM-KERNEL-TRANSPORT` | B | C2K modem USB function |
 | `c2k_usb_f_via_modem.ko` | `MODEM-KERNEL-TRANSPORT` | B | C2K modem USB function |
+| `c2ps_perf_ioctl.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
+| `camera_dpe_isp7sp.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
+| `camera_eeprom_v4l2.ko` | `CAMERA-EEPROMS` | A | sole EEPROM driver closed in camera/eeprom; not camera HAL kernel ownership |
 | `ccci_auxadc.ko` | `CCCI-KERNEL` | B | CCCI modem AUXADC transport |
 | `ccci_ccif.ko` | `CCCI-KERNEL` | B | CCCI CCIF host interface |
 | `ccci_fsm_scp.ko` | `CCCI-KERNEL` | B | CCCI/SCP state bridge |
 | `ccci_md_all.ko` | `CCCI-KERNEL` | B | CCCI modem aggregate |
 | `ccci_util_lib.ko` | `CCCI-KERNEL` | B | CCCI utility layer |
+| `ccd_rpmsg.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
 | `clk-common.ko` | `COVERED-GENERIC` | C | generic MTK clock framework |
+| `clk-mt6878-cam.ko` | `COVERED-GENERIC` | C | shared MTK source-carried platform dependency, not proprietary camera HAL or claimed module parity |
+| `clk-mt6878-ccu.ko` | `COVERED-GENERIC` | C | shared MTK source-carried platform dependency, not proprietary camera HAL or claimed module parity |
+| `clk-mt6878-img.ko` | `COVERED-GENERIC` | C | shared MTK source-carried platform dependency, not proprietary camera HAL or claimed module parity |
+| `clk-mt6878-mdpsys.ko` | `MTK-MDP-KERNEL` | B | authorized accelerator preparation: mdp_drv and the two MML modules are distinct from mediatek-drm. The DRM DONE scope explicitly closes DRM/panel modules, not MDP/MML; no MDP byte/semantic parity evidence was found. Keep generic CMDQ and reconstructed secure CMDQ outside this component. |
+| `clk-mt6878-vcodec.ko` | `MTK-VCODEC-KERNEL` | B | authorized accelerator preparation: Four codec/VCU normal-world drivers and their dedicated clock provider have donor targets but no complete module-level source/parity owner. Generic coverage was not a measured reconstruction. |
+| `custom-ldo.ko` | `WL2868-CAMERA-LDO` | A | two-module LDO wrapper/provider closure already owned by WL2868-CAMERA-LDO |
+| `custom-ldo-wl2868.ko` | `WL2868-CAMERA-LDO` | A | existing closed camera-rail provider; do not duplicate in ISP child |
+| `dw9781c.ko` | `DW9781C-OIS` | A | exact named OIS driver source closure; not camera HAL ownership |
+| `flashlight.ko` | `COVERED-GENERIC` | C | shared MTK source-carried platform dependency, not proprietary camera HAL or claimed module parity |
+| `ged.ko` | `MALI-GPU-KERNEL` | B | authorized accelerator preparation: Active KMD/MGM/protected allocation had no owner. GED, GPU HAL/QoS and gpufreq candidates were generic platform-source triage, not a DONE parity scope; no distinct DONE component owns them. |
+| `gpueb.ko` | `GPU-AI-AUX-KERNEL-INTERFACES` | B | authorized accelerator preparation: GPUEB and VCP host/status clients were only referenced by MTK-TINYSYS-IPI. Its explicit DONE scope proves the transport module, not these client implementations. SCP and ADSP host code are already DONE elsewhere and are not duplicated. |
 | `hbt.ko` | `MTK-MODULE-LOADER` | C | MediaTek HBT tracer: vendor debug tooling, not part of a ROM port |
 | `hci_uart.ko` | `COVERED-GENERIC` | C | upstream HCI UART helper |
+| `hf_manager.ko` | `SENSOR-HUB-KERNEL` | B | existing sensor 2.0 core source/ABI closure |
+| `i2c-mt65xx.ko` | `COVERED-GENERIC` | C | shared MTK source-carried platform dependency, not proprietary camera HAL or claimed module parity |
+| `imgsensor.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
+| `imgsensor-glue.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
 | `log_store.ko` | `COVERED-GENERIC` | C | generic MTK persistent logging helper |
 | `mali_dmabuf_test_mt6878_r44.ko` | `COVERED-GENERIC` | D | Mali DMA-BUF test helper is shipped in modules.load but is diagnostic support, not a distinct device subsystem |
-| `mali_kbase_mt6878_r44.ko` | `UNMAPPED` | E | active Mali Valhall KMD has no current RE ownership scope; proposed MALI-GPU-KERNEL |
-| `mali_mgm_mt6878_r44.ko` | `UNMAPPED` | E | active Mali memory-group manager belongs to the uncovered Mali KMD scope |
-| `mali_prot_alloc_mt6878_r44.ko` | `UNMAPPED` | E | active Mali protected allocator belongs to the uncovered Mali KMD scope |
+| `mali_kbase_mt6878_r44.ko` | `MALI-GPU-KERNEL` | B | authorized accelerator preparation: Active KMD/MGM/protected allocation had no owner. GED, GPU HAL/QoS and gpufreq candidates were generic platform-source triage, not a DONE parity scope; no distinct DONE component owns them. |
+| `mali_mgm_mt6878_r44.ko` | `MALI-GPU-KERNEL` | B | authorized accelerator preparation: Active KMD/MGM/protected allocation had no owner. GED, GPU HAL/QoS and gpufreq candidates were generic platform-source triage, not a DONE parity scope; no distinct DONE component owns them. |
+| `mali_prot_alloc_mt6878_r44.ko` | `MALI-GPU-KERNEL` | B | authorized accelerator preparation: Active KMD/MGM/protected allocation had no owner. GED, GPU HAL/QoS and gpufreq candidates were generic platform-source triage, not a DONE parity scope; no distinct DONE component owns them. |
 | `md_cooling_all.ko` | `MODEM-KERNEL-TRANSPORT` | B | modem cooling bridge |
 | `mddp.ko` | `MODEM-KERNEL-TRANSPORT` | B | modem data acceleration path |
+| `mdp_drv_mt6878.ko` | `MTK-MDP-KERNEL` | B | authorized accelerator preparation: mdp_drv and the two MML modules are distinct from mediatek-drm. The DRM DONE scope explicitly closes DRM/panel modules, not MDP/MML; no MDP byte/semantic parity evidence was found. Keep generic CMDQ and reconstructed secure CMDQ outside this component. |
 | `met.ko` | `MTK-MODULE-LOADER` | C | MediaTek MEU micro-tracer: vendor debug tooling, not part of a ROM port |
 | `mrdump.ko` | `MODEM-KERNEL-TRANSPORT` | B | modem/platform crash dump path |
+| `mt6363-regulator.ko` | `COVERED-GENERIC` | C | shared MTK source-carried platform dependency, not proprietary camera HAL or claimed module parity |
+| `mtk-cam-isp7sp.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
 | `mtk-composite.ko` | `MTU3-SSUSB` | B | MTK USB composite gadget function provider; MTU3-SSUSB scope covers the gadget-side vendor modules but its inventory does not name mtk-composite.ko |
+| `mtk-ipesys-me.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
+| `mtk-mmdvfs-v3.ko` | `COVERED-GENERIC` | C | shared MTK source-carried platform dependency, not proprietary camera HAL or claimed module parity |
+| `mtk-mml.ko` | `MTK-MDP-KERNEL` | B | authorized accelerator preparation: mdp_drv and the two MML modules are distinct from mediatek-drm. The DRM DONE scope explicitly closes DRM/panel modules, not MDP/MML; no MDP byte/semantic parity evidence was found. Keep generic CMDQ and reconstructed secure CMDQ outside this component. |
+| `mtk-mml-mt6878.ko` | `MTK-MDP-KERNEL` | B | authorized accelerator preparation: mdp_drv and the two MML modules are distinct from mediatek-drm. The DRM DONE scope explicitly closes DRM/panel modules, not MDP/MML; no MDP byte/semantic parity evidence was found. Keep generic CMDQ and reconstructed secure CMDQ outside this component. |
+| `mtk-smi.ko` | `COVERED-GENERIC` | C | shared MTK source-carried platform dependency, not proprietary camera HAL or claimed module parity |
+| `mtk-vcodec-common.ko` | `MTK-VCODEC-KERNEL` | B | authorized accelerator preparation: Four codec/VCU normal-world drivers and their dedicated clock provider have donor targets but no complete module-level source/parity owner. Generic coverage was not a measured reconstruction. |
+| `mtk-vcodec-dec-v1.ko` | `MTK-VCODEC-KERNEL` | B | authorized accelerator preparation: Four codec/VCU normal-world drivers and their dedicated clock provider have donor targets but no complete module-level source/parity owner. Generic coverage was not a measured reconstruction. |
+| `mtk-vcodec-enc-v1.ko` | `MTK-VCODEC-KERNEL` | B | authorized accelerator preparation: Four codec/VCU normal-world drivers and their dedicated clock provider have donor targets but no complete module-level source/parity owner. Generic coverage was not a measured reconstruction. |
+| `mtk-vcu.ko` | `MTK-VCODEC-KERNEL` | B | authorized accelerator preparation: Four codec/VCU normal-world drivers and their dedicated clock provider have donor targets but no complete module-level source/parity owner. Generic coverage was not a measured reconstruction. |
+| `mtk-vmm-isp71-regulator.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
+| `mtk-vmm-notifier.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
+| `mtk_aie.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
+| `mtk_aie_debug_7sp_2.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
 | `mtk_battery_oc_throttling.ko` | `THERMAL-POWER-HAL` | B | battery over-current throttling provider |
 | `mtk_bp_thl.ko` | `THERMAL-POWER-HAL` | B | battery-percent throttling provider |
+| `mtk_c2ps.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
+| `mtk_ccd_remoteproc.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
+| `mtk_ccuv.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
 | `mtk_cpu_power_throttling.ko` | `THERMAL-POWER-HAL` | B | CPU power throttling provider |
 | `mtk_dynamic_loading_throttling.ko` | `THERMAL-POWER-HAL` | B | dynamic load throttling provider |
+| `mtk_gpu_hal.ko` | `MALI-GPU-KERNEL` | B | authorized accelerator preparation: Active KMD/MGM/protected allocation had no owner. GED, GPU HAL/QoS and gpufreq candidates were generic platform-source triage, not a DONE parity scope; no distinct DONE component owns them. |
 | `mtk_gpu_power_throttling.ko` | `THERMAL-POWER-HAL` | B | GPU power throttling provider |
+| `mtk_gpu_qos.ko` | `MALI-GPU-KERNEL` | B | authorized accelerator preparation: Active KMD/MGM/protected allocation had no owner. GED, GPU HAL/QoS and gpufreq candidates were generic platform-source triage, not a DONE parity scope; no distinct DONE component owns them. |
+| `mtk_gpufreq_mt6878.ko` | `MALI-GPU-KERNEL` | B | authorized accelerator preparation: Active KMD/MGM/protected allocation had no owner. GED, GPU HAL/QoS and gpufreq candidates were generic platform-source triage, not a DONE parity scope; no distinct DONE component owns them. |
+| `mtk_gpufreq_wrapper.ko` | `MALI-GPU-KERNEL` | B | authorized accelerator preparation: Active KMD/MGM/protected allocation had no owner. GED, GPU HAL/QoS and gpufreq candidates were generic platform-source triage, not a DONE parity scope; no distinct DONE component owns them. |
+| `mtk_hcp.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
+| `mtk_imgsys_cmdq.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
+| `mtk_imgsys_isp7sp.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
+| `mtk_imgsys_v4l2.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
 | `mtk_ioctl_touch_boost.ko` | `FT3680-TOUCH` | B | touch input latency boost bridge |
+| `mtk_iommu.ko` | `COVERED-GENERIC` | C | shared MTK source-carried platform dependency, not proprietary camera HAL or claimed module parity |
 | `mtk_low_battery_throttling.ko` | `THERMAL-POWER-HAL` | B | low-battery throttling provider |
 | `mtk_md_power_throttling.ko` | `THERMAL-POWER-HAL` | B | modem power throttling provider |
 | `mtk_mdpm.ko` | `MODEM-KERNEL-TRANSPORT` | B | modem dynamic power manager |
 | `mtk_sec_heap.ko` | `TMEM-FFA` | B | secure-heap/CTX reserved-memory provider used by TMEM/FFA |
 | `nvmem-mt635x-efuse.ko` | `USB-PHY` | B | PMIC efuse nvmem reader; USB-PHY documents efuse calibration reads |
+| `pda_drv_mt6878.ko` | `CAMERA-ISP-KERNEL` | B | authorized accelerator preparation: Separate ISP/PDA/VMM normal-world kernel work from CAMERA-HAL-ISP's proprietary HAL/3A/tuning boundary. Preserve 16 existing function/data proof pairs and sensor-TU DONE closures; PDA/VMM and whole-module ABI/KCFI/relocation/B1-B2 acceptance remain unclosed. |
+| `pinctrl-mt6878.ko` | `COVERED-GENERIC` | C | shared MTK source-carried platform dependency, not proprietary camera HAL or claimed module parity |
 | `pmic_lbat_service.ko` | `THERMAL-POWER-HAL` | B | PMIC low-battery service |
 | `pmic_lvsys_notify.ko` | `THERMAL-POWER-HAL` | B | PMIC low-system-voltage notifier |
 | `reboot-mode.ko` | `BOOT-IMAGES` | B | reboot-mode/syscon-reboot-mode chain verified end-to-end in research android17-hidl-fixed-build-20261002/reboot-mode-end-to-end-proof-20261003 |
+| `scp.ko` | `SENSOR-HUB-KERNEL` | B | scp host source/ABI closed in sensors; TinySys IPI only provides transport |
+| `sensorhub.ko` | `SENSOR-HUB-KERNEL` | B | existing sensorhub Linux source closure |
 | `snd-soc-tfa98xx.ko` | `AW883XX-SPEAKER-AMP` | D | NXP TFA98xx codec driver ships in vendor_dlkm but no TFA98xx device exists in DT or HAL config; fitted amp is AW88394 |
 | `syscon-reboot-mode.ko` | `BOOT-IMAGES` | B | same reboot-mode chain (syscon variant) |
 | `thermal-generic-adc.ko` | `COOLING-HARDWARE` | C | upstream generic ADC thermal sensor driver; nothing board-specific beyond auxadc channel config |
 | `touch_boost.ko` | `FT3680-TOUCH` | B | touch input latency boost bridge |
 | `tui-common.ko` | `TRUSTKERNEL-TEE` | B | TrustUI common TEE client transport (normal world side) |
+| `vcp.ko` | `GPU-AI-AUX-KERNEL-INTERFACES` | B | authorized accelerator preparation: GPUEB and VCP host/status clients were only referenced by MTK-TINYSYS-IPI. Its explicit DONE scope proves the transport module, not these client implementations. SCP and ADSP host code are already DONE elsewhere and are not duplicated. |
+| `vcp_status.ko` | `GPU-AI-AUX-KERNEL-INTERFACES` | B | authorized accelerator preparation: GPUEB and VCP host/status clients were only referenced by MTK-TINYSYS-IPI. Its explicit DONE scope proves the transport module, not these client implementations. SCP and ADSP host code are already DONE elsewhere and are not duplicated. |
 | `widevine_driver.ko` | `KEYSTORE-VOLD-KEYMINT` | C | OEMCrypto/T-base L1 kernel driver; secure-world TAs proprietary |
 
-## Conclusions for this axis
+## Current accelerator ownership
 
-1. **One module-level gap, and it is named.** Every one of the 457 shipped kernel modules resolves either to a component owner (232) or a documented generic/dead class (222). `coverage=E` is exactly 3 rows: `mali_kbase_mt6878_r44.ko`, `mali_mgm_mt6878_r44.ko`, `mali_prot_alloc_mt6878_r44.ko`. That is the whole Mali KMD question, recorded as the proposed `MALI-GPU-KERNEL` component in [`../MISSING-COVERAGE.md`](../MISSING-COVERAGE.md).
-2. **Generic mass is real, not laziness.** 207 modules are class C and every one of them is justified by an existing source-provenance record in `OEM-KERNEL-MODULES/evidence/module-map.csv` (35 DIRECT_SOURCE_MATCH, 172 LIKELY_PLATFORM_MATCH). For a same-BSP custom kernel these travel as vendor platform code; they need no board-specific RE and must not inflate the component count.
-3. **The GPU kernel driver has no owner of its own - decision recorded.** No pack inventory claims the active Mali KMD modules: 3 active modules stay E. Decision (see MISSING-COVERAGE.md): create `MALI-GPU-KERNEL` (PARTIAL, class A) to own the Valhall KMD, MGM and protected allocator plus the three GPU DT compatibles. The Mali DMA-BUF *test* helper is separately D (diagnostic, not a subsystem), and `mtk_vcodec-*`/`mtk-vcu` media-VPU transport stays C under the vendor-blob boundary.
-4. **The MTK charging framework is spread over several packs with no single inventory**:
-   - `adapter_class`/`charger_class`/`mtk_charger_algorithm_class` -> `TCPC-CLASS`
-   - `mtk_pep40`/`mtk_charger_framework` -> `MT6375-CHARGER`
-   - `mtk_pep`/`mtk_pep50` -> `SH366003-FUEL-GAUGE`
-   - `mtk_pd_adapter`/`mtk_pd_charging` -> `PD-PPS-UFCS`
-   - `sc851x_charger` -> `SC8510-BIDIRECTIONAL-CHARGE-PUMP`
-   - `sc8571_charger` -> `SC8571-CHARGE-PUMP`/`BATTERY-PACK`
-
-Coverage exists, but no one component can currently answer "what does the charging stack look like end to end". A cross-pack index row inside `MT6375-CHARGER` (or a merge) is the follow-up.
-
-5. **`mtk-composite.ko` (USB composite gadget) had no owner** in any pack inventory: curated to `MTU3-SSUSB` (B) because that scope already declares "gadget-side vendor modules"; the pack still has no inventory row for it.
-6. **Dead payload** is 15 modules (D): the `met*`/`scheduler_ext` debug/eng tracer family, `nfc.ko` (the ST21NFC stack uses a misc char device, not the in-kernel NFC core), `snd-soc-tfa98xx.ko` (NXP amp driver shipped although the board fits AW88394) and `mali_dmabuf_test_mt6878_r44.ko` (diagnostic self-test helper).
-
-## Follow-ups produced by this axis
-
-- add per-module inventory rows for the 71 prose/own-source-owned modules (table above), so pack ownership becomes machine-checkable;
-- create `MALI-GPU-KERNEL` as recorded in `../MISSING-COVERAGE.md` and move these 3 E rows onto it;
-- record the charging-framework cross-pack view (conclusion 4);
-- refresh the stale 471-module prose count inside `OEM-KERNEL-MODULES` to the measured 457.
+All 457 shipped modules are enumerated; 0 module-level ownership gaps remain.
+Six authorized accelerator PARTIAL registrations own 41 distinct target modules. Public/platform source candidates are not module parity.
+Camera kernel ownership is separate from proprietary CAMERA-HAL-ISP; SCP/ADSP/mailbox and named camera DONE drivers retain their source owners.
+Historical co-mentions are evidence, not duplicate primary ownership. Shared platform infrastructure stays source-carried/generic with no fabricated parity.
+See [accelerator roadmap](../../accelerator-re-roadmap.md) and explicit transfer ledgers. Diagnostic Mali DMA-BUF and other D payloads remain separately classified.

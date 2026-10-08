@@ -40,7 +40,7 @@ def name_owner(name: str) -> tuple[str, str, str, str]:
     """component, coverage, subsystem, reason for config/overlay names."""
     n = name.lower()
     rules = [
-        (r"mali|gpu", "UNMAPPED", "E", "Graphics", "GPU integration converges on the missing Mali kernel/DT ownership scope"),
+        (r'mali|gpu', 'MALI-GPU-KERNEL', 'B', 'Graphics', 'Retained userspace consumer of registered normal-world GPU kernel ABI; not proprietary source closure'),
         (r"camera|camerax|isphal|mtkcam", "CAMERA-HAL-ISP", "B", "Camera", "camera HAL/framework configuration"),
         (r"audio|mixer|soundtrigger|sound_trigger", "AUDIO-DSP", "B", "Audio", "audio policy/routing/DSP integration"),
         (r"finger|biometric", "MADEV-FINGERPRINT", "B", "Fingerprint", "fingerprint/biometric integration"),

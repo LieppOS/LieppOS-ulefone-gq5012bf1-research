@@ -1,46 +1,38 @@
-# GQ5012BF1 Reverse-Engineering Index — final handoff
+# GQ5012BF1 reverse-engineering index
 
-Final snapshot: **2026-10-08**, source HEAD `3abc5643e539b3f2c8565d8197091d3bb50856ff`; workspace directories are authoritative. This report is reproducible from committed metadata, not a claim that later concurrent closures never occur.
+Snapshot: **2026-10-08**, source HEAD `c8de6a1`. Actual workspace directory status is authoritative; scope registration is not kernel reconstruction.
 
-**Single starting point** for subsequent component RE and LieppOS integration. Phone: Ulefone Armor 29 Pro Thermal, GQ5012BF1, MT6878T/Dimensity 7400 family. Workspace directory status is authoritative; no taxonomy migrations or status moves were made by this audit.
-
-- **DONE:** the named static/source/parity or inventory contract only; not proprietary HAL/firmware openness or runtime acceptance.
-- **PARTIAL:** exactly one A–F class with a real static, proprietary, physical/runtime or tracking boundary.
-- **BLOCKED:** evidence/source/access explicitly unavailable. **TODO:** untriaged accepted scope.
-- Artifact coverage: A dedicated owner; B broader owner; C generic; D dead/reference; E explained ownership gap.
-- `component` is the single assigned owner per artifact. Module `co_owners` and `umbrella_records` are cross-citations/tracking witnesses, not additional primary ownership. Proposed splits require a transfer ledger.
-- Evidence priority is capture provenance/actual observations, corrected research, exact parity, current trees, older/donor assumptions. A later-written summary without a newer capture does not override runtime evidence.
+Phone: Ulefone Armor 29 Pro Thermal / GQ5012BF1 / MT6878T. DONE is named static/source/inventory closure, not proprietary openness or runtime readiness. `component` is singleton primary ownership; co-mentions/umbrellas are references only. Accelerator registrations were authorized preparation, not reconstruction.
 
 ## Current totals
 
 | Status | Count |
 |---|---:|
 | DONE | 94 |
-| PARTIAL | 36 |
+| PARTIAL | 42 |
 | BLOCKED | 3 |
 | TODO | 0 |
-| **TOTAL** | **133** |
+| **TOTAL** | **139** |
 
 ## PARTIAL classification
 
 | Classification | Count |
 |---|---:|
-| A — Actionable static RE (whole-scope runtime acceptance may still be separate) | 6 |
-| B — Kernel/source closed; broader proprietary boundary remains | 11 |
-| C — Proprietary boundary | 8 |
+| A — Actionable static RE; runtime acceptance separate | 11 |
+| B — Closed kernel/source boundary; proprietary integration remains | 11 |
+| C — Proprietary boundary | 9 |
 | D — Hardware/runtime/teardown gated | 6 |
 | E — Stale/duplicate/wrong scope | 0 |
-| F — Broad umbrella/tracking scope | 5 |
+| F — Umbrella/tracking scope | 5 |
 
 ## Master component table
 
-Every registered scope appears once. Research links may be a shared canonical subsystem report; the workspace README provides the specific scope/closure operands. Neither is replaced by a circular audit-summary link.
-
-| Component | Status | Subsystem | Scope | Classification | Kernel | Userspace/HAL | Firmware | Hardware | Remaining boundary / DONE limitations | Research | Workspace |
-|---|---|---|---|---|---|---|---|---|---|---|---|
+| Component | Status | Subsystem | Scope | Class | Kernel | Userspace | Firmware | Hardware | Remaining/DONE limits | Research | Workspace |
+|---|---|---|---|---|---|---|---|---|---|---|
 | AB-SUPER-GEOMETRY | DONE | BOOT/STORAGE | A/B physical and dynamic-super geometry | SCOPE-CLOSED | N/A | N/A | SOURCE-AVAILABLE | N/A | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](storage/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/AB-SUPER-GEOMETRY/README.md) |
 | AC020-UVC | DONE | THERMAL CAMERA | Raytron/InfiRay Tiny2-C (TC2-C) module ASIC as USB device 3474:4321 ("AC020" = SDK family name, not a chip) | SCOPE-CLOSED | N/A | N/A | N/A | PROVEN | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](thermal-camera/ac020/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/AC020-UVC/README.md) |
 | ANDROID-INIT | PARTIAL | ANDROID INTEGRATION | Android 15 MTK init and Android 16 GSI interaction | A | N/A | PARTIAL | N/A | N/A | Reconcile stock/current service ordering and validate property-trigger behavior. | [report](../docs/service-map.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/ANDROID-INIT/README.md) |
+| APUSYS-NPU-KERNEL | PARTIAL | ACCELERATOR KERNEL | APUSYS/NPU normal-world kernel / exact module, DT and observable ABI parity; proprietary algorithms excluded | A | PARTIAL (existing measured axes preserved) | PROPRIETARY CONSUMERS / kernel ABI | BINARY/SIGNED (excluded) | DT/STATIC; execution unproved | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | [report](accelerator-preparation/APUSYS-NPU-KERNEL/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/APUSYS-NPU-KERNEL/README.md) |
 | AUDIO-DSP | PARTIAL | AUDIO | MTK audio DSP and routing stack | B | CLOSED | PROPRIETARY | SIGNED/BINARY | PROVEN | Kernel AFE/DSP transport is closed; DSP protocol, firmware, routing and calibration remain proprietary. | [report](audio/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/AUDIO-DSP/README.md) |
 | AUDIO-DSP-KERNEL | DONE | AUDIO | Linux ADSP/SCP audio transport modules and ABI | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](audio/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/AUDIO-DSP-KERNEL/README.md) |
 | AVB-SIGNING-CHAIN | DONE | BOOT/SECURITY | AVB keys, descriptors, rollback and vbmeta topology | SCOPE-CLOSED | N/A | N/A | SOURCE-AVAILABLE | N/A | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](../slot-b-investigation/untouched-b-early-boot-forensics/FIRST-STAGE-AVB-KEY-CONCLUSION.md) | [scope](../../Reverse%20Engineer%20-%20DONE/AVB-SIGNING-CHAIN/README.md) |
@@ -55,8 +47,9 @@ Every registered scope appears once. Research links may be a shared canonical su
 | BOOT-CONTROL-SLOTS | DONE | BOOT/OTA | A/B slot metadata and safe Slot-B development contract | SCOPE-CLOSED | N/A | PROPRIETARY (outside scope) | N/A | N/A | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](storage/ab-ota/boot-control.md) | [scope](../../Reverse%20Engineer%20-%20DONE/BOOT-CONTROL-SLOTS/README.md) |
 | BOOT-IMAGES | DONE | BOOT | boot, vendor_boot and init_boot image geometry/content contract | SCOPE-CLOSED | N/A (image containers) | N/A | N/A | N/A | Six stock container round-trips byte-identical; Slot B stock verified, Slot A modified. Custom-kernel boot/recovery acceptance is NOT closed. | [report](boot-images/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/BOOT-IMAGES/README.md) |
 | CAMERA-EEPROMS | DONE | CAMERA | 4 external camera-module EEPROMs: cam0 7-0050, cam1 4-0050, cam2 2-0050, cam3 4-0053 | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | None for the static kernel/DT/HAL-interface scope; EEPROM die/capacity not electronically identifiable (no ID register), per-unit calibration bytes out of scope | [report](camera/eeprom/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/CAMERA-EEPROMS/README.md) |
-| CAMERA-HAL-ISP | PARTIAL | CAMERA | MT6878 ISP7sp + MTK mtkcam AIDL CameraProvider | A | PARTIAL | PROPRIETARY | SIGNED/BINARY | PROVEN | Actionable ISP kernel parity is not closed (A, pending approved split); whole HAL/3A/tuning/CCU scope cannot close statically and remains proprietary. | [report](camera-stack/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/CAMERA-HAL-ISP/README.md) |
+| CAMERA-HAL-ISP | PARTIAL | CAMERA | Proprietary CameraProvider/HAL, 3A, tuning/calibration interpretation and ISP/CCU algorithms; kernel owned by CAMERA-ISP-KERNEL | C | OWNED BY CAMERA-ISP-KERNEL | PROPRIETARY | SIGNED/BINARY | EXISTING CAMERA CAPTURES | HAL/3A/tuning/calibration interpretation and firmware algorithms remain proprietary; normal-world kernel ownership transferred to child. | [report](camera-stack/accelerator-kernel-split.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/CAMERA-HAL-ISP/README.md) |
 | CAMERA-IMX989 | DONE | CAMERA | Sony IMX989 (chip-ID 0x0989 PROVEN on this unit); the same slot also carries the CTS-board sub-driver `imx989cts` reporting **0x0988 = chip-ID − 1** (same silicon, gated by `is_yft_cts_board()`), and accepts S5KGN1SP/S5KGM2SP | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | no driver RE left. The frame-descriptor keep/fix decision is now an explicit build flag, not an unknown; the five family functions the 2026-10-02 donor pass reported `(stock-only)` (`imx989_awb_gain` + four `imx989cts_*`) are present at matching sizes against the shipped module and byte-identical on the reproducibility axis; tuning blobs are proprietary (ISP/tuning track); on-device validation rem | [report](camera-stack/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/CAMERA-IMX989/README.md) |
+| CAMERA-ISP-KERNEL | PARTIAL | ACCELERATOR KERNEL | Camera ISP kernel normal-world kernel / exact module, DT and observable ABI parity; proprietary algorithms excluded | A | PARTIAL (existing measured axes preserved) | PROPRIETARY CONSUMERS / kernel ABI | BINARY/SIGNED (excluded) | DT/STATIC; execution unproved | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | [report](accelerator-preparation/CAMERA-ISP-KERNEL/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/CAMERA-ISP-KERNEL/README.md) |
 | CAMERA-OV64B | DONE | CAMERA | OmniVision OV64B, chip-ID 0x566442 (bound on this unit), camera 3 rear, the 64 MP night-vision camera. DT `sensor4` on i2c-4 (`4-0020`), write-IDs 0x20/0x44, seninf csi-port-0 D-PHY 4-lane, MCLK CAMTG2 24 MHz, WL2864C avdd4/afvdd5/dvdd1/dovdd7 | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](camera-stack/ov64b/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/CAMERA-OV64B/README.md) |
 | CAMERA-S5KJN1 | DONE | CAMERA | Samsung S5KJN1 front camera (chip-ID 0x38E1) at write-ID 0x7A. DT `sensor1` on i2c-4 (`4-0010`), csi-port-2 D-PHY 4-lane, MCLK CAMTG2 24 MHz, WL2864C dvdd1/avdd4/dovdd7 + GPIO76 AVDD1, fixed focus | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](camera-stack/s5kjn1/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/CAMERA-S5KJN1/README.md) |
 | CAMERA-S5KJN1MAIN2 | DONE | CAMERA | Samsung S5KJN1 die (0x38E1). The driver pseudo-ID is 0x38E2 (low byte +1, non-CTS boards only). Camera 2, the rear 16 mm ultrawide | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](camera-stack/s5kjn1main2/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/CAMERA-S5KJN1MAIN2/README.md) |
@@ -85,6 +78,7 @@ Every registered scope appears once. Research links may be a shared canonical su
 | GKI-KMI-BASELINE | DONE | BOOT/KERNEL PACKAGING | Android 14 Linux 6.1 GKI ab/12901745 | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Production packaging/runtime qualification, not further identity RE | [report](../kernel/exact-gki-build-inputs.md) | [scope](../../Reverse%20Engineer%20-%20DONE/GKI-KMI-BASELINE/README.md) |
 | GNSS | PARTIAL | GNSS | MT6878 CONNSYS GPS MCU + MT6637 A-die GNSS (L1+L5); no MT6686 on this SKU | B | CLOSED | PROPRIETARY | SIGNED | PROVEN | Kernel transport is closed; connsys GNSS firmware, mnld/libmnl and live L1/L5 behavior remain proprietary/runtime-gated. | [report](connectivity/gnss/README.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/GNSS/README.md) |
 | GNSS-KERNEL-TRANSPORT | DONE | GNSS | GNSS kernel transport and connsys interface | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](connectivity/gnss/README.md) | [scope](../../Reverse%20Engineer%20-%20DONE/GNSS-KERNEL-TRANSPORT/README.md) |
+| GPU-AI-AUX-KERNEL-INTERFACES | PARTIAL | ACCELERATOR KERNEL | GPU/AI auxiliary processors normal-world kernel / exact module, DT and observable ABI parity; proprietary algorithms excluded | A | PARTIAL (existing measured axes preserved) | PROPRIETARY CONSUMERS / kernel ABI | BINARY/SIGNED (excluded) | DT/STATIC; execution unproved | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | [report](accelerator-preparation/GPU-AI-AUX-KERNEL-INTERFACES/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/GPU-AI-AUX-KERNEL-INTERFACES/README.md) |
 | GZ-IPC-MOD | DONE | SECURITY/TEE | MediaTek GenieZone IPC provider | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Only integration qualification remains | [report](tkcore/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/GZ-IPC-MOD/README.md) |
 | GZ-MAIN-MOD | DONE | SECURITY/TEE | MediaTek GenieZone main module | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Only integration qualification remains | [report](tkcore/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/GZ-MAIN-MOD/README.md) |
 | GZ-TRANSPORT | DONE | SECURITY/TEE | GenieZone transport support layer | SCOPE-CLOSED | CLOSED | PROPRIETARY (outside scope) | SIGNED-BINARY | PROVEN | None for the kernel transport scope; GenieZone/TEE secure-world images and payloads are proprietary firmware outside this scope | [report](geniezone/transport/README.md) | [scope](../../Reverse%20Engineer%20-%20DONE/GZ-TRANSPORT/README.md) |
@@ -100,6 +94,7 @@ Every registered scope appears once. Research links may be a shared canonical su
 | KEYSTORE-VOLD-KEYMINT | PARTIAL | SECURITY/TEE | TrustKernel KeyMint/Gatekeeper with Android vold/Keystore2 | B | CLOSED (normal world) | PROPRIETARY | SIGNED (TEE) | N/A | Normal-world FBE/RPMB/KeyMint integration is mapped; TA semantics, keys and provisioning remain proprietary. | [report](tkcore/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/KEYSTORE-VOLD-KEYMINT/README.md) |
 | LN2403-CAMPLIGHT | DONE | IR/RUGGED | LN2403/PWM camp-light and red/blue light controller | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Only integration qualification remains | [report](../kernel/phase4-leds-ln2403-reconstruction.md) | [scope](../../Reverse%20Engineer%20-%20DONE/LN2403-CAMPLIGHT/README.md) |
 | MADEV-FINGERPRINT | DONE | FINGERPRINT | Madev Fingerprint | SCOPE-CLOSED | CLOSED | PROPRIETARY (outside scope) | N/A | N/A | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](madev-fingerprint/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/MADEV-FINGERPRINT/README.md) |
+| MALI-GPU-KERNEL | PARTIAL | ACCELERATOR KERNEL | Mali GPU normal-world kernel / exact module, DT and observable ABI parity; proprietary algorithms excluded | A | PARTIAL (existing measured axes preserved) | PROPRIETARY CONSUMERS / kernel ABI | BINARY/SIGNED (excluded) | DT/STATIC; execution unproved | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | [report](accelerator-preparation/MALI-GPU-KERNEL/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/MALI-GPU-KERNEL/README.md) |
 | MEDIATEK-DRM | DONE | DISPLAY/INPUT | MT6878 DRM core and generic panel driver modules | SCOPE-CLOSED | CLOSED | PROPRIETARY (outside scope) | N/A | PROVEN | Runtime validation; exact text of padded source lines (count proven); VTDR6115 reserved-padding header can now be swapped for the real one (optional) | [report](display-input/mediatek-drm/README.md) | [scope](../../Reverse%20Engineer%20-%20DONE/MEDIATEK-DRM/README.md) |
 | MICROARRAY-FP-TEE | DONE | FINGERPRINT/SECURITY | MicroArray fingerprint TEE client kernel driver | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](microarray-fp-tee/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/MICROARRAY-FP-TEE/README.md) |
 | MICROPHONES | PARTIAL | AUDIO | Board microphone topology and audio routing | D | CLOSED | PARTIAL | N/A | TEARDOWN | Package/acoustic-port confirmation plus enforcing-SELinux and full Audio HAL tests remain. | [report](audio/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/MICROPHONES/README.md) |
@@ -116,10 +111,12 @@ Every registered scope appears once. Research links may be a shared canonical su
 | MT6878-AFE | DONE | AUDIO | MT6878 AFE at 0x11050000, machine card `mt6878-mt6369` | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | runtime qualification only | [report](audio/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/MT6878-AFE/README.md) |
 | MTK-DISP-NOTIFY | DONE | DISPLAY/INPUT | `mtk_disp_notify.ko` (vendor ramdisk), sha256 `28fb6a324e432547b98f618d7981a4940dc3e5bf9b319b0181b339d3e8bd062b` | SCOPE-CLOSED | CLOSED | N/A | N/A | N/A | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](display-input/SURVEY.md) | [scope](../../Reverse%20Engineer%20-%20DONE/MTK-DISP-NOTIFY/README.md) |
 | MTK-MBOX | DONE | SENSORS/TINYSYS | MT6878 mailbox/IPU doorbell provider under MDDR/mCp/SCP/VCP/GPUEB/MCUPM/SSPM messaging | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](sensors/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/MTK-MBOX/README.md) |
+| MTK-MDP-KERNEL | PARTIAL | ACCELERATOR KERNEL | MDP normal-world kernel / exact module, DT and observable ABI parity; proprietary algorithms excluded | A | PARTIAL (existing measured axes preserved) | PROPRIETARY CONSUMERS / kernel ABI | BINARY/SIGNED (excluded) | DT/STATIC; execution unproved | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | [report](accelerator-preparation/MTK-MDP-KERNEL/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/MTK-MDP-KERNEL/README.md) |
 | MTK-MODULE-LOADER | DONE | BOOT/KERNEL PACKAGING | MediaTek kernel module loader behavior | SCOPE-CLOSED | CLOSED | N/A | N/A | N/A | Named static scope closed; runtime/system integration is outside this DONE scope. | [report](boot/module-loading/README.md) | [scope](../../Reverse%20Engineer%20-%20DONE/MTK-MODULE-LOADER/README.md) |
 | MTK-PWM | DONE | DISPLAY/INPUT | MediaTek PWM provider used by rugged lights | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Runtime validation only | [report](display-input/SURVEY.md) | [scope](../../Reverse%20Engineer%20-%20DONE/MTK-PWM/README.md) |
 | MTK-RPMSG-MBOX | DONE | SENSORS/TINYSYS | MediaTek RPMsg mailbox layer | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | None for the kernel scope (runtime traffic not exercised by rule) | [report](sensors/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/MTK-RPMSG-MBOX/README.md) |
 | MTK-TINYSYS-IPI | DONE | SENSORS/TINYSYS | MediaTek tinysys IPI stack | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | None for the kernel scope; per-channel payload semantics belong to client drivers and proprietary SCP/VCP/GPUEB/MCUPM firmware | [report](sensors/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/MTK-TINYSYS-IPI/README.md) |
+| MTK-VCODEC-KERNEL | PARTIAL | ACCELERATOR KERNEL | Hardware VCodec normal-world kernel / exact module, DT and observable ABI parity; proprietary algorithms excluded | A | PARTIAL (existing measured axes preserved) | PROPRIETARY CONSUMERS / kernel ABI | BINARY/SIGNED (excluded) | DT/STATIC; execution unproved | Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation. | [report](accelerator-preparation/MTK-VCODEC-KERNEL/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/MTK-VCODEC-KERNEL/README.md) |
 | MTU3-SSUSB | DONE | USB/TYPE-C | 11201000.usb0 MTU3 dual-role controller | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Runtime role-transition validation only; proprietary USB/gadget AIDL HAL internals (interface boundary documented) | [report](usb/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/MTU3-SSUSB/README.md) |
 | NFC-SECURE-ELEMENT | PARTIAL | NFC | Embedded secure-element path behind ST21 | B | CLOSED | PROPRIETARY | SIGNED | PROVEN | ST21 controller kernel is closed; NCI HAL, secure-element applets/access rules and firmware stay proprietary. | [report](nfc/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/NFC-SECURE-ELEMENT/README.md) |
 | NVRAM-CALIBRATION | PARTIAL | NVRAM/CALIBRATION | NVRAM partitions, consumers and per-unit calibration boundaries | C | CLOSED (paths) | PROPRIETARY | DEVICE-INTERNAL | PROVEN | Partition/consumer paths are mapped; per-unit values and vendor calibration logic are private/device-specific. | [report](modem/nvram/boundary.md) | [scope](../../Reverse%20Engineer%20-%20PARTIAL/NVRAM-CALIBRATION/README.md) |
@@ -172,44 +169,34 @@ Every registered scope appears once. Research links may be a shared canonical su
 | YFT-TINY2C-USB | DONE | THERMAL CAMERA | YFT tiny2c USB/power controller | SCOPE-CLOSED | CLOSED | N/A | N/A | PROVEN | Only integration qualification remains | [report](camera-stack/STATUS.md) | [scope](../../Reverse%20Engineer%20-%20DONE/YFT-TINY2C-USB/README.md) |
 | YFT-TPD-GESTURE | DONE | DISPLAY/INPUT | YFT touchscreen gesture provider | SCOPE-CLOSED | CLOSED | PROPRIETARY (outside scope) | N/A | PROVEN | Only integration qualification remains | [report](display-input/SURVEY.md) | [scope](../../Reverse%20Engineer%20-%20DONE/YFT-TPD-GESTURE/README.md) |
 
+## Accelerator preparation
+
+[Six-scope roadmap](accelerator-re-roadmap.md), [precise module/DT/source metadata and Claude handoffs](accelerator-preparation/README.md). Six new PARTIALs, no unrelated merges/removals/renames. Camera HAL stays proprietary PARTIAL; sensor TUs/EEPROM/VCM/OIS/rails and existing transports remain DONE. APUSYS is not camera kernel ownership; MDP is not DRM closure; GPUEB/VCP clients are not transport closure.
+
 ## Current artifact axes
 
-- [kernel-modules.tsv](coverage-audit/kernel-modules.tsv): 457 rows, coverage {'A': 66, 'B': 166, 'C': 207, 'D': 15, 'E': 3}.
-- [device-tree.tsv](coverage-audit/device-tree.tsv): 580 rows, coverage {'A': 69, 'B': 189, 'C': 315, 'D': 4, 'E': 3}.
+- [kernel-modules.tsv](coverage-audit/kernel-modules.tsv): 457 rows, coverage {'A': 71, 'B': 172, 'C': 199, 'D': 15}.
+- [device-tree.tsv](coverage-audit/device-tree.tsv): 580 rows, coverage {'A': 69, 'B': 228, 'C': 279, 'D': 4}.
 - [hardware.tsv](coverage-audit/hardware.tsv): 44 rows, coverage {'A': 39, 'B': 3, 'C': 1, 'D': 1}.
-- [hals-services.tsv](coverage-audit/hals-services.tsv): 272 rows, coverage {'A': 69, 'B': 126, 'C': 74, 'D': 1, 'E': 2}.
-- [vendor-services.tsv](coverage-audit/vendor-services.tsv): 253 rows, coverage {'A': 10, 'B': 103, 'C': 114, 'D': 24, 'E': 2}.
-- [firmware.tsv](coverage-audit/firmware.tsv): 80 rows, coverage {'A': 45, 'B': 30, 'C': 4, 'D': 1}.
+- [hals-services.tsv](coverage-audit/hals-services.tsv): 272 rows, coverage {'A': 69, 'B': 128, 'C': 74, 'D': 1}.
+- [vendor-services.tsv](coverage-audit/vendor-services.tsv): 253 rows, coverage {'A': 10, 'B': 105, 'C': 114, 'D': 24}.
+- [firmware.tsv](coverage-audit/firmware.tsv): 80 rows, coverage {'A': 45, 'B': 32, 'C': 2, 'D': 1}.
 - [secure-world.tsv](coverage-audit/secure-world.tsv): 13 rows, coverage {'A': 5, 'B': 1, 'C': 5, 'D': 2}.
 - [boot-storage.tsv](coverage-audit/boot-storage.tsv): 61 rows, coverage {'A': 20, 'B': 40, 'C': 1}.
 - [android-integration.tsv](coverage-audit/android-integration.tsv): 654 rows, coverage {'A': 127, 'B': 428, 'C': 99}.
 - [userspace-libraries.tsv](coverage-audit/userspace-libraries.tsv): 538 rows, coverage {'B': 448, 'C': 90}.
-- [artifact-map.tsv](coverage-audit/artifact-map.tsv): 2952 rows, coverage {'A': 450, 'B': 1534, 'C': 910, 'D': 48, 'E': 10}.
+- [artifact-map.tsv](coverage-audit/artifact-map.tsv): 2952 rows, coverage {'A': 455, 'B': 1585, 'C': 864, 'D': 48}.
 
-## Ranked actionable RE targets
+## Ranked static work
 
-1. **DTB-DTBO** (PARTIAL; STATIC SOURCE CONTRACT) — Highest: bounded blobs and selection metadata already exist. [Evidence](../docs/dt-module-matching.md).
-2. **FT3680-TOUCH** (PARTIAL; KERNEL MODULE PARITY) — Good but uncertain: bounded, buildable 166-function reconstruction. [Evidence](display-input/ft3680/parity-report.md).
-3. **YFT-DEVINFO** (PARTIAL; KERNEL MODULE PARITY) — Moderate: small residual but unknown enum spelling may resist exact closure. [Evidence](../kernel/phase4-yft-devinfo-kcfi-typeid.md).
-4. **CAMERA-ISP-KERNEL** (PROPOSED; PROPOSED SPLIT / KERNEL MODULE PARITY) — Moderate/lower: source coverage exists, but entire ISP set has not been parity-built. [Evidence](camera-stack/notes/isp-stack.md).
-5. **MALI-GPU-KERNEL** (PROPOSED; PROPOSED ADD / KERNEL MODULE PARITY) — Lowest of this list: ownership absent and matched platform source/parity not established. [Evidence](coverage-audit/MISSING-COVERAGE.md).
+1. **MALI-GPU-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](accelerator-preparation/MALI-GPU-KERNEL/CLAUDE-HANDOFF.md).
+2. **APUSYS-NPU-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](accelerator-preparation/APUSYS-NPU-KERNEL/CLAUDE-HANDOFF.md).
+3. **CAMERA-ISP-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
+4. **MTK-VCODEC-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](accelerator-preparation/MTK-VCODEC-KERNEL/CLAUDE-HANDOFF.md).
+5. **MTK-MDP-KERNEL** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](accelerator-preparation/MTK-MDP-KERNEL/CLAUDE-HANDOFF.md).
+6. **GPU-AI-AUX-KERNEL-INTERFACES** — REGISTERED ACCELERATOR / MODULE PARITY; [handoff/evidence](accelerator-preparation/GPU-AI-AUX-KERNEL-INTERFACES/CLAUDE-HANDOFF.md).
+7. **DTB-DTBO** — STATIC SOURCE CONTRACT; [handoff/evidence](../docs/dt-module-matching.md).
+8. **FT3680-TOUCH** — KERNEL MODULE PARITY; [handoff/evidence](display-input/ft3680/parity-report.md).
+9. **YFT-DEVINFO** — KERNEL MODULE PARITY; [handoff/evidence](../kernel/phase4-yft-devinfo-kcfi-typeid.md).
 
-[Exact scope, source residual, criteria, effort, dependency and phone requirement](coverage-audit/NEXT-RE.md).
-
-## Missing / proposed scopes and taxonomy
-
-**MALI-GPU-KERNEL** is the sole genuinely missing owner: proposed ADD. **CAMERA-ISP-KERNEL** is a proposed SPLIT from covered CAMERA-HAL-ISP, not another orphan. Neither is registered yet. GZ/AW36518/USB3/module-readiness merges and negative-absence retirements are recommendations only. RT5133 rename is rejected; [capture retraction](coverage-audit/notes/RT5133-CORRECTION.md). [Full decision/count consequences](coverage-audit/PROPOSED-CHANGES.md).
-
-## ROM integration is not unfinished component RE
-
-SYSTEM-DLKM's 60-module baseline, BOOT-IMAGES containers, vendor-property/VINTF ledgers and partition ownership are closed named static scopes. External 24afa6b has installed vendor.prop and bluetooth_audio.xml; preserve the changes and verify the emitted image, assemble/check policy/VINTF and validate actual boot/SELinux/HAL behavior. USB/thermal kernel closures do not establish charging safety, radiometry or runtime feature parity. [Separate queues](coverage-audit/NEXT-RE.md) and [seven readiness targets](coverage-audit/PORT-READINESS.md).
-
-## Proprietary, physical/runtime and umbrella limits
-
-SCP sensor algorithms/register drivers, modem/RIL/IMS, camera HAL/3A/tuning/CCU, DSP/CSF, TAs/keys, per-unit calibration and radiometry remain proprietary boundaries. RF/battery/cooling/microphone/runtime evidence cannot be closed by static documentation. Only current F-class PARTIALs are tracking scopes: `FIRMWARE-INVENTORY`, `OEM-KERNEL-MODULES`, `REAR-RUGGED-FEATURES`, `VENDOR-BLOB-HAL-INVENTORY`, `VENDOR-DLKM`.
-
-## Reports and validation
-
-[Summary](coverage-audit/SUMMARY.md), [all PARTIAL A–F decisions](coverage-audit/PARTIAL-TRIAGE.md), [missing coverage](coverage-audit/MISSING-COVERAGE.md), [rebuild/check instructions](coverage-audit/README.md), [final corrections](coverage-audit/notes/FINAL-CORRECTIONS.md) and [validation](coverage-audit/notes/FINAL-VALIDATION.md). [Historical manifest hygiene](coverage-audit/notes/MANIFEST-HYGIENE.md) is separate from coverage completeness.
-
-**Final audit boundary:** stop global subsystem discovery for this stock build; proceed with component RE, ROM integration and physical/runtime validation. No new component research was started by this audit.
+[Summary](coverage-audit/SUMMARY.md), [triage](coverage-audit/PARTIAL-TRIAGE.md), [ownership gaps](coverage-audit/MISSING-COVERAGE.md), [taxonomy](coverage-audit/PROPOSED-CHANGES.md), [readiness](coverage-audit/PORT-READINESS.md). [RT5133 correction](coverage-audit/notes/RT5133-CORRECTION.md) remains valid. Preserve external property/VINTF fixes and stock B; actual boot/SELinux/HAL/OTA and proprietary algorithms remain separate. No further global discovery is required for this captured stock build.

@@ -3,6 +3,8 @@
 import copy
 import importlib.util
 import io
+import json
+import re
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -35,8 +37,7 @@ class FinalAuditTests(unittest.TestCase):
             if r["component"] in {x["component"] for x in reports.CANDIDATES}:
                 r["status"] = "DONE"
         ranked = reports.next_targets(m)
-        self.assertEqual([r["component"] for r in ranked], ["CAMERA-ISP-KERNEL", "MALI-GPU-KERNEL"])
-        self.assertTrue(all(r["status"] == "PROPOSED" for r in ranked))
+        self.assertEqual(ranked, [])  # registered accelerator scopes must not survive DONE filtering
         names = {r["component"] for r in reports.next_targets(self.metrics)}
         self.assertFalse(names & {"VINTF-HAL-MANIFEST", "VENDOR-PROPERTIES", "BOOT-IMAGES"})
 
@@ -45,10 +46,11 @@ class FinalAuditTests(unittest.TestCase):
         # or incorporate wall-clock time. All output is temporary.
         with tempfile.TemporaryDirectory() as td:
             root = Path(td); ca = root / "coverage-audit"; ca.mkdir(); (ca / "notes").mkdir()
+            (ca/'notes/ANDROID-USERSPACE.md').write_text('## Unified artifact map\n\nhistorical\n')
             with patch.object(reports, "CA", ca), patch.object(reports, "RE", root), redirect_stdout(io.StringIO()):
                 functions = (reports.build_next, reports.build_partial, reports.build_missing,
                              reports.build_changes, reports.build_readiness, reports.build_summary,
-                             reports.build_index, reports.build_manifest_note, reports.build_readme)
+                             reports.build_index, reports.build_manifest_note, reports.build_readme, reports.build_axis_notes)
                 for fn in functions:
                     fn(self.metrics)
                 a = {str(p.relative_to(root)): p.read_bytes() for p in root.rglob("*") if p.is_file()}
@@ -90,10 +92,33 @@ class FinalAuditTests(unittest.TestCase):
             next(r for r in data if r["status"] == "PARTIAL")["partial_class"] = "AB"
         self.reject_mutation("components.tsv", mutate, "exactly one A–F")
 
+    def test_kernel_parent_duplicate_is_rejected(self):
+        def mutate(data):
+            parent=next(r for r in data if r['component']=='CAMERA-HAL-ISP')
+            parent['modules']=next(r for r in data if r['component']=='CAMERA-ISP-KERNEL')['modules']
+        self.reject_mutation('components.tsv',mutate,'duplicate whole-module ownership')
+
+    def test_accdet_is_not_a_ccd_match(self):
+        scopes=json.loads((checks.RE/'accelerator-preparation/scopes.json').read_text())['scopes']
+        cam=next(s for s in scopes if s['component']=='CAMERA-ISP-KERNEL')
+        self.assertFalse(re.search(cam['dt_pattern'],'mediatek,mt6369-accdet'))
+        self.assertTrue(re.search(cam['dt_pattern'],'mediatek,ccd'))
+        gpu=next(s for s in scopes if s['component']=='MALI-GPU-KERNEL')
+        self.assertTrue(re.search(gpu['dt_pattern'],'mediatek,ged'))
+
+    def test_existing_transports_and_hosts_not_duplicated(self):
+        scopes=json.loads((checks.RE/'accelerator-preparation/scopes.json').read_text())['scopes']
+        new={m for s in scopes for m in s['modules']}
+        protected={'scp.ko','sensorhub.ko','hf_manager.ko','adsp.ko','mtk_tinysys_ipi.ko','mtk-mbox.ko','mtk-rpmsg-mbox.ko'}
+        self.assertFalse(new & protected)
+
     def test_unsupported_rename_is_rejected_not_applied(self):
         rt = next(p for p in reports.PROPOSALS if p[0] == "PC-009")
         self.assertEqual((rt[3], rt[4]), ("REJECT", 0))
-        self.assertEqual(sum(p[4] for p in reports.PROPOSALS if p[3] == "ACCEPT RECOMMENDATION"), -7)
+        self.assertEqual(sum(p[4] for p in reports.PROPOSALS if p[3] == 'ACCEPT RECOMMENDATION'), -9)
+        applied=[p for p in reports.PROPOSALS if p[3]=='APPLIED (AUTHORIZED PREPARATION)']
+        self.assertEqual(len(applied),6)
+        self.assertTrue(all(p[4]==0 for p in applied))
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ from pathlib import Path
 from urllib.parse import unquote
 
 from audit_policy import CANDIDATES, PROPOSALS
+from accelerator_owners import SCOPES, KERNEL_OVERRIDES, DT_OVERRIDES
 
 HERE = Path(__file__).resolve().parent
 CA = HERE.parent
@@ -47,7 +48,8 @@ def check_links(path: Path) -> list[str]:
 def main() -> int:
     comps = rows("components.tsv")
     by_name = {r["component"]: r for r in comps}
-    require(len(comps) == len(by_name) == 133, "components.tsv must contain 133 unique current components")
+    require(len(comps) == len(by_name), 'components.tsv must contain unique current components')
+    require({s['component'] for s in SCOPES} <= set(by_name), 'authorized accelerator registration missing')
 
     workspace: dict[str, str] = {}
     for status in ("DONE", "PARTIAL", "BLOCKED", "TODO"):
@@ -81,13 +83,28 @@ def main() -> int:
     table_modules = {r["module"] for r in km}
     require(len(km) == len(table_modules) == 457, "kernel module rows/uniqueness")
     require(actual_modules == table_modules, f"module universe mismatch missing={actual_modules-table_modules} extra={table_modules-actual_modules}")
-    require({r["module"] for r in km if r["coverage"] == "E"} == {"mali_kbase_mt6878_r44.ko", "mali_mgm_mt6878_r44.ko", "mali_prot_alloc_mt6878_r44.ko"}, "kernel E set")
+    require(not any(r['coverage']=='E' for r in km), 'kernel E set after accelerator registration')
+    for r in km:
+        if r['module'][:-3] in KERNEL_OVERRIDES:
+            require(r['component']==KERNEL_OVERRIDES[r['module'][:-3]][0], 'accelerator/dependency kernel owner drift')
+
+    # Every listed whole module has exactly one primary registered owner; dependency
+    # and umbrella references must not silently duplicate component module inventories.
+    listed={}
+    for comp in comps:
+        for module in filter(None, comp['modules'].split(', ')):
+            require(module not in listed, 'duplicate whole-module ownership '+module)
+            listed[module]=comp['component']
+    require(listed=={r['module']:r['component'] for r in km if r['component'] in by_name}, 'component primary module join mismatch')
 
     dt = rows("device-tree.tsv")
     require(len(dt) == 580 and sum(int(r["nodes"]) for r in dt) == 930, "DT universe")
-    require({r["compatible"] for r in dt if r["coverage"] == "E"} == {"arm,mali-valhall", "mediatek,g3d_brisket", "mediatek,mali"}, "DT E set")
+    require(not any(r['coverage']=='E' for r in dt), 'DT E set after accelerator registration')
+    for r in dt:
+        if r['compatible'] in DT_OVERRIDES:
+            require(r['component']==DT_OVERRIDES[r['compatible']][0], 'accelerator DT owner drift')
     active = [r for r in dt if int(r["nodes_enabled"]) > 0]
-    require(sum(r["coverage"] == "E" for r in active) == 3, "active DT mapping")
+    require(sum(r['coverage']=='E' for r in active)==0, 'active DT mapping')
     require(not any(r["coverage"] == "E" and r["component"] != "UNMAPPED" for r in dt),
             "an unmapped compatible claims a component owner")
 
@@ -107,8 +124,7 @@ def main() -> int:
 
     hs, vs = rows("hals-services.tsv"), rows("vendor-services.tsv")
     require(len(hs) == 272 and len(vs) == 253, "HAL/service universe")
-    require({r["artifact"] for r in hs if r["coverage"] == "E"} == {"vendor.mediatek.hardware.gpu", "vendor.mediatek.hardware.gpuserv"}, "HAL E set")
-    require({r["service"] for r in vs if r["coverage"] == "E"} == {"vendor.gpuserv-default", "vendor.mali_platform-mediatek"}, "service E set")
+    require(not any(r['coverage']=='E' for r in hs+vs), 'HAL/service E set after accelerator registration')
     require(sum(r["binary_present"] == "no" and not r["service"].startswith("[exec]") for r in vs) == 22, "absent init-service executable count")
 
     fw, sw, bs = rows("firmware.tsv"), rows("secure-world.tsv"), rows("boot-storage.tsv")
@@ -121,7 +137,7 @@ def main() -> int:
     ai, ul, art = rows("android-integration.tsv"), rows("userspace-libraries.tsv"), rows("artifact-map.tsv")
     require(len(ai) == 654 and len(ul) == 538 and len(art) == 2952, "integration/artifact totals")
     require(not any(r["coverage"] == "E" for r in ai + ul), "integration/library unexplained orphan")
-    require(sum(r["coverage"] == "E" for r in art) == 10, "unified E count")
+    require(sum(r['coverage']=='E' for r in art)==0, 'unified E count after ownership registration')
     keys = [(r["artifact_type"], r["artifact"], r["partition_or_source"]) for r in art]
     require(len(keys) == len(set(keys)), "duplicate artifact-map key")
 
@@ -222,7 +238,6 @@ def main() -> int:
     ranked = rows("next-re.tsv")
     names = [r["component"] for r in ranked]
     expected_names = [r["component"] for r in CANDIDATES if
-                      r["component"] in {"MALI-GPU-KERNEL", "CAMERA-ISP-KERNEL"} or
                       (r["component"] in by_name and by_name[r["component"]]["status"] == "PARTIAL" and
                        by_name[r["component"]]["partial_class"] == "A")]
     require(names == expected_names and len(names) == len(set(names)), "ranked list is stale/duplicated")
@@ -250,14 +265,18 @@ def main() -> int:
     bad_links = [x for p in markdown for x in check_links(p)]
     require(not bad_links, "broken relative links:\n" + "\n".join(bad_links))
 
-    manifest = json.loads((CA / "audit-evidence/manifest-audit-2026-10-07.json").read_text())
-    require(manifest["rows_total"] == manifest["rows_resolved"] == 4153, "manifest resolution")
-    require(manifest["rows_missing_file"] == 0 and manifest["rows_wrong_field_count"] == 0, "manifest malformed/missing")
-    require(manifest["rows_hash_mismatch"] == 19 and manifest["unregistered_files_total"] == 408 and len(manifest["duplicate_paths"]) == 1, "manifest drift recording")
+    prep = RE/'accelerator-preparation/validation'
+    manifest=json.loads((prep/'manifest-after.json').read_text())
+    baseline=json.loads((prep/'manifest-before.json').read_text())
+    require(manifest['rows_total']==manifest['rows_resolved'], 'manifest resolution')
+    require(manifest['rows_missing_file']==0 and manifest['rows_wrong_field_count']==0, 'manifest malformed/missing')
+    require(all(manifest[k]==baseline[k] for k in ('rows_hash_mismatch','rows_size_mismatch','unregistered_paths','duplicate_paths')), 'new manifest drift introduced')
+    nonempty=lambda d:{k:v for k,v in d.items() if any(v.values())}
+    require(nonempty(manifest['drift_paths'])==nonempty(baseline['drift_paths']), 'unrelated pre-existing drift paths changed')
 
     for report in ("README.md", "SUMMARY.md", "PARTIAL-TRIAGE.md", "MISSING-COVERAGE.md", "PORT-READINESS.md", "PROPOSED-CHANGES.md"):
         require((CA / report).exists(), f"missing report {report}")
-    require((CA / "SUMMARY.md").read_text().startswith("# Coverage verdict: NEAR-COMPLETE"), "summary verdict heading")
+    require((CA/'SUMMARY.md').read_text().startswith('# Coverage verdict: ACCOUNTED'), 'summary verdict heading')
     proposed = (CA / "PROPOSED-CHANGES.md").read_text()
     conditional = len(comps) + sum(p[4] for p in PROPOSALS if p[3] == "ACCEPT RECOMMENDATION")
     require(f"**{conditional} canonical components**" in proposed and "not current reality" in proposed,
@@ -273,11 +292,11 @@ def main() -> int:
     print(f"PASS: component status {dict(sorted(status_totals.items()))} matches the workspace")
     print(f"PASS: {len(km)} modules, {len(dt)} compatibles/{sum(int(r['nodes']) for r in dt)} nodes, "
           f"{len(ai)} integration + {len(ul)} library rows, {len(art)} artifact rows")
-    print("PASS: all normalized rows reconcile with their axes; only 10 E rows, one Mali scope")
+    print('PASS: all normalized rows reconcile with their axes; no E rows after authorized accelerator registration')
     print("PASS: status-filtered static ranking, proposal decisions and RT5133 retraction")
     print("PASS: no firmware/module/library payloads in coverage-audit")
     print("PASS: all index/report relative links resolve")
-    print("PASS: manifest hygiene recorded separately (4153 resolve, 19 stale, 408 unregistered, 1 duplicate)")
+    print(f"PASS: current manifest snapshot: {manifest['rows_resolved']} resolve; {manifest['rows_hash_mismatch']} pre-existing stale, {manifest['unregistered_files_total']} pre-existing unregistered, {len(manifest['duplicate_paths'])} pre-existing duplicate; no new drift")
     return 0
 
 

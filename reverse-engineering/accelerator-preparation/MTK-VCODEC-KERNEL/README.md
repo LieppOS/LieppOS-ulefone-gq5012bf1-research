@@ -1,5 +1,13 @@
 # MTK-VCODEC-KERNEL — PARTIAL preparation
 
+Status: PARTIAL
+
+- **Subsystem:** Accelerators / Hardware VCodec
+- **Hardware identity:** MT6878 decoder vdec@16000000, encoder venc@17000000, dedicated vcodec clocks and VCP codec IOMMU domains. Exact registers, interrupts and power/clock/domain references are in dt-nodes.tsv. JPEG and display/MDP blocks are distinct, not silently added to this scope.
+- **Stock artifact:** `mtk-vcodec-common.ko`, `mtk-vcodec-dec-v1.ko`, `mtk-vcodec-enc-v1.ko`, `mtk-vcu.ko`, `clk-mt6878-vcodec.ko`
+- **Interfaces:** MediaTek V4L2 decoder/encoder and common driver; VCU bridge and VCP firmware ABI, native/compat ioctls, video device registration, input/output buffer ownership, DMA/IOMMU, interrupt completion, stream-on/off/abort and timeout recovery. Stock codec XML declarations and donor FOURCC evidence are recorded separately: neither proves codec execution or that the unchanged generic donor reproduces shipped binaries. Codec2/userspace consumer candidates are listed without asserting a complete call graph.
+- **Still required:** Complete per-module source/parity and observable DT/ABI acceptance; proprietary algorithms excluded
+
 **Purpose:** Hardware VCodec normal-world kernel source/parity closure, not firmware reconstruction.
 
 **Decision:** REGISTER PARTIAL. Four codec/VCU normal-world drivers and their dedicated clock provider have donor targets but no complete module-level source/parity owner. Generic coverage was not a measured reconstruction.

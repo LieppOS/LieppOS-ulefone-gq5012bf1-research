@@ -115,7 +115,7 @@ def scan(roots: list[tuple[str, str]], keys: dict[str, str]) -> list[dict]:
                         per[key] += 1
                         out.append({"scope": scope_label(scope, dirpath, fn), "tier": tier,
                                     "artifact": h, "family": keys[h], "source_file": rel,
-                                    "line": re.sub(r"\s+", " ", line).strip()[:150]})
+                                    "line": re.sub(r"\s+", " ", line).strip()[:150].rstrip()})
     return out
 
 

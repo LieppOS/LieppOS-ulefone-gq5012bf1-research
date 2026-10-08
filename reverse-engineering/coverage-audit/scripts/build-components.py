@@ -10,6 +10,7 @@ from __future__ import annotations
 import csv
 import os
 from collections import Counter, defaultdict
+from accelerator_owners import SCOPES, COMPONENTS as ACCELERATOR_COMPONENTS
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CA = os.path.dirname(HERE)
@@ -168,6 +169,17 @@ P: dict[str, tuple[str, str, str, str, str, str, str, str, str]] = {
         "Finish the remaining enum/probe parity without disturbing the active owner workspace.", "HARD", "ANDROID-INIT, VENDOR-PROPERTIES"),
 }
 
+for accelerator in SCOPES:
+    name = accelerator['component']
+    P[name] = ('A', 'PARTIAL (existing measured axes preserved)', 'PROPRIETARY CONSUMERS / kernel ABI',
+               'BINARY/SIGNED (excluded)', 'DT/STATIC; execution unproved',
+               'Complete every owned module on function/data/CRC/KCFI/relocation/ABI/B1-B2 axes; no new parity measured by preparation.',
+               'Follow canonical accelerator CLAUDE-HANDOFF; preserve already exact source/proofs.',
+               accelerator['difficulty'], accelerator['prerequisites'])
+P['CAMERA-HAL-ISP'] = ('C', 'OWNED BY CAMERA-ISP-KERNEL', 'PROPRIETARY', 'SIGNED/BINARY', 'EXISTING CAMERA CAPTURES',
+    'HAL/3A/tuning/calibration interpretation and firmware algorithms remain proprietary; normal-world kernel ownership transferred to child.',
+    'Retain vendor userspace/firmware and integrate against CAMERA-ISP-KERNEL; do not duplicate module ownership.', 'PROPRIETARY-GATED', 'CAMERA-ISP-KERNEL; camera sensor/VCM/EEPROM/OIS/rail DONE scopes')
+
 SCOPE = {
     "AB-SUPER-GEOMETRY": "A/B physical and dynamic-super geometry",
     "AUDIO-DSP-KERNEL": "Linux ADSP/SCP audio transport modules and ABI",
@@ -208,6 +220,9 @@ SCOPE = {
     "VINTF-HAL-MANIFEST": "Device VINTF manifests, matrices and HAL declaration contract",
 }
 
+SCOPE.update({s['component']: s['title']+' normal-world kernel / exact module, DT and observable ABI parity; proprietary algorithms excluded' for s in SCOPES})
+SCOPE['CAMERA-HAL-ISP']='Proprietary CameraProvider/HAL, 3A, tuning/calibration interpretation and ISP/CCU algorithms; kernel owned by CAMERA-ISP-KERNEL'
+
 SUBSYSTEM = {
     "AB-SUPER-GEOMETRY": "BOOT/STORAGE", "AVB-SIGNING-CHAIN": "BOOT/SECURITY",
     "BOOT-CONTROL-SLOTS": "BOOT/OTA", "BOOT-IMAGES": "BOOT",
@@ -231,11 +246,13 @@ TAXONOMY = {
     "USB3-FEASIBILITY": "MERGE negative capability finding into USB-TYPEC",
     "VENDOR-ALL-MODULES-READY": "MERGE init-property finding into INIT-INSMOD",
     "RT5133-POWER-IC": "KEEP name; REJECT unverified camera-LDO rename; static DONE, client unbound",
-    "CAMERA-HAL-ISP": "SPLIT actionable CAMERA-ISP-KERNEL from proprietary HAL/3A scope",
+    "CAMERA-HAL-ISP": "KEEP PARTIAL proprietary HAL/3A scope; authorized kernel split APPLIED to CAMERA-ISP-KERNEL",
 }
 
 
 def subsystem_for(comp: str, raw: str) -> str:
+    if comp in ACCELERATOR_COMPONENTS:
+        return 'ACCELERATOR KERNEL'
     if comp in SUBSYSTEM:
         return SUBSYSTEM[comp]
     u = (comp + " " + raw).upper()
@@ -269,6 +286,10 @@ def research_for(comp: str, sub: str) -> str:
     # Prefer an existing dedicated authoritative research directory (including
     # new closures) over the historical subsystem fallback.
     repo = os.path.dirname(os.path.dirname(CA))
+    if comp in ACCELERATOR_COMPONENTS:
+        return f'reverse-engineering/accelerator-preparation/{comp}/STATUS.md'
+    if comp == 'CAMERA-HAL-ISP':
+        return 'reverse-engineering/camera-stack/accelerator-kernel-split.md'
     for leaf in ("STATUS.md", "README.md"):
         dedicated = f"reverse-engineering/{comp.lower()}/{leaf}"
         if os.path.isfile(os.path.join(repo, dedicated)):
@@ -357,11 +378,8 @@ def main() -> int:
     devices: dict[str, set[str]] = defaultdict(set)
     firmwares: dict[str, set[str]] = defaultdict(set)
     for r in mods:
-        owners = {r["component"]}
-        owners.update(x for x in r.get("co_owners", "").split(",") if x)
-        owners.update(x for x in r.get("umbrella_records", "").split(",") if x)
-        for owner in owners:
-            modules[owner].add(r["module"])
+        # Modules column is primary ownership, not dependency/umbrella references.
+        modules[r['component']].add(r['module'])
     for r in hals:
         services[r["component"]].add(r["artifact"])
     for r in svcs:

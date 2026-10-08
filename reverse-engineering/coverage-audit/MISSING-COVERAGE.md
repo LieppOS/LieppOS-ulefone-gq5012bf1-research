@@ -1,39 +1,18 @@
-# Final missing-coverage verdict
+# Current missing-coverage verdict
 
-Final snapshot: **2026-10-08**, source HEAD `3abc5643e539b3f2c8565d8197091d3bb50856ff`; workspace directories are authoritative. This report is reproducible from committed metadata, not a claim that later concurrent closures never occur.
+Snapshot: **2026-10-08**, source HEAD `c8de6a1`. Actual workspace directory status is authoritative; scope registration is not kernel reconstruction.
 
-## CONFIRMED MISSING: MALI-GPU-KERNEL
+**0 unmapped normalized rows.** The prior Mali ownership hole is filled by the authorized MALI-GPU-KERNEL PARTIAL registration. Ownership is not source/parity closure.
 
-**One** genuinely missing registered ownership scope. Its ADD is recommended but **not applied**.
+## Six prepared normal-world kernel owners
 
-- **Owns:** `mali_kbase_mt6878_r44.ko`, `mali_mgm_mt6878_r44.ko`, `mali_prot_alloc_mt6878_r44.ko`; enabled `arm,mali-valhall`, `mediatek,mali`, `mediatek,g3d_brisket`; normal-world GPU kernel/platform ABI and the kernel-facing GPU/gpuserv services.
-- **Not owned by:** TMEM-FFA's secure-memory transport or VENDOR-BLOB-HAL-INVENTORY's userspace/CSF payload inventory.
-- **Boundary:** proprietary userspace/CSF firmware stays retained; source availability and matched r44/MT6878 build are not assumed.
-- **Initial proposed status:** PARTIAL/A, HARD. Exact closure plan is in [NEXT-RE.md](NEXT-RE.md).
+- **MALI-GPU-KERNEL (PARTIAL)**: ged.ko, mali_kbase_mt6878_r44.ko, mali_mgm_mt6878_r44.ko, mali_prot_alloc_mt6878_r44.ko, mtk_gpu_hal.ko, mtk_gpu_qos.ko, mtk_gpufreq_mt6878.ko, mtk_gpufreq_wrapper.ko. [Handoff](../accelerator-preparation/MALI-GPU-KERNEL/CLAUDE-HANDOFF.md).
+- **APUSYS-NPU-KERNEL (PARTIAL)**: apu_top.ko, apusys.ko. [Handoff](../accelerator-preparation/APUSYS-NPU-KERNEL/CLAUDE-HANDOFF.md).
+- **CAMERA-ISP-KERNEL (PARTIAL)**: c2ps_perf_ioctl.ko, camera_dpe_isp7sp.ko, ccd_rpmsg.ko, imgsensor-glue.ko, imgsensor.ko, mtk-cam-isp7sp.ko, mtk-ipesys-me.ko, mtk-vmm-isp71-regulator.ko, mtk-vmm-notifier.ko, mtk_aie.ko, mtk_aie_debug_7sp_2.ko, mtk_c2ps.ko, mtk_ccd_remoteproc.ko, mtk_ccuv.ko, mtk_hcp.ko, mtk_imgsys_cmdq.ko, mtk_imgsys_isp7sp.ko, mtk_imgsys_v4l2.ko, pda_drv_mt6878.ko. [Handoff](../accelerator-preparation/CAMERA-ISP-KERNEL/CLAUDE-HANDOFF.md).
+- **MTK-VCODEC-KERNEL (PARTIAL)**: clk-mt6878-vcodec.ko, mtk-vcodec-common.ko, mtk-vcodec-dec-v1.ko, mtk-vcodec-enc-v1.ko, mtk-vcu.ko. [Handoff](../accelerator-preparation/MTK-VCODEC-KERNEL/CLAUDE-HANDOFF.md).
+- **MTK-MDP-KERNEL (PARTIAL)**: clk-mt6878-mdpsys.ko, mdp_drv_mt6878.ko, mtk-mml-mt6878.ko, mtk-mml.ko. [Handoff](../accelerator-preparation/MTK-MDP-KERNEL/CLAUDE-HANDOFF.md).
+- **GPU-AI-AUX-KERNEL-INTERFACES (PARTIAL)**: gpueb.ko, vcp.ko, vcp_status.ko. [Handoff](../accelerator-preparation/GPU-AI-AUX-KERNEL-INTERFACES/CLAUDE-HANDOFF.md).
 
-All **10** normalized E rows converge on that one scope:
+APUSYS/MDLA/RPMsg is accelerator-kernel ownership, not camera-consumer ownership. Camera child preserves existing function/data proofs; HAL parent stays PARTIAL. MDP is not DRM DONE, and GPUEB/VCP clients are not TinySys IPI DONE. Shared generic infrastructure and proprietary firmware remain explicit boundaries.
 
-- `kernel-module` `mali_kbase_mt6878_r44.ko` — depends=ged.ko,mtk_gpu_qos.ko,mtk_qos.ko,sspm_v3.ko,mtk_gpufreq_wrapper.ko,gpueb.ko,mtk_sec_heap.ko,tmem_ffa.ko,gz_tz_system.ko,gz_ipc_mod.ko,gz_trusty_mod.ko,mtk_pbm.ko,mtk_mdpm.ko,mtk_dynamic_loading_throttling.ko,mtk_low_battery_throttling.ko,mtk_tinysys_ipi.ko,mtk_rpmsg_mbox.ko,mtk-mbox.ko,mtk_gpu_hal.ko; load_order=43
-- `kernel-module` `mali_mgm_mt6878_r44.ko` — depends=; load_order=42
-- `kernel-module` `mali_prot_alloc_mt6878_r44.ko` — depends=; load_order=41
-- `dt-compatible` `arm,mali-valhall` — sample=/soc/mali@13000000; drivers=
-- `dt-compatible` `mediatek,g3d_brisket` — sample=/soc/g3d-brisket@13fb0000; drivers=
-- `dt-compatible` `mediatek,mali` — sample=/soc/mali@13000000; drivers=
-- `vintf-interface` `vendor.mediatek.hardware.gpu` — GPU HAL has no current component; proposed MALI-GPU-KERNEL scope
-- `vintf-interface` `vendor.mediatek.hardware.gpuserv` — GPU service has no current component; proposed MALI-GPU-KERNEL scope
-- `init-service` `vendor.gpuserv-default` — GPU service has no current component; proposed MALI-GPU-KERNEL scope
-- `init-service` `vendor.mali_platform-mediatek` — Mali platform service has no current GPU component
-
-## CAMERA-ISP-KERNEL — covered mixed scope, proposed SPLIT
-
-ISP kernel modules/source donors and near-exact imgsensor reconstruction already belong to CAMERA-HAL-ISP. This is **not a second coverage hole**. Accept the split recommendation to isolate kernel parity from HAL/3A/tuning/CCU, with an explicit transfer ledger and no duplicate primary owners.
-
-## POSSIBLE MISSING
-
-None is supported by unexplained artifacts. Generic MTK/APUSYS/media infrastructure, SCP-owned sensor register drivers, modem/RIL/IMS, TEE TAs, DSP/CSF firmware and per-unit calibration have explicit generic or proprietary boundaries; do not invent source-actionable components for them.
-
-## Not missing / negative findings
-
-Physical sensors belong to SENSOR-HUB/SCP firmware plus their registered sensor scopes; transport is SENSOR-HUB-KERNEL. Camera sensors/VCM/OIS/EEPROM have named child owners. Thermal-camera USB/power, command/viewer and radiometry are separate scopes. eSIM/eUICC and wireless charging are preserved not-fitted findings. RT5133 is a declared, unbound reference client, not a new active camera-LDO gap; see [correction](notes/RT5133-CORRECTION.md).
-
-Generic/dead artifacts stay enumerated in the TSVs with per-row evidence. Coverage is not source openness.
+RT5133 still denotes an unbound reference client; its supported static DONE scope and rejected rename are unchanged. [Capture correction](notes/RT5133-CORRECTION.md). No new hardware binding/execution or parity is claimed.

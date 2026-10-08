@@ -37,6 +37,7 @@ import json
 import os
 import re
 from collections import Counter, defaultdict
+from accelerator_owners import KERNEL_OVERRIDES
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CA = os.path.abspath(os.path.join(HERE, ".."))
@@ -117,6 +118,8 @@ CURATED = {
     "mtk_ioctl_touch_boost": ("FT3680-TOUCH", "B", "touch input latency boost bridge"),
     "touch_boost": ("FT3680-TOUCH", "B", "touch input latency boost bridge"),
 }
+
+CURATED.update(KERNEL_OVERRIDES)
 
 # a component's own per-module state column, when it says the module does not
 # exist / is not used on this board, overrides the coverage class to D
@@ -342,6 +345,14 @@ def summarise(rows: list[dict], claims: list[dict]) -> None:
             "- record the charging-framework cross-pack view (conclusion 4);",
             "- refresh the stale 471-module prose count inside `OEM-KERNEL-MODULES` to the "
             f"measured {len(rows)}.", ""]
+    # Supersede the pre-registration conclusions with current measured ownership.
+    out = out[:out.index("## Conclusions for this axis")]
+    out += ["## Current accelerator ownership", "",
+            f"All {len(rows)} shipped modules are enumerated; {C['E']} module-level ownership gaps remain.",
+            "Six authorized accelerator PARTIAL registrations own 41 distinct target modules. Public/platform source candidates are not module parity.",
+            "Camera kernel ownership is separate from proprietary CAMERA-HAL-ISP; SCP/ADSP/mailbox and named camera DONE drivers retain their source owners.",
+            "Historical co-mentions are evidence, not duplicate primary ownership. Shared platform infrastructure stays source-carried/generic with no fabricated parity.",
+            "See [accelerator roadmap](../../accelerator-re-roadmap.md) and explicit transfer ledgers. Diagnostic Mali DMA-BUF and other D payloads remain separately classified.", ""]
     os.makedirs(os.path.dirname(NOTE), exist_ok=True)
     with open(NOTE, "w") as fh:
         fh.write("\n".join(out).rstrip() + "\n")
@@ -469,7 +480,7 @@ def main() -> None:
             "component": comp,
             "component_status": status,
             "coverage": cls,
-            "co_owners": ",".join(x for x in co_owners if x != comp),
+            "co_owners": ("" if stem in KERNEL_OVERRIDES else ",".join(x for x in co_owners if x != comp)),
             "umbrella_records": ",".join(umbrellas),
             "evidence": ";".join(evidence),
         })

@@ -41,6 +41,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lib_fdt as libfdt  # noqa: E402
+from accelerator_owners import DT_OVERRIDES
 
 ROOT = "/home/armol/androido_dalykai/LieppOS custom ROM"
 AUDIT = os.path.join(ROOT, "ulefone-gq5012bf1-research/reverse-engineering/"
@@ -235,6 +236,8 @@ def parse(path: str) -> dict[str, dict]:
 
 
 # Device-tree state overrides that the blob alone cannot express.
+CURATED.update(DT_OVERRIDES)
+
 NODE_STATE = {
     "richtek,rt5133": "PRESENT-NOT-BOUND",
 }
@@ -407,6 +410,11 @@ def summarise(rows: list[dict]) -> None:
             f"- promote the {len(researched)} `research-family` rows into the owning packs' "
             "inventories, above all the sensor/SMI and PMIC-charger groups;",
             "- add the charging cross-pack view requested by the kernel axis.", ""]
+    out = out[:out.index('## Conclusions for this axis')] + ['## Current accelerator ownership', '',
+        f"All {len(rows)} compatibles are enumerated; {C['E']} compatible ownership gaps remain.",
+        'GPU, APUSYS/MDLA/RPMsg, ISP, codec, MDP/MML and GPUEB/VCP compatibles now have singleton kernel owners. Generic syscon stays shared infrastructure.',
+        'DT enablement is not binding or execution. Camera HAL consumers do not own accelerator kernel nodes.',
+        '[Exact node/property/provider and source-contract ledgers](../../accelerator-re-roadmap.md).', '']
     doc = os.path.join(AUDIT, "notes", "DEVICE-TREE.md")
     with open(doc, "w") as fh:
         fh.write("\n".join(out).rstrip() + "\n")

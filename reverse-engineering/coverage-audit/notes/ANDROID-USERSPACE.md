@@ -29,7 +29,7 @@ Audit date: 2026-10-07
 
 Coverage is A=127, B=428, C=99, D=0, E=0. A same-name counterpart exists in the current device/vendor trees for 261 rows; 387 are stock-only; 6 SELinux files are current-tree-only. `stock-only` is not automatically an RE gap: many are deliberately supplied through vendor extraction. Each row says whether the port should carry the stock file or author a replacement; current-only rows require compatibility/necessity review.
 
-Final correction (2026-10-08): the two GPU init `.rc` files have class-B configuration ownership under `ANDROID-INIT`; missing GPU kernel/service implementation ownership remains E on the service/KMD/DT axes. Basename presence is not build-installation proof. External device commit `24afa6b` has since added `vendor.prop` and included `bluetooth_audio.xml`; the final handoff records those fixes separately without treating these frozen basename inventories as a successful ROM build.
+Final correction (2026-10-08): the two GPU init `.rc` files have class-B configuration ownership under `ANDROID-INIT`; GPU kernel/service implementation now has registered PARTIAL ownership on the service/KMD/DT axes. Basename presence is not build-installation proof. External device commit `24afa6b` has since added `vendor.prop` and included `bluetooth_audio.xml`; the final handoff records those fixes separately without treating these frozen basename inventories as a successful ROM build.
 
 Ownership is concentrated in existing integration scopes (`ANDROID-INIT`, `VINTF-HAL-MANIFEST`, `VENDOR-SEPOLICY`, `VENDOR-PROPERTIES`, `PARTITION-OWNERSHIP`) and the relevant hardware scope for audio/camera/sensors/USB/power. No separate “one component per XML/RRO” taxonomy is justified.
 
@@ -61,7 +61,7 @@ Ownership is concentrated in existing integration scopes (`ANDROID-INIT`, `VINTF
 
 The five thermal-camera JNI libraries (`libAC020sdk`, `libadvirtemp`, `libadvirtempac020`, `libdualuvccamera020`, `libusbuvccamera020`) are owned by `THERMAL-RADIOMETRY`, not mistaken for Linux USB-driver gaps.
 
-Mali/GPU userspace libraries are represented by `VENDOR-BLOB-HAL-INVENTORY`; that does not close the separate missing active Mali kernel/DT ownership scope.
+Mali/GPU consumers are assigned to the registered `MALI-GPU-KERNEL` kernel-facing boundary where applicable; proprietary payloads are retained, not reconstructed.
 
 ## Dead/reference init evidence
 
@@ -76,11 +76,4 @@ This is evidence of reference-board/vendor-template baggage, not evidence that s
 
 ## Unified artifact map
 
-`artifact-map.tsv` currently has 2,952 rows across axes 1–10. Its 10 `E` rows are exactly:
-
-- three Mali kernel modules;
-- three active Mali/GPU DT compatibles;
-- two GPU VINTF families;
-- two GPU init services.
-
-All 10 converge on one confirmed missing ownership scope, not ten proposed components.
+`artifact-map.tsv` has 2,952 normalized records; 0 current E ownership gaps after the authorized accelerator registrations. The historical ten Mali E rows are now assigned, not source/runtime-closed.

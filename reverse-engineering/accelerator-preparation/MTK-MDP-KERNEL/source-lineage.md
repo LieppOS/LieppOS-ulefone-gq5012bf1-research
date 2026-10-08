@@ -21,4 +21,6 @@ Every donor directory/file exists. Commits and complete relevant-file fingerprin
 
 No existing complete MDP/MML source-parity owner or measured rebuild was found. Public donor availability is not proof that hardware behavior or shipped module bytes match.
 
+Input fingerprints identify actual local donor bytes, including grafted/patch worktree files. The enclosing Git pin alone does not prove every donor file is committed; archive only verified tracked inputs, or copy exact fingerprint-checked inputs into isolated scratch space without touching the source.
+
 Exact source candidates, build targets and object composition remain subject to stock function/data/CRC/KCFI evidence; namespace/name overlap is triage, never parity.

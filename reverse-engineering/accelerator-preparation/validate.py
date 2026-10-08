@@ -6,6 +6,7 @@ import csv
 import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path
 from urllib.parse import unquote
 from inventory import HERE, REPO, WS, CA, rows
@@ -55,6 +56,12 @@ def main():
   for x in mf:by_path.setdefault(x['local_path'],[]).append(x)
   for rel,h in tracking.items():
    rr=by_path.get(rel,[]);p=WS/rel;require(len(rr)==1 and rr[0]['current_sha256']==h==hashlib.sha256(p.read_bytes()).hexdigest() and rr[0]['bytes']==str(p.stat().st_size),f'new pack manifest drift {rel}')
+  registration=json.loads((HERE/'registration.json').read_text())
+  if pin:=registration.get('metadata_source_commit'):
+   for rel in tracking:
+    record=by_path[rel][0];source=Path(record['original_path'])
+    committed=subprocess.check_output(['git','show',pin+':'+str(source.relative_to(REPO))],cwd=REPO)
+    require(record['relevant_commit']==pin and record['original_sha256']==hashlib.sha256(committed).hexdigest()==hashlib.sha256(source.read_bytes()).hexdigest(),f'committed metadata source pin drift {rel}')
   comps=rows(CA/'components.tsv');new={s['component'] for s in scopes};require(new<={x['component'] for x in comps},'new registrations missing from database')
   for x in comps:
    if x['component'] in new:require(x['status']=='PARTIAL' and x['partial_class']=='A','incorrect new component state')

@@ -1,4 +1,4 @@
-"""Final audit decisions, not filesystem migrations or component reconstruction.
+"""Audit decisions synchronized with authorized accelerator preparation; no reconstruction.
 
 Ranking is qualitative closure probability for the entire named static scope, not
 a runtime-readiness score. Effort ranges are estimates, not measured promises.
@@ -58,6 +58,21 @@ CANDIDATES = [
     },
 ]
 
+# Authorized accelerator priorities supersede stale proposed/uncertain-source entries.
+from accelerator_owners import SCOPES
+CANDIDATES = [c for c in CANDIDATES if c['component'] not in {'MALI-GPU-KERNEL','CAMERA-ISP-KERNEL'}]
+CANDIDATES = [{
+    'component': s['component'], 'kind': 'REGISTERED ACCELERATOR / MODULE PARITY',
+    'scope': ', '.join(s['modules'])+'; normal-world kernel/DT/ABI only',
+    'difficulty': s['difficulty'], 'probability': 'Pinned source candidates and exact stock operands; whole-scope closure probability unmeasured',
+    'evidence': 'Exact module hashes, full ELF metadata, DT/providers, pinned donor files and existing proof-axis citations',
+    'research_path': 'reverse-engineering/accelerator-preparation/'+s['component']+'/CLAUDE-HANDOFF.md',
+    'missing': 'All-axes module acceptance; preserve existing camera function/data proofs and close unmeasured residuals',
+    'closure': 'Every explicitly owned module satisfies function/data/CRC/KCFI/relocation/symbol/string/modinfo/vermagic/B1-B2 and observable DT/ABI; algorithms excluded',
+    'effort': s['effort'], 'dependency': s['prerequisites'],
+    'phone': 'No for static parity; later hardware/runtime acceptance needs separate authorization'
+} for s in SCOPES] + CANDIDATES
+
 # Separate queue: completion here is ROM integration, NOT fresh module RE.
 INTEGRATION = {
     "SYSTEM-DLKM": "Use the 60/60 reproducible GKI module ELF-body baseline; match custom GKI/KMI, signing, packaging and load order. A stock rebuild does not prove a custom kernel boots.",
@@ -74,12 +89,12 @@ INTEGRATION = {
 }
 
 PROPOSALS = [
-    ("PC-001", "ADD", "MALI-GPU-KERNEL", "ACCEPT RECOMMENDATION", 1,
+    ("PC-001", "ADD", "MALI-GPU-KERNEL", "APPLIED (AUTHORIZED PREPARATION)", 0,
      "Ten E rows converge on one active source-actionable kernel/DT/platform scope, not ten components.",
-     "Keep proprietary CSF firmware and GPU userspace outside closure; preserve source claims/metadata and add only after approval."),
-    ("PC-002", "SPLIT", "CAMERA-HAL-ISP → CAMERA-HAL-ISP + CAMERA-ISP-KERNEL", "ACCEPT RECOMMENDATION", 1,
+     "Authorized registration is PARTIAL; eight explicit KMD/platform modules, CSF/userspace algorithms excluded. Historical ten E rows are now assigned; no parity fabricated."),
+    ("PC-002", "SPLIT", "CAMERA-HAL-ISP → CAMERA-HAL-ISP + CAMERA-ISP-KERNEL", "APPLIED (AUTHORIZED PREPARATION)", 0,
      "Existing ISP source/module ledger proves actionable kernel work is mixed with permanently proprietary HAL/3A/tuning/CCU.",
-     "Transfer an explicit module/DT ownership ledger to the new child without duplicating primary ownership; retain HAL scope and historical evidence."),
+     "Nineteen explicit kernel modules moved in ownership only; sixteen existing proof pairs and source/evidence paths preserved. HAL parent stays PARTIAL for proprietary userspace/algorithms."),
     ("PC-003", "MERGE", "GZ-IPC-MOD, GZ-MAIN-MOD, GZ-TRUSTY-MOD, GZ-TZ-SYSTEM → GZ-TRANSPORT", "ACCEPT RECOMMENDATION", -4,
      "Four exact-source transport children and their parent share a coherent normal-world transport boundary.",
      "Preserve all per-module parity/source/ABI subreports and provenance; do not imply signed hypervisor/TA source closure."),
@@ -105,3 +120,6 @@ PROPOSALS = [
      "Use the measured module universe and current child closures; tracking is not reconstruction. SYSTEM-DLKM is now DONE for its measured 60-module baseline, not an unfinished umbrella.",
      "Refresh stale metadata/checklists only after approval; preserve all registers/provenance, with no automatic status or ownership move."),
 ]
+PROPOSALS += [(f'PC-{i:03d}', 'ADD', s['component'], 'APPLIED (AUTHORIZED PREPARATION)', 0,
+               s['justification'], 'PARTIAL only; exact module/DT ledger and handoff prepared, no source reconstruction or proprietary algorithm claim.')
+              for i,s in enumerate([s for s in SCOPES if s['component'] not in {'MALI-GPU-KERNEL','CAMERA-ISP-KERNEL'}],11)]

@@ -1,5 +1,13 @@
 # APUSYS-NPU-KERNEL — PARTIAL preparation
 
+Status: PARTIAL
+
+- **Subsystem:** Accelerators / APUSYS/NPU
+- **Hardware identity:** MT6878 APU RV complex at apusys-rv@190e1000, apu-top-3@1c000000, APUMMU, APU IOMMU banks and MDLA/MVPU/EDMA/RPMsg channel declarations. The monolithic apusys.ko contains multiple IP generations: alias presence does not mean every generation is enabled. Separate board DT instances from dormant code.
+- **Stock artifact:** `apu_top.ko`, `apusys.ko`
+- **Interfaces:** apu_top power/DVFS callbacks; apusys middleware command submission, buffer/shared-memory management, APUMMU/reviser translation, RPMsg/mailbox/interrupt transport, EDMA/MDLA/MVPU completion and recovery. Extract APUSYS ioctl command numbers and native/compat layouts from source witnesses and compare stock switch paths. Recover ownership of each buffer through allocation, map, submit, ACK, abort/reset and release. APUSYS uses its own RPMsg implementation; do not assign it to TinySys IPI merely because both exchange messages.
+- **Still required:** Complete per-module source/parity and observable DT/ABI acceptance; proprietary algorithms excluded
+
 **Purpose:** APUSYS/NPU normal-world kernel source/parity closure, not firmware reconstruction.
 
 **Decision:** REGISTER PARTIAL. apusys and apu_top are normal-world source-actionable kernel code, not proprietary algorithms. Prior class-C blob-inventory ownership did not establish source parity; APU/MDLA RPMsg nodes were incorrectly attributed to camera consumers.

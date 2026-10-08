@@ -1,420 +1,120 @@
 #!/usr/bin/env python3
-"""Generate the final coverage handoff from synchronized tables; no migrations."""
+"""Measured coverage reports, synchronized with authorized accelerator registration.
+No reconstruction, stock rediscovery or hardware operations. Replay from committed tables.
+"""
 from __future__ import annotations
-
 import csv
 import json
 import os
 from collections import Counter
 from pathlib import Path
 from urllib.parse import quote
-
 from audit_policy import CANDIDATES, INTEGRATION, PROPOSALS
 
-HERE = Path(__file__).resolve().parent
-CA = HERE.parent
-RE = CA.parent
-DATE = "2026-10-08"
+HERE=Path(__file__).resolve().parent;CA=HERE.parent;RE=CA.parent
+PARTIAL_MEANING={'A':'Actionable static RE; runtime acceptance separate','B':'Closed kernel/source boundary; proprietary integration remains','C':'Proprietary boundary','D':'Hardware/runtime/teardown gated','E':'Stale/duplicate/wrong scope','F':'Umbrella/tracking scope'}
 
-PARTIAL_MEANING = {
-    "A": "Actionable static RE (whole-scope runtime acceptance may still be separate)",
-    "B": "Kernel/source closed; broader proprietary boundary remains",
-    "C": "Proprietary boundary",
-    "D": "Hardware/runtime/teardown gated",
-    "E": "Stale/duplicate/wrong scope",
-    "F": "Broad umbrella/tracking scope",
-}
+def read(name):
+ with (CA/name).open() as f:return list(csv.DictReader(f,delimiter='\t'))
+def save(path,text):path.write_text(text.rstrip()+'\n');print(path.relative_to(RE.parent))
+def esc(s):return (s or '-').replace('|','\\|').replace('\n',' ')
+def link_from(path,base=None):return quote(os.path.relpath(RE.parent/path,base or CA),safe='/-_.')
+def metrics():
+ names={'components':'components.tsv','km':'kernel-modules.tsv','dt':'device-tree.tsv','hw':'hardware.tsv','hs':'hals-services.tsv','vs':'vendor-services.tsv','fw':'firmware.tsv','sw':'secure-world.tsv','bs':'boot-storage.tsv','ai':'android-integration.tsv','ul':'userspace-libraries.tsv','art':'artifact-map.tsv'}
+ m={k:read(v) for k,v in names.items()};m['status']=Counter(x['status'] for x in m['components']);m['partial']=Counter(x['partial_class'] for x in m['components'] if x['status']=='PARTIAL')
+ m['snapshot']=json.loads((CA/'audit-evidence/final-snapshot.json').read_text());m['manifest']=json.loads((CA/'audit-evidence/manifest-audit-2026-10-07.json').read_text());return m
+def stamp(m):return f"Snapshot: **{m['snapshot']['date']}**, source HEAD `{m['snapshot']['source_head']}`. Actual workspace directory status is authoritative; scope registration is not kernel reconstruction."
+def next_targets(m):
+ by={x['component']:x for x in m['components']};out=[]
+ for c in CANDIDATES:
+  if c['component'] not in by:raise ValueError('unregistered target '+c['component'])
+  r=by[c['component']]
+  if r['status']=='PARTIAL' and r['partial_class']=='A':out.append({'rank':len(out)+1,'status':'PARTIAL',**c})
+ return out
+def compact_ranking(m,base=None):return [f"{r['rank']}. **{r['component']}** — {r['kind']}; [handoff/evidence]({link_from(r['research_path'],base)})." for r in next_targets(m)]
 
+def build_next(m):
+ targets=next_targets(m)
+ with (CA/'next-re.tsv').open('w',newline='') as f:
+  fields=list(targets[0]) if targets else ['rank','status','component'];w=csv.DictWriter(f,fieldnames=fields,delimiter='\t',lineterminator='\n');w.writeheader();w.writerows(targets)
+ out=['# Next-RE handoff priorities','',stamp(m),'','Accelerator priority follows the authorized dependency-aware roadmap, not unsupported closure-probability or hour estimates. Remaining general static targets follow it. DONE and non-A targets are automatically omitted. No reconstruction is performed here.','']
+ for r in targets:
+  out += [f"## {r['rank']}. {r['component']} — {r['status']}",'']+[f'- **{k}:** {r[k]}' for k in ('kind','scope','difficulty','probability','evidence','missing','closure','effort','dependency','phone')]+[f"- [Canonical handoff/evidence]({link_from(r['research_path'])}).",'']
+ out += ['## Separate ROM integration queue','','| Component | Status | Remaining action |','|---|---|---|'];by={x['component']:x for x in m['components']}
+ for n,a in INTEGRATION.items():
+  if n in by:out.append(f"| {n} | {by[n]['status']} | {esc(a)} |")
+ out += ['','[Accelerator roadmap](../accelerator-re-roadmap.md): six prepared scopes, precise reconstruction order and proprietary exclusions. Runtime/HAL/SELinux, proprietary and inventory tracking are not module-parity shortcuts.'];save(CA/'NEXT-RE.md','\n'.join(out))
 
-def read(name: str) -> list[dict]:
-    with (CA / name).open(newline="", encoding="utf8") as fh:
-        return list(csv.DictReader(fh, delimiter="\t"))
+def build_partial(m):
+ rs=[x for x in m['components'] if x['status']=='PARTIAL'];out=['# PARTIAL triage','',stamp(m),'',f'All **{len(rs)}** current PARTIAL directories have one A–F class. Camera kernel child is A; HAL/3A/firmware algorithms remain C. Existing static DONE scopes stay DONE.','','| Component | Class | Remaining boundary | Next action | Difficulty | Dependencies |','|---|---|---|---|---|---|']
+ for r in rs:out.append('| '+' | '.join(esc(r[k]) for k in ('component','partial_class','blocker','recommended_action','difficulty','dependencies'))+' |')
+ out += ['','## Classification totals','','| Classification | Count |','|---|---:|']+[f"| {k} — {v} | {m['partial'][k]} |" for k,v in PARTIAL_MEANING.items()]+[f'| **Total PARTIAL** | **{len(rs)}** |','','## Ranked static targets','']+compact_ranking(m);save(CA/'PARTIAL-TRIAGE.md','\n'.join(out))
 
+def build_missing(m):
+ e=[r for r in m['art'] if r['coverage']=='E'];out=['# Current missing-coverage verdict','',stamp(m),'',f'**{len(e)} unmapped normalized rows.** The prior Mali ownership hole is filled by the authorized MALI-GPU-KERNEL PARTIAL registration. Ownership is not source/parity closure.','','## Six prepared normal-world kernel owners','']
+ for n in ('MALI-GPU-KERNEL','APUSYS-NPU-KERNEL','CAMERA-ISP-KERNEL','MTK-VCODEC-KERNEL','MTK-MDP-KERNEL','GPU-AI-AUX-KERNEL-INTERFACES'):
+  r=next(x for x in m['components'] if x['component']==n);out.append(f"- **{n} ({r['status']})**: {r['modules']}. [Handoff](../accelerator-preparation/{n}/CLAUDE-HANDOFF.md).")
+ out += ['','APUSYS/MDLA/RPMsg is accelerator-kernel ownership, not camera-consumer ownership. Camera child preserves existing function/data proofs; HAL parent stays PARTIAL. MDP is not DRM DONE, and GPUEB/VCP clients are not TinySys IPI DONE. Shared generic infrastructure and proprietary firmware remain explicit boundaries.','','RT5133 still denotes an unbound reference client; its supported static DONE scope and rejected rename are unchanged. [Capture correction](notes/RT5133-CORRECTION.md). No new hardware binding/execution or parity is claimed.']
+ if e:out += ['','## Remaining exact unmapped records']+[f"- {r['artifact_type']}: `{r['artifact']}`" for r in e]
+ save(CA/'MISSING-COVERAGE.md','\n'.join(out))
 
-def save(path: Path, text: str) -> None:
-    path.write_text(text.rstrip() + "\n", encoding="utf8")
-    print(path.relative_to(RE.parent))
+def build_changes(m):
+ count=len(m['components']);delta=sum(p[4] for p in PROPOSALS if p[3]=='ACCEPT RECOMMENDATION');out=['# Taxonomy decisions after accelerator preparation','',stamp(m),'',f'**Current registered total: {count}.** Six authorized PARTIAL registrations (including the camera child) are applied. No unrelated merge, removal, rename or DONE promotion was performed.','','| Proposal | Operation | Decision | Remaining conditional change |','|---|---|---|---:|']
+ out += [f'| {p[0]} | {p[1]} | {p[3]} | {p[4]:+d} |' for p in PROPOSALS]
+ for cid,op,n,decision,d,why,preserve in PROPOSALS:out += ['',f'## {cid}: {op} — {decision}','',f'- **Components:** {n}',f'- **Rationale:** {why}',f'- **Preservation/remaining consequences:** {preserve}',f'- **Remaining conditional change:** {d:+d}']
+ out += ['','## Conditional count, not current reality','',f'Only still-unapplied accepted recommendations would yield {count} {delta:+d} = **{count+delta} canonical components**. This is not current reality; applied additions are not counted twice. All unrelated migrations need separate approval and evidence-preserving redirects/manifest/index changes. RT5133 rename remains rejected.'];save(CA/'PROPOSED-CHANGES.md','\n'.join(out))
 
+def build_readiness(m):
+ out=['# LieppOS development readiness','',stamp(m),'','| Target | Assessment | Remaining work |','|---|---|---|',
+ '| Custom GKI/kernel | Static baseline strong; custom boot unproved | Preserve SYSTEM-DLKM 60/60 baseline, exact containers and KMI; close accelerator/source/DT ABI and validate actual boot later. |',
+ '| Full custom ROM | Integration incomplete | Preserve external 24afa6b vendor.prop and bluetooth_audio.xml fixes; verify emitted properties, VINTF, init, enforcing SELinux and real HAL registration. |',
+ '| Daily driver | NOT PROVEN | Actual boot, radio/IMS, camera/audio, connectivity, sensors, fingerprint/NFC, suspend, charging/thermal, OTA/recovery acceptance remains. |',
+ '| Hardware parity | Proprietary/physical/runtime gated | Retain CSF/APU/VCP/CCU/SCP/DSP/modem images, 3A/PQ/tuning, RIL/IMS, TAs and calibration; static preparation proves no accelerator execution. |',
+ '| Google-free LieppOS | Product integration work | Remove/replace Google services while retaining vendor contracts; decide DRM/attestation/app compatibility. |',
+ '| Stock-integrity secondary slot | Stock B anchor verified | Preserve B and shared userdata/FBE/metadata/rollback/snapshot state; never overwrite anchor for experimental tests. |',
+ '| Future Linux slot | Source-actionable baseline, feature parity uncertain | Accelerator source/ABI, remote firmware, Linux userspace replacements, audio/sensors/modem/display and power policy remain. |',
+ '','## Existing closures preserved','']
+ by={r['component']:r for r in m['components']}
+ for n in ('SYSTEM-DLKM','BOOT-IMAGES','VENDOR-PROPERTIES','VINTF-HAL-MANIFEST','PARTITION-OWNERSHIP','USB-CHARGER-INTEGRATION','INTERNAL-THERMAL-USB'):
+  r=by[n];out.append(f"- **{n} ({r['status']})**: {r['notes']}. [Research]({link_from(r['research_path'])}).")
+ out += ['','Do not force RT5133 binding; the observed failure releases GPIO1 for the working WL2864C camera rails. [Correction](notes/RT5133-CORRECTION.md). Property installation, build success and component DONE never replace runtime acceptance.'];save(CA/'PORT-READINESS.md','\n'.join(out))
 
-def esc(text: str) -> str:
-    return (text or "-").replace("|", "\\|").replace("\n", " ").strip()
+def build_summary(m):
+ s=m['status'];active=[r for r in m['dt'] if int(r['nodes_enabled'])>0];e=sum(r['coverage']=='E' for r in m['art']);out=['# Coverage verdict: ACCOUNTED — kernel RE pending','',stamp(m),'','Authorized accelerator preparation fills ownership, not source or runtime parity. All six scopes are accessible; no proprietary firmware payload copied.','',f"- Components **{len(m['components'])}**: DONE **{s['DONE']}**, PARTIAL **{s['PARTIAL']}**, BLOCKED **{s['BLOCKED']}**, TODO **{s['TODO']}**.",f"- Modules **{len(m['km'])}**; DT **{len(m['dt'])}** / **{sum(int(r['nodes']) for r in m['dt'])}** node instances; active mapped **{sum(r['coverage']!='E' for r in active)}/{len(active)}**.",f"- HAL/services **{len(m['hs'])+len(m['vs'])}**; firmware **{len(m['fw'])}**; secure-world **{len(m['sw'])}**; partitions **{len(m['bs'])}**.",f"- Integration **{len(m['ai'])}**; significant libraries **{len(m['ul'])}**; normalized records **{len(m['art'])}**; unmapped E **{e}**.",'','## PARTIAL A–F','']+[f"- {k}={m['partial'][k]} — {v}" for k,v in PARTIAL_MEANING.items()]
+ out += ['','## Accelerator ownership applied','','Six registrations own 41 exact stock targets. Preserve 16 camera function/data proof pairs, SCP/ADSP/TinySys and named camera DONE scopes. No new module parity, hardware execution or unrelated taxonomy migration is claimed. [Roadmap](../accelerator-re-roadmap.md).','','## Next work','']+compact_ranking(m)+['','## Validation/hygiene','','Historical audit/manifest records remain historical; the accelerator preparation validation records current scoped registration, exact input checks, manifest drift and reproducibility. [Preparation](../accelerator-preparation/README.md). [RT5133 retraction](notes/RT5133-CORRECTION.md) remains valid. See [PARTIAL triage](PARTIAL-TRIAGE.md), [taxonomy](PROPOSED-CHANGES.md) and [readiness](PORT-READINESS.md). Stop global inventory work; proceed only with component reconstruction and later authorized integration/runtime validation.'];save(CA/'SUMMARY.md','\n'.join(out))
 
+def build_index(m):
+ out=['# GQ5012BF1 reverse-engineering index','',stamp(m),'','Phone: Ulefone Armor 29 Pro Thermal / GQ5012BF1 / MT6878T. DONE is named static/source/inventory closure, not proprietary openness or runtime readiness. `component` is singleton primary ownership; co-mentions/umbrellas are references only. Accelerator registrations were authorized preparation, not reconstruction.','','## Current totals','','| Status | Count |','|---|---:|']+[f"| {s} | {m['status'][s]} |" for s in ('DONE','PARTIAL','BLOCKED','TODO')]+[f"| **TOTAL** | **{len(m['components'])}** |",'','## PARTIAL classification','','| Classification | Count |','|---|---:|']+[f"| {k} — {v} | {m['partial'][k]} |" for k,v in PARTIAL_MEANING.items()]
+ out += ['','## Master component table','','| Component | Status | Subsystem | Scope | Class | Kernel | Userspace | Firmware | Hardware | Remaining/DONE limits | Research | Workspace |','|---|---|---|---|---|---|---|---|---|---|---|']
+ for r in m['components']:
+  ws=RE.parent.parent/r['workspace_path']/'README.md';fields=[r[k] for k in ('component','status','subsystem','scope','partial_class','kernel_state','userspace_state','firmware_state','hardware_state')]+[r['blocker'] or r['notes']]
+  out.append('| '+' | '.join(esc(x) for x in fields)+f" | [report]({link_from(r['research_path'],RE)}) | [scope]({quote(os.path.relpath(ws,RE),safe='/-_.')}) |")
+ out += ['','## Accelerator preparation','','[Six-scope roadmap](accelerator-re-roadmap.md), [precise module/DT/source metadata and Claude handoffs](accelerator-preparation/README.md). Six new PARTIALs, no unrelated merges/removals/renames. Camera HAL stays proprietary PARTIAL; sensor TUs/EEPROM/VCM/OIS/rails and existing transports remain DONE. APUSYS is not camera kernel ownership; MDP is not DRM closure; GPUEB/VCP clients are not transport closure.','','## Current artifact axes','']
+ for n,k in (('kernel-modules','km'),('device-tree','dt'),('hardware','hw'),('hals-services','hs'),('vendor-services','vs'),('firmware','fw'),('secure-world','sw'),('boot-storage','bs'),('android-integration','ai'),('userspace-libraries','ul'),('artifact-map','art')):out.append(f"- [{n}.tsv](coverage-audit/{n}.tsv): {len(m[k])} rows, coverage {dict(sorted(Counter(r['coverage'] for r in m[k]).items()))}.")
+ out += ['','## Ranked static work','']+compact_ranking(m,RE)+['','[Summary](coverage-audit/SUMMARY.md), [triage](coverage-audit/PARTIAL-TRIAGE.md), [ownership gaps](coverage-audit/MISSING-COVERAGE.md), [taxonomy](coverage-audit/PROPOSED-CHANGES.md), [readiness](coverage-audit/PORT-READINESS.md). [RT5133 correction](coverage-audit/notes/RT5133-CORRECTION.md) remains valid. Preserve external property/VINTF fixes and stock B; actual boot/SELinux/HAL/OTA and proprietary algorithms remain separate. No further global discovery is required for this captured stock build.'];save(RE/'index.md','\n'.join(out))
 
-def link_from(path: str, base: Path = CA) -> str:
-    return quote(os.path.relpath(RE.parent / path, base), safe="/-_.")
+def build_manifest_note(m):
+ a=m['manifest'];out=['# Manifest hygiene — historical baseline','','Frozen 2026-10-07 audit; not current directory totals and not an accelerator registration run. Unrelated drift is not silently repaired.','','| Measure | Historical result |','|---|---:|']
+ for label,key in (('Manifest rows','rows_total'),('Resolved','rows_resolved'),('Missing','rows_missing_file'),('Malformed','rows_wrong_field_count'),('Hash mismatches','rows_hash_mismatch'),('Size mismatches','rows_size_mismatch'),('Unregistered files','unregistered_files_total')):out.append(f'| {label} | {a[key]} |')
+ out += [f"| Duplicate paths | {len(a['duplicate_paths'])} |",'','[Historical machine result](../audit-evidence/manifest-audit-2026-10-07.json). Current scoped registration/drift is recorded separately in accelerator-preparation validation.'];save(CA/'notes/MANIFEST-HYGIENE.md','\n'.join(out))
 
+def build_readme(m):
+ out=['# GQ5012BF1 coverage database — accelerator ownership synchronized','',stamp(m),'',f"[PARTIAL-TRIAGE.md](PARTIAL-TRIAGE.md): all {m['status']['PARTIAL']} current PARTIAL components. Six authorized PARTIAL additions and singleton module/DT ownership are applied; no source parity is fabricated. [Accelerator roadmap](../accelerator-re-roadmap.md).",'','## Reports','']+[f'- [{n}]({n})' for n in ('SUMMARY.md','PARTIAL-TRIAGE.md','NEXT-RE.md','MISSING-COVERAGE.md','PROPOSED-CHANGES.md','PORT-READINESS.md')]+['','## Reproduce committed metadata','','```sh']
+ out += [f'python3 reverse-engineering/coverage-audit/scripts/{s}.py' for s in ('build-kernel-modules','build-devicetree','build-hardware','build-services','build-integration','build-components','build-reports','check-audit','test-final-audit')]+['```','','No fresh full module investigation or payload harvest. Changed pack identity/claims were refreshed with existing harvesters. [Current snapshot](audit-evidence/final-snapshot.json). [Historical final-audit validation](notes/FINAL-VALIDATION.md) is not the new accelerator snapshot; current preparation has its own validation record. No proprietary payload enters Git.'];save(CA/'README.md','\n'.join(out))
 
-def metrics() -> dict:
-    names = {
-        "components": "components.tsv", "km": "kernel-modules.tsv", "dt": "device-tree.tsv",
-        "hw": "hardware.tsv", "hs": "hals-services.tsv", "vs": "vendor-services.tsv",
-        "fw": "firmware.tsv", "sw": "secure-world.tsv", "bs": "boot-storage.tsv",
-        "ai": "android-integration.tsv", "ul": "userspace-libraries.tsv", "art": "artifact-map.tsv",
-    }
-    m = {k: read(v) for k, v in names.items()}
-    m["status"] = Counter(r["status"] for r in m["components"])
-    m["partial"] = Counter(r["partial_class"] for r in m["components"] if r["status"] == "PARTIAL")
-    m["snapshot"] = json.loads((CA / "audit-evidence/final-snapshot.json").read_text())
-    m["manifest"] = json.loads((CA / "audit-evidence/manifest-audit-2026-10-07.json").read_text())
-    return m
+def build_axis_notes(m):
+ out=['# HAL, init, firmware, secure-world and boot/storage coverage','',stamp(m),'','Built from committed metadata-only raw TSVs and current curated ownership; no payload copied. Source availability, DT enablement and interface declaration are not runtime or parity proof.','','## Measured inventory','','| Axis | Rows | A | B | C | D | E |','|---|---:|---:|---:|---:|---:|---:|']
+ for label,k in [('VINTF families + legacy HAL libraries','hs'),('Init services + trigger executables','vs'),('Firmware/calibration payloads','fw'),('Secure-world surfaces','sw'),('Scatter/ABOTA partition families','bs')]:
+  c=Counter(r['coverage'] for r in m[k]);out.append(f'| {label} | {len(m[k])} | '+' | '.join(str(c[a]) for a in 'ABCDE')+' |')
+ out += ['','GPU interface/service ownership is now MALI-GPU-KERNEL PARTIAL, not an E gap. CSF/APU/GPUEB/VCP binary algorithms are excluded; CCU algorithms remain camera HAL, with a separate ISP host owner. Firmware owner denotes the interface/retention boundary, never reconstructed remote internals. Loading claims are per-payload evidence to reconcile, not proof of a universal Linux loader.','','Matrix declarations are framework requirements, not implementation proof. Twenty-two missing-executable non-trigger service groups remain reference baggage; virtual camera, face example and alternative fingerprint templates are not additional fitted hardware. DOOGEE-named EIS calibration remains reference tuning. A/B partition pairs are grouped, not new components. Secure-world/boot ownership is separate from accelerator host ABI.','','Reproduce: `python3 scripts/build-services.py` then `python3 scripts/build-reports.py` from the coverage-audit directory. Raw stock harvests are preserved; no repeated hardware discovery required.'];save(CA/'notes/SERVICES-FIRMWARE.md','\n'.join(out))
 
+ def_update=CA/'notes/ANDROID-USERSPACE.md';text=def_update.read_text()
+ text=text.replace('missing GPU kernel/service implementation ownership remains E on the service/KMD/DT axes','GPU kernel/service implementation now has registered PARTIAL ownership on the service/KMD/DT axes')
+ text=text.replace('Mali/GPU userspace libraries are represented by `VENDOR-BLOB-HAL-INVENTORY`; that does not close the separate missing active Mali kernel/DT ownership scope.','Mali/GPU consumers are assigned to the registered `MALI-GPU-KERNEL` kernel-facing boundary where applicable; proprietary payloads are retained, not reconstructed.')
+ text=text.split('## Unified artifact map')[0]+'## Unified artifact map\n\n'+f"`artifact-map.tsv` has {len(m['art']):,} normalized records; {sum(r['coverage']=='E' for r in m['art'])} current E ownership gaps after the authorized accelerator registrations. The historical ten Mali E rows are now assigned, not source/runtime-closed.\n"
+ save(def_update,text)
 
-def stamp(m: dict) -> str:
-    s = m["snapshot"]
-    return (f"Final snapshot: **{s['date']}**, source HEAD `{s['source_head']}`; "
-            "workspace directories are authoritative. This report is reproducible from committed metadata, "
-            "not a claim that later concurrent closures never occur.")
-
-
-def next_targets(m: dict) -> list[dict]:
-    by = {r["component"]: r for r in m["components"]}
-    result = []
-    for candidate in CANDIDATES:
-        name = candidate["component"]
-        if name in by:
-            if by[name]["status"] != "PARTIAL" or by[name]["partial_class"] != "A":
-                continue
-            status = "PARTIAL"
-        else:
-            if name not in {"MALI-GPU-KERNEL", "CAMERA-ISP-KERNEL"}:
-                raise ValueError(f"unregistered ranked candidate {name}")
-            status = "PROPOSED"
-        result.append({"rank": len(result) + 1, "status": status, **candidate})
-    return result
-
-
-def compact_ranking(m: dict, base: Path = CA) -> list[str]:
-    return [f"{r['rank']}. **{r['component']}** ({r['status']}; {r['kind']}) — "
-            f"{r['probability']}. [Evidence]({link_from(r['research_path'], base)})."
-            for r in next_targets(m)]
-
-
-def build_next(m: dict) -> None:
-    targets = next_targets(m)
-    with (CA / "next-re.tsv").open("w", newline="", encoding="utf8") as fh:
-        w = csv.DictWriter(fh, delimiter="\t", lineterminator="\n", fieldnames=list(targets[0]))
-        w.writeheader(); w.writerows(targets)
-    out = ["# Final next-RE priority list", "", stamp(m), "",
-           "Ranked by qualitative probability of defensible closure of the entire named **static** scope, "
-           "not document-writing speed. Effort is an estimate, not a guarantee. No reconstruction is performed "
-           "by this audit. A matched source donor is not assumed where none is proved.", "",
-           "Only remaining registered PARTIAL static targets and the two proposed kernel scopes appear below. "
-           "A newly DONE target is automatically omitted. Static DTS contract closure is distinct from module "
-           "parity; init/policy assembly, boot, SELinux, HAL registration and hardware acceptance are separate integration work.", ""]
-    for r in targets:
-        out += [f"## {r['rank']}. {r['component']} — {r['status']}", "",
-                f"- **Work type:** {r['kind']}", f"- **Scope:** {r['scope']}",
-                f"- **Difficulty / closure outlook:** {r['difficulty']}; {r['probability']}",
-                f"- **Existing evidence:** {r['evidence']}. [Canonical report]({link_from(r['research_path'])}).",
-                f"- **Missing source/behavior:** {r['missing']}",
-                f"- **Closure criterion:** {r['closure']}", f"- **Expected effort:** {r['effort']}",
-                f"- **Dependency:** {r['dependency']}", f"- **Phone necessary:** {r['phone']}", ""]
-    out += ["## Separate ROM integration queue (not ranked RE)", "",
-            "DONE here means named-scope static closure, not a finished LieppOS feature.", "",
-            "| Component | Current status | Remaining ROM/acceptance action |", "|---|---|---|"]
-    by = {r["component"]: r for r in m["components"]}
-    for n, action in INTEGRATION.items():
-        if n in by:
-            out.append(f"| {n} | {by[n]['status']} | {esc(action)} |")
-    for title, classes in (("Proprietary or runtime-only boundaries", "BCD"),
-                           ("Umbrella/tracking scopes", "F")):
-        rows = [r for r in m["components"] if r["status"] == "PARTIAL" and r["partial_class"] in classes]
-        out += ["", f"## {title}", "", ", ".join(f"`{r['component']}`" for r in rows) or "None.", "",
-                "Do not convert these into kernel-module parity targets or claim whole-scope closure by updating documentation."]
-    save(CA / "NEXT-RE.md", "\n".join(out))
-
-
-def build_partial(m: dict) -> None:
-    rows = [r for r in m["components"] if r["status"] == "PARTIAL"]
-    out = ["# PARTIAL triage", "", stamp(m), "",
-           f"All **{len(rows)}** current PARTIAL directories have exactly one A–F class. "
-           "A denotes actionable static work, not permission to claim untested end-to-end acceptance. "
-           "OTA and recovery acceptance are D, not source-parity shortcuts. DONE rows are excluded.", "",
-           "| Component | Class | Remaining boundary | Next action | Difficulty | Dependencies |",
-           "|---|:---:|---|---|---|---|"]
-    for r in rows:
-        out.append("| " + " | ".join(esc(r[k]) for k in
-                    ("component", "partial_class", "blocker", "recommended_action", "difficulty", "dependencies")) + " |")
-    out += ["", "## Classification totals", "", "| Classification | Count |", "|---|---:|"]
-    out += [f"| {c} — {PARTIAL_MEANING[c]} | {m['partial'][c]} |" for c in "ABCDEF"]
-    out += [f"| **Total PARTIAL** | **{len(rows)}** |", "", "## Ranked static targets", ""] + compact_ranking(m)
-    out += ["", "See [NEXT-RE.md](NEXT-RE.md) for exact closure criteria, source residuals, effort, dependencies, "
-            "phone requirements and separate integration/proprietary/tracking queues."]
-    save(CA / "PARTIAL-TRIAGE.md", "\n".join(out))
-
-
-def build_missing(m: dict) -> None:
-    e = [r for r in m["art"] if r["coverage"] == "E"]
-    out = ["# Final missing-coverage verdict", "", stamp(m), "",
-           "## CONFIRMED MISSING: MALI-GPU-KERNEL", "",
-           "**One** genuinely missing registered ownership scope. Its ADD is recommended but **not applied**.", "",
-           "- **Owns:** `mali_kbase_mt6878_r44.ko`, `mali_mgm_mt6878_r44.ko`, "
-           "`mali_prot_alloc_mt6878_r44.ko`; enabled `arm,mali-valhall`, `mediatek,mali`, "
-           "`mediatek,g3d_brisket`; normal-world GPU kernel/platform ABI and the kernel-facing GPU/gpuserv services.",
-           "- **Not owned by:** TMEM-FFA's secure-memory transport or VENDOR-BLOB-HAL-INVENTORY's userspace/CSF payload inventory.",
-           "- **Boundary:** proprietary userspace/CSF firmware stays retained; source availability and matched r44/MT6878 build are not assumed.",
-           "- **Initial proposed status:** PARTIAL/A, HARD. Exact closure plan is in [NEXT-RE.md](NEXT-RE.md).", "",
-           f"All **{len(e)}** normalized E rows converge on that one scope:", ""]
-    out += [f"- `{r['artifact_type']}` `{r['artifact']}` — {r['notes']}" for r in e]
-    out += ["", "## CAMERA-ISP-KERNEL — covered mixed scope, proposed SPLIT", "",
-            "ISP kernel modules/source donors and near-exact imgsensor reconstruction already belong to CAMERA-HAL-ISP. "
-            "This is **not a second coverage hole**. Accept the split recommendation to isolate kernel parity from "
-            "HAL/3A/tuning/CCU, with an explicit transfer ledger and no duplicate primary owners.", "",
-            "## POSSIBLE MISSING", "",
-            "None is supported by unexplained artifacts. Generic MTK/APUSYS/media infrastructure, SCP-owned sensor "
-            "register drivers, modem/RIL/IMS, TEE TAs, DSP/CSF firmware and per-unit calibration have explicit "
-            "generic or proprietary boundaries; do not invent source-actionable components for them.", "",
-            "## Not missing / negative findings", "",
-            "Physical sensors belong to SENSOR-HUB/SCP firmware plus their registered sensor scopes; transport is "
-            "SENSOR-HUB-KERNEL. Camera sensors/VCM/OIS/EEPROM have named child owners. Thermal-camera USB/power, "
-            "command/viewer and radiometry are separate scopes. eSIM/eUICC and wireless charging are preserved "
-            "not-fitted findings. RT5133 is a declared, unbound reference client, not a new active camera-LDO gap; "
-            "see [correction](notes/RT5133-CORRECTION.md).", "",
-            "Generic/dead artifacts stay enumerated in the TSVs with per-row evidence. Coverage is not source openness."]
-    save(CA / "MISSING-COVERAGE.md", "\n".join(out))
-
-
-def build_changes(m: dict) -> None:
-    count = len(m["components"])
-    delta = sum(p[4] for p in PROPOSALS if p[3] == "ACCEPT RECOMMENDATION")
-    out = ["# Final taxonomy decision document", "", stamp(m), "",
-           f"**Current registered total: {count}.** Recommendations only: no ADD/SPLIT/MERGE/REMOVE/RENAME "
-           "has been applied by this audit. ACCEPT RECOMMENDATION is not migration approval or evidence of implementation.", "",
-           "| Proposal | Operation | Decision | Conditional component-count change |", "|---|---|---|---:|"]
-    out += [f"| {p[0]} | {p[1]} | {p[3]} | {p[4]:+d} |" for p in PROPOSALS]
-    for cid, kind, names, decision, change, reason, consequences in PROPOSALS:
-        out += ["", f"## {cid}: {kind} — {decision}", "", f"- **Components:** {names}",
-                f"- **Evidence / rationale:** {reason}", f"- **Consequences and preservation:** {consequences}",
-                f"- **Count change if approved and executed:** {change:+d}"]
-        if cid == "PC-002":
-            out += ["- [ISP module/source and proprietary-boundary evidence](../camera-stack/notes/isp-stack.md)."]
-        if cid == "PC-009":
-            out += ["- [Exact capture chronology and retraction](notes/RT5133-CORRECTION.md). "
-                    "Physical population is NEEDS EVIDENCE; the specific unsupported rename is REJECT, not silently deferred."]
-    out += ["", "## Conditional count, not current reality", "",
-            f"If all **accepted recommendations** are approved and executed: {count} {delta:+d} = "
-            f"**{count + delta} canonical components**. This conditional number is not the component database total. "
-            "One ADD and one split-created child are offset by seven merged-away children/findings and two "
-            "archived absence findings. Rejected RT5133 rename changes nothing.", "",
-            "## Future migration prerequisites", "",
-            "Archive originals first; write old→new path/owner redirects; preserve parity operands, source provenance, "
-            "negative findings and manifests. Update every affected module/DT/service owner, registered directory, "
-            "COPY-MANIFEST and status index together **after approval**, outside this final audit. No evidence is to be deleted."]
-    save(CA / "PROPOSED-CHANGES.md", "\n".join(out))
-
-
-def build_readiness(m: dict) -> None:
-    rows = [
-        ("1. Custom GKI/kernel", "STATIC BASELINE STRONG; custom boot unvalidated", "SYSTEM-DLKM 60/60 stock ELF bodies; exact BOOT-IMAGES containers and module-loader/KMI baseline. Custom kernel ABI/signatures, remaining DT/driver work and Mali KMD still require integration/acceptance."),
-        ("2. Full custom ROM", "ARCHITECTURE MAPPED; integration incomplete", "External 24afa6b installs vendor.prop and includes bluetooth_audio.xml; preserve both. Verify correct emitted-image properties/precedence, assemble/check VINTF, init and enforcing SELinux, then validate actual HAL behavior."),
-        ("3. Daily-driver readiness", "NOT PROVEN", "Actual boot, enforcing SELinux, calls/data/IMS, camera/audio, Wi-Fi/BT/GNSS, sensors, fingerprint/NFC, suspend, charging/thermal, OTA and recovery acceptance are required. Static DONE is not a runtime test."),
-        ("4. Hardware feature parity", "PROPRIETARY / PHYSICAL / RUNTIME GATED", "Retain camera 3A/tuning/CCU, DSP/SCP/modem/CSF firmware, RIL/IMS, secure TAs, calibration and radiometry. USB/thermal kernel integration closures do not prove feature or high-power safety parity."),
-        ("5. Google-free LieppOS", "NO NEW HARDWARE COVERAGE GAP; product work remains", "Remove/replace Google framework services while retaining vendor HAL/blob contracts; explicitly decide DRM/attestation/app compatibility. Policy, properties and HAL integration actions still apply."),
-        ("6. Stock-integrity secondary slot", "STOCK B BASELINE VERIFIED; shared-state safety open", "BOOT-IMAGES proves Slot B stock while Slot A is modified. Preserve B as the anchor; do not boot-test experimental payloads by overwriting it. Shared userdata/FBE/metadata, rollback, OTA/snapshot and recovery behavior still need safe validation."),
-        ("7. Future Linux slot", "RECONSTRUCTABLE BASELINE; feature parity uncertain", "GPU KMD/DT, camera ISP and retained firmware plus Linux modem userspace, SCP sensors, audio/DSP, display/input and charging policy remain porting constraints. Android HAL closure does not imply a Linux replacement."),
-    ]
-    out = ["# Final LieppOS development readiness", "", stamp(m), "",
-           "Assessment only: no property, VINTF, ROM, kernel, slot or component changes are performed here.", "",
-           "| Target | Assessment | Remaining work |", "|---|---|---|"]
-    out += [f"| {a} | **{b}** | {c} |" for a, b, c in rows]
-    out += ["", "## Verified closures used, not reopened", ""]
-    by = {r["component"]: r for r in m["components"]}
-    for n in ("SYSTEM-DLKM", "BOOT-IMAGES", "VENDOR-PROPERTIES", "VINTF-HAL-MANIFEST", "PARTITION-OWNERSHIP", "USB-CHARGER-INTEGRATION", "INTERNAL-THERMAL-USB"):
-        r = by[n]
-        out.append(f"- **{n} ({r['status']})**: {r['notes']}. [Research]({link_from(r['research_path'])}).")
-    out += ["", "## Non-negotiable outstanding integration actions", "",
-            "1. The missing vendor definitions were installed externally: 327 keys, 16 documented exclusions, one EGL rewrite. Preserve the fix and verify correct generated/inherited and emitted-image values plus SELinux context; runtime installation is not proven by a makefile alone.",
-            "2. `bluetooth_audio.xml` is now included rather than `EXTRACT_ONLY`, with a vendor prebuilt module. Preserve it, run build-time VINTF checks and validate actual service registration.",
-            "3. Validate real boot, SELinux and HAL behavior before claiming daily-driver readiness.",
-            "4. Preserve the stock-integrity B slot and per-unit secure/calibration/shared metadata.",
-            "5. Do not force RT5133 binding: the observed failure releases GPIO1 for the working WL2864C camera LDO. "
-            "[Correction](notes/RT5133-CORRECTION.md)."]
-    save(CA / "PORT-READINESS.md", "\n".join(out))
-
-
-def build_summary(m: dict) -> None:
-    s, p = m["status"], m["partial"]
-    active = [r for r in m["dt"] if int(r["nodes_enabled"]) > 0]
-    meaningful = [r for r in m["hs"] + m["vs"] if r["coverage"] != "C"]
-    mapped = lambda rows: sum(r["coverage"] != "E" for r in rows)
-    out = ["# Coverage verdict: NEAR-COMPLETE", "", stamp(m), "",
-           "**Global audit finalized for this stock build.** All registered components and artifact axes are inventoried. "
-           "One source-actionable ownership hole remains: proposed MALI-GPU-KERNEL. Camera ISP is a split of an "
-           "already represented scope. NEAR-COMPLETE describes ownership, not open source or daily-driver readiness.", "",
-           "## Measured headline", "",
-           f"- Registered components: **{len(m['components'])}**; DONE **{s['DONE']}**, PARTIAL **{s['PARTIAL']}**, BLOCKED **{s['BLOCKED']}**, TODO **{s['TODO']}**.",
-           f"- Shipped modules: **{len(m['km'])}** unique names; all accounted, including three explicit GPU E rows.",
-           f"- DT compatibles: **{len(m['dt'])}**, across **{sum(int(r['nodes']) for r in m['dt'])}** nodes; active mapped **{mapped(active)}/{len(active)}** (three GPU E rows).",
-           f"- HAL/service rows: **{len(m['hs']) + len(m['vs'])}**; non-generic mapped **{mapped(meaningful)}/{len(meaningful)}** (four GPU E rows).",
-           f"- Physical inventory: **{len(m['hw'])}**; firmware **{len(m['fw'])}**; secure-world boundaries **{len(m['sw'])}**; partition families **{len(m['bs'])}**.",
-           f"- Android integration **{len(m['ai'])}**; significant native libraries **{len(m['ul'])}**; normalized artifact rows **{len(m['art'])}**.",
-           f"- Unexplained E rows: **0**. All **{sum(r['coverage']=='E' for r in m['art'])}** E rows are the one documented Mali scope, not registered owners.", "",
-           "## PARTIAL A–F", ""]
-    out += [f"- {c}={p[c]} — {PARTIAL_MEANING[c]}" for c in "ABCDEF"]
-    out += [f"- Sum: **{sum(p.values())}**, exactly the current PARTIAL directory count.", "",
-            "## Final decisions", "",
-            "- **Mali:** ACCEPT RECOMMENDATION for one ADD. Source/parity remains work; userspace/CSF stays proprietary.",
-            "- **ISP:** ACCEPT RECOMMENDATION for CAMERA-ISP-KERNEL SPLIT from CAMERA-HAL-ISP; not another missing component.",
-            "- **RT5133:** bound-device claim RETRACTED; rename REJECTED. Declared client is unbound, zero registered/consumed RT5133 rails, WL2864C supplies camera rails. Static DONE remains. [Evidence](notes/RT5133-CORRECTION.md).",
-            "- **Taxonomy:** ADD/SPLIT/MERGE/REMOVE/metadata recommendations only; current component set remains unchanged. "
-            "[Decisions and conditional count](PROPOSED-CHANGES.md).",
-            "- **Readiness:** custom GKI/container baseline is strong, but custom boot/ROM/daily-driver acceptance is not proven. "
-            "Property definitions and bluetooth_audio.xml were installed externally in 24afa6b; preserve and verify them in the built image, and validate boot, SELinux and HALs. Preserve stock B.", "",
-            "## Corrected next-RE ranking", ""] + compact_ranking(m)
-    out += ["", "[Full criteria and separate integration/proprietary/tracking queues](NEXT-RE.md). "
-            "VINTF-HAL-MANIFEST, VENDOR-PROPERTIES and BOOT-IMAGES are not unfinished RE targets when DONE.", "",
-            "## Manifest hygiene — separate historical result", "",
-            "The 2026-10-07 baseline records 19 stale hash/size entries, 408 unregistered files and one duplicate "
-            "path; it is not a new current-workspace measurement. No COPY-MANIFEST repair was performed. "
-            "[Historical details](notes/MANIFEST-HYGIENE.md). This drift does not invalidate the synchronized coverage database.", "",
-            "## Handoff", "",
-            "Use [the master index](../index.md), [PARTIAL triage](PARTIAL-TRIAGE.md), "
-            "[missing coverage](MISSING-COVERAGE.md), [taxonomy decisions](PROPOSED-CHANGES.md) and "
-            "[port readiness](PORT-READINESS.md). No further global coverage investigation is needed for this stock build. "
-            "Remaining work is component RE, ROM integration and physical/runtime validation."]
-    save(CA / "SUMMARY.md", "\n".join(out))
-
-
-def build_index(m: dict) -> None:
-    c = m["components"]
-    out = ["# GQ5012BF1 Reverse-Engineering Index — final handoff", "", stamp(m), "",
-           "**Single starting point** for subsequent component RE and LieppOS integration. Phone: Ulefone Armor 29 Pro Thermal, "
-           "GQ5012BF1, MT6878T/Dimensity 7400 family. Workspace directory status is authoritative; no taxonomy migrations "
-           "or status moves were made by this audit.", "",
-           "- **DONE:** the named static/source/parity or inventory contract only; not proprietary HAL/firmware openness or runtime acceptance.",
-           "- **PARTIAL:** exactly one A–F class with a real static, proprietary, physical/runtime or tracking boundary.",
-           "- **BLOCKED:** evidence/source/access explicitly unavailable. **TODO:** untriaged accepted scope.",
-           "- Artifact coverage: A dedicated owner; B broader owner; C generic; D dead/reference; E explained ownership gap.",
-           "- `component` is the single assigned owner per artifact. Module `co_owners` and `umbrella_records` are "
-           "cross-citations/tracking witnesses, not additional primary ownership. Proposed splits require a transfer ledger.",
-           "- Evidence priority is capture provenance/actual observations, corrected research, exact parity, current trees, older/donor assumptions. "
-           "A later-written summary without a newer capture does not override runtime evidence.", "",
-           "## Current totals", "", "| Status | Count |", "|---|---:|"]
-    out += [f"| {s} | {m['status'][s]} |" for s in ("DONE", "PARTIAL", "BLOCKED", "TODO")]
-    out += [f"| **TOTAL** | **{len(c)}** |", "", "## PARTIAL classification", "", "| Classification | Count |", "|---|---:|"]
-    out += [f"| {k} — {PARTIAL_MEANING[k]} | {m['partial'][k]} |" for k in "ABCDEF"]
-    out += ["", "## Master component table", "",
-            "Every registered scope appears once. Research links may be a shared canonical subsystem report; the "
-            "workspace README provides the specific scope/closure operands. Neither is replaced by a circular audit-summary link.", "",
-            "| Component | Status | Subsystem | Scope | Classification | Kernel | Userspace/HAL | Firmware | Hardware | Remaining boundary / DONE limitations | Research | Workspace |",
-            "|---|---|---|---|---|---|---|---|---|---|---|---|"]
-    for r in c:
-        ws_path = RE.parent.parent / r["workspace_path"] / "README.md"
-        workspace_link = quote(os.path.relpath(ws_path, RE), safe="/-_.")
-        fields = [r[k] for k in ("component", "status", "subsystem", "scope", "partial_class", "kernel_state", "userspace_state", "firmware_state", "hardware_state")]
-        fields += [r["blocker"] or r["notes"]]
-        out.append("| " + " | ".join(esc(x) for x in fields) +
-                   f" | [report]({link_from(r['research_path'], RE)}) | [scope]({workspace_link}) |")
-    out += ["", "## Current artifact axes", ""]
-    for name, key in (("kernel-modules", "km"), ("device-tree", "dt"), ("hardware", "hw"), ("hals-services", "hs"), ("vendor-services", "vs"),
-                      ("firmware", "fw"), ("secure-world", "sw"), ("boot-storage", "bs"), ("android-integration", "ai"), ("userspace-libraries", "ul"), ("artifact-map", "art")):
-        out.append(f"- [{name}.tsv](coverage-audit/{name}.tsv): {len(m[key])} rows, coverage {dict(sorted(Counter(r['coverage'] for r in m[key]).items()))}.")
-    out += ["", "## Ranked actionable RE targets", ""] + compact_ranking(m, RE)
-    out += ["", "[Exact scope, source residual, criteria, effort, dependency and phone requirement](coverage-audit/NEXT-RE.md).", "",
-            "## Missing / proposed scopes and taxonomy", "",
-            "**MALI-GPU-KERNEL** is the sole genuinely missing owner: proposed ADD. **CAMERA-ISP-KERNEL** is a proposed "
-            "SPLIT from covered CAMERA-HAL-ISP, not another orphan. Neither is registered yet. "
-            "GZ/AW36518/USB3/module-readiness merges and negative-absence retirements are recommendations only. "
-            "RT5133 rename is rejected; [capture retraction](coverage-audit/notes/RT5133-CORRECTION.md). "
-            "[Full decision/count consequences](coverage-audit/PROPOSED-CHANGES.md).", "",
-            "## ROM integration is not unfinished component RE", "",
-            "SYSTEM-DLKM's 60-module baseline, BOOT-IMAGES containers, vendor-property/VINTF ledgers and "
-            "partition ownership are closed named static scopes. External 24afa6b has installed vendor.prop and "
-            "bluetooth_audio.xml; preserve the changes and verify the emitted image, assemble/check policy/VINTF and "
-            "validate actual boot/SELinux/HAL behavior. USB/thermal "
-            "kernel closures do not establish charging safety, radiometry or runtime feature parity. "
-            "[Separate queues](coverage-audit/NEXT-RE.md) and [seven readiness targets](coverage-audit/PORT-READINESS.md).", "",
-            "## Proprietary, physical/runtime and umbrella limits", "",
-            "SCP sensor algorithms/register drivers, modem/RIL/IMS, camera HAL/3A/tuning/CCU, DSP/CSF, TAs/keys, "
-            "per-unit calibration and radiometry remain proprietary boundaries. RF/battery/cooling/microphone/runtime "
-            "evidence cannot be closed by static documentation. Only current F-class PARTIALs are tracking scopes: " +
-            ", ".join(f"`{r['component']}`" for r in c if r['status'] == 'PARTIAL' and r['partial_class'] == 'F') + ".", "",
-            "## Reports and validation", "",
-            "[Summary](coverage-audit/SUMMARY.md), [all PARTIAL A–F decisions](coverage-audit/PARTIAL-TRIAGE.md), "
-            "[missing coverage](coverage-audit/MISSING-COVERAGE.md), [rebuild/check instructions](coverage-audit/README.md), "
-            "[final corrections](coverage-audit/notes/FINAL-CORRECTIONS.md) and [validation](coverage-audit/notes/FINAL-VALIDATION.md). "
-            "[Historical manifest hygiene](coverage-audit/notes/MANIFEST-HYGIENE.md) is separate from coverage completeness.", "",
-            "**Final audit boundary:** stop global subsystem discovery for this stock build; proceed with component RE, "
-            "ROM integration and physical/runtime validation. No new component research was started by this audit."]
-    save(RE / "index.md", "\n".join(out))
-
-
-def build_manifest_note(m: dict) -> None:
-    a = m["manifest"]
-    out = ["# Pack / manifest hygiene — historical baseline", "",
-           "Run: **2026-10-07**, before the final audit correction. These are frozen historical measurements, "
-           "not current status totals or a rerun against Claude's concurrent component batch.", "",
-           "The read-only manifest auditor exited nonzero because bookkeeping drift remained. The audit did not "
-           "edit COPY-MANIFEST.tsv, REVERSE-ENGINEERING-STATUS.md or component evidence. Coverage database "
-           "consistency is checked independently.", "", "| Measure | Historical result |", "|---|---:|"]
-    for label, key in (("Manifest rows", "rows_total"), ("Resolved", "rows_resolved"), ("Missing", "rows_missing_file"),
-                       ("Malformed", "rows_wrong_field_count"), ("Hash mismatches", "rows_hash_mismatch"),
-                       ("Size mismatches", "rows_size_mismatch"), ("Unregistered files", "unregistered_files_total")):
-        out.append(f"| {label} | {a[key]} |")
-    out += [f"| Duplicate paths | {len(a['duplicate_paths'])} |", "",
-            "Historical drift owners: " + ", ".join(f"`{n}`" for n in a["components_with_drift"]) + ".", "",
-            "Do not replace the synchronized component totals with this old run's status-tree counts. "
-            "Future manifest repair must preserve evidence and be performed by its owner, outside this audit.", "",
-            "[Full historical machine result](../audit-evidence/manifest-audit-2026-10-07.json)."]
-    save(CA / "notes/MANIFEST-HYGIENE.md", "\n".join(out))
-
-
-def build_readme(m: dict) -> None:
-    out = ["# GQ5012BF1 reverse-engineering coverage audit — FINAL", "", stamp(m), "",
-           "Reproducible database behind [the authoritative index](../index.md). **NEAR-COMPLETE ownership**: "
-           "one confirmed missing scope (MALI-GPU-KERNEL), no unexplained artifact gap. No taxonomy changes applied.", "",
-           "## Reports", "",
-           "- [SUMMARY.md](SUMMARY.md) — final measured verdict",
-           f"- [PARTIAL-TRIAGE.md](PARTIAL-TRIAGE.md) — all {m['status']['PARTIAL']} current PARTIAL components, A–F",
-           "- [NEXT-RE.md](NEXT-RE.md) / [next-re.tsv](next-re.tsv) — status-filtered static ranking and separate work queues",
-           "- [MISSING-COVERAGE.md](MISSING-COVERAGE.md) — one Mali gap; camera ISP already covered, proposed split",
-           "- [PROPOSED-CHANGES.md](PROPOSED-CHANGES.md) — decisions and conditional count, not an implemented migration",
-           "- [PORT-READINESS.md](PORT-READINESS.md) — seven readiness assessments and remaining integration actions",
-           "- [RT5133 correction](notes/RT5133-CORRECTION.md) — capture chronology and bound-device retraction",
-           "- [Final corrections](notes/FINAL-CORRECTIONS.md) and [validation](notes/FINAL-VALIDATION.md)",
-           "- [Historical manifest hygiene](notes/MANIFEST-HYGIENE.md) — separate unresolved baseline drift", "",
-           "## Machine tables", ""]
-    for name, key in (("components", "components"), ("kernel-modules", "km"), ("device-tree", "dt"), ("hardware", "hw"), ("hals-services", "hs"),
-                      ("vendor-services", "vs"), ("firmware", "fw"), ("secure-world", "sw"), ("boot-storage", "bs"), ("android-integration", "ai"),
-                      ("userspace-libraries", "ul"), ("artifact-map", "art")):
-        out.append(f"- [{name}.tsv]({name}.tsv): {len(m[key])} rows")
-    out += ["", "## Reproduce from committed evidence", "",
-            "From the research repository root (builders locate their files relative to themselves):", "", "```sh",
-            "python3 reverse-engineering/coverage-audit/scripts/build-kernel-modules.py",
-            "python3 reverse-engineering/coverage-audit/scripts/build-devicetree.py",
-            "python3 reverse-engineering/coverage-audit/scripts/build-hardware.py",
-            "python3 reverse-engineering/coverage-audit/scripts/build-services.py",
-            "python3 reverse-engineering/coverage-audit/scripts/build-integration.py",
-            "python3 reverse-engineering/coverage-audit/scripts/build-components.py",
-            "python3 reverse-engineering/coverage-audit/scripts/build-reports.py",
-            "python3 reverse-engineering/coverage-audit/scripts/check-audit.py",
-            "python3 reverse-engineering/coverage-audit/scripts/test-final-audit.py -v", "```", "",
-            "Do not redo the 457-module investigation. For a legitimate new workspace snapshot, refresh only changed "
-            "pack identity/claims with the existing harvesters and rebuild the dependent axes. Do not reharvest unchanged "
-            "stock firmware/integration payloads. The final snapshot record is metadata, not permission to modify component packs.", "",
-            "`check-audit.py` checks current workspace membership/status, all A–F assignments and displayed totals, "
-            "source/workspace paths, relative Markdown links, axis/normalized joins and the explicit GPU orphan sets. "
-            "Determinism is verified by hashing generated outputs across a second build. "
-            "Committed audit evidence contains metadata/claims only, no proprietary firmware/library/module payloads.", "",
-            "The final report's snapshot date/source HEAD is explicit in [final-snapshot.json](audit-evidence/final-snapshot.json). "
-            "All corrections are committed in the final audit commit; no push is required. Further work is component RE, "
-            "ROM integration and physical/runtime validation, not another global coverage investigation."]
-    save(CA / "README.md", "\n".join(out))
-
-
-def main() -> int:
-    m = metrics()
-    build_next(m)
-    build_partial(m)
-    build_missing(m)
-    build_changes(m)
-    build_readiness(m)
-    build_summary(m)
-    build_index(m)
-    build_manifest_note(m)
-    build_readme(m)
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+def main():
+ m=metrics()
+ for fn in (build_next,build_partial,build_missing,build_changes,build_readiness,build_summary,build_index,build_manifest_note,build_readme,build_axis_notes):fn(m)
+if __name__=='__main__':main()

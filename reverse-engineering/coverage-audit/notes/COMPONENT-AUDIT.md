@@ -8,13 +8,13 @@ the old typed totals. The measured current workspace is:
 | Status | Count |
 |---|---:|
 | DONE | 94 |
-| PARTIAL | 36 |
+| PARTIAL | 42 |
 | BLOCKED | 3 |
 | TODO | 0 |
-| **Total** | **133** |
+| **Total** | **139** |
 
 This supersedes the 71/59/3 snapshot in the original audit request. The total stayed
-133 while 23 folders have since moved from PARTIAL to DONE through
+139 while 23 folders have since moved from PARTIAL to DONE through
 independently verified closures; each moved folder carries its own closure README
 with measured parity evidence.
 
@@ -22,9 +22,9 @@ with measured parity evidence.
 
 | Class | Meaning | Count |
 |---|---|---:|
-| A | actionable / statically closeable | 6 |
+| A | actionable / statically closeable | 11 |
 | B | kernel/source closed, broader proprietary scope remains | 11 |
-| C | proprietary boundary | 8 |
+| C | proprietary boundary | 9 |
 | D | hardware/runtime/teardown gated | 6 |
 | E | stale/duplicate/wrong PARTIAL scope | 0 |
 | F | intentional umbrella/tracking scope | 5 |

@@ -1,62 +1,21 @@
-# Axes 4–8: HAL, init, firmware, secure-world and boot/storage coverage
+# HAL, init, firmware, secure-world and boot/storage coverage
 
-Audit date: 2026-10-07
+Snapshot: **2026-10-08**, source HEAD `c8de6a1`. Actual workspace directory status is authoritative; scope registration is not kernel reconstruction.
 
-## Evidence and reproducibility
-
-The generated tables are built by `scripts/build-services.py` from metadata-only stock harvests under `audit-evidence/`:
-
-- `raw-vintf.tsv`: every AIDL/HIDL/native interface declaration in the extracted manifests and compatibility matrices;
-- `raw-legacy-hw.tsv`: every legacy `*/lib*/hw/android.hardware.*` backend library;
-- `raw-init-services.tsv`: every parsed init service plus every executable launched by an `on` trigger;
-- `raw-firmware.tsv`: firmware/calibration file metadata and firmware-bearing scatter payload metadata (path, byte count and SHA-256 only);
-- `raw-partitions.tsv`: MTK scatter/ABOTA partition metadata;
-- `pack-identity.tsv`: canonical component and status lookup.
-
-No proprietary payload is copied into this repository. Coverage assignment is an ordered, curated exact/family mapping. Unknowns remain `E`; there is no generic fallback that silently hides an orphan.
+Built from committed metadata-only raw TSVs and current curated ownership; no payload copied. Source availability, DT enablement and interface declaration are not runtime or parity proof.
 
 ## Measured inventory
 
 | Axis | Rows | A | B | C | D | E |
 |---|---:|---:|---:|---:|---:|---:|
-| VINTF families + legacy HAL libraries | 272 | 69 | 126 | 74 | 1 | 2 |
-| Init services + trigger executables | 253 | 10 | 103 | 114 | 24 | 2 |
-| Firmware/calibration payloads | 80 | 45 | 30 | 4 | 1 | 0 |
+| VINTF families + legacy HAL libraries | 272 | 69 | 128 | 74 | 1 | 0 |
+| Init services + trigger executables | 253 | 10 | 105 | 114 | 24 | 0 |
+| Firmware/calibration payloads | 80 | 45 | 32 | 2 | 1 | 0 |
 | Secure-world surfaces | 13 | 5 | 1 | 5 | 2 | 0 |
 | Scatter/ABOTA partition families | 61 | 20 | 40 | 1 | 0 | 0 |
 
-The four `E` rows are not four independent gaps. They are two VINTF interfaces and two init services for the same uncovered active Mali GPU ownership scope:
+GPU interface/service ownership is now MALI-GPU-KERNEL PARTIAL, not an E gap. CSF/APU/GPUEB/VCP binary algorithms are excluded; CCU algorithms remain camera HAL, with a separate ISP host owner. Firmware owner denotes the interface/retention boundary, never reconstructed remote internals. Loading claims are per-payload evidence to reconcile, not proof of a universal Linux loader.
 
-- `vendor.mediatek.hardware.gpu`
-- `vendor.mediatek.hardware.gpuserv`
-- `vendor.gpuserv-default`
-- `vendor.mali_platform-mediatek`
+Matrix declarations are framework requirements, not implementation proof. Twenty-two missing-executable non-trigger service groups remain reference baggage; virtual camera, face example and alternative fingerprint templates are not additional fitted hardware. DOOGEE-named EIS calibration remains reference tuning. A/B partition pairs are grouped, not new components. Secure-world/boot ownership is separate from accelerator host ABI.
 
-They converge with the three uncovered Mali modules and three uncovered GPU DT compatibles on one proposed component, `MALI-GPU-KERNEL`. The proprietary userspace and CSF firmware remain a vendor-blob boundary; the missing scope is ownership and reconstruction of the active kernel/DT platform contract.
-
-## Important boundaries
-
-- Compatibility-matrix-only declarations are framework requirements, not proof that the device provides an implementation. `hals-services.tsv` records manifest counts separately.
-- AOSP/example services are retained as `C` or `D`, rather than being mistaken for phone-specific implementations.
-- Executable presence is frozen in `raw-init-services.tsv`. Twenty-two non-trigger service declarations point to binaries absent from every extracted stock partition and are `D`; this exposes vendor-template/reference-board baggage rather than inventing active implementations.
-- SCP, modem, connectivity, camera tuning, GPU firmware and secure-world images are represented but are not claimed source-reconstructable.
-- Trigger-time init `exec` parsing resolves the first absolute executable path after optional uid/gid/seclabel arguments. This avoids fake artifacts named `-` or `--`.
-- `secure-world.tsv` deliberately separates normal-world transport closure from signed TA/hypervisor source availability.
-- `boot-storage.tsv` groups A/B slot pairs and does not create one RE component per partition.
-
-## Reference-board / example findings
-
-- `vendor.face-default` is the AOSP face example service with no matching face hardware (`D`).
-- Virtual-camera remains diagnostic/reference baggage (`D`) even though its AOSP example executable is present.
-- Five alternative fingerprint service declarations point to missing executables and are reference-board baggage (`D`); the MicroArray legacy backend/TEE path is the represented fitted implementation.
-- The DOOGEE-named Morpho EIS calibration payload is carried-over reference-board tuning data (`D`), not evidence of an additional fitted camera.
-
-## Rebuild
-
-```sh
-cd reverse-engineering/coverage-audit
-python3 scripts/harvest-stock-artifacts.py
-python3 scripts/build-services.py
-```
-
-The harvest script reads the local extracted stock tree; the builder itself is deterministic over the committed TSV evidence.
+Reproduce: `python3 scripts/build-services.py` then `python3 scripts/build-reports.py` from the coverage-audit directory. Raw stock harvests are preserved; no repeated hardware discovery required.

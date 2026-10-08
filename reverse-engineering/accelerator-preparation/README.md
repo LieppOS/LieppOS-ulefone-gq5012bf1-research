@@ -24,7 +24,22 @@ python3 reverse-engineering/accelerator-preparation/write-plans.py
 python3 reverse-engineering/accelerator-preparation/validate.py
 ```
 
-[Module transfer ledger](ownership-changes.tsv), [DT transfer ledger](dt-ownership.tsv), [source candidates](source-candidates.tsv), [import/provider graph](dependency-edges.tsv), [complete parity standard](PARITY-STANDARD.md). Every dependency mention is a cross-reference, not a second primary owner. Generic `syscon` compatibles shared by different blocks remain generic; node-specific accelerator compatibles have one scope.
+[Module transfer ledger](ownership-changes.tsv), [all 166 explained normalized ownership/class changes](ownership-delta.tsv), [DT transfer ledger](dt-ownership.tsv), [source candidates](source-candidates.tsv), [import/provider graph](dependency-edges.tsv), [complete parity standard](PARITY-STANDARD.md). Every dependency mention is a cross-reference, not a second primary owner. Generic `syscon` compatibles shared by different blocks remain generic; node-specific accelerator compatibles have one scope.
+
+## Registration and validation
+
+Current workspace: **139 components = 94 DONE / 42 PARTIAL / 3 BLOCKED / 0 TODO**. Six new PARTIAL packs contain 146 actual manifest-registered files. The camera parent's README was corrected in place with historical evidence retained; no unrelated manifest row was repaired. Primary module ownership is singleton, including component-level module lists; shared/umbrella mentions are references only.
+
+[Registration](registration.json), [registered file rows](registration-manifest.tsv), [workspace synchronization hashes](workspace-sync.json), [scoped manifest refresh](manifest-refresh.json), [validation report](validation/FINAL-VALIDATION.md). The global manifest audit still exits 1 for unchanged pre-existing drift: 19 hash/size mismatches, 408 unregistered files and one duplicate. New scopes have no drift; all 4,397 rows resolve, zero missing/malformed. Do not mistake the expected historical nonzero result for a clean global manifest.
+
+```sh
+python3 reverse-engineering/accelerator-preparation/validate.py
+python3 reverse-engineering/accelerator-preparation/validate-replay.py
+python3 reverse-engineering/scripts/manifest-audit.py .. --json reverse-engineering/accelerator-preparation/validation/manifest-after.json
+python3 reverse-engineering/coverage-audit/scripts/check-audit.py
+```
+
+Replay checks 183 generated metadata/doc files byte-for-byte across 16 offline commands, including ten regression tests. It does not build modules or measure new kernel parity. Do not rerun registration; scope copies can be updated with `sync-workspace.py --copy-packs --refresh-registration`, which fails on foreign changes. Committed updated source can be pinned with `--refresh-registration --research-commit <revision>`; no blanket manifest rebuild is permitted.
 
 ## Limits
 

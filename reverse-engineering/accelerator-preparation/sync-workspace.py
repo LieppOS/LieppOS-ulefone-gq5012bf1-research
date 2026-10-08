@@ -18,7 +18,7 @@ from inventory import HERE, REPO, WS
 def digest(b):return hashlib.sha256(b).hexdigest()
 
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--copy-packs',action='store_true');ap.add_argument('--register',action='store_true');ap.add_argument('--research-commit');args=ap.parse_args()
+ ap=argparse.ArgumentParser();ap.add_argument('--copy-packs',action='store_true');ap.add_argument('--register',action='store_true');ap.add_argument('--refresh-registration',action='store_true');ap.add_argument('--research-commit');args=ap.parse_args()
  cfg=json.loads((HERE/'scopes.json').read_text());scopes=cfg['scopes'];names={s['component'] for s in scopes}
  tracking=HERE/'workspace-sync.json';old=json.loads(tracking.read_text()) if tracking.exists() else {}
  if args.copy_packs:
@@ -75,5 +75,44 @@ def main():
   (HERE/'registration.json').write_text(json.dumps(dict(date=cfg['date'],research_commit=args.research_commit,added_components=sorted(names),status_counts=counts,manifest_rows_added=len(adds),previous_status_sha256=digest(original_status),previous_manifest_sha256=digest(original_manifest),current_status_sha256=digest(text.encode()),current_manifest_sha256=digest(out.getvalue().encode())),indent=2,sort_keys=True)+'\n')
   (HERE/'registration-manifest.tsv').write_text('\t'.join(fields)+'\n'+''.join('\t'.join(x[k] for k in fields)+'\n' for x in adds))
   print('registered',len(scopes),'PARTIAL components;',len(adds),'actual files; totals',counts)
+
+ if args.refresh_registration:
+  # Update only our 146 rows plus the explicitly changed parent/status index.
+  import subprocess
+  mf=WS/'COPY-MANIFEST.tsv';before=mf.read_bytes();dr=csv.DictReader(io.StringIO(before.decode()),delimiter='\t');fields=dr.fieldnames;records=list(dr)
+  previous={x['local_path']:x for x in csv.DictReader((HERE/'registration-manifest.tsv').open(),delimiter='\t')}
+  tracking_data=json.loads(tracking.read_text());registration=json.loads((HERE/'registration.json').read_text());changed=[]
+  for row in records:
+   rel=row['local_path']
+   if rel in tracking_data:
+    assert row['current_sha256']==previous[rel]['current_sha256'],'foreign manifest edit'
+    p=WS/rel;src=Path(row['original_path']);assert digest(p.read_bytes())==tracking_data[rel],'foreign pack edit'
+    if args.research_commit:
+     committed=subprocess.check_output(['git','show',args.research_commit+':'+str(src.relative_to(REPO))],cwd=REPO)
+     assert committed==src.read_bytes(),'source is not committed at the requested pin'
+     row['relevant_commit']=args.research_commit
+    changed.append(dict(local_path=rel,previous_sha256=row['current_sha256'],current_sha256=tracking_data[rel],reason='owned accelerator metadata refreshed'))
+    row.update(current_sha256=tracking_data[rel],bytes=str(p.stat().st_size),original_sha256=digest(src.read_bytes()))
+   elif rel=='Reverse Engineer - PARTIAL/CAMERA-HAL-ISP/README.md':
+    p=WS/rel;body=p.read_text();marker='\n## Current ownership correction — 2026-10-08\n';end='Source reconstruction and prior function/data proofs remain in their original paths; no private source or firmware was copied or deleted.\n'
+    assert marker in body and end in body,'unexpected parent edit'
+    original=body[:body.index(marker)]+body[body.index(end)+len(end):]
+    expected=registration.get('camera_parent_sha256',row['current_sha256'])
+    assert digest(original.encode())==row['current_sha256'] or digest(p.read_bytes())==expected,'concurrent parent modification'
+    h=digest(p.read_bytes());changed.append(dict(local_path=rel,previous_sha256=row['current_sha256'],current_sha256=h,reason='authorized parent ownership correction; historical evidence retained'))
+    row.update(current_sha256=h,bytes=str(p.stat().st_size));registration['camera_parent_sha256']=h
+   elif rel=='REVERSE-ENGINEERING-STATUS.md':
+    p=WS/rel;h=digest(p.read_bytes());assert h==registration['current_status_sha256'],'concurrent global status edit'
+    changed.append(dict(local_path=rel,previous_sha256=row['current_sha256'],current_sha256=h,reason='six authorized PARTIAL additions and current totals'))
+    row.update(current_sha256=h,bytes=str(p.stat().st_size))
+  assert set(previous)==set(tracking_data),'unexpected registration file set'
+  out=io.StringIO();w=csv.DictWriter(out,fieldnames=fields,delimiter='\t',lineterminator='\n');w.writeheader();w.writerows(records)
+  assert mf.read_bytes()==before,'concurrent manifest edit'
+  mf.write_text(out.getvalue());registration['current_manifest_sha256']=digest(out.getvalue().encode())
+  if args.research_commit:registration['metadata_source_commit']=args.research_commit
+  (HERE/'registration.json').write_text(json.dumps(registration,indent=2,sort_keys=True)+'\n')
+  (HERE/'manifest-refresh.json').write_text(json.dumps(changed,indent=2,sort_keys=True)+'\n')
+  out=io.StringIO();w=csv.DictWriter(out,fieldnames=fields,delimiter='\t',lineterminator='\n');w.writeheader();w.writerows(x for x in records if x['local_path'] in tracking_data)
+  (HERE/'registration-manifest.tsv').write_text(out.getvalue());print('refreshed',len(changed),'explicitly owned manifest records; unrelated drift preserved')
 
 if __name__=='__main__':main()

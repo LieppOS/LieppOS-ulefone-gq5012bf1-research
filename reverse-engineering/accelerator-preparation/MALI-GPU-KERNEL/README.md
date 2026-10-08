@@ -1,5 +1,13 @@
 # MALI-GPU-KERNEL — PARTIAL preparation
 
+Status: PARTIAL
+
+- **Subsystem:** Accelerators / Mali GPU
+- **Hardware identity:** Valhall/CSF KMD on MT6878; merged DT has mali@13000000 and g3d-brisket@13fb0000. Exact GPU_ID/revision/core count is UNKNOWN from this static pass; do not substitute a marketing GPU designation. Register ranges, raw GIC interrupt cells, clocks, power domains and provider arguments are recorded per node.
+- **Stock artifact:** `mali_kbase_mt6878_r44.ko`, `mali_mgm_mt6878_r44.ko`, `mali_prot_alloc_mt6878_r44.ko`, `ged.ko`, `mtk_gpu_hal.ko`, `mtk_gpu_qos.ko`, `mtk_gpufreq_wrapper.ko`, `mtk_gpufreq_mt6878.ko`
+- **Interfaces:** Kbase memory/context/queue management and mmap/ioctl paths; MGM memory groups and protected allocator; GED, GPU HAL callbacks, GPU QoS and gpufreq wrapper/platform interfaces. Trace kbase context creation → GPU VA allocation/import/map → CSF scheduling → completion/fault cleanup; then protected allocation and normal-world secure-heap calls. `/dev/mali0` is the expected Kbase ABI, not a newly observed binding. Numeric commands and layouts must be checked against stock handlers; source definitions alone are not parity.
+- **Still required:** Complete per-module source/parity and observable DT/ABI acceptance; proprietary algorithms excluded
+
 **Purpose:** Mali GPU normal-world kernel source/parity closure, not firmware reconstruction.
 
 **Decision:** REGISTER PARTIAL. Active KMD/MGM/protected allocation had no owner. GED, GPU HAL/QoS and gpufreq candidates were generic platform-source triage, not a DONE parity scope; no distinct DONE component owns them.
