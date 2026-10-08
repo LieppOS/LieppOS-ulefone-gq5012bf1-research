@@ -1,5 +1,14 @@
 # NEXT CLAUDE TASK — source-close the six-module MT6878 boot clock core
 
+> **STATUS: COMPLETED 2026-10-09.** All six modules D → A (byte-exact except GNU build ID,
+> independent clean-checkout B1/B2). Result: `../kernel-source-reconstruction/BOOT-CLOCK-CORE/`;
+> source: `android_kernel_modules_boot_clock_ulefone_gq5012bf1`. The assignment below is
+> retained as the historical brief. Two of its statements were corrected by the work:
+> the pinned public source alone did **not** reproduce stock (a display-PWM clock delta was
+> required for `clk-mt6878` and `clk-mt6878-peri`), and `clk-fmeter-mt6878` sits at normal
+> loader position 50 (recovery 49), not 51. The current queue head is the first project in
+> `RECONSTRUCTION-QUEUE.md` (`PRESERVE:STORAGE`); no new assignment has been written yet.
+
 ## Mission
 
 Create an independently reproducible, stock-compatible source package for **only**:

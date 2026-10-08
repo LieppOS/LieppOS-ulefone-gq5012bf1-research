@@ -115,6 +115,32 @@ for owner,repository in ACC.items():
             preservation_risk='LOW: immutable recipe, complete patches and local history; public input availability remains a dependency',
             source_group=owner,blocker='NONE',gap_kind='NONE',firmware_boundary='Proprietary processor firmware / userspace algorithms remain outside kernel-source proof')
 
+# BOOT-CLOCK-CORE (2026-10-09): maintained pinned recipe, independent clean-checkout B1/B2 and
+# full stock acceptance bound to each exact stock SHA256. Ownership (COVERED-GENERIC) unchanged.
+CLK_REPO=WORKSPACE/'android_kernel_modules_boot_clock_ulefone_gq5012bf1'
+CLK_PACK=ROOT/'reverse-engineering/kernel-source-reconstruction/BOOT-CLOCK-CORE'
+CLK_HEAD=subprocess.check_output(['git','rev-parse','HEAD'],cwd=CLK_REPO,text=True).strip()
+assert not subprocess.check_output(['git','status','--porcelain'],cwd=CLK_REPO,text=True).strip(), 'boot-clock repo dirty'
+clk_acceptance=json.loads((CLK_PACK/'evidence/acceptance/acceptance.json').read_text())
+clk_hashes={v['stock_sha256']:k for k,v in clk_acceptance.items()}
+assert len(clk_hashes)==6 and all(v['unresolved']==0 and v['raw_differing_bytes']<=v['allowed_range'][1]==20 for v in clk_acceptance.values())
+for stock in STOCK.values():
+    if stock['stock_sha256'] not in clk_hashes:continue
+    m=clk_hashes[stock['stock_sha256']];assert m+'.ko'==stock['filename']
+    assert clk_acceptance[m]['functions']==stock['function_count'],(m,stock['function_count'])
+    add(stock,source_status='A',source_repo=ref(CLK_REPO),source_commit=CLK_HEAD,
+        source_pin=ref(CLK_REPO/'SOURCE-PINS.tsv'),build_script=ref(CLK_REPO/'scripts/b1b2.sh'),
+        source_snapshot_path=ref(CLK_REPO/'patches'),
+        parity_evidence=[ref(CLK_PACK/'evidence/acceptance/acceptance.json'),ref(CLK_PACK/'module-parity.tsv'),
+                         ref(CLK_PACK/'evidence/build/b1b2-clean-checkout.log'),ref(CLK_PACK/'RECONSTRUCTION-REPORT.md')],
+        exact_functions=stock['function_count'],equivalent_functions=0,unresolved_functions=0,
+        historical_exact_functions=stock['function_count'],historical_parity='FULL_ACCEPTANCE',
+        abi_status='VERIFIED',crc_status='VERIFIED',kcfi_status='VERIFIED',reproduction_status='INDEPENDENT_CLEAN_CHECKOUT_B1_B2',
+        verified_difference_classification='BUILD_METADATA_ONLY (20-byte GNU build ID)',
+        preservation_risk='LOW: immutable public pins, complete patches, local history and research bundle; public input availability remains a dependency',
+        source_group='BOOT-CLOCK-CORE',blocker='NONE',gap_kind='NONE',
+        firmware_boundary='NONE; runtime clock behaviour not validated (Slot B procedure pending)')
+
 # GKI: both independently cleaned builds prove complete ELF bodies, not vendor variants.
 system=pack('SYSTEM-DLKM');gki_lines=(system/'parity/system-dlkm-parity-B1.txt').read_text().splitlines()
 proven={l.split('\t')[0] for l in gki_lines if '\tIDENTICAL BODY, signature differs' in l};assert len(proven)==60

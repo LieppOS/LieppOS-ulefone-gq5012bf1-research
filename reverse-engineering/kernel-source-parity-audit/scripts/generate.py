@@ -187,7 +187,8 @@ metrics=dict(distinct_stock_identities=len(ALL),unique_filenames=len({r['filenam
     dependency_import_records=len(EDGES),provider_resolution_counts=dict(collections.Counter(r['result'] for r in EDGES)),source_projects=len(PROJECTS),
     recorded_bound_modules=sum(r['bound_probe_status']=='RECORDED_DRIVER_MODULE_SYMLINK' for r in ALL),
     unmatched_load_list_entries=[r for r in LISTS if r['matching_module_ids']=='UNKNOWN'],
-    next_project='BOOT-CLOCK-CORE',next_modules=CLOCK_CORE,
+    completed_projects=['BOOT-CLOCK-CORE (6 identities D->A, 2026-10-09)'],
+    next_project=PROJECTS[0]['project'],next_modules=PROJECTS[0]['modules'].split(';'),
     source_counts_are_not_component_DONE_counts=True)
 (AUDIT/'evidence/audit-summary.json').write_text(json.dumps(metrics,indent=2,sort_keys=True)+'\n')
 
@@ -195,7 +196,8 @@ queue=['# Dependency-aware kernel source reconstruction queue','',
 'Frozen audit: 458 binary identities / 457 filenames. This queue does not alter existing components.',
 '','## Acceptance and order','',
 '1. Essential retained boot contract and storage; 2. radio/security interfaces; 3. active peripherals; 4. optional/diagnostic features.',
-'Clock core is the next narrowly scoped integration project; its six modules are listed in the first-stage loader and have public candidates but no accepted clean-source parity.',
+'Completed: BOOT-CLOCK-CORE (6 first-stage clock modules, D->A on 2026-10-09; reverse-engineering/kernel-source-reconstruction/BOOT-CLOCK-CORE). It no longer appears below.',
+'The first project listed below is the current queue head.',
 '`PRESERVE:*` projects must preserve/reproduce existing exact source work, not reverse-engineer it again. `G` is a finite evidence/input-closure question, not a missing-code claim.',
 'All dependency entries below are stock symbol/CRC requirements. A provider gap is recorded separately from implementation effort; retained provider ABI records may support compilation but do not close that provider.',
 'Firmware stays proprietary where documented. Runtime loading never proves successful hardware binding.','',

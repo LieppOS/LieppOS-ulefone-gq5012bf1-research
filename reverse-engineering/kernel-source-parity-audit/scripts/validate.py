@@ -100,6 +100,8 @@ def validate(audit=AUDIT, overrides=None, actual=None):
             elif Path(recipe).suffix not in ['.sh','.py']:problem('NONEXECUTABLE_VERIFIED_RECIPE',identity)
             source=row.get('source_repo','UNKNOWN')
             if source=='UNKNOWN' or not (ROOT/source).is_dir():problem('MISSING_SOURCE_LOCATION',identity)
+            elif (ROOT/source/'.git').exists() and subprocess.run(['git','cat-file','-e',row.get('source_commit','')+'^{commit}'],cwd=ROOT/source,capture_output=True).returncode:
+                problem('SOURCE_COMMIT_NOT_IN_REPOSITORY',identity)
             if row.get('reproduction_status') not in ['INDEPENDENT_CLEAN_CHECKOUT_B1_B2','STAMPED_SOURCE_BUILD_BAZEL_CLEAN_B1_B2']:
                 problem('VERIFIED_WITHOUT_CLEAN_BUILD',identity)
             snapshot=row.get('source_snapshot_path','UNKNOWN')
