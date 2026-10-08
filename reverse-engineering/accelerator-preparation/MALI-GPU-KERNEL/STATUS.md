@@ -23,3 +23,14 @@
 ## Workspace move (2026-10-08)
 
 Moved `Reverse Engineer - PARTIAL/MALI-GPU-KERNEL` -> `Reverse Engineer - DONE/MALI-GPU-KERNEL` via `reverse-engineering/scripts/promote-to-done.py` (research commit cf0a994); 93 COPY-MANIFEST rows, 0 drift / 0 unregistered for this component. Totals: 95 DONE / 41 PARTIAL / 3 BLOCKED / 0 TODO.
+
+## Accelerator-preparation validator after closure
+
+* `validate.py --scope MALI-GPU-KERNEL --inputs-only` **PASS**: stock operands and donor
+  input fingerprints are unchanged, and the canonical .md files have no forbidden links.
+* Full mode stops at `non-singleton status MALI-GPU-KERNEL`. That mode asserts the
+  *preparation* snapshot (scope pack under `Reverse Engineer - PARTIAL`, PARTIAL
+  registration, `workspace-sync.json` pack hashes), which this closure supersedes by
+  design.
+* `validate.py` is left unmodified because it is shared by all six accelerator scopes.
+  Making it closure-aware is a separate tooling change.
