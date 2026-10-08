@@ -1,0 +1,15 @@
+# APUSYS-NPU-KERNEL — PARTIAL preparation
+
+**Purpose:** APUSYS/NPU normal-world kernel source/parity closure, not firmware reconstruction.
+
+**Decision:** REGISTER PARTIAL. apusys and apu_top are normal-world source-actionable kernel code, not proprietary algorithms. Prior class-C blob-inventory ownership did not establish source parity; APU/MDLA RPMsg nodes were incorrectly attributed to camera consumers.
+
+**Entry point:** [CLAUDE-HANDOFF.md](CLAUDE-HANDOFF.md). Canonical research: `reverse-engineering/accelerator-preparation/APUSYS-NPU-KERNEL/`. Workspace pack: `Reverse Engineer - PARTIAL/APUSYS-NPU-KERNEL/`.
+
+**Exclusive primary kernel modules (2):** `apu_top.ko`, `apusys.ko`. Dependencies are references, not additional ownership.
+
+[stock modules](stock-modules.tsv), [DT nodes](dt-nodes.tsv), [source candidates](source-candidates.tsv), [parity gaps](parity-gaps.tsv), [imports](imports.tsv), [exports](exports.tsv), [functions](functions.tsv), [data symbols](data-symbols.tsv), [donor ABI witnesses](abi-source-witnesses.tsv).
+
+All APU/MDLA/MVPU RPMsg accelerator nodes previously attributed to CAMERA-HAL-ISP move to this kernel owner. Camera AIE/FD hardware stays CAMERA-ISP-KERNEL. GenieZone trusty-sapu remains the existing secure transport. Shared generic IOMMU/QoS/SSPM providers remain dependencies. APUware/NeuroPilot/neuron/NNAPI libraries and signed apusys firmware algorithms are retained binaries, not a claim of proven model execution.
+
+No module rebuilt, hardware command executed or parity result created by this preparation. Published proof rows are preserved and labeled by axis; the component starts PARTIAL, never DONE.

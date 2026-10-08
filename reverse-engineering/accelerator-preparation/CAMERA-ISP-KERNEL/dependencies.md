@@ -1,0 +1,13 @@
+# Dependencies and singleton ownership — CAMERA-ISP-KERNEL
+
+**Prerequisites:** GKI-KMI-BASELINE; camera sensor/VCM/EEPROM/OIS DONE children; shared CMDQ/IOMMU/SMI; VCP client ABI.
+
+**Owned modules:** `mtk_hcp.ko`, `mtk-ipesys-me.ko`, `mtk_imgsys_cmdq.ko`, `mtk_imgsys_v4l2.ko`, `mtk_imgsys_isp7sp.ko`, `ccd_rpmsg.ko`, `mtk_ccd_remoteproc.ko`, `mtk_ccuv.ko`, `mtk-cam-isp7sp.ko`, `mtk_aie.ko`, `mtk_aie_debug_7sp_2.ko`, `camera_dpe_isp7sp.ko`, `pda_drv_mt6878.ko`, `mtk-vmm-isp71-regulator.ko`, `mtk-vmm-notifier.ko`, `imgsensor-glue.ko`, `imgsensor.ko`, `c2ps_perf_ioctl.ko`, `mtk_c2ps.ko`.
+
+CAMERA-HAL-ISP stays PARTIAL for proprietary CameraProvider/HAL, 3A, tuning, calibration interpretation and CCU/ISP firmware algorithms. The child owns the explicit 19-module ledger only. Keep all parent historical evidence and source material where it is; its references become historical/cross-links, not a second primary owner. CAMERA-EEPROMS/VCMS/OIS/flash/LDO and closed sensor TUs are dependencies, never restarted.
+
+[Master dependency edges](../dependency-edges.tsv) resolve stock imports by symbol and CRC; each row carries consumer/provider/owner. The load order and legacy modinfo dependencies are recorded separately in stock-modules.tsv. `modules.dep` can be transitive and legacy modinfo can name obsolete provider identities; neither overrides the actual export/CRC graph.
+
+Raw direct modinfo dependency sets: `mtk_slbc,system_heap; mtk-mmdvfs-v3,mtk-cmdq-drv-ext,mtk-smi-dbg,mtk-icc-core,cmdq-sec-drv,aee_aed,vcp_status; mtk_hcp,iommu_debug,mtk_imgsys_cmdq,mtk-ipesys-me,mtk-mmdvfs-v3,mtk-smi; mtk_imgsys_v4l2,mtk-smi,mtk-cmdq-drv-ext,mtk_hcp; ccd_rpmsg; mtk-smi-dbg,mtk-icc-core,system_heap,mrdump,aee_aed; mtk_slbc,system_heap,mtk-cmdq-drv-ext,ccd_rpmsg,aee_aed,mtk-smi-dbg,clk-common,mtk-mmdvfs-v3,gz_tz_system,mtk-smi,mtk_printk_ctrl,iommu_debug,mtk-icc-core,mmqos-common,mtk_sec_heap,mtk_ccu_mssv; mtk-cmdq-drv-ext,cmdq-sec-drv,system_heap; iommu_debug,mtk_aie; mtk-cmdq-drv-ext,mtk-mmdvfs-v3; mtk-mmdvfs-v3,mtk-icc-core; mtk_ccu_mssv,mtk_ccu; mtk-mmdvfs-v3; aee_aed,custom-ldo,yft_devinfo,mtk_charger_framework,flashlight,mtk_ccu_mssv,imgsensor-glue; cpufreq_sugov_ext,c2ps_perf_ioctl,scheduler`. These names are not a list of new targets. UNKNOWN provider/type provenance must be resolved against existing stock export/KMI ledgers, not fabricated. Preserve generic platform providers and explicitly closed modules.
+
+For cycles, freeze mutually shared headers/provider ABI, use unchanged stock provider operands during initial isolation, then verify the assembled reconstructed graph; copied stock symvers is an oracle, not source/type proof.

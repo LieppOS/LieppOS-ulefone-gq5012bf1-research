@@ -1,0 +1,27 @@
+# Source lineage — MTK-VCODEC-KERNEL
+
+Every donor directory/file exists. Commits and complete relevant-file fingerprints are in [source-candidates.tsv](source-candidates.tsv). The ALPS snapshot local commit `2ae742fda9cd461bfe8cf8a5c04f95e212f8e699` identifies a pristine archive of upstream MT6878 ALPS `5e415e059253`; it is not misrepresented as the upstream Git commit. The Nothing donor import and the patched mixed-build tree are distinct candidates. Do not reset or edit any of these shared checkouts.
+
+| Module | Local donor | Local Git commit | Starting state |
+|---|---|---|---|
+| `mtk-vcodec-common.ko` | `/home/armol/androido_dalykai/LieppOS custom ROM/kernel-research/nothing-mt6878/device_modules/drivers/media/platform/mtk-vcodec` | `957dac185efe46cbf6336b0fff9516d84c8cd78f` | LOCAL SOURCE CANDIDATE; parity not implied |
+| `mtk-vcodec-common.ko` | `/home/armol/kernel-work/gki-12901745-workspace/lieppos/tinysys/trees/5e41/drivers/media/platform/mtk-vcodec` | `2ae742fda9cd461bfe8cf8a5c04f95e212f8e699` | ALTERNATIVE PINNED LOCAL CANDIDATE; ALPS archive origin 5e415e059253 |
+| `mtk-vcodec-common.ko` | `/home/armol/kernel-work/gki-12901745-workspace/kernel_device_modules-6.1/drivers/media/platform/mtk-vcodec` | `ca8b550b75e8b49f403f0097e8323c4a930bad79` | EXISTING PATCHED WORKSPACE; read-only candidate, do not edit |
+| `mtk-vcodec-dec-v1.ko` | `/home/armol/androido_dalykai/LieppOS custom ROM/kernel-research/nothing-mt6878/device_modules/drivers/media/platform/mtk-vcodec` | `957dac185efe46cbf6336b0fff9516d84c8cd78f` | LOCAL SOURCE CANDIDATE; parity not implied |
+| `mtk-vcodec-dec-v1.ko` | `/home/armol/kernel-work/gki-12901745-workspace/lieppos/tinysys/trees/5e41/drivers/media/platform/mtk-vcodec` | `2ae742fda9cd461bfe8cf8a5c04f95e212f8e699` | ALTERNATIVE PINNED LOCAL CANDIDATE; ALPS archive origin 5e415e059253 |
+| `mtk-vcodec-dec-v1.ko` | `/home/armol/kernel-work/gki-12901745-workspace/kernel_device_modules-6.1/drivers/media/platform/mtk-vcodec` | `ca8b550b75e8b49f403f0097e8323c4a930bad79` | EXISTING PATCHED WORKSPACE; read-only candidate, do not edit |
+| `mtk-vcodec-enc-v1.ko` | `/home/armol/androido_dalykai/LieppOS custom ROM/kernel-research/nothing-mt6878/device_modules/drivers/media/platform/mtk-vcodec` | `957dac185efe46cbf6336b0fff9516d84c8cd78f` | LOCAL SOURCE CANDIDATE; parity not implied |
+| `mtk-vcodec-enc-v1.ko` | `/home/armol/kernel-work/gki-12901745-workspace/lieppos/tinysys/trees/5e41/drivers/media/platform/mtk-vcodec` | `2ae742fda9cd461bfe8cf8a5c04f95e212f8e699` | ALTERNATIVE PINNED LOCAL CANDIDATE; ALPS archive origin 5e415e059253 |
+| `mtk-vcodec-enc-v1.ko` | `/home/armol/kernel-work/gki-12901745-workspace/kernel_device_modules-6.1/drivers/media/platform/mtk-vcodec` | `ca8b550b75e8b49f403f0097e8323c4a930bad79` | EXISTING PATCHED WORKSPACE; read-only candidate, do not edit |
+| `mtk-vcu.ko` | `/home/armol/androido_dalykai/LieppOS custom ROM/kernel-research/nothing-mt6878/device_modules/drivers/media/platform/mtk-vcu` | `957dac185efe46cbf6336b0fff9516d84c8cd78f` | LOCAL SOURCE CANDIDATE; parity not implied |
+| `mtk-vcu.ko` | `/home/armol/kernel-work/gki-12901745-workspace/lieppos/tinysys/trees/5e41/drivers/media/platform/mtk-vcu` | `2ae742fda9cd461bfe8cf8a5c04f95e212f8e699` | ALTERNATIVE PINNED LOCAL CANDIDATE; ALPS archive origin 5e415e059253 |
+| `mtk-vcu.ko` | `/home/armol/kernel-work/gki-12901745-workspace/kernel_device_modules-6.1/drivers/media/platform/mtk-vcu` | `ca8b550b75e8b49f403f0097e8323c4a930bad79` | EXISTING PATCHED WORKSPACE; read-only candidate, do not edit |
+| `clk-mt6878-vcodec.ko` | `/home/armol/androido_dalykai/LieppOS custom ROM/kernel-research/nothing-mt6878/device_modules/drivers/clk/mediatek/clk-mt6878-vcodec.c` | `957dac185efe46cbf6336b0fff9516d84c8cd78f` | LOCAL SOURCE CANDIDATE; parity not implied |
+| `clk-mt6878-vcodec.ko` | `/home/armol/kernel-work/gki-12901745-workspace/lieppos/tinysys/trees/5e41/drivers/clk/mediatek/clk-mt6878-vcodec.c` | `2ae742fda9cd461bfe8cf8a5c04f95e212f8e699` | ALTERNATIVE PINNED LOCAL CANDIDATE; ALPS archive origin 5e415e059253 |
+| `clk-mt6878-vcodec.ko` | `/home/armol/kernel-work/gki-12901745-workspace/kernel_device_modules-6.1/drivers/clk/mediatek/clk-mt6878-vcodec.c` | `ca8b550b75e8b49f403f0097e8323c4a930bad79` | EXISTING PATCHED WORKSPACE; read-only candidate, do not edit |
+
+**Build baseline:** Android CI 12901745; `common` `6b18f0b574ab3267615ae6ce642d5a7c3c21ac09`; stock vermagic `6.1.115-android14-11-g945dff7bc1bf SMP preempt mod_unload modversions aarch64`; Android Clang 17.0.2 `clang-r487747c` (10087095), LLVM integrated assembler/lld, exact GKI/KMI and vendor config. Recorded config: `reverse-engineering/camera-stack/kernel-isp-imgsys/build/vendor-kernel.config`; CI pins: `kernel/exact-gki-build-inputs.md`. Inspect CONFIG_CFI_CLANG/MODVERSIONS and effective per-object LTO/visibility flags. `-faddrsig` was necessary in existing parity builds; verify rather than broadly changing compiler flags. Legacy camera scripts depend on `/tmp/ispenv.sh` and enable modpost warnings; do not call them blindly or count ignored unresolved symbols as success.
+
+Unchanged-donor binary equivalence and actually functioning exposed codecs are UNKNOWN. XML/config/source capabilities are static declarations only; runtime encode/decode and signed firmware internals are excluded.
+
+Exact source candidates, build targets and object composition remain subject to stock function/data/CRC/KCFI evidence; namespace/name overlap is triage, never parity.
