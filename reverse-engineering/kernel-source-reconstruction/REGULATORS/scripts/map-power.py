@@ -169,5 +169,20 @@ for p in sorted(set(nodesets['static'])|set(nodesets['live'])):
         if key in ['name','phandle','linux,phandle']:continue
         comparison.append([p,key,'IDENTICAL' if a.get(key)==b.get(key) else 'DIFFERENT',json.dumps(decode(a[key])) if key in a else 'ABSENT',json.dumps(decode(b[key])) if key in b else 'ABSENT'])
 tab('STATIC-LIVE-COMPARISON.tsv',['node','property','result','static','live'],comparison)
+resource_refs=[]
+for operand,nodes in raws.items():
+    ph={cells(v['phandle'])[0]:p for p,v in nodes.items() if 'phandle' in v}
+    contexts=set(providers[operand])|{q.rpartition('/')[0] or '/' for q in providers[operand]}|{r[1] for r in allsupplies if r[0]==operand and r[6]!='OUT_OF_SCOPE_PROVIDER'}
+    for p in sorted(contexts):
+        for prop,ncells in [('clocks','#clock-cells'),('power-domains','#power-domain-cells'),('interconnects','#interconnect-cells')]:
+            if prop not in nodes.get(p,{}):continue
+            cc=cells(nodes[p][prop]);i=0
+            while i<len(cc):
+                handle=cc[i];i+=1;provider=ph.get(handle,'UNKNOWN');v=nodes.get(provider,{})
+                if ncells not in v:
+                    resource_refs.append([operand,p,prop,hex(handle),provider,'UNKNOWN','UNKNOWN',status(nodes,p)]);break
+                num=cells(v[ncells])[0];args=cc[i:i+num];i+=num;assert len(args)==num
+                resource_refs.append([operand,p,prop,hex(handle),provider,';'.join(strings(v.get('compatible',b''))),json.dumps([hex(x) for x in args]),status(nodes,p)])
+tab('DT-CLOCK-POWER-REFERENCES.tsv',['operand','consumer','property','phandle','provider','provider_compatible','specifier_args','consumer_effective_status'],resource_refs)
 summary={'inputs':{str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in [D,L]},'providers':providers,'source_descriptors':{k:len(v) for k,v in descriptors.items()},'dt_nodes':{k:len(v) for k,v in raws.items()},'supply_suffix_properties':{k:sum(r[0]==k for r in allsupplies) for k in raws},'regulator_supply_edges':{k:sum(r[0]==k and r[-1]=='REGULATOR_PHANDLE' for r in allsupplies) for k in raws},'regulator_nodes':{k:sum(r[0]==k for r in allrails) for k in raws},'source_check_results':{r[-1]:sum(x[-1]==r[-1] for x in checks) for r in checks},'static_live_properties':len(comparison),'static_live_differences':[r for r in comparison if r[2]!='IDENTICAL']}
 (O/'mapping-summary.json').write_text(json.dumps(summary,indent=2,sort_keys=True)+'\n');print(json.dumps(summary,indent=2))

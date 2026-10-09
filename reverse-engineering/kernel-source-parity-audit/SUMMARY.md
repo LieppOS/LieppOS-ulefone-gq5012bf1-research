@@ -13,8 +13,14 @@
 > **Update 2026-10-09 — PINCTRL completed.** `pinctrl-mt6363`, `pinctrl-mt6878`,
 > `pinctrl-mtk-common-v2_debug` and `pinctrl-mtk-v2` moved **D → A** via the maintained
 > `android_kernel_modules_pinctrl_ulefone_gq5012bf1` recipe, independent clean B1/B2 and full
-> stock acceptance (`../kernel-source-reconstruction/PINCTRL/`). Counts below are current:
-> **121 certified / 337 uncertified of 458**. Exactly four rows changed; owners and statuses unchanged.
+> stock acceptance (`../kernel-source-reconstruction/PINCTRL/`; then 121 certified / 337 uncertified).
+>
+> **Update 2026-10-09 — REGULATORS completed.** `mt6315-regulator`, `mt6363-regulator`,
+> `mtk-dvfsrc-regulator` and `rt6160-regulator` moved **D → A** via the maintained
+> `android_kernel_modules_regulators_ulefone_gq5012bf1` recipe, clean-clone B1/B2 and full
+> stock acceptance (`../kernel-source-reconstruction/REGULATORS/`). Current totals:
+> **125 certified / 333 uncertified of 458**. Exactly four rows changed; owners/statuses unchanged.
+> RT6160's stale load_order133 is corrected to actual normal124 (recovery122); no load-list edits.
 
 ## Answer and limits
 
@@ -26,28 +32,28 @@ but correctly contains **458** identity rows and every stock path.
 
 | Source class | Count | Evidence-supported interpretation |
 |---|---:|---|
-| A — VERIFIED_BYTE_EXACT | 120 | 60 system_dlkm ELF bodies; 40 accelerator modules; 6 boot-clock modules; 10 storage modules; 4 pinctrl modules; declared nonbehavioral metadata differences |
+| A — VERIFIED_BYTE_EXACT | 124 | 60 system_dlkm ELF bodies; 40 accelerator modules; 6 boot-clock modules; 10 storage modules; 4 pinctrl modules; 4 regulator modules; declared nonbehavioral metadata differences |
 | B — VERIFIED_SEMANTIC_EQUIVALENT | 1 | imgsensor, with bounded equivalent function/moved byte-load proof |
 | C — REPRODUCIBLE_SOURCE_UNVERIFIED | 4 | FT3680, YFT devinfo, ST21NFC, tkcore source island; required stock acceptance remains incomplete |
-| D — SOURCE_CANDIDATE_ONLY | 190 | Located public targets/source candidates; no accepted independent stock-compatible build |
+| D — SOURCE_CANDIDATE_ONLY | 186 | Located public targets/source candidates; no accepted independent stock-compatible build |
 | E — SOURCE_MISSING | 0 | No implementation is affirmatively classified missing; this is NOT a claim that every implementation is sufficient |
 | F — PROVEN_NOT_REQUIRED | 0 | No production exclusion meets the requested evidential standard |
 | G — UNRESOLVED | 143 | Historical source builds/parity exist, but independent recipe/input closure is not established by the reviewed records |
 | **Total** | **458** | No unresolved identity dropped |
 
-**121 A/B identities are certified. 337 identities are not certified or legitimately
-excluded.** Of those, **194** are known candidate/incomplete-acceptance cases (190 D + 4 C),
+**125 A/B identities are certified. 333 identities are not certified or legitimately
+excluded.** Of those, **190** are known candidate/incomplete-acceptance cases (186 D + 4 C),
 and **143 remain unclassified for independent reproducibility**. Do not describe this as
-337 new reverse-engineering projects: the 143 G cases include large, already reconstructed
+333 new reverse-engineering projects: the 143 G cases include large, already reconstructed
 stacks whose existing code and parity must be preserved rather than redone.
 
-There are **161 uncertified identities required by the retained stock first-stage loader
+There are **157 uncertified identities required by the retained stock first-stage loader
 contract** (187 first-stage identities in total). This is a conditional boot/integration
 requirement, not proof that every driver controls indispensable physical hardware. For
 **271 identities, production/runtime necessity remains unknown**. No authorized stripped
 production configuration or removal-safety proof was supplied, so no F exclusions are made.
 
-Source is located in some form for all 337 remaining identities: 190 public candidates and
+Source is located in some form for all 333 remaining identities: 186 public candidates and
 147 reconstructed/historically built cases (143 G + 4 C). **Only four have class C's specific
 incomplete stock-acceptance finding.** Availability of code is not independent reproduction;
 absence of an E finding is not evidence of complete source availability.
@@ -134,11 +140,12 @@ absence or negative DT alias alone supports exclusion. See `OPTIONAL-15-REVIEW.t
    `../kernel-source-reconstruction/BOOT-CLOCK-CORE/`.
 2. ~~**Boot/storage source preservation**~~ — **completed 2026-10-09**: all ten G → A, see
    `../kernel-source-reconstruction/STORAGE/`.
-3. **PMIC/regulator and boot power infrastructure:** pinctrl completed (four D → A,
-   `../kernel-source-reconstruction/PINCTRL/`). Queue head is now the four-module regulator
-   group (`RECONSTRUCTION-QUEUE.md`); keep audio/charger leaf work separate.
-4. **IOMMU/SMI/interconnect/CMDQ providers:** consumers depend on these unverified source
-   providers; group by actual source directory and retain provider blockers separately.
+3. **PMIC/regulator and boot power infrastructure:** PINCTRL and REGULATORS completed
+   (four D → A each; see their reconstruction packages). PMIC/MFD/transport source gaps
+   remain separate; do not infer provider closure from these consumer builds.
+4. **IOMMU/SMI/interconnect/CMDQ providers:** current queue head is interconnect's
+   `mmqos-common`, `mmqos-mt6878`, `mtk-emi`. Consumers depend on these unverified providers;
+   group by actual source directory and retain provider blockers separately.
 5. **Connectivity:** preserve/reproduce the 21 historical connectivity targets and separately
    integrate remaining candidate platform dependencies; do not redo radio firmware.
 6. **Modem/data path:** preserve the 16-source-build set and resolve external input closure;
@@ -152,7 +159,7 @@ absence or negative DT alias alone supports exclusion. See `OPTIONAL-15-REVIEW.t
     charger and support closures; independently resolve their build inputs before certification.
 
 The complete finite map is `RECONSTRUCTION-PROJECTS.tsv` / `RECONSTRUCTION-QUEUE.md`:
-153 scoped source/preservation projects (BOOT-CLOCK-CORE, PRESERVE:STORAGE and PINCTRL completed), not 458 isolated projects and not one giant BSP project.
+152 scoped source/preservation projects (BOOT-CLOCK-CORE, PRESERVE:STORAGE, PINCTRL and REGULATORS completed), not 458 isolated projects and not one giant BSP project.
 
 ## Reproduction and validation
 

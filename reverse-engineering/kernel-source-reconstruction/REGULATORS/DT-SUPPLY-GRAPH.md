@@ -69,6 +69,19 @@ rail DT child; source registration attempts do not establish physical output usa
 - **Connectivity/modem:** modem's three supplies are explicit. MT6363 VCN/VRF names alone
   do not establish connectivity PCB wiring or use, especially where firmware manages it.
 
+## Clock and power-domain context
+
+DT-CLOCK-POWER-REFERENCES.tsv follows provider-specific cell counts for clocks,
+power-domains and interconnects of target controllers, their bus parents and supply
+consumers:131 static /262 static+live references, all provider handles resolved.
+RT6160 I2C5 bus clocks point to syscon0x11281000(specifier0) and0x11036000(specifier17);
+I2C6 uses0x11e04000(specifier1) and0x11036000(specifier17). Display SCPSYS domain8,
+VENC/JPEG9, modem0, SENINF13/3 and display SMI7 are explicit device-domain links.
+These are configured dependencies, not clock-enable/power-state measurements. The four
+regulators themselves import no clock API; bus/domain frameworks and DVFSRC policy are
+separate from direct PMIC selector operations. Resolving a handle does not certify its
+provider source or prove the domain is active.
+
 ## Avoiding false graph edges
 
 120 properties end in `-supply`, but only48 reference a regulator-name node. SMI properties

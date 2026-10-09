@@ -5,7 +5,7 @@
 Fresh committed clone independently reproduced B1/B2; no hardware operation or push.
 
 Maintained source: `../android_kernel_modules_regulators_ulefone_gq5012bf1`, accepted commit
-`b6aaaf3d7ae0bdbc853ba6fe5c6890aa386a91ff`.
+`33130d53c94404f65e1661ffa4113bde21cb4b08`.
 This is a reconstruction/audit group, **not a registered component promotion**. All four
 keep COVERED-GENERIC ownership. Source snapshots and recoverable recipe bundle are in source/.
 
@@ -15,6 +15,7 @@ keep COVERED-GENERIC ownership. Source snapshots and recoverable recipe bundle a
 - [Module parity](MODULE-PARITY.tsv), [function parity](FUNCTION-PARITY.tsv), [data parity](DATA-PARITY.tsv)
 - [Rail/register behavior](POWER-RAIL-MAPPING.md), [DT supply graph](DT-SUPPLY-GRAPH.md)
 - [Boot and deferred SlotB conditions](BOOT-DEPENDENCIES.md), [corrections](STALE-CLAIMS.md)
+- [Audit closure, scope invariants and final tests](AUDIT-UPDATE.md)
 
 Evidence includes complete raw/semantic relocation/section/ABI ledgers, exact raw difference
 offsets, clean B1/B2 objects/config/tree hashes, provider CRC/KCFI-prefix witnesses, case-sensitive

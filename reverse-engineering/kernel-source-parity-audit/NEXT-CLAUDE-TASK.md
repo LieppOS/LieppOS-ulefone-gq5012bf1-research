@@ -13,9 +13,12 @@
 >
 > **Follow-up PINCTRL: COMPLETED 2026-10-09** (four pinctrl/GPIO/EINT modules D → A,
 > `../kernel-source-reconstruction/PINCTRL/`; 121 certified / 337 uncertified of 458).
-> The current queue head is the first project in `RECONSTRUCTION-QUEUE.md` (regulator:
-> `mt6315-regulator`, `mt6363-regulator`, `mtk-dvfsrc-regulator`, `rt6160-regulator`);
-> no new assignment has been written yet.
+>
+> **Follow-up REGULATORS: COMPLETED 2026-10-09** (four modules D → A,
+> `../kernel-source-reconstruction/REGULATORS/`; 125 certified / 333 uncertified of 458).
+> RT6160 actual load-order metadata corrected133→124 (recovery122); stock lists unchanged.
+> Current queue head: `CANDIDATE:device_modules:drivers/interconnect/mediatek`:
+> `mmqos-common`, `mmqos-mt6878`, `mtk-emi`; no new assignment has been written yet.
 
 ## Mission
 

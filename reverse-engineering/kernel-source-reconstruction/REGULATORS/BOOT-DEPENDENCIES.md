@@ -55,6 +55,12 @@ unrelated inherited positions are silently repaired. Every actual load-list byte
   links target them. This is not an F exclusion/removal-safety proof: unpowered/population,
   userspace/by-name consumers, vendor assumptions and alternate boot states remain unknown.
 
+Clock/power-domain/ICC supplier specifiers are also resolved in
+`evidence/hardware/DT-CLOCK-POWER-REFERENCES.tsv` (131 per DT operand). I2C5/6 clocks come
+from their respective bus syscons plus peripheral syscon0x11036000; supply consumers
+reference SCPSYS domains. Those device-level prerequisites are not direct symbol imports
+of the four regulator modules, and no clock/domain state was changed or measured.
+
 ## Conditions for future controlled Slot B verification
 
 **Not authorized or performed now.** Obtain separate approval and a recoverable, verified

@@ -22,7 +22,7 @@ is stale: actual normal/recovery file positions are124/122 (BOOT-DEPENDENCIES.md
 ## Maintained reconstruction
 
 Repository: `../android_kernel_modules_regulators_ulefone_gq5012bf1`.
-Accepted commit: `b6aaaf3d7ae0bdbc853ba6fe5c6890aa386a91ff`.
+Accepted commit: `33130d53c94404f65e1661ffa4113bde21cb4b08`.
 Compiled C: immutable ALPS5e415e059253ce0d2e61c97108e5f5785d71f06f. No C changes.
 Config: NothingOSS957dac185efe46cbf6336b0fff9516d84c8cd78f plus GKI common6b18f0b574ab….
 Two explicit scope-only Kbuild patches isolate the four targets and the separate provider
@@ -45,8 +45,9 @@ stock-byte injection or Ulefone-specific C patch was required.
   GNU/NT_GNU_BUILD_ID20-byte descriptor is normalized. A coincidental equal byte accounts
   for DVFSRC's19 rather than20 differing bytes.
 - No srcversion or appended module signature exists in these stock operands/rebuilds.
-- Fresh committed clone, empty workspace and identity-verified public offline inputs;
-  development tree moved away throughout bootstrap/build/acceptance.
+- Initial fresh clone ran with development tree moved away throughout bootstrap/build/
+  acceptance. Final clean commit (generated Python bytecode removed, no C/build logic changes)
+  passed a second fresh clone/empty workspace from the separate regulator recovery mirror.
 - B1 and B2 independently reconstruct both source trees, kout, config, host tools and
   provider object. Four raw + four stripped modules, every **8 target.o**, provider.o,
   all symvers, CRC witnesses, config and source tree hashes compare identical.

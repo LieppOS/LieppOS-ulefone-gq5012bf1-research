@@ -202,6 +202,54 @@ for stock in STOCK.values():
         source_group='PINCTRL',blocker='NONE',gap_kind='NONE',
         firmware_boundary='NONE required by the module source proof; physical wiring, selected pad states, GPIO bases and replacement runtime are not certified')
 
+# REGULATORS (2026-10-09): immutable unchanged ALPS C, explicit build scopes and real
+# provider-source CRC witnesses; fresh committed clone independently passes B1/B2 and stock.
+REG_REPO=WORKSPACE/'android_kernel_modules_regulators_ulefone_gq5012bf1'
+REG_PACK=ROOT/'reverse-engineering/kernel-source-reconstruction/REGULATORS'
+REG_HEAD=subprocess.check_output(['git','rev-parse','HEAD'],cwd=REG_REPO,text=True).strip()
+assert REG_HEAD==(REG_PACK/'source/COMMIT').read_text().strip(), 'regulator accepted recipe commit changed'
+assert not subprocess.check_output(['git','status','--porcelain'],cwd=REG_REPO,text=True).strip(), 'regulator recipe dirty'
+reg_targets={
+    'mt6315-regulator':'38c684d376fe58879b764e9b46a8657961113e9d7309411f0abcfaa5ff499ff7',
+    'mt6363-regulator':'c827e52efea8a4e447707186e41114ce71facd5c6e548e4c5788def113772249',
+    'mtk-dvfsrc-regulator':'ebd6147c7f4d803dbdfa1246efbf8a3487d744eb65cf53d12cbd6f3874a57073',
+    'rt6160-regulator':'3fa85cc4811ab691ac337288056a2f0a518917ab8aa7e7b85946957b2378d45e'}
+reg_acceptance=json.loads((REG_PACK/'evidence/acceptance/acceptance.json').read_text())
+reg_refs={r['module']:r for r in read_table(REG_REPO/'reference/stock-normalized.tsv')}
+assert set(reg_acceptance)==set(reg_targets)==set(reg_refs)
+for m,v in reg_acceptance.items():
+    assert v['stock_sha256']==reg_targets[m]==reg_refs[m]['stock_sha256'] and v['unresolved']==0
+    assert v['normalized_sha256']==reg_refs[m]['normalized_sha256']
+    assert v['allowed_range']==[int(reg_refs[m]['build_id_offset'],0),20]
+    assert len(v['raw_difference_offsets'])==v['raw_differing_bytes']<=20
+    assert all(v['allowed_range'][0]<=i<v['allowed_range'][0]+20 for i in v['raw_difference_offsets'])
+for f in ['SHA256SUMS','INTERMEDIATE-SHA256SUMS','SOURCE-TREE','PROVIDER-TREE','config.sha256','gki-symvers.sha256','regulators.Module.symvers','natural-external-provider.symvers','crc-witnesses.tsv','provider-object.sha256']:
+    assert (REG_PACK/'evidence/build'/('B1-'+f)).read_bytes()==(REG_PACK/'evidence/build'/('B2-'+f)).read_bytes(), 'regulator B1/B2 '+f
+for stem,artifact in [('kdm','SOURCE-TREE'),('prov','PROVIDER-TREE')]:
+    assert (REG_PACK/'evidence/build'/('B1-'+artifact)).read_text()==(REG_REPO/'reference'/(stem+'-tree.txt')).read_text()
+assert (REG_PACK/'evidence/build/B1-natural-external-provider.symvers').read_bytes()==(REG_REPO/'reference/external-provider.symvers').read_bytes()
+# Narrow metadata repair: actual hashed load files prove RT6160 normal124/recovery122.
+reg_load=read_table(REG_PACK/'evidence/inventory/LOAD-ORDER.tsv')
+for kind,seq in [('NORMAL','124'),('RECOVERY','122')]:
+    r=next(r for r in reg_load if r['entry']=='rt6160-regulator.ko' and r['kind']==kind)
+    assert r['sequence']==seq and digest(ROOT/r['list_path'])==r['list_sha256']
+for stock in STOCK.values():
+    m=stock['filename'].removesuffix('.ko')
+    if m not in reg_targets:continue
+    v=reg_acceptance[m]
+    assert stock['stock_sha256']==reg_targets[m] and v['functions']==stock['function_count'] and v['data']==stock['data_count']
+    add(stock,source_status='A',source_repo=ref(REG_REPO),source_commit=REG_HEAD,
+        source_pin=ref(REG_REPO/'SOURCE-PINS.tsv'),build_script=ref(REG_REPO/'scripts/b1b2.sh'),source_snapshot_path=ref(REG_REPO/'patches'),
+        parity_evidence=[ref(REG_PACK/'evidence/acceptance/acceptance.json'),ref(REG_PACK/'MODULE-PARITY.tsv'),
+            ref(REG_PACK/'evidence/build/b1b2-clean-checkout.log'),ref(REG_PACK/'evidence/acceptance/provider-kcfi-witness.json'),ref(REG_PACK/'RECONSTRUCTION-REPORT.md')],
+        exact_functions=stock['function_count'],equivalent_functions=0,unresolved_functions=0,
+        abi_status='VERIFIED',crc_status='VERIFIED',kcfi_status='VERIFIED',reproduction_status='INDEPENDENT_CLEAN_CHECKOUT_B1_B2',
+        verified_difference_classification='BUILD_METADATA_ONLY (20-byte GNU build ID)',
+        preservation_risk='LOW: full public pins, scope-only patches, clean recipe, verbatim main C/headers, independent public recovery mirror and recipe bundle; dependency source gaps remain separate',
+        source_group='REGULATORS',blocker='NONE',gap_kind='NONE',
+        firmware_boundary='NONE accessed/required for module reconstruction; runtime power/PMIC state, secure-world votes and physical population/binding not certified')
+    if m=='rt6160-regulator':add(stock,load_order='124')
+
 # GKI: both independently cleaned builds prove complete ELF bodies, not vendor variants.
 system=pack('SYSTEM-DLKM');gki_lines=(system/'parity/system-dlkm-parity-B1.txt').read_text().splitlines()
 proven={l.split('\t')[0] for l in gki_lines if '\tIDENTICAL BODY, signature differs' in l};assert len(proven)==60

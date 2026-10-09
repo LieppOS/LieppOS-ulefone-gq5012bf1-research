@@ -1,7 +1,7 @@
 # Source identity and preservation
 
 Maintained recipe: `../android_kernel_modules_regulators_ulefone_gq5012bf1`, accepted
-commit `b6aaaf3d7ae0bdbc853ba6fe5c6890aa386a91ff` (also source/COMMIT).
+commit `33130d53c94404f65e1661ffa4113bde21cb4b08` (also source/COMMIT).
 
 | Input | Immutable full commit | Required tree |
 |---|---|---|

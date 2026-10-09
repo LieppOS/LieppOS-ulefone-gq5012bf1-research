@@ -1,10 +1,12 @@
 # Independent clean-checkout build reproduction
 
-Maintained commit:b6aaaf3d7ae0bdbc853ba6fe5c6890aa386a91ff.
-Fresh clone:/home/armol/kernel-work/regulators-cleancheck/repo; empty ws beside it.
-Original development directory was moved away throughout bootstrap/B1/B2/stock acceptance,
-then restored only after success. No old kout, module.o, hand-edited symvers or environment
-shim was available to the fresh recipe.
+Maintained commit:33130d53c94404f65e1661ffa4113bde21cb4b08.
+Final fresh clone:/home/armol/kernel-work/regulators-final-cleancheck/repo; empty ws beside it.
+Initial b6aaaf3 recipe clone ran with original development directory moved away throughout
+bootstrap/B1/B2/stock acceptance; initial proof log remains separately preserved. Generated
+Python bytecode was removed in33130d5 with no C/build-logic change, then that exact commit
+passed another fresh clone and empty workspace using the separate regulator recovery mirror.
+No old kout, module.o, hand-edited symvers or environment shim was available as a recipe input.
 
 ## Inputs and exact settings
 
@@ -27,7 +29,7 @@ shim was available to the fresh recipe.
 ## Run
 
 ```sh
-export LIEPPOS_REGULATORS_MIRROR=/home/armol/kernel-work/lieppos-gpu-pin-mirror
+export LIEPPOS_REGULATORS_MIRROR=/home/armol/kernel-work/regulators-pin-mirror
 /path/to/fresh-recipe/scripts/bootstrap.sh /space-free/empty-ws
 /path/to/fresh-recipe/scripts/b1b2.sh /space-free/empty-ws /path/to/extracted-stock/lib/modules
 ```
@@ -48,6 +50,9 @@ within the same rebuilt workspace; cross-workspace DWARF paths affect raw IDs, s
 stock equivalence claim is on standard strip-debug outputs.
 
 Evidence: evidence/build/B{1,2}-* and b1b2-clean-checkout.log; complete acceptance.json and
-axis ledgers. Both stock operands and reference-only acceptance are SHA-bound. Nine negative
+axis ledgers. The exact provider compile command/dependencies/#SYMVER records are preserved
+verbatim in evidence/build/provider-object.cmd.xz (compression keeps Kbuild's original
+whitespace without rewriting provenance). Both stock operands and reference-only acceptance
+are SHA-bound. Nine negative
 verifier tests reject real content/ABI/KCFI changes while allowing only the GNU descriptor.
 No ELF patching, srcversion deletion, signature masking or stock-code transplantation occurs.
