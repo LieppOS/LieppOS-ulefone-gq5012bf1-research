@@ -7,8 +7,8 @@ Existing records are preserved. This audit changes no component status or genera
 | “457 distinct shipped modules” | 457 filenames, **458 binary identities**, 471 occurrences. Vendor and system Bluetooth have different SHA256/size and require separate proof. |
 | “214 vendor_dlkm modules” as a physical count | The extracted partition contains **215** `.ko` files. The old name-based coverage total must not replace actual partition occurrences. |
 | “E=0 / no unmapped modules” means source complete | The older coverage A–E classes describe ownership, not this audit's source A–G classes. Zero unowned modules does not prove any clean source build. |
-| Every DONE owner proves every module assigned to it | 169 uncertified identities are associated with 58 DONE owners: 25 D, 142 G, 2 C. Often only named leaf modules were source-closed, not all umbrella/platform dependencies. No owner is downgraded here. |
-| Historical exact module artifacts automatically establish preserved independent reproduction | Real parity is retained, but recipes use temporary environment shims, prepared outputs, mutable vendor trees/provider inputs or private includes. 153 historical-build identities remain G until exact independent input closure is established. This is not a claim that their source code is absent. |
+| Every DONE owner proves every module assigned to it | 158 uncertified identities are associated with 56 DONE owners: 24 D, 132 G, 2 C. Often only named leaf modules were source-closed, not all umbrella/platform dependencies. No owner is downgraded here. |
+| Historical exact module artifacts automatically establish preserved independent reproduction | Real parity is retained, but recipes use temporary environment shims, prepared outputs, mutable vendor trees/provider inputs or private includes. 143 historical-build identities remain G until exact independent input closure is established. This is not a claim that their source code is absent. |
 | GKI 60-module source closure proves vendor modules | All 60 system_dlkm ELF bodies match, including build IDs; signatures differ. Vendor Bluetooth has a distinct baseline, and the other vendor modules are not covered by these proofs. |
 | Signature delta is a code delta — or can be ignored for deployment | Appended signing data differs without changing ELF code/ABI. Stock signature enforcement can still reject a replacement; LieppOS signing policy is a separate integration decision. |
 | 15 old optional/reference modules are automatically production-excludable | No F exclusion is certified. Actual lists/captures, reverse imports, declared DT aliases, engineering use and unknown userspace/removal evidence are recorded per identity in OPTIONAL-15-REVIEW.tsv. |
@@ -20,14 +20,15 @@ Existing records are preserved. This audit changes no component status or genera
 | Mali is still an unfinished accelerator reconstruction | Its organized workspace/source package is DONE; the older canonical component ledger still says PARTIAL. This pre-existing drift is recorded, not repaired. |
 | BOOT-CLOCK-CORE is D: public candidate likely sufficient, "no demonstrated missing implementation or required OEM patch" | Measured 2026-10-09: four of six were exact from public ALPS `5e415e059253`; `clk-mt6878`/`clk-mt6878-peri` needed the GQ5012BF1 display-PWM clock delta (mux ID 282, gates 31/32) that upstream `591991d44aad` removed. All six are now A. |
 | PRESERVE:STORAGE is G: historical exact storage rebuilds without independent input closure | Measured 2026-10-09: the historical artifacts were exact, but the recipe depended on a since-modified shared kout, stock-harvested `stock-all.symvers`, a hand-edited `-ise` symvers and copied headers. All replaced by pinned/regenerated inputs; all ten are now A (`../kernel-source-reconstruction/STORAGE/STALE-CLAIMS.md`). |
+| PINCTRL remains four public-candidate-only D rows | Measured unchanged ALPS 5e41 C reproduces all four full stripped ELFs except GNU build ID; independent clean B1/B2 and all ABI/data/table/relocation proof now permits four A rows (`../kernel-source-reconstruction/PINCTRL/`). |
 
 ## What the new counts do not claim
 
-- **341 uncertified/unexcluded identities (357 before BOOT-CLOCK-CORE, 351 before PRESERVE:STORAGE) are not missing implementations.**
+- **337 uncertified/unexcluded identities (357 before BOOT-CLOCK-CORE, 351 before PRESERVE:STORAGE, 341 before PINCTRL) are not missing implementations.**
 - **0 class E is not proof that every candidate is sufficient.** The 143 G source claims
   remain unresolved for independent input/recipe closure.
 - **143 G is not a reversal of measured byte/semantic parity.** Preserve that work and
   resolve its reproduction evidence; do not reverse-engineer it again.
-- **165 boot-contract gaps (181 before BOOT-CLOCK-CORE, 175 before PRESERVE:STORAGE) are conditional on retaining the stock first-stage load model**,
-  not an assertion that all 165 drivers control essential fitted hardware.
+- **161 boot-contract gaps (181 before BOOT-CLOCK-CORE, 175 before PRESERVE:STORAGE, 165 before PINCTRL) are conditional on retaining the stock first-stage load model**,
+  not an assertion that all 161 drivers control essential fitted hardware.
 - **271 unknown necessity results must not be turned into F just to shrink the queue.**

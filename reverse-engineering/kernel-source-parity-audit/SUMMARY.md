@@ -8,8 +8,13 @@
 > **Update 2026-10-09 — PRESERVE:STORAGE completed.** `ufs-mediatek-mod`, `ufs-mediatek-dbg`,
 > `phy-mtk-ufs`, `rpmb`, `rpmb-mtk`, `mtk-mmc`, `mtk-mmc-dbg`, `cqhci`, `mtk-wp` and `blocktag`
 > moved **G → A** via `android_kernel_modules_storage_ulefone_gq5012bf1`
-> (`../kernel-source-reconstruction/STORAGE/`). Counts below are current:
-> **117 certified / 341 uncertified of 458**. No other row, owner or component status changed.
+> (`../kernel-source-reconstruction/STORAGE/`; then 117 certified / 341 uncertified).
+>
+> **Update 2026-10-09 — PINCTRL completed.** `pinctrl-mt6363`, `pinctrl-mt6878`,
+> `pinctrl-mtk-common-v2_debug` and `pinctrl-mtk-v2` moved **D → A** via the maintained
+> `android_kernel_modules_pinctrl_ulefone_gq5012bf1` recipe, independent clean B1/B2 and full
+> stock acceptance (`../kernel-source-reconstruction/PINCTRL/`). Counts below are current:
+> **121 certified / 337 uncertified of 458**. Exactly four rows changed; owners and statuses unchanged.
 
 ## Answer and limits
 
@@ -21,28 +26,28 @@ but correctly contains **458** identity rows and every stock path.
 
 | Source class | Count | Evidence-supported interpretation |
 |---|---:|---|
-| A — VERIFIED_BYTE_EXACT | 116 | 60 system_dlkm ELF bodies; 40 accelerator modules; 6 boot-clock modules; 10 storage modules; declared nonbehavioral metadata differences |
+| A — VERIFIED_BYTE_EXACT | 120 | 60 system_dlkm ELF bodies; 40 accelerator modules; 6 boot-clock modules; 10 storage modules; 4 pinctrl modules; declared nonbehavioral metadata differences |
 | B — VERIFIED_SEMANTIC_EQUIVALENT | 1 | imgsensor, with bounded equivalent function/moved byte-load proof |
 | C — REPRODUCIBLE_SOURCE_UNVERIFIED | 4 | FT3680, YFT devinfo, ST21NFC, tkcore source island; required stock acceptance remains incomplete |
-| D — SOURCE_CANDIDATE_ONLY | 194 | Located public targets/source candidates; no accepted independent stock-compatible build |
+| D — SOURCE_CANDIDATE_ONLY | 190 | Located public targets/source candidates; no accepted independent stock-compatible build |
 | E — SOURCE_MISSING | 0 | No implementation is affirmatively classified missing; this is NOT a claim that every implementation is sufficient |
 | F — PROVEN_NOT_REQUIRED | 0 | No production exclusion meets the requested evidential standard |
 | G — UNRESOLVED | 143 | Historical source builds/parity exist, but independent recipe/input closure is not established by the reviewed records |
 | **Total** | **458** | No unresolved identity dropped |
 
-**117 A/B identities are certified. 341 identities are not certified or legitimately
-excluded.** Of those, **198** are known candidate/incomplete-acceptance cases (194 D + 4 C),
+**121 A/B identities are certified. 337 identities are not certified or legitimately
+excluded.** Of those, **194** are known candidate/incomplete-acceptance cases (190 D + 4 C),
 and **143 remain unclassified for independent reproducibility**. Do not describe this as
-341 new reverse-engineering projects: the 143 G cases include large, already reconstructed
+337 new reverse-engineering projects: the 143 G cases include large, already reconstructed
 stacks whose existing code and parity must be preserved rather than redone.
 
-There are **165 uncertified identities required by the retained stock first-stage loader
+There are **161 uncertified identities required by the retained stock first-stage loader
 contract** (187 first-stage identities in total). This is a conditional boot/integration
 requirement, not proof that every driver controls indispensable physical hardware. For
 **271 identities, production/runtime necessity remains unknown**. No authorized stripped
 production configuration or removal-safety proof was supplied, so no F exclusions are made.
 
-Source is located in some form for all 341 remaining identities: 194 public candidates and
+Source is located in some form for all 337 remaining identities: 190 public candidates and
 147 reconstructed/historically built cases (143 G + 4 C). **Only four have class C's specific
 incomplete stock-acceptance finding.** Availability of code is not independent reproduction;
 absence of an E finding is not evidence of complete source availability.
@@ -91,8 +96,8 @@ recipe is broken or that its driver code is missing**. `REPRODUCIBILITY-RISKS.ts
 actual recipe references and the exact unanswered preservation/reproduction question.
 
 This stricter independent-reproduction audit does not revoke previous static parity proofs
-or change any DONE/PARTIAL/BLOCKED classification. The 169 rows across 58 DONE owners needing
-further source evidence are separately recorded: 25 D, 142 G and 2 C. Ownership often covers
+or change any DONE/PARTIAL/BLOCKED classification. The 158 rows across 56 DONE owners needing
+further source evidence are separately recorded: 24 D, 132 G and 2 C. Ownership often covers
 additional related modules that were never the owner's reconstructed `.ko` target.
 
 ## GKI/system_dlkm
@@ -128,9 +133,10 @@ absence or negative DT alias alone supports exclusion. See `OPTIONAL-15-REVIEW.t
 1. ~~**Boot clock core**~~ — **completed 2026-10-09**: all six D → A, see
    `../kernel-source-reconstruction/BOOT-CLOCK-CORE/`.
 2. ~~**Boot/storage source preservation**~~ — **completed 2026-10-09**: all ten G → A, see
-   `../kernel-source-reconstruction/STORAGE/`. Queue head is now pinctrl (`RECONSTRUCTION-QUEUE.md`).
-3. **PMIC/regulator/pinctrl and boot power infrastructure:** integrate located public
-   sources and measure the specific modules; keep audio/charger leaf work separate.
+   `../kernel-source-reconstruction/STORAGE/`.
+3. **PMIC/regulator and boot power infrastructure:** pinctrl completed (four D → A,
+   `../kernel-source-reconstruction/PINCTRL/`). Queue head is now the four-module regulator
+   group (`RECONSTRUCTION-QUEUE.md`); keep audio/charger leaf work separate.
 4. **IOMMU/SMI/interconnect/CMDQ providers:** consumers depend on these unverified source
    providers; group by actual source directory and retain provider blockers separately.
 5. **Connectivity:** preserve/reproduce the 21 historical connectivity targets and separately
@@ -146,7 +152,7 @@ absence or negative DT alias alone supports exclusion. See `OPTIONAL-15-REVIEW.t
     charger and support closures; independently resolve their build inputs before certification.
 
 The complete finite map is `RECONSTRUCTION-PROJECTS.tsv` / `RECONSTRUCTION-QUEUE.md`:
-154 scoped source/preservation projects (BOOT-CLOCK-CORE and PRESERVE:STORAGE completed), not 458 isolated projects and not one giant BSP project.
+153 scoped source/preservation projects (BOOT-CLOCK-CORE, PRESERVE:STORAGE and PINCTRL completed), not 458 isolated projects and not one giant BSP project.
 
 ## Reproduction and validation
 
@@ -166,5 +172,6 @@ passing audit means the complete ledger and its evidence references are internal
 
 Workspace remains **100 DONE / 36 PARTIAL / 3 BLOCKED / 0 TODO**. Existing global manifest
 drift (19 hash/size changes, 408 unregistered files, one duplicate) and the stale canonical
-Mali status are documented and left untouched. Offline only; no compilation, device access,
-folder moves, verified-source edits or pushes were performed.
+Mali status are documented and left untouched. Audit regeneration itself is read-only evidence
+analysis; the separate completed reconstruction packages record their offline compilations and
+source preservation. No device access, component moves or pushes were performed.

@@ -9,7 +9,7 @@ acceptance except GNU build ID.** Static/offline only; no phone interaction or r
   [312 data objects](DATA-PARITY.tsv), [ABI](ABI-PARITY.md).
 * [Pinmux/board mapping](PINMUX-MAPPING.md), [GPIO/EINT](GPIO-EINT-CONTRACT.md),
   [DT contract](DEVICE-TREE-CONTRACT.md), [boot/deferred tests](EARLY-BOOT-DEPENDENCIES.md),
-  [corrections](STALE-CLAIMS.md).
+  [corrections](STALE-CLAIMS.md), [audit closure and test results](AUDIT-UPDATE.md).
 * `evidence/`: original four audit rows/identities/dependencies; source blob comparison;
   independent B1/B2 logs/hashes; all acceptance ledgers; generated full hardware indexes;
   hash manifest.

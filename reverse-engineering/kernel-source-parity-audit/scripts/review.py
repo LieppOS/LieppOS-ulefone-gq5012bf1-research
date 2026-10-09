@@ -168,6 +168,40 @@ for stock in STOCK.values():
         source_group='PRESERVE:STORAGE',blocker='NONE',gap_kind='NONE',
         firmware_boundary='NONE for the module source; RPMB secure-world consumers (TrustKernel teed/TAs) and ATF SiP services are outside the proof; runtime not validated')
 
+# PINCTRL (2026-10-09): unchanged ALPS 5e41 C, maintained scope-only recipe; independent
+# fresh clone B1/B2 and full stock ELF acceptance. Exact four identities, owners unchanged.
+PIN_REPO=WORKSPACE/'android_kernel_modules_pinctrl_ulefone_gq5012bf1'
+PIN_PACK=ROOT/'reverse-engineering/kernel-source-reconstruction/PINCTRL'
+PIN_HEAD=subprocess.check_output(['git','rev-parse','HEAD'],cwd=PIN_REPO,text=True).strip()
+assert PIN_HEAD==(PIN_PACK/'source/COMMIT').read_text().strip(), 'pinctrl accepted source commit changed'
+assert not subprocess.check_output(['git','status','--porcelain'],cwd=PIN_REPO,text=True).strip(), 'pinctrl repo dirty'
+pin_acceptance=json.loads((PIN_PACK/'evidence/acceptance/acceptance.json').read_text())
+pin_targets={
+    'pinctrl-mt6363':'19d1558e52ed4af589713c185451ef50444175944d8a874faa2b51146f984f03',
+    'pinctrl-mt6878':'c1e98148b06a21fdf2ac81bb67e3f0089fa43789d6a57a0bfd4cd8b41c0ac72a',
+    'pinctrl-mtk-common-v2_debug':'878aa15128051972047732a2c051a74c6d04c5f223bbff870b01ed58b9bf69be',
+    'pinctrl-mtk-v2':'54b28c83c8f20cba2ce4b7c770fc4534120eba6aaddd1eff11e09bee22b61ef6'}
+assert set(pin_acceptance)==set(pin_targets)
+assert all(v['stock_sha256']==pin_targets[m] and v['unresolved']==0 and
+           v['raw_differing_bytes']<=v['allowed_range'][1]==20 for m,v in pin_acceptance.items())
+for f in ['SHA256SUMS','INTERMEDIATE-SHA256SUMS','SOURCE-TREE','config.sha256','gki-symvers.sha256','pinctrl.Module.symvers']:
+    assert (PIN_PACK/'evidence/build'/('B1-'+f)).read_bytes()==(PIN_PACK/'evidence/build'/('B2-'+f)).read_bytes(), 'pinctrl B1/B2 '+f
+for stock in STOCK.values():
+    m=stock['filename'].removesuffix('.ko')
+    if m not in pin_targets:continue
+    assert stock['stock_sha256']==pin_targets[m] and pin_acceptance[m]['functions']==stock['function_count']
+    add(stock,source_status='A',source_repo=ref(PIN_REPO),source_commit=PIN_HEAD,
+        source_pin=ref(PIN_REPO/'SOURCE-PINS.tsv'),build_script=ref(PIN_REPO/'scripts/b1b2.sh'),
+        source_snapshot_path=ref(PIN_REPO/'patches'),
+        parity_evidence=[ref(PIN_PACK/'evidence/acceptance/acceptance.json'),ref(PIN_PACK/'MODULE-PARITY.tsv'),
+                         ref(PIN_PACK/'evidence/build/b1b2-clean-checkout.log'),ref(PIN_PACK/'RECONSTRUCTION-REPORT.md')],
+        exact_functions=stock['function_count'],equivalent_functions=0,unresolved_functions=0,
+        abi_status='VERIFIED',crc_status='VERIFIED',kcfi_status='VERIFIED',reproduction_status='INDEPENDENT_CLEAN_CHECKOUT_B1_B2',
+        verified_difference_classification='BUILD_METADATA_ONLY (20-byte GNU build ID)',
+        preservation_risk='LOW: immutable public pins, complete scope patch, local committed recipe and research bundle; public input availability remains a dependency',
+        source_group='PINCTRL',blocker='NONE',gap_kind='NONE',
+        firmware_boundary='NONE required by the module source proof; physical wiring, selected pad states, GPIO bases and replacement runtime are not certified')
+
 # GKI: both independently cleaned builds prove complete ELF bodies, not vendor variants.
 system=pack('SYSTEM-DLKM');gki_lines=(system/'parity/system-dlkm-parity-B1.txt').read_text().splitlines()
 proven={l.split('\t')[0] for l in gki_lines if '\tIDENTICAL BODY, signature differs' in l};assert len(proven)==60

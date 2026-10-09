@@ -9,9 +9,13 @@
 > loader position 50 (recovery 49), not 51.
 >
 > **Follow-up PRESERVE:STORAGE: COMPLETED 2026-10-09** (ten storage modules G → A,
-> `../kernel-source-reconstruction/STORAGE/`). The current queue head is the first project in
-> `RECONSTRUCTION-QUEUE.md` (pinctrl: `pinctrl-mt6363`, `pinctrl-mt6878`,
-> `pinctrl-mtk-common-v2_debug`, `pinctrl-mtk-v2`); no new assignment has been written yet.
+> `../kernel-source-reconstruction/STORAGE/`).
+>
+> **Follow-up PINCTRL: COMPLETED 2026-10-09** (four pinctrl/GPIO/EINT modules D → A,
+> `../kernel-source-reconstruction/PINCTRL/`; 121 certified / 337 uncertified of 458).
+> The current queue head is the first project in `RECONSTRUCTION-QUEUE.md` (regulator:
+> `mt6315-regulator`, `mt6363-regulator`, `mtk-dvfsrc-regulator`, `rt6160-regulator`);
+> no new assignment has been written yet.
 
 ## Mission
 
