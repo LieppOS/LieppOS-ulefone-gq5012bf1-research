@@ -22,14 +22,15 @@ Existing records are preserved. This audit changes no component status or genera
 | PRESERVE:STORAGE is G: historical exact storage rebuilds without independent input closure | Measured 2026-10-09: the historical artifacts were exact, but the recipe depended on a since-modified shared kout, stock-harvested `stock-all.symvers`, a hand-edited `-ise` symvers and copied headers. All replaced by pinned/regenerated inputs; all ten are now A (`../kernel-source-reconstruction/STORAGE/STALE-CLAIMS.md`). |
 | PINCTRL remains four public-candidate-only D rows | Measured unchanged ALPS 5e41 C reproduces all four full stripped ELFs except GNU build ID; independent clean B1/B2 and all ABI/data/table/relocation proof now permits four A rows (`../kernel-source-reconstruction/PINCTRL/`). |
 | REGULATORS are still four public candidates D; RT6160 load_order133 is current | Unchanged ALPS C now reproduces all four complete ELFs except GNU ID, with independent clean B1/B2 and real provider CRC witnesses; all four A. Actual hashed stock lists prove RT6160 normal124/recovery122; only its target metadata corrected, no list changes (`../kernel-source-reconstruction/REGULATORS/`). |
+| MMQoS/EMI are three public candidates only; audit load67/68/47 is current | Unchanged ALPS C is complete stock-exact except GNU IDs, with independent B1/B2 and33 real provider CRC/licence/KCFI boundaries. Exactly three A; actual stock normal61/62/51 (recovery59/60/50), no list edits. mtk-emi is the ICC vote wrapper, not the separate EMI controller (`../kernel-source-reconstruction/INTERCONNECT-EMI/`). |
 
 ## What the new counts do not claim
 
-- **333 uncertified/unexcluded identities (357 before BOOT-CLOCK-CORE, 351 before PRESERVE:STORAGE, 341 before PINCTRL, 337 before REGULATORS) are not missing implementations.**
+- **330 uncertified/unexcluded identities (357 before BOOT-CLOCK-CORE, 351 before PRESERVE:STORAGE, 341 before PINCTRL, 337 before REGULATORS, 333 before INTERCONNECT-EMI) are not missing implementations.**
 - **0 class E is not proof that every candidate is sufficient.** The 143 G source claims
   remain unresolved for independent input/recipe closure.
 - **143 G is not a reversal of measured byte/semantic parity.** Preserve that work and
   resolve its reproduction evidence; do not reverse-engineer it again.
-- **157 boot-contract gaps (181 before BOOT-CLOCK-CORE, 175 before PRESERVE:STORAGE, 165 before PINCTRL, 161 before REGULATORS) are conditional on retaining the stock first-stage load model**,
-  not an assertion that all 157 drivers control essential fitted hardware.
+- **154 boot-contract gaps (181 before BOOT-CLOCK-CORE, 175 before PRESERVE:STORAGE, 165 before PINCTRL, 161 before REGULATORS, 157 before INTERCONNECT-EMI) are conditional on retaining the stock first-stage load model**,
+  not an assertion that all 154 drivers control essential fitted hardware.
 - **271 unknown necessity results must not be turned into F just to shrink the queue.**

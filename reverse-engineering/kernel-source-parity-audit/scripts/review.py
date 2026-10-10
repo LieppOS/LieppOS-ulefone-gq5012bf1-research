@@ -250,6 +250,56 @@ for stock in STOCK.values():
         firmware_boundary='NONE accessed/required for module reconstruction; runtime power/PMIC state, secure-world votes and physical population/binding not certified')
     if m=='rt6160-regulator':add(stock,load_order='124')
 
+# INTERCONNECT-EMI: unchanged six ALPS C units, real 33-slot provider CRC/licence/CFI
+# witnesses and independently committed clean-clone B1/B2 plus complete stock ELF parity.
+ICC_REPO=WORKSPACE/'android_kernel_modules_interconnect_emi_ulefone_gq5012bf1'
+ICC_PACK=ROOT/'reverse-engineering/kernel-source-reconstruction/INTERCONNECT-EMI'
+ICC_HEAD=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ICC_REPO,text=True).strip()
+assert ICC_HEAD==(ICC_PACK/'source/COMMIT').read_text().strip(), 'interconnect accepted recipe commit changed'
+assert not subprocess.check_output(['git','status','--porcelain'],cwd=ICC_REPO,text=True).strip(), 'interconnect recipe dirty'
+icc_targets={
+    'mmqos-common':'65282e4fca3867482de11c6f6e9d309cf757ec5ee57f72cfd5cedc25b059815c',
+    'mmqos-mt6878':'d7ab05e65e8b1dfccc71dd842fe51e56855ec6cb3ba1717e712f3cda0c2f84f9',
+    'mtk-emi':'72446c1929e0a397946c2fd784cb905767acc241cf35567607a03b9f5c4fbd60'}
+icc_acceptance=json.loads((ICC_PACK/'evidence/acceptance/acceptance.json').read_text())
+icc_refs={r['module']:r for r in read_table(ICC_REPO/'reference/stock-normalized.tsv')}
+assert set(icc_acceptance)==set(icc_targets)==set(icc_refs)
+for m,v in icc_acceptance.items():
+    assert v['stock_sha256']==icc_targets[m]==icc_refs[m]['stock_sha256'] and v['unresolved']==0
+    assert v['normalized_sha256']==icc_refs[m]['normalized_sha256']
+    assert v['allowed_range']==[int(icc_refs[m]['build_id_offset'],0),20]
+    assert len(v['raw_difference_offsets'])==v['raw_differing_bytes']<=20
+    assert all(v['allowed_range'][0]<=i<v['allowed_range'][0]+20 for i in v['raw_difference_offsets'])
+for f in ['SHA256SUMS','INTERMEDIATE-SHA256SUMS','SOURCE-TREE','PROVIDER-TREE','config.sha256','gki-symvers.sha256','interconnect.Module.symvers','natural-external-provider.symvers','crc-witnesses.tsv','provider-object.sha256']:
+    assert (ICC_PACK/'evidence/build'/('B1-'+f)).read_bytes()==(ICC_PACK/'evidence/build'/('B2-'+f)).read_bytes(), 'interconnect B1/B2 '+f
+for stem,artifact in [('kdm','SOURCE-TREE'),('prov','PROVIDER-TREE')]:
+    assert (ICC_PACK/'evidence/build'/('B1-'+artifact)).read_text()==(ICC_REPO/'reference'/(stem+'-tree.txt')).read_text()
+assert (ICC_PACK/'evidence/build/B1-natural-external-provider.symvers').read_bytes()==(ICC_REPO/'reference/external-provider.symvers').read_bytes()
+icc_result=json.loads((ICC_PACK/'evidence/acceptance/result.json').read_text())
+assert icc_result['unresolved']==0 and icc_result['source_crc_licence_kcfi_boundary_checks']==33 and icc_result['actual_reverse_imports']==7
+assert icc_result['target_objects_per_build']==10 and icc_result['provider_objects_per_build']==12
+icc_load=read_table(ICC_PACK/'evidence/inventory/LOAD-ORDER.tsv')
+icc_positions={'mmqos-common':('61','59'),'mmqos-mt6878':('62','60'),'mtk-emi':('51','50')}
+for m,(normal,recovery) in icc_positions.items():
+    for kind,seq in [('NORMAL',normal),('RECOVERY',recovery)]:
+        r=next(r for r in icc_load if r['entry']==m+'.ko' and r['kind']==kind)
+        assert r['sequence']==seq and digest(ROOT/r['list_path'])==r['list_sha256']
+for stock in STOCK.values():
+    m=stock['filename'].removesuffix('.ko')
+    if m not in icc_targets:continue
+    v=icc_acceptance[m]
+    assert stock['stock_sha256']==icc_targets[m] and v['functions']==stock['function_count'] and v['data']==stock['data_count']
+    add(stock,source_status='A',source_repo=ref(ICC_REPO),source_commit=ICC_HEAD,
+        source_pin=ref(ICC_REPO/'SOURCE-PINS.tsv'),build_script=ref(ICC_REPO/'scripts/b1b2.sh'),source_snapshot_path=ref(ICC_REPO/'patches'),
+        parity_evidence=[ref(ICC_PACK/'evidence/acceptance/acceptance.json'),ref(ICC_PACK/'MODULE-PARITY.tsv'),
+            ref(ICC_PACK/'evidence/build/b1b2-clean-checkout.log'),ref(ICC_PACK/'evidence/acceptance/PROVIDER-ABI-WITNESSES.tsv'),ref(ICC_PACK/'RECONSTRUCTION-REPORT.md')],
+        exact_functions=stock['function_count'],equivalent_functions=0,unresolved_functions=0,
+        abi_status='VERIFIED',crc_status='VERIFIED',kcfi_status='VERIFIED',reproduction_status='INDEPENDENT_CLEAN_CHECKOUT_B1_B2',
+        verified_difference_classification='BUILD_METADATA_ONLY (20-byte GNU build ID)',
+        preservation_risk='LOW: immutable public pins, Kbuild-only patches, unchanged C/headers, independent recovery mirror and committed recipe/bundle; separate provider gaps remain',
+        source_group='INTERCONNECT-EMI',blocker='NONE',gap_kind='NONE',load_order=icc_positions[m][0],
+        firmware_boundary='VCP/secure-world/DRAMC/EMI controller policy remains separate; no firmware accessed/rebuilt or runtime bandwidth/channel/clock state certified')
+
 # GKI: both independently cleaned builds prove complete ELF bodies, not vendor variants.
 system=pack('SYSTEM-DLKM');gki_lines=(system/'parity/system-dlkm-parity-B1.txt').read_text().splitlines()
 proven={l.split('\t')[0] for l in gki_lines if '\tIDENTICAL BODY, signature differs' in l};assert len(proven)==60

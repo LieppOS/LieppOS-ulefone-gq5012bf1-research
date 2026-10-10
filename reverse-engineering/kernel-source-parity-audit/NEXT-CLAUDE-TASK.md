@@ -17,8 +17,12 @@
 > **Follow-up REGULATORS: COMPLETED 2026-10-09** (four modules D → A,
 > `../kernel-source-reconstruction/REGULATORS/`; 125 certified / 333 uncertified of 458).
 > RT6160 actual load-order metadata corrected133→124 (recovery122); stock lists unchanged.
-> Current queue head: `CANDIDATE:device_modules:drivers/interconnect/mediatek`:
-> `mmqos-common`, `mmqos-mt6878`, `mtk-emi`; no new assignment has been written yet.
+>
+> **Follow-up INTERCONNECT-EMI: COMPLETED 2026-10-09** (three D → A,
+> `../kernel-source-reconstruction/INTERCONNECT-EMI/`;128 certified /330 uncertified of458).
+> Actual normal load metadata common61/platform62/EMI51 corrected; no stock list changes.
+> Current queue head: `CANDIDATE:device_modules:drivers/iommu`: `mtk_iommu.ko`;
+> no new assignment has been written yet.
 
 ## Mission
 

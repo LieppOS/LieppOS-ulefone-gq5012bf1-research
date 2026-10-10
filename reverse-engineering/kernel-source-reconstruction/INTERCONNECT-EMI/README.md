@@ -14,6 +14,7 @@ Existing owner:COVERED-GENERIC/N/A. This is a source-audit group, not a new comp
 - [Boot/runtime conditions](BOOT-DEPENDENCIES.md)
 - [Independent reproduction](BUILD-REPRODUCTION.md)
 - [Corrections/non-claims](STALE-CLAIMS.md)
+- [Audit update and scope invariants](AUDIT-UPDATE.md)
 
 Evidence includes the exact pre-build audit identities and stock paths/hashes/sizes,
 complete generated ledgers, raw difference offsets, compile commands, all33 provider

@@ -1,7 +1,7 @@
 # INTERCONNECT-EMI — source reconstruction result
 
 Device: Ulefone Armor29 Pro Thermal / GQ5012BF1 / MT6878T.
-Stock:6.1.115-android14-11-g945dff7bc1bf. **All three targets source-certifiable A**:
+Stock:6.1.115-android14-11-g945dff7bc1bf. **All three targets source-certified A**:
 complete packaged stock ELF equality except parsed GNU build-ID descriptors; zero
 unexplained executable, data, ABI, KCFI, relocation, symbol or section differences.
 No component promotion is implied; existing owner is COVERED-GENERIC, status N/A.

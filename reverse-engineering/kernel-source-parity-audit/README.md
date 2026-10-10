@@ -4,7 +4,7 @@ A complete **read-only** inventory/evidence audit, not another kernel reconstruc
 
 - [Summary and exact counts](SUMMARY.md)
 - [All identities](ALL-457-MODULES.tsv): 458 binary identities / 457 filenames / 471 occurrences
-- [Source gaps](SOURCE-GAPS.tsv): all 333 uncertified/unexcluded identities, including G
+- [Source gaps](SOURCE-GAPS.tsv): all 330 uncertified/unexcluded identities, including G
 - [Canonical audit source ownership](SOURCE-OWNERSHIP.tsv)
 - [Finite reconstruction/preservation queue](RECONSTRUCTION-QUEUE.md)
 - [Machine project map](RECONSTRUCTION-PROJECTS.tsv)
@@ -12,6 +12,7 @@ A complete **read-only** inventory/evidence audit, not another kernel reconstruc
 - PRESERVE:STORAGE (completed 2026-10-09): [result](../kernel-source-reconstruction/STORAGE/README.md)
 - PINCTRL (completed 2026-10-09): [result](../kernel-source-reconstruction/PINCTRL/README.md)
 - REGULATORS (completed 2026-10-09): [result](../kernel-source-reconstruction/REGULATORS/README.md)
+- INTERCONNECT-EMI (completed 2026-10-09): [result](../kernel-source-reconstruction/INTERCONNECT-EMI/README.md)
 - [Stale claims](STALE-CLAIMS.md)
 - [All import/provider/CRC edges](DEPENDENCY-EDGES.tsv)
 - [Actual partition-specific load-list evidence](LOAD-LIST-EVIDENCE.tsv)
