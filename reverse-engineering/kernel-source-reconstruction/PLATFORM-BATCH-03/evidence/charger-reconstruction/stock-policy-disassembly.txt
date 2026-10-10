@@ -1,0 +1,183 @@
+
+/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/workspace/gq5012bf1/stock/partitions/vendor_dlkm/lib/modules/charger_cooling.ko:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+0000000000000004 <cooling_state_to_charger_limit_v1>:
+       4: d503233f     	paciasp
+       8: d10183ff     	sub	sp, sp, #0x60
+       c: a9037bfd     	stp	x29, x30, [sp, #0x30]
+      10: a90457f6     	stp	x22, x21, [sp, #0x40]
+      14: a9054ff4     	stp	x20, x19, [sp, #0x50]
+      18: 9100c3fd     	add	x29, sp, #0x30
+      1c: d5384108     	mrs	x8, SP_EL0
+      20: aa0003f3     	mov	x19, x0
+      24: f9431d08     	ldr	x8, [x8, #0x638]
+      28: f81f83a8     	stur	x8, [x29, #-0x8]
+      2c: f9402400     	ldr	x0, [x0, #0x48]
+      30: f81f03bf     	stur	xzr, [x29, #-0x10]
+      34: a9017fff     	stp	xzr, xzr, [sp, #0x10]
+      38: f90007ff     	str	xzr, [sp, #0x8]
+      3c: b4000a40     	cbz	x0, 0x184 <cooling_state_to_charger_limit_v1+0x180>
+      40: b13ffc1f     	cmn	x0, #0xfff
+      44: 54000a02     	b.hs	0x184 <cooling_state_to_charger_limit_v1+0x180>
+      48: f9400e68     	ldr	x8, [x19, #0x18]
+      4c: f1003d1f     	cmp	x8, #0xf
+      50: 54000ea2     	b.hs	0x224 <cooling_state_to_charger_limit_v1+0x220>
+      54: d37ef509     	lsl	x9, x8, #2
+      58: f100ed3f     	cmp	x9, #0x3b
+      5c: 54000e68     	b.hi	0x228 <cooling_state_to_charger_limit_v1+0x224>
+      60: 90000016     	adrp	x22, 0x0 <yft_long_charger_flag>
+		0000000000000060:  R_AARCH64_ADR_PREL_PG_HI21	yft_long_charger_flag
+      64: 90000015     	adrp	x21, 0x0 <yft_long_charger_flag>
+		0000000000000064:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str4.4
+      68: 910002b5     	add	x21, x21, #0x0
+		0000000000000068:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str4.4
+      6c: d10043a2     	sub	x2, x29, #0x10
+      70: 528003c1     	mov	w1, #0x1e
+      74: b8687aa8     	ldr	w8, [x21, x8, lsl #2]
+      78: b94002c9     	ldr	w9, [x22]
+		0000000000000078:  R_AARCH64_LDST32_ABS_LO12_NC	yft_long_charger_flag
+      7c: 7100013f     	cmp	w9, #0x0
+      80: 1a8803e8     	csel	w8, wzr, w8, eq
+      84: b81f03a8     	stur	w8, [x29, #-0x10]
+      88: 94000000     	bl	0x88 <cooling_state_to_charger_limit_v1+0x84>
+		0000000000000088:  R_AARCH64_CALL26	power_supply_set_property
+      8c: 35000860     	cbnz	w0, 0x198 <cooling_state_to_charger_limit_v1+0x194>
+      90: b85f03a8     	ldur	w8, [x29, #-0x10]
+      94: b94002c2     	ldr	w2, [x22]
+		0000000000000094:  R_AARCH64_LDST32_ABS_LO12_NC	yft_long_charger_flag
+      98: 7100011f     	cmp	w8, #0x0
+      9c: 52824688     	mov	w8, #0x1234
+      a0: 5a9f03e1     	csetm	w1, ne
+      a4: 6b08005f     	cmp	w2, w8
+      a8: b9001be1     	str	w1, [sp, #0x18]
+      ac: 54000040     	b.eq	0xb4 <cooling_state_to_charger_limit_v1+0xb0>
+      b0: 350000c2     	cbnz	w2, 0xc8 <cooling_state_to_charger_limit_v1+0xc4>
+      b4: 90000000     	adrp	x0, 0x0 <yft_long_charger_flag>
+		00000000000000b4:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x177
+      b8: 91000000     	add	x0, x0, #0x0
+		00000000000000b8:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x177
+      bc: 94000000     	bl	0xbc <cooling_state_to_charger_limit_v1+0xb8>
+		00000000000000bc:  R_AARCH64_CALL26	_printk
+      c0: 12800008     	mov	w8, #-0x1
+      c4: b9001be8     	str	w8, [sp, #0x18]
+      c8: f9402660     	ldr	x0, [x19, #0x48]
+      cc: 910063e2     	add	x2, sp, #0x18
+      d0: 528004c1     	mov	w1, #0x26
+      d4: 94000000     	bl	0xd4 <cooling_state_to_charger_limit_v1+0xd0>
+		00000000000000d4:  R_AARCH64_CALL26	power_supply_set_property
+      d8: 350006a0     	cbnz	w0, 0x1ac <cooling_state_to_charger_limit_v1+0x1a8>
+      dc: 90000008     	adrp	x8, 0x0 <yft_long_charger_flag>
+		00000000000000dc:  R_AARCH64_ADR_PREL_PG_HI21	yft_cam_open_flag
+      e0: f9402660     	ldr	x0, [x19, #0x48]
+      e4: 910043e2     	add	x2, sp, #0x10
+      e8: 52800101     	mov	w1, #0x8
+      ec: 39400108     	ldrb	w8, [x8]
+		00000000000000ec:  R_AARCH64_LDST8_ABS_LO12_NC	yft_cam_open_flag
+      f0: 7100011f     	cmp	w8, #0x0
+      f4: 1a9f17e8     	cset	w8, eq
+      f8: b90013e8     	str	w8, [sp, #0x10]
+      fc: 94000000     	bl	0xfc <cooling_state_to_charger_limit_v1+0xf8>
+		00000000000000fc:  R_AARCH64_CALL26	power_supply_set_property
+     100: 35000600     	cbnz	w0, 0x1c0 <cooling_state_to_charger_limit_v1+0x1bc>
+     104: f9400e61     	ldr	x1, [x19, #0x18]
+     108: 90000000     	adrp	x0, 0x0 <yft_long_charger_flag>
+		0000000000000108:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x12b
+     10c: 91000000     	add	x0, x0, #0x0
+		000000000000010c:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x12b
+     110: b85f03a2     	ldur	w2, [x29, #-0x10]
+     114: b9401be3     	ldr	w3, [sp, #0x18]
+     118: b94013e4     	ldr	w4, [sp, #0x10]
+     11c: 94000000     	bl	0x11c <cooling_state_to_charger_limit_v1+0x118>
+		000000000000011c:  R_AARCH64_CALL26	_printk
+     120: f9402660     	ldr	x0, [x19, #0x48]
+     124: 94000000     	bl	0x124 <cooling_state_to_charger_limit_v1+0x120>
+		0000000000000124:  R_AARCH64_CALL26	power_supply_changed
+     128: b9404268     	ldr	w8, [x19, #0x40]
+     12c: 7100051f     	cmp	w8, #0x1
+     130: 54000581     	b.ne	0x1e0 <cooling_state_to_charger_limit_v1+0x1dc>
+     134: f9402a60     	ldr	x0, [x19, #0x50]
+     138: b40004e0     	cbz	x0, 0x1d4 <cooling_state_to_charger_limit_v1+0x1d0>
+     13c: b13ffc1f     	cmn	x0, #0xfff
+     140: 540004a2     	b.hs	0x1d4 <cooling_state_to_charger_limit_v1+0x1d0>
+     144: f9400e68     	ldr	x8, [x19, #0x18]
+     148: f100391f     	cmp	x8, #0xe
+     14c: 540006c8     	b.hi	0x224 <cooling_state_to_charger_limit_v1+0x220>
+     150: d37ef509     	lsl	x9, x8, #2
+     154: f100ed3f     	cmp	x9, #0x3b
+     158: 54000688     	b.hi	0x228 <cooling_state_to_charger_limit_v1+0x224>
+     15c: b8687aa8     	ldr	w8, [x21, x8, lsl #2]
+     160: 910023e2     	add	x2, sp, #0x8
+     164: 528003c1     	mov	w1, #0x1e
+     168: b9000be8     	str	w8, [sp, #0x8]
+     16c: 94000000     	bl	0x16c <cooling_state_to_charger_limit_v1+0x168>
+		000000000000016c:  R_AARCH64_CALL26	power_supply_set_property
+     170: 2a0003f4     	mov	w20, w0
+     174: 35000500     	cbnz	w0, 0x214 <cooling_state_to_charger_limit_v1+0x210>
+     178: f9402a60     	ldr	x0, [x19, #0x50]
+     17c: 94000000     	bl	0x17c <cooling_state_to_charger_limit_v1+0x178>
+		000000000000017c:  R_AARCH64_CALL26	power_supply_changed
+     180: 14000019     	b	0x1e4 <cooling_state_to_charger_limit_v1+0x1e0>
+     184: 90000000     	adrp	x0, 0x0 <yft_long_charger_flag>
+		0000000000000184:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xdf
+     188: 91000000     	add	x0, x0, #0x0
+		0000000000000188:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xdf
+     18c: 94000000     	bl	0x18c <cooling_state_to_charger_limit_v1+0x188>
+		000000000000018c:  R_AARCH64_CALL26	_printk
+     190: 12800014     	mov	w20, #-0x1
+     194: 14000014     	b	0x1e4 <cooling_state_to_charger_limit_v1+0x1e0>
+     198: 2a0003f4     	mov	w20, w0
+     19c: 90000000     	adrp	x0, 0x0 <yft_long_charger_flag>
+		000000000000019c:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x116
+     1a0: 91000000     	add	x0, x0, #0x0
+		00000000000001a0:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x116
+     1a4: 94000000     	bl	0x1a4 <cooling_state_to_charger_limit_v1+0x1a0>
+		00000000000001a4:  R_AARCH64_CALL26	_printk
+     1a8: 1400000f     	b	0x1e4 <cooling_state_to_charger_limit_v1+0x1e0>
+     1ac: 2a0003f4     	mov	w20, w0
+     1b0: 90000000     	adrp	x0, 0x0 <yft_long_charger_flag>
+		00000000000001b0:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x3b
+     1b4: 91000000     	add	x0, x0, #0x0
+		00000000000001b4:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x3b
+     1b8: 94000000     	bl	0x1b8 <cooling_state_to_charger_limit_v1+0x1b4>
+		00000000000001b8:  R_AARCH64_CALL26	_printk
+     1bc: 1400000a     	b	0x1e4 <cooling_state_to_charger_limit_v1+0x1e0>
+     1c0: 2a0003f4     	mov	w20, w0
+     1c4: 90000000     	adrp	x0, 0x0 <yft_long_charger_flag>
+		00000000000001c4:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xf7
+     1c8: 91000000     	add	x0, x0, #0x0
+		00000000000001c8:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xf7
+     1cc: 94000000     	bl	0x1cc <cooling_state_to_charger_limit_v1+0x1c8>
+		00000000000001cc:  R_AARCH64_CALL26	_printk
+     1d0: 14000005     	b	0x1e4 <cooling_state_to_charger_limit_v1+0x1e0>
+     1d4: 90000000     	adrp	x0, 0x0 <yft_long_charger_flag>
+		00000000000001d4:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x88
+     1d8: 91000000     	add	x0, x0, #0x0
+		00000000000001d8:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x88
+     1dc: 94000000     	bl	0x1dc <cooling_state_to_charger_limit_v1+0x1d8>
+		00000000000001dc:  R_AARCH64_CALL26	_printk
+     1e0: 2a1f03f4     	mov	w20, wzr
+     1e4: d5384108     	mrs	x8, SP_EL0
+     1e8: f9431d08     	ldr	x8, [x8, #0x638]
+     1ec: f85f83a9     	ldur	x9, [x29, #-0x8]
+     1f0: eb09011f     	cmp	x8, x9
+     1f4: 540001c1     	b.ne	0x22c <cooling_state_to_charger_limit_v1+0x228>
+     1f8: 2a1403e0     	mov	w0, w20
+     1fc: a9454ff4     	ldp	x20, x19, [sp, #0x50]
+     200: a94457f6     	ldp	x22, x21, [sp, #0x40]
+     204: a9437bfd     	ldp	x29, x30, [sp, #0x30]
+     208: 910183ff     	add	sp, sp, #0x60
+     20c: d50323bf     	autiasp
+     210: d65f03c0     	ret
+     214: 90000000     	adrp	x0, 0x0 <yft_long_charger_flag>
+		0000000000000214:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x6d
+     218: 91000000     	add	x0, x0, #0x0
+		0000000000000218:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x6d
+     21c: 94000000     	bl	0x21c <cooling_state_to_charger_limit_v1+0x218>
+		000000000000021c:  R_AARCH64_CALL26	_printk
+     220: 17fffff1     	b	0x1e4 <cooling_state_to_charger_limit_v1+0x1e0>
+     224: d42aa240     	brk	#0x5512
+     228: d4200020     	brk	#0x1
+     22c: 94000000     	bl	0x22c <cooling_state_to_charger_limit_v1+0x228>
+		000000000000022c:  R_AARCH64_CALL26	__stack_chk_fail

@@ -2,8 +2,8 @@
 """Exercise the actual full ELF verifier, not a synthetic acceptance boolean."""
 import sys,os,json,csv,tempfile,shutil,subprocess,struct
 from pathlib import Path
-P=Path(__file__).resolve().parents[1];R=P.parents[2];C=Path('/home/armol/kernel-work/platform-batch-02-cleancheck');N=C/'recipes/android_kernel_modules_secure_diagnostics_ulefone_gq5012bf1';sys.dont_write_bytecode=True;sys.path.insert(0,str(N/'scripts'));from normalize import kpp,normalized
-O=C/'ws/out/F0-B1';m='mtk-icc-core';K=kpp.KO(O/(m+'.stripped'));_,bid,n=normalized(K);env=dict(os.environ,LIEPPOS_VERIFY_MODULE=m,LIEPPOS_VERIFY_JOINT='1');stock=C/'comparison-F0-B1/stock-operands';results=[]
+P=Path(__file__).resolve().parents[1];R=P.parents[2];C=Path('/home/armol/kernel-work/platform-batch-03-cleancheck');N=C/'recipes/android_kernel_modules_secure_diagnostics_ulefone_gq5012bf1';sys.dont_write_bytecode=True;sys.path.insert(0,str(N/'scripts'));from normalize import kpp,normalized
+O=C/'ws/out/F0-B1';m='aee_aed';K=kpp.KO(O/(m+'.stripped'));_,bid,n=normalized(K);env=dict(os.environ,LIEPPOS_VERIFY_MODULE=m,LIEPPOS_VERIFY_JOINT='1');stock=C/'comparison-F0-B1/stock-operands';results=[]
 def run(name,b,expect):
  with tempfile.TemporaryDirectory() as td:
   d=Path(td);(d/(m+'.stripped')).write_bytes(b);p=subprocess.run(['python3',str(N/'scripts/verify.py'),str(d),str(stock)],env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT);passed=(p.returncode==0)==expect;results.append({'case':name,'expected_accept':expect,'pass':passed,'exit':p.returncode});assert passed,(name,p.stdout[-1000:])

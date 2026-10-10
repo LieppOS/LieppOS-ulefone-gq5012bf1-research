@@ -22,14 +22,17 @@ restore() {
 trap restore EXIT
 for n in "${NAMES[@]}";do mv "$BASE/$n" "$BASE/$n.unavailable";done
 mv "$D" "$D.unavailable"
-export LIEPPOS_IOMMU_MIRROR=/home/armol/kernel-work/interconnect-pin-mirror JOBS=12
+export LIEPPOS_IOMMU_MIRROR=/home/armol/kernel-work/interconnect-pin-mirror JOBS=12 TMPDIR=/tmp TMP=/tmp TEMP=/tmp PYTHONDONTWRITEBYTECODE=1
+export LIEPPOS_BATCH03_NATIVE_MIRROR=${LIEPPOS_BATCH03_NATIVE_MIRROR:-/home/armol/kernel-work/platform-batch-03-native-inputs}
 bash "$C/recipes/${NAMES[0]}/scripts/bootstrap.sh" "$C/ws"
+bash "$C/recipes/${NAMES[0]}/scripts/native-bootstrap.sh" "$C/ws"
 for i in "${!NAMES[@]}";do
  N=$C/recipes/${NAMES[$i]}
  for B in B1 B2;do
   TAG=F$i-$B
   bash "$N/scripts/bulk-build.sh" "$C/ws" "$TAG"
   LIEPPOS_BATCH_RECIPE="$N" python3 "$P/scripts/compare-batch.py" "$C/ws/out/$TAG" "$C/comparison-$TAG"
+  LIEPPOS_BATCH_RECIPE="$N" python3 "$P/scripts/diagnose-native.py" "$C/ws/out/$TAG" "$C/native-$TAG"
  done
  # Real fresh-family proof before proceeding to next engine; target cache never survives assemble.
  python3 "$P/scripts/check-determinism.py" "$C" "$i"
