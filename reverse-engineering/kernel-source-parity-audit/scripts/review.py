@@ -453,7 +453,7 @@ for r in b3rows:
         assert p['final_class']=='C' and v['unresolved']==1 and v['btf_bytes_different']==21
         assert v['stock_sha256']==stock['stock_sha256']==r['stock_sha256'] and v['functions']==stock['function_count'] and v['data']==stock['data_count']
         assert v['code_data_abi_raw_semantic_relocations_metadata_layout_exact']
-        add(stock,**common,source_status='C',source_group='FINISH:NATIVE-COMMON-ADC-BTF-BASE',abi_status='CODE_DATA_CRC_KCFI_RELOCATIONS_EXACT_BTF_BASE_INCOMPLETE',verified_difference_classification='GNU20_BUILD_ID_PLUS21_BTF_REFERENCE_BYTES_UNACCEPTED',blocker=v['blocker']+'. '+v['next_experiment'],gap_kind='CODE_OR_ABI_PARITY',parity_evidence=[ref(BATCH03/'THERMAL-COOLING/evidence/incomplete-acceptance/thermal-generic-adc/incomplete-acceptance.json'),ref(BATCH03/'BLOCKERS.tsv'),ref(BATCH03/'evidence/cleancheck-result.json')])
+        add(stock,**common,source_status='C',source_group='FINISH:NATIVE-COMMON-ADC-BTF-BASE',abi_status='CODE_DATA_CRC_KCFI_RELOCATIONS_EXACT_BTF_BASE_INCOMPLETE',verified_difference_classification='GNU20_BUILD_ID_PLUS21_BTF_REFERENCE_BYTES_UNACCEPTED',blocker=v['blocker']+'. '+v['next_experiment'],gap_kind='CODE_OR_ABI_PARITY',parity_evidence=[ref(BATCH03/'THERMAL-COOLING/evidence/incomplete-acceptance/thermal-generic-adc/incomplete-acceptance.json'),ref(BATCH03/'BLOCKERS.tsv'),ref(BATCH03/'evidence/cleancheck-result.json'),ref(BATCH03/'evidence/native-lineage-revisit/result.json')])
     else:
         v=b3accept[m];assert p['final_class']=='A' and stock['stock_sha256']==r['stock_sha256']==v['stock_sha256']
         assert v['functions']==stock['function_count'] and v['data']==stock['data_count'] and v['unresolved']==0

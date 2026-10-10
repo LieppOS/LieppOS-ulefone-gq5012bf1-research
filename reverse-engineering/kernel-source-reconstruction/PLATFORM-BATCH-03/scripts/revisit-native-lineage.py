@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+"""Offline blocker revisit after33 accepted: references and authentic cached lineage only."""
+from pathlib import Path
+import subprocess,struct,json,hashlib
+P=Path(__file__).resolve().parents[1];R=P.parents[2];W=Path('/home/armol/kernel-work/platform-batch-03-cleancheck/ws');E=P/'evidence/native-lineage-revisit';E.mkdir(exist_ok=True);D=P/'THERMAL-COOLING/evidence/incomplete-acceptance/thermal-generic-adc'
+paths=[W/'common',Path('/home/armol/kernel-work/platform-batch-03-dev/common'),Path('/home/armol/kernel-work/interconnect-pin-mirror/common.git'),Path('/home/armol/kernel-work/gki-12901745-workspace/.repo/projects/common.git'),R.parent/'kernel-research/nothing-mt6878/common'];checks=[]
+for p in paths:
+ if not p.exists():checks.append({'repository':str(p),'present':False});continue
+ cmd=['git','--git-dir',str(p)] if p.name.endswith('.git') else ['git','-C',str(p)];q=subprocess.run(cmd+['cat-file','-e','945dff7bc1bf^{commit}'],capture_output=True);checks.append({'repository':str(p),'present':True,'authentic_OEM_commit_945dff7bc1bf_cached':q.returncode==0})
+a=(D/'stock.BTF.bin').read_bytes();b=(D/'source.BTF.bin').read_bytes();assert len(a)==len(b)==261;ha=struct.unpack_from('<HBBIIIII',a);hb=struct.unpack_from('<HBBIIIII',b);assert ha==hb and ha[0]==0xeb9f
+hdr,off,size,so,ss=ha[3:];assert a[hdr+so:hdr+so+ss]==b[hdr+so:hdr+so+ss]
+# Decode record boundaries/fields; never mutate references or claim unknown OEM graph equivalence.
+x=hdr+off;end=x+size;records=[]
+extra={1:lambda n:4,2:lambda n:0,3:lambda n:12,4:lambda n:12*n,5:lambda n:12*n,6:lambda n:8*n,7:lambda n:0,8:lambda n:0,9:lambda n:0,10:lambda n:0,11:lambda n:0,12:lambda n:0,13:lambda n:8*n,14:lambda n:4,15:lambda n:12*n,16:lambda n:0,17:lambda n:4,18:lambda n:0,19:lambda n:12*n}
+while x<end:
+ name,info,type_or_size=struct.unpack_from('<III',a,x);kind=(info>>24)&31;vlen=info&0xffff;assert struct.unpack_from('<I',b,x+4)[0]==info;n=12+extra[kind](vlen);assert x+n<=end;aw=struct.unpack_from('<'+'I'*(n//4),a,x);bw=struct.unpack_from('<'+'I'*(n//4),b,x);changes=[{'relative_offset':x+4*i,'stock_u32':u,'source_u32':v} for i,(u,v) in enumerate(zip(aw,bw)) if u!=v];records.append({'record_offset':x,'kind':kind,'vlen':vlen,'bytes':n,'stock_words':aw,'source_words':bw,'changed_words':changes,'limit':'Different base-relative name/type references, not executable/data bytes. OEM referenced graphs cannot be resolved using the unrelated public base.'});x+=n
+assert x==end;diff=[i for i,(u,v) in enumerate(zip(a,b)) if u!=v];assert len(diff)==21
+# Bind source-produced split BTF to its actual public provider; reading only, no loading.
+out=W/'out/F0-B1/thermal-generic-adc.stripped';q=subprocess.run(['bpftool','-B',str(W/'gki/vmlinux'),'btf','dump','file',str(out),'format','raw'],text=True,capture_output=True);(E/'public-source-split-btf.txt').write_text(q.stdout+q.stderr);assert q.returncode==0
+j={'result':'BLOCKED_AUTHENTIC_OEM_BTF_LINEAGE_NOT_PRESENT_IN_CHECKED_OFFLINE_CACHES' if not any(x.get('authentic_OEM_commit_945dff7bc1bf_cached') for x in checks) else 'CACHED_OEM_COMMIT_FOUND_REQUIRES_SOURCE_BASE_BUILD_VALIDATION','final_class':'C','after_other33_full_acceptance':True,'checked_cached_repositories':checks,'provider':'Public CI12901745 vmlinux, source-derived pinned SHA256; not OEM base','split_btf_header_equal':True,'module_local_string_bytes_equal':True,'split_btf_bytes':261,'different_bytes':21,'different_u32_reference_fields':sum(len(r['changed_words']) for r in records),'records':records,'source_split_btf_resolved_against_its_actual_provider':True,'stock_graph_equivalence_proven':False,'remaining_experiment':'Acquire authentic cached/public or source-reproduced OEM g945dff7bc1bf base/declarations/tool lineage, resolve the referenced graphs and regenerate naturally; no stock BTF transplant/CRC/reference edit','no_live_kernel_or_phone_or_network_access':True};(E/'result.json').write_text(json.dumps(j,indent=2)+'\n');print(j['result'],'records',len(records),'changed u32 refs',j['different_u32_reference_fields'],'module-local strings and record layout exact; C retained')
