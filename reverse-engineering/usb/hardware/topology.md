@@ -1,5 +1,11 @@
 # GQ5012BF1 USB hardware topology
 
+> **Routing correction, preserved during Batch04 historical-source recovery:** GPIO55/152
+> are the uSmart route/power controls, not thermal camera controls. The thermal module
+> uses GPIO149/191/192 and `tiny2c_mode`; its exact physical D+/D− sharing on the
+> default route is UNKNOWN. See `kernel/usmart/usb-routing.md` and
+> `reverse-engineering/thermal-camera/hardware/topology.md`. No new hardware test.
+
 Sources:
 - the live DT (`live-dt-usb-nodes.txt` here, taken from the existing read-only `/sys/firmware/devicetree` capture);
 - the effective stock DT (base vendor_boot DTB plus DTBO, `usb-research/evidence/stock-usb-dt-nodes.txt`);
@@ -35,12 +41,16 @@ Classes used in the tables:
  └─────────────────┼────────────────────────────────────────────────────────┘
                    │ D+/D− (USB 2.0 HS pair)
      ┌─────────────┴──────────────────────┐  GPIO 55 uvc_switch_gpio (route select)
-     │ board D+/D− route (switch)         │  GPIO 152 uvc_vbus_gpio (camera VBUS/power)
+     │ board D+/D− route (switch)         │  GPIO 152 uvc_vbus_gpio (uSmart power)
      ├──────────────┬─────────────────────┘
      │              │
-  Type-C receptacle   internal ThermoVue UVC camera (3474:4321, HS, root port 1)
-  (BM65_SUB_V1.2      rails via yft_tiny2c_usb GPIO 192/191/149
+  Type-C receptacle   uSmart accessory USB2 pair (GPIO28 detect)
+  (BM65_SUB_V1.2
    daughterboard)
+
+  Internal thermal UVC (3474:4321, HS, root port1) shares USB0;
+  rails via yft_tiny2c_usb GPIO192/191/149, role via tiny2c_mode.
+  Default-route physical sharing/mux wiring is UNKNOWN; no thermal GPIO55/152 writes.
 
  MT6375 PMIC/charger @ I2C 0x11280000 addr 0x34
    tcpc (type_c_port0, IRQ pd_evt)  ── CC/VCONN/SBU(WD) ── Type-C receptacle
@@ -94,15 +104,15 @@ The single root hub matters. `xhci-mtk` sets `allow_single_roothub` and creates 
 | Type-C class port | `/rt-pd-manager` (`rt_pd_manager.ko`) | `/sys/class/typec/port0`, partner/altmodes, orientation/mux forwarding |
 | USB role bridge | `/extcon-usb` (`extcon-mtk-usb.ko`) | TCPC notifier → `usb_role_switch_set_role(usb0)`, OTG VBUS regulator, GPIO glue |
 | VBUS source (OTG) | MT6375 `chg/otg` regulator `usb-otg-vbus` (4.85–5.50 V, 0.5–2.4 A) | `vbus-voltage = 5.25 V`, `vbus-current = 1.8 A`, `vbus-limit-current = 0.5 A` |
-| ID / accessory pin | GPIO 28 `id-gpios`, edge IRQ `extcon-usb` | internal accessory (thermal camera) insert/remove |
-| OTG select | GPIO 37 `otg_gpio_select`, high while extcon drives VBUS | board VBUS-path select |
-| UVC route | GPIO 55 `uvc_switch_gpio` | D+/D− route to the internal camera |
-| UVC power | GPIO 152 `uvc_vbus_gpio` | internal camera VBUS |
+| ID / accessory pin | GPIO 28 `id-gpios`, edge IRQ `extcon-usb` | uSmart accessory insert/remove, not thermal |
+| OTG select | GPIO 37 `otg_gpio_select`, high while extcon drives VBUS | external OTG VBUS-path select |
+| Legacy UVC-named route | GPIO 55 `uvc_switch_gpio` | uSmart D+/D− route select; thermal does not write it |
+| Legacy UVC-named power | GPIO 152 `uvc_vbus_gpio` | uSmart accessory power; not thermal rails |
 | mux | `/soc/typec-mux-switch` (DTBO-added, `orientation-switch`, `mode-switch`, `accessory`), endpoint ↔ tcpc | `mux_switch.ko`. No mux/redriver IC driver below it |
 | SBU | sensed by MT6375 ADC (`io-channels` SBU1/SBU2) for water detection only | no SBU data mux |
 
 ## DP/DM and SS routing
 
-- **D+/D−** go from the SoC USB2 PHY to a board switch (GPIO 55), which selects the Type-C receptacle or the internal camera. The internal path is runtime-proven: the camera enumerates on root port 1 at 480 Mbit/s with no hub. The switch part number is not known.
+- **D+/D−**: GPIO55 selects the external/default route or uSmart; the route-element part number is UNKNOWN. Internal thermal enumerates on the same root port1 at480M with `uvc_insert_status=0`, and thermal software does not toggle GPIO55/152. Whether the default thermal/Type-C path is passively shared or uses another board element is UNKNOWN. Separate software power controls do not establish independent controllers or concurrent data operation.
 - **SS TX/RX**: there is no SS PHY in DT, no SS root hub, and no redriver/retimer/mux IC driver. Physical routing is unproven either way (see `usb2-vs-usb3.md`).
 - **CC/SBU/VCONN** terminate on the MT6375 TCPC.
