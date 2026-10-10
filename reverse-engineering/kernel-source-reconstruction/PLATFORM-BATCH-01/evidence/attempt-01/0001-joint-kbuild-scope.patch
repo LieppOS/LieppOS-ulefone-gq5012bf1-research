@@ -1,0 +1,996 @@
+diff --git a/Kbuild b/Kbuild
+index 2f13dd0..e76428a 100644
+--- a/Kbuild
++++ b/Kbuild
+@@ -8,94 +8,58 @@ subdir-ccflags-y += -Werror \
+ 		-I$(srctree)/$(src)/include \
+ 		-I$(srctree)/$(src)/include/uapi \
+ 
+-obj-y += drivers/memory/
+ 
+-obj-y += drivers/iio/adc/
+ 
+-obj-y += drivers/mfd/
+ 
+-obj-y += drivers/nvmem/
+ 
+-obj-y += drivers/dma/mediatek/
+ 
+-obj-y += drivers/ufs/
+ 
+-obj-y += drivers/char/
+ 
+-obj-y += drivers/clk/mediatek/
+ 
+-obj-y += drivers/clocksource/
+ 
+-obj-y += drivers/cpufreq/
+ 
+-obj-y += drivers/soc/mediatek/
+ 
+-obj-y += drivers/watchdog/
+ 
+-obj-y += drivers/dma-buf/heaps/
+ 
+-obj-y += drivers/regulator/
+ 
+-obj-y += drivers/leds/
+ 
+-obj-y += drivers/pinctrl/mediatek/
+ 
+-obj-y += drivers/power/supply/
+ 
+-obj-y += drivers/rtc/
+ 
+-obj-y += drivers/remoteproc/
+ 
+-obj-y += drivers/rpmsg/
+ 
+-obj-y += drivers/input/keyboard/
+ 
+-obj-y += drivers/phy/mediatek/
+ 
+-obj-y += drivers/thermal/mediatek/
+ 
+-obj-y += drivers/spmi/
+ 
+-obj-y += drivers/tty/serial/8250/
+ 
+-obj-y += drivers/reset/
+ 
+-obj-y += drivers/mailbox/
+ 
+-obj-y += drivers/interconnect/
+ 
+-obj-y += drivers/i2c/busses/
+ 
+-obj-y += drivers/pwm/
+ 
+-obj-y += drivers/spi/
+ 
+-obj-y += drivers/iommu/
+ 
+-obj-y += drivers/mmc/host/
+ 
+-obj-y += drivers/tee/
+ 
+-obj-y += drivers/gpu/drm/mediatek/
+ 
+-obj-y += drivers/input/touchscreen/
+ 
+-obj-y += drivers/gpu/drm/panel/
+ 
+-obj-y += drivers/gpu/mediatek/
+ 
+-obj-y += drivers/media/platform/
+ 
+-obj-y += drivers/usb/
+ 
+-obj-y += drivers/devfreq/
+ 
+-obj-y += drivers/misc/mediatek/
+ 
+-obj-y += sound/soc/codecs/
+ 
+-obj-y += sound/soc/mediatek/
+ 
+-obj-y += drivers/pci/controller/
+ 
+ endif
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-y += drivers/clk/mediatek/
++obj-y += drivers/devfreq/
++obj-y += drivers/dma/mediatek/
++obj-y += drivers/memory/
++obj-y += drivers/mfd/
++obj-y += drivers/misc/mediatek/
++obj-y += drivers/soc/mediatek/
+diff --git a/drivers/clk/mediatek/Makefile b/drivers/clk/mediatek/Makefile
+index 8b8048f..fc078c4 100644
+--- a/drivers/clk/mediatek/Makefile
++++ b/drivers/clk/mediatek/Makefile
+@@ -2,148 +2,22 @@
+ 
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/clk/mediatek
+ 
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MEDIATEK) += clk-common.o
+ clk-common-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MEDIATEK) += clk-mtk.o clk-pll.o clk-gate.o clk-apmixed.o clk-cpumux.o reset.o clk-mux.o clkchk.o clk-fmeter.o mtk-pd-chk.o clkdbg.o
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MEDIATEK) += clk-disable-unused.o
+ 
+-obj-$(CONFIG_COMMON_CLK_MT6853) += clk-mt6853.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_APU0) += clk-mt6853-apu0.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_APU1) += clk-mt6853-apu1.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_APU_VCORE) += clk-mt6853-apuv.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_APU_CONN) += clk-mt6853-apuc.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_AUDIOSYS) += clk-mt6853-audsys.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_CAMSYS_MAIN) += clk-mt6853-cam_m.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_CAMSYS_RAWA) += clk-mt6853-cam_ra.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_CAMSYS_RAWB) += clk-mt6853-cam_rb.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_IMGSYS1) += clk-mt6853-imgsys1.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_IMGSYS2) += clk-mt6853-imgsys2.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_IMP_IIC_WRAP_C) += clk-mt6853-impc.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_IMP_IIC_WRAP_E) += clk-mt6853-impe.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_IMP_IIC_WRAP_N) += clk-mt6853-impn.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_IMP_IIC_WRAP_S) += clk-mt6853-imps.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_IMP_IIC_WRAP_W) += clk-mt6853-impw.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_IMP_IIC_WRAP_WS) += clk-mt6853-impws.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_IPESYS) += clk-mt6853-ipe.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_MDPSYS_CONFIG) += clk-mt6853-mdp.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_MFGCFG) += clk-mt6853-mfg.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_MMSYS_CONFIG) += clk-mt6853-mm.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_SCP_ADSP) += clk-mt6853-scp_par.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_VDEC_GCON) += clk-mt6853-vdec.o
+-obj-$(CONFIG_COMMON_CLK_MT6853_VENC_GCON) += clk-mt6853-venc.o
+ ifneq ($(wildcard $(srctree)/$(src)/clk-mt6878.c),)
+-obj-$(CONFIG_COMMON_CLK_MT6878) += clk-mt6878.o clk-bringup.o
+-obj-$(CONFIG_COMMON_CLK_MT6878_ADSP) += clk-mt6878-adsp.o
+-obj-$(CONFIG_COMMON_CLK_MT6878_CAM) += clk-mt6878-cam.o
+-obj-$(CONFIG_COMMON_CLK_MT6878_CCU) += clk-mt6878-ccu.o
+-obj-$(CONFIG_COMMON_CLK_MT6878_IMG) += clk-mt6878-img.o
+-obj-$(CONFIG_COMMON_CLK_MT6878_MMSYS) += clk-mt6878-mmsys.o
+-obj-$(CONFIG_COMMON_CLK_MT6878_PERI) += clk-mt6878-peri.o
+-obj-$(CONFIG_COMMON_CLK_MT6878_BUS) += clk-mt6878-bus.o
+-obj-$(CONFIG_COMMON_CLK_MT6878_MDPSYS) += clk-mt6878-mdpsys.o
+-obj-$(CONFIG_COMMON_CLK_MT6878_VLP) += clk-mt6878-vlp.o
+-obj-$(CONFIG_COMMON_CLK_MT6878_VCODEC) += clk-mt6878-vcodec.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/clk-mt6897.c),)
+-obj-$(CONFIG_COMMON_CLK_MT6897) += clk-mt6897.o clk-bringup.o
+-obj-$(CONFIG_COMMON_CLK_MT6897_ADSP) += clk-mt6897-adsp.o
+-obj-$(CONFIG_COMMON_CLK_MT6897_CAM) += clk-mt6897-cam.o
+-obj-$(CONFIG_COMMON_CLK_MT6897_CCU) += clk-mt6897-ccu.o
+-obj-$(CONFIG_COMMON_CLK_MT6897_IMG) += clk-mt6897-img.o
+-obj-$(CONFIG_COMMON_CLK_MT6897_MMSYS) += clk-mt6897-mmsys.o
+-obj-$(CONFIG_COMMON_CLK_MT6897_PERI) += clk-mt6897-peri.o
+-obj-$(CONFIG_COMMON_CLK_MT6897_BUS) += clk-mt6897-bus.o
+-obj-$(CONFIG_COMMON_CLK_MT6897_MDPSYS) += clk-mt6897-mdpsys.o
+-obj-$(CONFIG_COMMON_CLK_MT6897_VLP) += clk-mt6897-vlp.o
+-obj-$(CONFIG_COMMON_CLK_MT6897_VCODEC) += clk-mt6897-vcodec.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/clk-mt6886.c),)
+-obj-$(CONFIG_COMMON_CLK_MT6886) += clk-mt6886.o clk-bringup.o
+-obj-$(CONFIG_COMMON_CLK_MT6886_ADSP) += clk-mt6886-adsp.o
+-obj-$(CONFIG_COMMON_CLK_MT6886_CAM) += clk-mt6886-cam.o
+-obj-$(CONFIG_COMMON_CLK_MT6886_CCU) += clk-mt6886-ccu.o
+-obj-$(CONFIG_COMMON_CLK_MT6886_IMG) += clk-mt6886-img.o
+-obj-$(CONFIG_COMMON_CLK_MT6886_MMSYS) += clk-mt6886-mmsys.o
+-obj-$(CONFIG_COMMON_CLK_MT6886_PERI) += clk-mt6886-peri.o
+-obj-$(CONFIG_COMMON_CLK_MT6886_BUS) += clk-mt6886-bus.o
+-obj-$(CONFIG_COMMON_CLK_MT6886_MDPSYS) += clk-mt6886-mdpsys.o
+-obj-$(CONFIG_COMMON_CLK_MT6886_SCP) += clk-mt6886-scp.o
+-obj-$(CONFIG_COMMON_CLK_MT6886_VCODEC) += clk-mt6886-vcodec.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/clk-mt6983.c),)
+-obj-$(CONFIG_COMMON_CLK_MT6983) += clk-mt6983.o clk-bringup.o
+-obj-$(CONFIG_COMMON_CLK_MT6983_ADSP) += clk-mt6983-adsp_grp.o
+-obj-$(CONFIG_COMMON_CLK_MT6983_CCU) += clk-mt6983-ccu_main.o
+-obj-$(CONFIG_COMMON_CLK_MT6983_IMG) += clk-mt6983-img.o
+-obj-$(CONFIG_COMMON_CLK_MT6983_IMP_IIC_WRAP) += clk-mt6983-imp_iic_wrap.o
+-obj-$(CONFIG_COMMON_CLK_MT6983_VCODEC) += clk-mt6983-vcodec.o
+-obj-$(CONFIG_COMMON_CLK_MT6983_MDPSYS) += clk-mt6983-mdp_grp.o
+-obj-$(CONFIG_COMMON_CLK_MT6983_MFG) += clk-mt6983-mfg_top_config.o
+-obj-$(CONFIG_COMMON_CLK_MT6983_MMSYS) += clk-mt6983-mm.o
+-obj-$(CONFIG_COMMON_CLK_MT6983_CAM) += clk-mt6983-cam.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/clk-mt6985.c),)
+-obj-$(CONFIG_COMMON_CLK_MT6985) += clk-mt6985.o clk-bringup.o
+-obj-$(CONFIG_COMMON_CLK_MT6985_ADSP) += clk-mt6985-adsp.o
+-obj-$(CONFIG_COMMON_CLK_MT6985_CAM) += clk-mt6985-cam.o
+-obj-$(CONFIG_COMMON_CLK_MT6985_CCU) += clk-mt6985-ccu.o
+-obj-$(CONFIG_COMMON_CLK_MT6985_IMG) += clk-mt6985-img.o
+-obj-$(CONFIG_COMMON_CLK_MT6985_MMSYS) += clk-mt6985-mmsys.o
+-obj-$(CONFIG_COMMON_CLK_MT6985_PERI) += clk-mt6985-peri.o
+-obj-$(CONFIG_COMMON_CLK_MT6985_BUS) += clk-mt6985-bus.o
+-obj-$(CONFIG_COMMON_CLK_MT6985_MDPSYS) += clk-mt6985-mdpsys.o
+-obj-$(CONFIG_COMMON_CLK_MT6985_VLP) += clk-mt6985-vlp.o
+-obj-$(CONFIG_COMMON_CLK_MT6985_VCODEC) += clk-mt6985-vcodec.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/clk-mt6989.c),)
+-obj-$(CONFIG_COMMON_CLK_MT6989) += clk-mt6989.o clk-bringup.o
+-obj-$(CONFIG_COMMON_CLK_MT6989_ADSP) += clk-mt6989-adsp.o
+-obj-$(CONFIG_COMMON_CLK_MT6989_CAM) += clk-mt6989-cam.o
+-obj-$(CONFIG_COMMON_CLK_MT6989_IMG) += clk-mt6989-img.o
+-obj-$(CONFIG_COMMON_CLK_MT6989_MMSYS) += clk-mt6989-mmsys.o
+-obj-$(CONFIG_COMMON_CLK_MT6989_PERI) += clk-mt6989-peri.o
+-obj-$(CONFIG_COMMON_CLK_MT6989_BUS) += clk-mt6989-bus.o
+-obj-$(CONFIG_COMMON_CLK_MT6989_MDPSYS) += clk-mt6989-mdpsys.o
+-obj-$(CONFIG_COMMON_CLK_MT6989_VLP) += clk-mt6989-vlp.o
+-obj-$(CONFIG_COMMON_CLK_MT6989_VCODEC) += clk-mt6989-vcodec.o
+-endif
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MT8192) += clk-mt8192.o clk-bringup.o
+-obj-$(CONFIG_COMMON_CLK_MT8192_APU0) += clk-mt8192-apu0.o
+-obj-$(CONFIG_COMMON_CLK_MT8192_APU1) += clk-mt8192-apu1.o
+-obj-$(CONFIG_COMMON_CLK_MT8192_APU_VCORE) += clk-mt8192-apu_vcore.o
+-obj-$(CONFIG_COMMON_CLK_MT8192_APU_CONN) += clk-mt8192-apu_conn.o
+-obj-$(CONFIG_COMMON_CLK_MT8192_APU_MDLA0) += clk-mt8192-apu_mdla0.o
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MT8192_AUDSYS) += clk-mt8192-aud.o
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MT8192_CAMSYS) += clk-mt8192-cam.o
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MT8192_IMGSYS) += clk-mt8192-img.o
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MT8192_IMP_IIC_WRAP) += clk-mt8192-imp_iic_wrap.o
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MT8192_IPESYS) += clk-mt8192-ipe.o
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MT8192_MDPSYS) += clk-mt8192-mdp.o
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MT8192_MFGCFG) += clk-mt8192-mfg.o
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MT8192_MMSYS) += clk-mt8192-mm.o
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MT8192_MSDC) += clk-mt8192-msdc.o
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MT8192_SCP_ADSP) += clk-mt8192-scp_adsp.o
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MT8192_VDECSYS) += clk-mt8192-vdec.o
+-obj-$(CONFIG_DEVICE_MODULES_COMMON_CLK_MT8192_VENCSYS) += clk-mt8192-venc.o
++endif
+ ifneq ($(wildcard $(srctree)/$(src)/clk-mt8188.c),)
+-obj-$(CONFIG_COMMON_CLK_MT8188) += clk-mt8188.o  clk-bringup.o
+-obj-$(CONFIG_COMMON_CLK_MT8188_AUDSYS_SRC) += clk-mt8188-audio_src.o
+-obj-$(CONFIG_COMMON_CLK_MT8188_CAMSYS) += clk-mt8188-cam.o
+-obj-$(CONFIG_COMMON_CLK_MT8188_IMGSYS) += clk-mt8188-img.o
+-obj-$(CONFIG_COMMON_CLK_MT8188_IMP_IIC_WRAP) += clk-mt8188-imp_iic_wrap.o
+-obj-$(CONFIG_COMMON_CLK_MT8188_IPESYS) += clk-mt8188-ipe.o
+-obj-$(CONFIG_COMMON_CLK_MT8188_VDECSYS) += clk-mt8188-vdec.o
+-obj-$(CONFIG_COMMON_CLK_MT8188_VDOSYS0) += clk-mt8188-vdo0.o
+-obj-$(CONFIG_COMMON_CLK_MT8188_VDOSYS1) += clk-mt8188-vdo1.o
+-obj-$(CONFIG_COMMON_CLK_MT8188_VENCSYS) += clk-mt8188-venc.o
+-obj-$(CONFIG_COMMON_CLK_MT8188_VPPSYS0) += clk-mt8188-vpp0.o
+-obj-$(CONFIG_COMMON_CLK_MT8188_VPPSYS1) += clk-mt8188-vpp1.o
+-obj-$(CONFIG_COMMON_CLK_MT8188_WPESYS) += clk-mt8188-wpe.o
+-obj-$(CONFIG_COMMON_CLK_MT8188_CCUSYS) += clk-mt8188-ccu.o
+-obj-$(CONFIG_COMMON_CLK_MT8188_MFGCFG) += clk-mt8188-mfgcfg.o
+-endif
+-obj-$(CONFIG_COMMON_CLK_MT8516) += clk-mt8516.o
+-obj-$(CONFIG_COMMON_CLK_MT8516_AUDSYS) += clk-mt8516-aud.o
+-obj-$(CONFIG_COMMON_CLK_MTK_FREQ_HOPPING) += fhctl.o
++endif
+ fhctl-y += clk-fhctl.o
+ fhctl-y += clk-fhctl-ap.o
+ fhctl-y += clk-fhctl-pll.o
+@@ -162,81 +36,65 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/gpueb/
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/vcp/rv/
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/vcp/include/
+ 
+-obj-$(CONFIG_COMMON_CLK_MT6853) += clk-chk.o
+ clk-chk-$(CONFIG_COMMON_CLK_MT6853) += clkchk.o clkchk-mt6853.o
+ ifeq ($(CONFIG_DEBUG_FS), y)
+-obj-$(CONFIG_COMMON_CLK_MT6853) += clk-dbg.o
+ clk-dbg-$(CONFIG_COMMON_CLK_MT6853) += clkdbg.o clkdbg-mt6853.o
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/clk-mt6878.c),)
+-obj-$(CONFIG_COMMON_CLK_MT6878) += clk-chk-mt6878.o
+ clk-chk-mt6878-$(CONFIG_COMMON_CLK_MT6878) += clkchk-mt6878.o
+-obj-$(CONFIG_COMMON_CLK_MT6878) += clk-fmeter-mt6878.o
+-obj-$(CONFIG_COMMON_CLK_MT6878) += pd-chk-mt6878.o
+ pd-chk-mt6878-$(CONFIG_COMMON_CLK_MT6878) += mtk-pd-chk-mt6878.o
+ ifeq ($(CONFIG_DEBUG_FS), y)
+-obj-$(CONFIG_COMMON_CLK_MT6878) += clk-dbg-mt6878.o
+ clk-dbg-mt6878-$(CONFIG_COMMON_CLK_MT6878) += clkdbg-mt6878.o
+ endif
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/clk-mt6886.c),)
+-obj-$(CONFIG_COMMON_CLK_MT6886) += clk-chk-mt6886.o
+ clk-chk-mt6886-$(CONFIG_COMMON_CLK_MT6886) += clkchk-mt6886.o
+-obj-$(CONFIG_COMMON_CLK_MT6886) += clk-fmeter-mt6886.o
+-obj-$(CONFIG_COMMON_CLK_MT6886) += pd-chk-mt6886.o
+ pd-chk-mt6886-$(CONFIG_COMMON_CLK_MT6886) += mtk-pd-chk-mt6886.o
+ ifeq ($(CONFIG_DEBUG_FS), y)
+-obj-$(CONFIG_COMMON_CLK_MT6886) += clk-dbg-mt6886.o
+ clk-dbg-mt6886-$(CONFIG_COMMON_CLK_MT6886) += clkdbg-mt6886.o
+ endif
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/clk-mt6897.c),)
+-obj-$(CONFIG_COMMON_CLK_MT6897) += clk-chk-mt6897.o
+ clk-chk-mt6897-$(CONFIG_COMMON_CLK_MT6897) += clkchk-mt6897.o
+-obj-$(CONFIG_COMMON_CLK_MT6897) += clk-fmeter-mt6897.o
+-obj-$(CONFIG_COMMON_CLK_MT6897) += pd-chk-mt6897.o
+ pd-chk-mt6897-$(CONFIG_COMMON_CLK_MT6897) += mtk-pd-chk-mt6897.o
+ ifeq ($(CONFIG_DEBUG_FS), y)
+-obj-$(CONFIG_COMMON_CLK_MT6897) += clk-dbg-mt6897.o
+ clk-dbg-mt6897-$(CONFIG_COMMON_CLK_MT6897) += clkdbg-mt6897.o
+ endif
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/clk-mt6983.c),)
+-obj-$(CONFIG_COMMON_CLK_MT6983) += clk-chk-mt6983.o
+ clk-chk-mt6983-$(CONFIG_COMMON_CLK_MT6983) += clkchk-mt6983.o
+-obj-$(CONFIG_COMMON_CLK_MT6983) += clk-fmeter-mt6983.o
+-obj-$(CONFIG_COMMON_CLK_MT6983) += pd-chk-mt6983.o
+ pd-chk-mt6983-$(CONFIG_COMMON_CLK_MT6983) += mtk-pd-chk-mt6983.o
+ ifeq ($(CONFIG_DEBUG_FS), y)
+-obj-$(CONFIG_COMMON_CLK_MT6983) += clk-dbg-mt6983.o
+ clk-dbg-mt6983-$(CONFIG_COMMON_CLK_MT6983) += clkdbg-mt6983.o
+ endif
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/clk-mt6985.c),)
+-obj-$(CONFIG_COMMON_CLK_MT6985) += clk-chk-mt6985.o
+ clk-chk-mt6985-$(CONFIG_COMMON_CLK_MT6985) += clkchk-mt6985.o
+-obj-$(CONFIG_COMMON_CLK_MT6985) += clk-fmeter-mt6985.o
+-obj-$(CONFIG_COMMON_CLK_MT6985) += pd-chk-mt6985.o
+ pd-chk-mt6985-$(CONFIG_COMMON_CLK_MT6985) += mtk-pd-chk-mt6985.o
+ ifeq ($(CONFIG_DEBUG_FS), y)
+-obj-$(CONFIG_COMMON_CLK_MT6985) += clk-dbg-mt6985.o
+ clk-dbg-mt6985-$(CONFIG_COMMON_CLK_MT6985) += clkdbg-mt6985.o
+ endif
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/clk-mt6989.c),)
+-obj-$(CONFIG_COMMON_CLK_MT6989) += clk-chk-mt6989.o
+ clk-chk-mt6989-$(CONFIG_COMMON_CLK_MT6989) += clkchk-mt6989.o
+-obj-$(CONFIG_COMMON_CLK_MT6989) += clk-fmeter-mt6989.o
+-obj-$(CONFIG_COMMON_CLK_MT6989) += pd-chk-mt6989.o
+ pd-chk-mt6989-$(CONFIG_COMMON_CLK_MT6989) += mtk-pd-chk-mt6989.o
+ ifeq ($(CONFIG_DEBUG_FS), y)
+-obj-$(CONFIG_COMMON_CLK_MT6989) += clk-dbg-mt6989.o
+ clk-dbg-mt6989-$(CONFIG_COMMON_CLK_MT6989) += clkdbg-mt6989.o
+ endif
+-endif
+\ No newline at end of file
++endif
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += clk-bringup.o
++obj-m += clk-chk-mt6878.o
++obj-m += clk-common.o
++obj-m += clk-dbg-mt6878.o
++obj-m += clk-disable-unused.o
++obj-m += clk-mt6878-cam.o
++obj-m += clk-mt6878-ccu.o
++obj-m += clk-mt6878-img.o
++obj-m += clk-mt6878-mmsys.o
+diff --git a/drivers/devfreq/Makefile b/drivers/devfreq/Makefile
+index 7fb5830..446a324 100644
+--- a/drivers/devfreq/Makefile
++++ b/drivers/devfreq/Makefile
+@@ -1,4 +1,6 @@
+ # SPDX-License-Identifier: GPL-2.0
+ 
+ # DEVFREQ Drivers
+-obj-$(CONFIG_MTK_DVFSRC_DEVFREQ)	+= mtk-dvfsrc-devfreq.o
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += mtk-dvfsrc-devfreq.o
+diff --git a/drivers/dma/mediatek/Makefile b/drivers/dma/mediatek/Makefile
+index 1e6d214..3255263 100644
+--- a/drivers/dma/mediatek/Makefile
++++ b/drivers/dma/mediatek/Makefile
+@@ -2,5 +2,6 @@
+ 
+ ccflags-y += -I$(srctree)/drivers/dma/mediatek
+ 
+-obj-$(CONFIG_DEVICE_MODULES_MTK_UART_APDMA) += mtk-uart-apdma.o
+-obj-$(CONFIG_DEVICE_MODULES_MTK_CQDMA) += mtk-cqdma.o
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += mtk-uart-apdma.o
+diff --git a/drivers/memory/Makefile b/drivers/memory/Makefile
+index 615a32b..cf5dc1e 100644
+--- a/drivers/memory/Makefile
++++ b/drivers/memory/Makefile
+@@ -2,5 +2,7 @@
+ 
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/memory
+ 
+-obj-$(CONFIG_HAVE_MTK_MC)	+= mediatek/
+-obj-$(CONFIG_DEVICE_MODULES_MTK_SMI)		+= mtk-smi.o
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-y += mediatek/
++obj-m += mtk-smi.o
+diff --git a/drivers/memory/mediatek/Makefile b/drivers/memory/mediatek/Makefile
+index 3627b86..8bdacdc 100644
+--- a/drivers/memory/mediatek/Makefile
++++ b/drivers/memory/mediatek/Makefile
+@@ -1,15 +1,9 @@
+ # SPDX-License-Identifier: GPL-2.0
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/memory/mediatek/
+-obj-$(CONFIG_MTK_EMI) += emi.o
+ emi-objs := emi-cen.o emi-isu.o emi-dbg.o
+-obj-$(CONFIG_MTK_EMI) += emi-mpu.o
+-obj-$(CONFIG_MTK_EMI) += emi-fake-eng.o
+-obj-$(CONFIG_MTK_EMI) += smpu.o
+-obj-$(CONFIG_MTK_EMI) += emi-slb.o
+-obj-$(CONFIG_MTK_EMI) += slc-parity.o
+-obj-$(CONFIG_MTK_EMI) += smpu-hook-v1.o
+-obj-$(CONFIG_MTK_EMI_MPU_TEST) += emi-mpu-test.o
+-obj-$(CONFIG_MTK_EMI_MPU_TEST) += emi-mpu-test-v2.o
+-obj-$(CONFIG_MTK_DRAMC)    += mtk_dramc.o
+ mtk_dramc-objs	+= dramc.o dramc_bin.o
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += emi.o
++obj-m += mtk_dramc.o
+diff --git a/drivers/mfd/Makefile b/drivers/mfd/Makefile
+index 4488c84..aba6f6d 100644
+--- a/drivers/mfd/Makefile
++++ b/drivers/mfd/Makefile
+@@ -1,18 +1,9 @@
+ # SPDX-License-Identifier: GPL-2.0
+ 
+-obj-$(CONFIG_MFD_MT6338)	+= mt6338-core.o
+-obj-$(CONFIG_DEVICE_MODULES_MFD_MT6360)	+= mt6360-core.o
+ mt6397-objs			:= mt6397-core.o mt6397-irq.o mt6358-irq.o
+-obj-$(CONFIG_DEVICE_MODULES_MFD_MT6397)	+= mt6397.o
+-obj-$(CONFIG_DEVICE_MODULES_MFD_MT6397)        += mt63xx-debug.o
+-obj-$(CONFIG_MFD_MT6375)	+= mt6375.o
+ mt6379s-objs			:= mt6379-spmi.o mt6379-core.o
+-obj-$(CONFIG_MFD_MT6379_SPMI)	+= mt6379s.o
+-obj-$(CONFIG_MFD_MT6681)	+= mt6681-core.o
+-obj-$(CONFIG_MT6685_AUDCLK)	+= mt6685-audclk.o
+-obj-$(CONFIG_MFD_MT6685)	+= mt6685-core.o
+-obj-$(CONFIG_MFD_MTK_SPMI_PMIC)	+= mtk-spmi-pmic.o
+ ifeq ($(CONFIG_DEBUG_FS), y)
+-obj-$(CONFIG_MFD_MTK_SPMI_PMIC)	+= mtk-spmi-pmic-debug.o
+ endif
+-obj-$(CONFIG_MFD_RT9490)	+= rt9490.o
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += mt6338-core.o
+diff --git a/drivers/misc/mediatek/Makefile b/drivers/misc/mediatek/Makefile
+index 6b6c0f9..2292a24 100644
+--- a/drivers/misc/mediatek/Makefile
++++ b/drivers/misc/mediatek/Makefile
+@@ -1,108 +1,15 @@
+ # SPDX-License-Identifier: GPL-2.0
+ export MTK_PLATFORM := $(subst ",,$(CONFIG_MTK_PLATFORM))
+-obj-$(CONFIG_MTK_BLOCK_IO_TRACER) += blocktag/
+-obj-$(CONFIG_MTK_SLBC) += slbc/
+-obj-$(CONFIG_MTK_CM_MGR) += cm_mgr/
+-obj-$(CONFIG_MTK_QOS_FRAMEWORK) += qos/
+-obj-$(CONFIG_MTK_CCCI_DEVICES)	+=  ccci_util/
+-obj-$(CONFIG_MTK_NET_CCMNI) +=  ccmni/
+-obj-$(CONFIG_MTK_NET_RPS) += rps/
+-obj-$(CONFIG_NFC_CHIP_SUPPORT) += nfc/
+-obj-$(CONFIG_MTK_ECCCI_DRIVER) +=  eccci/
+-obj-$(CONFIG_MTK_MEMORY_BLOCK) += memblock/
+-obj-$(CONFIG_MTK_PID_MAP) += pidmap/
+-obj-$(CONFIG_MTK_TINYSYS_SSPM_SUPPORT) += sspm/
+-obj-$(CONFIG_MTK_TINYSYS_SCMI) += tinysys_scmi/
+-obj-$(CONFIG_MTK_TINYSYS_MCUPM_SUPPORT) += mcupm/
+-obj-$(CONFIG_MTK_ET) += et/
+-obj-$(CONFIG_MTK_SUBPMIC_MISC) += subpmic/
+-obj-$(CONFIG_MMPROFILE) += mmp/
+-obj-$(CONFIG_MTK_APUSYS_SUPPORT) += apusys/
+-obj-$(CONFIG_MTK_TRUSTED_MEMORY_SUBSYSTEM) += trusted_mem/
+-obj-$(CONFIG_MTK_ENABLE_GENIEZONE) += geniezone/
+-obj-$(CONFIG_TRUSTY) += trusty/
+-obj-$(CONFIG_MTK_ISE_LPM_SUPPORT) += ise_lpm/
+-obj-$(CONFIG_MTK_SECURITY_SW_SUPPORT) += masp/
+-obj-$(CONFIG_MTK_ATF_LOGGER) += atf/
+-obj-$(CONFIG_MTK_USB_TYPEC) += typec/
+-obj-$(CONFIG_MTPROF) += mtprof/
+-obj-$(CONFIG_MTK_IRQ_MONITOR) += mtprof/
+-obj-$(CONFIG_MTK_LOCKING_AEE) += locking/
+-obj-$(CONFIG_MTK_CAMERA_ISP_SUPPORT) += cameraisp/
+-obj-$(CONFIG_MTK_CAMERA_MEM_SUPPORT) += camera_mem/
+-obj-$(CONFIG_MTK_CAM_TIMESYNC) += cam_timesync/
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq/
+-obj-$(CONFIG_MTK_MDP) += mdp/
+-obj-$(CONFIG_MTK_JPEG) += jpeg/
+-obj-$(CONFIG_MTK_VDEC_FMT) += vdec_fmt/
+-obj-$(CONFIG_MTK_DVFSRC_HELPER) += dvfsrc/
+-obj-$(CONFIG_MTK_V4L2_LENS) += lens/
+-obj-$(CONFIG_MTK_LENS)      += lens/
+-obj-$(CONFIG_MTK_FLASHLIGHT) += flashlight/
+-obj-$(CONFIG_MTK_V4L2_FLASHLIGHT) += flashlight/v4l2/
+-obj-$(CONFIG_MTK_DCM_COMMON) += dcm/
+-obj-$(CONFIG_MMSTAT_TRACER) += mmstat/
+-obj-$(CONFIG_MTK_LOW_POWER_MODULE) += lpm/
+-obj-$(CONFIG_MTK_SSC_MODULE) += ssc/
+-obj-$(CONFIG_MTK_SWPM_MODULE) += swpm/
+-obj-$(CONFIG_MTK_PMSR) += pmsr/
+-obj-$(CONFIG_MTK_IMGSENSOR) += imgsensor/src/
+-obj-$(CONFIG_MTK_IOMMU_MISC) += iommu/
+-obj-$(CONFIG_MTK_COMBO) += connectivity/
+-obj-$(CONFIG_MTK_CONN_SCP) += conn_scp/
+-obj-$(CONFIG_MTK_BTIF) += btif/
+-obj-$(CONFIG_MTK_CONN_MD) += conn_md/
+-obj-$(CONFIG_MTK_UARTHUB) += uarthub/
+-obj-$(CONFIG_MTK_CAM_CAL) += cam_cal/
+-obj-$(CONFIG_MTK_AEE_FEATURE) += aee/
+-obj-$(CONFIG_MTK_SELINUX_AEE_WARNING) += selinux_warning/
+-obj-$(CONFIG_MTK_CLKBUF_CTRL) += clkbuf/
+-obj-$(CONFIG_MTK_SRCLKEN_RC) += srclken_rc/
+-obj-$(CONFIG_MTK_POWER_THROTTLING_COMMON) += power_throttling/
+-obj-$(CONFIG_MTK_PMIC_PROTECT) += pmic_protect/
+-obj-$(CONFIG_MTK_PMIC_TIA) += pmic_tia/
+-obj-$(CONFIG_MTK_MDPM) += mdpm/
+-obj-$(CONFIG_MTK_PWM)	    += pwm/
+-obj-$(CONFIG_MTK_IRTX_PWM_SUPPORT) += irtx/
+-obj-$(CONFIG_MTK_PBM) += pbm/
+-obj-$(CONFIG_MTK_CG_PEAK_POWER_THROTTLING) += cg_ppt/
+-obj-$(CONFIG_MTK_CCU) += ccu/src/
+-obj-$(CONFIG_MEDIATEK_CPUFREQ_DEBUG) += cpufreq_v1/
+-obj-$(CONFIG_MEDIATEK_CPUFREQ_DEBUG_LITE) += cpufreq_lite/
+-obj-$(CONFIG_MTK_PTPOD_GPU) += eemgpu/
+-obj-$(CONFIG_MTK_MKP) += mkp/
+-obj-$(CONFIG_MTK_STATIC_POWER) += leakage_table/
+-obj-$(CONFIG_EXTCON_MTK_USB) += extcon/
+-obj-$(CONFIG_MTK_VOW_SUPPORT) += vow/
+-obj-$(CONFIG_MTK_PERFORMANCE_MODULE) += performance/
+-obj-$(CONFIG_MTK_PERF_COMMON) += perf_common/
+-obj-$(CONFIG_MTK_AUDIODSP_SUPPORT) += adsp/
+-obj-$(CONFIG_MTK_AUDIO_IPI) += audio_ipi/
+-obj-$(CONFIG_MTK_HANG_DETECT) += monitor_hang/
+-obj-$(CONFIG_MTK_SCHEDULER) += sched/
+-obj-$(CONFIG_MTK_CPUQOS_V3) += cache-auditor/
+-obj-$(CONFIG_MTK_AMMS) += memory-amms/
+-obj-$(CONFIG_MTK_SDA) += sda/
+-obj-$(CONFIG_MTK_MDDP_SUPPORT) += mddp/
+-obj-$(CONFIG_MTK_TINYSYS_SCP_SUPPORT) += scp/
+-obj-$(CONFIG_MTK_TINYSYS_VCP_SUPPORT) += vcp/
+-obj-$(CONFIG_MTK_SENSOR_SUPPORT) += sensor/
+-obj-$(CONFIG_MTK_DRAM_LOG_STORE) += log_store/
+-obj-$(CONFIG_MTK_PRINTK) += mtprintk/
+-obj-$(CONFIG_MTK_TASK_TURBO) += task_turbo/
+-obj-$(CONFIG_INTERCONNECT_MTK_EXTENSION) += mtk-interconnect/
+-obj-$(CONFIG_MTK_MMDVFS) += mmdvfs/
+-obj-$(CONFIG_MTK_MMDEBUG) += mmdebug/
+-obj-$(CONFIG_MTK_VMM_SPM) += vmm_spm/
+-obj-$(CONFIG_MTK_VMM_NOTIFIER) += vmm/
+-obj-$(CONFIG_MTK_MMINFRA) += mminfra/
+-obj-$(CONFIG_MTK_HW_SEMAPHORE) += hw_sem/
+-obj-$(CONFIG_DEVICE_MODULES_MTK_SMI) += smi/
+-obj-$(CONFIG_INTERCONNECT_MTK_MMQOS_COMMON) += mmqos/
+-obj-$(CONFIG_MTK_GATE_IC) += gate_ic/
+-obj-$(CONFIG_USB) += usb/
+-obj-$(CONFIG_MTK_WIDEVINE_DRM) += widevine_drm/
+-obj-$(CONFIG_MTK_PGBOOST) += pgboost/
+-obj-$(CONFIG_MTK_MBRAINK)      += mbraink/
+-obj-$(CONFIG_MTK_IPS_HELPER) += ips/
+ 
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-y += aee/
++obj-y += cmdq/
++obj-y += dvfsrc/
++obj-y += geniezone/
++obj-y += iommu/
++obj-y += mdp/
++obj-y += mmp/
++obj-y += sda/
++obj-y += smi/
++obj-y += vcp/
+diff --git a/drivers/misc/mediatek/aee/Makefile b/drivers/misc/mediatek/aee/Makefile
+index 73e1d5b..3684ce2 100644
+--- a/drivers/misc/mediatek/aee/Makefile
++++ b/drivers/misc/mediatek/aee/Makefile
+@@ -22,6 +22,6 @@ ifdef CONFIG_MTK_ION
+ subdir-ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/staging/android/ion
+ endif
+ 
+-obj-$(CONFIG_MTK_AEE_FEATURE)	+= aed/
+-obj-$(CONFIG_MTK_AEE_FEATURE)	+= mrdump/
+-obj-$(CONFIG_MTK_AEE_HANGDET)   += hangdet/
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-y += aed/
+diff --git a/drivers/misc/mediatek/aee/aed/Makefile b/drivers/misc/mediatek/aee/aed/Makefile
+index 05c27f8..882fb89 100644
+--- a/drivers/misc/mediatek/aee/aed/Makefile
++++ b/drivers/misc/mediatek/aee/aed/Makefile
+@@ -15,11 +15,12 @@ ifeq ($(CONFIG_MTK_GCOV_KERNEL),y)
+ GCOV_PROFILE := y
+ endif
+ 
+-obj-$(CONFIG_MTK_AEE_AED)	+= aee_aed.o
+ aee_aed-y	+= \
+ 	aed-main.o \
+ 	aed-debug.o \
+ 	aee-common.o \
+ 	slog.o
+ 
+-obj-$(CONFIG_MTK_AEE_FEATURE)	+= aee_rs.o
+\ No newline at end of file
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += aee_aed.o
+diff --git a/drivers/misc/mediatek/cmdq/Makefile b/drivers/misc/mediatek/cmdq/Makefile
+index 272bfff..bf47e97 100644
+--- a/drivers/misc/mediatek/cmdq/Makefile
++++ b/drivers/misc/mediatek/cmdq/Makefile
+@@ -11,6 +11,8 @@
+ # GNU General Public License for more details.
+ #
+ 
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += mailbox/
+ 
+ # EOF
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-y += mailbox/
+diff --git a/drivers/misc/mediatek/cmdq/mailbox/Makefile b/drivers/misc/mediatek/cmdq/mailbox/Makefile
+index 5b9d499..2420595 100644
+--- a/drivers/misc/mediatek/cmdq/mailbox/Makefile
++++ b/drivers/misc/mediatek/cmdq/mailbox/Makefile
+@@ -29,7 +29,6 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/geniezone/public
+ ccflags-y += -DCMDQ_SECURE_MTEE_SUPPORT
+ 
+ ccflags-y += -DCMDQ_SECURE_SUPPORT
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-sec-drv.o
+ cmdq-sec-drv-y := cmdq_sec_mtee.o cmdq-sec-mailbox.o cmdq-sec-helper.o
+ 
+ ccflags-y += -DCMDQ_SECURE_CPR_SUPPORT
+@@ -37,47 +36,38 @@ endif
+ 
+ ccflags-y += -DCMDQ_DCACHE_INVAL
+ 
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += mtk-cmdq-drv-ext.o
+ mtk-cmdq-drv-ext-y := mtk-cmdq-mailbox-ext.o mtk-cmdq-helper-ext.o cmdq-util.o
+ 
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-test.o
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/cmdq-platform-mt6873.c),)
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-platform-mt6873.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/cmdq-platform-mt6853.c),)
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-platform-mt6853.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/cmdq-platform-mt6885.c),)
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-platform-mt6885.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/cmdq-platform-mt6893.c),)
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-platform-mt6893.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/cmdq-platform-mt6983.c),)
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-platform-mt6983.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/cmdq-platform-mt6879.c),)
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-platform-mt6879.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/cmdq-platform-mt6895.c),)
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-platform-mt6895.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/cmdq-platform-mt6855.c),)
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-platform-mt6855.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/cmdq-platform-mt6985.c),)
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-platform-mt6985.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/cmdq-platform-mt6886.c),)
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-platform-mt6886.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/cmdq-platform-mt6897.c),)
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-platform-mt6897.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/cmdq-platform-mt6989.c),)
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-platform-mt6989.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/cmdq-platform-mt6878.c),)
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq-platform-mt6878.o
+ endif
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += cmdq-platform-mt6878.o
++obj-m += cmdq-sec-drv.o
++obj-m += cmdq-test.o
++obj-m += mtk-cmdq-drv-ext.o
+diff --git a/drivers/misc/mediatek/dvfsrc/Makefile b/drivers/misc/mediatek/dvfsrc/Makefile
+index 0a8ad6f..88bc7ac 100644
+--- a/drivers/misc/mediatek/dvfsrc/Makefile
++++ b/drivers/misc/mediatek/dvfsrc/Makefile
+@@ -6,9 +6,11 @@ ccflags-y += \
+ 	-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/sspm/ \
+ 	-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat/ \
+ 
+-obj-$(CONFIG_MTK_DVFSRC_HELPER) += mtk-dvfsrc-helper.o
+ mtk-dvfsrc-helper-objs += dvfsrc-helper.o dvfsrc-debug-v3.o dvfsrc-sysfs.o
+ mtk-dvfsrc-helper-$(CONFIG_MTK_DVFSRC_MET) += dvfsrc-met.o
+ mtk-dvfsrc-helper-$(CONFIG_MTK_DVFSRC_MET_MT6873) += dvfsrc-met-v6873.o
+ mtk-dvfsrc-helper-${CONFIG_MTK_DVFSRC_MET_MT6873} += dvfsrc-met-v6983.o
+ mtk-dvfsrc-helper-$(CONFIG_MTK_DVFSRC_MB)	+= dvfsrc-mb.o
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += mtk-dvfsrc-helper.o
+diff --git a/drivers/misc/mediatek/geniezone/Makefile b/drivers/misc/mediatek/geniezone/Makefile
+index 88aa058..b2c1c49 100644
+--- a/drivers/misc/mediatek/geniezone/Makefile
++++ b/drivers/misc/mediatek/geniezone/Makefile
+@@ -48,13 +48,13 @@ else # Legacy
+   endif
+ endif # !CONFIG_TEE
+ 
+-obj-$(CONFIG_MTK_GZ_MAIN) += gz_main_mod.o
+ gz_main_mod-objs += gz_main.o \
+ 			     mtee_ut/gz_ut.o \
+ 			     mtee_ut/gz_chmem_ut.o mtee_ut/gz_shmem_ut.o mtee_ut/gz_vreg_ut.o \
+ 			     gz_ffa.o \
+ 
+-obj-$(CONFIG_MTK_GZ_TZ_SYSTEM) += gz_tz_system.o
+ gz_tz_system-objs += tz_system.o mtee-kree/tz_mmap.o mtee-kree/kree_mem.o
+ 
+-obj-$(CONFIG_MTK_ENABLE_GENIEZONE) += gz-trusty/
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += gz_tz_system.o
+diff --git a/drivers/misc/mediatek/iommu/Makefile b/drivers/misc/mediatek/iommu/Makefile
+index f613611..4880f7f 100644
+--- a/drivers/misc/mediatek/iommu/Makefile
++++ b/drivers/misc/mediatek/iommu/Makefile
+@@ -17,8 +17,8 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/iommu/arm/arm-smmu-v3
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/dma-buf/heaps
+ ccflags-y += -I$(srctree)/drivers/iommu
+ 
+-obj-$(CONFIG_MTK_IOMMU_MISC_DBG)    += iommu_debug.o
+-obj-$(CONFIG_MTK_IOMMU_MISC_SECURE) += iommu_secure.o
+-obj-$(CONFIG_MTK_IOMMU_MISC_TEST)   += iommu_test.o
+-obj-$(CONFIG_MTK_IOMMU_MISC_TEST)   += iommu_engine.o
+-obj-$(CONFIG_MTK_IOMMU_MISC_SECURE) += smmu_secure.o
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += iommu_debug.o
++obj-m += iommu_secure.o
++obj-m += iommu_test.o
+diff --git a/drivers/misc/mediatek/mdp/Makefile b/drivers/misc/mediatek/mdp/Makefile
+index 9126fe4..98070d8 100644
+--- a/drivers/misc/mediatek/mdp/Makefile
++++ b/drivers/misc/mediatek/mdp/Makefile
+@@ -55,24 +55,17 @@ ccflags-y += -DCMDQ_LARGE_MAX_FIRSTERROR_BUFFER
+ endif
+ 
+ # driver module
+-obj-$(CONFIG_MTK_MDP) += cmdq_helper_inf.o
+ ifneq ($(wildcard $(srctree)/$(src)/mdp_mt6878.c),)
+-obj-$(CONFIG_MTK_MDP) += mdp_drv_mt6878.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/mdp_mt6886.c),)
+-obj-$(CONFIG_MTK_MDP) += mdp_drv_mt6886.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/mdp_mt6897.c),)
+-obj-$(CONFIG_MTK_MDP) += mdp_drv_mt6897.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/mdp_mt6983.c),)
+-obj-$(CONFIG_MTK_MDP) += mdp_drv_mt6983.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/mdp_mt6985.c),)
+-obj-$(CONFIG_MTK_MDP) += mdp_drv_mt6985.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/mdp_mt6989.c),)
+-obj-$(CONFIG_MTK_MDP) += mdp_drv_mt6989.o
+ endif
+ 
+ mdp_drv_mt6878-objs := mdp_mt6878.o\
+@@ -166,3 +159,6 @@ mdp_drv_mt6989-objs := mdp_mt6989.o\
+ #obj-y += cmdq_mmp.o
+ #endif
+ 
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += cmdq_helper_inf.o
+diff --git a/drivers/misc/mediatek/mmp/Makefile b/drivers/misc/mediatek/mmp/Makefile
+index c3dc5a3..1f30a5f 100644
+--- a/drivers/misc/mediatek/mmp/Makefile
++++ b/drivers/misc/mediatek/mmp/Makefile
+@@ -14,10 +14,11 @@
+ 
+ ifeq ($(CONFIG_MTK_MMPROFILE_SUPPORT),y)
+ # The src folder should exist
+-obj-$(CONFIG_MMPROFILE) += src/
+ 
+ else
+ 
+-obj-$(CONFIG_MMPROFILE) += dummy/
+ 
+ endif
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-y += dummy/
+diff --git a/drivers/misc/mediatek/mmp/dummy/Makefile b/drivers/misc/mediatek/mmp/dummy/Makefile
+index e6210fb..03c7cfd 100644
+--- a/drivers/misc/mediatek/mmp/dummy/Makefile
++++ b/drivers/misc/mediatek/mmp/dummy/Makefile
+@@ -13,4 +13,6 @@
+ 
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mmp/
+ 
+-obj-$(CONFIG_MMPROFILE) += mmprofile.o
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += mmprofile.o
+diff --git a/drivers/misc/mediatek/sda/Makefile b/drivers/misc/mediatek/sda/Makefile
+index fe02261..6eb6099 100644
+--- a/drivers/misc/mediatek/sda/Makefile
++++ b/drivers/misc/mediatek/sda/Makefile
+@@ -2,11 +2,6 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/sda/include
+ ccflags-y += -I$(srctree)/kernel/
+ 
+-obj-$(CONFIG_MTK_CACHE_PARITY_CHECK) += cache-parity.o
+-obj-$(CONFIG_MTK_DBGTOP) += dbgtop-drm.o
+-obj-$(CONFIG_MTK_IRQ_DBG) += irq-dbg.o
+-obj-$(CONFIG_MTK_BUS_PARITY_CHECK) += bus-parity.o
+-obj-$(CONFIG_MTK_SYSTRACKER_WATCHPOINT) += systracker.o
+-obj-$(CONFIG_MTK_BUS_PARITY_CHECK) += dbg_error_flag.o
+-obj-$(CONFIG_MTK_LAST_BUS) += last_bus.o
+-obj-$(CONFIG_MTK_BTM_SUPPORT) += btm/
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += irq-dbg.o
+diff --git a/drivers/misc/mediatek/smi/Makefile b/drivers/misc/mediatek/smi/Makefile
+index 171682b..ced2a7f 100644
+--- a/drivers/misc/mediatek/smi/Makefile
++++ b/drivers/misc/mediatek/smi/Makefile
+@@ -4,5 +4,7 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/iommu
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/clk/mediatek/
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/include/soc/mediatek
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/iommu/arm/arm-smmu-v3/
+-obj-$(CONFIG_DEVICE_MODULES_MTK_SMI) += mtk-smi-dbg.o
+ 
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += mtk-smi-dbg.o
+diff --git a/drivers/misc/mediatek/vcp/Makefile b/drivers/misc/mediatek/vcp/Makefile
+index 1469337..85ec774 100644
+--- a/drivers/misc/mediatek/vcp/Makefile
++++ b/drivers/misc/mediatek/vcp/Makefile
+@@ -11,5 +11,7 @@
+ # GNU General Public License for more details.
+ #
+ 
+-obj-y += rv/
+ 
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-y += rv/
+diff --git a/drivers/misc/mediatek/vcp/rv/Makefile b/drivers/misc/mediatek/vcp/rv/Makefile
+index b4fe130..fed5ab9 100644
+--- a/drivers/misc/mediatek/vcp/rv/Makefile
++++ b/drivers/misc/mediatek/vcp/rv/Makefile
+@@ -1,6 +1,4 @@
+-obj-$(CONFIG_MTK_TINYSYS_VCP_SUPPORT) += vcp_status.o
+ 
+-obj-$(CONFIG_MTK_TINYSYS_VCP_SUPPORT) += vcp.o
+ vcp-$(CONFIG_MTK_TINYSYS_VCP_SUPPORT) += vcp_helper.o
+ vcp-$(CONFIG_MTK_TINYSYS_VCP_SUPPORT) += vcp_excep.o
+ vcp-$(CONFIG_MTK_TINYSYS_VCP_SUPPORT) += vcp_irq.o
+@@ -19,3 +17,6 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/clk/mediatek
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/iommu/arm/arm-smmu-v3
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/dma-buf/heaps
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += vcp_status.o
+diff --git a/drivers/soc/mediatek/Makefile b/drivers/soc/mediatek/Makefile
+index 2e4f66d..ecbbe7a 100644
+--- a/drivers/soc/mediatek/Makefile
++++ b/drivers/soc/mediatek/Makefile
+@@ -6,38 +6,32 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/vcp/rv/
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mmdvfs/
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/iommu/arm/arm-smmu-v3/
+ ccflags-y += -I$(srctree)/drivers/soc/mediatek/
+-obj-$(CONFIG_MTK_CMDQ) += mtk-cmdq-helper.o
+-obj-$(CONFIG_MTK_DVFSRC) += mtk-dvfsrc.o mtk-dvfsrc-start.o
+-obj-$(CONFIG_MTK_IPI) += mtk_tinysys_ipi.o
+-obj-$(CONFIG_MTK_MBOX) += mtk-mbox.o
+-obj-$(CONFIG_DEVICE_MODULES_MTK_PMIC_WRAP) += mtk-pmic-wrap.o
+-obj-$(CONFIG_DEVICE_MODULES_MTK_SCPSYS) += mtk-scpsys.o mtk-pm-domain-disable-unused.o
+-obj-$(CONFIG_DEVICE_MODULES_MTK_SCPSYS) += scpsys-dummy.o
+ scpsys-dummy-$(CONFIG_DEVICE_MODULES_MTK_SCPSYS) += mtk-scpsys-dummy.o
+ ifneq ($(wildcard $(srctree)/$(src)/mtk-scpsys-mt6878.c),)
+-obj-$(CONFIG_DEVICE_MODULES_MTK_SCPSYS) += mtk-scpsys-mt6878.o mtk-scpsys-bringup.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/mtk-scpsys-mt6886.c),)
+-obj-$(CONFIG_DEVICE_MODULES_MTK_SCPSYS) += mtk-scpsys-mt6886.o mtk-scpsys-bringup.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/mtk-scpsys-mt6897.c),)
+-obj-$(CONFIG_DEVICE_MODULES_MTK_SCPSYS) += mtk-scpsys-mt6897.o mtk-scpsys-bringup.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/mtk-scpsys-mt6983.c),)
+-obj-$(CONFIG_DEVICE_MODULES_MTK_SCPSYS) += mtk-scpsys-mt6983.o mtk-scpsys-bringup.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/mtk-scpsys-mt6985.c),)
+-obj-$(CONFIG_DEVICE_MODULES_MTK_SCPSYS) += mtk-scpsys-mt6985.o mtk-scpsys-bringup.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/mtk-scpsys-mt6989.c),)
+-obj-$(CONFIG_DEVICE_MODULES_MTK_SCPSYS) += mtk-scpsys-mt6989.o mtk-scpsys-bringup.o
+ endif
+ ifneq ($(wildcard $(srctree)/$(src)/mt8188-pm-domains.h),)
+-obj-$(CONFIG_DEVICE_MODULES_MTK_SCPSYS_PM_DOMAINS) += mtk-pm-domains.o
+ endif
+-obj-$(CONFIG_DEVICE_MODULES_MTK_MMSYS) += mtk-mmsys.o
+-obj-$(CONFIG_DEVICE_MODULES_MTK_DEVAPC) += devapc/
+-obj-$(CONFIG_MTK_DEVMPU) += devmpu/
+-obj-$(CONFIG_MTK_MMDVFS) += mtk-mmdvfs.o mtk-mmdvfs-v3.o
+-obj-$(CONFIG_DEVICE_MODULES_MTK_MMSYS) += mtk-mutex.o
+-obj-$(CONFIG_MTK_SOCINFO) += mtk-socinfo.o
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-y += devapc/
++obj-m += mtk-dvfsrc.o
++obj-m += mtk-dvfsrc-start.o
++obj-m += mtk-mmdvfs.o
++obj-m += mtk-mmdvfs-v3.o
++obj-m += mtk-pm-domain-disable-unused.o
++obj-m += mtk-pmic-wrap.o
++obj-m += mtk-scpsys.o
++obj-m += mtk-scpsys-bringup.o
++obj-m += mtk-scpsys-mt6878.o
++obj-m += mtk-socinfo.o
++obj-m += mtk_tinysys_ipi.o
+diff --git a/drivers/soc/mediatek/devapc/Makefile b/drivers/soc/mediatek/devapc/Makefile
+index 9f61d53..8e2ca70 100644
+--- a/drivers/soc/mediatek/devapc/Makefile
++++ b/drivers/soc/mediatek/devapc/Makefile
+@@ -4,60 +4,52 @@ ifeq ($(CONFIG_MTK_GCOV_KERNEL),y)
+ GCOV_PROFILE := y
+ endif
+ 
+-obj-$(CONFIG_DEVAPC_ARCH_MULTI) += device-apc-common.o
+ device-apc-common-$(CONFIG_DEVAPC_ARCH_MULTI) += devapc-mtk-multi-ao.o
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/devapc-mt6853.c),)
+-obj-$(CONFIG_DEVAPC_MT6853) += device-apc-mt6853.o
+ device-apc-mt6853-$(CONFIG_DEVAPC_MT6853) += devapc-mt6853.o
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/devapc-mt6873.c),)
+-obj-$(CONFIG_DEVAPC_MT6873) += device-apc-mt6873.o
+ device-apc-mt6873-$(CONFIG_DEVAPC_MT6873) += devapc-mt6873.o
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/devapc-mt6878.c),)
+-obj-$(CONFIG_DEVAPC_MT6878) += device-apc-mt6878.o
+ device-apc-mt6878-$(CONFIG_DEVAPC_MT6878) += devapc-mt6878.o
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/devapc-mt6879.c),)
+-obj-$(CONFIG_DEVAPC_MT6879) += device-apc-mt6879.o
+ device-apc-mt6879-$(CONFIG_DEVAPC_MT6879) += devapc-mt6879.o
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/devapc-mt6886.c),)
+-obj-$(CONFIG_DEVAPC_MT6886) += device-apc-mt6886.o
+ device-apc-mt6886-$(CONFIG_DEVAPC_MT6886) += devapc-mt6886.o
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/devapc-mt6893.c),)
+-obj-$(CONFIG_DEVAPC_MT6893) += device-apc-mt6893.o
+ device-apc-mt6893-$(CONFIG_DEVAPC_MT6893) += devapc-mt6893.o
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/devapc-mt6895.c),)
+-obj-$(CONFIG_DEVAPC_MT6895) += device-apc-mt6895.o
+ device-apc-mt6895-$(CONFIG_DEVAPC_MT6895) += devapc-mt6895.o
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/devapc-mt6897.c),)
+-obj-$(CONFIG_DEVAPC_MT6897) += device-apc-mt6897.o
+ device-apc-mt6897-$(CONFIG_DEVAPC_MT6897) += devapc-mt6897.o
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/devapc-mt6983.c),)
+-obj-$(CONFIG_DEVAPC_MT6983) += device-apc-mt6983.o
+ device-apc-mt6983-$(CONFIG_DEVAPC_MT6983) += devapc-mt6983.o
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/devapc-mt6985.c),)
+-obj-$(CONFIG_DEVAPC_MT6985) += device-apc-mt6985.o
+ device-apc-mt6985-$(CONFIG_DEVAPC_MT6985) += devapc-mt6985.o
+ endif
+ 
+ ifneq ($(wildcard $(srctree)/$(src)/devapc-mt6989.c),)
+-obj-$(CONFIG_DEVAPC_MT6989) += device-apc-mt6989.o
+ device-apc-mt6989-$(CONFIG_DEVAPC_MT6989) += devapc-mt6989.o
+ endif
++
++# LieppOS batch01: immutable35 target +8 provider-only scope.
++obj-m += device-apc-common.o
++obj-m += device-apc-mt6878.o
