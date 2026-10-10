@@ -15,6 +15,7 @@ No new workspace component/status or firmware/runtime translation claim.
 - [Boot/deployment boundaries](BOOT-DEPENDENCIES.md)
 - [Clean-clone reproduction](BUILD-REPRODUCTION.md)
 - [Corrections/non-claims](STALE-CLAIMS.md)
+- [Exact audit update/scope invariants](AUDIT-UPDATE.md)
 
 Machine ledgers under evidence/ preserve raw acceptance/differences, typed DT resources,
 source-derived platform/aperture fields, static/live checks, ABI provider signatures and

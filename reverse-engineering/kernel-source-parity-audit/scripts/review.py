@@ -300,6 +300,50 @@ for stock in STOCK.values():
         source_group='INTERCONNECT-EMI',blocker='NONE',gap_kind='NONE',load_order=icc_positions[m][0],
         firmware_boundary='VCP/secure-world/DRAMC/EMI controller policy remains separate; no firmware accessed/rebuilt or runtime bandwidth/channel/clock state certified')
 
+# IOMMU: one authorized target, unchanged ALPS C/header inputs, genuine18 provider
+# CRC/licence/CFI witnesses; debug/secure/test stay separate uncertified projects.
+IOMMU_REPO=WORKSPACE/'android_kernel_modules_iommu_ulefone_gq5012bf1'
+IOMMU_PACK=ROOT/'reverse-engineering/kernel-source-reconstruction/IOMMU'
+IOMMU_HEAD=subprocess.check_output(['git','rev-parse','HEAD'],cwd=IOMMU_REPO,text=True).strip()
+assert IOMMU_HEAD==(IOMMU_PACK/'source/COMMIT').read_text().strip()
+assert not subprocess.check_output(['git','status','--porcelain'],cwd=IOMMU_REPO,text=True).strip(), 'iommu recipe dirty'
+iommu_acceptance=json.loads((IOMMU_PACK/'evidence/acceptance/acceptance.json').read_text())
+iommu_refs={r['module']:r for r in read_table(IOMMU_REPO/'reference/stock-normalized.tsv')}
+assert set(iommu_acceptance)==set(iommu_refs)=={'mtk_iommu'}
+iv=iommu_acceptance['mtk_iommu'];ir=iommu_refs['mtk_iommu']
+assert iv['stock_sha256']==ir['stock_sha256']=='8398de841de67529967c09b144292faa88ca86685df110e05f46b4fb1d8b75c5'
+assert iv['bytes']==int(ir['bytes'])==107408 and iv['unresolved']==0
+assert iv['normalized_sha256']==ir['normalized_sha256']=='7f88162b28c3f45fdab0a38d29d12a7f2b9c24a40f35ccee46dde9a6b2dac4b0'
+assert iv['allowed_range']==[int(ir['build_id_offset'],0),20]==[0xea50,20]
+assert len(iv['raw_difference_offsets'])==iv['raw_differing_bytes']<=20
+assert all(0xea50<=i<0xea64 for i in iv['raw_difference_offsets'])
+for f in ['SHA256SUMS','INTERMEDIATE-SHA256SUMS','SOURCE-TREE','PROVIDER-TREE','config.sha256','gki-symvers.sha256','iommu.Module.symvers','natural-external-provider.symvers','crc-witnesses.tsv','provider-object.sha256']:
+    assert (IOMMU_PACK/'evidence/build'/('B1-'+f)).read_bytes()==(IOMMU_PACK/'evidence/build'/('B2-'+f)).read_bytes(), 'iommu B1/B2 '+f
+for stem,artifact in [('kdm','SOURCE-TREE'),('prov','PROVIDER-TREE')]:
+    assert (IOMMU_PACK/'evidence/build'/('B1-'+artifact)).read_text()==(IOMMU_REPO/'reference'/(stem+'-tree.txt')).read_text()
+assert (IOMMU_PACK/'evidence/build/B1-natural-external-provider.symvers').read_bytes()==(IOMMU_REPO/'reference/external-provider.symvers').read_bytes()
+ii=json.loads((IOMMU_PACK/'evidence/acceptance/result.json').read_text())
+assert ii['unresolved']==0 and ii['source_crc_licence_kcfi_boundary_checks']==18
+assert ii['target_objects_per_build']==2 and ii['provider_objects_per_build']==3 and ii['actual_reverse_imports']==0
+assert json.loads((IOMMU_PACK/'evidence/acceptance/mutation-tests.json').read_text())['all_pass']
+iommu_load=read_table(IOMMU_PACK/'evidence/inventory/LOAD-ORDER.tsv')
+for kind,seq in [('NORMAL','65'),('RECOVERY','63')]:
+    r=next(r for r in iommu_load if r['entry']=='mtk_iommu.ko' and r['kind']==kind)
+    assert r['sequence']==seq and digest(ROOT/r['list_path'])==r['list_sha256']
+for stock in STOCK.values():
+    if stock['filename']!='mtk_iommu.ko':continue
+    assert stock['stock_sha256']==iv['stock_sha256'] and iv['functions']==stock['function_count'] and iv['data']==stock['data_count']
+    add(stock,source_status='A',source_repo=ref(IOMMU_REPO),source_commit=IOMMU_HEAD,
+        source_pin=ref(IOMMU_REPO/'SOURCE-PINS.tsv'),build_script=ref(IOMMU_REPO/'scripts/b1b2.sh'),source_snapshot_path=ref(IOMMU_REPO/'patches'),
+        parity_evidence=[ref(IOMMU_PACK/'evidence/acceptance/acceptance.json'),ref(IOMMU_PACK/'MODULE-PARITY.tsv'),
+            ref(IOMMU_PACK/'evidence/build/b1b2-clean-checkout.log'),ref(IOMMU_PACK/'evidence/acceptance/PROVIDER-ABI-WITNESSES.tsv'),ref(IOMMU_PACK/'RECONSTRUCTION-REPORT.md')],
+        exact_functions=stock['function_count'],equivalent_functions=0,unresolved_functions=0,
+        abi_status='VERIFIED',crc_status='VERIFIED',kcfi_status='VERIFIED',reproduction_status='INDEPENDENT_CLEAN_CHECKOUT_B1_B2',
+        verified_difference_classification='BUILD_METADATA_ONLY (20-byte GNU build ID)',
+        preservation_risk='LOW: immutable public pins, Kbuild-only scope, unchanged22 public C/header inputs, independent clean builds/public mirror and committed recipe/bundle; providers remain separately uncertified',
+        source_group='IOMMU',blocker='NONE',gap_kind='NONE',load_order='65',
+        firmware_boundary='Exact normal-world host SMC/bank contract only; secure firmware, runtime translations/TTBR/groups/IRQ/PM state remain unvalidated; no hardware accessed')
+
 # GKI: both independently cleaned builds prove complete ELF bodies, not vendor variants.
 system=pack('SYSTEM-DLKM');gki_lines=(system/'parity/system-dlkm-parity-B1.txt').read_text().splitlines()
 proven={l.split('\t')[0] for l in gki_lines if '\tIDENTICAL BODY, signature differs' in l};assert len(proven)==60

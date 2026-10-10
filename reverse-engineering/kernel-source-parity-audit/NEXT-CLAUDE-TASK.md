@@ -21,7 +21,13 @@
 > **Follow-up INTERCONNECT-EMI: COMPLETED 2026-10-09** (three D → A,
 > `../kernel-source-reconstruction/INTERCONNECT-EMI/`;128 certified /330 uncertified of458).
 > Actual normal load metadata common61/platform62/EMI51 corrected; no stock list changes.
-> Current queue head: `CANDIDATE:device_modules:drivers/iommu`: `mtk_iommu.ko`;
+>
+> **Follow-up IOMMU: COMPLETED 2026-10-10** (mtk_iommu only D→A,
+> `../kernel-source-reconstruction/IOMMU/`;129 certified /329 uncertified of458).
+> Debug/secure/test remain separate D; target actual normal65/recovery63 recorded;
+> no stock load-list or taxonomy edits.
+> Current queue head: `CANDIDATE:device_modules:drivers/misc/mediatek/cmdq/mailbox`:
+> cmdq-platform-mt6878 / cmdq-sec-drv / cmdq-test / mtk-cmdq-drv-ext;
 > no new assignment has been written yet.
 
 ## Mission
