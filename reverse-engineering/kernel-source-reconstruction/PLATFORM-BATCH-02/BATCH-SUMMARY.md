@@ -167,7 +167,8 @@ no omitted path,duplicate,unsupported A/B claim,broken source ref or ownership/s
 
 Research checkpoints:2972afa(freeze),5bc73b9(all27 development/source recovery),
 f85ff4e(memory),b0534fe(PMIF),46aa419(mailbox/TinySys),e3d58b6(power policy).
-Shared proof and final audit commits follow; exact pointers in BATCH-STATE.json/Git history.
+Shared independent proof:2e87a85. Final audit commit follows;exact pointers in
+BATCH-STATE.json/Git history.
 All source/research repositories local and clean;no push.
 
 Exact next dependency-aware recommendation:**34 remaining identities**,current queue head

@@ -31,8 +31,19 @@
 > All35 selected modules independently compiled;31 D→A, four CMDQ drivers D→C.
 > Auxiliary IOMMU, SMI and25 power/platform members now certified; CMDQ helper certified.
 > Result:`../kernel-source-reconstruction/PLATFORM-BATCH-01/BATCH-SUMMARY.md`.
-> Current totals160 certified /298 remaining of458. Current queue head:mtk-icc-core.
-> Exact recommended next27-module batch:`../kernel-source-reconstruction/PLATFORM-BATCH-01/NEXT-BATCH.md`.
+> Then160 certified /298 remaining of458;the next27-member assignment is now completed.
+>
+> **PLATFORM-BATCH-02: COMPLETED 2026-10-10.** All27 selected identities independently A,
+> 21D/6G→A. Current187 certified /271 remaining of458;four Batch01 CMDQ C unchanged.
+> See `../kernel-source-reconstruction/PLATFORM-BATCH-02/BATCH-SUMMARY.md`.
+>
+> **Next recommended assignment:PLATFORM-BATCH-03 (34 identities).** Current queue head
+> sec-rng;then diagnostics/watchdog,PMIF MFD/ADC/clock supply and thermal/CPU/power policy.
+> Exact target names and machine IDs/classes/owners are in
+> `../kernel-source-reconstruction/PLATFORM-BATCH-02/NEXT-BATCH.md`.
+> Revalidate/freeze before source compilation;reuse immutable public pins and source witnesses,
+> preserve historical G code,require fresh family B1/B2/full ELF acceptance. No phone/firmware
+> operations or push. No implicit authorization to execute the recommendation in this session.
 > The historical six-clock assignment below is NOT a new assignment.
 
 ## Mission

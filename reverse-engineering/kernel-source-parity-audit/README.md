@@ -4,7 +4,7 @@ A complete **read-only** inventory/evidence audit, not another kernel reconstruc
 
 - [Summary and exact counts](SUMMARY.md)
 - [All identities](ALL-457-MODULES.tsv): 458 binary identities / 457 filenames / 471 occurrences
-- [Source gaps](SOURCE-GAPS.tsv): all 298 uncertified/unexcluded identities, including G
+- [Source gaps](SOURCE-GAPS.tsv): all 271 uncertified/unexcluded identities, including G
 - [Canonical audit source ownership](SOURCE-OWNERSHIP.tsv)
 - [Finite reconstruction/preservation queue](RECONSTRUCTION-QUEUE.md)
 - [Machine project map](RECONSTRUCTION-PROJECTS.tsv)
@@ -15,6 +15,7 @@ A complete **read-only** inventory/evidence audit, not another kernel reconstruc
 - INTERCONNECT-EMI (completed 2026-10-09): [result](../kernel-source-reconstruction/INTERCONNECT-EMI/README.md)
 - IOMMU (mtk_iommu only, completed 2026-10-10): [result](../kernel-source-reconstruction/IOMMU/README.md)
 - PLATFORM-BATCH-01 (35 compiled;31 certified,4 explicit C blockers): [result](../kernel-source-reconstruction/PLATFORM-BATCH-01/BATCH-SUMMARY.md)
+- PLATFORM-BATCH-02 (27/27 certified A,21D/6G→A): [result](../kernel-source-reconstruction/PLATFORM-BATCH-02/BATCH-SUMMARY.md)
 - [Stale claims](STALE-CLAIMS.md)
 - [All import/provider/CRC edges](DEPENDENCY-EDGES.tsv)
 - [Actual partition-specific load-list evidence](LOAD-LIST-EVIDENCE.tsv)
