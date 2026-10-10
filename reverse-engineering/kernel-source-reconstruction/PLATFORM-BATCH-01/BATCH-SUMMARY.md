@@ -161,8 +161,9 @@ Final machine results and unchanged-scope comparison are preserved under evidenc
 
 Research checkpoints:06d770b (frozen manifest);65ba73c (all35 development builds and source
 commits);a34b97b (CMDQ accepted helper plus four blockers);6f85036 (IOMMU auxiliary);
-2c71594 (SMI);e90ac31 (power/platform). Final shared-proof/audit commit follows these
-and is discoverable from Git history; BATCH-STATE.json records durable commit pointers.
+2c71594 (SMI);e90ac31 (power/platform);282e27a (independent shared proof).
+The final audit commit follows these and is discoverable from Git history;
+BATCH-STATE.json records durable commit pointers.
 
 Exact next coherent recommendation: **27 existing uncertified identities**, beginning with
 current canonical queue head mtk-icc-core, spanning EMI/DRAMC protection, PMIF/SPMI,

@@ -24,11 +24,16 @@
 >
 > **Follow-up IOMMU: COMPLETED 2026-10-10** (mtk_iommu only D→A,
 > `../kernel-source-reconstruction/IOMMU/`;129 certified /329 uncertified of458).
-> Debug/secure/test remain separate D; target actual normal65/recovery63 recorded;
-> no stock load-list or taxonomy edits.
-> Current queue head: `CANDIDATE:device_modules:drivers/misc/mediatek/cmdq/mailbox`:
-> cmdq-platform-mt6878 / cmdq-sec-drv / cmdq-test / mtk-cmdq-drv-ext;
-> no new assignment has been written yet.
+> At that checkpoint debug/secure/test remained separate D; actual normal65/recovery63
+> recorded; no stock load-list or taxonomy edits.
+>
+> **Follow-up PLATFORM-BATCH-01: COMPLETED WITH FOUR EXPLICIT BLOCKERS 2026-10-10.**
+> All35 selected modules independently compiled;31 D→A, four CMDQ drivers D→C.
+> Auxiliary IOMMU, SMI and25 power/platform members now certified; CMDQ helper certified.
+> Result:`../kernel-source-reconstruction/PLATFORM-BATCH-01/BATCH-SUMMARY.md`.
+> Current totals160 certified /298 remaining of458. Current queue head:mtk-icc-core.
+> Exact recommended next27-module batch:`../kernel-source-reconstruction/PLATFORM-BATCH-01/NEXT-BATCH.md`.
+> The historical six-clock assignment below is NOT a new assignment.
 
 ## Mission
 

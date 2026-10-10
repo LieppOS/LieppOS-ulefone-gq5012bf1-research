@@ -344,6 +344,51 @@ for stock in STOCK.values():
         source_group='IOMMU',blocker='NONE',gap_kind='NONE',load_order='65',
         firmware_boundary='Exact normal-world host SMC/bank contract only; secure firmware, runtime translations/TTBR/groups/IRQ/PM state remain unvalidated; no hardware accessed')
 
+# Frozen platform batch01:35 measured independent builds,31 accepted,4 explicit C residuals.
+BATCH_PACK=ROOT/'reverse-engineering/kernel-source-reconstruction/PLATFORM-BATCH-01'
+batch_rows=read_table(BATCH_PACK/'BATCH-MANIFEST.tsv')
+batch_parity={r['module_id']:r for r in read_table(BATCH_PACK/'BATCH-PARITY.tsv')}
+batch_repos={r['family']:r for r in read_table(BATCH_PACK/'SOURCE-REPOSITORIES.tsv')}
+batch_accept=json.loads((BATCH_PACK/'evidence/acceptance.json').read_text())
+batch_clean=json.loads((BATCH_PACK/'evidence/cleancheck-result.json').read_text())
+assert len(batch_rows)==len(batch_parity)==35 and len(batch_accept)==31
+assert digest(BATCH_PACK/'BATCH-MANIFEST.tsv')=='c381b5b8fd770dd02aa4f73a062e9d40c0d0e1ce7d920d6225c59aef4c9dd813'
+assert batch_clean['result']=='PASS_31_ACCEPTED_4_REPRODUCED_ABI_RESIDUALS'
+assert batch_clean['original_development_and_all_four_recipes_unavailable_during_build']
+assert batch_clean['raw_modules_deterministic']==batch_clean['stripped_modules_deterministic']==35
+assert batch_clean['intermediate_object_count']==120
+assert json.loads((BATCH_PACK/'evidence/acceptance-mutation-tests.json').read_text())['all_pass']
+for family,q in batch_repos.items():
+    repo=(ROOT/q['repository']).resolve()
+    assert subprocess.check_output(['git','rev-parse','HEAD'],cwd=repo,text=True).strip()==q['commit']
+    assert not subprocess.check_output(['git','status','--porcelain'],cwd=repo,text=True).strip()
+    assert (BATCH_PACK/family/'source/COMMIT').read_text().strip()==q['commit']
+    owned=json.loads((repo/'families/OWNERSHIP.json').read_text())['owned_modules']
+    assert set(owned)=={r['filename'].removesuffix('.ko') for r in batch_rows if r['dependency_group']==family}
+for f in ['SHA256SUMS','INTERMEDIATE-SHA256SUMS','config.sha256','gki-symvers.sha256','TARGET-SOURCE-TREE','batch-full.Module.symvers','batch-stock-provider.Module.symvers','provider/natural-external-provider.symvers','provider/scpsys-dummy.symvers','provider/provider-witnesses.json','provider/scpsys-link-name-witnesses.json']:
+    assert (BATCH_PACK/'evidence/build/B1'/f).read_bytes()==(BATCH_PACK/'evidence/build/B2'/f).read_bytes(), 'batch01 B1/B2 '+f
+batch_comparison={r['module_id']:r for r in json.loads((BATCH_PACK/'evidence/comparison-B1.json').read_text())}
+for r in batch_rows:
+    stock=STOCK[r['module_id']];p=batch_parity[r['module_id']];q=batch_repos[r['dependency_group']];repo=(ROOT/q['repository']).resolve();m=stock['filename'].removesuffix('.ko')
+    assert stock['stock_sha256']==r['stock_sha256']
+    common=dict(source_repo=q['repository'],source_commit=q['commit'],source_pin=ref(repo/'SOURCE-PINS.tsv'),build_script=ref(repo/'scripts/bulk-build.sh'),source_snapshot_path=ref(repo/'patches'),
+        reproduction_status='INDEPENDENT_CLEAN_CHECKOUT_B1_B2',preservation_risk='LOW: immutable public pins/shared offline mirror, complete patches, four committed family clones and recovery bundles; original trees unavailable during independent35-module builds',
+        firmware_boundary='Normal-world host source only; secure CMDQ/GZ, VCP/MCUPM/SSPM firmware, actual DMA/IRQ/clock/power transitions and runtime binding remain unvalidated')
+    if p['final_class']=='A':
+        v=batch_accept[m];assert v['stock_sha256']==stock['stock_sha256'] and v['functions']==stock['function_count'] and v['data']==stock['data_count'] and v['unresolved']==0
+        refs={x['module']:x for x in read_table(repo/'reference/stock-normalized.tsv')};assert v['normalized_sha256']==refs[m]['normalized_sha256'] and v['bytes']==int(refs[m]['bytes'])
+        assert v['allowed_range']==[int(refs[m]['build_id_offset'],0),20]
+        assert len(v['raw_difference_offsets'])==v['raw_differing_bytes']<=20 and all(v['allowed_range'][0]<=i<v['allowed_range'][0]+20 for i in v['raw_difference_offsets'])
+        add(stock,**common,source_status='A',source_group='PLATFORM-BATCH-01:'+r['dependency_group'],exact_functions=stock['function_count'],equivalent_functions=0,unresolved_functions=0,
+            abi_status='VERIFIED',crc_status='VERIFIED',kcfi_status='VERIFIED',verified_difference_classification='BUILD_METADATA_ONLY (20-byte GNU build ID)',blocker='NONE',gap_kind='NONE',
+            parity_evidence=[ref(BATCH_PACK/r['dependency_group']/'evidence/acceptance'/m/'acceptance.json'),ref(BATCH_PACK/'evidence/cleancheck-result.json'),ref(BATCH_PACK/'BATCH-PARITY.tsv'),ref(BATCH_PACK/'BUILD-REPRODUCTION.md')])
+    else:
+        x=batch_comparison[r['module_id']];assert p['final_class']=='C' and x['functions_exact']==stock['function_count']
+        add(stock,**common,source_status='C',source_group='FINISH:CMDQ-MAILBOX-ABI',exact_functions=x['functions_exact'],equivalent_functions=0,
+            historical_parity='PARTIAL_SOURCE_BUILD_PARITY_BATCH01',abi_status='INCOMPLETE_ACCEPTANCE',crc_status='SOURCE_CRC_GRAPH_MISMATCH',kcfi_status='ABS_IDS_AND_REQUIRED_PROVIDER_PREFIXES_MATCH_CRC_GRAPH_UNCLOSED',
+            blocker='Deterministic full source build; all function bytes exact, but '+str(len(x['import_crc_mismatches']))+' import and '+str(len(x['export_crc_mismatches']))+' export CRC mismatches plus symbol-counter residue prevent full stock acceptance. Preserve recursive symtypes; OEM-matching declarations required, exact differing field unlocated.',gap_kind='CODE_OR_ABI_PARITY',
+            parity_evidence=[ref(BATCH_PACK/'evidence/comparison-B1.json'),ref(BATCH_PACK/'BLOCKERS.tsv'),ref(BATCH_PACK/'CMDQ-MAILBOX/evidence/type-investigation/public-header-investigation.json')])
+
 # GKI: both independently cleaned builds prove complete ELF bodies, not vendor variants.
 system=pack('SYSTEM-DLKM');gki_lines=(system/'parity/system-dlkm-parity-B1.txt').read_text().splitlines()
 proven={l.split('\t')[0] for l in gki_lines if '\tIDENTICAL BODY, signature differs' in l};assert len(proven)==60
