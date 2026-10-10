@@ -44,9 +44,16 @@
 
 > **Update 2026-10-10 — PLATFORM-BATCH-02:** all27 frozen identities independently
 > accepted A (21D/6G→A), each of four fresh committed engines actually builds joint27 B1/B2.
-> Current:**187 certified /271 remaining of458**. All431 unselected rows,including
+> Then:**187 certified /271 remaining of458**. All431 unselected rows,including
 > four CMDQ C, unchanged. No C/H behavior patch; genuine historical G source recovered.
 > See `../kernel-source-reconstruction/PLATFORM-BATCH-02/BATCH-SUMMARY.md`.
+
+> **PLATFORM-BATCH-03 processed:** all34 frozen identities source-built by five
+> committed clean-clone engines, ten full B1/B2 builds.33 A (27D/6G→A); native
+> thermal-generic-adc D→C for21 split-BTF reference bytes, with all code/data/ABI/
+> relocations/layout exact. Current:**220 certified /238 remaining of458**.
+> All424 unselected rows, four CMDQ C, ownership and471 stock occurrences unchanged.
+> See `../kernel-source-reconstruction/PLATFORM-BATCH-03/BATCH-SUMMARY.md`.
 
 ## Answer and limits
 
@@ -58,29 +65,29 @@ but correctly contains **458** identity rows and every stock path.
 
 | Source class | Count | Evidence-supported interpretation |
 |---|---:|---|
-| A — VERIFIED_BYTE_EXACT | 186 | 60 system_dlkm ELF bodies; 40 accelerator modules; 6 boot-clock modules; 10 storage modules; 4 pinctrl modules; 4 regulator modules; 3 interconnect/EMI modules; 1 IOMMU module; 31 batch01 platform modules;27 batch02 platform modules;declared nonbehavioral metadata differences |
+| A — VERIFIED_BYTE_EXACT | 219 | 60 system_dlkm ELF bodies; 40 accelerator modules; 6 boot-clock; 10 storage; 4 pinctrl; 4 regulator; 3 interconnect/EMI; 1 IOMMU; 31 batch01;27 batch02;33 batch03; declared nonbehavioral metadata differences |
 | B — VERIFIED_SEMANTIC_EQUIVALENT | 1 | imgsensor, with bounded equivalent function/moved byte-load proof |
-| C — REPRODUCIBLE_SOURCE_UNVERIFIED | 8 | FT3680, YFT devinfo, ST21NFC, tkcore source island and four independently built CMDQ drivers; required stock acceptance remains incomplete |
-| D — SOURCE_CANDIDATE_ONLY | 126 | Located public targets/source candidates; no accepted independent stock-compatible build |
+| C — REPRODUCIBLE_SOURCE_UNVERIFIED | 9 | FT3680, YFT devinfo, ST21NFC, tkcore source island, four independently built CMDQ drivers and native common ADC (21 BTF reference bytes); full acceptance incomplete |
+| D — SOURCE_CANDIDATE_ONLY | 98 | Located public targets/source candidates; no accepted independent stock-compatible build |
 | E — SOURCE_MISSING | 0 | No implementation is affirmatively classified missing; this is NOT a claim that every implementation is sufficient |
 | F — PROVEN_NOT_REQUIRED | 0 | No production exclusion meets the requested evidential standard |
-| G — UNRESOLVED | 137 | Historical source builds/parity exist, but independent recipe/input closure is not established by the reviewed records |
+| G — UNRESOLVED | 131 | Historical source builds/parity exist, but independent recipe/input closure is not established by the reviewed records |
 | **Total** | **458** | No unresolved identity dropped |
 
-**187 A/B identities are certified.271 identities are not certified or legitimately
-excluded.** Of those,**134** are candidate/incomplete-acceptance cases (126D+8C),
-and **137 remain unclassified for independent reproducibility**. Do not describe this as
-271 new reverse-engineering projects:the137 G cases include already reconstructed
+**220 A/B identities are certified.238 identities are not certified or legitimately
+excluded.** Of those,**107** are candidate/incomplete-acceptance cases (98D+9C),
+and **131 remain unresolved for independent reproducibility**. Do not describe this as
+238 new reverse-engineering projects:the131 G cases include already reconstructed
 stacks whose existing code and parity must be preserved rather than redone.
 
-There are **111 uncertified identities required by the retained stock first-stage loader
+There are **96 uncertified identities required by the retained stock first-stage loader
 contract** (187 first-stage identities in total). This is a conditional boot/integration
 requirement, not proof that every driver controls indispensable physical hardware. For
 **271 identities, production/runtime necessity remains unknown**. No authorized stripped
 production configuration or removal-safety proof was supplied, so no F exclusions are made.
 
-Source is located in some form for all271 remaining identities:126 public candidates and
-145 reconstructed/built cases (137G+8C). **Eight have class C's specific
+Source is located in some form for all238 remaining identities:98 public candidates and
+140 reconstructed/built cases (131G+9C). **Nine have class C's specific
 incomplete stock-acceptance finding.** Availability of code is not independent reproduction;
 absence of an E finding is not evidence of complete source availability.
 
@@ -174,9 +181,10 @@ absence or negative DT alias alone supports exclusion. See `OPTIONAL-15-REVIEW.t
    completed at their recorded scopes. Batch01 certifies31, including auxiliary IOMMU,
    SMI, clock/power/DMA/IRQ/PMIC support; four CMDQ CRC/counter-symbol gaps stay C.
    Batch02 now certifies27 more,including ICC,memory/PMIF/mailbox/policy source and six
-   historical G inputs. Current queue head:`CANDIDATE:device_modules:drivers/char/hw_random`
-   (`sec-rng.ko`). Recommended next34-member platform batch is in
-   PLATFORM-BATCH-02/NEXT-BATCH.md;external providers/runtime/firmware remain separate.
+   historical G inputs. Batch03 processes34 more:33A/1C, with all target source preserved.
+   Current queue head:`CANDIDATE:device_modules:drivers/clocksource` (`timer-mediatek.ko`).
+   Recommended coherent charging/Type-C/USB batch is in PLATFORM-BATCH-03/NEXT-BATCH.md;
+   native ADC BTF and four CMDQ C remain scoped blockers; firmware/runtime stay separate.
 5. **Connectivity:** preserve/reproduce the 21 historical connectivity targets and separately
    integrate remaining candidate platform dependencies; do not redo radio firmware.
 6. **Modem/data path:** preserve the 16-source-build set and resolve external input closure;
@@ -190,7 +198,7 @@ absence or negative DT alias alone supports exclusion. See `OPTIONAL-15-REVIEW.t
     charger and support closures; independently resolve their build inputs before certification.
 
 The complete finite map is `RECONSTRUCTION-PROJECTS.tsv` / `RECONSTRUCTION-QUEUE.md`:
-128 scoped source/preservation projects (prior closures and Batch02;four Batch01 C blockers remain), not 458 isolated projects and not one giant BSP project.
+114 scoped source/preservation projects (after Batch03;four CMDQ C and native ADC C remain), not 458 isolated projects and not one giant BSP project.
 
 ## Reproduction and validation
 

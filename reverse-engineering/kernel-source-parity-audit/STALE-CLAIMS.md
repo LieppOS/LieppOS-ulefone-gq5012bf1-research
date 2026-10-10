@@ -25,13 +25,17 @@ Existing records are preserved. This audit changes no component status or genera
 | MMQoS/EMI are three public candidates only; audit load67/68/47 is current | Unchanged ALPS C is complete stock-exact except GNU IDs, with independent B1/B2 and33 real provider CRC/licence/KCFI boundaries. Exactly three A; actual stock normal61/62/51 (recovery59/60/50), no list edits. mtk-emi is the ICC vote wrapper, not the separate EMI controller (`../kernel-source-reconstruction/INTERCONNECT-EMI/`). |
 | Original four IOMMU names authorize a four-module closure; main load71 is current | Only current drivers/iommu target mtk_iommu moved D→A via unchanged ALPS C, independent B1/B2 and complete ELF parity. Normal65/recovery63; debug/secure/test remain separate D. No taxonomy promotion or runtime-DMA proof (`../kernel-source-reconstruction/IOMMU/`). |
 
-## What the new counts do not claim
+| Batch03 deterministic all34 means A/B all34 | Five committed engines independently build all34 B1/B2;33 have full whole-ELF acceptance. Native ADC remains C:21 .BTF reference bytes differ although all functions/data/CRC/KCFI/relocations/layout match. Determinism does not waive metadata acceptance. |
+| The public CI BTF base is the OEM source lineage | Public CI12901745 is a pinned source-derived provider input, not OEM g945dff7bc1bf BTF. Authentic matching declaration/tool/base lineage remains to be found; no stock BTF transplantation or field editing is permitted. |
+| Reused maintained recipe HEAD must equal every previous batch's accepted commit | A later scoped recipe commit does not invalidate an immutable accepted ancestor. Batch02 acceptance/ownership/reference records are checked at its exact preserved Git commit, not the advanced Batch03 HEAD. No previous audit identity is reclassified. |
 
-- **329 uncertified/unexcluded identities (357 before BOOT-CLOCK-CORE, 351 before PRESERVE:STORAGE, 341 before PINCTRL, 337 before REGULATORS, 333 before INTERCONNECT-EMI, 330 before IOMMU) are not missing implementations.**
-- **0 class E is not proof that every candidate is sufficient.** The 143 G source claims
+## What the current counts do not claim
+
+- **238 uncertified/unexcluded identities after Batch03 (271 after Batch02,298 after Batch01) are not missing implementations.** Earlier checkpoint counts remain historical, not current totals.
+- **0 class E is not proof that every candidate is sufficient.** The 131 G source claims
   remain unresolved for independent input/recipe closure.
-- **143 G is not a reversal of measured byte/semantic parity.** Preserve that work and
+- **131 G is not a reversal of measured byte/semantic parity.** Preserve that work and
   resolve its reproduction evidence; do not reverse-engineer it again.
-- **153 boot-contract gaps (181 before BOOT-CLOCK-CORE, 175 before PRESERVE:STORAGE, 165 before PINCTRL, 161 before REGULATORS, 157 before INTERCONNECT-EMI, 154 before IOMMU) are conditional on retaining the stock first-stage load model**,
-  not an assertion that all 153 drivers control essential fitted hardware.
+- **96 boot-contract gaps after Batch03 are conditional on retaining the stock first-stage load model**,
+  not an assertion that all96 drivers control essential fitted hardware.
 - **271 unknown necessity results must not be turned into F just to shrink the queue.**

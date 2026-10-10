@@ -401,11 +401,13 @@ assert b2clean['original_development_and_all_four_recipe_paths_unavailable_durin
 assert b2clean['all_27_accepted_each_run'] and b2clean['cross_family_source_config_abi_objects_raw_stripped_identical']
 assert json.loads((BATCH02/'evidence/acceptance-mutation-tests.json').read_text())['all_pass']
 for i,(family,q) in enumerate(b2repos.items()):
-    repo=(ROOT/q['repository']).resolve();assert subprocess.check_output(['git','rev-parse','HEAD'],cwd=repo,text=True).strip()==q['commit']
+    repo=(ROOT/q['repository']).resolve();subprocess.run(['git','merge-base','--is-ancestor',q['commit'],'HEAD'],cwd=repo,check=True)
+    # Advancing shared HEAD never changes the already accepted immutable Batch02 recipe.
+    pinned=lambda path:subprocess.check_output(['git','show',q['commit']+':'+path],cwd=repo,text=True)
     assert not subprocess.check_output(['git','status','--porcelain'],cwd=repo,text=True).strip()
     assert not any(p.endswith(('.o','.ko','.pyc')) for p in subprocess.check_output(['git','ls-files'],cwd=repo,text=True).splitlines())
     assert (BATCH02/family/'source/COMMIT').read_text().strip()==q['commit']
-    assert set(json.loads((repo/'families/OWNERSHIP.json').read_text())['owned_modules'])=={r['filename'].removesuffix('.ko') for r in b2rows if r['dependency_group']==family}
+    assert set(json.loads(pinned('families/OWNERSHIP.json'))['owned_modules'])=={r['filename'].removesuffix('.ko') for r in b2rows if r['dependency_group']==family}
     for f in ['SHA256SUMS','INTERMEDIATE-SHA256SUMS','config.sha256','gki-symvers.sha256','TARGET-SOURCE-TREE','batch-full.Module.symvers','provider/natural-external-provider.symvers','provider/provider-witnesses.json','provider/provider-errors.json']:
         assert (BATCH02/f'evidence/build/F{i}-B1'/f).read_bytes()==(BATCH02/f'evidence/build/F{i}-B2'/f).read_bytes(),f
     assert b2clean['families'][i]['source_commit']==q['commit'] and b2clean['families'][i]['intermediate_object_count']==105
@@ -413,7 +415,8 @@ for r in b2rows:
     stock=STOCK[r['module_id']];m=stock['filename'].removesuffix('.ko');v=b2accept[m];q=b2repos[r['dependency_group']];repo=(ROOT/q['repository']).resolve()
     assert stock['stock_sha256']==r['stock_sha256']==v['stock_sha256']
     assert v['functions']==stock['function_count'] and v['data']==stock['data_count'] and v['unresolved']==0
-    refs={x['module']:x for x in read_table(repo/'reference/stock-normalized.tsv')};assert v['normalized_sha256']==refs[m]['normalized_sha256'] and v['bytes']==int(refs[m]['bytes'])
+    import io
+    refs={x['module']:x for x in csv.DictReader(io.StringIO(subprocess.check_output(['git','show',q['commit']+':reference/stock-normalized.tsv'],cwd=repo,text=True)),delimiter='\t')};assert v['normalized_sha256']==refs[m]['normalized_sha256'] and v['bytes']==int(refs[m]['bytes'])
     assert v['allowed_range']==[int(refs[m]['build_id_offset'],0),20]
     assert len(v['raw_difference_offsets'])==v['raw_differing_bytes']<=20 and all(v['allowed_range'][0]<=i<v['allowed_range'][0]+20 for i in v['raw_difference_offsets'])
     add(stock,source_status='A',source_group='PLATFORM-BATCH-02:'+r['dependency_group'],source_repo=q['repository'],source_commit=q['commit'],source_pin=ref(repo/'SOURCE-PINS.tsv'),build_script=ref(repo/'scripts/bulk-build.sh'),source_snapshot_path=ref(repo/'patches'),
@@ -421,6 +424,43 @@ for r in b2rows:
         preservation_risk='LOW: public immutable pins, full Kbuild-only patches, independent four-clone eight-build proof, source hashes and recovery bundles;no cached target/provider object inputs',
         firmware_boundary='Normal-world memory/PMIF/mailbox/policy host source only;secure calls,TinySys/MCUPM/SSPM/SCP/VCP/GPUEB firmware and actual MMIO/IRQ/traffic/startup remain separate and unvalidated',
         parity_evidence=[ref(BATCH02/r['dependency_group']/'evidence/acceptance'/m/'acceptance.json'),ref(BATCH02/'evidence/cleancheck-result.json'),ref(BATCH02/'evidence/PROVIDER-GRAPH.tsv'),ref(BATCH02/'BATCH-PARITY.tsv'),ref(BATCH02/'BUILD-REPRODUCTION.md')])
+
+# Batch03:34 frozen identities,33 full-accepted A and one explicit native BTF C.
+BATCH03=ROOT/'reverse-engineering/kernel-source-reconstruction/PLATFORM-BATCH-03'
+b3rows=read_table(BATCH03/'BATCH-MANIFEST.tsv');b3parity={r['module_id']:r for r in read_table(BATCH03/'BATCH-PARITY.tsv')};b3repos={r['family']:r for r in read_table(BATCH03/'SOURCE-REPOSITORIES.tsv')}
+b3accept=json.loads((BATCH03/'evidence/acceptance.json').read_text());b3clean=json.loads((BATCH03/'evidence/cleancheck-result.json').read_text())
+assert len(b3rows)==len(b3parity)==34 and len(b3accept)==33
+assert digest(BATCH03/'BATCH-MANIFEST.tsv')=='07940aeefe13a9c3fa50a2ba2e8fb9cee75ce1e057942b0d5da34215896246d5'
+assert b3clean['result']=='PASS_ALL34_FIVE_INDEPENDENT_FAMILY_ENGINES_B1_B2'
+assert b3clean['fresh_complete_compilations']==10 and b3clean['fresh_committed_source_clones']==5
+assert b3clean['original_development_and_all_five_recipe_paths_unavailable_during_ten_compilations']
+assert b3clean['accepted_each_run']==33 and b3clean['explicit_C_blockers_each_run']==1 and b3clean['all_34_built_each_run']
+assert b3clean['cross_family_source_config_abi_objects_raw_stripped_identical']
+assert json.loads((BATCH03/'evidence/acceptance-mutation-tests.json').read_text())['all_pass']
+for i,(family,q) in enumerate(b3repos.items()):
+    repo=(ROOT/q['repository']).resolve();assert subprocess.check_output(['git','rev-parse','HEAD'],cwd=repo,text=True).strip()==q['commit']
+    assert not subprocess.check_output(['git','status','--porcelain'],cwd=repo,text=True).strip()
+    assert (BATCH03/family/'source/COMMIT').read_text().strip()==q['commit']
+    assert set(json.loads((repo/'families/OWNERSHIP.json').read_text())['owned_modules'])=={r['filename'].removesuffix('.ko') for r in b3rows if r['dependency_group']==family}
+    for f in ['SHA256SUMS','INTERMEDIATE-SHA256SUMS','NATIVE-INTERMEDIATE-SHA256SUMS','native-config.sha256','config.sha256','gki-symvers.sha256','TARGET-SOURCE-TREE','batch-full.Module.symvers','provider/natural-external-provider.symvers','provider/provider-witnesses.json','provider/provider-errors.json']:
+        assert (BATCH03/f'evidence/build/F{i}-B1'/f).read_bytes()==(BATCH03/f'evidence/build/F{i}-B2'/f).read_bytes(),f
+    assert b3clean['families'][i]['source_commit']==q['commit'] and b3clean['families'][i]['joint_modules_accepted']==33
+for r in b3rows:
+    stock=STOCK[r['module_id']];m=stock['filename'].removesuffix('.ko');p=b3parity[r['module_id']];q=b3repos[r['dependency_group']];repo=(ROOT/q['repository']).resolve()
+    common=dict(source_repo=q['repository'],source_commit=q['commit'],source_pin=ref(repo/'SOURCE-PINS.tsv'),build_script=ref(repo/'scripts/bulk-build.sh'),source_snapshot_path=ref(repo/'patches'),exact_functions=stock['function_count'],equivalent_functions=0,unresolved_functions=0,reproduction_status='INDEPENDENT_CLEAN_CHECKOUT_B1_B2',crc_status='VERIFIED',kcfi_status='VERIFIED',preservation_risk='LOW: maintained pinned source, full patches, five committed clone ten-build proof and recovery bundles; metadata acceptance remains explicitly scoped',firmware_boundary='Normal-world host interfaces only; ARM secure RNG/SiP services, SSPM/SCMI firmware, crash capture and actual thermal/power/MMIO behavior remain separately unvalidated')
+    if m=='thermal-generic-adc':
+        v=json.loads((BATCH03/'THERMAL-COOLING/evidence/incomplete-acceptance/thermal-generic-adc/incomplete-acceptance.json').read_text())
+        assert p['final_class']=='C' and v['unresolved']==1 and v['btf_bytes_different']==21
+        assert v['stock_sha256']==stock['stock_sha256']==r['stock_sha256'] and v['functions']==stock['function_count'] and v['data']==stock['data_count']
+        assert v['code_data_abi_raw_semantic_relocations_metadata_layout_exact']
+        add(stock,**common,source_status='C',source_group='FINISH:NATIVE-COMMON-ADC-BTF-BASE',abi_status='CODE_DATA_CRC_KCFI_RELOCATIONS_EXACT_BTF_BASE_INCOMPLETE',verified_difference_classification='GNU20_BUILD_ID_PLUS21_BTF_REFERENCE_BYTES_UNACCEPTED',blocker=v['blocker']+'. '+v['next_experiment'],gap_kind='CODE_OR_ABI_PARITY',parity_evidence=[ref(BATCH03/'THERMAL-COOLING/evidence/incomplete-acceptance/thermal-generic-adc/incomplete-acceptance.json'),ref(BATCH03/'BLOCKERS.tsv'),ref(BATCH03/'evidence/cleancheck-result.json')])
+    else:
+        v=b3accept[m];assert p['final_class']=='A' and stock['stock_sha256']==r['stock_sha256']==v['stock_sha256']
+        assert v['functions']==stock['function_count'] and v['data']==stock['data_count'] and v['unresolved']==0
+        refs={x['module']:x for x in read_table(repo/'reference/stock-normalized.tsv')};assert v['normalized_sha256']==refs[m]['normalized_sha256'] and v['bytes']==int(refs[m]['bytes'])
+        assert v['allowed_range']==[int(refs[m]['build_id_offset'],0),20]
+        assert len(v['raw_difference_offsets'])==v['raw_differing_bytes']<=20 and all(v['allowed_range'][0]<=i<v['allowed_range'][0]+20 for i in v['raw_difference_offsets'])
+        add(stock,**common,source_status='A',source_group='PLATFORM-BATCH-03:'+r['dependency_group'],abi_status='VERIFIED',verified_difference_classification='BUILD_METADATA_ONLY (20-byte GNU build ID)',blocker='NONE',gap_kind='NONE',parity_evidence=[ref(BATCH03/r['dependency_group']/'evidence/acceptance'/m/'acceptance.json'),ref(BATCH03/'evidence/cleancheck-result.json'),ref(BATCH03/'evidence/PROVIDER-GRAPH.tsv'),ref(BATCH03/'BATCH-PARITY.tsv'),ref(BATCH03/'BUILD-REPRODUCTION.md')])
 
 # GKI: both independently cleaned builds prove complete ELF bodies, not vendor variants.
 system=pack('SYSTEM-DLKM');gki_lines=(system/'parity/system-dlkm-parity-B1.txt').read_text().splitlines()

@@ -34,16 +34,21 @@
 > Then160 certified /298 remaining of458;the next27-member assignment is now completed.
 >
 > **PLATFORM-BATCH-02: COMPLETED 2026-10-10.** All27 selected identities independently A,
-> 21D/6G→A. Current187 certified /271 remaining of458;four Batch01 CMDQ C unchanged.
+> 21D/6G→A. Then187 certified /271 remaining of458;four Batch01 CMDQ C unchanged.
 > See `../kernel-source-reconstruction/PLATFORM-BATCH-02/BATCH-SUMMARY.md`.
 >
-> **Next recommended assignment:PLATFORM-BATCH-03 (34 identities).** Current queue head
-> sec-rng;then diagnostics/watchdog,PMIF MFD/ADC/clock supply and thermal/CPU/power policy.
-> Exact target names and machine IDs/classes/owners are in
-> `../kernel-source-reconstruction/PLATFORM-BATCH-02/NEXT-BATCH.md`.
-> Revalidate/freeze before source compilation;reuse immutable public pins and source witnesses,
-> preserve historical G code,require fresh family B1/B2/full ELF acceptance. No phone/firmware
-> operations or push. No implicit authorization to execute the recommendation in this session.
+> **PLATFORM-BATCH-03 processed:** all34 source-built;33A/1C. Five committed engines,
+> ten fresh builds; originals unavailable; whole acceptance33 and deterministic34.
+> Native ADC remains C for21 split-BTF reference bytes. Current220 certified /238 remaining.
+> See `../kernel-source-reconstruction/PLATFORM-BATCH-03/BATCH-SUMMARY.md`.
+>
+> **Next recommendation: charging/Type-C/USB source preservation.** Exact source-backed
+> identities, current classes, owners and dependency rationale:
+> `../kernel-source-reconstruction/PLATFORM-BATCH-03/NEXT-BATCH.md`.
+> Revalidate/freeze before compilation. Reuse the completed PMIC parent/ADC interfaces,
+> preserve historical implementations, and require fresh family B1/B2/full ELF acceptance.
+> Keep native ADC BTF and four CMDQ C as separate blockers. Strict offline, no phone,
+> firmware operations or push. This proposal is not authorization to start another batch.
 > The historical six-clock assignment below is NOT a new assignment.
 
 ## Mission
