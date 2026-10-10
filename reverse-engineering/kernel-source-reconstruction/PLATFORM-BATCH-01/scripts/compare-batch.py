@@ -2,7 +2,7 @@
 """Investigate all35; exact full-file acceptance is stricter than partial axis matches."""
 import csv,sys,json,hashlib,struct,collections,os,subprocess
 from pathlib import Path
-P=Path(__file__).resolve().parents[1];R=P.parents[2];N=R.parent/'android_kernel_modules_power_platform_ulefone_gq5012bf1'
+P=Path(__file__).resolve().parents[1];R=P.parents[2];N=Path(os.environ.get('LIEPPOS_BATCH_RECIPE',str(R.parent/'android_kernel_modules_power_platform_ulefone_gq5012bf1')))
 sys.dont_write_bytecode=True;sys.path.insert(0,str(N/'scripts'));from normalize import kpp,normalized
 O=Path(sys.argv[1]);D=Path(sys.argv[2]);D.mkdir(parents=True,exist_ok=True)
 rows=list(csv.DictReader((P/'BATCH-MANIFEST.tsv').open(),delimiter='\t'));out=[]
@@ -27,9 +27,9 @@ for r in rows:
  x['stock_sha256']=hashlib.sha256(a.b).hexdigest();x['normalized_sha256']=hashlib.sha256(bn).hexdigest()
  for typ,axis in [(2,'functions'),(1,'data')]:
   aa,bb=syms(a,typ),syms(b,typ);same=[k for k in aa if k in bb and aa[k]==bb[k]];x[axis+'_exact']=len(same);x[axis+'_rebuilt']=len(bb);x[axis+'_different']=[list(k) for k in aa if k not in same]
- va,_=kpp.versions(a);vb,_=kpp.versions(b);x['import_crc_mismatches']=[s for s in set(va)|set(vb) if va.get(s)!=vb.get(s)]
- ea,eb=exports(a),exports(b);x['export_crc_mismatches']=[s for s in set(ea)|set(eb) if ea.get(s)!=eb.get(s)]
- ka={v['n']:v['val'] for v in a.syms if v['n'].startswith('__kcfi_typeid_')};kb={v['n']:v['val'] for v in b.syms if v['n'].startswith('__kcfi_typeid_')};x['kcfi_abs_mismatches']=[s for s in set(ka)|set(kb) if ka.get(s)!=kb.get(s)];x['provider_boundary_failures']=sorted({e['symbol'] for e in edges if e['consumer_module_id']==r['module_id'] and e['symbol'] in bad})
+ va,_=kpp.versions(a);vb,_=kpp.versions(b);x['import_crc_mismatches']=[s for s in sorted(set(va)|set(vb)) if va.get(s)!=vb.get(s)]
+ ea,eb=exports(a),exports(b);x['export_crc_mismatches']=[s for s in sorted(set(ea)|set(eb)) if ea.get(s)!=eb.get(s)]
+ ka={v['n']:v['val'] for v in a.syms if v['n'].startswith('__kcfi_typeid_')};kb={v['n']:v['val'] for v in b.syms if v['n'].startswith('__kcfi_typeid_')};x['kcfi_abs_mismatches']=[s for s in sorted(set(ka)|set(kb)) if ka.get(s)!=kb.get(s)];x['provider_boundary_failures']=sorted({e['symbol'] for e in edges if e['consumer_module_id']==r['module_id'] and e['symbol'] in bad})
  x['different_sections']=[s['n'] for s in a.secs[1:] if not b.sec(s['n']) or a.data(s['n'])!=b.data(s['n'])]
  # All raw differences are saved before any normalization; differing lengths remain explicit.
  diff=[i for i,(u,v) in enumerate(zip(a.b,b.b)) if u!=v];ranges=[]

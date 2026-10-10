@@ -1,0 +1,198 @@
+diff --git a/drivers/clk/mediatek/Makefile b/drivers/clk/mediatek/Makefile
+index 474e9d8..34b97ce 100644
+--- a/drivers/clk/mediatek/Makefile
++++ b/drivers/clk/mediatek/Makefile
+@@ -91,7 +91,6 @@ endif
+ # LieppOS batch01: immutable35 target +9 provider-only scope.
+ obj-m += clk-bringup.o
+ obj-m += clk-chk-mt6878.o
+-obj-m += clk-common.o
+ obj-m += clk-dbg-mt6878.o
+ obj-m += clk-disable-unused.o
+ obj-m += clk-mt6878-cam.o
+diff --git a/drivers/gpu/mediatek/gpueb/Makefile b/drivers/gpu/mediatek/gpueb/Makefile
+index d58facd..2fb99d9 100644
+--- a/drivers/gpu/mediatek/gpueb/Makefile
++++ b/drivers/gpu/mediatek/gpueb/Makefile
+@@ -16,7 +16,6 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/gpueb/include/
+ 
+ #subdir-ccflags-y += -Wno-error
+ 
+-obj-m += gpueb.o
+ gpueb-y += \
+     gpueb_init.o \
+     gpueb_ipi.o \
+diff --git a/drivers/input/touchscreen/GT9895/Makefile b/drivers/input/touchscreen/GT9895/Makefile
+index 0217e68..83ae972 100644
+--- a/drivers/input/touchscreen/GT9895/Makefile
++++ b/drivers/input/touchscreen/GT9895/Makefile
+@@ -1,6 +1,5 @@
+ ccflags-$(CONFIG_DRM_MEDIATEK_V2) += -I$(DEVICE_MODULES_PATH)/drivers/gpu/drm/mediatek/mediatek_v2/
+ 
+-obj-m += gt9895.o
+ gt9895-y := \
+ 				goodix_brl_spi.o \
+ 				goodix_ts_core.o \
+diff --git a/drivers/input/touchscreen/GT9896S/Makefile b/drivers/input/touchscreen/GT9896S/Makefile
+index b4f8b26..9ddcb18 100644
+--- a/drivers/input/touchscreen/GT9896S/Makefile
++++ b/drivers/input/touchscreen/GT9896S/Makefile
+@@ -6,7 +6,6 @@
+ 
+ ccflags-$(CONFIG_DRM_MEDIATEK_V2) += -I$(DEVICE_MODULES_PATH)/drivers/gpu/drm/mediatek/mediatek_v2/
+ 
+-obj-m += gt9896s.o
+ gt9896s-y += goodix_ts_spi.o
+ gt9896s-y += goodix_ts_core.o
+ gt9896s-y += goodix_cfg_bin.o
+diff --git a/drivers/input/touchscreen/Makefile b/drivers/input/touchscreen/Makefile
+index 7844f17..730364d 100644
+--- a/drivers/input/touchscreen/Makefile
++++ b/drivers/input/touchscreen/Makefile
+@@ -2,7 +2,6 @@
+ #
+ # Makefile for the touchscreen drivers.
+ #
+-obj-m += tui-common.o
+ TOUCH_LISTS := $(subst ",,$(CONFIG_TOUCHSCREEN_MTK_TOUCH))
+ obj-y += $(foreach TOUCH,$(TOUCH_LISTS),$(TOUCH)/)
+ 
+diff --git a/drivers/memory/mediatek/Makefile b/drivers/memory/mediatek/Makefile
+index c4c487e..106e973 100644
+--- a/drivers/memory/mediatek/Makefile
++++ b/drivers/memory/mediatek/Makefile
+@@ -5,5 +5,3 @@ emi-objs := emi-cen.o emi-isu.o emi-dbg.o
+ mtk_dramc-objs	+= dramc.o dramc_bin.o
+ 
+ # LieppOS batch01: immutable35 target +9 provider-only scope.
+-obj-m += emi.o
+-obj-m += mtk_dramc.o
+diff --git a/drivers/misc/mediatek/aee/aed/Makefile b/drivers/misc/mediatek/aee/aed/Makefile
+index 56e2477..2a2df30 100644
+--- a/drivers/misc/mediatek/aee/aed/Makefile
++++ b/drivers/misc/mediatek/aee/aed/Makefile
+@@ -23,4 +23,3 @@ aee_aed-y	+= \
+ 
+ 
+ # LieppOS batch01: immutable35 target +9 provider-only scope.
+-obj-m += aee_aed.o
+diff --git a/drivers/misc/mediatek/geniezone/Makefile b/drivers/misc/mediatek/geniezone/Makefile
+index 3e1d248..1c08835 100644
+--- a/drivers/misc/mediatek/geniezone/Makefile
++++ b/drivers/misc/mediatek/geniezone/Makefile
+@@ -57,4 +57,3 @@ gz_tz_system-objs += tz_system.o mtee-kree/tz_mmap.o mtee-kree/kree_mem.o
+ 
+ 
+ # LieppOS batch01: immutable35 target +9 provider-only scope.
+-obj-m += gz_tz_system.o
+diff --git a/drivers/misc/mediatek/mmp/src/Makefile b/drivers/misc/mediatek/mmp/src/Makefile
+index 7cac64f..5e78f7c 100644
+--- a/drivers/misc/mediatek/mmp/src/Makefile
++++ b/drivers/misc/mediatek/mmp/src/Makefile
+@@ -22,4 +22,3 @@ ccflags-y += -DFORBID_MMP_START
+ endif
+ 
+ # LieppOS batch01: immutable35 target +9 provider-only scope.
+-obj-m += mmprofile.o
+diff --git a/drivers/misc/mediatek/trusted_mem/Makefile b/drivers/misc/mediatek/trusted_mem/Makefile
+index ff8156c..2854d17 100644
+--- a/drivers/misc/mediatek/trusted_mem/Makefile
++++ b/drivers/misc/mediatek/trusted_mem/Makefile
+@@ -33,7 +33,6 @@ trusted_mem-y += tmemperf/tmemperf.o
+ endif # !CONFIG_ALLOC_TMEM_WITH_HIGH_FREQ
+ 
+ ifneq ($(filter y m,$(CONFIG_ARM_FFA_TRANSPORT)),)
+-obj-m += tmem_ffa.o
+ tmem_ffa-y += dev_mgr.o
+ tmem_ffa-y += entry.o
+ tmem_ffa-y += region_mgr.o
+@@ -49,7 +48,6 @@ tmem_ffa-y += tmemperf/tmemperf.o
+ endif # !CONFIG_ALLOC_TMEM_WITH_HIGH_FREQ
+ 
+ 
+-obj-m += ffa_v10.o
+ ffa_v10-y += ffa_v10/bus.o
+ ffa_v10-y += ffa_v10/driver.o
+ ffa_v10-y += ffa_v10/smccc.o
+diff --git a/drivers/misc/mediatek/vcp/rv/Makefile b/drivers/misc/mediatek/vcp/rv/Makefile
+index 232e064..edc1087 100644
+--- a/drivers/misc/mediatek/vcp/rv/Makefile
++++ b/drivers/misc/mediatek/vcp/rv/Makefile
+@@ -19,4 +19,3 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/iommu/arm/arm-smmu-v3
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/dma-buf/heaps
+ 
+ # LieppOS batch01: immutable35 target +9 provider-only scope.
+-obj-m += vcp_status.o
+diff --git a/drivers/pinctrl/mediatek/Makefile b/drivers/pinctrl/mediatek/Makefile
+index 9e87b5a..891115c 100644
+--- a/drivers/pinctrl/mediatek/Makefile
++++ b/drivers/pinctrl/mediatek/Makefile
+@@ -3,11 +3,8 @@ ccflags-y += -I$(srctree)/drivers/pinctrl/mediatek
+ 
+ # Core
+ ifeq ($(CONFIG_DEVICE_MODULES_EINT_MTK),m)
+-obj-m += pinctrl-mtk-v2.o
+ else ifeq ($(CONFIG_DEVICE_MODULES_PINCTRL_MTK_V2),m)
+-obj-m += pinctrl-mtk-v2.o
+ else ifeq ($(CONFIG_DEVICE_MODULES_PINCTRL_MTK_PARIS),m)
+-obj-m += pinctrl-mtk-v2.o
+ endif
+ 
+ ifeq ($(CONFIG_DEVICE_MODULES_EINT_MTK),y)
+@@ -26,7 +23,6 @@ ifeq ($(CONFIG_DEVICE_MODULES_PINCTRL_MTK_PARIS),y)
+ obj-y += pinctrl-paris.o pinctrl-mtk-common-v2_debug.o
+ else ifeq ($(CONFIG_DEVICE_MODULES_PINCTRL_MTK_PARIS),m)
+ pinctrl-mtk-v2-y += pinctrl-paris.o
+-obj-m += pinctrl-mtk-common-v2_debug.o
+ endif
+ 
+ # SoC Drivers
+diff --git a/drivers/soc/mediatek/Makefile b/drivers/soc/mediatek/Makefile
+index ea04d08..10d4e36 100644
+--- a/drivers/soc/mediatek/Makefile
++++ b/drivers/soc/mediatek/Makefile
+@@ -30,9 +30,6 @@ obj-m += mtk-mmdvfs.o
+ obj-m += mtk-mmdvfs-v3.o
+ obj-m += mtk-pm-domain-disable-unused.o
+ obj-m += mtk-pmic-wrap.o
+-obj-m += mtk-scpsys.o
+ obj-m += mtk-scpsys-bringup.o
+ obj-m += mtk-scpsys-mt6878.o
+ obj-m += mtk-socinfo.o
+-obj-m += mtk_tinysys_ipi.o
+-obj-m += scpsys-dummy.o
+diff --git a/drivers/tee/teei/510/Makefile b/drivers/tee/teei/510/Makefile
+index c6f45b9..6b48413 100644
+--- a/drivers/tee/teei/510/Makefile
++++ b/drivers/tee/teei/510/Makefile
+@@ -24,7 +24,6 @@ endif
+ $(info "=----------------1---------------------------")
+ subdir-ccflags-$(CONFIG_MICROTRUST_DEBUG) += -DDEBUG
+ #add teei with ffa module
+-obj-m += isee-ffa.o
+ isee-ffa-y :=          tee/tee_core.o \
+                        tee/capi_proxy.o \
+                        tee/tee_client_api.o \
+@@ -70,7 +69,6 @@ subdir-ccflags-y  += -DTEEI_UNITTEST_SUPPORT
+ endif
+ 
+ #add teei kernel driver without ffa
+-obj-m += isee.o
+ isee-y :=              tee/tee_core.o \
+                        tee/capi_proxy.o \
+                        tee/tee_client_api.o \
+diff --git a/sound/soc/mediatek/common/Makefile b/sound/soc/mediatek/common/Makefile
+index 482e22c..5bcd184 100644
+--- a/sound/soc/mediatek/common/Makefile
++++ b/sound/soc/mediatek/common/Makefile
+@@ -19,10 +19,8 @@ snd-soc-mtk-common-$(CONFIG_SND_SOC_MTK_SRAM) += mtk-sram-manager.o
+ snd-soc-mtk-common-$(CONFIG_SND_SOC_MTK_SMART_PHONE) += mtk-sp-pcm-ops.o mtk-afe-debug.o
+ 
+ # functions for external modules
+-obj-m += mtk-afe-external.o
+ 
+ # speaker dynamic detect
+-obj-m += mtk-sp-spk-amp.o
+ 
+ # BT CVSD driver
+ obj-$(CONFIG_DEVICE_MODULES_SND_SOC_MTK_BTCVSD) += mtk-btcvsd.o
