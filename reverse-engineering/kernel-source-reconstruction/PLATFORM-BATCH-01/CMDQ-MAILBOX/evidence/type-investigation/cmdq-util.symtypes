@@ -1,0 +1,767 @@
+t#bool typedef _Bool bool 
+t#cmdq_mminfra_power typedef t#bool ( * cmdq_mminfra_power ) ( void ) 
+mminfra_power_cb extern t#cmdq_mminfra_power mminfra_power_cb 
+cmdq_get_mminfra_cb void cmdq_get_mminfra_cb ( t#cmdq_mminfra_power ) 
+t#__u32 typedef unsigned int __u32 
+t#u32 typedef t#__u32 u32 
+t#cmdq_mminfra_gce_cg typedef t#bool ( * cmdq_mminfra_gce_cg ) ( t#u32 ) 
+mminfra_gce_cg extern t#cmdq_mminfra_gce_cg mminfra_gce_cg 
+cmdq_get_mminfra_gce_cg_cb void cmdq_get_mminfra_gce_cg_cb ( t#cmdq_mminfra_gce_cg ) 
+t#__u64 __extension__ typedef unsigned long long __u64 
+t#u64 typedef t#__u64 u64 
+t#phys_addr_t typedef t#u64 phys_addr_t 
+t#__s32 typedef __signed__ int __s32 
+t#s32 typedef t#__s32 s32 
+t#platform_thread_module_dispatch typedef const char * ( * platform_thread_module_dispatch ) ( t#phys_addr_t , t#s32 ) 
+t#__u16 typedef unsigned short __u16 
+t#u16 typedef t#__u16 u16 
+t#platform_event_module_dispatch typedef const char * ( * platform_event_module_dispatch ) ( t#phys_addr_t , const t#u16 , t#s32 ) 
+t#platform_util_hw_id typedef t#u32 ( * platform_util_hw_id ) ( t#u32 ) 
+t#platform_test_get_subsys_list typedef t#u32 ( * platform_test_get_subsys_list ) ( t#u32 * * ) 
+t#platform_test_set_ostd typedef void ( * platform_test_set_ostd ) ( void ) 
+t#platform_util_hw_name typedef const char * ( * platform_util_hw_name ) ( void * ) 
+t#util_hw_name typedef const char * ( * util_hw_name ) ( void * ) 
+t#platform_thread_ddr_module typedef t#bool ( * platform_thread_ddr_module ) ( const t#s32 ) 
+t#platform_hw_trace_thread typedef t#bool ( * platform_hw_trace_thread ) ( void * ) 
+t#platform_error_irq_debug typedef void ( * platform_error_irq_debug ) ( void * ) 
+s#list_head struct list_head { s#list_head * next , * prev ; } 
+t#atomic_t typedef struct { int counter ; } atomic_t 
+t#__u8 typedef unsigned char __u8 
+t#u8 typedef t#__u8 u8 
+s#qspinlock struct qspinlock { union { t#atomic_t val ; struct { t#u8 locked ; t#u8 pending ; } ; struct { t#u16 locked_pending ; t#u16 tail ; } ; } ; } 
+t#arch_spinlock_t typedef s#qspinlock arch_spinlock_t 
+s#raw_spinlock struct raw_spinlock { t#arch_spinlock_t raw_lock ; } 
+s#spinlock struct spinlock { union { s#raw_spinlock rlock ; } ; } 
+t#spinlock_t typedef s#spinlock spinlock_t 
+s#kobj_uevent_env struct kobj_uevent_env { char * argv [ 3 ] ; char * envp [ 64 ] ; int envp_idx ; char buf [ 2048 ] ; int buflen ; } 
+s#kset_uevent_ops struct kset_uevent_ops { int ( * const filter ) ( s#kobject * ) ; const char * ( * const name ) ( s#kobject * ) ; int ( * const uevent ) ( s#kobject * , s#kobj_uevent_env * ) ; } 
+s#kset struct kset { s#list_head list ; t#spinlock_t list_lock ; s#kobject kobj ; const s#kset_uevent_ops * uevent_ops ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+t#__kernel_long_t typedef long __kernel_long_t 
+t#__kernel_ssize_t typedef t#__kernel_long_t __kernel_ssize_t 
+t#ssize_t typedef t#__kernel_ssize_t ssize_t 
+t#umode_t typedef unsigned short umode_t 
+s#attribute struct attribute { const char * name ; t#umode_t mode ; } 
+t#__kernel_ulong_t typedef unsigned long __kernel_ulong_t 
+t#__kernel_size_t typedef t#__kernel_ulong_t __kernel_size_t 
+t#size_t typedef t#__kernel_size_t size_t 
+s#sysfs_ops struct sysfs_ops { t#ssize_t ( * show ) ( s#kobject * , s#attribute * , char * ) ; t#ssize_t ( * store ) ( s#kobject * , s#attribute * , const char * , t#size_t ) ; } 
+t#__kernel_uid32_t typedef unsigned int __kernel_uid32_t 
+t#uid_t typedef t#__kernel_uid32_t uid_t 
+t#kuid_t typedef struct { t#uid_t val ; } kuid_t 
+t#__kernel_gid32_t typedef unsigned int __kernel_gid32_t 
+t#gid_t typedef t#__kernel_gid32_t gid_t 
+t#kgid_t typedef struct { t#gid_t val ; } kgid_t 
+s#posix_acl struct posix_acl { UNKNOWN } 
+s#seqcount struct seqcount { unsigned sequence ; } 
+t#seqcount_t typedef s#seqcount seqcount_t 
+s#seqcount_spinlock struct seqcount_spinlock { t#seqcount_t seqcount ; ; } 
+t#seqcount_spinlock_t typedef s#seqcount_spinlock seqcount_spinlock_t 
+s#hlist_bl_node struct hlist_bl_node { s#hlist_bl_node * next , * * pprev ; } 
+s#qstr struct qstr { union { struct { t#u32 hash ; t#u32 len ; } ; t#u64 hash_len ; } ; const unsigned char * name ; } 
+s#lockref struct lockref { union { t#__u64 __attribute__ ( ( aligned ( 8 ) ) ) lock_count ; struct { t#spinlock_t lock ; int count ; } ; } ; } 
+t#__kernel_dev_t typedef t#u32 __kernel_dev_t 
+t#dev_t typedef t#__kernel_dev_t dev_t 
+t#__kernel_loff_t typedef long long __kernel_loff_t 
+t#loff_t typedef t#__kernel_loff_t loff_t 
+s#fs_context struct fs_context { UNKNOWN } 
+s#fs_parameter_spec struct fs_parameter_spec { UNKNOWN } 
+e#module_state enum module_state { MODULE_STATE_LIVE , MODULE_STATE_COMING , MODULE_STATE_GOING , MODULE_STATE_UNFORMED , } 
+s#module_param_attrs struct module_param_attrs { UNKNOWN } 
+t#raw_spinlock_t typedef s#raw_spinlock raw_spinlock_t 
+s#swait_queue_head struct swait_queue_head { t#raw_spinlock_t lock ; s#list_head task_list ; } 
+s#completion struct completion { unsigned int done ; s#swait_queue_head wait ; } 
+s#module_kobject struct module_kobject { s#kobject kobj ; s#module * mod ; s#kobject * drivers_dir ; s#module_param_attrs * mp ; s#completion * kobj_completion ; } 
+s#module_attribute struct module_attribute { s#attribute attr ; t#ssize_t ( * show ) ( s#module_attribute * , s#module_kobject * , char * ) ; t#ssize_t ( * store ) ( s#module_attribute * , s#module_kobject * , const char * , t#size_t ) ; void ( * setup ) ( s#module * , const char * ) ; int ( * test ) ( s#module * ) ; void ( * free ) ( s#module * ) ; } 
+s#kernel_symbol struct kernel_symbol { int value_offset ; int name_offset ; int namespace_offset ; } 
+t#__s64 __extension__ typedef __signed__ long long __s64 
+t#s64 typedef t#__s64 s64 
+t#atomic64_t typedef struct { t#s64 counter ; } atomic64_t 
+t#atomic_long_t typedef t#atomic64_t atomic_long_t 
+s#optimistic_spin_queue struct optimistic_spin_queue { t#atomic_t tail ; } 
+s#mutex struct mutex { t#atomic_long_t owner ; t#raw_spinlock_t wait_lock ; s#optimistic_spin_queue osq ; s#list_head wait_list ; t#u64 android_oem_data1 [ 2 ] ; } 
+s#kernel_param_ops struct kernel_param_ops { unsigned int flags ; int ( * set ) ( const char * , const s#kernel_param * ) ; int ( * get ) ( char * , const s#kernel_param * ) ; void ( * free ) ( void * ) ; } 
+t#__s8 typedef __signed__ char __s8 
+t#s8 typedef t#__s8 s8 
+s#kparam_string struct kparam_string { unsigned int maxlen ; char * string ; } 
+s#kparam_array struct kparam_array { unsigned int max ; unsigned int elemsize ; unsigned int * num ; const s#kernel_param_ops * ops ; void * elem ; } 
+s#kernel_param struct kernel_param { const char * name ; s#module * mod ; const s#kernel_param_ops * ops ; const t#u16 perm ; t#s8 level ; t#u8 flags ; union { void * arg ; const s#kparam_string * str ; const s#kparam_array * arr ; } ; } 
+s#exception_table_entry struct exception_table_entry { int insn , fixup ; short type , data ; } 
+s#rb_node struct rb_node { unsigned long __rb_parent_color ; s#rb_node * rb_right ; s#rb_node * rb_left ; } 
+s#latch_tree_node struct latch_tree_node { s#rb_node node [ 2 ] ; } 
+s#mod_tree_node struct mod_tree_node { s#module * mod ; s#latch_tree_node node ; } 
+s#module_layout struct module_layout { void * base ; unsigned int size ; unsigned int text_size ; unsigned int ro_size ; unsigned int ro_after_init_size ; s#mod_tree_node mtn ; } 
+s#mod_plt_sec struct mod_plt_sec { int plt_shndx ; int plt_num_entries ; int plt_max_entries ; } 
+t#__le32 typedef t#__u32 __le32 
+s#plt_entry struct plt_entry { t#__le32 adrp ; t#__le32 add ; t#__le32 br ; } 
+s#pkvm_module_section struct pkvm_module_section { void * start ; void * end ; } 
+t#kvm_nvhe_reloc_t typedef t#s32 kvm_nvhe_reloc_t 
+s#pkvm_module_ops struct pkvm_module_ops { UNKNOWN } 
+s#pkvm_el2_module struct pkvm_el2_module { s#pkvm_module_section text ; s#pkvm_module_section bss ; s#pkvm_module_section rodata ; s#pkvm_module_section data ; t#kvm_nvhe_reloc_t * relocs ; unsigned int nr_relocs ; int ( * init ) ( const s#pkvm_module_ops * ) ; } 
+s#mod_arch_specific struct mod_arch_specific { s#mod_plt_sec core ; s#mod_plt_sec init ; s#plt_entry * ftrace_trampolines ; s#pkvm_el2_module hyp ; } 
+s#bug_entry struct bug_entry { signed int bug_addr_disp ; signed int file_disp ; unsigned short line ; unsigned short flags ; } 
+t#Elf64_Word typedef t#__u32 Elf64_Word 
+t#Elf64_Half typedef t#__u16 Elf64_Half 
+t#Elf64_Addr typedef t#__u64 Elf64_Addr 
+t#Elf64_Xword typedef t#__u64 Elf64_Xword 
+s#elf64_sym struct elf64_sym { t#Elf64_Word st_name ; unsigned char st_info ; unsigned char st_other ; t#Elf64_Half st_shndx ; t#Elf64_Addr st_value ; t#Elf64_Xword st_size ; } 
+t#Elf64_Sym typedef s#elf64_sym Elf64_Sym 
+s#mod_kallsyms struct mod_kallsyms { t#Elf64_Sym * symtab ; unsigned int num_symtab ; char * strtab ; char * typetab ; } 
+s#module_sect_attrs struct module_sect_attrs { UNKNOWN } 
+s#module_notes_attrs struct module_notes_attrs { UNKNOWN } 
+t#tracepoint_ptr_t typedef const int tracepoint_ptr_t 
+s#srcu_node struct srcu_node { t#spinlock_t lock ; unsigned long srcu_have_cbs [ 4 ] ; unsigned long srcu_data_have_cbs [ 4 ] ; unsigned long srcu_gp_seq_needed_exp ; s#srcu_node * srcu_parent ; int grplo ; int grphi ; } 
+s#callback_head struct callback_head { s#callback_head * next ; void ( * func ) ( s#callback_head * ) ; } 
+s#rcu_segcblist struct rcu_segcblist { s#callback_head * head ; s#callback_head * * tails [ 4 ] ; unsigned long gp_seq [ 4 ] ; t#atomic_long_t len ; long seglen [ 4 ] ; t#u8 flags ; } 
+s#hlist_node struct hlist_node { s#hlist_node * next , * * pprev ; } 
+s#timer_list struct timer_list { s#hlist_node entry ; unsigned long expires ; void ( * function ) ( s#timer_list * ) ; t#u32 flags ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+t#work_func_t typedef void ( * work_func_t ) ( s#work_struct * ) 
+s#work_struct struct work_struct { t#atomic_long_t data ; s#list_head entry ; t#work_func_t func ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+s#srcu_data struct srcu_data { unsigned long srcu_lock_count [ 2 ] ; unsigned long srcu_unlock_count [ 2 ] ; t#spinlock_t lock __attribute__ ( ( __aligned__ ( 1 << ( ( 6 ) ) ) ) ) ; s#rcu_segcblist srcu_cblist ; unsigned long srcu_gp_seq_needed ; unsigned long srcu_gp_seq_needed_exp ; t#bool srcu_cblist_invoking ; s#timer_list delay_work ; s#work_struct work ; s#callback_head srcu_barrier_head ; s#srcu_node * mynode ; unsigned long grpmask ; int cpu ; s#srcu_struct * ssp ; } 
+s#workqueue_struct struct workqueue_struct { UNKNOWN } 
+s#delayed_work struct delayed_work { s#work_struct work ; s#timer_list timer ; s#workqueue_struct * wq ; int cpu ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+s#lockdep_map struct lockdep_map { } 
+s#srcu_struct struct srcu_struct { s#srcu_node * node ; s#srcu_node * level [ 2 + 1 ] ; int srcu_size_state ; s#mutex srcu_cb_mutex ; t#spinlock_t lock ; s#mutex srcu_gp_mutex ; unsigned int srcu_idx ; unsigned long srcu_gp_seq ; unsigned long srcu_gp_seq_needed ; unsigned long srcu_gp_seq_needed_exp ; unsigned long srcu_gp_start ; unsigned long srcu_last_gp_end ; unsigned long srcu_size_jiffies ; unsigned long srcu_n_lock_retries ; unsigned long srcu_n_exp_nodelay ; s#srcu_data __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * sda ; t#bool sda_is_static ; unsigned long srcu_barrier_seq ; s#mutex srcu_barrier_mutex ; s#completion srcu_barrier_completion ; t#atomic_t srcu_barrier_cpu_cnt ; unsigned long reschedule_jiffies ; unsigned long reschedule_count ; s#delayed_work work ; s#lockdep_map dep_map ; } 
+s#jump_entry struct jump_entry { t#s32 code ; t#s32 target ; long key ; } 
+s#static_key_mod struct static_key_mod { UNKNOWN } 
+s#static_key struct static_key { t#atomic_t enabled ; union { unsigned long type ; s#jump_entry * entries ; s#static_key_mod * next ; } ; } 
+s#static_call_key struct static_call_key { void * func ; } 
+s#tracepoint_func struct tracepoint_func { void * func ; void * data ; int prio ; } 
+s#tracepoint struct tracepoint { const char * name ; s#static_key key ; s#static_call_key * static_call_key ; void * static_call_tramp ; void * iterator ; int ( * regfunc ) ( void ) ; void ( * unregfunc ) ( void ) ; s#tracepoint_func * funcs ; } 
+s#bpf_raw_event_map struct bpf_raw_event_map { s#tracepoint * tp ; void * bpf_func ; t#u32 num_args ; t#u32 writable_size ; } 
+e#trace_reg enum trace_reg { TRACE_REG_REGISTER , TRACE_REG_UNREGISTER , TRACE_REG_PERF_REGISTER , TRACE_REG_PERF_UNREGISTER , TRACE_REG_PERF_OPEN , TRACE_REG_PERF_CLOSE , TRACE_REG_PERF_ADD , TRACE_REG_PERF_DEL , } 
+s#trace_event_fields struct trace_event_fields { const char * type ; union { struct { const char * name ; const int size ; const int align ; const int is_signed ; const int filter_type ; const int len ; } ; int ( * define_fields ) ( s#trace_event_call * ) ; } ; } 
+s#trace_event_class struct trace_event_class { const char * system ; void * probe ; void * perf_probe ; int ( * reg ) ( s#trace_event_call * , e#trace_reg , void * ) ; s#trace_event_fields * fields_array ; s#list_head * ( * get_fields ) ( s#trace_event_call * ) ; s#list_head fields ; int ( * raw_init ) ( s#trace_event_call * ) ; } 
+e#print_line_t enum print_line_t { TRACE_TYPE_PARTIAL_LINE = 0 , TRACE_TYPE_HANDLED = 1 , TRACE_TYPE_UNHANDLED = 2 , TRACE_TYPE_NO_CONSUME = 3 } 
+s#trace_array struct trace_array { UNKNOWN } 
+s#tracer struct tracer { UNKNOWN } 
+s#array_buffer struct array_buffer { UNKNOWN } 
+s#ring_buffer_iter struct ring_buffer_iter { UNKNOWN } 
+s#seq_buf struct seq_buf { char * buffer ; t#size_t size ; t#size_t len ; t#loff_t readpos ; } 
+s#trace_seq struct trace_seq { char buffer [ ( ( 1UL ) << 12 ) ] ; s#seq_buf seq ; int full ; } 
+s#cpumask struct cpumask { unsigned long bits [ ( ( ( 32 ) + ( ( sizeof ( long ) * 8 ) ) - 1 ) / ( ( sizeof ( long ) * 8 ) ) ) ] ; } 
+t#cpumask_var_t typedef s#cpumask cpumask_var_t [ 1 ] 
+s#trace_entry struct trace_entry { unsigned short type ; unsigned char flags ; unsigned char preempt_count ; int pid ; } 
+s#trace_iterator struct trace_iterator { s#trace_array * tr ; s#tracer * trace ; s#array_buffer * array_buffer ; void * private ; int cpu_file ; s#mutex mutex ; s#ring_buffer_iter * * buffer_iter ; unsigned long iter_flags ; void * temp ; unsigned int temp_size ; char * fmt ; unsigned int fmt_size ; long wait_index ; s#trace_seq tmp_seq ; t#cpumask_var_t started ; t#bool snapshot ; s#trace_seq seq ; s#trace_entry * ent ; unsigned long lost_events ; int leftover ; int ent_size ; int cpu ; t#u64 ts ; t#loff_t pos ; long idx ; } 
+t#trace_print_func typedef e#print_line_t ( * trace_print_func ) ( s#trace_iterator * , int , s#trace_event * ) 
+s#trace_event_functions struct trace_event_functions { t#trace_print_func trace ; t#trace_print_func raw ; t#trace_print_func hex ; t#trace_print_func binary ; } 
+s#trace_event struct trace_event { s#hlist_node node ; s#list_head list ; int type ; s#trace_event_functions * funcs ; } 
+s#event_filter struct event_filter { UNKNOWN } 
+s#hlist_head struct hlist_head { s#hlist_node * first ; } 
+s#bpf_prog_array struct bpf_prog_array { UNKNOWN } 
+s#rb_root struct rb_root { s#rb_node * rb_node ; } 
+s#perf_event_groups struct perf_event_groups { s#rb_root tree ; t#u64 index ; } 
+s#refcount_struct struct refcount_struct { t#atomic_t refs ; } 
+t#refcount_t typedef s#refcount_struct refcount_t 
+s#thread_info struct thread_info { unsigned long flags ; t#u64 ttbr0 ; union { t#u64 preempt_count ; struct { t#u32 count ; t#u32 need_resched ; } preempt ; } ; void * scs_base ; void * scs_sp ; t#u32 cpu ; } 
+s#llist_node struct llist_node { s#llist_node * next ; } 
+s#__call_single_node struct __call_single_node { s#llist_node llist ; union { unsigned int u_flags ; t#atomic_t a_flags ; } ; t#u16 src , dst ; } 
+s#load_weight struct load_weight { unsigned long weight ; t#u32 inv_weight ; } 
+s#cfs_rq struct cfs_rq { UNKNOWN } 
+s#util_est struct util_est { unsigned int enqueued ; unsigned int ewma ; } 
+s#sched_avg struct sched_avg { t#u64 last_update_time ; t#u64 load_sum ; t#u64 runnable_sum ; t#u32 util_sum ; t#u32 period_contrib ; unsigned long load_avg ; unsigned long runnable_avg ; unsigned long util_avg ; s#util_est util_est ; } 
+s#sched_entity struct sched_entity { s#load_weight load ; s#rb_node run_node ; s#list_head group_node ; unsigned int on_rq ; t#u64 exec_start ; t#u64 sum_exec_runtime ; t#u64 vruntime ; t#u64 prev_sum_exec_runtime ; t#u64 nr_migrations ; int depth ; s#sched_entity * parent ; s#cfs_rq * cfs_rq ; s#cfs_rq * my_q ; unsigned long runnable_weight ; s#sched_avg avg ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+s#sched_rt_entity struct sched_rt_entity { s#list_head run_list ; unsigned long timeout ; unsigned long watchdog_stamp ; unsigned int time_slice ; unsigned short on_rq ; unsigned short on_list ; s#sched_rt_entity * back ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+t#ktime_t typedef t#s64 ktime_t 
+s#timerqueue_node struct timerqueue_node { s#rb_node node ; t#ktime_t expires ; } 
+e#hrtimer_restart enum hrtimer_restart { HRTIMER_NORESTART , HRTIMER_RESTART , } 
+E#HRTIMER_MAX_CLOCK_BASES 8 
+s#hrtimer_cpu_base struct hrtimer_cpu_base { t#raw_spinlock_t lock ; unsigned int cpu ; unsigned int active_bases ; unsigned int clock_was_set_seq ; unsigned int hres_active : 1 , in_hrtirq : 1 , hang_detected : 1 , softirq_activated : 1 ; unsigned int nr_events ; unsigned short nr_retries ; unsigned short nr_hangs ; unsigned int max_hang_time ; t#ktime_t expires_next ; s#hrtimer * next_timer ; t#ktime_t softirq_expires_next ; s#hrtimer * softirq_next_timer ; s#hrtimer_clock_base clock_base [ E#HRTIMER_MAX_CLOCK_BASES ] ; } 
+t#__kernel_clockid_t typedef int __kernel_clockid_t 
+t#clockid_t typedef t#__kernel_clockid_t clockid_t 
+s#seqcount_raw_spinlock struct seqcount_raw_spinlock { t#seqcount_t seqcount ; ; } 
+t#seqcount_raw_spinlock_t typedef s#seqcount_raw_spinlock seqcount_raw_spinlock_t 
+s#rb_root_cached struct rb_root_cached { s#rb_root rb_root ; s#rb_node * rb_leftmost ; } 
+s#timerqueue_head struct timerqueue_head { s#rb_root_cached rb_root ; } 
+s#hrtimer_clock_base struct hrtimer_clock_base { s#hrtimer_cpu_base * cpu_base ; unsigned int index ; t#clockid_t clockid ; t#seqcount_raw_spinlock_t seq ; s#hrtimer * running ; s#timerqueue_head active ; t#ktime_t ( * get_time ) ( void ) ; t#ktime_t offset ; } 
+s#hrtimer struct hrtimer { s#timerqueue_node node ; t#ktime_t _softexpires ; e#hrtimer_restart ( * function ) ( s#hrtimer * ) ; s#hrtimer_clock_base * base ; t#u8 state ; t#u8 is_rel ; t#u8 is_soft ; t#u8 is_hard ; t#u64 android_kabi_reserved1 ; } 
+s#sched_dl_entity struct sched_dl_entity { s#rb_node rb_node ; t#u64 dl_runtime ; t#u64 dl_deadline ; t#u64 dl_period ; t#u64 dl_bw ; t#u64 dl_density ; t#s64 runtime ; t#u64 deadline ; unsigned int flags ; unsigned int dl_throttled : 1 ; unsigned int dl_yielded : 1 ; unsigned int dl_non_contending : 1 ; unsigned int dl_overrun : 1 ; s#hrtimer dl_timer ; s#hrtimer inactive_timer ; s#sched_dl_entity * pi_se ; } 
+s#sched_class struct sched_class { UNKNOWN } 
+s#task_group struct task_group { UNKNOWN } 
+s#uclamp_se struct uclamp_se { unsigned int value : ( __builtin_constant_p ( ( 1L << 10 ) ) ? ( ( ( ( 1L << 10 ) ) == 0 || ( ( 1L << 10 ) ) == 1 ) ? 1 : ( __builtin_constant_p ( ( 1L << 10 ) ) ? ( ( ( 1L << 10 ) ) < 2 ? 0 : 63 - __builtin_clzll ( ( 1L << 10 ) ) ) : ( sizeof ( ( 1L << 10 ) ) <= 4 ) ? __ilog2_u32 ( ( 1L << 10 ) ) : __ilog2_u64 ( ( 1L << 10 ) ) ) + 1 ) : __bits_per ( ( 1L << 10 ) ) ) ; unsigned int bucket_id : ( __builtin_constant_p ( 20 ) ? ( ( ( 20 ) == 0 || ( 20 ) == 1 ) ? 1 : ( __builtin_constant_p ( 20 ) ? ( ( 20 ) < 2 ? 0 : 63 - __builtin_clzll ( 20 ) ) : ( sizeof ( 20 ) <= 4 ) ? __ilog2_u32 ( 20 ) : __ilog2_u64 ( 20 ) ) + 1 ) : __bits_per ( 20 ) ) ; unsigned int active : 1 ; unsigned int user_defined : 1 ; } 
+E#UCLAMP_CNT ( 0 ) + 2 
+s#sched_statistics struct sched_statistics { t#u64 wait_start ; t#u64 wait_max ; t#u64 wait_count ; t#u64 wait_sum ; t#u64 iowait_count ; t#u64 iowait_sum ; t#u64 sleep_start ; t#u64 sleep_max ; t#s64 sum_sleep_runtime ; t#u64 block_start ; t#u64 block_max ; t#s64 sum_block_runtime ; t#u64 exec_max ; t#u64 slice_max ; t#u64 nr_migrations_cold ; t#u64 nr_failed_migrations_affine ; t#u64 nr_failed_migrations_running ; t#u64 nr_failed_migrations_hot ; t#u64 nr_forced_migrations ; t#u64 nr_wakeups ; t#u64 nr_wakeups_sync ; t#u64 nr_wakeups_migrate ; t#u64 nr_wakeups_local ; t#u64 nr_wakeups_remote ; t#u64 nr_wakeups_affine ; t#u64 nr_wakeups_affine_attempts ; t#u64 nr_wakeups_passive ; t#u64 nr_wakeups_idle ; } 
+t#cpumask_t typedef s#cpumask cpumask_t 
+u#rcu_special union rcu_special { struct { t#u8 blocked ; t#u8 need_qs ; t#u8 exp_hint ; t#u8 need_mb ; } b ; t#u32 s ; } 
+s#rcu_node struct rcu_node { UNKNOWN } 
+s#sched_info struct sched_info { unsigned long pcount ; unsigned long long run_delay ; unsigned long long last_arrival ; unsigned long long last_queued ; } 
+s#plist_node struct plist_node { int prio ; s#list_head prio_list ; s#list_head node_list ; } 
+t#lockdep_map_p typedef struct { } lockdep_map_p 
+s#maple_tree struct maple_tree { union { t#spinlock_t ma_lock ; t#lockdep_map_p ma_external_lock ; } ; void * ma_root ; unsigned int ma_flags ; } 
+s#path struct path { s#vfsmount * mnt ; s#dentry * dentry ; } 
+s#page_pool struct page_pool { UNKNOWN } 
+t#pgtable_t typedef s#page * pgtable_t 
+s#vmem_altmap struct vmem_altmap { unsigned long base_pfn ; const unsigned long end_pfn ; const unsigned long reserve ; unsigned long free ; unsigned long align ; unsigned long alloc ; } 
+t#percpu_ref_func_t typedef void ( percpu_ref_func_t ) ( s#percpu_ref * ) 
+s#percpu_ref_data struct percpu_ref_data { t#atomic_long_t count ; t#percpu_ref_func_t * release ; t#percpu_ref_func_t * confirm_switch ; t#bool force_atomic : 1 ; t#bool allow_reinit : 1 ; s#callback_head rcu ; s#percpu_ref * ref ; } 
+s#percpu_ref struct percpu_ref { unsigned long percpu_count_ptr ; s#percpu_ref_data * data ; } 
+e#memory_type enum memory_type { MEMORY_DEVICE_PRIVATE = 1 , MEMORY_DEVICE_COHERENT , MEMORY_DEVICE_FS_DAX , MEMORY_DEVICE_GENERIC , MEMORY_DEVICE_PCI_P2PDMA , } 
+t#vm_fault_t typedef unsigned int vm_fault_t 
+t#pteval_t typedef t#u64 pteval_t 
+t#pgprot_t typedef struct { t#pteval_t pgprot ; } pgprot_t 
+t#vm_flags_t typedef unsigned long vm_flags_t 
+s#rw_semaphore struct rw_semaphore { t#atomic_long_t count ; t#atomic_long_t owner ; s#optimistic_spin_queue osq ; t#raw_spinlock_t wait_lock ; s#list_head wait_list ; t#u64 android_vendor_data1 ; t#u64 android_oem_data1 [ 2 ] ; } 
+s#vma_lock struct vma_lock { s#rw_semaphore lock ; } 
+s#kref struct kref { t#refcount_t refcount ; } 
+s#anon_vma_name struct anon_vma_name { s#kref kref ; char name [ ] ; } 
+s#anon_vma struct anon_vma { UNKNOWN } 
+e#page_entry_size enum page_entry_size { PE_SIZE_PTE = 0 , PE_SIZE_PMD , PE_SIZE_PUD , } 
+s#vm_operations_struct struct vm_operations_struct { void ( * open ) ( s#vm_area_struct * ) ; void ( * close ) ( s#vm_area_struct * ) ; int ( * may_split ) ( s#vm_area_struct * , unsigned long ) ; int ( * mremap ) ( s#vm_area_struct * ) ; int ( * mprotect ) ( s#vm_area_struct * , unsigned long , unsigned long , unsigned long ) ; t#vm_fault_t ( * fault ) ( s#vm_fault * ) ; t#vm_fault_t ( * huge_fault ) ( s#vm_fault * , e#page_entry_size ) ; t#vm_fault_t ( * map_pages ) ( s#vm_fault * , unsigned long , unsigned long ) ; unsigned long ( * pagesize ) ( s#vm_area_struct * ) ; t#vm_fault_t ( * page_mkwrite ) ( s#vm_fault * ) ; t#vm_fault_t ( * pfn_mkwrite ) ( s#vm_fault * ) ; int ( * access ) ( s#vm_area_struct * , unsigned long , void * , int , int ) ; const char * ( * name ) ( s#vm_area_struct * ) ; s#page * ( * find_special_page ) ( s#vm_area_struct * , unsigned long ) ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+s#userfaultfd_ctx struct userfaultfd_ctx { UNKNOWN } 
+s#vm_userfaultfd_ctx struct vm_userfaultfd_ctx { s#userfaultfd_ctx * ctx ; } 
+s#vm_area_struct struct vm_area_struct { union { struct { unsigned long vm_start ; unsigned long vm_end ; } ; s#callback_head vm_rcu ; } ; s#mm_struct * vm_mm ; t#pgprot_t vm_page_prot ; union { const t#vm_flags_t vm_flags ; t#vm_flags_t __vm_flags ; } ; int vm_lock_seq ; s#vma_lock * vm_lock ; t#bool detached ; union { struct { s#rb_node rb ; unsigned long rb_subtree_last ; } shared ; s#anon_vma_name * anon_name ; } ; s#list_head anon_vma_chain ; s#anon_vma * anon_vma ; const s#vm_operations_struct * vm_ops ; unsigned long vm_pgoff ; s#file * vm_file ; void * vm_private_data ; t#atomic_long_t swap_readahead_info ; s#vm_userfaultfd_ctx vm_userfaultfd_ctx ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+t#gfp_t typedef unsigned int gfp_t 
+e#fault_flag enum fault_flag { FAULT_FLAG_WRITE = 1 << 0 , FAULT_FLAG_MKWRITE = 1 << 1 , FAULT_FLAG_ALLOW_RETRY = 1 << 2 , FAULT_FLAG_RETRY_NOWAIT = 1 << 3 , FAULT_FLAG_KILLABLE = 1 << 4 , FAULT_FLAG_TRIED = 1 << 5 , FAULT_FLAG_USER = 1 << 6 , FAULT_FLAG_REMOTE = 1 << 7 , FAULT_FLAG_INSTRUCTION = 1 << 8 , FAULT_FLAG_INTERRUPTIBLE = 1 << 9 , FAULT_FLAG_UNSHARE = 1 << 10 , FAULT_FLAG_ORIG_PTE_VALID = 1 << 11 , FAULT_FLAG_VMA_LOCK = 1 << 12 , } 
+t#pmdval_t typedef t#u64 pmdval_t 
+t#pmd_t typedef struct { t#pmdval_t pmd ; } pmd_t 
+t#pgdval_t typedef t#u64 pgdval_t 
+t#pgd_t typedef struct { t#pgdval_t pgd ; } pgd_t 
+t#p4d_t typedef struct { t#pgd_t pgd ; } p4d_t 
+t#pud_t typedef struct { t#p4d_t p4d ; } pud_t 
+t#pte_t typedef struct { t#pteval_t pte ; } pte_t 
+s#vm_fault struct vm_fault { const struct { s#vm_area_struct * vma ; t#gfp_t gfp_mask ; unsigned long pgoff ; unsigned long address ; unsigned long real_address ; } ; e#fault_flag flags ; t#pmd_t * pmd ; t#pud_t * pud ; union { t#pte_t orig_pte ; t#pmd_t orig_pmd ; } ; s#page * cow_page ; s#page * page ; t#pte_t * pte ; t#spinlock_t * ptl ; t#pgtable_t prealloc_pte ; } 
+s#dev_pagemap_ops struct dev_pagemap_ops { void ( * page_free ) ( s#page * ) ; t#vm_fault_t ( * migrate_to_ram ) ( s#vm_fault * ) ; int ( * memory_failure ) ( s#dev_pagemap * , unsigned long , unsigned long , int ) ; } 
+s#range struct range { t#u64 start ; t#u64 end ; } 
+s#dev_pagemap struct dev_pagemap { s#vmem_altmap altmap ; s#percpu_ref ref ; s#completion done ; e#memory_type type ; unsigned int flags ; unsigned long vmemmap_shift ; const s#dev_pagemap_ops * ops ; void * owner ; int nr_range ; union { s#range range ; s#range ranges [ 0 ] ; } ; } 
+s#page struct page { unsigned long flags ; union { struct { union { s#list_head lru ; struct { void * __filler ; unsigned int mlock_count ; } ; s#list_head buddy_list ; s#list_head pcp_list ; } ; s#address_space * mapping ; unsigned long index ; unsigned long private ; } ; struct { unsigned long pp_magic ; s#page_pool * pp ; unsigned long _pp_mapping_pad ; unsigned long dma_addr ; union { unsigned long dma_addr_upper ; t#atomic_long_t pp_frag_count ; } ; } ; struct { unsigned long compound_head ; unsigned char compound_dtor ; unsigned char compound_order ; t#atomic_t compound_mapcount ; t#atomic_t compound_pincount ; unsigned int compound_nr ; } ; struct { unsigned long _compound_pad_1 ; unsigned long _compound_pad_2 ; s#list_head deferred_list ; } ; struct { unsigned long _pt_pad_1 ; t#pgtable_t pmd_huge_pte ; unsigned long _pt_pad_2 ; union { s#mm_struct * pt_mm ; t#atomic_t pt_frag_refcount ; } ; t#spinlock_t ptl ; } ; struct { s#dev_pagemap * pgmap ; void * zone_device_data ; } ; s#callback_head callback_head ; } ; union { t#atomic_t _mapcount ; unsigned int page_type ; } ; t#atomic_t _refcount ; unsigned long memcg_data ; } 
+s#folio struct folio { union { struct { unsigned long flags ; union { s#list_head lru ; struct { void * __filler ; unsigned int mlock_count ; } ; } ; s#address_space * mapping ; unsigned long index ; void * private ; t#atomic_t _mapcount ; t#atomic_t _refcount ; unsigned long memcg_data ; } ; s#page page ; } ; unsigned long _flags_1 ; unsigned long __head ; unsigned char _folio_dtor ; unsigned char _folio_order ; t#atomic_t _total_mapcount ; t#atomic_t _pincount ; unsigned int _folio_nr_pages ; } 
+t#wait_queue_func_t typedef int ( * wait_queue_func_t ) ( s#wait_queue_entry * , unsigned , int , void * ) 
+s#wait_queue_entry struct wait_queue_entry { unsigned int flags ; void * private ; t#wait_queue_func_t func ; s#list_head entry ; } 
+t#wait_queue_entry_t typedef s#wait_queue_entry wait_queue_entry_t 
+s#wait_page_queue struct wait_page_queue { s#folio * folio ; int bit_nr ; t#wait_queue_entry_t wait ; } 
+s#kiocb struct kiocb { s#file * ki_filp ; t#loff_t ki_pos ; void ( * ki_complete ) ( s#kiocb * , long ) ; void * private ; int ki_flags ; t#u16 ki_ioprio ; s#wait_page_queue * ki_waitq ; } 
+s#iovec struct iovec { void __attribute__ ( ( btf_type_tag ( "user" ) ) ) * iov_base ; t#__kernel_size_t iov_len ; } 
+s#kvec struct kvec { void * iov_base ; t#size_t iov_len ; } 
+s#bio_vec struct bio_vec { s#page * bv_page ; unsigned int bv_len ; unsigned int bv_offset ; } 
+s#xarray struct xarray { t#spinlock_t xa_lock ; t#gfp_t xa_flags ; void * xa_head ; } 
+s#pipe_inode_info struct pipe_inode_info { UNKNOWN } 
+s#iov_iter struct iov_iter { t#u8 iter_type ; t#bool nofault ; t#bool data_source ; t#bool user_backed ; union { t#size_t iov_offset ; int last_offset ; } ; t#size_t count ; union { const s#iovec * iov ; const s#kvec * kvec ; const s#bio_vec * bvec ; s#xarray * xarray ; s#pipe_inode_info * pipe ; void __attribute__ ( ( btf_type_tag ( "user" ) ) ) * ubuf ; } ; union { unsigned long nr_segs ; struct { unsigned int head ; unsigned int start_head ; } ; t#loff_t xarray_start ; } ; } 
+s#io_comp_batch struct io_comp_batch { UNKNOWN } 
+t#filldir_t typedef t#bool ( * filldir_t ) ( s#dir_context * , const char * , int , t#loff_t , t#u64 , unsigned ) 
+s#dir_context struct dir_context { t#filldir_t actor ; t#loff_t pos ; } 
+t#__poll_t typedef unsigned __poll_t 
+s#wait_queue_head struct wait_queue_head { t#spinlock_t lock ; s#list_head head ; } 
+t#wait_queue_head_t typedef s#wait_queue_head wait_queue_head_t 
+t#poll_queue_proc typedef void ( * poll_queue_proc ) ( s#file * , t#wait_queue_head_t * , s#poll_table_struct * ) 
+s#poll_table_struct struct poll_table_struct { t#poll_queue_proc _qproc ; t#__poll_t _key ; } 
+t#fl_owner_t typedef void * fl_owner_t 
+s#qrwlock struct qrwlock { union { t#atomic_t cnts ; struct { t#u8 wlocked ; t#u8 __lstate [ 3 ] ; } ; } ; t#arch_spinlock_t wait_lock ; } 
+t#arch_rwlock_t typedef s#qrwlock arch_rwlock_t 
+t#rwlock_t typedef struct { t#arch_rwlock_t raw_lock ; } rwlock_t 
+s#fasync_struct struct fasync_struct { t#rwlock_t fa_lock ; int magic ; int fa_fd ; s#fasync_struct * fa_next ; s#file * fa_file ; s#callback_head fa_rcu ; } 
+s#file_lock_operations struct file_lock_operations { void ( * fl_copy_lock ) ( s#file_lock * , s#file_lock * ) ; void ( * fl_release_private ) ( s#file_lock * ) ; } 
+s#lock_manager_operations struct lock_manager_operations { void * lm_mod_owner ; t#fl_owner_t ( * lm_get_owner ) ( t#fl_owner_t ) ; void ( * lm_put_owner ) ( t#fl_owner_t ) ; void ( * lm_notify ) ( s#file_lock * ) ; int ( * lm_grant ) ( s#file_lock * , int ) ; t#bool ( * lm_break ) ( s#file_lock * ) ; int ( * lm_change ) ( s#file_lock * , int , s#list_head * ) ; void ( * lm_setup ) ( s#file_lock * , void * * ) ; t#bool ( * lm_breaker_owns_lease ) ( s#file_lock * ) ; t#bool ( * lm_lock_expirable ) ( s#file_lock * ) ; void ( * lm_expire_lock ) ( void ) ; } 
+s#nlm_lockowner struct nlm_lockowner { UNKNOWN } 
+s#nfs_lock_info struct nfs_lock_info { t#u32 state ; s#nlm_lockowner * owner ; s#list_head list ; } 
+s#nfs4_lock_state struct nfs4_lock_state { UNKNOWN } 
+s#nfs4_lock_info struct nfs4_lock_info { s#nfs4_lock_state * owner ; } 
+s#file_lock struct file_lock { s#file_lock * fl_blocker ; s#list_head fl_list ; s#hlist_node fl_link ; s#list_head fl_blocked_requests ; s#list_head fl_blocked_member ; t#fl_owner_t fl_owner ; unsigned int fl_flags ; unsigned char fl_type ; unsigned int fl_pid ; int fl_link_cpu ; t#wait_queue_head_t fl_wait ; s#file * fl_file ; t#loff_t fl_start ; t#loff_t fl_end ; s#fasync_struct * fl_fasync ; unsigned long fl_break_time ; unsigned long fl_downgrade_time ; const s#file_lock_operations * fl_ops ; const s#lock_manager_operations * fl_lmops ; union { s#nfs_lock_info nfs_fl ; s#nfs4_lock_info nfs4_fl ; struct { s#list_head link ; int state ; unsigned int debug_id ; } afs ; } fl_u ; } 
+s#seq_operations struct seq_operations { void * ( * start ) ( s#seq_file * , t#loff_t * ) ; void ( * stop ) ( s#seq_file * , void * ) ; void * ( * next ) ( s#seq_file * , void * , t#loff_t * ) ; int ( * show ) ( s#seq_file * , void * ) ; } 
+s#seq_file struct seq_file { char * buf ; t#size_t size ; t#size_t from ; t#size_t count ; t#size_t pad_until ; t#loff_t index ; t#loff_t read_pos ; s#mutex lock ; const s#seq_operations * op ; int poll_event ; const s#file * file ; void * private ; } 
+s#io_uring_cmd struct io_uring_cmd { UNKNOWN } 
+s#file_operations struct file_operations { s#module * owner ; t#loff_t ( * llseek ) ( s#file * , t#loff_t , int ) ; t#ssize_t ( * read ) ( s#file * , char __attribute__ ( ( btf_type_tag ( "user" ) ) ) * , t#size_t , t#loff_t * ) ; t#ssize_t ( * write ) ( s#file * , const char __attribute__ ( ( btf_type_tag ( "user" ) ) ) * , t#size_t , t#loff_t * ) ; t#ssize_t ( * read_iter ) ( s#kiocb * , s#iov_iter * ) ; t#ssize_t ( * write_iter ) ( s#kiocb * , s#iov_iter * ) ; int ( * iopoll ) ( s#kiocb * , s#io_comp_batch * , unsigned int ) ; int ( * iterate ) ( s#file * , s#dir_context * ) ; int ( * iterate_shared ) ( s#file * , s#dir_context * ) ; t#__poll_t ( * poll ) ( s#file * , s#poll_table_struct * ) ; long ( * unlocked_ioctl ) ( s#file * , unsigned int , unsigned long ) ; long ( * compat_ioctl ) ( s#file * , unsigned int , unsigned long ) ; int ( * mmap ) ( s#file * , s#vm_area_struct * ) ; unsigned long mmap_supported_flags ; int ( * open ) ( s#inode * , s#file * ) ; int ( * flush ) ( s#file * , t#fl_owner_t ) ; int ( * release ) ( s#inode * , s#file * ) ; int ( * fsync ) ( s#file * , t#loff_t , t#loff_t , int ) ; int ( * fasync ) ( int , s#file * , int ) ; int ( * lock ) ( s#file * , int , s#file_lock * ) ; t#ssize_t ( * sendpage ) ( s#file * , s#page * , int , t#size_t , t#loff_t * , int ) ; unsigned long ( * get_unmapped_area ) ( s#file * , unsigned long , unsigned long , unsigned long , unsigned long ) ; int ( * check_flags ) ( int ) ; int ( * flock ) ( s#file * , int , s#file_lock * ) ; t#ssize_t ( * splice_write ) ( s#pipe_inode_info * , s#file * , t#loff_t * , t#size_t , unsigned int ) ; t#ssize_t ( * splice_read ) ( s#file * , t#loff_t * , s#pipe_inode_info * , t#size_t , unsigned int ) ; int ( * setlease ) ( s#file * , long , s#file_lock * * , void * * ) ; long ( * fallocate ) ( s#file * , int , t#loff_t , t#loff_t ) ; void ( * show_fdinfo ) ( s#seq_file * , s#file * ) ; t#ssize_t ( * copy_file_range ) ( s#file * , t#loff_t , s#file * , t#loff_t , t#size_t , unsigned int ) ; t#loff_t ( * remap_file_range ) ( s#file * , t#loff_t , s#file * , t#loff_t , t#loff_t , unsigned int ) ; int ( * fadvise ) ( s#file * , t#loff_t , t#loff_t , int ) ; int ( * uring_cmd ) ( s#io_uring_cmd * , unsigned int ) ; int ( * uring_cmd_iopoll ) ( s#io_uring_cmd * , s#io_comp_batch * , unsigned int ) ; } 
+t#fmode_t typedef unsigned int fmode_t 
+E#PIDTYPE_MAX 4 
+s#idr struct idr { s#xarray idr_rt ; unsigned int idr_base ; unsigned int idr_next ; } 
+s#kmem_cache struct kmem_cache { UNKNOWN } 
+s#uid_gid_extent struct uid_gid_extent { t#u32 first ; t#u32 lower_first ; t#u32 count ; } 
+s#uid_gid_map struct uid_gid_map { t#u32 nr_extents ; union { s#uid_gid_extent extent [ 5 ] ; struct { s#uid_gid_extent * forward ; s#uid_gid_extent * reverse ; } ; } ; } 
+s#proc_ns_operations struct proc_ns_operations { UNKNOWN } 
+s#ns_common struct ns_common { t#atomic_long_t stashed ; const s#proc_ns_operations * ops ; unsigned int inum ; t#refcount_t count ; } 
+t#int32_t typedef t#s32 int32_t 
+t#key_serial_t typedef t#int32_t key_serial_t 
+s#key_user struct key_user { UNKNOWN } 
+t#time64_t typedef t#__s64 time64_t 
+t#uint32_t typedef t#u32 uint32_t 
+t#key_perm_t typedef t#uint32_t key_perm_t 
+s#key_type struct key_type { UNKNOWN } 
+s#key_tag struct key_tag { s#callback_head rcu ; t#refcount_t usage ; t#bool removed ; } 
+s#keyring_index_key struct keyring_index_key { unsigned long hash ; union { struct { t#u16 desc_len ; char desc [ sizeof ( long ) - 2 ] ; } ; unsigned long x ; } ; s#key_type * type ; s#key_tag * domain_tag ; const char * description ; } 
+u#key_payload union key_payload { void * rcu_data0 ; void * data [ 4 ] ; } 
+s#assoc_array_ptr struct assoc_array_ptr { UNKNOWN } 
+s#assoc_array struct assoc_array { s#assoc_array_ptr * root ; unsigned long nr_leaves_on_tree ; } 
+t#key_restrict_link_func_t typedef int ( * key_restrict_link_func_t ) ( s#key * , const s#key_type * , const u#key_payload * , s#key * ) 
+s#key_restriction struct key_restriction { t#key_restrict_link_func_t check ; s#key * key ; s#key_type * keytype ; } 
+s#key struct key { t#refcount_t usage ; t#key_serial_t serial ; union { s#list_head graveyard_link ; s#rb_node serial_node ; } ; s#rw_semaphore sem ; s#key_user * user ; void * security ; union { t#time64_t expiry ; t#time64_t revoked_at ; } ; t#time64_t last_used_at ; t#kuid_t uid ; t#kgid_t gid ; t#key_perm_t perm ; unsigned short quotalen ; unsigned short datalen ; short state ; unsigned long flags ; union { s#keyring_index_key index_key ; struct { unsigned long hash ; unsigned long len_desc ; s#key_type * type ; s#key_tag * domain_tag ; char * description ; } ; } ; union { u#key_payload payload ; struct { s#list_head name_link ; s#assoc_array keys ; } ; } ; s#key_restriction * restrict_link ; } 
+t#proc_handler typedef int proc_handler ( s#ctl_table * , int , void * , t#size_t * , t#loff_t * ) 
+s#ctl_table_poll struct ctl_table_poll { t#atomic_t event ; t#wait_queue_head_t wait ; } 
+s#ctl_table struct ctl_table { const char * procname ; void * data ; int maxlen ; t#umode_t mode ; s#ctl_table * child ; t#proc_handler * proc_handler ; s#ctl_table_poll * poll ; void * extra1 ; void * extra2 ; } 
+s#ctl_table_root struct ctl_table_root { s#ctl_table_set default_set ; s#ctl_table_set * ( * lookup ) ( s#ctl_table_root * ) ; void ( * set_ownership ) ( s#ctl_table_header * , s#ctl_table * , t#kuid_t * , t#kgid_t * ) ; int ( * permissions ) ( s#ctl_table_header * , s#ctl_table * ) ; } 
+s#ctl_node struct ctl_node { s#rb_node node ; s#ctl_table_header * header ; } 
+s#ctl_table_header struct ctl_table_header { union { struct { s#ctl_table * ctl_table ; int used ; int count ; int nreg ; } ; s#callback_head rcu ; } ; s#completion * unregistering ; s#ctl_table * ctl_table_arg ; s#ctl_table_root * root ; s#ctl_table_set * set ; s#ctl_dir * parent ; s#ctl_node * node ; s#hlist_head inodes ; } 
+s#ctl_dir struct ctl_dir { s#ctl_table_header header ; s#rb_root root ; } 
+s#ctl_table_set struct ctl_table_set { int ( * is_seen ) ( s#ctl_table_set * ) ; s#ctl_dir dir ; } 
+E#UCOUNT_COUNTS 10 
+E#UCOUNT_RLIMIT_COUNTS 4 
+s#ucounts struct ucounts { s#hlist_node node ; s#user_namespace * ns ; t#kuid_t uid ; t#atomic_t count ; t#atomic_long_t ucount [ E#UCOUNT_COUNTS ] ; t#atomic_long_t rlimit [ E#UCOUNT_RLIMIT_COUNTS ] ; } 
+s#user_namespace struct user_namespace { s#uid_gid_map uid_map ; s#uid_gid_map gid_map ; s#uid_gid_map projid_map ; s#user_namespace * parent ; int level ; t#kuid_t owner ; t#kgid_t group ; s#ns_common ns ; unsigned long flags ; t#bool parent_could_setfcap ; s#list_head keyring_name_list ; s#key * user_keyring_register ; s#rw_semaphore keyring_sem ; s#work_struct work ; s#ctl_table_set set ; s#ctl_table_header * sysctls ; s#ucounts * ucounts ; long ucount_max [ E#UCOUNT_COUNTS ] ; long rlimit_max [ E#UCOUNT_RLIMIT_COUNTS ] ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+s#pid_namespace struct pid_namespace { s#idr idr ; s#callback_head rcu ; unsigned int pid_allocated ; s#task_struct * child_reaper ; s#kmem_cache * pid_cachep ; unsigned int level ; s#pid_namespace * parent ; s#user_namespace * user_ns ; s#ucounts * ucounts ; int reboot ; s#ns_common ns ; } 
+s#upid struct upid { int nr ; s#pid_namespace * ns ; } 
+s#pid struct pid { t#refcount_t count ; unsigned int level ; t#spinlock_t lock ; s#hlist_head tasks [ E#PIDTYPE_MAX ] ; s#hlist_head inodes ; t#wait_queue_head_t wait_pidfd ; s#callback_head rcu ; s#upid numbers [ 1 ] ; } 
+e#pid_type enum pid_type { PIDTYPE_PID , PIDTYPE_TGID , PIDTYPE_PGID , PIDTYPE_SID , PIDTYPE_MAX , } 
+s#fown_struct struct fown_struct { t#rwlock_t lock ; s#pid * pid ; e#pid_type pid_type ; t#kuid_t uid , euid ; int signum ; } 
+s#kernel_cap_struct struct kernel_cap_struct { t#__u32 cap [ 2 ] ; } 
+t#kernel_cap_t typedef s#kernel_cap_struct kernel_cap_t 
+s#percpu_counter struct percpu_counter { t#raw_spinlock_t lock ; t#s64 count ; s#list_head list ; t#s32 __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * counters ; } 
+s#ratelimit_state struct ratelimit_state { t#raw_spinlock_t lock ; int interval ; int burst ; int printed ; int missed ; unsigned long begin ; unsigned long flags ; } 
+s#user_struct struct user_struct { t#refcount_t __count ; s#percpu_counter epoll_watches ; unsigned long unix_inflight ; t#atomic_long_t pipe_bufs ; s#hlist_node uidhash_node ; t#kuid_t uid ; t#atomic_long_t locked_vm ; s#ratelimit_state ratelimit ; t#u64 android_oem_data1 [ 2 ] ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+s#group_info struct group_info { t#atomic_t usage ; int ngroups ; t#kgid_t gid [ ] ; } 
+s#cred struct cred { t#atomic_t usage ; t#kuid_t uid ; t#kgid_t gid ; t#kuid_t suid ; t#kgid_t sgid ; t#kuid_t euid ; t#kgid_t egid ; t#kuid_t fsuid ; t#kgid_t fsgid ; unsigned securebits ; t#kernel_cap_t cap_inheritable ; t#kernel_cap_t cap_permitted ; t#kernel_cap_t cap_effective ; t#kernel_cap_t cap_bset ; t#kernel_cap_t cap_ambient ; unsigned char jit_keyring ; s#key * session_keyring ; s#key * process_keyring ; s#key * thread_keyring ; s#key * request_key_auth ; void * security ; s#user_struct * user ; s#user_namespace * user_ns ; s#ucounts * ucounts ; s#group_info * group_info ; union { int non_rcu ; s#callback_head rcu ; } ; } 
+s#file_ra_state struct file_ra_state { unsigned long start ; unsigned int size ; unsigned int async_size ; unsigned int ra_pages ; unsigned int mmap_miss ; t#loff_t prev_pos ; } 
+t#errseq_t typedef t#u32 errseq_t 
+s#file struct file { union { s#llist_node f_llist ; s#callback_head f_rcuhead ; unsigned int f_iocb_flags ; } ; s#path f_path ; s#inode * f_inode ; const s#file_operations * f_op ; t#spinlock_t f_lock ; t#atomic_long_t f_count ; unsigned int f_flags ; t#fmode_t f_mode ; s#mutex f_pos_lock ; t#loff_t f_pos ; s#fown_struct f_owner ; const s#cred * f_cred ; s#file_ra_state f_ra ; t#u64 f_version ; void * f_security ; void * private_data ; s#hlist_head * f_ep ; s#address_space * f_mapping ; t#errseq_t f_wb_err ; t#errseq_t f_sb_err ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+E#NR_MM_COUNTERS 4 
+s#mm_rss_stat struct mm_rss_stat { t#atomic_long_t count [ E#NR_MM_COUNTERS ] ; } 
+s#linux_binfmt struct linux_binfmt { UNKNOWN } 
+t#mm_context_t typedef struct { t#atomic64_t id ; void * sigpage ; t#refcount_t pinned ; void * vdso ; unsigned long flags ; } mm_context_t 
+s#kioctx_table struct kioctx_table { UNKNOWN } 
+s#mmu_notifier_subscriptions struct mmu_notifier_subscriptions { UNKNOWN } 
+s#xol_area struct xol_area { UNKNOWN } 
+s#uprobes_state struct uprobes_state { s#xol_area * xol_area ; } 
+s#kernfs_root struct kernfs_root { UNKNOWN } 
+s#kernfs_elem_dir struct kernfs_elem_dir { unsigned long subdirs ; s#rb_root children ; s#kernfs_root * root ; unsigned long rev ; } 
+s#kernfs_elem_symlink struct kernfs_elem_symlink { s#kernfs_node * target_kn ; } 
+s#kernfs_open_file struct kernfs_open_file { s#kernfs_node * kn ; s#file * file ; s#seq_file * seq_file ; void * priv ; s#mutex mutex ; s#mutex prealloc_mutex ; int event ; s#list_head list ; char * prealloc_buf ; t#size_t atomic_write_len ; t#bool mmapped : 1 ; t#bool released : 1 ; const s#vm_operations_struct * vm_ops ; t#u64 android_kabi_reserved1 ; } 
+s#kernfs_ops struct kernfs_ops { int ( * open ) ( s#kernfs_open_file * ) ; void ( * release ) ( s#kernfs_open_file * ) ; int ( * seq_show ) ( s#seq_file * , void * ) ; void * ( * seq_start ) ( s#seq_file * , t#loff_t * ) ; void * ( * seq_next ) ( s#seq_file * , void * , t#loff_t * ) ; void ( * seq_stop ) ( s#seq_file * , void * ) ; t#ssize_t ( * read ) ( s#kernfs_open_file * , char * , t#size_t , t#loff_t ) ; t#size_t atomic_write_len ; t#bool prealloc ; t#ssize_t ( * write ) ( s#kernfs_open_file * , char * , t#size_t , t#loff_t ) ; t#__poll_t ( * poll ) ( s#kernfs_open_file * , s#poll_table_struct * ) ; int ( * mmap ) ( s#kernfs_open_file * , s#vm_area_struct * ) ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+s#kernfs_open_node struct kernfs_open_node { UNKNOWN } 
+s#kernfs_elem_attr struct kernfs_elem_attr { const s#kernfs_ops * ops ; s#kernfs_open_node * open ; t#loff_t size ; s#kernfs_node * notify_next ; } 
+s#kernfs_iattrs struct kernfs_iattrs { UNKNOWN } 
+s#kernfs_node struct kernfs_node { t#atomic_t count ; t#atomic_t active ; s#kernfs_node * parent ; const char * name ; s#rb_node rb ; const void * ns ; unsigned int hash ; union { s#kernfs_elem_dir dir ; s#kernfs_elem_symlink symlink ; s#kernfs_elem_attr attr ; } ; void * priv ; t#u64 id ; unsigned short flags ; t#umode_t mode ; s#kernfs_iattrs * iattr ; t#u64 android_kabi_reserved1 ; } 
+s#cgroup_file struct cgroup_file { s#kernfs_node * kn ; unsigned long notified_at ; s#timer_list notify_timer ; } 
+E#NR_PSI_RESOURCES 4 
+E#CGROUP_SUBSYS_COUNT 7 
+s#cgroup_root struct cgroup_root { s#kernfs_root * kf_root ; unsigned int subsys_mask ; int hierarchy_id ; s#cgroup cgrp ; s#cgroup * cgrp_ancestor_storage ; t#atomic_t nr_cgrps ; s#list_head root_list ; unsigned int flags ; char release_agent_path [ 4096 ] ; char name [ 64 ] ; } 
+s#u64_stats_sync struct u64_stats_sync { } 
+s#task_cputime struct task_cputime { t#u64 stime ; t#u64 utime ; unsigned long long sum_exec_runtime ; } 
+s#cgroup_base_stat struct cgroup_base_stat { s#task_cputime cputime ; } 
+s#cgroup_rstat_cpu struct cgroup_rstat_cpu { s#u64_stats_sync bsync ; s#cgroup_base_stat bstat ; s#cgroup_base_stat last_bstat ; s#cgroup * updated_children ; s#cgroup * updated_next ; } 
+s#prev_cputime struct prev_cputime { t#u64 utime ; t#u64 stime ; t#raw_spinlock_t lock ; } 
+E#NR_PSI_TASK_COUNTS 4 
+E#NR_PSI_STATES 8 
+E#NR_PSI_AGGREGATORS ( 0 ) + 2 
+s#psi_group_cpu struct psi_group_cpu { t#seqcount_t seq __attribute__ ( ( __aligned__ ( ( 1 << ( 6 ) ) ) ) ) ; unsigned int tasks [ E#NR_PSI_TASK_COUNTS ] ; t#u32 state_mask ; t#u32 times [ E#NR_PSI_STATES ] ; t#u64 state_start ; t#u32 times_prev [ E#NR_PSI_AGGREGATORS ] [ E#NR_PSI_STATES ] __attribute__ ( ( __aligned__ ( ( 1 << ( 6 ) ) ) ) ) ; } 
+s#psi_group struct psi_group { s#psi_group * parent ; t#bool enabled ; s#mutex avgs_lock ; s#psi_group_cpu __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * pcpu ; t#u64 avg_total [ E#NR_PSI_STATES - 1 ] ; t#u64 avg_last_update ; t#u64 avg_next_update ; s#delayed_work avgs_work ; t#u64 total [ E#NR_PSI_AGGREGATORS ] [ E#NR_PSI_STATES - 1 ] ; unsigned long avg [ E#NR_PSI_STATES - 1 ] [ 3 ] ; s#task_struct * poll_task ; s#timer_list poll_timer ; t#wait_queue_head_t poll_wait ; t#atomic_t poll_wakeup ; t#atomic_t poll_scheduled ; s#mutex trigger_lock ; s#list_head triggers ; t#u32 nr_triggers [ E#NR_PSI_STATES - 1 ] ; t#u32 poll_states ; t#u64 poll_min_period ; t#u64 polling_total [ E#NR_PSI_STATES - 1 ] ; t#u64 polling_next_update ; t#u64 polling_until ; } 
+E#CGROUP_LSM_START ( 0 ) + 23 
+E#MAX_CGROUP_BPF_ATTACH_TYPE ( E#CGROUP_LSM_START + 0 - 1 ) + 1 
+s#cgroup_bpf struct cgroup_bpf { s#bpf_prog_array * effective [ E#MAX_CGROUP_BPF_ATTACH_TYPE ] ; s#hlist_head progs [ E#MAX_CGROUP_BPF_ATTACH_TYPE ] ; t#u8 flags [ E#MAX_CGROUP_BPF_ATTACH_TYPE ] ; s#list_head storages ; s#bpf_prog_array * inactive ; s#percpu_ref refcnt ; s#work_struct release_work ; } 
+s#cgroup_freezer_state struct cgroup_freezer_state { t#bool freeze ; int e_freeze ; int nr_frozen_descendants ; int nr_frozen_tasks ; } 
+s#cgroup struct cgroup { s#cgroup_subsys_state self ; unsigned long flags ; int level ; int max_depth ; int nr_descendants ; int nr_dying_descendants ; int max_descendants ; int nr_populated_csets ; int nr_populated_domain_children ; int nr_populated_threaded_children ; int nr_threaded_children ; s#kernfs_node * kn ; s#cgroup_file procs_file ; s#cgroup_file events_file ; s#cgroup_file psi_files [ E#NR_PSI_RESOURCES ] ; t#u16 subtree_control ; t#u16 subtree_ss_mask ; t#u16 old_subtree_control ; t#u16 old_subtree_ss_mask ; s#cgroup_subsys_state * subsys [ E#CGROUP_SUBSYS_COUNT ] ; s#cgroup_root * root ; s#list_head cset_links ; s#list_head e_csets [ E#CGROUP_SUBSYS_COUNT ] ; s#cgroup * dom_cgrp ; s#cgroup * old_dom_cgrp ; s#cgroup_rstat_cpu __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * rstat_cpu ; s#list_head rstat_css_list ; s#cgroup_base_stat last_bstat ; s#cgroup_base_stat bstat ; s#prev_cputime prev_cputime ; s#list_head pidlists ; s#mutex pidlist_mutex ; t#wait_queue_head_t offline_waitq ; s#work_struct release_agent_work ; s#psi_group * psi ; s#cgroup_bpf bpf ; t#atomic_t congestion_count ; s#cgroup_freezer_state freezer ; s#cgroup * ancestors [ ] ; } 
+s#cgroup_taskset struct cgroup_taskset { UNKNOWN } 
+s#css_set struct css_set { s#cgroup_subsys_state * subsys [ E#CGROUP_SUBSYS_COUNT ] ; t#refcount_t refcount ; s#css_set * dom_cset ; s#cgroup * dfl_cgrp ; int nr_tasks ; s#list_head tasks ; s#list_head mg_tasks ; s#list_head dying_tasks ; s#list_head task_iters ; s#list_head e_cset_node [ E#CGROUP_SUBSYS_COUNT ] ; s#list_head threaded_csets ; s#list_head threaded_csets_node ; s#hlist_node hlist ; s#list_head cgrp_links ; s#list_head mg_src_preload_node ; s#list_head mg_dst_preload_node ; s#list_head mg_node ; s#cgroup * mg_src_cgrp ; s#cgroup * mg_dst_cgrp ; s#css_set * mg_dst_cset ; t#bool dead ; s#callback_head callback_head ; } 
+s#cftype struct cftype { char name [ 64 ] ; unsigned long private ; t#size_t max_write_len ; unsigned int flags ; unsigned int file_offset ; s#cgroup_subsys * ss ; s#list_head node ; s#kernfs_ops * kf_ops ; int ( * open ) ( s#kernfs_open_file * ) ; void ( * release ) ( s#kernfs_open_file * ) ; t#u64 ( * read_u64 ) ( s#cgroup_subsys_state * , s#cftype * ) ; t#s64 ( * read_s64 ) ( s#cgroup_subsys_state * , s#cftype * ) ; int ( * seq_show ) ( s#seq_file * , void * ) ; void * ( * seq_start ) ( s#seq_file * , t#loff_t * ) ; void * ( * seq_next ) ( s#seq_file * , void * , t#loff_t * ) ; void ( * seq_stop ) ( s#seq_file * , void * ) ; int ( * write_u64 ) ( s#cgroup_subsys_state * , s#cftype * , t#u64 ) ; int ( * write_s64 ) ( s#cgroup_subsys_state * , s#cftype * , t#s64 ) ; t#ssize_t ( * write ) ( s#kernfs_open_file * , char * , t#size_t , t#loff_t ) ; t#__poll_t ( * poll ) ( s#kernfs_open_file * , s#poll_table_struct * ) ; } 
+s#cgroup_subsys struct cgroup_subsys { s#cgroup_subsys_state * ( * css_alloc ) ( s#cgroup_subsys_state * ) ; int ( * css_online ) ( s#cgroup_subsys_state * ) ; void ( * css_offline ) ( s#cgroup_subsys_state * ) ; void ( * css_released ) ( s#cgroup_subsys_state * ) ; void ( * css_free ) ( s#cgroup_subsys_state * ) ; void ( * css_reset ) ( s#cgroup_subsys_state * ) ; void ( * css_rstat_flush ) ( s#cgroup_subsys_state * , int ) ; int ( * css_extra_stat_show ) ( s#seq_file * , s#cgroup_subsys_state * ) ; int ( * can_attach ) ( s#cgroup_taskset * ) ; void ( * cancel_attach ) ( s#cgroup_taskset * ) ; void ( * attach ) ( s#cgroup_taskset * ) ; void ( * post_attach ) ( void ) ; int ( * can_fork ) ( s#task_struct * , s#css_set * ) ; void ( * cancel_fork ) ( s#task_struct * , s#css_set * ) ; void ( * fork ) ( s#task_struct * ) ; void ( * exit ) ( s#task_struct * ) ; void ( * release ) ( s#task_struct * ) ; void ( * bind ) ( s#cgroup_subsys_state * ) ; t#bool early_init : 1 ; t#bool implicit_on_dfl : 1 ; t#bool threaded : 1 ; int id ; const char * name ; const char * legacy_name ; s#cgroup_root * root ; s#idr css_idr ; s#list_head cfts ; s#cftype * dfl_cftypes ; s#cftype * legacy_cftypes ; unsigned int depends_on ; } 
+s#rcu_work struct rcu_work { s#work_struct work ; s#callback_head rcu ; s#workqueue_struct * wq ; } 
+s#cgroup_subsys_state struct cgroup_subsys_state { s#cgroup * cgroup ; s#cgroup_subsys * ss ; s#percpu_ref refcnt ; s#list_head sibling ; s#list_head children ; s#list_head rstat_css_node ; int id ; unsigned int flags ; t#u64 serial_nr ; t#atomic_t online_cnt ; s#work_struct destroy_work ; s#rcu_work destroy_rwork ; s#cgroup_subsys_state * parent ; } 
+s#mem_cgroup_id struct mem_cgroup_id { int id ; t#refcount_t ref ; } 
+s#cacheline_padding struct cacheline_padding { char x [ 0 ] ; } 
+s#page_counter struct page_counter { t#atomic_long_t usage ; s#cacheline_padding _pad1_ ; unsigned long emin ; t#atomic_long_t min_usage ; t#atomic_long_t children_min_usage ; unsigned long elow ; t#atomic_long_t low_usage ; t#atomic_long_t children_low_usage ; unsigned long watermark ; unsigned long failcnt ; s#cacheline_padding _pad2_ ; unsigned long min ; unsigned long low ; unsigned long high ; unsigned long max ; s#page_counter * parent ; } 
+s#vmpressure struct vmpressure { unsigned long scanned ; unsigned long reclaimed ; unsigned long tree_scanned ; unsigned long tree_reclaimed ; t#spinlock_t sr_lock ; s#list_head events ; s#mutex events_lock ; s#work_struct work ; } 
+s#eventfd_ctx struct eventfd_ctx { UNKNOWN } 
+s#mem_cgroup_threshold struct mem_cgroup_threshold { s#eventfd_ctx * eventfd ; unsigned long threshold ; } 
+s#mem_cgroup_threshold_ary struct mem_cgroup_threshold_ary { int current_threshold ; unsigned int size ; s#mem_cgroup_threshold entries [ ] ; } 
+s#mem_cgroup_thresholds struct mem_cgroup_thresholds { s#mem_cgroup_threshold_ary * primary ; s#mem_cgroup_threshold_ary * spare ; } 
+s#memcg_vmstats struct memcg_vmstats { UNKNOWN } 
+E#MEMCG_NR_MEMORY_EVENTS 9 
+s#obj_cgroup struct obj_cgroup { s#percpu_ref refcnt ; s#mem_cgroup * memcg ; t#atomic_t nr_charged_bytes ; union { s#list_head list ; s#callback_head rcu ; } ; } 
+s#memcg_vmstats_percpu struct memcg_vmstats_percpu { UNKNOWN } 
+s#fprop_global struct fprop_global { s#percpu_counter events ; unsigned int period ; t#seqcount_t sequence ; } 
+s#wb_domain struct wb_domain { t#spinlock_t lock ; s#fprop_global completions ; s#timer_list period_timer ; unsigned long period_time ; unsigned long dirty_limit_tstamp ; unsigned long dirty_limit ; } 
+s#wb_completion struct wb_completion { t#atomic_t cnt ; t#wait_queue_head_t * waitq ; } 
+s#memcg_cgwb_frn struct memcg_cgwb_frn { t#u64 bdi_id ; int memcg_id ; t#u64 at ; s#wb_completion done ; } 
+s#deferred_split struct deferred_split { t#spinlock_t split_queue_lock ; s#list_head split_queue ; unsigned long split_queue_len ; } 
+s#lru_gen_mm_list struct lru_gen_mm_list { s#list_head fifo ; t#spinlock_t lock ; } 
+E#NR_LRU_LISTS ( 0 + 2 + 1 ) + 2 
+s#hlist_nulls_node struct hlist_nulls_node { s#hlist_nulls_node * next , * * pprev ; } 
+s#lru_gen_folio struct lru_gen_folio { unsigned long max_seq ; unsigned long min_seq [ 2 ] ; unsigned long timestamps [ 4U ] ; s#list_head folios [ 4U ] [ 2 ] [ 4 ] ; long nr_pages [ 4U ] [ 2 ] [ 4 ] ; unsigned long avg_refaulted [ 2 ] [ 4U ] ; unsigned long avg_total [ 2 ] [ 4U ] ; unsigned long protected [ 1U ] [ 2 ] [ 4U - 1 ] ; t#atomic_long_t evicted [ 1U ] [ 2 ] [ 4U ] ; t#atomic_long_t refaulted [ 1U ] [ 2 ] [ 4U ] ; t#bool enabled ; t#u8 gen ; t#u8 seg ; s#hlist_nulls_node list ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+E#NR_MM_STATS 6 
+s#lru_gen_mm_state struct lru_gen_mm_state { unsigned long seq ; s#list_head * head ; s#list_head * tail ; unsigned long * filters [ 2 ] ; unsigned long stats [ 1U ] [ E#NR_MM_STATS ] ; t#u64 android_kabi_reserved1 ; } 
+E#NR_WMARK 4 
+E#MIGRATE_PCPTYPES 4 
+s#per_cpu_pages struct per_cpu_pages { t#spinlock_t lock ; int count ; int high ; int batch ; short free_factor ; s#list_head lists [ ( ( E#MIGRATE_PCPTYPES * ( 3 + 1 ) ) + 1 ) ] ; } 
+E#NR_ZONE_LRU_BASE 1 
+E#NR_VM_ZONE_STAT_ITEMS ( E#NR_ZONE_LRU_BASE ) + 10 
+s#per_cpu_zonestat struct per_cpu_zonestat { t#s8 vm_stat_diff [ E#NR_VM_ZONE_STAT_ITEMS ] ; t#s8 stat_threshold ; } 
+t#seqlock_t typedef struct { t#seqcount_spinlock_t seqcount ; t#spinlock_t lock ; } seqlock_t 
+E#MIGRATE_TYPES ( E#MIGRATE_PCPTYPES ) + 2 
+s#free_area struct free_area { s#list_head free_list [ E#MIGRATE_TYPES ] ; unsigned long nr_free ; } 
+s#zone struct zone { unsigned long _watermark [ E#NR_WMARK ] ; unsigned long watermark_boost ; unsigned long nr_reserved_highatomic ; long lowmem_reserve [ 4 ] ; s#pglist_data * zone_pgdat ; s#per_cpu_pages __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * per_cpu_pageset ; s#per_cpu_zonestat __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * per_cpu_zonestats ; int pageset_high ; int pageset_batch ; unsigned long zone_start_pfn ; t#atomic_long_t managed_pages ; unsigned long spanned_pages ; unsigned long present_pages ; unsigned long present_early_pages ; unsigned long cma_pages ; const char * name ; unsigned long nr_isolate_pageblock ; t#seqlock_t span_seqlock ; int initialized ; s#cacheline_padding _pad1_ ; s#free_area free_area [ 11 ] ; unsigned long flags ; t#spinlock_t lock ; s#cacheline_padding _pad2_ ; unsigned long percpu_drift_mark ; unsigned long compact_cached_free_pfn ; unsigned long compact_cached_migrate_pfn [ 2 ] ; unsigned long compact_init_migrate_pfn ; unsigned long compact_init_free_pfn ; unsigned int compact_considered ; unsigned int compact_defer_shift ; int compact_order_failed ; t#bool compact_blockskip_flush ; t#bool contiguous ; s#cacheline_padding _pad3_ ; t#atomic_long_t vm_stat [ E#NR_VM_ZONE_STAT_ITEMS ] ; t#atomic_long_t vm_numa_event [ 0 ] ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+s#zoneref struct zoneref { s#zone * zone ; int zone_idx ; } 
+s#zonelist struct zonelist { s#zoneref _zonerefs [ ( ( 1 << 0 ) * 4 ) + 1 ] ; } 
+E#MAX_ZONELISTS 1 
+E#NR_VMSCAN_THROTTLE 4 
+e#zone_type enum zone_type { ZONE_DMA32 , ZONE_NORMAL , ZONE_MOVABLE , ZONE_DEVICE , __MAX_NR_ZONES } 
+s#lru_gen_mm_walk struct lru_gen_mm_walk { s#lruvec * lruvec ; unsigned long max_seq ; unsigned long next_addr ; int nr_pages [ 4U ] [ 2 ] [ 4 ] ; int mm_stats [ E#NR_MM_STATS ] ; int batched ; t#bool can_swap ; t#bool force_scan ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+s#hlist_nulls_head struct hlist_nulls_head { s#hlist_nulls_node * first ; } 
+s#lru_gen_memcg struct lru_gen_memcg { unsigned long seq ; unsigned long nr_memcgs [ 2 ] ; s#hlist_nulls_head fifo [ 2 ] [ 8 ] ; t#spinlock_t lock ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+E#NR_LRU_BASE 0 
+E#WORKINGSET_REFAULT_BASE ( E#NR_LRU_BASE ) + 10 
+E#WORKINGSET_ACTIVATE_BASE ( E#WORKINGSET_REFAULT_BASE ) + 2 
+E#WORKINGSET_RESTORE_BASE ( E#WORKINGSET_ACTIVATE_BASE ) + 2 
+E#NR_VM_NODE_STAT_ITEMS ( E#WORKINGSET_RESTORE_BASE ) + 28 
+s#per_cpu_nodestat struct per_cpu_nodestat { t#s8 stat_threshold ; t#s8 vm_node_stat_diff [ E#NR_VM_NODE_STAT_ITEMS ] ; } 
+s#pglist_data struct pglist_data { s#zone node_zones [ 4 ] ; s#zonelist node_zonelists [ E#MAX_ZONELISTS ] ; int nr_zones ; t#spinlock_t node_size_lock ; unsigned long node_start_pfn ; unsigned long node_present_pages ; unsigned long node_spanned_pages ; int node_id ; t#wait_queue_head_t kswapd_wait ; t#wait_queue_head_t pfmemalloc_wait ; t#wait_queue_head_t reclaim_wait [ E#NR_VMSCAN_THROTTLE ] ; t#atomic_t nr_writeback_throttled ; unsigned long nr_reclaim_start ; s#mutex kswapd_lock ; s#task_struct * kswapd ; s#task_struct * mkswapd [ 16 ] ; int kswapd_order ; e#zone_type kswapd_highest_zoneidx ; int kswapd_failures ; t#u64 android_oem_data1 ; int kcompactd_max_order ; e#zone_type kcompactd_highest_zoneidx ; t#wait_queue_head_t kcompactd_wait ; s#task_struct * kcompactd ; t#bool proactive_compact_trigger ; unsigned long totalreserve_pages ; s#cacheline_padding _pad1_ ; s#deferred_split deferred_split_queue ; s#lruvec __lruvec ; unsigned long flags ; s#lru_gen_mm_walk mm_walk ; s#lru_gen_memcg memcg_lru ; s#cacheline_padding _pad2_ ; s#per_cpu_nodestat __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * per_cpu_nodestats ; t#atomic_long_t vm_stat [ E#NR_VM_NODE_STAT_ITEMS ] ; } 
+s#lruvec struct lruvec { s#list_head lists [ E#NR_LRU_LISTS ] ; t#spinlock_t lru_lock ; unsigned long anon_cost ; unsigned long file_cost ; t#atomic_long_t nonresident_age ; unsigned long refaults [ 2 ] ; unsigned long flags ; s#lru_gen_folio lrugen ; s#lru_gen_mm_state mm_state ; s#pglist_data * pgdat ; t#u64 android_vendor_data1 ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+s#lruvec_stats_percpu struct lruvec_stats_percpu { long state [ E#NR_VM_NODE_STAT_ITEMS ] ; long state_prev [ E#NR_VM_NODE_STAT_ITEMS ] ; } 
+s#lruvec_stats struct lruvec_stats { long state [ E#NR_VM_NODE_STAT_ITEMS ] ; long state_pending [ E#NR_VM_NODE_STAT_ITEMS ] ; } 
+s#mem_cgroup_reclaim_iter struct mem_cgroup_reclaim_iter { s#mem_cgroup * position ; unsigned int generation ; } 
+s#shrinker_info struct shrinker_info { s#callback_head rcu ; t#atomic_long_t * nr_deferred ; unsigned long * map ; } 
+s#mem_cgroup_per_node struct mem_cgroup_per_node { s#lruvec lruvec ; s#lruvec_stats_percpu __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * lruvec_stats_percpu ; s#lruvec_stats lruvec_stats ; unsigned long lru_zone_size [ 4 ] [ E#NR_LRU_LISTS ] ; s#mem_cgroup_reclaim_iter iter ; s#shrinker_info * shrinker_info ; s#rb_node tree_node ; unsigned long usage_in_excess ; t#bool on_tree ; s#mem_cgroup * memcg ; } 
+s#mem_cgroup struct mem_cgroup { s#cgroup_subsys_state css ; s#mem_cgroup_id id ; s#page_counter memory ; union { s#page_counter swap ; s#page_counter memsw ; } ; s#page_counter kmem ; s#page_counter tcpmem ; s#work_struct high_work ; unsigned long soft_limit ; s#vmpressure vmpressure ; t#bool oom_group ; t#bool oom_lock ; int under_oom ; int swappiness ; int oom_kill_disable ; s#cgroup_file events_file ; s#cgroup_file events_local_file ; s#cgroup_file swap_events_file ; s#mutex thresholds_lock ; s#mem_cgroup_thresholds thresholds ; s#mem_cgroup_thresholds memsw_thresholds ; s#list_head oom_notify ; unsigned long move_charge_at_immigrate ; t#spinlock_t move_lock ; unsigned long move_lock_flags ; s#cacheline_padding _pad1_ ; s#memcg_vmstats * vmstats ; t#atomic_long_t memory_events [ E#MEMCG_NR_MEMORY_EVENTS ] ; t#atomic_long_t memory_events_local [ E#MEMCG_NR_MEMORY_EVENTS ] ; unsigned long socket_pressure ; t#bool tcpmem_active ; int tcpmem_pressure ; int kmemcg_id ; s#obj_cgroup * objcg ; s#list_head objcg_list ; s#cacheline_padding _pad2_ ; t#atomic_t moving_account ; s#task_struct * move_lock_task ; s#memcg_vmstats_percpu __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * vmstats_percpu ; s#list_head cgwb_list ; s#wb_domain cgwb_domain ; s#memcg_cgwb_frn cgwb_frn [ 4 ] ; s#list_head event_list ; t#spinlock_t event_list_lock ; s#deferred_split deferred_split_queue ; s#lru_gen_mm_list mm_list ; t#u64 android_oem_data1 [ 2 ] ; s#mem_cgroup_per_node * nodeinfo [ ] ; } 
+s#mm_struct struct mm_struct { struct { s#maple_tree mm_mt ; unsigned long ( * get_unmapped_area ) ( s#file * , unsigned long , unsigned long , unsigned long , unsigned long ) ; unsigned long mmap_base ; unsigned long mmap_legacy_base ; unsigned long task_size ; t#pgd_t * pgd ; t#atomic_t membarrier_state ; t#atomic_t mm_users ; t#atomic_t mm_count ; t#atomic_long_t pgtables_bytes ; int map_count ; t#spinlock_t page_table_lock ; s#rw_semaphore mmap_lock ; s#list_head mmlist ; int mm_lock_seq ; unsigned long hiwater_rss ; unsigned long hiwater_vm ; unsigned long total_vm ; unsigned long locked_vm ; t#atomic64_t pinned_vm ; unsigned long data_vm ; unsigned long exec_vm ; unsigned long stack_vm ; unsigned long def_flags ; t#seqcount_t write_protect_seq ; t#spinlock_t arg_lock ; unsigned long start_code , end_code , start_data , end_data ; unsigned long start_brk , brk , start_stack ; unsigned long arg_start , arg_end , env_start , env_end ; unsigned long saved_auxv [ ( 2 * ( 2 + 20 + 1 ) ) ] ; s#mm_rss_stat rss_stat ; s#linux_binfmt * binfmt ; t#mm_context_t context ; unsigned long flags ; t#spinlock_t ioctx_lock ; s#kioctx_table * ioctx_table ; s#task_struct * owner ; s#user_namespace * user_ns ; s#file * exe_file ; s#mmu_notifier_subscriptions * notifier_subscriptions ; t#atomic_t tlb_flush_pending ; s#uprobes_state uprobes_state ; s#work_struct async_put_work ; struct { s#list_head list ; unsigned long bitmap ; s#mem_cgroup * memcg ; } lru_gen ; t#u64 android_kabi_reserved1 ; } ; unsigned long cpu_bitmap [ ] ; } 
+s#task_rss_stat struct task_rss_stat { int events ; int count [ E#NR_MM_COUNTERS ] ; } 
+e#timespec_type enum timespec_type { TT_NONE = 0 , TT_NATIVE = 1 , TT_COMPAT = 2 , } 
+t#__kernel_time64_t typedef long long __kernel_time64_t 
+s#__kernel_timespec struct __kernel_timespec { t#__kernel_time64_t tv_sec ; long long tv_nsec ; } 
+t#old_time32_t typedef t#s32 old_time32_t 
+s#old_timespec32 struct old_timespec32 { t#old_time32_t tv_sec ; t#s32 tv_nsec ; } 
+s#pollfd struct pollfd { int fd ; short events ; short revents ; } 
+s#restart_block struct restart_block { unsigned long arch_data ; long ( * fn ) ( s#restart_block * ) ; union { struct { t#u32 __attribute__ ( ( btf_type_tag ( "user" ) ) ) * uaddr ; t#u32 val ; t#u32 flags ; t#u32 bitset ; t#u64 time ; t#u32 __attribute__ ( ( btf_type_tag ( "user" ) ) ) * uaddr2 ; } futex ; struct { t#clockid_t clockid ; e#timespec_type type ; union { s#__kernel_timespec __attribute__ ( ( btf_type_tag ( "user" ) ) ) * rmtp ; s#old_timespec32 __attribute__ ( ( btf_type_tag ( "user" ) ) ) * compat_rmtp ; } ; t#u64 expires ; } nanosleep ; struct { s#pollfd __attribute__ ( ( btf_type_tag ( "user" ) ) ) * ufds ; int nfds ; int has_timeout ; unsigned long tv_sec ; unsigned long tv_nsec ; } poll ; } ; } 
+t#__kernel_pid_t typedef int __kernel_pid_t 
+t#pid_t typedef t#__kernel_pid_t pid_t 
+s#posix_cputimer_base struct posix_cputimer_base { t#u64 nextevt ; s#timerqueue_head tqhead ; } 
+s#posix_cputimers struct posix_cputimers { s#posix_cputimer_base bases [ 3 ] ; unsigned int timers_active ; unsigned int expiry_active ; } 
+s#posix_cputimers_work struct posix_cputimers_work { s#callback_head work ; s#mutex mutex ; unsigned int scheduled ; } 
+E#TASK_COMM_LEN 16 
+s#nameidata struct nameidata { UNKNOWN } 
+s#fs_struct struct fs_struct { UNKNOWN } 
+s#files_struct struct files_struct { UNKNOWN } 
+s#io_uring_task struct io_uring_task { UNKNOWN } 
+s#uts_namespace struct uts_namespace { UNKNOWN } 
+s#ipc_namespace struct ipc_namespace { UNKNOWN } 
+s#mnt_namespace struct mnt_namespace { UNKNOWN } 
+s#net struct net { UNKNOWN } 
+s#time_namespace struct time_namespace { UNKNOWN } 
+s#cgroup_namespace struct cgroup_namespace { s#ns_common ns ; s#user_namespace * user_ns ; s#ucounts * ucounts ; s#css_set * root_cset ; } 
+s#nsproxy struct nsproxy { t#atomic_t count ; s#uts_namespace * uts_ns ; s#ipc_namespace * ipc_ns ; s#mnt_namespace * mnt_ns ; s#pid_namespace * pid_ns_for_children ; s#net * net_ns ; s#time_namespace * time_ns ; s#time_namespace * time_ns_for_children ; s#cgroup_namespace * cgroup_ns ; } 
+t#sigset_t typedef struct { unsigned long sig [ ( 64 / 64 ) ] ; } sigset_t 
+s#sigpending struct sigpending { s#list_head list ; t#sigset_t signal ; } 
+s#core_thread struct core_thread { s#task_struct * task ; s#core_thread * next ; } 
+s#core_state struct core_state { t#atomic_t nr_threads ; s#core_thread dumper ; s#completion startup ; } 
+s#cpu_itimer struct cpu_itimer { t#u64 expires ; t#u64 incr ; } 
+s#task_cputime_atomic struct task_cputime_atomic { t#atomic64_t utime ; t#atomic64_t stime ; t#atomic64_t sum_exec_runtime ; } 
+s#thread_group_cputimer struct thread_group_cputimer { s#task_cputime_atomic cputime_atomic ; } 
+s#tty_struct struct tty_struct { UNKNOWN } 
+s#task_io_accounting struct task_io_accounting { t#u64 rchar ; t#u64 wchar ; t#u64 syscr ; t#u64 syscw ; t#u64 syscfs ; t#u64 read_bytes ; t#u64 write_bytes ; t#u64 cancelled_write_bytes ; } 
+s#rlimit struct rlimit { t#__kernel_ulong_t rlim_cur ; t#__kernel_ulong_t rlim_max ; } 
+s#taskstats struct taskstats { t#__u16 version ; t#__u32 ac_exitcode ; t#__u8 ac_flag ; t#__u8 ac_nice ; t#__u64 cpu_count __attribute__ ( ( aligned ( 8 ) ) ) ; t#__u64 cpu_delay_total ; t#__u64 blkio_count ; t#__u64 blkio_delay_total ; t#__u64 swapin_count ; t#__u64 swapin_delay_total ; t#__u64 cpu_run_real_total ; t#__u64 cpu_run_virtual_total ; char ac_comm [ 32 ] ; t#__u8 ac_sched __attribute__ ( ( aligned ( 8 ) ) ) ; t#__u8 ac_pad [ 3 ] ; t#__u32 ac_uid __attribute__ ( ( aligned ( 8 ) ) ) ; t#__u32 ac_gid ; t#__u32 ac_pid ; t#__u32 ac_ppid ; t#__u32 ac_btime ; t#__u64 ac_etime __attribute__ ( ( aligned ( 8 ) ) ) ; t#__u64 ac_utime ; t#__u64 ac_stime ; t#__u64 ac_minflt ; t#__u64 ac_majflt ; t#__u64 coremem ; t#__u64 virtmem ; t#__u64 hiwater_rss ; t#__u64 hiwater_vm ; t#__u64 read_char ; t#__u64 write_char ; t#__u64 read_syscalls ; t#__u64 write_syscalls ; t#__u64 read_bytes ; t#__u64 write_bytes ; t#__u64 cancelled_write_bytes ; t#__u64 nvcsw ; t#__u64 nivcsw ; t#__u64 ac_utimescaled ; t#__u64 ac_stimescaled ; t#__u64 cpu_scaled_run_real_total ; t#__u64 freepages_count ; t#__u64 freepages_delay_total ; t#__u64 thrashing_count ; t#__u64 thrashing_delay_total ; t#__u64 ac_btime64 ; t#__u64 compact_count ; t#__u64 compact_delay_total ; t#__u32 ac_tgid ; t#__u64 ac_tgetime __attribute__ ( ( aligned ( 8 ) ) ) ; t#__u64 ac_exe_dev ; t#__u64 ac_exe_inode ; t#__u64 wpcopy_count ; t#__u64 wpcopy_delay_total ; } 
+s#tty_audit_buf struct tty_audit_buf { UNKNOWN } 
+s#signal_struct struct signal_struct { t#refcount_t sigcnt ; t#atomic_t live ; int nr_threads ; int quick_threads ; s#list_head thread_head ; t#wait_queue_head_t wait_chldexit ; s#task_struct * curr_target ; s#sigpending shared_pending ; s#hlist_head multiprocess ; int group_exit_code ; int notify_count ; s#task_struct * group_exec_task ; int group_stop_count ; unsigned int flags ; s#core_state * core_state ; unsigned int is_child_subreaper : 1 ; unsigned int has_child_subreaper : 1 ; int posix_timer_id ; s#list_head posix_timers ; s#hrtimer real_timer ; t#ktime_t it_real_incr ; s#cpu_itimer it [ 2 ] ; s#thread_group_cputimer cputimer ; s#posix_cputimers posix_cputimers ; s#pid * pids [ E#PIDTYPE_MAX ] ; s#pid * tty_old_pgrp ; int leader ; s#tty_struct * tty ; t#seqlock_t stats_lock ; t#u64 utime , stime , cutime , cstime ; t#u64 gtime ; t#u64 cgtime ; s#prev_cputime prev_cputime ; unsigned long nvcsw , nivcsw , cnvcsw , cnivcsw ; unsigned long min_flt , maj_flt , cmin_flt , cmaj_flt ; unsigned long inblock , oublock , cinblock , coublock ; unsigned long maxrss , cmaxrss ; s#task_io_accounting ioac ; unsigned long long sum_sched_runtime ; s#rlimit rlim [ 16 ] ; s#taskstats * stats ; unsigned audit_tty ; s#tty_audit_buf * tty_audit_buf ; t#bool oom_flag_origin ; short oom_score_adj ; short oom_score_adj_min ; s#mm_struct * oom_mm ; s#mutex cred_guard_mutex ; s#rw_semaphore exec_update_lock ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+t#__signalfn_t typedef void __signalfn_t ( int ) 
+t#__sighandler_t typedef t#__signalfn_t __attribute__ ( ( btf_type_tag ( "user" ) ) ) * __sighandler_t 
+t#__restorefn_t typedef void __restorefn_t ( void ) 
+t#__sigrestore_t typedef t#__restorefn_t __attribute__ ( ( btf_type_tag ( "user" ) ) ) * __sigrestore_t 
+s#sigaction struct sigaction { t#__sighandler_t sa_handler ; unsigned long sa_flags ; t#__sigrestore_t sa_restorer ; t#sigset_t sa_mask ; } 
+s#k_sigaction struct k_sigaction { s#sigaction sa ; } 
+s#sighand_struct struct sighand_struct { t#spinlock_t siglock ; t#refcount_t count ; t#wait_queue_head_t signalfd_wqh ; s#k_sigaction action [ 64 ] ; } 
+s#audit_context struct audit_context { UNKNOWN } 
+s#seccomp_filter struct seccomp_filter { UNKNOWN } 
+s#seccomp struct seccomp { int mode ; t#atomic_t filter_count ; s#seccomp_filter * filter ; } 
+s#syscall_user_dispatch struct syscall_user_dispatch { } 
+s#wake_q_node struct wake_q_node { s#wake_q_node * next ; } 
+s#rt_mutex_waiter struct rt_mutex_waiter { UNKNOWN } 
+t#sector_t typedef t#u64 sector_t 
+s#disk_stats struct disk_stats { UNKNOWN } 
+s#gendisk struct gendisk { UNKNOWN } 
+s#request_queue struct request_queue { UNKNOWN } 
+s#partition_meta_info struct partition_meta_info { UNKNOWN } 
+s#block_device struct block_device { t#sector_t bd_start_sect ; t#sector_t bd_nr_sectors ; s#disk_stats __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * bd_stats ; unsigned long bd_stamp ; t#bool bd_read_only ; t#dev_t bd_dev ; t#atomic_t bd_openers ; s#inode * bd_inode ; s#super_block * bd_super ; void * bd_claiming ; s#device bd_device ; void * bd_holder ; int bd_holders ; t#bool bd_write_holder ; s#kobject * bd_holder_dir ; t#u8 bd_partno ; t#spinlock_t bd_size_lock ; s#gendisk * bd_disk ; s#request_queue * bd_queue ; int bd_fsfreeze_count ; s#mutex bd_fsfreeze_mutex ; s#super_block * bd_fsfreeze_sb ; s#partition_meta_info * bd_meta_info ; } 
+t#blk_opf_t typedef t#__u32 blk_opf_t 
+t#blk_status_t typedef t#u8 blk_status_t 
+s#bvec_iter struct bvec_iter { t#sector_t bi_sector ; unsigned int bi_size ; unsigned int bi_idx ; unsigned int bi_bvec_done ; } 
+t#blk_qc_t typedef unsigned int blk_qc_t 
+t#bio_end_io_t typedef void ( bio_end_io_t ) ( s#bio * ) 
+s#blkcg_gq struct blkcg_gq { UNKNOWN } 
+s#bio_issue struct bio_issue { t#u64 value ; } 
+s#bio_crypt_ctx struct bio_crypt_ctx { UNKNOWN } 
+s#bio_alloc_cache struct bio_alloc_cache { UNKNOWN } 
+t#mempool_alloc_t typedef void * ( mempool_alloc_t ) ( t#gfp_t , void * ) 
+t#mempool_free_t typedef void ( mempool_free_t ) ( void * , void * ) 
+s#mempool_s struct mempool_s { t#spinlock_t lock ; int min_nr ; int curr_nr ; void * * elements ; void * pool_data ; t#mempool_alloc_t * alloc ; t#mempool_free_t * free ; t#wait_queue_head_t wait ; } 
+t#mempool_t typedef s#mempool_s mempool_t 
+s#bio_set struct bio_set { s#kmem_cache * bio_slab ; unsigned int front_pad ; s#bio_alloc_cache __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * cache ; t#mempool_t bio_pool ; t#mempool_t bvec_pool ; unsigned int back_pad ; t#spinlock_t rescue_lock ; s#bio_list rescue_list ; s#work_struct rescue_work ; s#workqueue_struct * rescue_workqueue ; s#hlist_node cpuhp_dead ; } 
+s#bio struct bio { s#bio * bi_next ; s#block_device * bi_bdev ; t#blk_opf_t bi_opf ; unsigned short bi_flags ; unsigned short bi_ioprio ; t#blk_status_t bi_status ; t#atomic_t __bi_remaining ; s#bvec_iter bi_iter ; t#blk_qc_t bi_cookie ; t#bio_end_io_t * bi_end_io ; void * bi_private ; s#blkcg_gq * bi_blkg ; s#bio_issue bi_issue ; t#u64 bi_iocost_cost ; s#bio_crypt_ctx * bi_crypt_context ; t#bool bi_skip_dm_default_key ; union { } ; unsigned short bi_vcnt ; unsigned short bi_max_vecs ; t#atomic_t __bi_cnt ; s#bio_vec * bi_io_vec ; s#bio_set * bi_pool ; t#u64 android_oem_data1 ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; s#bio_vec bi_inline_vecs [ ] ; } 
+s#bio_list struct bio_list { s#bio * head ; s#bio * tail ; } 
+s#blk_plug struct blk_plug { UNKNOWN } 
+s#reclaim_state struct reclaim_state { unsigned long reclaimed_slab ; s#lru_gen_mm_walk * mm_walk ; } 
+E#NR_WB_STAT_ITEMS 4 
+s#fprop_local_percpu struct fprop_local_percpu { s#percpu_counter events ; unsigned int period ; t#raw_spinlock_t lock ; } 
+e#wb_reason enum wb_reason { WB_REASON_BACKGROUND , WB_REASON_VMSCAN , WB_REASON_SYNC , WB_REASON_PERIODIC , WB_REASON_LAPTOP_TIMER , WB_REASON_FS_FREE_SPACE , WB_REASON_FORKER_THREAD , WB_REASON_FOREIGN_FLUSH , WB_REASON_MAX , } 
+s#bdi_writeback struct bdi_writeback { s#backing_dev_info * bdi ; unsigned long state ; unsigned long last_old_flush ; s#list_head b_dirty ; s#list_head b_io ; s#list_head b_more_io ; s#list_head b_dirty_time ; t#spinlock_t list_lock ; t#atomic_t writeback_inodes ; s#percpu_counter stat [ E#NR_WB_STAT_ITEMS ] ; unsigned long bw_time_stamp ; unsigned long dirtied_stamp ; unsigned long written_stamp ; unsigned long write_bandwidth ; unsigned long avg_write_bandwidth ; unsigned long dirty_ratelimit ; unsigned long balanced_dirty_ratelimit ; s#fprop_local_percpu completions ; int dirty_exceeded ; e#wb_reason start_all_reason ; t#spinlock_t work_lock ; s#list_head work_list ; s#delayed_work dwork ; s#delayed_work bw_dwork ; unsigned long dirty_sleep ; s#list_head bdi_node ; s#percpu_ref refcnt ; s#fprop_local_percpu memcg_completions ; s#cgroup_subsys_state * memcg_css ; s#cgroup_subsys_state * blkcg_css ; s#list_head memcg_node ; s#list_head blkcg_node ; s#list_head b_attached ; s#list_head offline_node ; union { s#work_struct release_work ; s#callback_head rcu ; } ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+s#backing_dev_info struct backing_dev_info { t#u64 id ; s#rb_node rb_node ; s#list_head bdi_list ; unsigned long ra_pages ; unsigned long io_pages ; s#kref refcnt ; unsigned int capabilities ; unsigned int min_ratio ; unsigned int max_ratio , max_prop_frac ; t#atomic_long_t tot_write_bandwidth ; s#bdi_writeback wb ; s#list_head wb_list ; s#xarray cgwb_tree ; s#mutex cgwb_release_mutex ; s#rw_semaphore wb_switch_rwsem ; t#wait_queue_head_t wb_waitq ; s#device * dev ; char dev_name [ 64 ] ; s#device * owner ; s#timer_list laptop_mode_wb_timer ; s#dentry * debug_dir ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+s#io_cq struct io_cq { s#request_queue * q ; s#io_context * ioc ; union { s#list_head q_node ; s#kmem_cache * __rcu_icq_cache ; } ; union { s#hlist_node ioc_node ; s#callback_head __rcu_head ; } ; unsigned int flags ; } 
+s#io_context struct io_context { t#atomic_long_t refcount ; t#atomic_t active_ref ; unsigned short ioprio ; t#spinlock_t lock ; s#xarray icq_tree ; s#io_cq * icq_hint ; s#hlist_head icq_list ; s#work_struct release_work ; } 
+s#capture_control struct capture_control { UNKNOWN } 
+t#__kernel_timer_t typedef int __kernel_timer_t 
+u#sigval union sigval { int sival_int ; void __attribute__ ( ( btf_type_tag ( "user" ) ) ) * sival_ptr ; } 
+t#sigval_t typedef u#sigval sigval_t 
+t#__kernel_clock_t typedef t#__kernel_long_t __kernel_clock_t 
+u#__sifields union __sifields { struct { t#__kernel_pid_t _pid ; t#__kernel_uid32_t _uid ; } _kill ; struct { t#__kernel_timer_t _tid ; int _overrun ; t#sigval_t _sigval ; int _sys_private ; } _timer ; struct { t#__kernel_pid_t _pid ; t#__kernel_uid32_t _uid ; t#sigval_t _sigval ; } _rt ; struct { t#__kernel_pid_t _pid ; t#__kernel_uid32_t _uid ; int _status ; t#__kernel_clock_t _utime ; t#__kernel_clock_t _stime ; } _sigchld ; struct { void __attribute__ ( ( btf_type_tag ( "user" ) ) ) * _addr ; union { int _trapno ; short _addr_lsb ; struct { char _dummy_bnd [ ( __alignof__ ( void * ) < sizeof ( short ) ? sizeof ( short ) : __alignof__ ( void * ) ) ] ; void __attribute__ ( ( btf_type_tag ( "user" ) ) ) * _lower ; void __attribute__ ( ( btf_type_tag ( "user" ) ) ) * _upper ; } _addr_bnd ; struct { char _dummy_pkey [ ( __alignof__ ( void * ) < sizeof ( short ) ? sizeof ( short ) : __alignof__ ( void * ) ) ] ; t#__u32 _pkey ; } _addr_pkey ; struct { unsigned long _data ; t#__u32 _type ; t#__u32 _flags ; } _perf ; } ; } _sigfault ; struct { long _band ; int _fd ; } _sigpoll ; struct { void __attribute__ ( ( btf_type_tag ( "user" ) ) ) * _call_addr ; int _syscall ; unsigned int _arch ; } _sigsys ; } 
+s#kernel_siginfo struct kernel_siginfo { struct { int si_signo ; int si_errno ; int si_code ; u#__sifields _sifields ; } ; } 
+t#kernel_siginfo_t typedef s#kernel_siginfo kernel_siginfo_t 
+t#nodemask_t typedef struct { unsigned long bits [ ( ( ( ( 1 << 0 ) ) + ( ( sizeof ( long ) * 8 ) ) - 1 ) / ( ( sizeof ( long ) * 8 ) ) ) ] ; } nodemask_t 
+s#robust_list_head struct robust_list_head { UNKNOWN } 
+t#compat_uptr_t typedef t#u32 compat_uptr_t 
+s#compat_robust_list struct compat_robust_list { t#compat_uptr_t next ; } 
+t#compat_long_t typedef t#s32 compat_long_t 
+s#compat_robust_list_head struct compat_robust_list_head { s#compat_robust_list list ; t#compat_long_t futex_offset ; t#compat_uptr_t list_op_pending ; } 
+s#futex_pi_state struct futex_pi_state { UNKNOWN } 
+E#perf_nr_task_contexts ( 0 ) + 2 
+s#tlbflush_unmap_batch struct tlbflush_unmap_batch { } 
+s#page_frag struct page_frag { s#page * page ; t#__u32 offset ; t#__u32 size ; } 
+s#kunit struct kunit { UNKNOWN } 
+e#uprobe_task_state enum uprobe_task_state { UTASK_RUNNING , UTASK_SSTEP , UTASK_SSTEP_ACK , UTASK_SSTEP_TRAPPED , } 
+s#arch_uprobe_task struct arch_uprobe_task { } 
+s#uprobe struct uprobe { UNKNOWN } 
+s#return_instance struct return_instance { s#uprobe * uprobe ; unsigned long func ; unsigned long stack ; unsigned long orig_ret_vaddr ; t#bool chained ; s#return_instance * next ; } 
+s#uprobe_task struct uprobe_task { e#uprobe_task_state state ; union { struct { s#arch_uprobe_task autask ; unsigned long vaddr ; } ; struct { s#callback_head dup_xol_work ; unsigned long dup_xol_addr ; } ; } ; s#uprobe * active_uprobe ; unsigned long xol_vaddr ; s#return_instance * return_instances ; unsigned int depth ; } 
+s#kmap_ctrl struct kmap_ctrl { } 
+s#vm_struct struct vm_struct { s#vm_struct * next ; void * addr ; unsigned long size ; unsigned long flags ; s#page * * pages ; unsigned int page_order ; unsigned int nr_pages ; t#phys_addr_t phys_addr ; const void * caller ; } 
+s#bpf_local_storage struct bpf_local_storage { UNKNOWN } 
+s#bpf_run_ctx struct bpf_run_ctx { UNKNOWN } 
+s#llist_head struct llist_head { s#llist_node * first ; } 
+s#cpu_context struct cpu_context { unsigned long x19 ; unsigned long x20 ; unsigned long x21 ; unsigned long x22 ; unsigned long x23 ; unsigned long x24 ; unsigned long x25 ; unsigned long x26 ; unsigned long x27 ; unsigned long x28 ; unsigned long fp ; unsigned long sp ; unsigned long pc ; } 
+s#user_fpsimd_state struct user_fpsimd_state { __uint128_t vregs [ 32 ] ; t#__u32 fpsr ; t#__u32 fpcr ; t#__u32 __reserved [ 2 ] ; } 
+E#ARM64_VEC_MAX ( 0 ) + 2 
+s#debug_info struct debug_info { int suspended_step ; int bps_disabled ; int wps_disabled ; s#perf_event * hbp_break [ 16 ] ; s#perf_event * hbp_watch [ 16 ] ; } 
+s#ptrauth_key struct ptrauth_key { unsigned long lo , hi ; } 
+s#ptrauth_keys_user struct ptrauth_keys_user { s#ptrauth_key apia ; s#ptrauth_key apib ; s#ptrauth_key apda ; s#ptrauth_key apdb ; s#ptrauth_key apga ; } 
+s#ptrauth_keys_kernel struct ptrauth_keys_kernel { s#ptrauth_key apia ; } 
+s#thread_struct struct thread_struct { s#cpu_context cpu_context ; struct { unsigned long tp_value ; unsigned long tp2_value ; s#user_fpsimd_state fpsimd_state ; } uw ; t#u64 android_vendor_data1 ; unsigned int fpsimd_cpu ; void * sve_state ; void * za_state ; unsigned int vl [ E#ARM64_VEC_MAX ] ; unsigned int vl_onexec [ E#ARM64_VEC_MAX ] ; unsigned long fault_address ; unsigned long fault_code ; s#debug_info debug ; s#ptrauth_keys_user keys_user ; s#ptrauth_keys_kernel keys_kernel ; t#u64 mte_ctrl ; t#u64 sctlr_user ; t#u64 svcr ; t#u64 tpidr2_el0 ; } 
+s#task_struct struct task_struct { s#thread_info thread_info ; unsigned int __state ; void * stack ; t#refcount_t usage ; unsigned int flags ; unsigned int ptrace ; int on_cpu ; s#__call_single_node wake_entry ; unsigned int wakee_flips ; unsigned long wakee_flip_decay_ts ; s#task_struct * last_wakee ; int recent_used_cpu ; int wake_cpu ; int on_rq ; int prio ; int static_prio ; int normal_prio ; unsigned int rt_priority ; s#sched_entity se ; s#sched_rt_entity rt ; s#sched_dl_entity dl ; const s#sched_class * sched_class ; s#task_group * sched_task_group ; s#uclamp_se uclamp_req [ E#UCLAMP_CNT ] ; s#uclamp_se uclamp [ E#UCLAMP_CNT ] ; s#sched_statistics stats ; s#hlist_head preempt_notifiers ; unsigned int policy ; int nr_cpus_allowed ; const t#cpumask_t * cpus_ptr ; t#cpumask_t * user_cpus_ptr ; t#cpumask_t cpus_mask ; void * migration_pending ; unsigned short migration_disabled ; unsigned short migration_flags ; int rcu_read_lock_nesting ; u#rcu_special rcu_read_unlock_special ; s#list_head rcu_node_entry ; s#rcu_node * rcu_blocked_node ; unsigned long rcu_tasks_nvcsw ; t#u8 rcu_tasks_holdout ; t#u8 rcu_tasks_idx ; int rcu_tasks_idle_cpu ; s#list_head rcu_tasks_holdout_list ; int trc_reader_nesting ; int trc_ipi_to_cpu ; u#rcu_special trc_reader_special ; s#list_head trc_holdout_list ; s#list_head trc_blkd_node ; int trc_blkd_cpu ; s#sched_info sched_info ; s#list_head tasks ; s#plist_node pushable_tasks ; s#rb_node pushable_dl_tasks ; s#mm_struct * mm ; s#mm_struct * active_mm ; s#task_rss_stat rss_stat ; int exit_state ; int exit_code ; int exit_signal ; int pdeath_signal ; unsigned long jobctl ; unsigned int personality ; unsigned sched_reset_on_fork : 1 ; unsigned sched_contributes_to_load : 1 ; unsigned sched_migrated : 1 ; unsigned sched_psi_wake_requeue : 1 ; unsigned : 0 ; unsigned sched_remote_wakeup : 1 ; unsigned in_execve : 1 ; unsigned in_iowait : 1 ; unsigned in_user_fault : 1 ; unsigned in_lru_fault : 1 ; unsigned no_cgroup_migration : 1 ; unsigned frozen : 1 ; unsigned use_memdelay : 1 ; unsigned in_memstall : 1 ; unsigned in_page_owner : 1 ; unsigned in_eventfd : 1 ; unsigned long atomic_flags ; s#restart_block restart_block ; t#pid_t pid ; t#pid_t tgid ; unsigned long stack_canary ; s#task_struct * real_parent ; s#task_struct * parent ; s#list_head children ; s#list_head sibling ; s#task_struct * group_leader ; s#list_head ptraced ; s#list_head ptrace_entry ; s#pid * thread_pid ; s#hlist_node pid_links [ E#PIDTYPE_MAX ] ; s#list_head thread_group ; s#list_head thread_node ; s#completion * vfork_done ; int __attribute__ ( ( btf_type_tag ( "user" ) ) ) * set_child_tid ; int __attribute__ ( ( btf_type_tag ( "user" ) ) ) * clear_child_tid ; void * worker_private ; t#u64 utime ; t#u64 stime ; t#u64 gtime ; t#u64 * time_in_state ; unsigned int max_state ; s#prev_cputime prev_cputime ; unsigned long nvcsw ; unsigned long nivcsw ; t#u64 start_time ; t#u64 start_boottime ; unsigned long min_flt ; unsigned long maj_flt ; s#posix_cputimers posix_cputimers ; s#posix_cputimers_work posix_cputimers_work ; const s#cred * ptracer_cred ; const s#cred * real_cred ; const s#cred * cred ; s#key * cached_requested_key ; char comm [ E#TASK_COMM_LEN ] ; s#nameidata * nameidata ; unsigned long last_switch_count ; unsigned long last_switch_time ; s#fs_struct * fs ; s#files_struct * files ; s#io_uring_task * io_uring ; s#nsproxy * nsproxy ; s#signal_struct * signal ; s#sighand_struct * sighand ; t#sigset_t blocked ; t#sigset_t real_blocked ; t#sigset_t saved_sigmask ; s#sigpending pending ; unsigned long sas_ss_sp ; t#size_t sas_ss_size ; unsigned int sas_ss_flags ; s#callback_head * task_works ; s#audit_context * audit_context ; t#kuid_t loginuid ; unsigned int sessionid ; s#seccomp seccomp ; s#syscall_user_dispatch syscall_dispatch ; t#u64 parent_exec_id ; t#u64 self_exec_id ; t#spinlock_t alloc_lock ; t#raw_spinlock_t pi_lock ; s#wake_q_node wake_q ; int wake_q_count ; s#rb_root_cached pi_waiters ; s#task_struct * pi_top_task ; s#rt_mutex_waiter * pi_blocked_on ; void * journal_info ; s#bio_list * bio_list ; s#blk_plug * plug ; s#reclaim_state * reclaim_state ; s#backing_dev_info * backing_dev_info ; s#io_context * io_context ; s#capture_control * capture_control ; unsigned long ptrace_message ; t#kernel_siginfo_t * last_siginfo ; s#task_io_accounting ioac ; unsigned int psi_flags ; t#u64 acct_rss_mem1 ; t#u64 acct_vm_mem1 ; t#u64 acct_timexpd ; t#nodemask_t mems_allowed ; t#seqcount_spinlock_t mems_allowed_seq ; int cpuset_mem_spread_rotor ; int cpuset_slab_spread_rotor ; s#css_set * cgroups ; s#list_head cg_list ; s#robust_list_head __attribute__ ( ( btf_type_tag ( "user" ) ) ) * robust_list ; s#compat_robust_list_head __attribute__ ( ( btf_type_tag ( "user" ) ) ) * compat_robust_list ; s#list_head pi_state_list ; s#futex_pi_state * pi_state_cache ; s#mutex futex_exit_mutex ; unsigned int futex_state ; s#perf_event_context * perf_event_ctxp [ E#perf_nr_task_contexts ] ; s#mutex perf_event_mutex ; s#list_head perf_event_list ; s#tlbflush_unmap_batch tlb_ubc ; union { t#refcount_t rcu_users ; s#callback_head rcu ; } ; s#pipe_inode_info * splice_pipe ; s#page_frag task_frag ; int nr_dirtied ; int nr_dirtied_pause ; unsigned long dirty_paused_when ; t#u64 timer_slack_ns ; t#u64 default_timer_slack_ns ; s#kunit * kunit_test ; unsigned long trace_recursion ; s#mem_cgroup * memcg_in_oom ; t#gfp_t memcg_oom_gfp_mask ; int memcg_oom_order ; unsigned int memcg_nr_pages_over_high ; s#mem_cgroup * active_memcg ; s#request_queue * throttle_queue ; s#uprobe_task * utask ; s#kmap_ctrl kmap_ctrl ; int pagefault_disabled ; s#task_struct * oom_reaper_list ; s#timer_list oom_reaper_timer ; s#vm_struct * stack_vm_area ; t#refcount_t stack_refcount ; void * security ; s#bpf_local_storage * bpf_storage ; s#bpf_run_ctx * bpf_ctx ; t#u64 android_vendor_data1 [ 64 ] ; t#u64 android_oem_data1 [ 6 ] ; s#llist_head kretprobe_instances ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; t#u64 android_kabi_reserved5 ; t#u64 android_kabi_reserved6 ; t#u64 android_kabi_reserved7 ; t#u64 android_kabi_reserved8 ; s#thread_struct thread ; } 
+t#local_t typedef struct { t#atomic_long_t a ; } local_t 
+s#perf_event_context struct perf_event_context { s#pmu * pmu ; t#raw_spinlock_t lock ; s#mutex mutex ; s#list_head active_ctx_list ; s#perf_event_groups pinned_groups ; s#perf_event_groups flexible_groups ; s#list_head event_list ; s#list_head pinned_active ; s#list_head flexible_active ; int nr_events ; int nr_active ; int nr_user ; int is_active ; int nr_stat ; int nr_freq ; int rotate_disable ; int rotate_necessary ; t#refcount_t refcount ; s#task_struct * task ; t#u64 time ; t#u64 timestamp ; t#u64 timeoffset ; s#perf_event_context * parent_ctx ; t#u64 parent_gen ; t#u64 generation ; int pin_count ; void * task_ctx_data ; s#callback_head callback_head ; t#local_t nr_pending ; } 
+s#perf_cpu_context struct perf_cpu_context { s#perf_event_context ctx ; s#perf_event_context * task_ctx ; int active_oncpu ; int exclusive ; t#raw_spinlock_t hrtimer_lock ; s#hrtimer hrtimer ; t#ktime_t hrtimer_interval ; unsigned int hrtimer_active ; s#list_head sched_cb_entry ; int sched_cb_usage ; int online ; int heap_size ; s#perf_event * * heap ; s#perf_event * heap_default [ 2 ] ; } 
+s#perf_buffer struct perf_buffer { UNKNOWN } 
+s#perf_output_handle struct perf_output_handle { s#perf_event * event ; s#perf_buffer * rb ; unsigned long wakeup ; unsigned long size ; t#u64 aux_flags ; union { void * addr ; unsigned long head ; } ; int page ; } 
+s#pmu struct pmu { s#list_head entry ; s#module * module ; s#device * dev ; const s#attribute_group * * attr_groups ; const s#attribute_group * * attr_update ; const char * name ; int type ; int capabilities ; int __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * pmu_disable_count ; s#perf_cpu_context __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * pmu_cpu_context ; t#atomic_t exclusive_cnt ; int task_ctx_nr ; int hrtimer_interval_ms ; unsigned int nr_addr_filters ; void ( * pmu_enable ) ( s#pmu * ) ; void ( * pmu_disable ) ( s#pmu * ) ; int ( * event_init ) ( s#perf_event * ) ; void ( * event_mapped ) ( s#perf_event * , s#mm_struct * ) ; void ( * event_unmapped ) ( s#perf_event * , s#mm_struct * ) ; int ( * add ) ( s#perf_event * , int ) ; void ( * del ) ( s#perf_event * , int ) ; void ( * start ) ( s#perf_event * , int ) ; void ( * stop ) ( s#perf_event * , int ) ; void ( * read ) ( s#perf_event * ) ; void ( * start_txn ) ( s#pmu * , unsigned int ) ; int ( * commit_txn ) ( s#pmu * ) ; void ( * cancel_txn ) ( s#pmu * ) ; int ( * event_idx ) ( s#perf_event * ) ; void ( * sched_task ) ( s#perf_event_context * , t#bool ) ; s#kmem_cache * task_ctx_cache ; void ( * swap_task_ctx ) ( s#perf_event_context * , s#perf_event_context * ) ; void * ( * setup_aux ) ( s#perf_event * , void * * , int , t#bool ) ; void ( * free_aux ) ( void * ) ; long ( * snapshot_aux ) ( s#perf_event * , s#perf_output_handle * , unsigned long ) ; int ( * addr_filters_validate ) ( s#list_head * ) ; void ( * addr_filters_sync ) ( s#perf_event * ) ; int ( * aux_output_match ) ( s#perf_event * ) ; int ( * filter_match ) ( s#perf_event * ) ; int ( * check_period ) ( s#perf_event * , t#u64 ) ; } 
+e#perf_event_state enum perf_event_state { PERF_EVENT_STATE_DEAD = - 4 , PERF_EVENT_STATE_EXIT = - 3 , PERF_EVENT_STATE_ERROR = - 2 , PERF_EVENT_STATE_OFF = - 1 , PERF_EVENT_STATE_INACTIVE = 0 , PERF_EVENT_STATE_ACTIVE = 1 , } 
+t#local64_t typedef struct { t#local_t a ; } local64_t 
+s#perf_event_attr struct perf_event_attr { t#__u32 type ; t#__u32 size ; t#__u64 config ; union { t#__u64 sample_period ; t#__u64 sample_freq ; } ; t#__u64 sample_type ; t#__u64 read_format ; t#__u64 disabled : 1 , inherit : 1 , pinned : 1 , exclusive : 1 , exclude_user : 1 , exclude_kernel : 1 , exclude_hv : 1 , exclude_idle : 1 , mmap : 1 , comm : 1 , freq : 1 , inherit_stat : 1 , enable_on_exec : 1 , task : 1 , watermark : 1 , precise_ip : 2 , mmap_data : 1 , sample_id_all : 1 , exclude_host : 1 , exclude_guest : 1 , exclude_callchain_kernel : 1 , exclude_callchain_user : 1 , mmap2 : 1 , comm_exec : 1 , use_clockid : 1 , context_switch : 1 , write_backward : 1 , namespaces : 1 , ksymbol : 1 , bpf_event : 1 , aux_output : 1 , cgroup : 1 , text_poke : 1 , build_id : 1 , inherit_thread : 1 , remove_on_exec : 1 , sigtrap : 1 , __reserved_1 : 26 ; union { t#__u32 wakeup_events ; t#__u32 wakeup_watermark ; } ; t#__u32 bp_type ; union { t#__u64 bp_addr ; t#__u64 kprobe_func ; t#__u64 uprobe_path ; t#__u64 config1 ; } ; union { t#__u64 bp_len ; t#__u64 kprobe_addr ; t#__u64 probe_offset ; t#__u64 config2 ; } ; t#__u64 branch_sample_type ; t#__u64 sample_regs_user ; t#__u32 sample_stack_user ; t#__s32 clockid ; t#__u64 sample_regs_intr ; t#__u32 aux_watermark ; t#__u16 sample_max_stack ; t#__u16 __reserved_2 ; t#__u32 aux_sample_size ; t#__u32 __reserved_3 ; t#__u64 sig_data ; } 
+s#hw_perf_event_extra struct hw_perf_event_extra { t#u64 config ; unsigned int reg ; int alloc ; int idx ; } 
+s#arch_hw_breakpoint_ctrl struct arch_hw_breakpoint_ctrl { t#u32 __reserved : 19 , len : 8 , type : 2 , privilege : 2 , enabled : 1 ; } 
+s#arch_hw_breakpoint struct arch_hw_breakpoint { t#u64 address ; t#u64 trigger ; s#arch_hw_breakpoint_ctrl ctrl ; } 
+s#rhash_head struct rhash_head { s#rhash_head * next ; } 
+s#rhlist_head struct rhlist_head { s#rhash_head rhead ; s#rhlist_head * next ; } 
+s#hw_perf_event struct hw_perf_event { union { struct { t#u64 config ; t#u64 last_tag ; unsigned long config_base ; unsigned long event_base ; int event_base_rdpmc ; int idx ; int last_cpu ; int flags ; s#hw_perf_event_extra extra_reg ; s#hw_perf_event_extra branch_reg ; } ; struct { s#hrtimer hrtimer ; } ; struct { s#list_head tp_list ; } ; struct { t#u64 pwr_acc ; t#u64 ptsc ; } ; struct { s#arch_hw_breakpoint info ; s#rhlist_head bp_list ; } ; struct { t#u8 iommu_bank ; t#u8 iommu_cntr ; t#u16 padding ; t#u64 conf ; t#u64 conf1 ; } ; } ; s#task_struct * target ; void * addr_filters ; unsigned long addr_filters_gen ; int state ; t#local64_t prev_count ; t#u64 sample_period ; union { struct { t#u64 last_period ; t#local64_t period_left ; } ; struct { t#u64 saved_metric ; t#u64 saved_slots ; } ; } ; t#u64 interrupts_seq ; t#u64 interrupts ; t#u64 freq_time_stamp ; t#u64 freq_count_stamp ; } 
+s#rcuwait struct rcuwait { s#task_struct * task ; } 
+s#irq_work struct irq_work { s#__call_single_node node ; void ( * func ) ( s#irq_work * ) ; s#rcuwait irqwait ; } 
+s#perf_addr_filters_head struct perf_addr_filters_head { s#list_head list ; t#raw_spinlock_t lock ; unsigned int nr_file_filters ; } 
+s#perf_addr_filter_range struct perf_addr_filter_range { unsigned long start ; unsigned long size ; } 
+s#perf_branch_entry struct perf_branch_entry { t#__u64 from ; t#__u64 to ; t#__u64 mispred : 1 , predicted : 1 , in_tx : 1 , abort : 1 , cycles : 16 , type : 4 , spec : 2 , new_type : 4 , priv : 3 , reserved : 31 ; } 
+s#perf_branch_stack struct perf_branch_stack { t#__u64 nr ; t#__u64 hw_idx ; s#perf_branch_entry entries [ ] ; } 
+u#perf_sample_weight union perf_sample_weight { t#__u64 full ; struct { t#__u32 var1_dw ; t#__u16 var2_w ; t#__u16 var3_w ; } ; } 
+u#perf_mem_data_src union perf_mem_data_src { t#__u64 val ; struct { t#__u64 mem_op : 5 , mem_lvl : 14 , mem_snoop : 5 , mem_lock : 2 , mem_dtlb : 7 , mem_lvl_num : 4 , mem_remote : 1 , mem_snoopx : 2 , mem_blk : 3 , mem_hops : 3 , mem_rsvd : 18 ; } ; } 
+t#perf_copy_f typedef unsigned long ( * perf_copy_f ) ( void * , const void * , unsigned long , unsigned long ) 
+s#perf_raw_frag struct perf_raw_frag { union { s#perf_raw_frag * next ; unsigned long pad ; } ; t#perf_copy_f copy ; void * data ; t#u32 size ; } 
+s#perf_raw_record struct perf_raw_record { s#perf_raw_frag frag ; t#u32 size ; } 
+s#perf_callchain_entry struct perf_callchain_entry { t#__u64 nr ; t#__u64 ip [ ] ; } 
+s#user_pt_regs struct user_pt_regs { t#__u64 regs [ 31 ] ; t#__u64 sp ; t#__u64 pc ; t#__u64 pstate ; } 
+s#pt_regs struct pt_regs { union { s#user_pt_regs user_regs ; struct { t#u64 regs [ 31 ] ; t#u64 sp ; t#u64 pc ; t#u64 pstate ; } ; } ; t#u64 orig_x0 ; t#s32 syscallno ; t#u32 unused2 ; t#u64 sdei_ttbr1 ; t#u64 pmr_save ; t#u64 stackframe [ 2 ] ; t#u64 lockdep_hardirqs ; t#u64 exit_rcu ; } 
+s#perf_regs struct perf_regs { t#__u64 abi ; s#pt_regs * regs ; } 
+s#perf_sample_data struct perf_sample_data { t#u64 sample_flags ; t#u64 period ; s#perf_branch_stack * br_stack ; u#perf_sample_weight weight ; u#perf_mem_data_src data_src ; t#u64 txn ; t#u64 addr ; s#perf_raw_record * raw ; t#u64 type ; t#u64 ip ; struct { t#u32 pid ; t#u32 tid ; } tid_entry ; t#u64 time ; t#u64 id ; t#u64 stream_id ; struct { t#u32 cpu ; t#u32 reserved ; } cpu_entry ; s#perf_callchain_entry * callchain ; t#u64 aux_size ; s#perf_regs regs_user ; s#perf_regs regs_intr ; t#u64 stack_user_size ; t#u64 phys_addr ; t#u64 cgroup ; t#u64 data_page_size ; t#u64 code_page_size ; } 
+t#perf_overflow_handler_t typedef void ( * perf_overflow_handler_t ) ( s#perf_event * , s#perf_sample_data * , s#pt_regs * ) 
+s#bpf_prog struct bpf_prog { UNKNOWN } 
+s#perf_event struct perf_event { s#list_head event_entry ; s#list_head sibling_list ; s#list_head active_list ; s#rb_node group_node ; t#u64 group_index ; s#list_head migrate_entry ; s#hlist_node hlist_entry ; s#list_head active_entry ; int nr_siblings ; int event_caps ; int group_caps ; s#perf_event * group_leader ; s#pmu * pmu ; void * pmu_private ; e#perf_event_state state ; unsigned int attach_state ; t#local64_t count ; t#atomic64_t child_count ; t#u64 total_time_enabled ; t#u64 total_time_running ; t#u64 tstamp ; s#perf_event_attr attr ; t#u16 header_size ; t#u16 id_header_size ; t#u16 read_size ; s#hw_perf_event hw ; s#perf_event_context * ctx ; t#atomic_long_t refcount ; t#atomic64_t child_total_time_enabled ; t#atomic64_t child_total_time_running ; s#mutex child_mutex ; s#list_head child_list ; s#perf_event * parent ; int oncpu ; int cpu ; s#list_head owner_entry ; s#task_struct * owner ; s#mutex mmap_mutex ; t#atomic_t mmap_count ; s#perf_buffer * rb ; s#list_head rb_entry ; unsigned long rcu_batches ; int rcu_pending ; t#wait_queue_head_t waitq ; s#fasync_struct * fasync ; unsigned int pending_wakeup ; unsigned int pending_kill ; unsigned int pending_disable ; unsigned int pending_sigtrap ; unsigned long pending_addr ; s#irq_work pending_irq ; s#callback_head pending_task ; unsigned int pending_work ; t#atomic_t event_limit ; s#perf_addr_filters_head addr_filters ; s#perf_addr_filter_range * addr_filter_ranges ; unsigned long addr_filters_gen ; s#perf_event * aux_event ; void ( * destroy ) ( s#perf_event * ) ; s#callback_head callback_head ; s#pid_namespace * ns ; t#u64 id ; t#atomic64_t lost_samples ; t#u64 ( * clock ) ( void ) ; t#perf_overflow_handler_t overflow_handler ; void * overflow_handler_context ; t#perf_overflow_handler_t orig_overflow_handler ; s#bpf_prog * prog ; t#u64 bpf_cookie ; s#trace_event_call * tp_event ; s#event_filter * filter ; void * security ; s#list_head sb_list ; } 
+s#trace_event_call struct trace_event_call { s#list_head list ; s#trace_event_class * class ; union { char * name ; s#tracepoint * tp ; } ; s#trace_event event ; char * print_fmt ; s#event_filter * filter ; union { void * module ; t#atomic_t refcnt ; } ; void * data ; int flags ; int perf_refcount ; s#hlist_head __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * perf_events ; s#bpf_prog_array * prog_array ; int ( * perf_perm ) ( s#trace_event_call * , s#perf_event * ) ; } 
+s#trace_eval_map struct trace_eval_map { const char * system ; const char * eval_string ; unsigned long eval_value ; } 
+s#kunit_suite struct kunit_suite { UNKNOWN } 
+s#module struct module { e#module_state state ; s#list_head list ; char name [ ( 64 - sizeof ( unsigned long ) ) ] ; s#module_kobject mkobj ; s#module_attribute * modinfo_attrs ; const char * version ; const char * srcversion ; const char * scmversion ; s#kobject * holders_dir ; const s#kernel_symbol * syms ; const t#s32 * crcs ; unsigned int num_syms ; s#mutex param_lock ; s#kernel_param * kp ; unsigned int num_kp ; unsigned int num_gpl_syms ; const s#kernel_symbol * gpl_syms ; const t#s32 * gpl_crcs ; t#bool using_gplonly_symbols ; t#bool sig_ok ; t#bool async_probe_requested ; unsigned int num_exentries ; s#exception_table_entry * extable ; int ( * init ) ( void ) ; s#module_layout core_layout __attribute__ ( ( __aligned__ ( ( 1 << ( 6 ) ) ) ) ) ; s#module_layout init_layout ; s#mod_arch_specific arch ; unsigned long taints ; unsigned num_bugs ; s#list_head bug_list ; s#bug_entry * bug_table ; s#mod_kallsyms * kallsyms ; s#mod_kallsyms core_kallsyms ; s#module_sect_attrs * sect_attrs ; s#module_notes_attrs * notes_attrs ; char * args ; void __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * percpu ; unsigned int percpu_size ; void * noinstr_text_start ; unsigned int noinstr_text_size ; unsigned int num_tracepoints ; t#tracepoint_ptr_t * tracepoints_ptrs ; unsigned int num_srcu_structs ; s#srcu_struct * * srcu_struct_ptrs ; unsigned int num_bpf_raw_events ; s#bpf_raw_event_map * bpf_raw_events ; unsigned int btf_data_size ; void * btf_data ; s#jump_entry * jump_entries ; unsigned int num_jump_entries ; unsigned int num_trace_bprintk_fmt ; const char * * trace_bprintk_fmt_start ; s#trace_event_call * * trace_events ; unsigned int num_trace_events ; s#trace_eval_map * * trace_evals ; unsigned int num_trace_evals ; void * kprobes_text_start ; unsigned int kprobes_text_size ; unsigned long * kprobe_blacklist ; unsigned int num_kprobe_blacklist ; int num_kunit_suites ; s#kunit_suite * * kunit_suites ; s#list_head source_list ; s#list_head target_list ; void ( * exit ) ( void ) ; t#atomic_t refcnt ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+s#lock_class_key struct lock_class_key { } 
+E#SB_FREEZE_COMPLETE 4 
+s#file_system_type struct file_system_type { const char * name ; int fs_flags ; int ( * init_fs_context ) ( s#fs_context * ) ; const s#fs_parameter_spec * parameters ; s#dentry * ( * mount ) ( s#file_system_type * , int , const char * , void * ) ; void ( * kill_sb ) ( s#super_block * ) ; s#module * owner ; s#file_system_type * next ; s#hlist_head fs_supers ; s#lock_class_key s_lock_key ; s#lock_class_key s_umount_key ; s#lock_class_key s_vfs_rename_key ; s#lock_class_key s_writers_key [ ( E#SB_FREEZE_COMPLETE - 1 ) ] ; s#lock_class_key i_lock_key ; s#lock_class_key i_mutex_key ; s#lock_class_key invalidate_lock_key ; s#lock_class_key i_mutex_dir_key ; } 
+e#writeback_sync_modes enum writeback_sync_modes { WB_SYNC_NONE , WB_SYNC_ALL , } 
+s#swap_iocb struct swap_iocb { UNKNOWN } 
+s#writeback_control struct writeback_control { long nr_to_write ; long pages_skipped ; t#loff_t range_start ; t#loff_t range_end ; e#writeback_sync_modes sync_mode ; unsigned for_kupdate : 1 ; unsigned for_background : 1 ; unsigned tagged_writepages : 1 ; unsigned for_reclaim : 1 ; unsigned range_cyclic : 1 ; unsigned for_sync : 1 ; unsigned unpinned_fscache_wb : 1 ; unsigned no_cgroup_owner : 1 ; unsigned punt_to_cgroup : 1 ; s#swap_iocb * * swap_plug ; s#bdi_writeback * wb ; s#inode * inode ; int wb_id ; int wb_lcand_id ; int wb_tcand_id ; t#size_t wb_bytes ; t#size_t wb_lcand_bytes ; t#size_t wb_tcand_bytes ; } 
+s#kstatfs struct kstatfs { UNKNOWN } 
+t#projid_t typedef t#__kernel_uid32_t projid_t 
+t#kprojid_t typedef struct { t#projid_t val ; } kprojid_t 
+e#quota_type enum quota_type { USRQUOTA = 0 , GRPQUOTA = 1 , PRJQUOTA = 2 , } 
+s#kqid struct kqid { union { t#kuid_t uid ; t#kgid_t gid ; t#kprojid_t projid ; } ; e#quota_type type ; } 
+t#qsize_t typedef long long qsize_t 
+s#mem_dqblk struct mem_dqblk { t#qsize_t dqb_bhardlimit ; t#qsize_t dqb_bsoftlimit ; t#qsize_t dqb_curspace ; t#qsize_t dqb_rsvspace ; t#qsize_t dqb_ihardlimit ; t#qsize_t dqb_isoftlimit ; t#qsize_t dqb_curinodes ; t#time64_t dqb_btime ; t#time64_t dqb_itime ; } 
+s#dquot struct dquot { s#hlist_node dq_hash ; s#list_head dq_inuse ; s#list_head dq_free ; s#list_head dq_dirty ; s#mutex dq_lock ; t#spinlock_t dq_dqb_lock ; t#atomic_t dq_count ; s#super_block * dq_sb ; s#kqid dq_id ; t#loff_t dq_off ; unsigned long dq_flags ; s#mem_dqblk dq_dqb ; } 
+s#shrink_control struct shrink_control { t#gfp_t gfp_mask ; int nid ; unsigned long nr_to_scan ; unsigned long nr_scanned ; s#mem_cgroup * memcg ; } 
+s#super_operations struct super_operations { s#inode * ( * alloc_inode ) ( s#super_block * ) ; void ( * destroy_inode ) ( s#inode * ) ; void ( * free_inode ) ( s#inode * ) ; void ( * dirty_inode ) ( s#inode * , int ) ; int ( * write_inode ) ( s#inode * , s#writeback_control * ) ; int ( * drop_inode ) ( s#inode * ) ; void ( * evict_inode ) ( s#inode * ) ; void ( * put_super ) ( s#super_block * ) ; int ( * sync_fs ) ( s#super_block * , int ) ; int ( * freeze_super ) ( s#super_block * ) ; int ( * freeze_fs ) ( s#super_block * ) ; int ( * thaw_super ) ( s#super_block * ) ; int ( * unfreeze_fs ) ( s#super_block * ) ; int ( * statfs ) ( s#dentry * , s#kstatfs * ) ; int ( * remount_fs ) ( s#super_block * , int * , char * ) ; void ( * umount_begin ) ( s#super_block * ) ; int ( * show_options ) ( s#seq_file * , s#dentry * ) ; int ( * show_devname ) ( s#seq_file * , s#dentry * ) ; int ( * show_path ) ( s#seq_file * , s#dentry * ) ; int ( * show_stats ) ( s#seq_file * , s#dentry * ) ; t#ssize_t ( * quota_read ) ( s#super_block * , int , char * , t#size_t , t#loff_t ) ; t#ssize_t ( * quota_write ) ( s#super_block * , int , const char * , t#size_t , t#loff_t ) ; s#dquot * * ( * get_dquots ) ( s#inode * ) ; long ( * nr_cached_objects ) ( s#super_block * , s#shrink_control * ) ; long ( * free_cached_objects ) ( s#super_block * , s#shrink_control * ) ; } 
+s#dquot_operations struct dquot_operations { int ( * write_dquot ) ( s#dquot * ) ; s#dquot * ( * alloc_dquot ) ( s#super_block * , int ) ; void ( * destroy_dquot ) ( s#dquot * ) ; int ( * acquire_dquot ) ( s#dquot * ) ; int ( * release_dquot ) ( s#dquot * ) ; int ( * mark_dirty ) ( s#dquot * ) ; int ( * write_info ) ( s#super_block * , int ) ; t#qsize_t * ( * get_reserved_space ) ( s#inode * ) ; int ( * get_projid ) ( s#inode * , t#kprojid_t * ) ; int ( * get_inode_usage ) ( s#inode * , t#qsize_t * ) ; int ( * get_next_id ) ( s#super_block * , s#kqid * ) ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+s#qc_info struct qc_info { int i_fieldmask ; unsigned int i_flags ; unsigned int i_spc_timelimit ; unsigned int i_ino_timelimit ; unsigned int i_rt_spc_timelimit ; unsigned int i_spc_warnlimit ; unsigned int i_ino_warnlimit ; unsigned int i_rt_spc_warnlimit ; } 
+s#qc_dqblk struct qc_dqblk { int d_fieldmask ; t#u64 d_spc_hardlimit ; t#u64 d_spc_softlimit ; t#u64 d_ino_hardlimit ; t#u64 d_ino_softlimit ; t#u64 d_space ; t#u64 d_ino_count ; t#s64 d_ino_timer ; t#s64 d_spc_timer ; int d_ino_warns ; int d_spc_warns ; t#u64 d_rt_spc_hardlimit ; t#u64 d_rt_spc_softlimit ; t#u64 d_rt_space ; t#s64 d_rt_spc_timer ; int d_rt_spc_warns ; } 
+t#blkcnt_t typedef t#u64 blkcnt_t 
+s#qc_type_state struct qc_type_state { unsigned int flags ; unsigned int spc_timelimit ; unsigned int ino_timelimit ; unsigned int rt_spc_timelimit ; unsigned int spc_warnlimit ; unsigned int ino_warnlimit ; unsigned int rt_spc_warnlimit ; unsigned long long ino ; t#blkcnt_t blocks ; t#blkcnt_t nextents ; } 
+s#qc_state struct qc_state { unsigned int s_incoredqs ; s#qc_type_state s_state [ 3 ] ; } 
+s#quotactl_ops struct quotactl_ops { int ( * quota_on ) ( s#super_block * , int , int , const s#path * ) ; int ( * quota_off ) ( s#super_block * , int ) ; int ( * quota_enable ) ( s#super_block * , unsigned int ) ; int ( * quota_disable ) ( s#super_block * , unsigned int ) ; int ( * quota_sync ) ( s#super_block * , int ) ; int ( * set_info ) ( s#super_block * , int , s#qc_info * ) ; int ( * get_dqblk ) ( s#super_block * , s#kqid , s#qc_dqblk * ) ; int ( * get_nextdqblk ) ( s#super_block * , s#kqid * , s#qc_dqblk * ) ; int ( * set_dqblk ) ( s#super_block * , s#kqid , s#qc_dqblk * ) ; int ( * get_state ) ( s#super_block * , s#qc_state * ) ; int ( * rm_xquota ) ( s#super_block * , unsigned int ) ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+s#export_operations struct export_operations { UNKNOWN } 
+s#xattr_handler struct xattr_handler { UNKNOWN } 
+s#fscrypt_operations struct fscrypt_operations { UNKNOWN } 
+s#fscrypt_keyring struct fscrypt_keyring { UNKNOWN } 
+s#fsverity_operations struct fsverity_operations { UNKNOWN } 
+s#unicode_map struct unicode_map { UNKNOWN } 
+s#hlist_bl_head struct hlist_bl_head { s#hlist_bl_node * first ; } 
+s#mtd_info struct mtd_info { UNKNOWN } 
+s#quota_format_ops struct quota_format_ops { int ( * check_quota_file ) ( s#super_block * , int ) ; int ( * read_file_info ) ( s#super_block * , int ) ; int ( * write_file_info ) ( s#super_block * , int ) ; int ( * free_file_info ) ( s#super_block * , int ) ; int ( * read_dqblk ) ( s#dquot * ) ; int ( * commit_dqblk ) ( s#dquot * ) ; int ( * release_dqblk ) ( s#dquot * ) ; int ( * get_next_id ) ( s#super_block * , s#kqid * ) ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+s#quota_format_type struct quota_format_type { int qf_fmt_id ; const s#quota_format_ops * qf_ops ; s#module * qf_owner ; s#quota_format_type * qf_next ; } 
+s#mem_dqinfo struct mem_dqinfo { s#quota_format_type * dqi_format ; int dqi_fmt_id ; s#list_head dqi_dirty_list ; unsigned long dqi_flags ; unsigned int dqi_bgrace ; unsigned int dqi_igrace ; t#qsize_t dqi_max_spc_limit ; t#qsize_t dqi_max_ino_limit ; void * dqi_priv ; } 
+s#quota_info struct quota_info { unsigned int flags ; s#rw_semaphore dqio_sem ; s#inode * files [ 3 ] ; s#mem_dqinfo info [ 3 ] ; const s#quota_format_ops * ops [ 3 ] ; } 
+s#rcu_sync struct rcu_sync { int gp_state ; int gp_count ; t#wait_queue_head_t gp_wait ; s#callback_head cb_head ; } 
+s#percpu_rw_semaphore struct percpu_rw_semaphore { s#rcu_sync rss ; unsigned int __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * read_count ; s#rcuwait writer ; t#wait_queue_head_t waiters ; t#atomic_t block ; } 
+s#sb_writers struct sb_writers { int frozen ; t#wait_queue_head_t wait_unfrozen ; s#percpu_rw_semaphore rw_sem [ ( E#SB_FREEZE_COMPLETE - 1 ) ] ; } 
+s#fsnotify_mark_connector struct fsnotify_mark_connector { UNKNOWN } 
+t#uuid_t typedef struct { t#__u8 b [ 16 ] ; } uuid_t 
+s#shrinker struct shrinker { unsigned long ( * count_objects ) ( s#shrinker * , s#shrink_control * ) ; unsigned long ( * scan_objects ) ( s#shrinker * , s#shrink_control * ) ; long batch ; int seeks ; unsigned flags ; s#list_head list ; int id ; t#atomic_long_t * nr_deferred ; } 
+s#list_lru_one struct list_lru_one { s#list_head list ; long nr_items ; } 
+s#list_lru_node struct list_lru_node { t#spinlock_t lock ; s#list_lru_one lru ; long nr_items ; } 
+s#list_lru struct list_lru { s#list_lru_node * node ; s#list_head list ; int shrinker_id ; t#bool memcg_aware ; s#xarray xa ; } 
+s#super_block struct super_block { s#list_head s_list ; t#dev_t s_dev ; unsigned char s_blocksize_bits ; unsigned long s_blocksize ; t#loff_t s_maxbytes ; s#file_system_type * s_type ; const s#super_operations * s_op ; const s#dquot_operations * dq_op ; const s#quotactl_ops * s_qcop ; const s#export_operations * s_export_op ; unsigned long s_flags ; unsigned long s_iflags ; unsigned long s_magic ; s#dentry * s_root ; s#rw_semaphore s_umount ; int s_count ; t#atomic_t s_active ; void * s_security ; const s#xattr_handler * * s_xattr ; const s#fscrypt_operations * s_cop ; s#fscrypt_keyring * s_master_keys ; const s#fsverity_operations * s_vop ; s#unicode_map * s_encoding ; t#__u16 s_encoding_flags ; s#hlist_bl_head s_roots ; s#list_head s_mounts ; s#block_device * s_bdev ; s#backing_dev_info * s_bdi ; s#mtd_info * s_mtd ; s#hlist_node s_instances ; unsigned int s_quota_types ; s#quota_info s_dquot ; s#sb_writers s_writers ; void * s_fs_info ; t#u32 s_time_gran ; t#time64_t s_time_min ; t#time64_t s_time_max ; t#__u32 s_fsnotify_mask ; s#fsnotify_mark_connector * s_fsnotify_marks ; char s_id [ 32 ] ; t#uuid_t s_uuid ; unsigned int s_max_links ; t#fmode_t s_mode ; s#mutex s_vfs_rename_mutex ; const char * s_subtype ; const s#dentry_operations * s_d_op ; int cleancache_poolid ; s#shrinker s_shrink ; t#atomic_long_t s_remove_count ; t#atomic_long_t s_fsnotify_connectors ; int s_readonly_remount ; t#errseq_t s_wb_err ; s#workqueue_struct * s_dio_done_wq ; s#hlist_head s_pins ; s#user_namespace * s_user_ns ; s#list_lru s_dentry_lru ; s#list_lru s_inode_lru ; s#callback_head rcu ; s#work_struct destroy_work ; s#mutex s_sync_lock ; int s_stack_depth ; t#spinlock_t s_inode_list_lock __attribute__ ( ( __aligned__ ( ( 1 << ( 6 ) ) ) ) ) ; s#list_head s_inodes ; t#spinlock_t s_inode_wblist_lock ; s#list_head s_inodes_wb ; } 
+s#vfsmount struct vfsmount { s#dentry * mnt_root ; s#super_block * mnt_sb ; int mnt_flags ; s#user_namespace * mnt_userns ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+s#dentry_operations struct dentry_operations { int ( * d_revalidate ) ( s#dentry * , unsigned int ) ; int ( * d_weak_revalidate ) ( s#dentry * , unsigned int ) ; int ( * d_hash ) ( const s#dentry * , s#qstr * ) ; int ( * d_compare ) ( const s#dentry * , unsigned int , const char * , const s#qstr * ) ; int ( * d_delete ) ( const s#dentry * ) ; int ( * d_init ) ( s#dentry * ) ; void ( * d_release ) ( s#dentry * ) ; void ( * d_prune ) ( s#dentry * ) ; void ( * d_iput ) ( s#dentry * , s#inode * ) ; char * ( * d_dname ) ( s#dentry * , char * , int ) ; s#vfsmount * ( * d_automount ) ( s#path * ) ; int ( * d_manage ) ( const s#path * , t#bool ) ; s#dentry * ( * d_real ) ( s#dentry * , const s#inode * ) ; int ( * d_canonical_path ) ( const s#path * , s#path * ) ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+s#dentry struct dentry { unsigned int d_flags ; t#seqcount_spinlock_t d_seq ; s#hlist_bl_node d_hash ; s#dentry * d_parent ; s#qstr d_name ; s#inode * d_inode ; unsigned char d_iname [ 32 ] ; s#lockref d_lockref ; const s#dentry_operations * d_op ; s#super_block * d_sb ; unsigned long d_time ; void * d_fsdata ; union { s#list_head d_lru ; t#wait_queue_head_t * d_wait ; } ; s#list_head d_child ; s#list_head d_subdirs ; union { s#hlist_node d_alias ; s#hlist_bl_node d_in_lookup_hash ; s#callback_head d_rcu ; } d_u ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+s#delayed_call struct delayed_call { void ( * fn ) ( void * ) ; void * arg ; } 
+t#vfsuid_t typedef struct { t#uid_t val ; } vfsuid_t 
+t#vfsgid_t typedef struct { t#gid_t val ; } vfsgid_t 
+s#timespec64 struct timespec64 { t#time64_t tv_sec ; long tv_nsec ; } 
+s#iattr struct iattr { unsigned int ia_valid ; t#umode_t ia_mode ; union { t#kuid_t ia_uid ; t#vfsuid_t ia_vfsuid ; } ; union { t#kgid_t ia_gid ; t#vfsgid_t ia_vfsgid ; } ; t#loff_t ia_size ; s#timespec64 ia_atime ; s#timespec64 ia_mtime ; s#timespec64 ia_ctime ; s#file * ia_file ; } 
+s#kstat struct kstat { t#u32 result_mask ; t#umode_t mode ; unsigned int nlink ; t#uint32_t blksize ; t#u64 attributes ; t#u64 attributes_mask ; t#u64 ino ; t#dev_t dev ; t#dev_t rdev ; t#kuid_t uid ; t#kgid_t gid ; t#loff_t size ; s#timespec64 atime ; s#timespec64 mtime ; s#timespec64 ctime ; s#timespec64 btime ; t#u64 blocks ; t#u64 mnt_id ; t#u32 dio_mem_align ; t#u32 dio_offset_align ; } 
+s#fiemap_extent_info struct fiemap_extent_info { UNKNOWN } 
+s#fileattr struct fileattr { UNKNOWN } 
+s#inode_operations struct inode_operations { s#dentry * ( * lookup ) ( s#inode * , s#dentry * , unsigned int ) ; const char * ( * get_link ) ( s#dentry * , s#inode * , s#delayed_call * ) ; int ( * permission ) ( s#user_namespace * , s#inode * , int ) ; s#posix_acl * ( * get_acl ) ( s#inode * , int , t#bool ) ; int ( * readlink ) ( s#dentry * , char __attribute__ ( ( btf_type_tag ( "user" ) ) ) * , int ) ; int ( * create ) ( s#user_namespace * , s#inode * , s#dentry * , t#umode_t , t#bool ) ; int ( * link ) ( s#dentry * , s#inode * , s#dentry * ) ; int ( * unlink ) ( s#inode * , s#dentry * ) ; int ( * symlink ) ( s#user_namespace * , s#inode * , s#dentry * , const char * ) ; int ( * mkdir ) ( s#user_namespace * , s#inode * , s#dentry * , t#umode_t ) ; int ( * rmdir ) ( s#inode * , s#dentry * ) ; int ( * mknod ) ( s#user_namespace * , s#inode * , s#dentry * , t#umode_t , t#dev_t ) ; int ( * rename ) ( s#user_namespace * , s#inode * , s#dentry * , s#inode * , s#dentry * , unsigned int ) ; int ( * setattr ) ( s#user_namespace * , s#dentry * , s#iattr * ) ; int ( * getattr ) ( s#user_namespace * , const s#path * , s#kstat * , t#u32 , unsigned int ) ; t#ssize_t ( * listxattr ) ( s#dentry * , char * , t#size_t ) ; int ( * fiemap ) ( s#inode * , s#fiemap_extent_info * , t#u64 , t#u64 ) ; int ( * update_time ) ( s#inode * , s#timespec64 * , int ) ; int ( * atomic_open ) ( s#inode * , s#dentry * , s#file * , unsigned , t#umode_t ) ; int ( * tmpfile ) ( s#user_namespace * , s#inode * , s#file * , t#umode_t ) ; int ( * set_acl ) ( s#user_namespace * , s#inode * , s#posix_acl * , int ) ; int ( * fileattr_set ) ( s#user_namespace * , s#dentry * , s#fileattr * ) ; int ( * fileattr_get ) ( s#dentry * , s#fileattr * ) ; } 
+s#file_lock_context struct file_lock_context { t#spinlock_t flc_lock ; s#list_head flc_flock ; s#list_head flc_posix ; s#list_head flc_lease ; } 
+s#cdev struct cdev { s#kobject kobj ; s#module * owner ; const s#file_operations * ops ; s#list_head list ; t#dev_t dev ; unsigned int count ; } 
+s#fscrypt_info struct fscrypt_info { UNKNOWN } 
+s#fsverity_info struct fsverity_info { UNKNOWN } 
+s#inode struct inode { t#umode_t i_mode ; unsigned short i_opflags ; t#kuid_t i_uid ; t#kgid_t i_gid ; unsigned int i_flags ; s#posix_acl * i_acl ; s#posix_acl * i_default_acl ; const s#inode_operations * i_op ; s#super_block * i_sb ; s#address_space * i_mapping ; void * i_security ; unsigned long i_ino ; union { const unsigned int i_nlink ; unsigned int __i_nlink ; } ; t#dev_t i_rdev ; t#loff_t i_size ; s#timespec64 i_atime ; s#timespec64 i_mtime ; s#timespec64 i_ctime ; t#spinlock_t i_lock ; unsigned short i_bytes ; t#u8 i_blkbits ; t#u8 i_write_hint ; t#blkcnt_t i_blocks ; unsigned long i_state ; s#rw_semaphore i_rwsem ; unsigned long dirtied_when ; unsigned long dirtied_time_when ; s#hlist_node i_hash ; s#list_head i_io_list ; s#bdi_writeback * i_wb ; int i_wb_frn_winner ; t#u16 i_wb_frn_avg_time ; t#u16 i_wb_frn_history ; s#list_head i_lru ; s#list_head i_sb_list ; s#list_head i_wb_list ; union { s#hlist_head i_dentry ; s#callback_head i_rcu ; } ; t#atomic64_t i_version ; t#atomic64_t i_sequence ; t#atomic_t i_count ; t#atomic_t i_dio_count ; t#atomic_t i_writecount ; t#atomic_t i_readcount ; union { const s#file_operations * i_fop ; void ( * free_inode ) ( s#inode * ) ; } ; s#file_lock_context * i_flctx ; s#address_space i_data ; s#list_head i_devices ; union { s#pipe_inode_info * i_pipe ; s#cdev * i_cdev ; char * i_link ; unsigned i_dir_seq ; } ; t#__u32 i_generation ; t#__u32 i_fsnotify_mask ; s#fsnotify_mark_connector * i_fsnotify_marks ; s#fscrypt_info * i_crypt_info ; s#fsverity_info * i_verity_info ; void * i_private ; } 
+s#readahead_control struct readahead_control { s#file * file ; s#address_space * mapping ; s#file_ra_state * ra ; unsigned long _index ; unsigned int _nr_pages ; unsigned int _batch_count ; t#bool _workingset ; unsigned long _pflags ; } 
+e#migrate_mode enum migrate_mode { MIGRATE_ASYNC , MIGRATE_SYNC_LIGHT , MIGRATE_SYNC , MIGRATE_SYNC_NO_COPY , } 
+s#swap_cluster_info struct swap_cluster_info { t#spinlock_t lock ; unsigned int data : 24 ; unsigned int flags : 8 ; } 
+s#swap_cluster_list struct swap_cluster_list { s#swap_cluster_info head ; s#swap_cluster_info tail ; } 
+s#percpu_cluster struct percpu_cluster { s#swap_cluster_info index ; unsigned int next ; } 
+s#swap_info_struct struct swap_info_struct { s#percpu_ref users ; unsigned long flags ; signed short prio ; s#plist_node list ; signed char type ; unsigned int max ; unsigned char * swap_map ; s#swap_cluster_info * cluster_info ; s#swap_cluster_list free_clusters ; unsigned int lowest_bit ; unsigned int highest_bit ; unsigned int pages ; unsigned int inuse_pages ; unsigned int cluster_next ; unsigned int cluster_nr ; unsigned int __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * cluster_next_cpu ; s#percpu_cluster __attribute__ ( ( btf_type_tag ( "percpu" ) ) ) * percpu_cluster ; s#rb_root swap_extent_root ; s#block_device * bdev ; s#file * swap_file ; unsigned int old_block_size ; s#completion comp ; t#spinlock_t lock ; t#spinlock_t cont_lock ; s#work_struct discard_work ; s#swap_cluster_list discard_clusters ; t#u64 android_vendor_data1 ; s#plist_node avail_lists [ ] ; } 
+s#address_space_operations struct address_space_operations { int ( * writepage ) ( s#page * , s#writeback_control * ) ; int ( * read_folio ) ( s#file * , s#folio * ) ; int ( * writepages ) ( s#address_space * , s#writeback_control * ) ; t#bool ( * dirty_folio ) ( s#address_space * , s#folio * ) ; void ( * readahead ) ( s#readahead_control * ) ; int ( * write_begin ) ( s#file * , s#address_space * , t#loff_t , unsigned , s#page * * , void * * ) ; int ( * write_end ) ( s#file * , s#address_space * , t#loff_t , unsigned , unsigned , s#page * , void * ) ; t#sector_t ( * bmap ) ( s#address_space * , t#sector_t ) ; void ( * invalidate_folio ) ( s#folio * , t#size_t , t#size_t ) ; t#bool ( * release_folio ) ( s#folio * , t#gfp_t ) ; void ( * free_folio ) ( s#folio * ) ; t#ssize_t ( * direct_IO ) ( s#kiocb * , s#iov_iter * ) ; int ( * migrate_folio ) ( s#address_space * , s#folio * , s#folio * , e#migrate_mode ) ; int ( * launder_folio ) ( s#folio * ) ; t#bool ( * is_partially_uptodate ) ( s#folio * , t#size_t , t#size_t ) ; void ( * is_dirty_writeback ) ( s#folio * , t#bool * , t#bool * ) ; int ( * error_remove_page ) ( s#address_space * , s#page * ) ; int ( * swap_activate ) ( s#swap_info_struct * , s#file * , t#sector_t * ) ; void ( * swap_deactivate ) ( s#file * ) ; int ( * swap_rw ) ( s#kiocb * , s#iov_iter * ) ; } 
+s#address_space struct address_space { s#inode * host ; s#xarray i_pages ; s#rw_semaphore invalidate_lock ; t#gfp_t gfp_mask ; t#atomic_t i_mmap_writable ; s#rb_root_cached i_mmap ; s#rw_semaphore i_mmap_rwsem ; unsigned long nrpages ; unsigned long writeback_index ; const s#address_space_operations * a_ops ; unsigned long flags ; t#errseq_t wb_err ; t#spinlock_t private_lock ; s#list_head private_list ; void * private_data ; } 
+s#bin_attribute struct bin_attribute { s#attribute attr ; t#size_t size ; void * private ; s#address_space * ( * f_mapping ) ( void ) ; t#ssize_t ( * read ) ( s#file * , s#kobject * , s#bin_attribute * , char * , t#loff_t , t#size_t ) ; t#ssize_t ( * write ) ( s#file * , s#kobject * , s#bin_attribute * , char * , t#loff_t , t#size_t ) ; int ( * mmap ) ( s#file * , s#kobject * , s#bin_attribute * , s#vm_area_struct * ) ; } 
+s#attribute_group struct attribute_group { const char * name ; t#umode_t ( * is_visible ) ( s#kobject * , s#attribute * , int ) ; t#umode_t ( * is_bin_visible ) ( s#kobject * , s#bin_attribute * , int ) ; s#attribute * * attrs ; s#bin_attribute * * bin_attrs ; } 
+e#kobj_ns_type enum kobj_ns_type { KOBJ_NS_TYPE_NONE = 0 , KOBJ_NS_TYPE_NET , KOBJ_NS_TYPES } 
+s#sock struct sock { UNKNOWN } 
+s#kobj_ns_type_operations struct kobj_ns_type_operations { e#kobj_ns_type type ; t#bool ( * current_may_mount ) ( void ) ; void * ( * grab_current_ns ) ( void ) ; const void * ( * netlink_ns ) ( s#sock * ) ; const void * ( * initial_ns ) ( void ) ; void ( * drop_ns ) ( void * ) ; } 
+s#kobj_type struct kobj_type { void ( * release ) ( s#kobject * ) ; const s#sysfs_ops * sysfs_ops ; const s#attribute_group * * default_groups ; const s#kobj_ns_type_operations * ( * child_ns_type ) ( s#kobject * ) ; const void * ( * namespace ) ( s#kobject * ) ; void ( * get_ownership ) ( s#kobject * , t#kuid_t * , t#kgid_t * ) ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+s#kobject struct kobject { const char * name ; s#list_head entry ; s#kobject * parent ; s#kset * kset ; const s#kobj_type * ktype ; s#kernfs_node * sd ; s#kref kref ; unsigned int state_initialized : 1 ; unsigned int state_in_sysfs : 1 ; unsigned int state_add_uevent_sent : 1 ; unsigned int state_remove_uevent_sent : 1 ; unsigned int uevent_suppress : 1 ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+s#device_private struct device_private { UNKNOWN } 
+s#dev_pm_ops struct dev_pm_ops { int ( * prepare ) ( s#device * ) ; void ( * complete ) ( s#device * ) ; int ( * suspend ) ( s#device * ) ; int ( * resume ) ( s#device * ) ; int ( * freeze ) ( s#device * ) ; int ( * thaw ) ( s#device * ) ; int ( * poweroff ) ( s#device * ) ; int ( * restore ) ( s#device * ) ; int ( * suspend_late ) ( s#device * ) ; int ( * resume_early ) ( s#device * ) ; int ( * freeze_late ) ( s#device * ) ; int ( * thaw_early ) ( s#device * ) ; int ( * poweroff_late ) ( s#device * ) ; int ( * restore_early ) ( s#device * ) ; int ( * suspend_noirq ) ( s#device * ) ; int ( * resume_noirq ) ( s#device * ) ; int ( * freeze_noirq ) ( s#device * ) ; int ( * thaw_noirq ) ( s#device * ) ; int ( * poweroff_noirq ) ( s#device * ) ; int ( * restore_noirq ) ( s#device * ) ; int ( * runtime_suspend ) ( s#device * ) ; int ( * runtime_resume ) ( s#device * ) ; int ( * runtime_idle ) ( s#device * ) ; t#u64 android_kabi_reserved1 ; } 
+s#device_type struct device_type { const char * name ; const s#attribute_group * * groups ; int ( * uevent ) ( s#device * , s#kobj_uevent_env * ) ; char * ( * devnode ) ( s#device * , t#umode_t * , t#kuid_t * , t#kgid_t * ) ; void ( * release ) ( s#device * ) ; const s#dev_pm_ops * pm ; } 
+e#probe_type enum probe_type { PROBE_DEFAULT_STRATEGY , PROBE_PREFER_ASYNCHRONOUS , PROBE_FORCE_SYNCHRONOUS , } 
+s#of_device_id struct of_device_id { char name [ 32 ] ; char type [ 32 ] ; char compatible [ 128 ] ; const void * data ; } 
+t#kernel_ulong_t typedef unsigned long kernel_ulong_t 
+s#acpi_device_id struct acpi_device_id { t#__u8 id [ 16 ] ; t#kernel_ulong_t driver_data ; t#__u32 cls ; t#__u32 cls_msk ; } 
+s#pm_message struct pm_message { int event ; } 
+t#pm_message_t typedef s#pm_message pm_message_t 
+s#driver_private struct driver_private { UNKNOWN } 
+s#device_driver struct device_driver { const char * name ; s#bus_type * bus ; s#module * owner ; const char * mod_name ; t#bool suppress_bind_attrs ; e#probe_type probe_type ; const s#of_device_id * of_match_table ; const s#acpi_device_id * acpi_match_table ; int ( * probe ) ( s#device * ) ; void ( * sync_state ) ( s#device * ) ; int ( * remove ) ( s#device * ) ; void ( * shutdown ) ( s#device * ) ; int ( * suspend ) ( s#device * , t#pm_message_t ) ; int ( * resume ) ( s#device * ) ; const s#attribute_group * * groups ; const s#attribute_group * * dev_groups ; const s#dev_pm_ops * pm ; void ( * coredump ) ( s#device * ) ; s#driver_private * p ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+s#iommu_ops struct iommu_ops { UNKNOWN } 
+s#subsys_private struct subsys_private { UNKNOWN } 
+s#bus_type struct bus_type { const char * name ; const char * dev_name ; s#device * dev_root ; const s#attribute_group * * bus_groups ; const s#attribute_group * * dev_groups ; const s#attribute_group * * drv_groups ; int ( * match ) ( s#device * , s#device_driver * ) ; int ( * uevent ) ( s#device * , s#kobj_uevent_env * ) ; int ( * probe ) ( s#device * ) ; void ( * sync_state ) ( s#device * ) ; void ( * remove ) ( s#device * ) ; void ( * shutdown ) ( s#device * ) ; int ( * online ) ( s#device * ) ; int ( * offline ) ( s#device * ) ; int ( * suspend ) ( s#device * , t#pm_message_t ) ; int ( * resume ) ( s#device * ) ; int ( * num_vf ) ( s#device * ) ; int ( * dma_configure ) ( s#device * ) ; void ( * dma_cleanup ) ( s#device * ) ; const s#dev_pm_ops * pm ; const s#iommu_ops * iommu_ops ; s#subsys_private * p ; s#lock_class_key lock_key ; t#bool need_parent_lock ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+e#dl_dev_state enum dl_dev_state { DL_DEV_NO_DRIVER = 0 , DL_DEV_PROBING , DL_DEV_DRIVER_BOUND , DL_DEV_UNBINDING , } 
+s#dev_links_info struct dev_links_info { s#list_head suppliers ; s#list_head consumers ; s#list_head defer_sync ; e#dl_dev_state status ; } 
+s#wake_irq struct wake_irq { UNKNOWN } 
+s#wakeup_source struct wakeup_source { const char * name ; int id ; s#list_head entry ; t#spinlock_t lock ; s#wake_irq * wakeirq ; s#timer_list timer ; unsigned long timer_expires ; t#ktime_t total_time ; t#ktime_t max_time ; t#ktime_t last_time ; t#ktime_t start_prevent_time ; t#ktime_t prevent_sleep_time ; unsigned long event_count ; unsigned long active_count ; unsigned long relax_count ; unsigned long expire_count ; unsigned long wakeup_count ; s#device * dev ; t#bool active : 1 ; t#bool autosleep_enabled : 1 ; } 
+e#rpm_request enum rpm_request { RPM_REQ_NONE = 0 , RPM_REQ_IDLE , RPM_REQ_SUSPEND , RPM_REQ_AUTOSUSPEND , RPM_REQ_RESUME , } 
+e#rpm_status enum rpm_status { RPM_INVALID = - 1 , RPM_ACTIVE = 0 , RPM_RESUMING , RPM_SUSPENDED , RPM_SUSPENDING , } 
+s#pm_domain_data struct pm_domain_data { UNKNOWN } 
+s#pm_subsys_data struct pm_subsys_data { t#spinlock_t lock ; unsigned int refcount ; unsigned int clock_op_might_sleep ; s#mutex clock_mutex ; s#list_head clock_list ; s#pm_domain_data * domain_data ; } 
+s#dev_pm_qos struct dev_pm_qos { UNKNOWN } 
+s#dev_pm_info struct dev_pm_info { t#pm_message_t power_state ; unsigned int can_wakeup : 1 ; unsigned int async_suspend : 1 ; t#bool in_dpm_list : 1 ; t#bool is_prepared : 1 ; t#bool is_suspended : 1 ; t#bool is_noirq_suspended : 1 ; t#bool is_late_suspended : 1 ; t#bool no_pm : 1 ; t#bool early_init : 1 ; t#bool direct_complete : 1 ; t#u32 driver_flags ; t#spinlock_t lock ; s#list_head entry ; s#completion completion ; s#wakeup_source * wakeup ; t#bool wakeup_path : 1 ; t#bool syscore : 1 ; t#bool no_pm_callbacks : 1 ; unsigned int must_resume : 1 ; unsigned int may_skip_resume : 1 ; s#hrtimer suspend_timer ; t#u64 timer_expires ; s#work_struct work ; t#wait_queue_head_t wait_queue ; s#wake_irq * wakeirq ; t#atomic_t usage_count ; t#atomic_t child_count ; unsigned int disable_depth : 3 ; unsigned int idle_notification : 1 ; unsigned int request_pending : 1 ; unsigned int deferred_resume : 1 ; unsigned int needs_force_resume : 1 ; unsigned int runtime_auto : 1 ; t#bool ignore_children : 1 ; unsigned int no_callbacks : 1 ; unsigned int irq_safe : 1 ; unsigned int use_autosuspend : 1 ; unsigned int timer_autosuspends : 1 ; unsigned int memalloc_noio : 1 ; unsigned int links_count ; e#rpm_request request ; e#rpm_status runtime_status ; e#rpm_status last_status ; int runtime_error ; int autosuspend_delay ; t#u64 last_busy ; t#u64 active_time ; t#u64 suspended_time ; t#u64 accounting_timestamp ; s#pm_subsys_data * subsys_data ; void ( * set_latency_tolerance ) ( s#device * , t#s32 ) ; s#dev_pm_qos * qos ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; } 
+s#dev_pm_domain struct dev_pm_domain { s#dev_pm_ops ops ; int ( * start ) ( s#device * ) ; void ( * detach ) ( s#device * , t#bool ) ; int ( * activate ) ( s#device * ) ; void ( * sync ) ( s#device * ) ; void ( * dismiss ) ( s#device * ) ; t#u64 android_kabi_reserved1 ; } 
+s#em_perf_state struct em_perf_state { unsigned long frequency ; unsigned long power ; unsigned long cost ; unsigned long flags ; } 
+s#em_perf_domain struct em_perf_domain { s#em_perf_state * table ; int nr_perf_states ; unsigned long flags ; unsigned long cpus [ ] ; } 
+s#dev_pin_info struct dev_pin_info { UNKNOWN } 
+s#irq_domain struct irq_domain { UNKNOWN } 
+s#msi_device_data struct msi_device_data { UNKNOWN } 
+s#dev_msi_info struct dev_msi_info { s#irq_domain * domain ; s#msi_device_data * data ; } 
+s#dma_map_ops struct dma_map_ops { UNKNOWN } 
+s#bus_dma_region struct bus_dma_region { UNKNOWN } 
+s#device_dma_parameters struct device_dma_parameters { unsigned int max_segment_size ; unsigned int min_align_mask ; unsigned long segment_boundary_mask ; } 
+s#dma_coherent_mem struct dma_coherent_mem { UNKNOWN } 
+s#cma struct cma { UNKNOWN } 
+s#io_tlb_mem struct io_tlb_mem { UNKNOWN } 
+s#dev_archdata struct dev_archdata { } 
+t#phandle typedef t#u32 phandle 
+e#dev_dma_attr enum dev_dma_attr { DEV_DMA_NOT_SUPPORTED , DEV_DMA_NON_COHERENT , DEV_DMA_COHERENT , } 
+s#fwnode_reference_args struct fwnode_reference_args { s#fwnode_handle * fwnode ; unsigned int nargs ; t#u64 args [ 8 ] ; } 
+s#fwnode_endpoint struct fwnode_endpoint { unsigned int port ; unsigned int id ; const s#fwnode_handle * local_fwnode ; } 
+s#fwnode_operations struct fwnode_operations { s#fwnode_handle * ( * get ) ( s#fwnode_handle * ) ; void ( * put ) ( s#fwnode_handle * ) ; t#bool ( * device_is_available ) ( const s#fwnode_handle * ) ; const void * ( * device_get_match_data ) ( const s#fwnode_handle * , const s#device * ) ; t#bool ( * device_dma_supported ) ( const s#fwnode_handle * ) ; e#dev_dma_attr ( * device_get_dma_attr ) ( const s#fwnode_handle * ) ; t#bool ( * property_present ) ( const s#fwnode_handle * , const char * ) ; int ( * property_read_int_array ) ( const s#fwnode_handle * , const char * , unsigned int , void * , t#size_t ) ; int ( * property_read_string_array ) ( const s#fwnode_handle * , const char * , const char * * , t#size_t ) ; const char * ( * get_name ) ( const s#fwnode_handle * ) ; const char * ( * get_name_prefix ) ( const s#fwnode_handle * ) ; s#fwnode_handle * ( * get_parent ) ( const s#fwnode_handle * ) ; s#fwnode_handle * ( * get_next_child_node ) ( const s#fwnode_handle * , s#fwnode_handle * ) ; s#fwnode_handle * ( * get_named_child_node ) ( const s#fwnode_handle * , const char * ) ; int ( * get_reference_args ) ( const s#fwnode_handle * , const char * , const char * , unsigned int , unsigned int , s#fwnode_reference_args * ) ; s#fwnode_handle * ( * graph_get_next_endpoint ) ( const s#fwnode_handle * , s#fwnode_handle * ) ; s#fwnode_handle * ( * graph_get_remote_endpoint ) ( const s#fwnode_handle * ) ; s#fwnode_handle * ( * graph_get_port_parent ) ( s#fwnode_handle * ) ; int ( * graph_parse_endpoint ) ( const s#fwnode_handle * , s#fwnode_endpoint * ) ; void * ( * iomap ) ( s#fwnode_handle * , int ) ; int ( * irq_get ) ( const s#fwnode_handle * , unsigned int ) ; int ( * add_links ) ( s#fwnode_handle * ) ; } 
+s#fwnode_handle struct fwnode_handle { s#fwnode_handle * secondary ; const s#fwnode_operations * ops ; s#device * dev ; s#list_head suppliers ; s#list_head consumers ; t#u8 flags ; t#u64 android_kabi_reserved1 ; } 
+s#property struct property { char * name ; int length ; void * value ; s#property * next ; s#bin_attribute attr ; } 
+s#device_node struct device_node { const char * name ; t#phandle t#phandle ; const char * full_name ; s#fwnode_handle fwnode ; s#property * properties ; s#property * deadprops ; s#device_node * parent ; s#device_node * child ; s#device_node * sibling ; s#kobject kobj ; unsigned long _flags ; void * data ; } 
+s#class struct class { const char * name ; s#module * owner ; const s#attribute_group * * class_groups ; const s#attribute_group * * dev_groups ; s#kobject * dev_kobj ; int ( * dev_uevent ) ( s#device * , s#kobj_uevent_env * ) ; char * ( * devnode ) ( s#device * , t#umode_t * ) ; void ( * class_release ) ( s#class * ) ; void ( * dev_release ) ( s#device * ) ; int ( * shutdown_pre ) ( s#device * ) ; const s#kobj_ns_type_operations * ns_type ; const void * ( * namespace ) ( s#device * ) ; void ( * get_ownership ) ( s#device * , t#kuid_t * , t#kgid_t * ) ; const s#dev_pm_ops * pm ; s#subsys_private * p ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; } 
+s#iommu_group struct iommu_group { UNKNOWN } 
+s#dev_iommu struct dev_iommu { UNKNOWN } 
+e#device_physical_location_panel enum device_physical_location_panel { DEVICE_PANEL_TOP , DEVICE_PANEL_BOTTOM , DEVICE_PANEL_LEFT , DEVICE_PANEL_RIGHT , DEVICE_PANEL_FRONT , DEVICE_PANEL_BACK , DEVICE_PANEL_UNKNOWN , } 
+e#device_physical_location_vertical_position enum device_physical_location_vertical_position { DEVICE_VERT_POS_UPPER , DEVICE_VERT_POS_CENTER , DEVICE_VERT_POS_LOWER , } 
+e#device_physical_location_horizontal_position enum device_physical_location_horizontal_position { DEVICE_HORI_POS_LEFT , DEVICE_HORI_POS_CENTER , DEVICE_HORI_POS_RIGHT , } 
+s#device_physical_location struct device_physical_location { e#device_physical_location_panel panel ; e#device_physical_location_vertical_position vertical_position ; e#device_physical_location_horizontal_position horizontal_position ; t#bool dock ; t#bool lid ; } 
+e#device_removable enum device_removable { DEVICE_REMOVABLE_NOT_SUPPORTED = 0 , DEVICE_REMOVABLE_UNKNOWN , DEVICE_FIXED , DEVICE_REMOVABLE , } 
+s#device struct device { s#kobject kobj ; s#device * parent ; s#device_private * p ; const char * init_name ; const s#device_type * type ; s#bus_type * bus ; s#device_driver * driver ; void * platform_data ; void * driver_data ; s#mutex mutex ; s#dev_links_info links ; s#dev_pm_info power ; s#dev_pm_domain * pm_domain ; s#em_perf_domain * em_pd ; s#dev_pin_info * pins ; s#dev_msi_info msi ; const s#dma_map_ops * dma_ops ; t#u64 * dma_mask ; t#u64 coherent_dma_mask ; t#u64 bus_dma_limit ; const s#bus_dma_region * dma_range_map ; s#device_dma_parameters * dma_parms ; s#list_head dma_pools ; s#dma_coherent_mem * dma_mem ; s#cma * cma_area ; s#io_tlb_mem * dma_io_tlb_mem ; s#dev_archdata archdata ; s#device_node * of_node ; s#fwnode_handle * fwnode ; t#dev_t devt ; t#u32 id ; t#spinlock_t devres_lock ; s#list_head devres_head ; s#class * class ; const s#attribute_group * * groups ; void ( * release ) ( s#device * ) ; s#iommu_group * iommu_group ; s#dev_iommu * iommu ; s#device_physical_location * physical_location ; e#device_removable removable ; t#bool offline_disabled : 1 ; t#bool offline : 1 ; t#bool of_node_reused : 1 ; t#bool state_synced : 1 ; t#bool can_match : 1 ; t#bool dma_coherent : 1 ; t#u64 android_kabi_reserved1 ; t#u64 android_kabi_reserved2 ; t#u64 android_kabi_reserved3 ; t#u64 android_kabi_reserved4 ; t#u64 android_kabi_reserved5 ; t#u64 android_kabi_reserved6 ; t#u64 android_kabi_reserved7 ; t#u64 android_kabi_reserved8 ; } 
+t#platform_check_tf typedef t#bool ( * platform_check_tf ) ( s#device * , t#u32 , t#u32 , t#u32 * ) 
+t#platform_get_mdp_min_thread typedef t#u32 ( * platform_get_mdp_min_thread ) ( void ) 
+s#cmdq_util_platform_fp struct cmdq_util_platform_fp { t#platform_thread_module_dispatch thread_module_dispatch ; t#platform_event_module_dispatch event_module_dispatch ; t#platform_util_hw_id util_hw_id ; t#platform_test_get_subsys_list test_get_subsys_list ; t#platform_test_set_ostd test_set_ostd ; t#platform_util_hw_name t#util_hw_name ; t#platform_thread_ddr_module thread_ddr_module ; t#platform_hw_trace_thread hw_trace_thread ; t#platform_error_irq_debug dump_error_irq_debug ; t#platform_check_tf check_tf ; t#platform_get_mdp_min_thread get_mdp_min_thread ; } 
+cmdq_util_set_fp void cmdq_util_set_fp ( s#cmdq_util_platform_fp * ) 
+cmdq_util_check_hw_trace_work t#bool cmdq_util_check_hw_trace_work ( t#u8 ) 
+cmdq_util_event_module_dispatch const char * cmdq_util_event_module_dispatch ( t#phys_addr_t , const t#u16 , t#s32 ) 
+cmdq_util_thread_module_dispatch const char * cmdq_util_thread_module_dispatch ( t#phys_addr_t , t#s32 ) 
+cmdq_util_get_hw_id t#u32 cmdq_util_get_hw_id ( t#u32 ) 
+cmdq_util_test_get_subsys_list t#u32 cmdq_util_test_get_subsys_list ( t#u32 * * ) 
+cmdq_util_test_set_ostd void cmdq_util_test_set_ostd ( void ) 
+cmdq_util_get_bit_feature t#u32 cmdq_util_get_bit_feature ( void ) 
+cmdq_util_is_feature_en t#bool cmdq_util_is_feature_en ( t#u8 ) 
+cmdq_util_error_enable void cmdq_util_error_enable ( t#u8 ) 
+cmdq_util_error_disable void cmdq_util_error_disable ( t#u8 ) 
+cmdq_util_dump_lock void cmdq_util_dump_lock ( void ) 
+cmdq_util_dump_unlock void cmdq_util_dump_unlock ( void ) 
+t#va_list typedef __builtin_va_list va_list 
+cmdq_util_error_save_lst t#s32 cmdq_util_error_save_lst ( const char * , t#va_list , t#u8 ) 
+cmdq_util_error_save t#s32 cmdq_util_error_save ( const char * , ... ) 
+cmdq_util_log_feature_set int cmdq_util_log_feature_set ( void * , t#u64 ) 
+s#mbox_client struct mbox_client { s#device * dev ; t#bool tx_block ; unsigned long tx_tout ; t#bool knows_txdone ; void ( * rx_callback ) ( s#mbox_client * , void * ) ; void ( * tx_prepare ) ( s#mbox_client * , void * ) ; void ( * tx_done ) ( s#mbox_client * , void * , int ) ; } 
+s#mbox_chan struct mbox_chan { UNKNOWN } 
+s#cmdq_client struct cmdq_client { s#mbox_client client ; s#mbox_chan * chan ; void * cl_priv ; s#mutex chan_mutex ; t#bool use_iommu ; s#device * share_dev ; } 
+cmdq_util_is_prebuilt_client t#bool cmdq_util_is_prebuilt_client ( s#cmdq_client * ) 
+cmdq_util_prebuilt_set_client void cmdq_util_prebuilt_set_client ( const t#u16 , s#cmdq_client * ) 
+cmdq_util_is_secure_client t#bool cmdq_util_is_secure_client ( s#cmdq_client * ) 
+t#cmdq_usage_cb typedef void ( * cmdq_usage_cb ) ( t#u32 ) 
+E#CMDQ_PKT_ID_ARR_IDX_END 2 
+s#cmdq_thread struct cmdq_thread { s#mbox_chan * chan ; void * base ; t#phys_addr_t gce_pa ; s#list_head task_busy_list ; s#timer_list timeout ; t#u32 timeout_ms ; s#work_struct timeout_work ; t#u32 priority ; t#u32 idx ; t#bool occupied ; t#bool dirty ; t#atomic_t usage ; t#u64 timer_mod ; t#u64 lock_time ; t#u64 irq_time ; t#u32 irq_task ; t#u64 mbox_en ; t#u64 mbox_dis ; t#u32 cookie ; t#cmdq_usage_cb usage_cb ; t#bool skip_fast_mtcmos ; t#u64 user_cb_cost ; t#u32 pkt_id_arr [ 1024 ] [ E#CMDQ_PKT_ID_ARR_IDX_END ] ; s#mutex pkt_id_mutex ; } 
+cmdq_client_get_thread s#cmdq_thread * cmdq_client_get_thread ( s#cmdq_client * ) 
+cmdq_util_set_mml_aid_selmode void cmdq_util_set_mml_aid_selmode ( void ) 
+cmdq_util_mmuen_devapc_disable void cmdq_util_mmuen_devapc_disable ( void ) 
+cmdq_util_enable_disp_va void cmdq_util_enable_disp_va ( void ) 
+cmdq_util_disp_smc_cmd void cmdq_util_disp_smc_cmd ( t#u32 , t#u32 ) 
+cmdq_util_prebuilt_init void cmdq_util_prebuilt_init ( const t#u16 ) 
+cmdq_util_prebuilt_enable void cmdq_util_prebuilt_enable ( const t#u16 ) 
+cmdq_util_prebuilt_disable void cmdq_util_prebuilt_disable ( const t#u16 ) 
+cmdq_util_prebuilt_dump void cmdq_util_prebuilt_dump ( const t#u16 , const t#u16 ) 
+cmdq_util_prebuilt_dump_cpr void cmdq_util_prebuilt_dump_cpr ( const t#u16 , const t#u16 , const t#u16 ) 
+cmdq_util_hw_trace_set_client t#s32 cmdq_util_hw_trace_set_client ( const t#u16 , s#cmdq_client * ) 
+cmdq_util_hw_trace_enable void cmdq_util_hw_trace_enable ( const t#u16 , const t#bool ) 
+cmdq_util_hw_trace_disable void cmdq_util_hw_trace_disable ( const t#u16 ) 
+cmdq_util_hw_trace_dump void cmdq_util_hw_trace_dump ( const t#u16 , const t#bool ) 
+cmdq_util_hw_trace_mode_update void cmdq_util_hw_trace_mode_update ( const t#u16 , const t#bool ) 
+cmdq_util_mminfra_cmd void cmdq_util_mminfra_cmd ( const t#u8 ) 
+cmdq_util_enable_dbg void cmdq_util_enable_dbg ( t#u32 ) 
+t#uint typedef unsigned int uint 
+cmdq_util_buff_track void cmdq_util_buff_track ( t#u32 * , const t#uint , const t#uint ) 
+cmdq_util_return_dbg void cmdq_util_return_dbg ( t#u32 , t#u64 * ) 
+s#cmdq_cb_data struct cmdq_cb_data { t#s32 err ; void * data ; } 
+t#cmdq_async_flush_cb typedef void ( * cmdq_async_flush_cb ) ( s#cmdq_cb_data ) 
+s#cmdq_task_cb struct cmdq_task_cb { t#cmdq_async_flush_cb cb ; void * data ; } 
+s#dma_pool struct dma_pool { UNKNOWN } 
+s#cmdq_buf_pool struct cmdq_buf_pool { s#dma_pool * pool ; t#atomic_t * cnt ; t#u32 * limit ; } 
+s#cmdq_pkt_err struct cmdq_pkt_err { t#bool wfe_timeout ; t#u16 event ; t#size_t offset ; } 
+t#cmdq_aee_cb typedef int ( * cmdq_aee_cb ) ( s#cmdq_cb_data ) 
+t#dma_addr_t typedef t#u64 dma_addr_t 
+s#cmdq_append struct cmdq_append { t#bool suspend ; t#dma_addr_t pc [ 2 ] ; t#dma_addr_t end ; t#u64 pre_last_inst ; } 
+s#cmdq_pkt struct cmdq_pkt { s#list_head buf ; t#size_t avail_buf_size ; t#size_t cmd_buf_size ; t#size_t buf_size ; t#u32 buf_cnt ; t#u32 priority ; s#cmdq_task_cb cb ; s#cmdq_task_cb err_cb ; void * user_data ; void * cl ; s#device * dev ; t#bool loop ; t#bool self_loop ; void * flush_item ; s#completion cmplt ; s#cmdq_buf_pool cur_pool ; t#bool mdp ; t#u64 rec_submit ; t#u64 rec_trigger ; t#u64 rec_wait ; t#u64 rec_irq ; void * sec_data ; t#bool task_alloc ; t#bool task_alive ; t#size_t pause_offset ; s#cmdq_pkt_err err_data ; t#cmdq_aee_cb aee_cb ; void * user_priv ; t#u32 vcp_eng ; t#bool no_pool ; t#bool no_irq ; s#cmdq_append append ; s#work_struct destroy_work ; t#u32 write_addr_high ; s#device * share_dev ; t#size_t create_instr_cnt ; t#bool timeout_dump_hw_trace ; t#u32 debug_id ; } 
+cmdq_util_track void cmdq_util_track ( s#cmdq_pkt * ) 
+cmdq_util_dump_smi void cmdq_util_dump_smi ( void ) 
+cmdq_util_devapc_dump void cmdq_util_devapc_dump ( void ) 
+cmdq_util_dump_fast_mtcmos void cmdq_util_dump_fast_mtcmos ( void ) 
+cmdq_util_track_ctrl t#u8 cmdq_util_track_ctrl ( void * , t#phys_addr_t , t#bool ) 
+cmdq_util_set_first_err_mod void cmdq_util_set_first_err_mod ( void * , const char * ) 
+cmdq_util_get_first_err_mod const char * cmdq_util_get_first_err_mod ( void * ) 
+cmdq_proc_create int cmdq_proc_create ( void ) 
+cmdq_util_init int cmdq_util_init ( void ) 
