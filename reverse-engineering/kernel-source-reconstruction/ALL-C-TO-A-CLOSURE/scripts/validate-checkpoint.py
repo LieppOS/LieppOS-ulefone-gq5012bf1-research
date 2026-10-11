@@ -23,13 +23,27 @@ state = json.loads((P/'C-CLOSURE-STATE.json').read_text())
 sha = hashlib.sha256((P/'C-CLOSURE-MANIFEST.tsv').read_bytes()).hexdigest()
 assert sha == (P/'C-CLOSURE-MANIFEST.sha256').read_text().split()[0] == state['frozen_manifest_sha256']
 ids = {r['module_id'] for r in manifest}
-assert len(manifest) == len(ids) == 18
+assert len(manifest) == len(ids) == 20
+original=(P/'C-CLOSURE-ORIGINAL-MANIFEST.tsv').read_bytes()
+assert original == subprocess.check_output(['git','show','daef94c6:reverse-engineering/kernel-source-reconstruction/ALL-C-TO-A-CLOSURE/C-CLOSURE-MANIFEST.tsv'],cwd=R)
+assert read('C-CLOSURE-ORIGINAL-MANIFEST.tsv') == manifest[:18]
+assert read('C-CLOSURE-MANIFEST-AMENDMENT.tsv') == manifest[18:]
+assert {r['filename'] for r in manifest[18:]} == {'drm_display_helper.ko','drm_dma_helper.ko'}
+drm_path=P/'evidence/drm/source-proof.json'
+drm_proof=json.loads(drm_path.read_text()) if drm_path.exists() else {'certified':False}
+expected_A=10 if drm_proof.get('certified') else 8
 assert {r['module_id'] for r in state['modules']} == ids
 assert state['objective_complete'] is False
-assert collections.Counter(r['final_class'] for r in state['modules']) == {'A':8,'C':10}
-assert len(read('BLOCKERS.tsv')) == 10 and len(read('MODULE-PARITY.tsv')) == 18
+assert collections.Counter(r['final_class'] for r in state['modules']) == {'A':expected_A,'C':20-expected_A}
+assert len(read('BLOCKERS.tsv')) == 20-expected_A and len(read('MODULE-PARITY.tsv')) == 20
 accepted = {r['module_id']: r for r in state['modules'] if r['accepted']}
-assert len(accepted) == 8
+assert len(accepted) == expected_A
+recovered=json.loads((P/'evidence/resume-context.json').read_text())
+for m in recovered['modules']:
+    if m['recovered_class']=='A':
+        assert m['module_id'] in accepted and accepted[m['module_id']]['source_commit']==m['source_commit']
+if drm_proof.get('certified'):
+    assert drm_proof['certified'] is True and drm_proof['independent_B1_B2'] and drm_proof['mutation_all_detected']
 for mid,row in accepted.items():
     assert row['metadata_exceptions'] == ['20-byte GNU build ID only']
     results = [json.loads((P/p).read_text())[row['filename'].removesuffix('.ko')] for p in row['evidence']]
@@ -87,4 +101,4 @@ assert all(x['sha256'] in {r['stock_sha256'] for r in canonical.values()} for x 
 legacy_mutations=json.loads((P/'evidence/legacy-source-search/newer-provider-search/legacy-search-mutations.json').read_text())
 assert legacy_mutations['control_exit']==0 and legacy_mutations['all_detected']
 assert len(legacy_mutations['cases'])==5 and all(x['detected'] and x['exit']!=0 for x in legacy_mutations['cases'])
-print('VALID checkpoint: 18 immutable targets, 8 independently accepted A, 10 explicit C; no canonical audit edits; strict GNU20 only; legacy candidate blobs and newer search scope verified')
+print(f'VALID checkpoint: original18 immutable +2 DRM amendment; {expected_A} independently accepted A, {20-expected_A} explicit C; no canonical audit edits; strict GNU20 only; legacy evidence verified')

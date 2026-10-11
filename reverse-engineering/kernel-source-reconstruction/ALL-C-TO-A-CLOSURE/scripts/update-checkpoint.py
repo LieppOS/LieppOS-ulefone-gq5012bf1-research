@@ -12,7 +12,10 @@ P = Path(__file__).resolve().parents[1]
 R = P.parents[2]
 BASE = 'f61ebf03275ba2d3f6aa4f9d5aebe18e12922263'
 rows = list(csv.DictReader((P/'C-CLOSURE-MANIFEST.tsv').open(), delimiter='\t'))
-assert len(rows) == 18
+assert len(rows) == 20
+resume = json.loads((P/'evidence/resume-context.json').read_text())
+drm_path = P/'evidence/drm/source-proof.json'
+drm_proof = json.loads(drm_path.read_text()) if drm_path.exists() else {'certified': False}
 canonical = {r['module_id']: r for r in csv.DictReader(
     (R/'reverse-engineering/kernel-source-parity-audit/ALL-457-MODULES.tsv').open(), delimiter='\t')}
 families = {
@@ -22,7 +25,10 @@ families = {
           '40bf42967a213af6faa45a6a579571973b8e5d15'),
  'BTF-THERMAL': ('thermal_cooling', 'thermal', '9e0e1a0df474f1e5a748d0302fba8445f13c996d',
           'ff6e97b3bf1f29c1e1fba4ba0c0e28493cbd0698')}
+if drm_proof.get('certified'):
+    families['BTF-DRM'] = ('audio_shared_infrastructure', 'drm', drm_proof['source_commit'], drm_proof['source_commit'])
 next_actions = {
+ 'BTF-DRM': 'Build unchanged DRM helper source with the already reproduced public-source OEM BTF base; require complete strict GNU20-only acceptance and fresh independent B1/B2.',
  'USB': 'Recover authentic OEM token inputs; retain latest 709/709 TCPC source; no srcversion or counter override.',
  'AUDIO': 'Test a helper-extracted insertion sort with independent j/k widths and stock dual bounds-check shape; current variants are unaccepted.',
  'focaltech_touch_spi_ft3680.ko': 'Recover an authentic FT3680 SPI OEM driver revision; compare all 40 size-different functions and YFT dependencies.',
@@ -33,7 +39,8 @@ state, parity, delta = [], [], []
 for r in rows:
     name = r['filename']; m = name.removesuffix('.ko')
     fam = 'CMDQ' if r['group']=='CMDQ' else ('BTF-THERMAL' if name=='thermal-generic-adc.ko' else
-          'BTF-CONNECTIVITY' if name in ['cfg80211.ko','mac80211.ko','bluetooth.ko'] else None)
+          'BTF-CONNECTIVITY' if name in ['cfg80211.ko','mac80211.ko','bluetooth.ko'] else
+          'BTF-DRM' if r['group']=='BTF-DRM' and drm_proof.get('certified') else None)
     item = dict(r, final_class='C', accepted=False, source_commit=r['maintained_source_commit'],
                 current_experiment='Bounded experiments complete; genuine residual retained',
                 exact_parity=r['current_exact_residual'], evidence=[],
@@ -73,7 +80,10 @@ for r in rows:
                     field=field, expected_old_value=old, new_value=value,
                     projected_previous_class='C', supporting_evidence=evidence))
     else:
-        if r['group']=='USB':
+        if r['group']=='BTF-DRM':
+            item.update(current_experiment='Verified amendment at source425ffd; shared OEM BTF reconstruction is the new executable hypothesis; not certified yet.',
+                        evidence=['evidence/resume-context.json'])
+        elif r['group']=='USB':
             item['evidence']=['evidence/srcversion/history-scan.json','evidence/srcversion/history-scan-micode.json']
             item['current_experiment']='No stock srcversion hits for four scanned modules; tcpc_class retains inherited traced source-provenance blocker.'
         elif r['group']=='AUDIO':
@@ -108,17 +118,26 @@ tsv('AUDIT-DELTA.tsv',delta)
 tsv('BLOCKERS.tsv',[dict(module_id=i['module_id'],filename=i['filename'],final_class='C',
     exact_remaining_issue=i['exact_parity'],last_experiment=i['current_experiment'],
     next_experiment=i['next_immediate_action']) for i in state if not i['accepted']])
+counts = dict(targets=len(state),accepted_A=sum(i['accepted'] for i in state),accepted_B=0,remaining_C=sum(not i['accepted'] for i in state))
+projected = dict(resume['audits']['codex22']['counts'])
+for item in state:
+    if item['accepted']:
+        previous=resume['audits']['codex22']['closure_classes'][item['module_id']]
+        if previous!='A':
+            projected[previous]-=1;projected['A']+=1
 (P/'C-CLOSURE-STATE.json').write_text(json.dumps(dict(
     objective_complete=False, frozen_manifest_sha256=hashlib.sha256((P/'C-CLOSURE-MANIFEST.tsv').read_bytes()).hexdigest(),
-    canonical_baseline_commit=BASE, canonical_audit_unchanged=True, count=dict(targets=18,accepted_A=8,accepted_B=0,remaining_C=10),
-    projected_counts_after_pending_audio_connectivity_and_this_delta=dict(A=289,B=1,C=10,D=91,E=0,F=0,G=67),
+    canonical_baseline_commit=BASE, canonical_audit_unchanged=True, count=counts,
+    resumed_checkpoint=resume['resumed_commit'],original_scope=18,scope_amendment='C-CLOSURE-MANIFEST-AMENDMENT.tsv',
+    staged_baseline_commit=resume['audits']['codex22']['commit'],projected_staged_counts_after_this_delta=projected,
     exclusions=['No canonical integration','No phone/device operations','No firmware or trusted-world reconstruction','No pushes'],
     next_checkpoint='Finish legacy OEM/source retrieval and a new constrained AW883XX/helper or TCPC-token experiment; do not repeat completed grids.',
     modules=state),indent=2)+'\n')
-summary = '''# Category-C closure checkpoint — 8 accepted, 10 unresolved
+summary = f'''# Category-C closure checkpoint — {counts['accepted_A']} accepted, {counts['remaining_C']} unresolved
 
-**The 18/18 mission is not complete.** All 18 frozen identities are tracked; eight have
-independent strict Category-A evidence, none are relabeled B, and ten retain C blockers.
+**The expanded 20-target mission is not complete.** All 18 original identities and the
+separate two-DRM amendment are tracked; {counts['accepted_A']} have independent strict
+Category-A evidence, none are relabeled B, and {counts['remaining_C']} retain C blockers.
 No canonical audit, phone, stock image, firmware/calibration, runtime module, secure world,
 or remote Git repository was modified. This is an isolated local research checkpoint.
 
@@ -186,15 +205,17 @@ BLOCKERS.tsv has a next experiment for every remaining C. C-CLOSURE-STATE.json i
 resumption checkpoint. Continue a genuinely new authentic source/header/helper-composition
 investigation; do not repeat completed grids or normalize missing OEM metadata.
 
-## Audit status and projected counts
+## Audit status and staged reconciliation
 
-Canonical at f61ebf03 remains A244 B1 C14 D91 E0 F0 G108: 245 certified / 213 remaining.
-With the pending audio/connectivity deltas and these eight closures, projected only:
-A289 B1 C10 D91 E0 F0 G67: 290 certified / 168 remaining / 458 total.
-Concurrent other-family work is excluded until reconciled. AUDIT-DELTA.tsv supplies exact
-field preconditions for eight identities; it is not applied. MERGE-INSTRUCTIONS.md requires
-inventory repair/validation, current-HEAD reconciliation, owner-reviewed regeneration and
-unchanged validator/mutation acceptance. No stale audit replacement or push.
+Original canonical baseline f61ebf03 is retained for the unchanged owner-CAS delta.
+The resume record compares actual canonical and both Codex staging commits by immutable
+identity. No staging research or canonical audit is merged or edited here. The eight
+previous promotions and any DRM promotions are applied only to the staged identity map
+for the projected counts below, not silently to the canonical table. Owner integration
+must regenerate field preconditions against its actual HEAD; no stale audit replacement.
 '''
+summary += '\nVerified Codex staged baseline: '+str(resume['audits']['codex22'])+'\n'
+summary += '\nProjected staged counts after this closure only: '+str(projected)+'\n'
+summary += '\nAccepted source proof and recovery inputs: BUILD-REPRODUCTION.md; additive scope receipt: C-CLOSURE-MANIFEST-AMENDMENT.tsv; recovered context: RESUME-DAEF94C6.md.\n'
 (P/'C-CLOSURE-SUMMARY.md').write_text(summary)
-print('checkpoint: 18 targets, 8 A, 10 C; no canonical audit changes; field-level delta',len(delta),'records')
+print('checkpoint:',counts,'no canonical audit changes; field-level delta',len(delta),'records')
