@@ -37,7 +37,7 @@ source-faithful to the OEM kernel tree.
 | nvmem_mtk-devinfo | ALPS `drivers/nvmem/mtk-devinfo.c` | none | PUBLIC_EXACT |
 | mtk-vmm-spm | ALPS `drivers/misc/mediatek/vmm_spm/mtk-vmm-spm.c` | none | PUBLIC_EXACT |
 | mtk-mminfra-imax | ALPS `drivers/misc/mediatek/mminfra/mtk-mminfra-imax.c` | none | PUBLIC_EXACT |
-| mtk_dpc | ALPS `drivers/gpu/drm/mediatek/dpc/{mtk_dpc_driver,mtk_dpc_mmp}.c` | none in dpc. Compiled with the inherited OEM display state (`patches/historical-drm`, owned by audio_shared_infrastructure) | PUBLIC_EXACT (target) |
+| mtk_dpc | ALPS `drivers/gpu/drm/mediatek/dpc/{mtk_dpc_driver,mtk_dpc_mmp}.c` | none. The only mediatek_v2 file it compiles is `mtk_disp_vidle.h`, which no historical-drm patch touches. The inherited OEM display patches therefore affect only the mediatek-drm provider witnesses, keeping them at the owner's certified state | PUBLIC_EXACT |
 | mtk-swpm-perf-arm-pmu | ALPS `drivers/misc/mediatek/swpm/swpm_perf_arm_pmu.c` | none | PUBLIC_EXACT |
 | sec | ALPS `drivers/misc/mediatek/masp/asfv3/*` (`Makefile.sec` object list) | none | PUBLIC_EXACT |
 | teeperf | ALPS `drivers/tee/teeperf/{main,user}.c` | none | PUBLIC_EXACT |
