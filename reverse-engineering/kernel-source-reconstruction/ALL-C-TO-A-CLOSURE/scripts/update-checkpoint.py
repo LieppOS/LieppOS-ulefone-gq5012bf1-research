@@ -90,7 +90,9 @@ for r in rows:
             item.update(current_experiment='90 type-grid candidates plus targeted structural variants: no acceptance',
                         evidence=['evidence/aw883xx/grid.log','evidence/aw883xx/grid2.log','evidence/aw883xx/grid3.log'],
                         diagnostic_best='255 diff lines; whole stripped file size 331808 equals stock; neither metric proves equivalence',
-                        exact_parity='235/236 raw functions exact; aw883xx_dev_cfg_load 3560 B stock vs 3564 B best experimental build; complete ELF remains unaccepted')
+                        exact_parity='235/236 raw functions exact; aw883xx_dev_cfg_load 3560 B stock vs 3564 B best experimental build; complete ELF remains unaccepted',
+                        next_immediate_action='Helper-extracted insertion sort rejected (4 variants). Only remaining route: authentic Awinic v1.7.1 OEM release; no further type/structure permutations.')
+            item['evidence'] += ['evidence/aw883xx/helper-probe/results.json']
         elif name=='st21nfc.ko':
             item.update(current_experiment='Historical object baseline reproduced 24/24; 28 authentic blob pairs tested (4 compile, 24 incompatible I2C probe API); no ioctl/ping hits.',
                         evidence=['evidence/st21nfc/public-history-object-scan.json','evidence/st21nfc/historic-baseline-vs-preserved-object.txt'])
@@ -100,7 +102,9 @@ for r in rows:
                                   'evidence/legacy-source-search/newer-provider-search/candidate-comparisons.json',
                                   'evidence/legacy-source-search/newer-provider-search/struct-block-comparison.json',
                                   'evidence/legacy-source-search/newer-provider-search/stock-type-info-scope.json'],
-                        next_immediate_action='Find the authentic newer 6:1.1-k6.6 source lineage carrying version/log/list-of-misc-device and extra context fields; use the recovered public headers as constraints, not a stock-compatible replacement.')
+                        next_immediate_action='Public 7:2.2 (anvil-kernel 8e1a0f39478f) matches all 9 stock layout anchors; with authentic unprefixed TEEC names 14/25 provider CRCs natural. Recover a 6.x TrustKernel release or anvil-kernel pre-8e1a0f history and test only its struct-tee-closure declarations.')
+            item['current_experiment'] += ' Continuation: 7:2.2 layout 9/9; H1 14/25 provider CRCs, 10/19 consumer edges; 8-way 3.2p3 intermediate grid rejected.'
+            item['evidence'] += ['evidence/tkcore-7.2.2/layout-result.json','evidence/tkcore-7.2.2/genksyms-results.json','evidence/tkcore-7.2.2/grid-H123.json']
         evidence = ';'.join(item['evidence'])
     state.append(item)
     parity.append(dict(module_id=r['module_id'],filename=name,initial_class=r['initial_class'],

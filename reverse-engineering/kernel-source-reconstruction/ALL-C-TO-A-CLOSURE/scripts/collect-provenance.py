@@ -99,6 +99,18 @@ experiments.extend([
   'NO_MATCH_IN_PINNED_TREE_SCOPES','evidence/legacy-source-search/newer-provider-search/'),
  ('TKCORE-STOCK-TYPE-INFO','LEGACY','Read-only debug/type-info sections in four provider/consumer identities',
   'Eight frozen stock occurrences have no BTF or debug sections;no private field-name recovery from those sections',
-  'UNAVAILABLE_IN_INSPECTED_STOCK_FILES','evidence/legacy-source-search/newer-provider-search/stock-type-info-scope.json')])
+  'UNAVAILABLE_IN_INSPECTED_STOCK_FILES','evidence/legacy-source-search/newer-provider-search/stock-type-info-scope.json'),
+ ('TKCORE-7.2.2-LAYOUT','LEGACY','Existing public anvil-kernel 8e1a0f39478f TrustKernel 7:2.2 header layout vs stock anchors',
+  '9/9 anchors equal (tee0x138,udevs0xa0,rpc0xb0,context0xd0);modern lineage confirmed structurally',
+  'SUPPORTED_LAYOUT','evidence/tkcore-7.2.2/layout-result.json'),
+ ('TKCORE-7.2.2-H1','LEGACY','Undo authentic 7:2.2 tkcore_TEEC_ prefix rename (stock exports unprefixed GP names)',
+  'Natural provider CRCs 11/25 -> 14/25;consumer edges 10/19 vs island5/19;remaining11 all reach struct tee closure',
+  'PARTIAL_IMPROVEMENT_C_RETAINED','evidence/tkcore-7.2.2/genksyms-results.json;evidence/tkcore-7.2.2/variants/H1.diff'),
+ ('TKCORE-7.2.2-H123','LEGACY','H1 x 3.2p3 tee_cmd x 3.2p3 tee.test x 3.2p3 client-api include (8 combinations)',
+  'All 14/25;no added match','REJECTED','evidence/tkcore-7.2.2/grid-H123.json'),
+ ('AW-HELPER-INSERT','AUDIO','Helper-extracted insertion sort with fixed-array bounds and independent j/k widths',
+  '4 variants+control;all 235/236;cfg_load 3524..3564 vs stock3560;no variant closer','REJECTED','evidence/aw883xx/helper-probe/results.json'),
+ ('USB-MTKACK-HEADERS','USB','MTK ACK printk/dev_printk headers in actual tcpc_mt6375 includes explain counter',
+  'Preprocessed output byte-identical to public GKI;counter names unchanged','REJECTED','evidence/usb-mtkack-counter/result.json')])
 tsv('EXPERIMENTS.tsv',[dict(id=a,group=b,hypothesis=c,measured_result=d,result=e,evidence=f) for a,b,c,d,e,f in experiments])
 print(len(pins),'pin records;',len(changes),'maintained source families;',len(bundles),'verified bundles;',len(experiments),'experiment records')

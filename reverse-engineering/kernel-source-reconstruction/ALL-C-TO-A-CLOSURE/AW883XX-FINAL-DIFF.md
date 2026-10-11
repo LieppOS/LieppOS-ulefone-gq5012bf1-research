@@ -35,3 +35,21 @@ Next bounded experiment: extract the insertion sort into a helper so the loop's 
 index widths and duplicate bounds-check sites can be tested without changing profile
 ordering. Alternatively recover original Awinic v1.7.1 OEM source from an authentic release.
 Accept only the full module, including metadata/relocations, under the existing rule.
+
+## Continuation: helper-extracted insertion sort (evidence/aw883xx/helper-probe/)
+
+The recorded next experiment was executed. The inline `j`/`k` loops were moved into
+`aw_scene_index_insert()` taking `uint32_t (*)[AW_SCENE_INDEX_MAX]`, which keeps both
+array-bound checks and the `<=` stable-before-equal ordering; no profile/protection logic changed.
+
+| Variant | Raw exact functions | `aw883xx_dev_cfg_load` bytes (stock 3560) | Stripped size | Non-GNU20 differing bytes |
+|---|---:|---:|---:|---:|
+| control (preserved best) | 235/236 | 3564 | 331808 | 114932 |
+| helper j:int8 k:int8 | 235/236 | 3564 | 331808 | 115168 |
+| helper j:int k:int8 | 235/236 | 3524 | 331744 | 192786 |
+| helper j:uint8 k:int8 | 235/236 | 3564 | 331808 | 115158 |
+| helper j:int8 k:int | 235/236 | 3544 | 331744 | 193200 |
+
+Data 81/81, import CRCs equal in every case. The helper is always inlined back and does not
+change the mismatching function in the stock direction. Hypothesis rejected; AW883XX remains C.
+Do not repeat helper/type permutations; the remaining route is an authentic Awinic v1.7.1 source.

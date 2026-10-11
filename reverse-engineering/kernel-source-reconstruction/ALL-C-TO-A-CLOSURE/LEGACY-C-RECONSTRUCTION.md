@@ -156,3 +156,56 @@ Next remains a genuinely different newer normal-world declaration/source lineage
 the proven added fields, not another publication of the 3.2 family. A matching OEM source
 release or retained build/debug header artifacts would be useful; no request for unpublished source was
 sent to an OEM and no source availability beyond the inspected scopes is asserted.
+
+## Continuation from daef94c6 — modern 7:2.2 lineage already in the project
+
+The "newer lineage" requirement above was already partly met by an existing local donor
+that the closure checkpoint had not linked. `reverse-engineering/microarray-fp-tee/` and
+`Reverse Engineer - DONE/TKCORE-DRV` use the public TrustKernel `drivers/tee/tkcore` from
+anvil-kernel `8e1a0f39478f` (tree `6b94428fe0aae736e06693cda13bd284b88e93ed`,
+`https://review.ozobot.com/plugins/gitiles/device/ozobot/anvil-kernel`, Zinwa Q25),
+imported unmodified as local KDM commit `ff290548332880265d6bc920b1fb8011959db54e`.
+It is `TKCORE_NSDRV_VER "7:2.2"`: newer than stock `6:1.1-k6.6`, but the first
+public source with the stock structural features (version/log, `udevs` list, context
+`config` pointer).
+
+### Layout: all nine stock anchors match (evidence/tkcore-7.2.2/layout-result.json)
+
+Compile-only probe of the unchanged 7:2.2 `include/linux/tee_tkcore.h` under the pinned
+environment: `sizeof(struct tee)`0x138, name0x20, priv0x88, ops0x90, dev0x98, `udevs`0xa0,
+rpc0xb0, `sizeof(struct tee_context)`0xd0, refcount0xc0 — 9/9 equal to stock. 3.2p3 matched
+none of the moved fields. The private layout is therefore no longer the open question.
+
+### Natural provider CRCs
+
+Harness: the exact recorded `tee_core.c` compile command with `-E -D__GENKSYMS__`, piped to the
+pinned `scripts/genksyms/genksyms` (argv in `genksyms-argv.json`); control reproduces the existing
+7:2.2 natural `Module.symvers` exactly. No CRC value is written anywhere.
+
+| Variant (authentic source basis) | Stock tkcore exports reproduced |
+|---|---:|
+| 7:2.2 unchanged | 11/25 |
+| **H1**: undo 7:2.2's `tkcore_TEEC_*` prefix in the two alias blocks (3.2p3 and stock export unprefixed GP `TEEC_*`) | **14/25** (+TEEC_CloseSession, TEEC_InvokeCommand, TEEC_ReleaseSharedMemory) |
+| H1 x {3.2p3 `tee_cmd` without login fields} x {3.2p3 layout-neutral `uint32_t test`} x {3.2p3 `tee_client_api.h` include} — 8 combinations | 14/25 each; rejected |
+
+Consumer-edge effect (stock import CRCs that a 7:2.2+H1 provider would satisfy naturally):
+tkcore_drv 6/11, tmem_ffa 3/7, microarray 1/1 → **10/19** (island: 5/19).
+
+All four `tee_wait_queue_*` reproduce: the Phase-3F "include-context" residual for
+sleep/wakeup is explained by the authentic `<linux/device.h>` include in the public header,
+which the island header omitted.
+
+### Localization of the remaining 11
+
+Every remaining mismatch (`__tee_get`, `tee_core_{alloc,add,del,free}`, `tee_supp_cmd`,
+`TEEC_{Initialize,Finalize}Context`, `TEEC_OpenSession`, `TEEC_{Register,Allocate}SharedMemory`)
+reaches `struct tee` through genksyms' recursive expansion; no matching symbol does. Each type
+has one expansion across all four translation units. The unknown is a same-layout spelling,
+type alias or include-visibility difference inside the `struct tee` closure between 6:1.1 and
+7:2.2 (18 private types plus GKI types reached via `tee_shm`/`tee_rpc`/`tee_device_config`).
+No stock artifact exposes member names (no BTF/debug sections, verified above).
+
+tkcore.ko remains **C**. H1 is a recorded source-level improvement for a future provider
+rebuild, not an accepted recipe; no whole-module code/data parity was attempted here.
+Next: recover a 6.x-era TrustKernel release (between 3.2p8 and 7:2.2) or the anvil-kernel
+history preceding `8e1a0f39478f`; test only declarations it actually contains.

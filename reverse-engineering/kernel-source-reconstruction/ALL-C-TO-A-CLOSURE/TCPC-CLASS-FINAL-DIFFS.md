@@ -34,3 +34,12 @@ prefix or prove absence of an unsearched OEM source release.
 Next: obtain the original OEM include/declaration stream and compare actual counter
 expansion provenance, or identify a new real same-directory modpost input set. Preserve
 all 709/709 TCPC functions and all timers while testing it. Both modules remain C.
+
+## Continuation: source-reproduced MTK ACK headers (evidence/usb-mtkack-counter/)
+
+The new OEM BTF lineage (MTK ACK c364c39ae8d) differs from public GKI in two headers that
+tcpc_mt6375 actually includes: `include/linux/printk.h` and `dev_printk.h` (MTK printk-debug
+wrappers). Preprocessing the exact recorded tcpc_mt6375 command against both common trees gives
+**byte-identical** output: the MTK additions are inactive under the pinned vendor config. The
+counter prefix (`__UNIQUE_ID_license459` etc.) is unchanged, and srcversion only hashes
+same-directory inputs. Rejected; the +1 counter and fingerprints are not a common-lineage effect.
