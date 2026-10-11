@@ -62,6 +62,15 @@
 > owners/statuses and471 stock occurrences unchanged. See
 > `../kernel-source-reconstruction/PLATFORM-BATCH-04/BATCH-SUMMARY.md`.
 
+> **CANONICAL-INTEGRATION-01 processed:** completed packages integrated by identity-keyed CAS on f61ebf03:
+> AUDIO-BATCH-01, SCP-CONNECTIVITY-BATCH-01, AUDIO-DEPENDENCIES-BATCH-02 (via
+> COMPLETED-BATCHES-INTEGRATION-01, 57A/6C), NEXT-DG-BATCH-01 (22 D→A) and
+> ALL-C-TO-A-CLOSURE (10 C→A after canonical combined-environment strict reverification;
+> 32 already-A rows moved to the superseding verified recipe tips), plus the USB-TYPEC-CLOSURE
+> 22-field C-evidence update (no class change). STOCK-INVENTORY-INTEGRITY history merged.
+> Current: **334 certified /124 remaining of458**. Ten C retained with explicit blockers.
+> See `../kernel-source-reconstruction/CANONICAL-INTEGRATION-01/INTEGRATION-SUMMARY.md`.
+
 ## Answer and limits
 
 **458 distinct stock binary identities, not 457.** There are 457 filenames and 471
@@ -72,29 +81,29 @@ but correctly contains **458** identity rows and every stock path.
 
 | Source class | Count | Evidence-supported interpretation |
 |---|---:|---|
-| A — VERIFIED_BYTE_EXACT | 244 | 60 system_dlkm ELF bodies;40 accelerator;6 boot-clock;10 storage;4 pinctrl;4 regulator;3 interconnect/EMI;1 IOMMU;31 batch01;27 batch02;33 batch03;25 batch04; declared nonbehavioral metadata differences |
+| A — VERIFIED_BYTE_EXACT | 333 | 60 system_dlkm ELF bodies;40 accelerator;6 boot-clock;10 storage;4 pinctrl;4 regulator;3 interconnect/EMI;1 IOMMU;31 batch01;27 batch02;33 batch03;25 batch04;20 audio;17 SCP/connectivity;20 audio-dependencies;22 diagnostics/MET;10 all-C closure (4 CMDQ,4 OEM-BTF-base,2 DRM); declared nonbehavioral metadata differences |
 | B — VERIFIED_SEMANTIC_EQUIVALENT | 1 | imgsensor, with bounded equivalent function/moved byte-load proof |
-| C — REPRODUCIBLE_SOURCE_UNVERIFIED | 14 | FT3680,YFT devinfo,ST21NFC,tkcore;four CMDQ;native ADC BTF;five independently built Batch04 source-token/counter/TCPC residuals; full acceptance incomplete |
-| D — SOURCE_CANDIDATE_ONLY | 91 | Located public targets/source candidates; no accepted independent stock-compatible build |
+| C — REPRODUCIBLE_SOURCE_UNVERIFIED | 10 | FT3680,YFT devinfo,ST21NFC,tkcore;AW883XX scene-parser codegen;five USB/Type-C source-token/counter residuals; full acceptance incomplete |
+| D — SOURCE_CANDIDATE_ONLY | 60 | Located public targets/source candidates; no accepted independent stock-compatible build |
 | E — SOURCE_MISSING | 0 | No implementation is affirmatively classified missing; this is NOT a claim that every implementation is sufficient |
 | F — PROVEN_NOT_REQUIRED | 0 | No production exclusion meets the requested evidential standard |
-| G — UNRESOLVED | 108 | Historical source builds/parity exist, but independent recipe/input closure is not established by the reviewed records |
+| G — UNRESOLVED | 54 | Historical source builds/parity exist, but independent recipe/input closure is not established by the reviewed records |
 | **Total** | **458** | No unresolved identity dropped |
 
-**245 A/B identities are certified.213 identities are not certified or legitimately
-excluded.** Of those,**105** are candidate/incomplete-acceptance cases (91D+14C),
-and **108 remain unresolved for independent reproducibility**. Do not describe this as
-213 new reverse-engineering projects:the108 G cases include already reconstructed
+**334 A/B identities are certified.124 identities are not certified or legitimately
+excluded.** Of those,**70** are candidate/incomplete-acceptance cases (60D+10C),
+and **54 remain unresolved for independent reproducibility**. Do not describe this as
+124 new reverse-engineering projects:the54 G cases include already reconstructed
 stacks whose existing code and parity must be preserved rather than redone.
 
-There are **74 uncertified identities required by the retained stock first-stage loader
+There are **43 uncertified identities required by the retained stock first-stage loader
 contract** (187 first-stage identities in total). This is a conditional boot/integration
 requirement, not proof that every driver controls indispensable physical hardware. For
 **271 identities, production/runtime necessity remains unknown**. No authorized stripped
 production configuration or removal-safety proof was supplied, so no F exclusions are made.
 
-Source is located in some form for all213 remaining identities:91 public candidates and
-122 reconstructed/built cases (108G+14C). **Fourteen have class C's specific
+Source is located in some form for all124 remaining identities:60 public candidates and
+64 reconstructed/built cases (54G+10C). **Ten have class C's specific
 incomplete stock-acceptance finding.** Availability of code is not independent reproduction;
 absence of an E finding is not evidence of complete source availability.
 
