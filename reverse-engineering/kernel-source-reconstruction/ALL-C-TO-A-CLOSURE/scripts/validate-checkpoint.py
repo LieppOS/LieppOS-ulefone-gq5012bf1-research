@@ -5,6 +5,7 @@ import csv
 import hashlib
 import json
 from pathlib import Path
+import runpy
 import subprocess
 
 P = Path(__file__).resolve().parents[1]
@@ -80,4 +81,10 @@ for f in legacy['files']:
     assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==f['git_blob']
 layout=json.loads((P/'evidence/legacy-source-search/public-layout-result.json').read_text())
 assert layout['compile_exit']==0 and layout['values']['tee.size']==0x158 and layout['values']['tee_context.size']==0xc8
-print('VALID checkpoint: 18 immutable targets, 8 independently accepted A, 10 explicit C; no canonical audit edits; strict GNU20 only; 52 legacy candidate source blobs verified')
+runpy.run_path(str(P/'scripts/validate-legacy-search.py'),run_name='__main__')
+type_scope=json.loads((P/'evidence/legacy-source-search/newer-provider-search/stock-type-info-scope.json').read_text())
+assert all(x['sha256'] in {r['stock_sha256'] for r in canonical.values()} for x in type_scope['stock_modules'])
+legacy_mutations=json.loads((P/'evidence/legacy-source-search/newer-provider-search/legacy-search-mutations.json').read_text())
+assert legacy_mutations['control_exit']==0 and legacy_mutations['all_detected']
+assert len(legacy_mutations['cases'])==5 and all(x['detected'] and x['exit']!=0 for x in legacy_mutations['cases'])
+print('VALID checkpoint: 18 immutable targets, 8 independently accepted A, 10 explicit C; no canonical audit edits; strict GNU20 only; legacy candidate blobs and newer search scope verified')

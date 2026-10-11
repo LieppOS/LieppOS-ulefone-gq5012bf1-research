@@ -51,6 +51,14 @@ legacy = json.loads((P/'evidence/legacy-source-search/zte-tkcore-manifest.json')
 pins.append(dict(family='legacy-tkcore-candidate',id='zte-tkcore-3.2p3',
     url='https://github.com/'+legacy['repo'],commit=legacy['commit'],subtree='.',
     tree_id=legacy['tree'],role='Rejected drop-in candidate; normal-world tkcore core/include declarations provide historical constraints, not stock source acceptance'))
+newer = P/'evidence/legacy-source-search/newer-provider-search'
+for name in ['Y21s', 'V23_5G', 'UMIDIGI-Official-F2', 'Hadenix-F2', 'Hadenix-GitLab-vendor']:
+    pin = json.loads((newer/(name+'-pin.json')).read_text())
+    pins.append(dict(family='legacy-tkcore-candidate',id=name,url=pin['url'],
+        commit=pin['commit'],subtree='.',tree_id=pin['tree'],
+        role='Bounded source-tree search, not accepted source; '+
+             ('unchanged core struct graph in TKCore 3.2p8.4.14p2' if name in ['Y21s','V23_5G']
+              else 'no matching normal-world private-header path recovered')))
 tsv('SOURCE-PINS.tsv',pins);tsv('SOURCE-CHANGES.tsv',changes)
 (P/'evidence/bundle-verification.json').write_text(json.dumps(bundles,indent=2)+'\n')
 history=[]
@@ -82,5 +90,15 @@ experiments = [
 experiments.append(('TKCORE-ZTE-3.2P3','LEGACY','Pinned public TrustKernel core/include source and compile-only layout probe',
     '52 verified blobs;tee size0x158/context0xc8 versus stock0x138/0xd0;not compatible newer6:1.1-k6.6 lineage',
     'REJECTED_DROP_IN_HISTORICAL_CONSTRAINTS_RECOVERED','evidence/legacy-source-search/zte-tkcore-manifest.json;evidence/legacy-source-search/public-layout-result.json'))
+experiments.extend([
+ ('TKCORE-VIVO-3.2P8','LEGACY','Newer published Vivo Y21s/V23_5G TrustKernel declaration lineage',
+  'Two pinned trees;57 recovered blobs;10 core struct definitions byte-identical to ZTE3.2p3;version3.2p8.4.14p2, not stock6:1.1-k6.6',
+  'REJECTED_DROP_IN','evidence/legacy-source-search/newer-provider-search/candidate-comparisons.json'),
+ ('TKCORE-UMIDIGI-SCOPES','LEGACY','Official UMIDIGI F2 and community kernel/vendor tree paths',
+  'Two >50k-path kernel trees have zero target paths;linked145500-path GitLab vendor tree has no matching normal-world private header',
+  'NO_MATCH_IN_PINNED_TREE_SCOPES','evidence/legacy-source-search/newer-provider-search/'),
+ ('TKCORE-STOCK-TYPE-INFO','LEGACY','Read-only debug/type-info sections in four provider/consumer identities',
+  'Eight frozen stock occurrences have no BTF or debug sections;no private field-name recovery from those sections',
+  'UNAVAILABLE_IN_INSPECTED_STOCK_FILES','evidence/legacy-source-search/newer-provider-search/stock-type-info-scope.json')])
 tsv('EXPERIMENTS.tsv',[dict(id=a,group=b,hypothesis=c,measured_result=d,result=e,evidence=f) for a,b,c,d,e,f in experiments])
 print(len(pins),'pin records;',len(changes),'maintained source families;',len(bundles),'verified bundles;',len(experiments),'experiment records')

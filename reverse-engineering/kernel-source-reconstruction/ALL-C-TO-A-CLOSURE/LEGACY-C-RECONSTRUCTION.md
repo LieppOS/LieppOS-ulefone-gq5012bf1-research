@@ -104,3 +104,55 @@ The exact FT V4.2 20240407 banner is also visible in a TI support-thread boot lo
 that I2C example is not the GQ5012BF1 SPI source release. No source file or immutable
 matching FT/YFT release was recovered from the bounded indexed searches; this is not
 proof of global nonexistence. No unrelated generic driver is promoted.
+
+### Follow-up: newer publication dates do not imply newer private declarations
+
+A constrained follow-up fetched Git trees directly after the GitHub API returned an
+HTTP403 quota limit. The accessible Git transport allowed immutable tree/blob checks;
+the quota failure is not treated as source absence. Source-tree evidence, recovered GPL
+normal-world driver files, and comparisons are under
+`evidence/legacy-source-search/newer-provider-search/`.
+
+| Publication | Immutable commit | Finding |
+|---|---|---|
+| vivo-source-mirror/Y21s | c6f6fa957459b2b5d435c816113f1743bb6f4549 | TKCore 3.2p8.4.14p2; 52 TKCore paths, 28 changed blobs vs ZTE |
+| vivo-source-mirror/V23_5G | caadc867e01508e6b5ccf1905e6b65122d85a3e0 | Same TKCore version/header; 52 paths, 29 changed blobs vs ZTE |
+| UMIDIGI-Official/UMIDIGI-F2-Kernel-Source-Code | 3b998eaba611932b7cc2b451eb7eb3ab5d2fbf0b | 50,588 tracked blobs; zero selected TKCore/private-header/FT/YFT paths |
+| Hadenix/kernel_umidigi_f2_mt6771_4.14 | e494bc66f92dfacf9494a7ac8a40c225cca87181 | 50,583 tracked blobs; zero selected paths; README links vendor source |
+| gitlab.com/Hadenix1/umidigi_open_source_code_mtk | 84bf3f5e0b1fe0e35bf603d5aec284b11bfed92a | Followed the README link; 145,500 tracked paths, no matching normal-world private-header filename |
+
+`vivo-source-mirror` and Hadenix are community publications, not verified direct OEM
+releases for this board. An immutable Git blob proves the retrieved text's identity,
+not that it is the GQ5012BF1 source. The linked vendor tree includes ATF/userspace/TEE
+artifact paths and camera `MTKCore` false positives; these are not Linux TKCore private
+headers. Only its Git filename inventory was inspected. No trusted applications,
+firmware, production-line payloads or keys were fetched, built, incorporated or executed.
+This is a bounded filename/tree search, not exhaustive content/history proof.
+
+The 57 recovered Vivo blobs retain their original license notices. Both newer header
+files differ from 3.2p3 only by two added function declarations. All ten extracted private
+struct definition blocks (`tee`, context/session/shm variants, data/cmd/ops) are
+**byte-identical** to the rejected 3.2p3 definitions. The low-level header's SMC dispatch
+changes to an arm-smccc macro, not the missing version/log/list/context fields. Rebuilding
+the same struct blocks would not recover those fields, so the completed layout experiment
+was not repeated. No full-module build or CRC acceptance is claimed for these candidates.
+
+A read-only ELF section inventory also checked four stock provider/consumer filenames:
+`tkcore.ko`, `tkcore_drv.ko`, `tmem_ffa.ko`, `microarray_fp_tee.ko`. All eight occurrences
+in the frozen operand set lack `.BTF` and `.debug*` sections. That route cannot supply
+original member spellings from these files. SHA256s and section results are archived in
+`stock-type-info-scope.json`; stock operands were not modified.
+
+Validation: `PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate-legacy-search.py` rechecks
+all recovered blob/SHA256 identities, compares actual struct blocks against both
+candidate headers, and verifies the recorded scope and section findings. A separate
+`legacy-search-mutation-test.py` rejects five corrupted diagnostic fixtures (source
+byte, pin, struct verdict, debug scope and tree entry), with a passing control. Those
+5/5 checks run only on temporary copies and do not substitute for module-parity tests.
+The main checkpoint validator includes the archive validator and checks the mutation
+record. The mission remains 8 A / 10 C.
+
+Next remains a genuinely different newer normal-world declaration/source lineage carrying
+the proven added fields, not another publication of the 3.2 family. A matching OEM source
+release or retained build/debug header artifacts would be useful; no request for unpublished source was
+sent to an OEM and no source availability beyond the inspected scopes is asserted.
