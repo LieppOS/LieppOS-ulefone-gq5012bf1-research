@@ -1,6 +1,6 @@
 {
   "batch": "SCP-CONNECTIVITY-BATCH-01",
-  "phase": "SCP_SENSORHUB_DONE",
+  "phase": "COMPLETE_17A_3C_INDEPENDENTLY_VERIFIED_DELTA_NOT_MERGED",
   "canonical_base_commit": "bb370374f4d53f4860b0f7df88a40a3107e6d83c",
   "audit_baseline_commit": "548526fc711cf9943a20d2daad42158ee1543842",
   "baseline_counts": {
@@ -24,7 +24,7 @@
     "AUDIO-BATCH-01 (21, codex/audio-batch-01, unmerged)",
     "PLATFORM-BATCH-04 (30, Claude, in progress)"
   ],
-  "resume": "Next: CONN-KDM (connadp, connscp, uarthub_drv, wifi_cooling, mtk-btcvsd) in ../android_kernel_modules_connectivity_ulefone_gq5012bf1",
+  "resume": "Complete. Optional: BTF-base experiment in BLOCKERS.tsv.",
   "families": {
     "SCP-SENSORHUB": {
       "repo": "../android_kernel_modules_scp_sensorhub_ulefone_gq5012bf1",
@@ -32,5 +32,73 @@
       "result": "scp, hf_manager, sensorhub whole-file stock-identical except GNU build-ID; CLEANCHECK PASS (bwrap-isolated B1/B2)",
       "evidence": "evidence/scp-sensorhub/cleancheck"
     }
-  }
+  },
+  "completed_modules": [
+    "bluetooth",
+    "bt_drv_6878",
+    "cfg80211",
+    "connadp",
+    "connfem",
+    "conninfra",
+    "connscp",
+    "fmradio_drv_connac2x",
+    "gps_drv_dl_v051",
+    "gps_pwr",
+    "gps_scp",
+    "hf_manager",
+    "mac80211",
+    "mtk-btcvsd",
+    "scp",
+    "sensorhub",
+    "uarthub_drv",
+    "wifi_cooling",
+    "wlan_drv_gen4m_6878",
+    "wmt_chrdev_wifi_connac2"
+  ],
+  "in_progress_modules": [],
+  "blocked_modules": {
+    "bluetooth": "split-BTF base lineage (OEM g945dff7bc1bf vmlinux BTF unavailable; device boots public GKI 12901745)",
+    "cfg80211": "split-BTF base lineage (OEM g945dff7bc1bf vmlinux BTF unavailable; device boots public GKI 12901745)",
+    "mac80211": "split-BTF base lineage (OEM g945dff7bc1bf vmlinux BTF unavailable; device boots public GKI 12901745)"
+  },
+  "source_commits": {
+    "android_kernel_modules_scp_sensorhub_ulefone_gq5012bf1": "26507aa653a09f907329795b6c31c6ec1bd694dd",
+    "android_kernel_modules_connectivity_ulefone_gq5012bf1": "d0b9e10fbb3bb4810de79fda190a4216cec65b00"
+  },
+  "build_results": {
+    "SCP-SENSORHUB": "3/3 whole-file accepted; CLEANCHECK PASS; 28 boundaries (18 source witness, 10 STOCK_PROVIDER_EXPORT yft_devinfo)",
+    "CONNECTIVITY": "17/17 built; 14 whole-file accepted; 3 C .BTF-only residual; CLEANCHECK PASS; 29/29 boundaries source-witnessed"
+  },
+  "latest_tests": {
+    "verify.py": "17 A PASS (B1 and B2)",
+    "residual-btf.py": "cfg80211/mac80211/bluetooth RESIDUAL-ONLY-BTF",
+    "mutation-test.py": "scp-sensorhub 23/23, connectivity 29/29 (incl. 6 class-C gate cases)",
+    "clean_clone": {
+      "android_kernel_modules_scp_sensorhub_ulefone_gq5012bf1": "PASS 26507aa653a09f907329795b6c31c6ec1bd694dd",
+      "android_kernel_modules_connectivity_ulefone_gq5012bf1": "PASS d0b9e10fbb3bb4810de79fda190a4216cec65b00"
+    },
+    "validate-batch.py": "VALID 17 A + 3 C; projected 237/458 (delta only); canonical audit untouched",
+    "test-delta.py": "scratch clone: 20 rows / 8 fields; wrong-class, unknown-id, double-apply REJECTED"
+  },
+  "final_classes": {
+    "A": 17,
+    "C": 3
+  },
+  "projected_canonical_counts_provisional": {
+    "A": 236,
+    "B": 1,
+    "C": 12,
+    "D": 98,
+    "G": 111
+  },
+  "projected_certified_provisional": 237,
+  "projected_uncertified_provisional": 221,
+  "projection_basis": "frozen baseline 548526fc only; excludes unmerged AUDIO-BATCH-01 (+20 A +1 C) and in-progress PLATFORM-BATCH-04",
+  "next_exact_action": "Wait for Claude PLATFORM-BATCH-04 and the AUDIO-BATCH-01 merge; then follow MERGE-INSTRUCTIONS.md",
+  "latest_parity_result": "17 A + 3 C",
+  "research_commits": [
+    "08a45aa6 freeze manifest",
+    "0e20fbae SCP-SENSORHUB checkpoint",
+    "(this commit) results/evidence/deliverables"
+  ]
 }

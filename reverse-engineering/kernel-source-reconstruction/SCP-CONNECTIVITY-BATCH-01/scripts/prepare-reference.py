@@ -49,8 +49,9 @@ with (REC / 'reference/stock-normalized.tsv').open('w') as f:
 need = {}
 for e in csv.DictReader((B / 'DEPENDENCIES.tsv').open(), delimiter='\t'):
     if e['consumer_module_id'] not in ids: continue
-    ps = [p for p in e['provider_module_ids'].split(';') if p and p != 'GKI_CORE' and p not in ids]
-    if not ps: continue
+    allp = [p for p in e['provider_module_ids'].split(';') if p]
+    if 'GKI_CORE' in allp or any(p in ids for p in allp): continue  # satisfied by GKI core or by a recipe-owned target
+    ps = allp
     # Several identical-CRC stock identities may exist (e.g. system_dlkm vs vendor_dlkm bluetooth.ko);
     # all are recorded, the first sorted identity is the CRC operand and every one must agree.
     old = need.setdefault(e['symbol'], (tuple(sorted(ps)), e['required_crc']))
