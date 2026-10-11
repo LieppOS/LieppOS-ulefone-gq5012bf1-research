@@ -17,7 +17,7 @@ manifest=read(P/'BATCH-MANIFEST.tsv');base=read(P/'evidence/baseline/ALL-457-MOD
 assert len(selected)==22 and len(byid)==458
 original=ROOT/'ulefone-gq5012bf1-research/reverse-engineering/kernel-source-parity-audit/ALL-457-MODULES.tsv'
 assert original.read_bytes()==(P/'evidence/baseline/ALL-457-MODULES.tsv').read_bytes(),'canonical audit changed; stop/reconcile CAS'
-S=P/'evidence/audit-scratch';assert not S.exists(),'retain previous scratch; do not overwrite';shutil.copytree(A,S)
+S=P/'evidence/audit-scratch-v3';assert not S.exists(),'retain previous scratch; do not overwrite';shutil.copytree(A,S)
 review=json.loads((S/'evidence/source-reviews.json').read_text());hashes=json.loads((S/'evidence/review-input-hashes.json').read_text());frozen=json.loads((S/'evidence/stock-identities.json').read_text())
 family={'SLBC':'slbc','MODEM-AUDIO-TRANSPORT':'modem','TRANSITIVE-SHARED-INFRASTRUCTURE':'shared'}
 rel='reverse-engineering/kernel-source-reconstruction/AUDIO-DEPENDENCIES-BATCH-02/'
@@ -80,6 +80,10 @@ for owner,rs in sorted(byowner.items()):
   elif key in ['modules','filenames']:template[key]=';'.join(sorted(r['filename'] for r in rs))
   elif key in ['module_count','identity_count','count']:template[key]=str(len(rs))
   elif key=='statuses':template[key]=';'.join(f'{s}:{sum(r["source_status"]==s for r in rs)}' for s in 'ABCDEFG' if any(r['source_status']==s for r in rs))
+ if all(r['module_id'] in selected for r in rs):
+  template['effort']='RECOVER_ORIGINAL_OEM_SPLIT_BTF_BASE_NO_ELF_REWRITE'
+  template['source_locations']=';'.join(sorted({r['source_repo'] for r in rs}))
+  template['proof_needed']='Natural source-generated BTF against genuine OEM g945dff7bc1bf base; every other byte already exact'
  new.append(template)
 write(S/'RECONSTRUCTION-PROJECTS.tsv',new,pf)
 # Verify every actual private raw operand rather than assuming frozen metadata.
@@ -93,6 +97,24 @@ for r in base:
   alias=R/relative;alias.parent.mkdir(parents=True,exist_ok=True)
   if not alias.exists():alias.symlink_to(path)
   assert SHA(alias.read_bytes())==r['stock_sha256']
+# Some preexisting immutable research inputs are git-ignored and not carried
+# by git worktree. Alias only genuinely matching original baseline files;
+# never change their expected hash or substitute generated content.
+for relative,expected in json.loads((S/'evidence/workspace-baseline.json').read_text())['workspace_inputs'].items():
+ target=R/relative
+ if not target.exists():
+  original_input=ROOT/'ulefone-gq5012bf1-research'/relative
+  assert original_input.is_file() and SHA(original_input.read_bytes())==expected,relative
+  target.parent.mkdir(parents=True,exist_ok=True);target.symlink_to(original_input)
+ assert SHA(target.read_bytes())==expected,relative
+for inputs in hashes.values():
+ for relative,expected in inputs.items():
+  target=R/relative
+  if not target.exists():
+   original_input=ROOT/'ulefone-gq5012bf1-research'/relative
+   assert original_input.is_file() and SHA(original_input.read_bytes())==expected,relative
+   target.parent.mkdir(parents=True,exist_ok=True);target.symlink_to(original_input)
+  assert SHA(target.read_bytes())==expected,relative
 sys.path.insert(0,str(A/'scripts'));import validate
 result=validate.validate(S,actual=actual);(P/'evidence/isolated-audit-validation.json').write_text(json.dumps(result,indent=2)+'\n');print('Isolated audit',result['result'],'errors',result['errors'][:12]);assert not result['errors']
 # Existing mutation tests use the isolated proposed table and actual SHA-verified inputs.
