@@ -47,10 +47,22 @@ The delta intentionally leaves ten C rows unpromoted. BLOCKERS.tsv names the nex
 source experiment for each. USB-TYPEC-CLOSURE's newer functional source must be reconciled
 separately; this checkpoint does not reset it to older Batch04 code.
 
+## Two-DRM amendment (drm_display_helper, drm_dma_helper)
+
+These identities are owned by Codex AUDIO-DEPENDENCIES-BATCH-02 (staged C at 437ebd57, source
+425ffd72). This closure only adds a recipe commit 4697eac3 on a separate branch of a separate
+clone; Codex's repository/worktree is untouched. AUDIT-DELTA.tsv rows for them carry
+expected_old values from canonical f61ebf03 (where they are still D); after the Codex batch is
+integrated those preconditions will intentionally conflict. The owner must regenerate them
+against the integrated HEAD, keeping Codex's ownership/source-review provenance and changing
+only status/commit/reproduction/parity fields backed by evidence/drm/source-proof.json. The ten
+co-built KDM providers keep Codex's own certification; nothing here re-certifies them.
+
 ## Counts (provisional, not a merged audit)
 
 Canonical baseline remains A244 B1 C14 D91 E0 F0 G108 = 245/458 certified.
-With pending audio/connectivity plus these eight closures: projected
-A289 B1 C10 D91 E0 F0 G67 = 290 certified / 168 uncertified / 458.
-Other concurrent deltas are excluded until independently reconciled. No merged classification
-count is claimed by this package. No phone, flash, runtime module load or secure-world test.
+Codex staged 437ebd57 (verified by identity): A323 B1 C20 D60 G54 = 324 certified.
+This closure's ten promotions are all C in that staging map (no overlap), so the projected
+staged result is A333 B1 C10 D60 E0 F0 G54 = 334 certified / 124 uncertified / 458.
+This is a projection over identity-keyed rows, not a merged audit. No phone, flash, runtime
+module load or secure-world test.

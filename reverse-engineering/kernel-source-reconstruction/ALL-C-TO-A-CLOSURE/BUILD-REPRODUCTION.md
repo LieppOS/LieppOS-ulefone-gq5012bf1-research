@@ -16,6 +16,7 @@ Clone with `git clone --no-hardlinks -b codex/all-c-closure <bundle> <fresh-reci
 | CMDQ | 059e2fe439309c3adc2e95b87aa547967e7e5f80 | 0b4b07f38397ca6c0630b9edc5ccf2df9251da1d | /home/armol/kernel-work/allc/cmdq-ws / cmdq-ws2 |
 | Connectivity | 40bf42967a213af6faa45a6a579571973b8e5d15 | same | /home/armol/kernel-work/allc/conn-ws1 / conn-ws2 |
 | Thermal | 9e0e1a0df474f1e5a748d0302fba8445f13c996d | ff6e97b3bf1f29c1e1fba4ba0c0e28493cbd0698 | /home/armol/kernel-work/allc/thermal-ws1 / thermal-ws2 |
+| DRM helpers (audio_shared_infrastructure-allc) | 4697eac32544fbfaeab76f6d7a5367a8d8d32460 | same | /home/armol/kernel-work/allc/drm/ws-B1 / ws-B2 |
 
 The post-build CMDQ/thermal commits change README documentation and remove an accidental
 host pycache only, not build logic/config/source. `SOURCE-CHANGES.tsv` distinguishes tested
@@ -76,3 +77,11 @@ These are independent clean recipe/workspace builds, but use shared authenticate
 caches and official GKI core ABI inputs, explicitly recorded above. They are not independent
 physical devices or runtime tests. Unaccepted USB/audio/legacy experiments are not recipes
 certified by these results.
+
+## DRM helpers
+
+`scripts/run-drm-independent.sh ROOT B1|B2` (research package): rejects alternates, runs
+`git fsck --full` and `bundle verify`, bootstraps, builds (incl. the OEM base) and runs the
+unchanged strict verifier. Needs `LIEPPOS_IOMMU_MIRROR`, `LIEPPOS_NATIVE_MIRROR` and
+`LIEPPOS_MTKACK_MIRROR`. Mutation: `drm-mutation-test.py RECIPE BUILD_DIR STOCK_DIR REPORT`
+(34 cases). Comparison: `evidence/drm/b1-b2-compare.json`. Run under `taskset -c 0-3 nice -n 10`.

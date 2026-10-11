@@ -56,3 +56,22 @@ imports/exports/CRCs/KCFI, modinfo, srcversion and BTF match stock under the sol
 exception. See full ledgers under `evidence/connectivity/` and `evidence/thermal/`.
 This common mechanism may help other BTF investigations, but no additional identities
 were silently added to this closure scope or promoted.
+
+## Continuation: same base closes the two DRM helpers (evidence/drm/)
+
+The DRM helpers (Codex AUDIO-DEPENDENCIES-BATCH-02) had every non-BTF byte exact against the
+public GKI12901745 base, with the same +15 types / +389 string-byte residual. Hypothesis: the
+same source-generated OEM base closes them. The isolated recipe
+`android_kernel_modules_audio_shared_infrastructure_ulefone_gq5012bf1-allc` @4697eac3 builds
+the base in each workspace (`scripts/make-btf-base.sh`, BTF sha `cafe5987…`) and passes it via
+`KBUILD_MIXED_TREE`; no target source, verifier or BTF byte changed.
+
+Result in two fresh bundle clones (taskset 0-3, nice10, JOBS=4): unchanged strict verifier
+12/12 PASS each (Codex's original recipe: 10 PASS + 2 REJECT). drm_display_helper 199 functions /
+47 data / 90 imports / 140 exports / 2 KCFI / 2567 relocations; drm_dma_helper 19 / 14 / 40 / 14 /
+3 / 169. Only the GNU20 range differs from stock. B1==B2 for all 12 raw modules and 265/265
+intermediates; configs, symvers, target tree and base BTF identical. 34/34 actual ELF mutation
+controls per build (code, rodata, data, import/export CRC, export name, modinfo, raw relocation,
+symbol value, KCFI ID, BSS/section layout, BTF header/name/type/string, signature trailer;
+GNU20 is the only accepted flip). Both helpers are now **A**. Six BTF-blocked identities
+(thermal ADC, cfg80211, mac80211, vendor bluetooth, two DRM) are closed by one source correction.

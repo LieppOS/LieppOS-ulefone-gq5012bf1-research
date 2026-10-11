@@ -16,7 +16,8 @@ W = args.workspace.resolve()
 configs = {
  'cmdq': ('059e2fe439309c3adc2e95b87aa547967e7e5f80', 'cmdq-allc.bundle'),
  'connectivity': ('40bf42967a213af6faa45a6a579571973b8e5d15', 'connectivity-allc.bundle'),
- 'thermal_cooling': ('9e0e1a0df474f1e5a748d0302fba8445f13c996d', 'thermal-allc.bundle')}
+ 'thermal_cooling': ('9e0e1a0df474f1e5a748d0302fba8445f13c996d', 'thermal-allc.bundle'),
+ 'audio_shared_infrastructure': ('4697eac32544fbfaeab76f6d7a5367a8d8d32460', 'drm-allc.bundle')}
 
 pins, changes, bundles = [], [], []
 for family, (tested, bundle_name) in configs.items():

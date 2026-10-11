@@ -163,7 +163,7 @@ summary += '''
 1. Four CMDQ modules: Microtrust header visibility from a generic vendor configuration
    contaminated recursive genksyms type graphs. The recovered board config removes it;
    Trustonic stays enabled for genuine provider source. Natural CRC/counter metadata match.
-2. Four BTF modules: public GKI base was the wrong split-BTF lineage. Pinned NothingOSS MTK
+2. Six BTF modules (four original + two DRM amendment): public GKI base was the wrong split-BTF lineage. Pinned NothingOSS MTK
    ACK, vendor configuration, Kleaf flags, OEM release-string length and pahole reproduce
    exact base BTF. No BTF copying, rewriting or extra normalization.
 
