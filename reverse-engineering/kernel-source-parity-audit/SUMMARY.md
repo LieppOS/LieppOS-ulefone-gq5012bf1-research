@@ -51,9 +51,16 @@
 > **PLATFORM-BATCH-03 processed:** all34 frozen identities source-built by five
 > committed clean-clone engines, ten full B1/B2 builds.33 A (27D/6G→A); native
 > thermal-generic-adc D→C for21 split-BTF reference bytes, with all code/data/ABI/
-> relocations/layout exact. Current:**220 certified /238 remaining of458**.
+> relocations/layout exact. Then:**220 certified /238 remaining of458**.
 > All424 unselected rows, four CMDQ C, ownership and471 stock occurrences unchanged.
 > See `../kernel-source-reconstruction/PLATFORM-BATCH-03/BATCH-SUMMARY.md`.
+
+> **PLATFORM-BATCH-04 processed:** all30 frozen identities independently source-built
+> through three committed engines, six complete B1/B2 runs.25 A (7D/18G→A),5G→C
+> for source-token/counter metadata and TCPC code/data/layout residuals. Current:
+> **245 certified /213 remaining of458**. All428 unselected rows, older CMDQ/ADC C,
+> owners/statuses and471 stock occurrences unchanged. See
+> `../kernel-source-reconstruction/PLATFORM-BATCH-04/BATCH-SUMMARY.md`.
 
 ## Answer and limits
 
@@ -65,29 +72,29 @@ but correctly contains **458** identity rows and every stock path.
 
 | Source class | Count | Evidence-supported interpretation |
 |---|---:|---|
-| A — VERIFIED_BYTE_EXACT | 219 | 60 system_dlkm ELF bodies; 40 accelerator modules; 6 boot-clock; 10 storage; 4 pinctrl; 4 regulator; 3 interconnect/EMI; 1 IOMMU; 31 batch01;27 batch02;33 batch03; declared nonbehavioral metadata differences |
+| A — VERIFIED_BYTE_EXACT | 244 | 60 system_dlkm ELF bodies;40 accelerator;6 boot-clock;10 storage;4 pinctrl;4 regulator;3 interconnect/EMI;1 IOMMU;31 batch01;27 batch02;33 batch03;25 batch04; declared nonbehavioral metadata differences |
 | B — VERIFIED_SEMANTIC_EQUIVALENT | 1 | imgsensor, with bounded equivalent function/moved byte-load proof |
-| C — REPRODUCIBLE_SOURCE_UNVERIFIED | 9 | FT3680, YFT devinfo, ST21NFC, tkcore source island, four independently built CMDQ drivers and native common ADC (21 BTF reference bytes); full acceptance incomplete |
-| D — SOURCE_CANDIDATE_ONLY | 98 | Located public targets/source candidates; no accepted independent stock-compatible build |
+| C — REPRODUCIBLE_SOURCE_UNVERIFIED | 14 | FT3680,YFT devinfo,ST21NFC,tkcore;four CMDQ;native ADC BTF;five independently built Batch04 source-token/counter/TCPC residuals; full acceptance incomplete |
+| D — SOURCE_CANDIDATE_ONLY | 91 | Located public targets/source candidates; no accepted independent stock-compatible build |
 | E — SOURCE_MISSING | 0 | No implementation is affirmatively classified missing; this is NOT a claim that every implementation is sufficient |
 | F — PROVEN_NOT_REQUIRED | 0 | No production exclusion meets the requested evidential standard |
-| G — UNRESOLVED | 131 | Historical source builds/parity exist, but independent recipe/input closure is not established by the reviewed records |
+| G — UNRESOLVED | 108 | Historical source builds/parity exist, but independent recipe/input closure is not established by the reviewed records |
 | **Total** | **458** | No unresolved identity dropped |
 
-**220 A/B identities are certified.238 identities are not certified or legitimately
-excluded.** Of those,**107** are candidate/incomplete-acceptance cases (98D+9C),
-and **131 remain unresolved for independent reproducibility**. Do not describe this as
-238 new reverse-engineering projects:the131 G cases include already reconstructed
+**245 A/B identities are certified.213 identities are not certified or legitimately
+excluded.** Of those,**105** are candidate/incomplete-acceptance cases (91D+14C),
+and **108 remain unresolved for independent reproducibility**. Do not describe this as
+213 new reverse-engineering projects:the108 G cases include already reconstructed
 stacks whose existing code and parity must be preserved rather than redone.
 
-There are **96 uncertified identities required by the retained stock first-stage loader
+There are **74 uncertified identities required by the retained stock first-stage loader
 contract** (187 first-stage identities in total). This is a conditional boot/integration
 requirement, not proof that every driver controls indispensable physical hardware. For
 **271 identities, production/runtime necessity remains unknown**. No authorized stripped
 production configuration or removal-safety proof was supplied, so no F exclusions are made.
 
-Source is located in some form for all238 remaining identities:98 public candidates and
-140 reconstructed/built cases (131G+9C). **Nine have class C's specific
+Source is located in some form for all213 remaining identities:91 public candidates and
+122 reconstructed/built cases (108G+14C). **Fourteen have class C's specific
 incomplete stock-acceptance finding.** Availability of code is not independent reproduction;
 absence of an E finding is not evidence of complete source availability.
 
@@ -182,8 +189,9 @@ absence or negative DT alias alone supports exclusion. See `OPTIONAL-15-REVIEW.t
    SMI, clock/power/DMA/IRQ/PMIC support; four CMDQ CRC/counter-symbol gaps stay C.
    Batch02 now certifies27 more,including ICC,memory/PMIF/mailbox/policy source and six
    historical G inputs. Batch03 processes34 more:33A/1C, with all target source preserved.
+   Batch04 processed30more:25A/5C; complete source recovery, six independent builds.
    Current queue head:`CANDIDATE:device_modules:drivers/clocksource` (`timer-mediatek.ko`).
-   Recommended coherent charging/Type-C/USB batch is in PLATFORM-BATCH-03/NEXT-BATCH.md;
+   Proposed29 display/camera peripheral batch is in PLATFORM-BATCH-04/NEXT-BATCH.md;
    native ADC BTF and four CMDQ C remain scoped blockers; firmware/runtime stay separate.
 5. **Connectivity:** preserve/reproduce the 21 historical connectivity targets and separately
    integrate remaining candidate platform dependencies; do not redo radio firmware.
@@ -198,7 +206,7 @@ absence or negative DT alias alone supports exclusion. See `OPTIONAL-15-REVIEW.t
     charger and support closures; independently resolve their build inputs before certification.
 
 The complete finite map is `RECONSTRUCTION-PROJECTS.tsv` / `RECONSTRUCTION-QUEUE.md`:
-114 scoped source/preservation projects (after Batch03;four CMDQ C and native ADC C remain), not 458 isolated projects and not one giant BSP project.
+112 scoped source/preservation projects (after Batch04;four CMDQ/native ADC/five Batch04 C remain), not 458 isolated projects and not one giant BSP project.
 
 ## Reproduction and validation
 

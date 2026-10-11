@@ -462,6 +462,43 @@ for r in b3rows:
         assert len(v['raw_difference_offsets'])==v['raw_differing_bytes']<=20 and all(v['allowed_range'][0]<=i<v['allowed_range'][0]+20 for i in v['raw_difference_offsets'])
         add(stock,**common,source_status='A',source_group='PLATFORM-BATCH-03:'+r['dependency_group'],abi_status='VERIFIED',verified_difference_classification='BUILD_METADATA_ONLY (20-byte GNU build ID)',blocker='NONE',gap_kind='NONE',parity_evidence=[ref(BATCH03/r['dependency_group']/'evidence/acceptance'/m/'acceptance.json'),ref(BATCH03/'evidence/cleancheck-result.json'),ref(BATCH03/'evidence/PROVIDER-GRAPH.tsv'),ref(BATCH03/'BATCH-PARITY.tsv'),ref(BATCH03/'BUILD-REPRODUCTION.md')])
 
+# Batch04: actual30,25 full-accepted A and5 strict source/token/code C candidates.
+BATCH04=ROOT/'reverse-engineering/kernel-source-reconstruction/PLATFORM-BATCH-04'
+b4rows=read_table(BATCH04/'BATCH-MANIFEST.tsv');b4parity={r['module_id']:r for r in read_table(BATCH04/'BATCH-PARITY.tsv')};b4repos={r['family']:r for r in read_table(BATCH04/'SOURCE-REPOSITORIES.tsv')};b4accept=json.loads((BATCH04/'evidence/acceptance.json').read_text());b4clean=json.loads((BATCH04/'evidence/cleancheck-result.json').read_text())
+assert len(b4rows)==len(b4parity)==30 and len(b4accept)==25
+assert digest(BATCH04/'BATCH-MANIFEST.tsv')=='77ed42ecdd9b996a78fe7ff7ee387e3c65643162b3e585d6f3424a05f1f01af1'
+assert b4clean['result']=='PASS_ALL30_THREE_INDEPENDENT_FAMILY_ENGINES_B1_B2_WITH_FIVE_EXPLICIT_UNACCEPTED'
+assert b4clean['fresh_complete_compilations']==6 and b4clean['fresh_committed_source_clones']==3
+assert b4clean['original_development_and_all_three_recipe_paths_unavailable_during_six_compilations'] and b4clean['cross_family_source_config_abi_objects_raw_stripped_identical']
+assert b4clean['accepted_each_run']==25 and b4clean['explicit_unaccepted_each_run']==5
+assert json.loads((BATCH04/'evidence/acceptance-mutation-tests.json').read_text())['all_pass']
+assert json.loads((BATCH04/'evidence/source-preservation-result.json').read_text())['result']=='PASS_ALL_SOURCE_HASHES_COMPLETE_HISTORICAL_PATCHES_THREE_BUNDLE_RECOVERIES'
+for i,(family,q) in enumerate(b4repos.items()):
+    repo=(ROOT/q['repository']).resolve();assert subprocess.check_output(['git','rev-parse','HEAD'],cwd=repo,text=True).strip()==q['commit']
+    assert not subprocess.check_output(['git','status','--porcelain'],cwd=repo,text=True).strip()
+    assert (BATCH04/family/'source/COMMIT').read_text().strip()==q['commit']
+    assert set(json.loads((repo/'families/OWNERSHIP.json').read_text())['owned_modules'])=={r['filename'].removesuffix('.ko') for r in b4rows if r['dependency_group']==family}
+    for f in ['SHA256SUMS','INTERMEDIATE-SHA256SUMS','config.sha256','gki-symvers.sha256','TARGET-SOURCE-TREE','batch-full.Module.symvers','provider/natural-external-provider.symvers','provider/provider-witnesses.json','provider/provider-errors.json']:
+        assert (BATCH04/f'evidence/build/F{i}-B1'/f).read_bytes()==(BATCH04/f'evidence/build/F{i}-B2'/f).read_bytes(),f
+    assert b4clean['families'][i]['source_commit']==q['commit'] and b4clean['families'][i]['joint_modules_accepted']==25
+for r in b4rows:
+    stock=STOCK[r['module_id']];m=stock['filename'].removesuffix('.ko');p=b4parity[r['module_id']];q=b4repos[r['dependency_group']];repo=(ROOT/q['repository']).resolve()
+    common=dict(source_repo=q['repository'],source_commit=q['commit'],source_pin=ref(repo/'SOURCE-PINS.tsv'),build_script=ref(repo/'scripts/bulk-build.sh'),source_snapshot_path=ref(repo/'patches'),equivalent_functions=0,reproduction_status='INDEPENDENT_CLEAN_CHECKOUT_B1_B2',crc_status='VERIFIED',kcfi_status='VERIFIED',preservation_risk='LOW: complete169 historical C/H38source deltas, immutable ALPS/publicTCPC31/common pins; three source bundles fresh-recovered; incomplete metadata/code remains C',firmware_boundary='Normal-world host source only; external gauge/charging controller, USB devices/calibration, PD electrical behavior and ADSP/SCP audio firmware/runtime separately unvalidated')
+    if p['final_class']=='C':
+        e=BATCH04/r['dependency_group']/'evidence/incomplete-acceptance'/m/'incomplete-acceptance.json';v=json.loads(e.read_text());assert v['final_class']=='C'
+        assert v['stock_sha256']==stock['stock_sha256']==r['stock_sha256']
+        assert not v['import_crc_mismatches'] and not v['export_crc_mismatches'] and not v['kcfi_mismatches'] and not v['provider_boundary_failures']
+        exact=v['axes']['functions']['named_body_exact'];assert exact<=stock['function_count']
+        assert m in b4clean['unaccepted']
+        add(stock,**common,source_status='C',source_group='FINISH:BATCH04:'+m,exact_functions=exact,unresolved_functions=stock['function_count']-exact,abi_status='CRC_KCFI_EXACT_OTHER_ELF_AXES_INCOMPLETE',verified_difference_classification='UNACCEPTED:'+p['residual'],blocker=p['residual']+'. '+v['next_experiment'],gap_kind='CODE_OR_ABI_PARITY',parity_evidence=[ref(e),ref(BATCH04/'BLOCKERS.tsv'),ref(BATCH04/'evidence/cleancheck-result.json'),ref(BATCH04/'evidence/source-preservation-result.json'),ref(BATCH04/'evidence/blocker-revisit/result.json'),ref(BATCH04/'evidence/blocker-revisit/token-metadata-result.json')])
+    else:
+        assert p['final_class']=='A';v=b4accept[m];assert stock['stock_sha256']==r['stock_sha256']==v['stock_sha256']
+        assert v['functions']==stock['function_count'] and v['data']==stock['data_count'] and v['unresolved']==0
+        refs={x['module']:x for x in read_table(repo/'reference/stock-normalized.tsv')};assert v['normalized_sha256']==refs[m]['normalized_sha256'] and v['bytes']==int(refs[m]['bytes'])
+        assert v['allowed_range']==[int(refs[m]['build_id_offset'],0),20]
+        assert len(v['raw_difference_offsets'])==v['raw_differing_bytes']<=20 and all(v['allowed_range'][0]<=i<v['allowed_range'][0]+20 for i in v['raw_difference_offsets'])
+        add(stock,**common,source_status='A',source_group='PLATFORM-BATCH-04:'+r['dependency_group'],exact_functions=stock['function_count'],unresolved_functions=0,abi_status='VERIFIED',verified_difference_classification='BUILD_METADATA_ONLY (20-byte GNU build ID)',blocker='NONE',gap_kind='NONE',parity_evidence=[ref(BATCH04/r['dependency_group']/'evidence/acceptance'/m/'acceptance.json'),ref(BATCH04/'evidence/cleancheck-result.json'),ref(BATCH04/'evidence/PROVIDER-GRAPH.tsv'),ref(BATCH04/'BATCH-PARITY.tsv'),ref(BATCH04/'BUILD-REPRODUCTION.md')])
+
 # GKI: both independently cleaned builds prove complete ELF bodies, not vendor variants.
 system=pack('SYSTEM-DLKM');gki_lines=(system/'parity/system-dlkm-parity-B1.txt').read_text().splitlines()
 proven={l.split('\t')[0] for l in gki_lines if '\tIDENTICAL BODY, signature differs' in l};assert len(proven)==60
@@ -553,7 +590,8 @@ INCOMPLETE={
 }
 for identity,stock in STOCK.items():
     row=REVIEW[identity];name=NORM(stock['filename'])
-    if row['source_status'] in ['A','B']:continue
+    if row['source_status'] in ['A','B'] or identity in b4parity:continue
+    # Historical G defaults never overwrite a new independent explicit Batch04 C proof.
     if name in BUILT:
         b=BUILT[name];add(stock,source_status='G',source_repo='.',source_commit=BASE['research_baseline_commit'],
             source_pin=b['proof'],build_script=b['recipe'],source_snapshot_path=b['source'],parity_evidence=[b['proof']],

@@ -39,16 +39,21 @@
 >
 > **PLATFORM-BATCH-03 processed:** all34 source-built;33A/1C. Five committed engines,
 > ten fresh builds; originals unavailable; whole acceptance33 and deterministic34.
-> Native ADC remains C for21 split-BTF reference bytes. Current220 certified /238 remaining.
+> Native ADC remains C for21 split-BTF reference bytes. Then220 certified /238 remaining.
 > See `../kernel-source-reconstruction/PLATFORM-BATCH-03/BATCH-SUMMARY.md`.
 >
-> **Next recommendation: charging/Type-C/USB source preservation.** Exact source-backed
-> identities, current classes, owners and dependency rationale:
-> `../kernel-source-reconstruction/PLATFORM-BATCH-03/NEXT-BATCH.md`.
-> Revalidate/freeze before compilation. Reuse the completed PMIC parent/ADC interfaces,
-> preserve historical implementations, and require fresh family B1/B2/full ELF acceptance.
-> Keep native ADC BTF and four CMDQ C as separate blockers. Strict offline, no phone,
-> firmware operations or push. This proposal is not authorization to start another batch.
+> **PLATFORM-BATCH-04 processed:** all30 full source candidates built through three
+> committed engines, six independent B1/B2 runs;25A/5 explicit C. Source-token/counter
+> and TCPC code residuals are not normalized. Current245 certified /213 remaining.
+> See `../kernel-source-reconstruction/PLATFORM-BATCH-04/BATCH-SUMMARY.md`.
+>
+> **Next recommendation:29 display/camera peripheral source-preservation identities.**
+> Exact IDs/classes/owners/source availability/dependency rationale:
+> `../kernel-source-reconstruction/PLATFORM-BATCH-04/NEXT-BATCH.md`.
+> Freeze before compiling; recover historical source before rewriting. No full DRM/ISP,
+> CMDQ, ADC or Batch04 C scope expansion. Keep all explicit blockers separately.
+> Strict offline; no phone, firmware/control operations or push. Proposal only—not
+> authorization to execute. Generated queue head timer-mediatek stays unchanged.
 > The historical six-clock assignment below is NOT a new assignment.
 
 ## Mission

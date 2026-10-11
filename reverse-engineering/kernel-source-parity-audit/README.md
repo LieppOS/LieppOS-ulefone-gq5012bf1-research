@@ -4,7 +4,7 @@ A complete **read-only** inventory/evidence audit, not another kernel reconstruc
 
 - [Summary and exact counts](SUMMARY.md)
 - [All identities](ALL-457-MODULES.tsv): 458 binary identities / 457 filenames / 471 occurrences
-- [Source gaps](SOURCE-GAPS.tsv): all 238 uncertified/unexcluded identities, including G
+- [Source gaps](SOURCE-GAPS.tsv): all 213 uncertified/unexcluded identities, including G
 - [Canonical audit source ownership](SOURCE-OWNERSHIP.tsv)
 - [Finite reconstruction/preservation queue](RECONSTRUCTION-QUEUE.md)
 - [Machine project map](RECONSTRUCTION-PROJECTS.tsv)
@@ -17,6 +17,7 @@ A complete **read-only** inventory/evidence audit, not another kernel reconstruc
 - PLATFORM-BATCH-01 (35 compiled;31 certified,4 explicit C blockers): [result](../kernel-source-reconstruction/PLATFORM-BATCH-01/BATCH-SUMMARY.md)
 - PLATFORM-BATCH-02 (27/27 certified A,21D/6G→A): [result](../kernel-source-reconstruction/PLATFORM-BATCH-02/BATCH-SUMMARY.md)
 - PLATFORM-BATCH-03 (34 source-built;33 A/1 native ADC BTF C): [result](../kernel-source-reconstruction/PLATFORM-BATCH-03/BATCH-SUMMARY.md); [next charging/Type-C/USB proposal](../kernel-source-reconstruction/PLATFORM-BATCH-03/NEXT-BATCH.md)
+- PLATFORM-BATCH-04 (30 source-built;25 A/5 strict C): [result](../kernel-source-reconstruction/PLATFORM-BATCH-04/BATCH-SUMMARY.md); [next29 display/camera peripheral proposal](../kernel-source-reconstruction/PLATFORM-BATCH-04/NEXT-BATCH.md)
 - [Stale claims](STALE-CLAIMS.md)
 - [All import/provider/CRC edges](DEPENDENCY-EDGES.tsv)
 - [Actual partition-specific load-list evidence](LOAD-LIST-EVIDENCE.tsv)

@@ -14,6 +14,7 @@ Completed: IOMMU (mtk_iommu only, D->A on 2026-10-10; reverse-engineering/kernel
 Completed: PLATFORM-BATCH-01 (35 compiled;31 D->A,4 D->C with recursive CMDQ ABI blockers; independent raw/stripped B1/B2 and full stock validation). See reverse-engineering/kernel-source-reconstruction/PLATFORM-BATCH-01. No blocked member was omitted.
 Completed: PLATFORM-BATCH-02 (all27 identities;21D/6G->A;four independent family engines B1/B2;zero implementation/ABI residuals). See reverse-engineering/kernel-source-reconstruction/PLATFORM-BATCH-02.
 Processed: PLATFORM-BATCH-03 (all34 source-built;33 A,1 native ADC C for21 BTF bytes;five independent family engines B1/B2). See reverse-engineering/kernel-source-reconstruction/PLATFORM-BATCH-03. The BTF blocker is retained in the queue.
+Processed: PLATFORM-BATCH-04 (all30 source-built;25 A,5 explicit C token/TCPC mismatches;three independent engines six full B1/B2 builds). See reverse-engineering/kernel-source-reconstruction/PLATFORM-BATCH-04. Earlier CMDQ and ADC C unchanged.
 The first project listed below is the current queue head.
 `PRESERVE:*` projects must preserve/reproduce existing exact source work, not reverse-engineer it again. `G` is a finite evidence/input-closure question, not a missing-code claim.
 All dependency entries below are stock symbol/CRC requirements. A provider gap is recorded separately from implementation effort; retained provider ABI records may support compilation but do not close that provider.
@@ -189,15 +190,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 22. CANDIDATE:device_modules:drivers/power/supply — P0_BOOT
-- Modules (7): `adapter_class.ko`, `mtk_charger_algorithm_class.ko`, `mtk_pd_adapter.ko`, `mtk_pd_charging.ko`, `mtk_pep.ko`, `mtk_pep40.ko`, `mtk_pep50.ko`.
-- Source statuses: D:7.
-- Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/power/supply`.
-- Effort: SOURCE_INTEGRATION_THEN_MEASURE_DELTAS; no substantial reverse engineering inferred.
-- Separate provider blockers: `PRESERVE:MTK-DISP-NOTIFY;PRESERVE:TCPC-CLASS;PRESERVE:USB-CHARGER-INTEGRATION`.
-- Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
-
-### 23. CANDIDATE:device_modules:drivers/reset — P0_BOOT
+### 22. CANDIDATE:device_modules:drivers/reset — P0_BOOT
 - Modules (1): `reset-ti-syscon.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/reset`.
@@ -205,7 +198,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 24. CANDIDATE:device_modules:drivers/rtc — P0_BOOT
+### 23. CANDIDATE:device_modules:drivers/rtc — P0_BOOT
 - Modules (1): `rtc-mt6685.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/rtc`.
@@ -213,7 +206,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 25. CANDIDATE:device_modules:drivers/tee/teeperf — P0_BOOT
+### 24. CANDIDATE:device_modules:drivers/tee/teeperf — P0_BOOT
 - Modules (1): `teeperf.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/tee/teeperf`.
@@ -221,7 +214,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 26. CANDIDATE:device_modules:drivers/tty/serial/8250 — P0_BOOT
+### 25. CANDIDATE:device_modules:drivers/tty/serial/8250 — P0_BOOT
 - Modules (1): `8250_mtk.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/tty/serial/8250`.
@@ -229,7 +222,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `PRESERVE:CONNECTIVITY`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 27. CANDIDATE:kernel:drivers/gpu/drm/display — P0_BOOT
+### 26. CANDIDATE:kernel:drivers/gpu/drm/display — P0_BOOT
 - Modules (1): `drm_display_helper.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/kernel/drivers/gpu/drm/display`.
@@ -237,7 +230,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 28. CANDIDATE:kernel:drivers/iio/buffer — P0_BOOT
+### 27. CANDIDATE:kernel:drivers/iio/buffer — P0_BOOT
 - Modules (2): `industrialio-triggered-buffer.ko`, `kfifo_buf.ko`.
 - Source statuses: D:2.
 - Source locations: `../kernel-research/nothing-mt6878/kernel/drivers/iio/buffer`.
@@ -245,7 +238,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 29. CANDIDATE:kernel:drivers/perf — P0_BOOT
+### 28. CANDIDATE:kernel:drivers/perf — P0_BOOT
 - Modules (1): `arm_dsu_pmu.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/kernel/drivers/perf`.
@@ -253,7 +246,47 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 30. FINISH:CMDQ-MAILBOX-ABI — P0_BOOT
+### 29. FINISH:BATCH04:charger_class — P0_BOOT
+- Modules (1): `charger_class.ko`.
+- Source statuses: C:1.
+- Source locations: `../android_kernel_modules_charging_battery_ulefone_gq5012bf1/patches`.
+- Effort: TARGETED_MISSING_CODE_ABI_OR_EQUIVALENCE_PROOF; exact blockers in SOURCE-GAPS.tsv.
+- Separate provider blockers: `NONE`.
+- Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
+
+### 30. FINISH:BATCH04:mtk_chg_type_det — P0_BOOT
+- Modules (1): `mtk_chg_type_det.ko`.
+- Source statuses: C:1.
+- Source locations: `../android_kernel_modules_charging_battery_ulefone_gq5012bf1/patches`.
+- Effort: TARGETED_MISSING_CODE_ABI_OR_EQUIVALENCE_PROOF; exact blockers in SOURCE-GAPS.tsv.
+- Separate provider blockers: `FINISH:BATCH04:charger_class;FINISH:BATCH04:tcpc_class`.
+- Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
+
+### 31. FINISH:BATCH04:rt_pd_manager — P0_BOOT
+- Modules (1): `rt_pd_manager.ko`.
+- Source statuses: C:1.
+- Source locations: `../android_kernel_modules_usb_typec_ulefone_gq5012bf1/patches`.
+- Effort: TARGETED_MISSING_CODE_ABI_OR_EQUIVALENCE_PROOF; exact blockers in SOURCE-GAPS.tsv.
+- Separate provider blockers: `FINISH:BATCH04:tcpc_class`.
+- Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
+
+### 32. FINISH:BATCH04:tcpc_class — P0_BOOT
+- Modules (1): `tcpc_class.ko`.
+- Source statuses: C:1.
+- Source locations: `../android_kernel_modules_usb_typec_ulefone_gq5012bf1/patches`.
+- Effort: TARGETED_MISSING_CODE_ABI_OR_EQUIVALENCE_PROOF; exact blockers in SOURCE-GAPS.tsv.
+- Separate provider blockers: `NONE`.
+- Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
+
+### 33. FINISH:BATCH04:tcpc_mt6375 — P0_BOOT
+- Modules (1): `tcpc_mt6375.ko`.
+- Source statuses: C:1.
+- Source locations: `../android_kernel_modules_usb_typec_ulefone_gq5012bf1/patches`.
+- Effort: TARGETED_MISSING_CODE_ABI_OR_EQUIVALENCE_PROOF; exact blockers in SOURCE-GAPS.tsv.
+- Separate provider blockers: `FINISH:BATCH04:tcpc_class`.
+- Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
+
+### 34. FINISH:CMDQ-MAILBOX-ABI — P0_BOOT
 - Modules (4): `cmdq-platform-mt6878.ko`, `cmdq-sec-drv.ko`, `cmdq-test.ko`, `mtk-cmdq-drv-ext.ko`.
 - Source statuses: C:4.
 - Source locations: `../android_kernel_modules_cmdq_ulefone_gq5012bf1/patches`.
@@ -261,7 +294,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/mmp/dummy;PRESERVE:GZ-TZ-SYSTEM`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 31. FINISH:ST21NFC — P0_BOOT
+### 35. FINISH:ST21NFC — P0_BOOT
 - Modules (1): `st21nfc.ko`.
 - Source statuses: C:1.
 - Source locations: `../Reverse Engineer - DONE/ST21NFC/source`.
@@ -269,7 +302,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 32. FINISH:TRUSTKERNEL-SOURCE-ABI — P0_BOOT
+### 36. FINISH:TRUSTKERNEL-SOURCE-ABI — P0_BOOT
 - Modules (1): `tkcore.ko`.
 - Source statuses: C:1.
 - Source locations: `../Reverse Engineer - BLOCKED/TRUSTKERNEL-ABI-ISLAND/source`.
@@ -277,7 +310,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 33. FINISH:YFT-DEVINFO — P0_BOOT
+### 37. FINISH:YFT-DEVINFO — P0_BOOT
 - Modules (1): `yft_devinfo.ko`.
 - Source statuses: C:1.
 - Source locations: `../Reverse Engineer - PARTIAL/YFT-DEVINFO/source`.
@@ -285,7 +318,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 34. PRESERVE:AUDIO — P0_BOOT
+### 38. PRESERVE:AUDIO — P0_BOOT
 - Modules (20): `adsp.ko`, `audio_ipi.ko`, `clk-mt6878-adsp.ko`, `mt6369-accdet.ko`, `mt6369-regulator.ko`, `mt6685-audclk.ko`, `mt6878-mt6369.ko`, `mtk-afe-external.ko`, `mtk-scp-audiocommon.ko`, `mtk-scp-ultra.ko`, `mtk-scp-vow.ko`, `mtk-soc-offload-common.ko`, `mtk-sp-spk-amp.ko`, `mtk-vow.ko`, `snd-soc-audiodsp-common.ko`, `snd-soc-mt6369.ko`, `snd-soc-mt6878-afe.ko`, `snd-soc-mtk-common.ko`, `snd-soc-mtk-scp-ultra.ko`, `snd-soc-tfa98xx.ko`.
 - Source statuses: G:20.
 - Source locations: `reverse-engineering/audio`.
@@ -293,7 +326,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/slbc;PRESERVE:AW883XX-SPEAKER-AMP;PRESERVE:MODEM;PRESERVE:SENSOR-HUB`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 35. PRESERVE:AW2013-RGB-LED — P0_BOOT
+### 39. PRESERVE:AW2013-RGB-LED — P0_BOOT
 - Modules (1): `leds-rgb-aw2013.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/AW2013-RGB-LED/source`.
@@ -301,7 +334,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 36. PRESERVE:CONNECTIVITY — P0_BOOT
+### 40. PRESERVE:CONNECTIVITY — P0_BOOT
 - Modules (17): `bluetooth.ko`, `bt_drv_6878.ko`, `cfg80211.ko`, `connadp.ko`, `connfem.ko`, `conninfra.ko`, `connscp.ko`, `fmradio_drv_connac2x.ko`, `gps_drv_dl_v051.ko`, `gps_pwr.ko`, `gps_scp.ko`, `mac80211.ko`, `mtk-btcvsd.ko`, `uarthub_drv.ko`, `wifi_cooling.ko`, `wlan_drv_gen4m_6878.ko`, `wmt_chrdev_wifi_connac2.ko`.
 - Source statuses: G:17.
 - Source locations: `reverse-engineering/connectivity`.
@@ -309,7 +342,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `PRESERVE:MODEM;PRESERVE:MTK-DISP-NOTIFY;PRESERVE:SENSOR-HUB`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 37. PRESERVE:DISPLAY-GLUE — P0_BOOT
+### 41. PRESERVE:DISPLAY-GLUE — P0_BOOT
 - Modules (8): `leds-mtk-disp.ko`, `leds-mtk.ko`, `mediatek-drm-gateic.ko`, `met_backlight_api.ko`, `mtk-pwm.ko`, `mtk_disp_sec.ko`, `pwm-mtk-disp.ko`, `rt4831a_drv.ko`.
 - Source statuses: G:8.
 - Source locations: `reverse-engineering/display-input/backlight-glue/module-inventory.tsv`.
@@ -317,7 +350,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/dma-buf/heaps;CANDIDATE:device_modules:drivers/misc/mediatek/mtprintk;CANDIDATE:kernel_modules:met_drv_v3;FINISH:CMDQ-MAILBOX-ABI;PRESERVE:MEDIATEK-DRM`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 38. PRESERVE:FFA-V10 — P0_BOOT
+### 42. PRESERVE:FFA-V10 — P0_BOOT
 - Modules (1): `ffa_v10.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/FFA-V10/source`.
@@ -325,7 +358,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 39. PRESERVE:FINGERPRINT-PLATFORM-SHIM — P0_BOOT
+### 43. PRESERVE:FINGERPRINT-PLATFORM-SHIM — P0_BOOT
 - Modules (1): `fingerprint.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/FINGERPRINT-PLATFORM-SHIM/source`.
@@ -333,7 +366,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 40. PRESERVE:MEDIATEK-DRM — P0_BOOT
+### 44. PRESERVE:MEDIATEK-DRM — P0_BOOT
 - Modules (3): `mediatek-drm-panel-drv.ko`, `mediatek-drm.ko`, `mtk_panel_ext.ko`.
 - Source statuses: G:3.
 - Source locations: `../Reverse Engineer - DONE/MEDIATEK-DRM/source`.
@@ -341,7 +374,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/dma-buf/heaps;CANDIDATE:device_modules:drivers/gpu/drm;CANDIDATE:device_modules:drivers/gpu/drm/mediatek/dummy_drm;CANDIDATE:device_modules:drivers/misc/mediatek/mminfra;CANDIDATE:device_modules:drivers/misc/mediatek/mmp/dummy;CANDIDATE:device_modules:drivers/misc/mediatek/slbc;CANDIDATE:kernel:drivers/gpu/drm/display;FINISH:CMDQ-MAILBOX-ABI;PRESERVE:AUDIO;PRESERVE:DISPLAY-GLUE;PRESERVE:MTK-DISP-NOTIFY`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 41. PRESERVE:MICROARRAY-FP-TEE — P0_BOOT
+### 45. PRESERVE:MICROARRAY-FP-TEE — P0_BOOT
 - Modules (1): `microarray_fp_tee.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/MICROARRAY-FP-TEE/source`.
@@ -349,15 +382,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `FINISH:TRUSTKERNEL-SOURCE-ABI;PRESERVE:FINGERPRINT-PLATFORM-SHIM;PRESERVE:SPI-MT65XX`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 42. PRESERVE:MT6375-CHARGER — P0_BOOT
-- Modules (4): `mt6375-adc.ko`, `mt6375-auxadc.ko`, `mt6375-battery.ko`, `mt6375-charger.ko`.
-- Source statuses: G:4.
-- Source locations: `../Reverse Engineer - DONE/MT6375-CHARGER/source`.
-- Effort: SOURCE_PRESERVATION_AND_REPRODUCTION_ONLY; do not redo established reconstruction.
-- Separate provider blockers: `CANDIDATE:kernel:drivers/iio/buffer;PRESERVE:TCPC-CLASS;PRESERVE:USB-CHARGER-INTEGRATION`.
-- Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
-
-### 43. PRESERVE:MTK-DISP-NOTIFY — P0_BOOT
+### 46. PRESERVE:MTK-DISP-NOTIFY — P0_BOOT
 - Modules (1): `mtk_disp_notify.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/MTK-DISP-NOTIFY/source`.
@@ -365,15 +390,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 44. PRESERVE:PD-DBG-INFO — P0_BOOT
-- Modules (1): `pd_dbg_info.ko`.
-- Source statuses: G:1.
-- Source locations: `../Reverse Engineer - DONE/PD-DBG-INFO/source`.
-- Effort: SOURCE_PRESERVATION_AND_REPRODUCTION_ONLY; do not redo established reconstruction.
-- Separate provider blockers: `NONE`.
-- Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
-
-### 45. PRESERVE:PROGRAMMABLE-KEYS — P0_BOOT
+### 47. PRESERVE:PROGRAMMABLE-KEYS — P0_BOOT
 - Modules (1): `yft_gpio_keys.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/PROGRAMMABLE-KEYS/source`.
@@ -381,7 +398,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 46. PRESERVE:RT5133-POWER-IC — P0_BOOT
+### 48. PRESERVE:RT5133-POWER-IC — P0_BOOT
 - Modules (2): `extdev_io_class.ko`, `rt5133-regulator.ko`.
 - Source statuses: G:2.
 - Source locations: `../Reverse Engineer - DONE/RT5133-POWER-IC/source`.
@@ -389,7 +406,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 47. PRESERVE:SC8510-BIDIRECTIONAL-CHARGE-PUMP — P0_BOOT
+### 49. PRESERVE:SC8510-BIDIRECTIONAL-CHARGE-PUMP — P0_BOOT
 - Modules (1): `sc851x_charger.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/SC8510-BIDIRECTIONAL-CHARGE-PUMP/source`.
@@ -397,15 +414,15 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 48. PRESERVE:SC8571-CHARGE-PUMP — P0_BOOT
+### 50. PRESERVE:SC8571-CHARGE-PUMP — P0_BOOT
 - Modules (1): `sc8571_charger.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/SC8571-CHARGE-PUMP/source`.
 - Effort: SOURCE_PRESERVATION_AND_REPRODUCTION_ONLY; do not redo established reconstruction.
-- Separate provider blockers: `PRESERVE:USB-CHARGER-INTEGRATION`.
+- Separate provider blockers: `FINISH:BATCH04:charger_class`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 49. PRESERVE:SH366003-FUEL-GAUGE — P0_BOOT
+### 51. PRESERVE:SH366003-FUEL-GAUGE — P0_BOOT
 - Modules (1): `sh366003_fg.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/SH366003-FUEL-GAUGE/source`.
@@ -413,28 +430,12 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `FINISH:YFT-DEVINFO`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 50. PRESERVE:SPI-MT65XX — P0_BOOT
+### 52. PRESERVE:SPI-MT65XX — P0_BOOT
 - Modules (1): `spi-mt65xx.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/SPI-MT65XX/source`.
 - Effort: SOURCE_PRESERVATION_AND_REPRODUCTION_ONLY; do not redo established reconstruction.
 - Separate provider blockers: `NONE`.
-- Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
-
-### 51. PRESERVE:TCPC-CLASS — P0_BOOT
-- Modules (1): `tcpc_class.ko`.
-- Source statuses: G:1.
-- Source locations: `../Reverse Engineer - DONE/TCPC-CLASS/source`.
-- Effort: SOURCE_PRESERVATION_AND_REPRODUCTION_ONLY; do not redo established reconstruction.
-- Separate provider blockers: `PRESERVE:PD-DBG-INFO`.
-- Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
-
-### 52. PRESERVE:TCPC-MT6375 — P0_BOOT
-- Modules (1): `tcpc_mt6375.ko`.
-- Source statuses: G:1.
-- Source locations: `../Reverse Engineer - DONE/TCPC-MT6375/source`.
-- Effort: SOURCE_PRESERVATION_AND_REPRODUCTION_ONLY; do not redo established reconstruction.
-- Separate provider blockers: `PRESERVE:PD-DBG-INFO;PRESERVE:TCPC-CLASS`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
 ### 53. PRESERVE:TKCORE-DRV — P0_BOOT
@@ -445,23 +446,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `FINISH:TRUSTKERNEL-SOURCE-ABI;PRESERVE:FFA-V10`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 54. PRESERVE:USB — P0_BOOT
-- Modules (13): `extcon-mtk-usb.ko`, `mtk_u_ether.ko`, `mtk_usb_f_rndis.ko`, `mtu3.ko`, `mux_switch.ko`, `phy-mtk-xsphy.ko`, `rt_pd_manager.ko`, `tcpci_late_sync.ko`, `usb_boost.ko`, `usb_logger.ko`, `usb_meta.ko`, `usb_offload.ko`, `xhci-mtk-hcd-v2.ko`.
-- Source statuses: G:13.
-- Source locations: `reverse-engineering/usb`.
-- Effort: SOURCE_PRESERVATION_AND_REPRODUCTION_ONLY; do not redo established reconstruction.
-- Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/mtprof;PRESERVE:AUDIO;PRESERVE:MODEM;PRESERVE:MT6375-CHARGER;PRESERVE:SENSOR-HUB;PRESERVE:TCPC-CLASS`.
-- Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
-
-### 55. PRESERVE:USB-CHARGER-INTEGRATION — P0_BOOT
-- Modules (3): `charger_class.ko`, `mtk_charger_framework.ko`, `mtk_chg_type_det.ko`.
-- Source statuses: G:3.
-- Source locations: `../Reverse Engineer - DONE/USB-CHARGER-INTEGRATION/source`.
-- Effort: SOURCE_PRESERVATION_AND_REPRODUCTION_ONLY; do not redo established reconstruction.
-- Separate provider blockers: `CANDIDATE:device_modules:drivers/power/supply;PRESERVE:TCPC-CLASS`.
-- Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
-
-### 56. PRESERVE:VTDR6115-DISPLAY — P0_BOOT
+### 54. PRESERVE:VTDR6115-DISPLAY — P0_BOOT
 - Modules (1): `panel-ky-vtdr6115-dphy-cmd.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/VTDR6115-DISPLAY/source`.
@@ -469,7 +454,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `PRESERVE:MEDIATEK-DRM`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 57. PRESERVE:YFT-TPD-GESTURE — P0_BOOT
+### 55. PRESERVE:YFT-TPD-GESTURE — P0_BOOT
 - Modules (1): `yft_tpd_gesture.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/YFT-TPD-GESTURE/source`.
@@ -477,7 +462,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 58. FINISH:NATIVE-COMMON-ADC-BTF-BASE — P1_RADIO_OR_SECURITY
+### 56. FINISH:NATIVE-COMMON-ADC-BTF-BASE — P1_RADIO_OR_SECURITY
 - Modules (1): `thermal-generic-adc.ko`.
 - Source statuses: C:1.
 - Source locations: `../android_kernel_modules_thermal_cooling_ulefone_gq5012bf1/patches`.
@@ -485,7 +470,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 59. PRESERVE:GZ-MAIN-MOD — P1_RADIO_OR_SECURITY
+### 57. PRESERVE:GZ-MAIN-MOD — P1_RADIO_OR_SECURITY
 - Modules (1): `gz_main_mod.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/GZ-MAIN-MOD/source`.
@@ -493,7 +478,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/dma-buf/heaps;PRESERVE:FFA-V10;PRESERVE:GZ-TRANSPORT;PRESERVE:GZ-TZ-SYSTEM;PRESERVE:TMEM-FFA`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 60. PRESERVE:GZ-TRANSPORT — P1_RADIO_OR_SECURITY
+### 58. PRESERVE:GZ-TRANSPORT — P1_RADIO_OR_SECURITY
 - Modules (5): `gz_ipc_mod.ko`, `gz_irq_mod.ko`, `gz_log_mod.ko`, `gz_trusty_mod.ko`, `gz_virtio_mod.ko`.
 - Source statuses: G:5.
 - Source locations: `../Reverse Engineer - DONE/GZ-TRANSPORT/source`.
@@ -501,7 +486,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 61. PRESERVE:GZ-TZ-SYSTEM — P1_RADIO_OR_SECURITY
+### 59. PRESERVE:GZ-TZ-SYSTEM — P1_RADIO_OR_SECURITY
 - Modules (1): `gz_tz_system.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/GZ-TZ-SYSTEM/source`.
@@ -509,7 +494,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `PRESERVE:GZ-TRANSPORT`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 62. PRESERVE:MODEM — P1_RADIO_OR_SECURITY
+### 60. PRESERVE:MODEM — P1_RADIO_OR_SECURITY
 - Modules (16): `c2k_usb.ko`, `c2k_usb_f_via_atc.ko`, `c2k_usb_f_via_ets.ko`, `c2k_usb_f_via_modem.ko`, `ccci_auxadc.ko`, `ccci_ccif.ko`, `ccci_dpmaif.ko`, `ccci_fsm_scp.ko`, `ccci_md_all.ko`, `ccci_util_lib.ko`, `ccmni.ko`, `md_cooling_all.ko`, `mddp.ko`, `mtk_md_power_throttling.ko`, `mtk_mdpm.ko`, `rps_perf.ko`.
 - Source statuses: G:16.
 - Source locations: `reverse-engineering/modem`.
@@ -517,7 +502,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/slbc;PRESERVE:MEDIATEK-DRM;PRESERVE:SENSOR-HUB`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 63. PRESERVE:TMEM-FFA — P1_RADIO_OR_SECURITY
+### 61. PRESERVE:TMEM-FFA — P1_RADIO_OR_SECURITY
 - Modules (1): `tmem_ffa.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/TMEM-FFA/source`.
@@ -525,7 +510,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `FINISH:TRUSTKERNEL-SOURCE-ABI;PRESERVE:FFA-V10;PRESERVE:GZ-TZ-SYSTEM`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 64. FINISH:FT3680-TOUCH — P2_ACTIVE_FEATURE
+### 62. FINISH:FT3680-TOUCH — P2_ACTIVE_FEATURE
 - Modules (1): `focaltech_touch_spi_ft3680.ko`.
 - Source statuses: C:1.
 - Source locations: `../Reverse Engineer - PARTIAL/FT3680-TOUCH/source`.
@@ -533,7 +518,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `FINISH:YFT-DEVINFO;PRESERVE:MTK-DISP-NOTIFY;PRESERVE:YFT-TPD-GESTURE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 65. PRESERVE:CAMERA-EEPROMS — P2_ACTIVE_FEATURE
+### 63. PRESERVE:CAMERA-EEPROMS — P2_ACTIVE_FEATURE
 - Modules (1): `camera_eeprom_v4l2.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/CAMERA-EEPROMS/source`.
@@ -541,7 +526,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 66. PRESERVE:CAMERA-VCMS — P2_ACTIVE_FEATURE
+### 64. PRESERVE:CAMERA-VCMS — P2_ACTIVE_FEATURE
 - Modules (6): `camera_af_media.ko`, `main2_vcm.ko`, `main3_vcm.ko`, `main4_vcm.ko`, `main_vcm.ko`, `sub_vcm.ko`.
 - Source statuses: G:6.
 - Source locations: `../Reverse Engineer - DONE/CAMERA-VCMS/source`.
@@ -549,7 +534,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 67. PRESERVE:CO5300-REAR-DISPLAY — P2_ACTIVE_FEATURE
+### 65. PRESERVE:CO5300-REAR-DISPLAY — P2_ACTIVE_FEATURE
 - Modules (1): `spi_tiny_co5300_lcd.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/CO5300-REAR-DISPLAY/source`.
@@ -557,7 +542,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `FINISH:YFT-DEVINFO;PRESERVE:HYNITRON-REAR-TOUCH`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 68. PRESERVE:CUSTOM-LDO — P2_ACTIVE_FEATURE
+### 66. PRESERVE:CUSTOM-LDO — P2_ACTIVE_FEATURE
 - Modules (1): `custom-ldo.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/CUSTOM-LDO/source`.
@@ -565,15 +550,15 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `PRESERVE:WL2868-CAMERA-LDO`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 69. PRESERVE:FM78100-COMPANION — P2_ACTIVE_FEATURE
+### 67. PRESERVE:FM78100-COMPANION — P2_ACTIVE_FEATURE
 - Modules (1): `yft_tiny2c_usb.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/FM78100-COMPANION/source`.
 - Effort: SOURCE_PRESERVATION_AND_REPRODUCTION_ONLY; do not redo established reconstruction.
-- Separate provider blockers: `PRESERVE:MT6375-CHARGER`.
+- Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 70. PRESERVE:HYNITRON-REAR-TOUCH — P2_ACTIVE_FEATURE
+### 68. PRESERVE:HYNITRON-REAR-TOUCH — P2_ACTIVE_FEATURE
 - Modules (1): `hynitron.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/HYNITRON-REAR-TOUCH/source`.
@@ -581,7 +566,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `FINISH:YFT-DEVINFO`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 71. PRESERVE:SENSOR-HUB — P2_ACTIVE_FEATURE
+### 69. PRESERVE:SENSOR-HUB — P2_ACTIVE_FEATURE
 - Modules (3): `hf_manager.ko`, `scp.ko`, `sensorhub.ko`.
 - Source statuses: G:3.
 - Source locations: `reverse-engineering/sensors`.
@@ -589,7 +574,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `FINISH:YFT-DEVINFO;PRESERVE:AUDIO;PRESERVE:MTK-DISP-NOTIFY`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 72. PRESERVE:WL2868-CAMERA-LDO — P2_ACTIVE_FEATURE
+### 70. PRESERVE:WL2868-CAMERA-LDO — P2_ACTIVE_FEATURE
 - Modules (1): `custom-ldo-wl2868.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/WL2868-CAMERA-LDO/source`.
@@ -597,7 +582,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 73. CANDIDATE:device_modules:drivers/input/touchscreen — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 71. CANDIDATE:device_modules:drivers/input/touchscreen — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `tui-common.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/input/touchscreen`.
@@ -605,7 +590,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 74. CANDIDATE:device_modules:drivers/media/platform/mtk-jpeg — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 72. CANDIDATE:device_modules:drivers/media/platform/mtk-jpeg — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `mtk_jpeg.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/media/platform/mtk-jpeg`.
@@ -613,7 +598,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 75. CANDIDATE:device_modules:drivers/misc/mediatek/apusys/sapu — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 73. CANDIDATE:device_modules:drivers/misc/mediatek/apusys/sapu — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `sapu.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/apusys/sapu`.
@@ -621,7 +606,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/dma-buf/heaps;PRESERVE:GZ-TRANSPORT;PRESERVE:GZ-TZ-SYSTEM`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 76. CANDIDATE:device_modules:drivers/misc/mediatek/atf — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 74. CANDIDATE:device_modules:drivers/misc/mediatek/atf — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `atf_logger.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/atf`.
@@ -629,7 +614,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 77. CANDIDATE:device_modules:drivers/misc/mediatek/cache-auditor/cpuqos_v3 — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 75. CANDIDATE:device_modules:drivers/misc/mediatek/cache-auditor/cpuqos_v3 — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `cpuqos_v3.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/cache-auditor/cpuqos_v3`.
@@ -637,7 +622,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/slbc`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 78. CANDIDATE:device_modules:drivers/misc/mediatek/flashlight — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 76. CANDIDATE:device_modules:drivers/misc/mediatek/flashlight — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (2): `flashlight.ko`, `mtk-composite.ko`.
 - Source statuses: D:2.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/flashlight`.
@@ -645,7 +630,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 79. CANDIDATE:device_modules:drivers/misc/mediatek/irtx — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 77. CANDIDATE:device_modules:drivers/misc/mediatek/irtx — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `mtk_irtx_pwm.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/irtx`.
@@ -653,7 +638,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `PRESERVE:DISPLAY-GLUE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 80. CANDIDATE:device_modules:drivers/misc/mediatek/lpm — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 78. CANDIDATE:device_modules:drivers/misc/mediatek/lpm — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `mtk-lpm.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/lpm`.
@@ -661,7 +646,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 81. CANDIDATE:device_modules:drivers/misc/mediatek/lpm/governors/MHSP — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 79. CANDIDATE:device_modules:drivers/misc/mediatek/lpm/governors/MHSP — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `lpm-gov-MHSP.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/lpm/governors/MHSP`.
@@ -669,7 +654,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 82. CANDIDATE:device_modules:drivers/misc/mediatek/lpm/modules/debug/mt6878 — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 80. CANDIDATE:device_modules:drivers/misc/mediatek/lpm/modules/debug/mt6878 — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `mtk-lpm-dbg-mt6878.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/lpm/modules/debug/mt6878`.
@@ -677,7 +662,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/lpm/modules/debug/v2;CANDIDATE:device_modules:drivers/misc/mediatek/swpm`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 83. CANDIDATE:device_modules:drivers/misc/mediatek/lpm/modules/debug/v2 — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 81. CANDIDATE:device_modules:drivers/misc/mediatek/lpm/modules/debug/v2 — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `mtk-lpm-dbg-common-v2.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/lpm/modules/debug/v2`.
@@ -685,7 +670,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/lpm`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 84. CANDIDATE:device_modules:drivers/misc/mediatek/lpm/modules/platform/v1 — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 82. CANDIDATE:device_modules:drivers/misc/mediatek/lpm/modules/platform/v1 — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `mtk-lpm-plat-v1.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/lpm/modules/platform/v1`.
@@ -693,7 +678,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/lpm;CANDIDATE:device_modules:drivers/misc/mediatek/lpm/modules/debug/v2`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 85. CANDIDATE:device_modules:drivers/misc/mediatek/mbraink — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 83. CANDIDATE:device_modules:drivers/misc/mediatek/mbraink — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `mtk_mbraink.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/mbraink`.
@@ -701,7 +686,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/lpm/modules/debug/v2;CANDIDATE:device_modules:drivers/misc/mediatek/performance/fpsgo_v3;CANDIDATE:device_modules:drivers/misc/mediatek/swpm;PRESERVE:MODEM;PRESERVE:SENSOR-HUB`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 86. CANDIDATE:device_modules:drivers/misc/mediatek/mmstat — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 84. CANDIDATE:device_modules:drivers/misc/mediatek/mmstat — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `trace_mmstat.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/mmstat`.
@@ -709,7 +694,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 87. CANDIDATE:device_modules:drivers/misc/mediatek/perf_common — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 85. CANDIDATE:device_modules:drivers/misc/mediatek/perf_common — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `mtk_perf_common.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/perf_common`.
@@ -717,7 +702,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 88. CANDIDATE:device_modules:drivers/misc/mediatek/performance — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 86. CANDIDATE:device_modules:drivers/misc/mediatek/performance — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (4): `mtk_ioctl_powerhal.ko`, `mtk_ioctl_touch_boost.ko`, `mtk_perf_ioctl.ko`, `mtk_perf_ioctl_magt.ko`.
 - Source statuses: D:4.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/performance`.
@@ -725,7 +710,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 89. CANDIDATE:device_modules:drivers/misc/mediatek/performance/fpsgo_v3 — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 87. CANDIDATE:device_modules:drivers/misc/mediatek/performance/fpsgo_v3 — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `mtk_fpsgo.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/performance/fpsgo_v3`.
@@ -733,7 +718,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/performance;CANDIDATE:device_modules:drivers/misc/mediatek/performance/powerhal_cpu_ctrl;CANDIDATE:device_modules:drivers/misc/mediatek/sched;PRESERVE:MEDIATEK-DRM`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 90. CANDIDATE:device_modules:drivers/misc/mediatek/performance/frs — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 88. CANDIDATE:device_modules:drivers/misc/mediatek/performance/frs — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `frs.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/performance/frs`.
@@ -741,7 +726,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/performance/fpsgo_v3`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 91. CANDIDATE:device_modules:drivers/misc/mediatek/performance/load_track — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 89. CANDIDATE:device_modules:drivers/misc/mediatek/performance/load_track — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `load_track.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/performance/load_track`.
@@ -749,7 +734,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 92. CANDIDATE:device_modules:drivers/misc/mediatek/performance/powerhal_cpu_ctrl — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 90. CANDIDATE:device_modules:drivers/misc/mediatek/performance/powerhal_cpu_ctrl — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `powerhal_cpu_ctrl.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/performance/powerhal_cpu_ctrl`.
@@ -757,7 +742,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/performance`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 93. CANDIDATE:device_modules:drivers/misc/mediatek/performance/touch_boost — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 91. CANDIDATE:device_modules:drivers/misc/mediatek/performance/touch_boost — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `touch_boost.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/performance/touch_boost`.
@@ -765,7 +750,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/performance;CANDIDATE:device_modules:drivers/misc/mediatek/performance/powerhal_cpu_ctrl;CANDIDATE:device_modules:drivers/misc/mediatek/sched`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 94. CANDIDATE:device_modules:drivers/misc/mediatek/performance/uload_ind — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 92. CANDIDATE:device_modules:drivers/misc/mediatek/performance/uload_ind — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `uload_ind.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/performance/uload_ind`.
@@ -773,7 +758,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/performance/load_track`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 95. CANDIDATE:device_modules:drivers/misc/mediatek/sched — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 93. CANDIDATE:device_modules:drivers/misc/mediatek/sched — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `scheduler.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/sched`.
@@ -781,7 +766,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/cache-auditor/cpuqos_v3;CANDIDATE:device_modules:drivers/misc/mediatek/performance/powerhal_cpu_ctrl`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 96. CANDIDATE:device_modules:drivers/misc/mediatek/ssc — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 94. CANDIDATE:device_modules:drivers/misc/mediatek/ssc — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `mtk-ssc.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/ssc`.
@@ -789,7 +774,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 97. CANDIDATE:device_modules:drivers/misc/mediatek/ssc/debug/v2 — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 95. CANDIDATE:device_modules:drivers/misc/mediatek/ssc/debug/v2 — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `mtk-ssc-dbg-v2.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/ssc/debug/v2`.
@@ -797,7 +782,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/ssc`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 98. CANDIDATE:device_modules:drivers/misc/mediatek/swpm/modules/debug/v1 — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 96. CANDIDATE:device_modules:drivers/misc/mediatek/swpm/modules/debug/v1 — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `mtk-swpm-dbg-common-v1.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/swpm/modules/debug/v1`.
@@ -805,7 +790,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/swpm`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 99. CANDIDATE:device_modules:drivers/misc/mediatek/swpm/modules/debug/v6878 — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 97. CANDIDATE:device_modules:drivers/misc/mediatek/swpm/modules/debug/v6878 — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (2): `mtk-swpm-cpu-dbg-v6878.ko`, `mtk-swpm-dbg-v6878.ko`.
 - Source statuses: D:2.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/swpm/modules/debug/v6878`.
@@ -813,7 +798,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/swpm;CANDIDATE:device_modules:drivers/misc/mediatek/swpm/modules/debug/v1`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 100. CANDIDATE:device_modules:drivers/misc/mediatek/task_turbo — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 98. CANDIDATE:device_modules:drivers/misc/mediatek/task_turbo — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `task_turbo.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/task_turbo`.
@@ -821,7 +806,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 101. CANDIDATE:device_modules:drivers/misc/mediatek/widevine_drm — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 99. CANDIDATE:device_modules:drivers/misc/mediatek/widevine_drm — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `widevine_driver.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/widevine_drm`.
@@ -829,7 +814,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/dma-buf/heaps`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 102. CANDIDATE:kernel:drivers/power/reset — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 100. CANDIDATE:kernel:drivers/power/reset — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (2): `reboot-mode.ko`, `syscon-reboot-mode.ko`.
 - Source statuses: D:2.
 - Source locations: `../kernel-research/nothing-mt6878/kernel/drivers/power/reset`.
@@ -837,7 +822,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 103. CANDIDATE:kernel_modules:fpsgo_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 101. CANDIDATE:kernel_modules:fpsgo_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `fpsgo.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/kernel_modules/fpsgo_cus`.
@@ -845,7 +830,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/performance/fpsgo_v3`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 104. CANDIDATE:kernel_modules:hbt_driver_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 102. CANDIDATE:kernel_modules:hbt_driver_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `hbt.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/kernel_modules/hbt_driver_cus`.
@@ -853,7 +838,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 105. CANDIDATE:kernel_modules:msync2_frd_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 103. CANDIDATE:kernel_modules:msync2_frd_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `msync2_frd.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/kernel_modules/msync2_frd_cus`.
@@ -861,7 +846,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `PRESERVE:MEDIATEK-DRM`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 106. PRESERVE:AW36515-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 104. PRESERVE:AW36515-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `aw36515.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/AW36515-FLASH/source`.
@@ -869,7 +854,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/flashlight`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 107. PRESERVE:AW36518-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 105. PRESERVE:AW36518-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `aw36518.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/AW36518-FLASH/source`.
@@ -877,7 +862,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/flashlight;FINISH:YFT-DEVINFO`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 108. PRESERVE:AW36518-V2-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 106. PRESERVE:AW36518-V2-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `aw36518_v2.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/AW36518-V2-FLASH/source`.
@@ -885,7 +870,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `CANDIDATE:device_modules:drivers/misc/mediatek/flashlight`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 109. PRESERVE:AW883XX-SPEAKER-AMP — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 107. PRESERVE:AW883XX-SPEAKER-AMP — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `aw883xx_driver.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/AW883XX-SPEAKER-AMP/source`.
@@ -893,7 +878,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 110. PRESERVE:DW9781C-OIS — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 108. PRESERVE:DW9781C-OIS — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `dw9781c.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/DW9781C-OIS/source`.
@@ -901,7 +886,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `PRESERVE:SENSOR-HUB`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 111. PRESERVE:LN2403-CAMPLIGHT — P3_LOADED_PLATFORM_OR_OPTIONAL
+### 109. PRESERVE:LN2403-CAMPLIGHT — P3_LOADED_PLATFORM_OR_OPTIONAL
 - Modules (1): `leds-ln2403.ko`.
 - Source statuses: G:1.
 - Source locations: `../Reverse Engineer - DONE/LN2403-CAMPLIGHT/source`.
@@ -909,7 +894,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `PRESERVE:DISPLAY-GLUE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 112. CANDIDATE:kernel_modules:met_drv_v3 — P4_DIAGNOSTIC_OR_REFERENCE
+### 110. CANDIDATE:kernel_modules:met_drv_v3 — P4_DIAGNOSTIC_OR_REFERENCE
 - Modules (10): `met.ko`, `met_emi_api.ko`, `met_gpu_adv_api.ko`, `met_gpu_api.ko`, `met_gpueb_api.ko`, `met_ipi_api.ko`, `met_mcupm_api.ko`, `met_scmi_api.ko`, `met_sspm_api.ko`, `met_vcore_api.ko`.
 - Source statuses: D:10.
 - Source locations: `../kernel-research/nothing-mt6878/kernel_modules/met_drv_v3`.
@@ -917,7 +902,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 113. CANDIDATE:kernel_modules:sched_cus — P4_DIAGNOSTIC_OR_REFERENCE
+### 111. CANDIDATE:kernel_modules:sched_cus — P4_DIAGNOSTIC_OR_REFERENCE
 - Modules (1): `scheduler_ext.ko`.
 - Source statuses: D:1.
 - Source locations: `../kernel-research/nothing-mt6878/kernel_modules/sched_cus`.
@@ -925,7 +910,7 @@ Firmware stays proprietary where documented. Runtime loading never proves succes
 - Separate provider blockers: `NONE`.
 - Required proof: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing.
 
-### 114. MALI-DMA-BUF-DIAGNOSTIC — P4_DIAGNOSTIC_OR_REFERENCE
+### 112. MALI-DMA-BUF-DIAGNOSTIC — P4_DIAGNOSTIC_OR_REFERENCE
 - Modules (1): `mali_dmabuf_test_mt6878_r44.ko`.
 - Source statuses: D:1.
 - Source locations: `git-object:gpu/gpu_mali/mali_avalon/mali-r44p1/drivers/base/arm/dma_buf_test_exporter/dma-buf-test-exporter.c`.

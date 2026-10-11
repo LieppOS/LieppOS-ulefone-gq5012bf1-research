@@ -29,13 +29,17 @@ Existing records are preserved. This audit changes no component status or genera
 | The public CI BTF base is the OEM source lineage | Public CI12901745 is a pinned source-derived provider input, not OEM g945dff7bc1bf BTF. Authentic matching declaration/tool/base lineage remains to be found; no stock BTF transplantation or field editing is permitted. |
 | Reused maintained recipe HEAD must equal every previous batch's accepted commit | A later scoped recipe commit does not invalidate an immutable accepted ancestor. Batch02 acceptance/ownership/reference records are checked at its exact preserved Git commit, not the advanced Batch03 HEAD. No previous audit identity is reclassified. |
 
+| Batch04 old DONE/code-exact history makes all30 certified | Three committed engines freshly build all30 six times,25 whole-accepted A;five remain strict C for source-token/counter metadata and TCPC behavior/data/layout. A bounded separate TCPC experiment improves701→702/709 bodies but is not accepted or substituted into the six-build proof. |
+| Legacy uvc_switch/vbus GPIO names identify thermal-camera controls | GPIO55/152 belong to uSmart route/power. Thermal usesGPIO149/191/192 and tiny2c_mode; same USB0 role/fabric, physical default-route sharing remains UNKNOWN. Existing USB topology corrected from actual earlier uSmart/thermal evidence; no new hardware test. |
+| Unsigned local copies may replace frozen signed stock inventory | After interruption,60 local system_dlkm operands lacked721-byte signatures. Original local GQ5012BF1 system_dlkm_a image independently yielded60 exact frozen SHA/size matches; original signed analysis copies restored, drift quarantined, no audit hash or compilation output changed. |
+
 ## What the current counts do not claim
 
-- **238 uncertified/unexcluded identities after Batch03 (271 after Batch02,298 after Batch01) are not missing implementations.** Earlier checkpoint counts remain historical, not current totals.
-- **0 class E is not proof that every candidate is sufficient.** The 131 G source claims
+- **213 uncertified/unexcluded identities after Batch04 (238 after Batch03,271 after Batch02,298 after Batch01) are not missing implementations.** Earlier checkpoint counts remain historical, not current totals.
+- **0 class E is not proof that every candidate is sufficient.** The 108 G source claims
   remain unresolved for independent input/recipe closure.
-- **131 G is not a reversal of measured byte/semantic parity.** Preserve that work and
+- **108 G is not a reversal of measured byte/semantic parity.** Preserve that work and
   resolve its reproduction evidence; do not reverse-engineer it again.
-- **96 boot-contract gaps after Batch03 are conditional on retaining the stock first-stage load model**,
-  not an assertion that all96 drivers control essential fitted hardware.
+- **74 boot-contract gaps after Batch04 are conditional on retaining the stock first-stage load model**,
+  not an assertion that all74 drivers control essential fitted hardware.
 - **271 unknown necessity results must not be turned into F just to shrink the queue.**
