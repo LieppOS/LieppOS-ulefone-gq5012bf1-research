@@ -1,0 +1,28 @@
+--- a/aw883xx_bin_parse.c
++++ b/aw883xx_bin_parse.c
+@@ -1002,10 +1002,10 @@
+ 		struct aw_cfg_hdr *prof_hdr, bool dev_type)
+ {
+ 	int i;
+-	uint32_t j, k;
++	int8_t j, k;
+ 	int ret;
+ 	int cur_scene_id = 0;
+-	uint32_t num = 0;
++	unsigned long num = 0;
+ 	uint32_t index[AW_SCENE_INDEX_MAX];
+ 	struct aw_cfg_dde_v_1_0_0_0 *cfg_dde =
+ 		(struct aw_cfg_dde_v_1_0_0_0 *)((char *)prof_hdr + prof_hdr->a_hdr_offset);
+@@ -1026,7 +1026,11 @@
+ 		if (aw_dev->chip_id != cfg_dde[i].chip_id)
+ 			continue;
+ 
+-		/* keep index[] ordered by ascending dev_profile */
++		if (num == 0) {
++			index[0] = i;
++			num = 1;
++			continue;
++		}
+ 		for (j = 0; j < num; j++)
+ 			if (cfg_dde[i].dev_profile <= cfg_dde[index[j]].dev_profile)
+ 				break;

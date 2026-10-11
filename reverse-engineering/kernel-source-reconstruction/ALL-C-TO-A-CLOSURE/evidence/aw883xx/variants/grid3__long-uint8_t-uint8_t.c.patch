@@ -1,0 +1,41 @@
+--- a/aw883xx_bin_parse.c
++++ b/aw883xx_bin_parse.c
+@@ -999,13 +999,13 @@
+ #define AW_SCENE_INDEX_MAX	(32)
+ 
+ static int aw_dev_parse_scene_v_1_0_0_0(struct aw_device *aw_dev,
+-		struct aw_cfg_hdr *prof_hdr, bool dev_type)
++		struct aw_cfg_hdr *prof_hdr, uint8_t dev_type)
+ {
+ 	int i;
+-	uint32_t j, k;
++	long j, k;
+ 	int ret;
+ 	int cur_scene_id = 0;
+-	uint32_t num = 0;
++	uint8_t num = 0;
+ 	uint32_t index[AW_SCENE_INDEX_MAX];
+ 	struct aw_cfg_dde_v_1_0_0_0 *cfg_dde =
+ 		(struct aw_cfg_dde_v_1_0_0_0 *)((char *)prof_hdr + prof_hdr->a_hdr_offset);
+@@ -1026,7 +1026,11 @@
+ 		if (aw_dev->chip_id != cfg_dde[i].chip_id)
+ 			continue;
+ 
+-		/* keep index[] ordered by ascending dev_profile */
++		if (num == 0) {
++			index[0] = i;
++			num = 1;
++			continue;
++		}
+ 		for (j = 0; j < num; j++)
+ 			if (cfg_dde[i].dev_profile <= cfg_dde[index[j]].dev_profile)
+ 				break;
+@@ -1057,7 +1061,7 @@
+ 		struct aw_cfg_hdr *cfg_hdr)
+ {
+ 	int ret;
+-	bool dev_type;
++	uint8_t dev_type;
+ 
+ 	switch (aw_dev->prof_info.prof_type) {
+ 	case AW_DEV_TYPE_ID:
