@@ -24,7 +24,7 @@ delta; it is not claimed to have already been canonically integrated.
 | tcpc_class.ko | C | srcversion only after closure (709/709 functions, 113/114 data, 54 timers exact) | No stock srcversion hits for four scanned modules; tcpc_class retains inherited traced source-provenance blocker. | Inherited only; no new accepted B1/B2 | NOT ACCEPTED | C |
 | tcpc_mt6375.ko | C | srcversion + __COUNTER__-numbered .modinfo/addressable objects (66/66 functions, data 21/28) | No stock srcversion hits for four scanned modules; tcpc_class retains inherited traced source-provenance blocker. | Inherited only; no new accepted B1/B2 | NOT ACCEPTED | C |
 | thermal-generic-adc.ko | C | GNU build-ID only (allowed) | Public-source OEM split-BTF base | PASS independent B1/B2; GNU20-normalized identity | PASS | A |
-| tkcore.ko | C | only 5/19 consumer CRC edges reproduced; 14 private-type CRC edges | Bounded experiments complete; genuine residual retained | Inherited only; no new accepted B1/B2 | NOT ACCEPTED | C |
+| tkcore.ko | C | only 5/19 consumer CRC edges reproduced; 14 private-type CRC edges | Recovered pinned ZTE public TKCore 3.2p3 source (52 verified blobs); layout probe shows tee 0x158/context 0xc8 versus stock 0x138/0xd0; not a compatible drop-in. | Inherited only; no new accepted B1/B2 | NOT ACCEPTED | C |
 | yft_devinfo.ko | C | 10 exported device_add CRCs + 11 KCFI IDs differ; provider enum/type graph; probe/sysfs codegen | Bounded experiments complete; genuine residual retained | Inherited only; no new accepted B1/B2 | NOT ACCEPTED | C |
 | aw883xx_driver.ko | C (pending) | 235/236 raw functions exact; aw883xx_dev_cfg_load 3560 B stock vs 3564 B best experimental build; complete ELF remains unaccepted | 90 type-grid candidates plus targeted structural variants: no acceptance | Inherited only; no new accepted B1/B2 | NOT ACCEPTED | C |
 | bluetooth.ko | C (pending) | GNU build-ID only (allowed) | Public-source OEM split-BTF base | PASS independent B1/B2; GNU20-normalized identity | PASS | A |
@@ -67,7 +67,11 @@ AW883XX's diagnostic best still has one mismatching function (3564 vs stock3560)
 are preserved, not certified. Historical ST21 flags reproduce its preserved object, but
 neither the public blob scan nor natural fingerprint scan closes ioctl/ping/OEM tokens.
 FT3680, YFT private enum/type graph and TrustKernel private CRC declarations remain open;
-no new accepted source release was recovered for them.
+no new accepted source release was recovered for them. A public ZTE TKCore 3.2p3 release
+was recovered at b0c0f1ec4cb6d616090e7879a7df0785a1323c5d (52 verified source blobs).
+A compile-only layout probe proves it is not the newer stock 6:1.1-k6.6 declaration
+lineage: tee 0x158 versus stock0x138, context0xc8 versus stock0xd0. It supplies authentic
+historical constraints, not an accepted replacement; see LEGACY-C-RECONSTRUCTION.md.
 
 BLOCKERS.tsv has a next experiment for every remaining C. C-CLOSURE-STATE.json is the
 resumption checkpoint. Continue a genuinely new authentic source/header/helper-composition

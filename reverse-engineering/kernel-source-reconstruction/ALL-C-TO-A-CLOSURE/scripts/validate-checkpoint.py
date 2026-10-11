@@ -71,4 +71,13 @@ for b in json.loads((P/'evidence/bundle-verification.json').read_text()):
     assert b['verify_exit']==0
     heads=subprocess.check_output(['git','bundle','list-heads',str(path)],text=True,cwd=R)
     assert b['final_commit'] in heads
-print('VALID checkpoint: 18 immutable targets, 8 independently accepted A, 10 explicit C; no canonical audit edits; strict GNU20 only')
+legacy=json.loads((P/'evidence/legacy-source-search/zte-tkcore-manifest.json').read_text())
+assert legacy['commit']=='b0c0f1ec4cb6d616090e7879a7df0785a1323c5d' and len(legacy['files'])==52
+for f in legacy['files']:
+    relative=f['path'].removeprefix('drivers/misc/mediatek/tkcore/')
+    data=(P/'evidence/legacy-source-search/zte-tkcore'/relative).read_bytes()
+    assert hashlib.sha256(data).hexdigest()==f['sha256']
+    assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==f['git_blob']
+layout=json.loads((P/'evidence/legacy-source-search/public-layout-result.json').read_text())
+assert layout['compile_exit']==0 and layout['values']['tee.size']==0x158 and layout['values']['tee_context.size']==0xc8
+print('VALID checkpoint: 18 immutable targets, 8 independently accepted A, 10 explicit C; no canonical audit edits; strict GNU20 only; 52 legacy candidate source blobs verified')

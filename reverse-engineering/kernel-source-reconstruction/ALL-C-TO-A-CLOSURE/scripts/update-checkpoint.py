@@ -84,6 +84,10 @@ for r in rows:
         elif name=='st21nfc.ko':
             item.update(current_experiment='Historical object baseline reproduced 24/24; 28 authentic blob pairs tested (4 compile, 24 incompatible I2C probe API); no ioctl/ping hits.',
                         evidence=['evidence/st21nfc/public-history-object-scan.json','evidence/st21nfc/historic-baseline-vs-preserved-object.txt'])
+        elif name=='tkcore.ko':
+            item.update(current_experiment='Recovered pinned ZTE public TKCore 3.2p3 source (52 verified blobs); layout probe shows tee 0x158/context 0xc8 versus stock 0x138/0xd0; not a compatible drop-in.',
+                        evidence=['evidence/legacy-source-search/zte-tkcore-manifest.json','evidence/legacy-source-search/public-layout-result.json'],
+                        next_immediate_action='Find the authentic newer 6:1.1-k6.6 source lineage carrying version/log/list-of-misc-device and extra context fields; use the recovered public headers as constraints, not a stock-compatible replacement.')
         evidence = ';'.join(item['evidence'])
     state.append(item)
     parity.append(dict(module_id=r['module_id'],filename=name,initial_class=r['initial_class'],
@@ -164,7 +168,11 @@ AW883XX's diagnostic best still has one mismatching function (3564 vs stock3560)
 are preserved, not certified. Historical ST21 flags reproduce its preserved object, but
 neither the public blob scan nor natural fingerprint scan closes ioctl/ping/OEM tokens.
 FT3680, YFT private enum/type graph and TrustKernel private CRC declarations remain open;
-no new accepted source release was recovered for them.
+no new accepted source release was recovered for them. A public ZTE TKCore 3.2p3 release
+was recovered at b0c0f1ec4cb6d616090e7879a7df0785a1323c5d (52 verified source blobs).
+A compile-only layout probe proves it is not the newer stock 6:1.1-k6.6 declaration
+lineage: tee 0x158 versus stock0x138, context0xc8 versus stock0xd0. It supplies authentic
+historical constraints, not an accepted replacement; see LEGACY-C-RECONSTRUCTION.md.
 
 BLOCKERS.tsv has a next experiment for every remaining C. C-CLOSURE-STATE.json is the
 resumption checkpoint. Continue a genuinely new authentic source/header/helper-composition

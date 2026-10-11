@@ -61,3 +61,46 @@ unrecovered original names. No matching tkcore source path was found in the insp
 NothingOSS/MiCode trees. This is not a claim that every possible release was searched.
 Next: recover authentic TrustKernel normal-world private headers. Trusted-world, HAL,
 KeyMint/Gatekeeper and firmware behavior remain outside the proof and were not exercised.
+
+### New public declaration release recovered, not a compatible replacement
+
+A subsequent external search located actual TrustKernel normal-world source in
+`deadman96385/android_kernel_zte_mt6761`, pinned at
+`b0c0f1ec4cb6d616090e7879a7df0785a1323c5d`. The `tkcore` core/include/armtz source
+is preserved under `evidence/legacy-source-search/zte-tkcore/`, with original GPL-2.0
+copyright/license notices. All 52 downloaded blobs were checked against their Git blob
+IDs and are recorded with SHA256 in `zte-tkcore-manifest.json`. An API quota interruption
+on the final version header was resolved by fetching the commit-pinned raw URL and
+checking the same blob ID; no source substitution was made.
+
+This is version `3.2p3` (2015–2018), not the stock module's read-only-observed
+`tkcore_nsdrv_version` / modinfo version `6:1.1-k6.6`. The authenticated source contains
+real `tee_core_priv.h`, `tee_core.h`, `tee_shm.h` and RPC/private headers. Their presence
+is direct source evidence, unlike an indexed Kconfig-only reference.
+
+A compile-only probe under the prepared pinned kernel environment measures:
+
+| Declaration | Public 3.2p3 | Stock reconstructed anchor |
+|---|---:|---:|
+| sizeof(struct tee) | 0x158 | 0x138 |
+| tee.priv / ops / dev | 0x68 / 0x70 / 0x78 | 0x88 / 0x90 / 0x98 |
+| tee.rpc | 0xd0 | 0xb0 |
+| sizeof(struct tee_context) | 0xc8 | 0xd0 |
+| tee_context.refcount | 0xc0 | 0xc0 |
+
+The public release embeds one `miscdevice`; stock uses a list at 0xa0 and has added
+version/logging fields. Its context lacks the extra stock pointer at 0xc8. These are
+actual declaration/layout differences: do not drop the old header into the modern
+island and assume correct CRCs. The public tee_session retains implicit padding and
+provides useful original member-name constraints, but the recursively referenced tee
+and context graphs are still unclosed. No source correction, CRC acceptance or runtime
+claim follows from this successful layout probe.
+
+Next concrete search: find the newer `6:1.1-k6.6` normal-world source release/fork,
+constrained by the known added version/log fields, misc-device-list conversion and
+extra context member. Do not repeat unconstrained spelling brute force.
+
+The exact FT V4.2 20240407 banner is also visible in a TI support-thread boot log, but
+that I2C example is not the GQ5012BF1 SPI source release. No source file or immutable
+matching FT/YFT release was recovered from the bounded indexed searches; this is not
+proof of global nonexistence. No unrelated generic driver is promoted.

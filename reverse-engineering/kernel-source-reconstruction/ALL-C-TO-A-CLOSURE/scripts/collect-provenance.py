@@ -47,6 +47,10 @@ for family, (tested, bundle_name) in configs.items():
 def tsv(name,data):
     with (P/name).open('w',newline='') as f:
         w=csv.DictWriter(f,list(data[0]),delimiter='\t',lineterminator='\n');w.writeheader();w.writerows(data)
+legacy = json.loads((P/'evidence/legacy-source-search/zte-tkcore-manifest.json').read_text())
+pins.append(dict(family='legacy-tkcore-candidate',id='zte-tkcore-3.2p3',
+    url='https://github.com/'+legacy['repo'],commit=legacy['commit'],subtree='.',
+    tree_id=legacy['tree'],role='Rejected drop-in candidate; normal-world tkcore core/include declarations provide historical constraints, not stock source acceptance'))
 tsv('SOURCE-PINS.tsv',pins);tsv('SOURCE-CHANGES.tsv',changes)
 (P/'evidence/bundle-verification.json').write_text(json.dumps(bundles,indent=2)+'\n')
 history=[]
@@ -75,5 +79,8 @@ experiments = [
  ('ST21-HISTORICAL-ENV','LEGACY','Replay preserved historical flags with isolated outputs','24/24 bodies exact vs preserved object; 22/24 vs stock','BASELINE_REPRODUCED','evidence/st21nfc/historic-baseline-vs-preserved-object.txt'),
  ('ST21-PUBLIC-BLOBS','LEGACY','Full union C/header Cartesian product under reproduced historical command','28 pairs;4 compile;24 incompatible I2C probe API;no ioctl/ping matches','REJECTED_CANDIDATES','evidence/st21nfc/public-history-object-scan.json'),
  ('ST21-SRCV','LEGACY','Natural upstream fingerprint over authentic historical C/header pairs','Nothing20+MiCode28 tests;no stock fingerprint hit','REJECTED_CANDIDATES','evidence/srcversion/st21-nothing-kdm.json;evidence/srcversion/st21-micode-kdm.json')]
+experiments.append(('TKCORE-ZTE-3.2P3','LEGACY','Pinned public TrustKernel core/include source and compile-only layout probe',
+    '52 verified blobs;tee size0x158/context0xc8 versus stock0x138/0xd0;not compatible newer6:1.1-k6.6 lineage',
+    'REJECTED_DROP_IN_HISTORICAL_CONSTRAINTS_RECOVERED','evidence/legacy-source-search/zte-tkcore-manifest.json;evidence/legacy-source-search/public-layout-result.json'))
 tsv('EXPERIMENTS.tsv',[dict(id=a,group=b,hypothesis=c,measured_result=d,result=e,evidence=f) for a,b,c,d,e,f in experiments])
 print(len(pins),'pin records;',len(changes),'maintained source families;',len(bundles),'verified bundles;',len(experiments),'experiment records')
