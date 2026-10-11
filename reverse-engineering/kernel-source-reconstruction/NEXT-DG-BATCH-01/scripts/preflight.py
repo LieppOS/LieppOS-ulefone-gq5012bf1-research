@@ -20,7 +20,14 @@ completed=table(S/'reverse-engineering/kernel-source-reconstruction/COMPLETED-BA
 active=table(A/'reverse-engineering/kernel-source-reconstruction/ALL-C-TO-A-CLOSURE/C-CLOSURE-MANIFEST.tsv');active_ids={r['module_id'] for r in active}
 allC={r['module_id'] for r in staged if r['source_status']=='C'};assert allC.isdisjoint(protected) is False
 maintained={}
+owned_repos={'android_kernel_modules_platform_diagnostics_ulefone_gq5012bf1','android_kernel_modules_met_instrumentation_ulefone_gq5012bf1'}
 for repo in ROOT.glob('android_kernel_modules_*'):
+ if repo.name in owned_repos:
+  # These claims were created by this frozen task, not a concurrent reservation.
+  for claim in repo.glob('families/*/OWNERSHIP.json'):
+   c=json.loads(claim.read_text());assert c.get('claim')=='codex/next-dg-source-batch'
+   assert c['manifest_sha256']==SHA(P/'BATCH-MANIFEST.tsv')
+  continue
  for f in repo.glob('reference/BATCH-MANIFEST.tsv'):
   for row in table(f):
    if row.get('module_id'):maintained.setdefault(row['module_id'],[]).append(repo.name)

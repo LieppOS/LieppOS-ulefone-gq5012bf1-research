@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import csv,json,hashlib,subprocess,shutil,os
+P=Path(__file__).resolve().parents[1];R=P.parents[2];E=P/'evidence';result=json.loads((E/'independent-proof/RESULT.json').read_text());delta=json.loads((E/'audit-delta-result.json').read_text());assert result['result']==delta['result']=='PASS'
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest();repo_rows=[];mutation_controls=0
+for family,j in result['families'].items():
+ name='android_kernel_modules_platform_diagnostics_ulefone_gq5012bf1' if family=='diagnostics' else 'android_kernel_modules_met_instrumentation_ulefone_gq5012bf1';repo=R.parent/name;assert subprocess.check_output(['git','-C',str(repo),'rev-parse','HEAD'],text=True).strip()==j['commit'];assert not subprocess.check_output(['git','-C',str(repo),'status','--porcelain'],text=True)
+ repo_rows.append(dict(family=family,repository=name,commit=j['commit'],source_pins_sha256=sha(repo/'SOURCE-PINS.tsv'),source_tree_ids=';'.join(j['builds'][0]['source_trees'].values()),bundle='evidence/independent-proof/'+name+'.bundle',bundle_sha256=j['bundle_sha256'],targets=12 if family=='diagnostics' else 10,intermediate_preparation_object_pairs=len(j['builds'][0]['objects']),provider_slots_per_build=j['builds'][0]['provider_slots'],independent_status=j['result'],licence='Original GPL source headers/copyright plus inherited GPL engine LICENSE; immutable upstream attribution',donor_lineage='ALPS5e415e;common6b18f0;config957dac;Clang7775eb'+(';NKM5f75a3' if family=='met' else '')))
+for f in (E/'independent-proof').glob('*/*/actual-elf-mutations.log'):
+ s=f.read_text();j=json.loads(s[s.index('{\n  "result"'):]);assert j['result']=='PASS';mutation_controls+=j['controls']
+assert mutation_controls==550
+with (P/'SOURCE-REPOSITORIES.tsv').open('w') as f:w=csv.DictWriter(f,fieldnames=list(repo_rows[0]),delimiter='\t',lineterminator='\n');w.writeheader();w.writerows(repo_rows)
+state=json.loads((P/'BATCH-STATE.json').read_text());parity=list(csv.DictReader((P/'BATCH-PARITY.tsv').open(),delimiter='\t'));assert len(parity)==22 and all(r['final_class']=='A' for r in parity)
+state.update(phase='COMPLETE_22_INDEPENDENT_CATEGORY_A_PROPOSALS_CANONICAL_UNTOUCHED',targets_processed=22,new_certifications=dict(A=22,B=0),source_reconstruction_state='All22 complete genuine source implementations independently whole-stock GNU20 accepted in B1/B2',independent_build_state='PASS_FOUR_FRESH_BUILDS_NO_DEVELOPMENT_REUSE',source_commits={r['repository']:r['commit'] for r in repo_rows},projected_counts=delta['projected_counts'],projected_certified=324,projected_remaining=134,whole_stock_acceptance_calls=44,raw_stripped_pairs=44,actual_object_pairs=298,source_provider_slot_records=108,actual_elf_mutation_controls=550,audit_mutations=14,field_CAS_changes=418,unchanged_unselected_rows=436,source_blockers=[],next_action='Owner-reviewed CAS integration only after canonical stock restoration and concurrent Claude work reconciliation; next verifiedtimer/UART/I2C source family')
+state['targets']={r['module_id']:dict(build='B1_B2_FULL_PASS',parity='WHOLE_STOCK_GNU20_ONLY_PASS',source_commit=r['source_commit'],final_class='A_PROPOSED_NOT_LIVE_CANONICAL',residual='NONE',next='Owner CAS review') for r in parity};(P/'BATCH-STATE.json').write_text(json.dumps(state,indent=2)+'\n')
+shutil.copyfile('/home/armol/kernel-work/next-dg-batch-01/independent-proof-driver.log',E/'independent-proof/driver.log')
+# Research snapshot is frozen; independent result files hashed by audit aren't modified here.
+print('COMPLETE22A;44 stock gates;550ELFcontrols;298objectpairs;418CAS;324/134projected')
