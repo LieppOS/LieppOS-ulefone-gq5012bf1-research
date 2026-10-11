@@ -1,0 +1,46 @@
+--- "/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research-codex-audio/reverse-engineering/audio/mt6369/source/mt6369-accdet.c"	2026-10-11 00:30:01.938626718 +0300
++++ /tmp/codex-audio-scratch/acc/c4.c	2026-10-11 00:52:10.197431071 +0300
+@@ -111,6 +111,7 @@
+ 	u32 moisture_offset;
+ 	u32 moisture_eint_offset;
+ };
++int g_gpio_accdet_fm_switch = 0;
+ static struct mt6369_accdet_data *accdet;
+ 
+ static struct head_dts_data accdet_dts;
+@@ -181,7 +182,6 @@
+ static void recover_eint_setting(u32 eintsts);
+ static void recover_moisture_setting(u32 moistureID);
+ static void send_status_event(u32 cable_type, u32 status);
+-extern int g_gpio_accdet_fm_switch;
+ 
+ #if IS_ENABLED(CONFIG_AUDIO_SWITCH_HL5280)
+ void accdet_eint_callback_wrapper(bool plug_status)
+@@ -2941,7 +2941,14 @@
+ }
+ EXPORT_SYMBOL_GPL(mt6369_accdet_init);
+ 
+-int g_gpio_accdet_fm_switch;
++static int yft_parse_dts2(struct device_node *node)
++{
++	int gpio;
++
++	gpio = of_get_named_gpio(node, "gpio-accdet-fm-switch", 0);
++	printk("%s: of_get_named_gpio GPIO is %d.\n", "yft_parse_dts2", gpio);
++	return gpio;
++}
+ 
+ int yft_accdet_fm_switch(struct device *dev)
+ {
+@@ -2954,9 +2961,8 @@
+ 		printk("%s: cannot get the node: 'mediatek,pmic-accdet'.\n", __func__);
+ 		return -ENODEV;
+ 	}
+-	printk("%s: node not null.\n", __func__);
+-	gpio = of_get_named_gpio(node, "gpio-accdet-fm-switch", 0);
+-	printk("%s: of_get_named_gpio GPIO is %d.\n", "yft_parse_dts2", gpio);
++	printk("%s: node not null.\n", "yft_accdet_fm_switch");
++	gpio = yft_parse_dts2(node);
+ 	g_gpio_accdet_fm_switch = gpio;
+ 	if (gpio_is_valid(gpio))
+ 		pr_info("gpio number %d is valid\n", gpio);

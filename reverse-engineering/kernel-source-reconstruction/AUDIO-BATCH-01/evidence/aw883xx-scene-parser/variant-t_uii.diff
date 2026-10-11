@@ -1,0 +1,30 @@
+--- /tmp/codex-audio-scratch/awv/base.c	2026-10-11 00:55:04.543317216 +0300
++++ /tmp/codex-audio-scratch/awv/t_uii.c	2026-10-11 00:59:16.094932141 +0300
+@@ -994,7 +994,8 @@
+ static int aw_dev_parse_scene_v_1_0_0_0(struct aw_device *aw_dev,
+ 		struct aw_cfg_hdr *prof_hdr, bool dev_type)
+ {
+-	int i, j, k;
++	uint32_t i;
++	int j, k;
+ 	int ret;
+ 	int cur_scene_id = 0;
+ 	int num = 0;
+@@ -1018,16 +1019,9 @@
+ 		if (aw_dev->chip_id != cfg_dde[i].chip_id)
+ 			continue;
+ 
+-		/* LieppOS hardening: stock relies on the compiler's array-bounds
+-		 * trap here; an explicit bound cannot change behaviour for any
+-		 * ACF with <= 32 matching DDEs (see RED.md deviation D10).
+-		 */
+-		if (num >= AW_SCENE_INDEX_MAX)
+-			return -EINVAL;
+-
+ 		/* keep index[] ordered by ascending dev_profile */
+ 		for (j = 0; j < num; j++)
+-			if (cfg_dde[i].dev_profile < cfg_dde[index[j]].dev_profile)
++			if (cfg_dde[i].dev_profile <= cfg_dde[index[j]].dev_profile)
+ 				break;
+ 		for (k = num; k > j; k--)
+ 			index[k] = index[k - 1];

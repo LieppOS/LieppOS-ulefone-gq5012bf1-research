@@ -1,0 +1,20 @@
+--- /tmp/codex-audio-scratch/awv/base.c	2026-10-11 00:55:04.543317216 +0300
++++ /tmp/codex-audio-scratch/awv/le.c	2026-10-11 00:58:02.329582361 +0300
+@@ -1018,16 +1018,9 @@
+ 		if (aw_dev->chip_id != cfg_dde[i].chip_id)
+ 			continue;
+ 
+-		/* LieppOS hardening: stock relies on the compiler's array-bounds
+-		 * trap here; an explicit bound cannot change behaviour for any
+-		 * ACF with <= 32 matching DDEs (see RED.md deviation D10).
+-		 */
+-		if (num >= AW_SCENE_INDEX_MAX)
+-			return -EINVAL;
+-
+ 		/* keep index[] ordered by ascending dev_profile */
+ 		for (j = 0; j < num; j++)
+-			if (cfg_dde[i].dev_profile < cfg_dde[index[j]].dev_profile)
++			if (cfg_dde[i].dev_profile <= cfg_dde[index[j]].dev_profile)
+ 				break;
+ 		for (k = num; k > j; k--)
+ 			index[k] = index[k - 1];

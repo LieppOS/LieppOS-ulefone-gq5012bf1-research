@@ -1,0 +1,31 @@
+{
+  "session_log_sha256": "03f139f3578d91c2b54410e12f4db42dc3a03705a4d87fa38bf4c8c34e655807",
+  "calls": [
+    {
+      "label": "incident-1 .modinfo census (SCP-CONNECTIVITY-BATCH-01 survey)",
+      "session_file": "2026-09-25T10-17-44-583Z_01a0d812-2b86-71c6-8fb0-e331fc7bd560.jsonl",
+      "call_line": 9412,
+      "call_timestamp_utc": "2026-10-10T22:38:12.244Z",
+      "result_timestamp_utc": "2026-10-10T22:38:19.386Z",
+      "tool": "ctx_execute",
+      "arguments": {
+        "language": "python",
+        "code": "import csv,subprocess,os\nC='/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research/'\nrows=list(csv.DictReader(open(C+'reverse-engineering/kernel-source-parity-audit/ALL-457-MODULES.tsv'),delimiter='\\t'))\nres=[]\nfor r in rows:\n  p=C+r['stock_paths'].split(';')[0]\n  out=subprocess.run(['llvm-readelf','-S',p],capture_output=True,text=True).stdout\n  if '.BTF' in out:\n    mi=subprocess.run(['llvm-objcopy','--dump-section=.modinfo=/dev/stdout',p],capture_output=True).stdout\n    vm=[x for x in mi.split(b'\\0') if x.startswith(b'vermagic=')][0].decode()\n    res.append((r['source_status'],r['partitions'],r['filename'],vm.split()[0][-13:],r['source_group']))\nimport collections\nprint(collections.Counter((a,b,d) for a,b,c,d,e in res))\nfor x in res:\n  if x[1]!='system_dlkm': print(x)"
+      },
+      "note": "llvm-objcopy invoked with an input file and no output operand; llvm-objcopy then rewrites the input in place"
+    },
+    {
+      "label": "incident-2 .BTF OEM-base census (SCP-CONNECTIVITY-BATCH-01 NEXT-BATCH evidence)",
+      "session_file": "2026-09-25T10-17-44-583Z_01a0d812-2b86-71c6-8fb0-e331fc7bd560.jsonl",
+      "call_line": 9642,
+      "call_timestamp_utc": "2026-10-11T09:38:52.536Z",
+      "result_timestamp_utc": "2026-10-11T09:38:58.844Z",
+      "tool": "bash",
+      "arguments": {
+        "command": "cd '/home/armol/androido_dalykai/LieppOS custom ROM/ulefone-gq5012bf1-research' && python3 - <<'PY'\nimport csv,subprocess,struct\nrows=list(csv.DictReader(open('reverse-engineering/kernel-source-parity-audit/ALL-457-MODULES.tsv'),delimiter='\\t'))\nfor r in rows:\n  p=r['stock_paths'].split(';')[0]\n  b=subprocess.run(['llvm-objcopy','--dump-section','.BTF=/dev/stdout',p],capture_output=True).stdout\n  if not b or 'vendor' not in r['partitions']: continue\n  magic,ver,fl,hl,to,tl,so,sl=struct.unpack_from('<HBBIIIII',b,0); t=b[hl+to:hl+to+tl]\n  i=0;n=0;mx=0;mn=None\n  while i<len(t):\n    name,info,sz=struct.unpack_from('<III',t,i);k=(info>>24)&31;v=info&0xffff;st=i;i+=12;n+=1\n    refs=[]\n    if k in(2,8,9,10,11,12,13,14,17,18):refs.append(sz)\n    if k==1:i+=4\n    elif k==3:refs+=list(struct.unpack_from('<II',t,i));i+=12\n    elif k in(4,5):\n      for _ in range(v):refs.append(struct.unpack_from('<I',t,i+4)[0]);i+=12\n    elif k==6:i+=8*v\n    elif k==13:\n      for _ in range(v):refs.append(struct.unpack_from('<I',t,i+4)[0]);i+=8\n    elif k in(14,17):i+=4\n    elif k==15:\n      for _ in range(v):refs.append(struct.unpack_from('<I',t,i)[0]);i+=12\n    elif k==19:i+=12*v\n    mx=max([mx]+refs)\n  # name offsets: max local string offset relates to base string len\n  print(f\"{r['filename']:34s} {r['source_status']} records {n:5d} max_ref {mx} base_lower_bound {mx-n}\")\nPY",
+        "timeout": 300
+      },
+      "note": "llvm-objcopy invoked with an input file and no output operand; llvm-objcopy then rewrites the input in place"
+    }
+  ]
+}

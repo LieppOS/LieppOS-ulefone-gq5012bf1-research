@@ -1,0 +1,10 @@
+# Mutation and negative-control results
+
+- Unchanged canonical audit tests:14/14 PASS in final staging;14/14 PASS in independently replayed owner worktree. Logs evidence/audit-mutations.log and owner-mutations.log.
+- New original recipe ELF mutation/control runs: audio24/24, SCP23/23, connectivity29/29 (76 total). Their actual original code flips function, data/rodata, CRC/export CRC where present, modinfo, relocation and GNU build-ID bytes in temporary copies. Everything except the sole allowed build-ID descriptor is rejected. Connectivity includes its C gate negative controls.
+- Dependency batch68 actual independent ELF controls remain committed/verified in the original package, not relabelled as newly run here; includes layout/symbol/KCFI/BTF/signature-trailer corruptions and positive originals.
+- Owner CAS planner9/9 PASS: authentic before state, idempotent identical second application, unknown identity, stock SHA/size corruption, source-owner change, unexpected class, and protection of newer A/B whole identities. Synthetic fixtures exist only in memory; no A/B proof is forged on disk. The tested AST is the actual owner planner, not an equivalent rewritten mock. evidence/owner-cas-mutations.json.
+- Committed-blob package installer: dry-run/apply PASS for1475 files; a synthetic overlap in a temporary private copy is rejected before any target write, and all1475 file hashes remain unchanged. Three installer reports preserve this test; canonical/original evidence is not mutated.
+- Six C modules are12 genuine strict complete-file negative controls across B1/B2, with independently passing bounded residual gates. No C is waived.
+
+Original STOCK-INVENTORY-INTEGRITY's11 completed regression tests are preserved unchanged and traceable; this integration reran its unchanged positive inventory checker on all471 actual files. The image extraction/signature-strip restoration archaeology was not gratuitously repeated. Canonical shared copies and original images were never mutation operands.
