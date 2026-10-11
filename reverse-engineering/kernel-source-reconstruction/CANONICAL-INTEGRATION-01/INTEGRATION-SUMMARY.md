@@ -52,3 +52,14 @@ The shared canonical stock copies were restored (60/60) through the authenticate
 while the checkout was idle. The integrated branch is applied to canonical master by fast-forward
 only after the live inventory passes; the resulting canonical SHA is recorded in the final commit
 message and MERGE-INSTRUCTIONS.md section 5 (no self-referential hash inside this file). No push.
+
+## Executed canonical application
+
+- Pre-integration reference: annotated tag `pre-canonical-integration-01` → f61ebf03 and verified
+  bundle `/home/armol/kernel-work/canonical-integration-01/pre-integration-canonical-f61ebf03.bundle`.
+- Idle check repeated immediately before applying: no new writes, HEAD/refs unchanged.
+- `git merge --ff-only 88ccded8c9c685e2c1493e44fca31a95fabebc84` on canonical master (no history
+  rewritten). Live, in the canonical checkout with the restored shared stock:
+  inventory PASS 0 errors 458/471, 60/60 signed; validator PASS 0 errors A333/B1/C10/D60/E0/F0/G54;
+  audit mutation tests 14/14 (`evidence/canonical-live/`).
+- This evidence commit follows on master; its SHA is the final canonical commit. No push.
