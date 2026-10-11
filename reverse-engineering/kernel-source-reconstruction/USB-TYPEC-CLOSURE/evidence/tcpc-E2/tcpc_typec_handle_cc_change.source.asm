@@ -1,0 +1,376 @@
+source tcpc_typec_handle_cc_change section=.text address=0x1444 size=1280
+    1444:      	paciasp
+    1448:      	sub	sp, sp, #0x60
+    144c:      	stp	x29, x30, [sp, #0x20]
+    1450:      	str	x23, [sp, #0x30]
+    1454:      	stp	x22, x21, [sp, #0x40]
+    1458:      	stp	x20, x19, [sp, #0x50]
+    145c:      	add	x29, sp, #0x20
+    1460:      	mrs	x8, SP_EL0
+    1464:      	mov	x19, x0
+    1468:      	ldr	x8, [x8, #0x638]
+    146c:      	stur	x8, [x29, #-0x8]
+    1470:      	bl	0x1470 <tcpc_typec_handle_cc_change+0x2c>
+		0000000000001470:  R_AARCH64_CALL26	tcpci_get_cc
+    1474:      	tbnz	w0, #0x1f, 0x14d4 <tcpc_typec_handle_cc_change+0x90>
+    1478:      	mov	w8, #0x2c70
+    147c:      	adrp	x0, 0x1000 <tcpc_show_property+0x3c4>
+		000000000000147c:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x217b
+    1480:      	add	x0, x0, #0x0
+		0000000000001480:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x217b
+    1484:      	add	x22, x19, x8
+    1488:      	ldrb	w1, [x22, #0x7]
+    148c:      	ldrb	w2, [x22, #0x8]
+    1490:      	bl	0x1490 <tcpc_typec_handle_cc_change+0x4c>
+		0000000000001490:  R_AARCH64_CALL26	pd_dbg_info
+    1494:      	mov	x0, x19
+    1498:      	bl	0x1944 <typec_try_norp_src>
+    149c:      	tbnz	w0, #0x0, 0x14d0 <tcpc_typec_handle_cc_change+0x8c>
+    14a0:      	ldrb	w8, [x22, #0x7]
+    14a4:      	cmp	w8, #0xf
+    14a8:      	b.eq	0x14d0 <tcpc_typec_handle_cc_change+0x8c>
+    14ac:      	ldrb	w9, [x22]
+    14b0:      	cmp	w9, #0x12
+    14b4:      	b.hi	0x1504 <tcpc_typec_handle_cc_change+0xc0>
+    14b8:      	mov	w10, #0x1
+    14bc:      	mov	w11, #0x3
+    14c0:      	lsl	w10, w10, w9
+    14c4:      	movk	w11, #0x4, lsl #16
+    14c8:      	tst	w10, w11
+    14cc:      	b.eq	0x1504 <tcpc_typec_handle_cc_change+0xc0>
+    14d0:      	mov	w0, wzr
+    14d4:      	mrs	x8, SP_EL0
+    14d8:      	ldr	x8, [x8, #0x638]
+    14dc:      	ldur	x9, [x29, #-0x8]
+    14e0:      	cmp	x8, x9
+    14e4:      	b.ne	0x1940 <tcpc_typec_handle_cc_change+0x4fc>
+    14e8:      	ldp	x20, x19, [sp, #0x50]
+    14ec:      	ldp	x22, x21, [sp, #0x40]
+    14f0:      	ldp	x29, x30, [sp, #0x20]
+    14f4:      	ldr	x23, [sp, #0x30]
+    14f8:      	add	sp, sp, #0x60
+    14fc:      	autiasp
+    1500:      	ret
+    1504:      	ldr	w10, [x19, #0x2c8c]
+    1508:      	cmp	w9, #0x13
+    150c:      	b.ne	0x1514 <tcpc_typec_handle_cc_change+0xd0>
+    1510:      	tbnz	w10, #0x8, 0x14d0 <tcpc_typec_handle_cc_change+0x8c>
+    1514:      	cmp	w9, #0x14
+    1518:      	b.ne	0x1520 <tcpc_typec_handle_cc_change+0xdc>
+    151c:      	tbnz	w10, #0x9, 0x14d0 <tcpc_typec_handle_cc_change+0x8c>
+    1520:      	mov	w0, wzr
+    1524:      	cmp	w9, #0xa
+    1528:      	b.eq	0x14d4 <tcpc_typec_handle_cc_change+0x90>
+    152c:      	ldrb	w10, [x22, #0x384]
+    1530:      	cbnz	w10, 0x14d4 <tcpc_typec_handle_cc_change+0x90>
+    1534:      	sub	w9, w9, #0x6
+    1538:      	cmp	w9, #0xb
+    153c:      	b.hi	0x15b8 <tcpc_typec_handle_cc_change+0x174>
+    1540:      	adrp	x10, 0x1000 <tcpc_show_property+0x3c4>
+		0000000000001540:  R_AARCH64_ADR_PREL_PG_HI21	.rodata+0x30
+    1544:      	add	x10, x10, #0x0
+		0000000000001544:  R_AARCH64_ADD_ABS_LO12_NC	.rodata+0x30
+    1548:      	adr	x11, #0x10
+    154c:      	ldrb	w12, [x10, x9]
+    1550:      	add	x11, x11, x12, lsl #2
+    1554:      	br	x11
+    1558:      	ldrb	w8, [x22, #0xb]
+    155c:      	cmp	w8, #0x0
+    1560:      	mov	w8, #0x7
+    1564:      	cinc	x8, x8, ne
+    1568:      	ldrb	w8, [x22, x8]
+    156c:      	cbnz	w8, 0x1628 <tcpc_typec_handle_cc_change+0x1e4>
+    1570:      	b	0x1834 <tcpc_typec_handle_cc_change+0x3f0>
+    1574:      	cbz	w8, 0x161c <tcpc_typec_handle_cc_change+0x1d8>
+    1578:      	cmp	w8, #0x1
+    157c:      	b.eq	0x161c <tcpc_typec_handle_cc_change+0x1d8>
+    1580:      	cmp	w8, #0x2
+    1584:      	b.ne	0x1834 <tcpc_typec_handle_cc_change+0x3f0>
+    1588:      	ldrb	w8, [x22, #0x8]
+    158c:      	cmp	w8, #0x2
+    1590:      	b.lo	0x1628 <tcpc_typec_handle_cc_change+0x1e4>
+    1594:      	b	0x1834 <tcpc_typec_handle_cc_change+0x3f0>
+    1598:      	ldrb	w9, [x22, #0x8]
+    159c:      	add	w8, w8, w9
+    15a0:      	sub	w8, w8, #0x5
+    15a4:      	cmp	w8, #0x3
+    15a8:      	b.lo	0x1628 <tcpc_typec_handle_cc_change+0x1e4>
+    15ac:      	b	0x1834 <tcpc_typec_handle_cc_change+0x3f0>
+    15b0:      	cbnz	w8, 0x15dc <tcpc_typec_handle_cc_change+0x198>
+    15b4:      	b	0x1834 <tcpc_typec_handle_cc_change+0x3f0>
+    15b8:      	ldrb	w9, [x22, #0x8]
+    15bc:      	add	w10, w9, w8
+    15c0:      	cmp	w10, #0x1
+    15c4:      	b.ne	0x1788 <tcpc_typec_handle_cc_change+0x344>
+    15c8:      	adrp	x0, 0x1000 <tcpc_show_property+0x3c4>
+		00000000000015c8:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x1e3a
+    15cc:      	add	x0, x0, #0x0
+		00000000000015cc:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x1e3a
+    15d0:      	bl	0x15d0 <tcpc_typec_handle_cc_change+0x18c>
+		00000000000015d0:  R_AARCH64_CALL26	pd_dbg_info
+    15d4:      	b	0x1834 <tcpc_typec_handle_cc_change+0x3f0>
+    15d8:      	cbnz	w8, 0x1628 <tcpc_typec_handle_cc_change+0x1e4>
+    15dc:      	ldrb	w8, [x22, #0x8]
+    15e0:      	cbnz	w8, 0x1628 <tcpc_typec_handle_cc_change+0x1e4>
+    15e4:      	b	0x1834 <tcpc_typec_handle_cc_change+0x3f0>
+    15e8:      	ldrb	w9, [x22, #0x8]
+    15ec:      	add	w10, w8, w9
+    15f0:      	sub	w10, w10, #0x5
+    15f4:      	cmp	w10, #0x3
+    15f8:      	b.lo	0x1628 <tcpc_typec_handle_cc_change+0x1e4>
+    15fc:      	cbz	w8, 0x182c <tcpc_typec_handle_cc_change+0x3e8>
+    1600:      	cmp	w8, #0x1
+    1604:      	b.eq	0x182c <tcpc_typec_handle_cc_change+0x3e8>
+    1608:      	cmp	w8, #0x2
+    160c:      	b.ne	0x1834 <tcpc_typec_handle_cc_change+0x3f0>
+    1610:      	cmp	w9, #0x2
+    1614:      	b.lo	0x1628 <tcpc_typec_handle_cc_change+0x1e4>
+    1618:      	b	0x1834 <tcpc_typec_handle_cc_change+0x3f0>
+    161c:      	ldrb	w8, [x22, #0x8]
+    1620:      	cmp	w8, #0x2
+    1624:      	b.ne	0x1834 <tcpc_typec_handle_cc_change+0x3f0>
+    1628:      	mov	x0, x19
+    162c:      	mov	w1, wzr
+    1630:      	bl	0x1630 <tcpc_typec_handle_cc_change+0x1ec>
+		0000000000001630:  R_AARCH64_CALL26	tcpc_enable_lpm_timer
+    1634:      	mov	x0, x19
+    1638:      	mov	w1, wzr
+    163c:      	bl	0x163c <tcpc_typec_handle_cc_change+0x1f8>
+		000000000000163c:  R_AARCH64_CALL26	tcpci_set_low_power_mode
+    1640:      	ldrb	w8, [x22, #0x5]
+    1644:      	and	w8, w8, #0x7
+    1648:      	cmp	w8, #0x4
+    164c:      	b.eq	0x1660 <tcpc_typec_handle_cc_change+0x21c>
+    1650:      	cmp	w8, #0x1
+    1654:      	b.ne	0x1678 <tcpc_typec_handle_cc_change+0x234>
+    1658:      	mov	w20, wzr
+    165c:      	b	0x167c <tcpc_typec_handle_cc_change+0x238>
+    1660:      	ldrb	w8, [x22, #0x7]
+    1664:      	ldrb	w9, [x22, #0x8]
+    1668:      	add	w8, w9, w8
+    166c:      	cmp	w8, #0x4
+    1670:      	cset	w20, hi
+    1674:      	b	0x167c <tcpc_typec_handle_cc_change+0x238>
+    1678:      	mov	w20, #0x1
+    167c:      	ldrb	w8, [x22, #0xb]
+    1680:      	cmp	w8, #0x0
+    1684:      	mov	w8, #0x7
+    1688:      	cinc	x9, x8, ne
+    168c:      	ldrb	w8, [x22]
+    1690:      	ldrb	w23, [x22, x9]
+    1694:      	cmp	w8, #0x7
+    1698:      	b.eq	0x1708 <tcpc_typec_handle_cc_change+0x2c4>
+    169c:      	cmp	w8, #0xe
+    16a0:      	b.eq	0x1708 <tcpc_typec_handle_cc_change+0x2c4>
+    16a4:      	ldrb	w8, [x22, #0xa]
+    16a8:      	cbz	w8, 0x1700 <tcpc_typec_handle_cc_change+0x2bc>
+    16ac:      	adrp	x0, 0x1000 <tcpc_show_property+0x3c4>
+		00000000000016ac:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x1c86
+    16b0:      	add	x0, x0, #0x0
+		00000000000016b0:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x1c86
+    16b4:      	adrp	x1, 0x1000 <tcpc_show_property+0x3c4>
+		00000000000016b4:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xc1c
+    16b8:      	add	x1, x1, #0x0
+		00000000000016b8:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xc1c
+    16bc:      	bl	0x16bc <tcpc_typec_handle_cc_change+0x278>
+		00000000000016bc:  R_AARCH64_CALL26	pd_dbg_info
+    16c0:      	ldrb	w8, [x22, #0xa]
+    16c4:      	cmp	w8, #0x1
+    16c8:      	b.ne	0x1700 <tcpc_typec_handle_cc_change+0x2bc>
+    16cc:      	mov	w8, #0x2248
+    16d0:      	add	x21, x19, x8
+    16d4:      	mov	x0, x21
+    16d8:      	bl	0x16d8 <tcpc_typec_handle_cc_change+0x294>
+		00000000000016d8:  R_AARCH64_CALL26	mutex_lock
+    16dc:      	mov	x0, x19
+    16e0:      	mov	w1, #0x26
+    16e4:      	bl	0x16e4 <tcpc_typec_handle_cc_change+0x2a0>
+		00000000000016e4:  R_AARCH64_CALL26	tcpc_disable_timer
+    16e8:      	mov	x0, x19
+    16ec:      	mov	w1, wzr
+    16f0:      	mov	w2, wzr
+    16f4:      	bl	0x16f4 <tcpc_typec_handle_cc_change+0x2b0>
+		00000000000016f4:  R_AARCH64_CALL26	tcpci_enable_discharge
+    16f8:      	mov	x0, x21
+    16fc:      	bl	0x16fc <tcpc_typec_handle_cc_change+0x2b8>
+		00000000000016fc:  R_AARCH64_CALL26	mutex_unlock
+    1700:      	ldrb	w8, [x22]
+    1704:      	strb	wzr, [x22, #0xa]
+    1708:      	sub	w8, w8, #0x6
+    170c:      	cmp	w8, #0xf
+    1710:      	b.hi	0x17f4 <tcpc_typec_handle_cc_change+0x3b0>
+    1714:      	adrp	x9, 0x1000 <tcpc_show_property+0x3c4>
+		0000000000001714:  R_AARCH64_ADR_PREL_PG_HI21	.rodata+0x3c
+    1718:      	add	x9, x9, #0x0
+		0000000000001718:  R_AARCH64_ADD_ABS_LO12_NC	.rodata+0x3c
+    171c:      	adr	x10, #0x10
+    1720:      	ldrb	w11, [x9, x8]
+    1724:      	add	x10, x10, x11, lsl #2
+    1728:      	br	x10
+    172c:      	mov	x0, x19
+    1730:      	mov	w1, w20
+    1734:      	bl	0x1734 <tcpc_typec_handle_cc_change+0x2f0>
+		0000000000001734:  R_AARCH64_CALL26	tcpci_notify_attachwait_state
+    1738:      	b	0x18c4 <tcpc_typec_handle_cc_change+0x480>
+    173c:      	mov	w8, #0x3044
+    1740:      	add	x8, x19, x8
+    1744:      	ldrb	w9, [x8]
+    1748:      	cbz	w9, 0x18e8 <tcpc_typec_handle_cc_change+0x4a4>
+    174c:      	ldrb	w8, [x8, #0xf9]
+    1750:      	cmp	w8, #0x2
+    1754:      	b.lo	0x18e8 <tcpc_typec_handle_cc_change+0x4a4>
+    1758:      	cmp	w23, #0x7
+    175c:      	b.eq	0x18e8 <tcpc_typec_handle_cc_change+0x4a4>
+    1760:      	adrp	x8, 0x1000 <tcpc_show_property+0x3c4>
+		0000000000001760:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.cst16+0x30
+    1764:      	add	x8, x8, #0x0
+		0000000000001764:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.cst16+0x30
+    1768:      	add	x1, sp, #0x8
+    176c:      	mov	x0, x19
+    1770:      	mov	w2, wzr
+    1774:      	ldp	x9, x8, [x8]
+    1778:      	stp	x9, x8, [sp, #0x8]
+    177c:      	strb	wzr, [sp, #0xa]
+    1780:      	bl	0x1780 <tcpc_typec_handle_cc_change+0x33c>
+		0000000000001780:  R_AARCH64_CALL26	pd_put_event
+    1784:      	b	0x18e8 <tcpc_typec_handle_cc_change+0x4a4>
+    1788:      	cbnz	w8, 0x1628 <tcpc_typec_handle_cc_change+0x1e4>
+    178c:      	cbz	w9, 0x1834 <tcpc_typec_handle_cc_change+0x3f0>
+    1790:      	b	0x1628 <tcpc_typec_handle_cc_change+0x1e4>
+    1794:      	ldrb	w8, [x22, #0x7]
+    1798:      	ldrb	w9, [x22, #0x8]
+    179c:      	add	w8, w9, w8
+    17a0:      	cmp	w8, #0x3
+    17a4:      	b.ne	0x18d0 <tcpc_typec_handle_cc_change+0x48c>
+    17a8:      	ldrb	w8, [x22, #0x18]
+    17ac:      	cbz	w8, 0x18d0 <tcpc_typec_handle_cc_change+0x48c>
+    17b0:      	mov	x0, x19
+    17b4:      	mov	w1, #0x1
+    17b8:      	bl	0x17b8 <tcpc_typec_handle_cc_change+0x374>
+		00000000000017b8:  R_AARCH64_CALL26	tcpci_set_vconn
+    17bc:      	b	0x18d0 <tcpc_typec_handle_cc_change+0x48c>
+    17c0:      	mov	x0, x19
+    17c4:      	mov	w1, #0x1
+    17c8:      	bl	0x17c8 <tcpc_typec_handle_cc_change+0x384>
+		00000000000017c8:  R_AARCH64_CALL26	tcpci_notify_attachwait_state
+    17cc:      	b	0x18dc <tcpc_typec_handle_cc_change+0x498>
+    17d0:      	adrp	x0, 0x1000 <tcpc_show_property+0x3c4>
+		00000000000017d0:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x1709
+    17d4:      	add	x0, x0, #0x0
+		00000000000017d4:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x1709
+    17d8:      	bl	0x17d8 <tcpc_typec_handle_cc_change+0x394>
+		00000000000017d8:  R_AARCH64_CALL26	pd_dbg_info
+    17dc:      	mov	x0, x19
+    17e0:      	mov	w1, #0x2b
+    17e4:      	strb	wzr, [x22, #0x381]
+    17e8:      	bl	0x17e8 <tcpc_typec_handle_cc_change+0x3a4>
+		00000000000017e8:  R_AARCH64_CALL26	tcpc_disable_timer
+    17ec:      	mov	x0, x19
+    17f0:      	bl	0x3c48 <typec_unattached_power_entry>
+    17f4:      	mov	x0, x19
+    17f8:      	mov	w1, w20
+    17fc:      	bl	0x17fc <tcpc_typec_handle_cc_change+0x3b8>
+		00000000000017fc:  R_AARCH64_CALL26	tcpci_notify_attachwait_state
+    1800:      	cmp	w20, #0x0
+    1804:      	mov	w8, #0x4
+    1808:      	cinc	w20, w8, eq
+    180c:      	adrp	x8, 0x1000 <tcpc_show_property+0x3c4>
+		000000000000180c:  R_AARCH64_ADR_PREL_PG_HI21	.rodata+0xf0
+    1810:      	add	x8, x8, #0x0
+		0000000000001810:  R_AARCH64_ADD_ABS_LO12_NC	.rodata+0xf0
+    1814:      	adrp	x0, 0x1000 <tcpc_show_property+0x3c4>
+		0000000000001814:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x37f1
+    1818:      	add	x0, x0, #0x0
+		0000000000001818:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x37f1
+    181c:      	ldr	x1, [x8, w20, uxtw #3]
+    1820:      	bl	0x1820 <tcpc_typec_handle_cc_change+0x3dc>
+		0000000000001820:  R_AARCH64_CALL26	pd_dbg_info
+    1824:      	strb	w20, [x22]
+    1828:      	b	0x18dc <tcpc_typec_handle_cc_change+0x498>
+    182c:      	cmp	w9, #0x2
+    1830:      	b.eq	0x1628 <tcpc_typec_handle_cc_change+0x1e4>
+    1834:      	ldrb	w8, [x22, #0xa]
+    1838:      	cbz	w8, 0x1890 <tcpc_typec_handle_cc_change+0x44c>
+    183c:      	adrp	x0, 0x1000 <tcpc_show_property+0x3c4>
+		000000000000183c:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0x1c86
+    1840:      	add	x0, x0, #0x0
+		0000000000001840:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0x1c86
+    1844:      	adrp	x1, 0x1000 <tcpc_show_property+0x3c4>
+		0000000000001844:  R_AARCH64_ADR_PREL_PG_HI21	.rodata.str1.1+0xc1c
+    1848:      	add	x1, x1, #0x0
+		0000000000001848:  R_AARCH64_ADD_ABS_LO12_NC	.rodata.str1.1+0xc1c
+    184c:      	bl	0x184c <tcpc_typec_handle_cc_change+0x408>
+		000000000000184c:  R_AARCH64_CALL26	pd_dbg_info
+    1850:      	ldrb	w8, [x22, #0xa]
+    1854:      	cmp	w8, #0x1
+    1858:      	b.ne	0x1890 <tcpc_typec_handle_cc_change+0x44c>
+    185c:      	mov	w8, #0x2248
+    1860:      	add	x20, x19, x8
+    1864:      	mov	x0, x20
+    1868:      	bl	0x1868 <tcpc_typec_handle_cc_change+0x424>
+		0000000000001868:  R_AARCH64_CALL26	mutex_lock
+    186c:      	mov	x0, x19
+    1870:      	mov	w1, #0x26
+    1874:      	bl	0x1874 <tcpc_typec_handle_cc_change+0x430>
+		0000000000001874:  R_AARCH64_CALL26	tcpc_disable_timer
+    1878:      	mov	x0, x19
+    187c:      	mov	w1, wzr
+    1880:      	mov	w2, wzr
+    1884:      	bl	0x1884 <tcpc_typec_handle_cc_change+0x440>
+		0000000000001884:  R_AARCH64_CALL26	tcpci_enable_discharge
+    1888:      	mov	x0, x20
+    188c:      	bl	0x188c <tcpc_typec_handle_cc_change+0x448>
+		000000000000188c:  R_AARCH64_CALL26	mutex_unlock
+    1890:      	ldrb	w8, [x22]
+    1894:      	strb	wzr, [x22, #0xa]
+    1898:      	sub	w8, w8, #0x6
+    189c:      	cmp	w8, #0x9
+    18a0:      	b.hi	0x18e8 <tcpc_typec_handle_cc_change+0x4a4>
+    18a4:      	adrp	x9, 0x1000 <tcpc_show_property+0x3c4>
+		00000000000018a4:  R_AARCH64_ADR_PREL_PG_HI21	.rodata+0x4c
+    18a8:      	add	x9, x9, #0x0
+		00000000000018a8:  R_AARCH64_ADD_ABS_LO12_NC	.rodata+0x4c
+    18ac:      	adr	x10, #0x10
+    18b0:      	ldrb	w11, [x9, x8]
+    18b4:      	add	x10, x10, x11, lsl #2
+    18b8:      	br	x10
+    18bc:      	ldrb	w8, [x22, #0xc]
+    18c0:      	cbz	w8, 0x18d0 <tcpc_typec_handle_cc_change+0x48c>
+    18c4:      	mov	x0, x19
+    18c8:      	mov	w1, #0x32
+    18cc:      	b	0x1938 <tcpc_typec_handle_cc_change+0x4f4>
+    18d0:      	mov	x0, x19
+    18d4:      	bl	0x18d4 <tcpc_typec_handle_cc_change+0x490>
+		00000000000018d4:  R_AARCH64_CALL26	tcpc_reset_typec_debounce_timer
+    18d8:      	b	0x14d0 <tcpc_typec_handle_cc_change+0x8c>
+    18dc:      	mov	x0, x19
+    18e0:      	mov	w1, #0x30
+    18e4:      	b	0x1938 <tcpc_typec_handle_cc_change+0x4f4>
+    18e8:      	mov	x0, x19
+    18ec:      	mov	w1, #0x31
+    18f0:      	b	0x1938 <tcpc_typec_handle_cc_change+0x4f4>
+    18f4:      	mov	x0, x19
+    18f8:      	mov	w1, #0x31
+    18fc:      	bl	0x18fc <tcpc_typec_handle_cc_change+0x4b8>
+		00000000000018fc:  R_AARCH64_CALL26	tcpc_enable_timer
+    1900:      	ldrb	w8, [x22, #0x7]
+    1904:      	cbnz	w8, 0x14d0 <tcpc_typec_handle_cc_change+0x8c>
+    1908:      	ldrb	w8, [x22, #0x8]
+    190c:      	cbnz	w8, 0x14d0 <tcpc_typec_handle_cc_change+0x8c>
+    1910:      	mov	w8, #0x2248
+    1914:      	add	x19, x19, x8
+    1918:      	mov	x0, x19
+    191c:      	bl	0x191c <tcpc_typec_handle_cc_change+0x4d8>
+		000000000000191c:  R_AARCH64_CALL26	mutex_lock
+    1920:      	mov	x0, x19
+    1924:      	strb	wzr, [x22, #0x388]
+    1928:      	bl	0x1928 <tcpc_typec_handle_cc_change+0x4e4>
+		0000000000001928:  R_AARCH64_CALL26	mutex_unlock
+    192c:      	b	0x14d0 <tcpc_typec_handle_cc_change+0x8c>
+    1930:      	mov	x0, x19
+    1934:      	mov	w1, #0x33
+    1938:      	bl	0x1938 <tcpc_typec_handle_cc_change+0x4f4>
+		0000000000001938:  R_AARCH64_CALL26	tcpc_enable_timer
+    193c:      	b	0x14d0 <tcpc_typec_handle_cc_change+0x8c>
+    1940:      	bl	0x1940 <tcpc_typec_handle_cc_change+0x4fc>
+		0000000000001940:  R_AARCH64_CALL26	__stack_chk_fail
