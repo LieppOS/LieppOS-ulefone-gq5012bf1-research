@@ -1,0 +1,20 @@
+--- a/aw883xx_bin_parse.c
++++ b/aw883xx_bin_parse.c
+@@ -1026,10 +1026,13 @@
+ 		if (aw_dev->chip_id != cfg_dde[i].chip_id)
+ 			continue;
+ 
+-		/* keep index[] ordered by ascending dev_profile */
+-		for (j = 0; j < num; j++)
+-			if (cfg_dde[i].dev_profile <= cfg_dde[index[j]].dev_profile)
+-				break;
++		if (num == 0) {
++			index[num++] = i;
++			continue;
++		}
++		j = 0;
++		while (j < num && cfg_dde[i].dev_profile > cfg_dde[index[j]].dev_profile)
++			j++;
+ 		for (k = num; k > j; k--)
+ 			index[k] = index[k - 1];
+ 		index[j] = i;

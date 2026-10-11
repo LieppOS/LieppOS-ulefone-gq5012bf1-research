@@ -1,0 +1,50 @@
+--- ZTE3.2p3/core/tee_context.c
++++ Vivo3.2p8/core/tee_context.c
+@@ -52,8 +52,7 @@
+ 		pos += sprintf(buff + pos,
+ 				"[%02d] ctx=%p (refcount=%d) (usr=%d)",
+ 				i, ctx,
+-				(int)atomic_read(&ctx->refcount.
+-					refcount),
++				(int)kref_read(&ctx->refcount),
+ 				ctx->usr_client);
+ 		pos += sprintf(buff + pos, "name=\"%s\" (tgid=%d)\n",
+ 				ctx->name,
+@@ -186,9 +185,6 @@
+ 	WARN_ON(!ctx || !ctx->tee);
+ 
+ 	kref_get(&ctx->refcount);
+-
+-	pr_debug("ctx=%p, kref=%d\n",
+-		ctx, (int) atomic_read(&ctx->refcount.refcount));
+ }
+ 
+ static int is_in_list(struct tee *tee, struct list_head *entry)
+@@ -218,9 +214,6 @@
+ 		return;
+ 
+ 	kref_put(&ctx->refcount, _tee_context_do_release);
+-
+-	pr_debug("ctx=%p, kref=%d\n",
+-		_ctx, (int) atomic_read(&ctx->refcount.refcount));
+ }
+ 
+ /**
+@@ -263,7 +256,7 @@
+ 
+ 	type &= (TEEC_MEM_INPUT | TEEC_MEM_OUTPUT);
+ 
+-	shm = tee_shm_alloc(ctx->tee, size,
++	shm = tkcore_alloc_shm(ctx->tee, size,
+ 			TEE_SHM_MAPPED | TEE_SHM_TEMP | type);
+ 	if (IS_ERR_OR_NULL(shm)) {
+ 		pr_err("buffer allocation failed (%ld)\n",
+@@ -278,7 +271,7 @@
+ 			shm->resv.kaddr, src, size)) {
+ 			pr_err(
+ 				"tee_context_copy_from_client failed\n");
+-			tee_shm_free(shm);
++			tkcore_shm_free(shm);
+ 			shm = NULL;
+ 		}
+ 	}
