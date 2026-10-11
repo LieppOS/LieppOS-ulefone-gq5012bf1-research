@@ -42,3 +42,15 @@ All three manifests are pairwise disjoint by `module_id` (checked by `scripts/va
    - Correct the sensors note: SCP host "Ulefone deltas" are pristine ALPS (`SCP-HOST-INTERFACES.md`).
    - Replace the historical `intree_relink.sh` `.mod.c` editing with the genuine in-tree build. It remains C because of BTF.
 10. Commit in the canonical branch. Do **not** push without explicit approval.
+
+## Re-check after Batch04 landed (canonical `f61ebf03`)
+
+Claude committed PLATFORM-BATCH-04 during this batch: 245 certified (A244 B1 C14 D91 G108). The
+canonical checkout was not touched here. In a scratch clone at `f61ebf03`, all 20 rows of this
+delta and all 21 audio rows still have `old_source_status = G`, and both deltas apply cleanly
+(`evidence/audit-delta-test-on-f61ebf03.json`):
+
+- this delta: A261 B1 C17 D91 G88, **262 certified / 196 uncertified**;
+- this delta + AUDIO-BATCH-01: A281 B1 C18 D91 G67, **282 certified / 176 uncertified**.
+
+Still re-run step 3 on whatever HEAD is current when merging.
