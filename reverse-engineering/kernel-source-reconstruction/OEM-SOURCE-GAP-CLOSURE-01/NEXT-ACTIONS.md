@@ -18,3 +18,19 @@
    immediately. Test srcversion only; the code is already exact.
 6. **No further generic searching** for flashlight, the shipped objects or the 11 unowned G drivers without a
    new, distinct source lead.
+
+## Reconciliation with Codex batch-02 (observed at end of session; read-only)
+
+Codex committed `aa212a88`, "complete12 non-display sources, 7 independent A / 5 honest C". It uses the same
+manifest `6f78615b`, and its AUDIT-DELTA covers exactly its 12 identities. It does **not** touch `tmem_ffa` or
+`tkcore`, so it is disjoint from this package's 14-field delta.
+
+| Class | A | B | C | D | E | F | G | Certified |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Canonical now (`4e47a5b9`) | 420 | 1 | 11 | 3 | 0 | 0 | 23 | 421 |
+| + this package (tmem_ffa C→A) | 421 | 1 | 10 | 3 | 0 | 0 | 23 | 422 |
+| + Codex batch-02 (7 G→A, 5 G→C), identity-disjoint | 428 | 1 | 15 | 3 | 0 | 0 | 11 | **429/458** |
+
+Codex reports `tkcore_drv` as C with 50/50 functions and import CRC residuals on `__tee_get`/`tee_core_add`/….
+Those are the `tkcore.ko` exports this package reproduces naturally (25/25), so applying patch 0002 to Codex's
+provider witness is the direct next test (`HANDOFF-TO-CODEX.md`).
