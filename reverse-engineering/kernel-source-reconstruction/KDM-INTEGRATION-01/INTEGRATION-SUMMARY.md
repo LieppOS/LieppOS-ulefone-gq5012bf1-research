@@ -51,3 +51,19 @@ frozen target, stays **D**: its row is byte-identical.
 
 The applier's scratch output was moved to `evidence/apply/`, and the committed research package was restored
 unchanged.
+
+## Applied
+
+Canonical was fast-forwarded from ee1803b7 to `ec46467a` after re-checking that it was still idle (clean, no
+locks). Live post-integration checks (`evidence/live-post/`):
+
+- inventory PASS 458/471, with all 471 stock `.ko` sha256 unchanged;
+- validator PASS_WITH_EXPLICIT_UNRESOLVED_SOURCE_CLASSES, 0 errors, A385 B1 C10 D8 E0 F0 G54;
+- `test_validate.py` 14/14 OK.
+
+## Unmerged branches after integration
+
+- **`codex/g-source-recovery-batch-01`:** 22 G→A and 1 G→C proposals, planned against ee1803b7. They must be
+  re-planned by identity on ec46467a. The rows are disjoint from these 10, but the RECONSTRUCTION-QUEUE header
+  anchor changed.
+- Older merged or superseded integration branches were left as-is.
