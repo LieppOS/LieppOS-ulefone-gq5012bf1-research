@@ -1,8 +1,8 @@
 # Authoritative staged source reconstruction queue
 
-458 identities /471 occurrences; 72 uncertified identities. Generated from current identity-keyed audit, not a stale file replacement.
+458 identities /471 occurrences; 67 uncertified identities. Generated from current identity-keyed audit, not a stale file replacement.
 
-Completed integration (CANONICAL-INTEGRATION-01): AUDIO-BATCH-01, SCP-CONNECTIVITY-BATCH-01, AUDIO-DEPENDENCIES-BATCH-02, NEXT-DG-BATCH-01, ALL-C-TO-A-CLOSURE and the USB-TYPEC-CLOSURE C-evidence update; BOOT-DEPENDENCY-BATCH-01 (16 first-stage D->A); LOW-POWER-BATCH-01 (12 LPM/SWPM/SSC/mbraink D->A); PERFORMANCE-POWERHAL-BATCH-01 (14 performance/PowerHAL/FPSGO/CPUQoS D->A); KDM-MEDIA-SECURITY-BATCH-01 (10 media/security/platform D->A; flashlight retained D). Retained C proof obligations are separate from code/hardware/component status.
+Completed integration (CANONICAL-INTEGRATION-01): AUDIO-BATCH-01, SCP-CONNECTIVITY-BATCH-01, AUDIO-DEPENDENCIES-BATCH-02, NEXT-DG-BATCH-01, ALL-C-TO-A-CLOSURE and the USB-TYPEC-CLOSURE C-evidence update; BOOT-DEPENDENCY-BATCH-01 (16 first-stage D->A); LOW-POWER-BATCH-01 (12 LPM/SWPM/SSC/mbraink D->A); PERFORMANCE-POWERHAL-BATCH-01 (14 performance/PowerHAL/FPSGO/CPUQoS D->A); KDM-MEDIA-SECURITY-BATCH-01 (10 media/security/platform D->A; flashlight retained D); REMAINING-KERNEL-SOURCE-BATCH-01 (5 reboot/kernel_modules/Mali-test D->A). Retained C proof obligations are separate from code/hardware/component status.
 
 ## 1. FINISH:BATCH04:charger_class — P0_BOOT
 - 1 identities: charger_class.ko
@@ -270,80 +270,52 @@ Completed integration (CANONICAL-INTEGRATION-01): AUDIO-BATCH-01, SCP-CONNECTIVI
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 39. CANDIDATE:kernel:drivers/power/reset — P3_LOADED_PLATFORM_OR_OPTIONAL
-- 2 identities: reboot-mode.ko;syscon-reboot-mode.ko
-- Classes: D:2
-- Source: ../kernel-research/nothing-mt6878/kernel/drivers/power/reset
-- Provider gaps: NONE
-- Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
-
-## 40. CANDIDATE:kernel_modules:fpsgo_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 39. CANDIDATE:kernel_modules:fpsgo_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: fpsgo.ko
 - Classes: D:1
 - Source: ../kernel-research/nothing-mt6878/kernel_modules/fpsgo_cus
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 41. CANDIDATE:kernel_modules:hbt_driver_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
-- 1 identities: hbt.ko
-- Classes: D:1
-- Source: ../kernel-research/nothing-mt6878/kernel_modules/hbt_driver_cus
-- Provider gaps: NONE
-- Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
-
-## 42. CANDIDATE:kernel_modules:msync2_frd_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 40. CANDIDATE:kernel_modules:msync2_frd_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: msync2_frd.ko
 - Classes: D:1
 - Source: ../kernel-research/nothing-mt6878/kernel_modules/msync2_frd_cus
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 43. PRESERVE:AW36515-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 41. PRESERVE:AW36515-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: aw36515.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/AW36515-FLASH/source
 - Provider gaps: CANDIDATE:device_modules:drivers/misc/mediatek/flashlight
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 44. PRESERVE:AW36518-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 42. PRESERVE:AW36518-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: aw36518.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/AW36518-FLASH/source
 - Provider gaps: CANDIDATE:device_modules:drivers/misc/mediatek/flashlight;FINISH:YFT-DEVINFO
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 45. PRESERVE:AW36518-V2-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 43. PRESERVE:AW36518-V2-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: aw36518_v2.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/AW36518-V2-FLASH/source
 - Provider gaps: CANDIDATE:device_modules:drivers/misc/mediatek/flashlight
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 46. PRESERVE:DW9781C-OIS — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 44. PRESERVE:DW9781C-OIS — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: dw9781c.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/DW9781C-OIS/source
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 47. PRESERVE:LN2403-CAMPLIGHT — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 45. PRESERVE:LN2403-CAMPLIGHT — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: leds-ln2403.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/LN2403-CAMPLIGHT/source
 - Provider gaps: PRESERVE:DISPLAY-GLUE
-- Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
-
-## 48. CANDIDATE:kernel_modules:sched_cus — P4_DIAGNOSTIC_OR_REFERENCE
-- 1 identities: scheduler_ext.ko
-- Classes: D:1
-- Source: ../kernel-research/nothing-mt6878/kernel_modules/sched_cus
-- Provider gaps: NONE
-- Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
-
-## 49. MALI-DMA-BUF-DIAGNOSTIC — P4_DIAGNOSTIC_OR_REFERENCE
-- 1 identities: mali_dmabuf_test_mt6878_r44.ko
-- Classes: D:1
-- Source: git-object:gpu/gpu_mali/mali_avalon/mali-r44p1/drivers/base/arm/dma_buf_test_exporter/dma-buf-test-exporter.c
-- Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
