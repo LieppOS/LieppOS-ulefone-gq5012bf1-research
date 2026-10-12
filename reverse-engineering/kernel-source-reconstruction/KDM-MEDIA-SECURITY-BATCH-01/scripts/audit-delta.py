@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""PERFORMANCE-POWERHAL-BATCH-01 identity-keyed, field-level audit delta (compare-and-swap).
+"""KDM-MEDIA-SECURITY-BATCH-01 identity-keyed, field-level audit delta (compare-and-swap).
 
-  audit-delta.py plan                       -> writes AUDIT-DELTA.tsv from the canonical 63f12972 rows (read-only)
+  audit-delta.py plan                       -> writes AUDIT-DELTA.tsv from the canonical ee1803b7 rows (read-only)
   audit-delta.py apply <scratch-root> --expected-head SHA [--canonical-base SHA]
         applies AUDIT-DELTA.tsv to <scratch-root>'s audit only, updates source-reviews.json and
-        review-input-hashes.json for the 14 rows, runs the reviewed regenerate() (AST-extracted from
+        review-input-hashes.json for the 10 certified rows (flashlight stays D, untouched), runs the reviewed regenerate() (AST-extracted from
         COMPLETED-BATCHES-INTEGRATION-01/scripts/apply-staging.py, unmodified), restores the current
         canonical queue narrative header, then the unchanged validator and 14 audit mutation tests.
 
@@ -16,10 +16,11 @@ from pathlib import Path
 
 P = Path(__file__).resolve().parents[1]
 HERE = P.parents[2]
-CANON_BASE = '63f12972ab8826a7caff5f64db36feecf37a9f81'
-REPO = '../android_kernel_modules_performance_ulefone_gq5012bf1'
-COMMIT = '7a1a1e298a2a6f6a282a4a8957c23a606616dfd4'
-PKG = 'reverse-engineering/kernel-source-reconstruction/PERFORMANCE-POWERHAL-BATCH-01'
+CANON_BASE = 'ee1803b7c639412c6cdadd8ce66e4a4bfeaa87ea'
+REPO = '../android_kernel_modules_kdm_media_security_ulefone_gq5012bf1'
+COMMIT = '973eb04ac0d02be7dbb3fe8275ca35b7a5c4522b'
+PKG = 'reverse-engineering/kernel-source-reconstruction/KDM-MEDIA-SECURITY-BATCH-01'
+BLOCKED = {'flashlight.ko'}  # frozen target retained D (see BLOCKERS.tsv); its audit row is not changed
 AUD = 'reverse-engineering/kernel-source-parity-audit'
 ap = argparse.ArgumentParser()
 ap.add_argument('mode', choices=['plan', 'apply'])
@@ -51,10 +52,12 @@ if args.mode == 'plan':
     ev = f'{PKG}/evidence/independent-proof'
     out = []
     for m in man:
+        if m['filename'] in BLOCKED:
+            continue
         i = m['module_id']; r = base[i]; p = par[i]
         assert r['source_status'] == 'D' and r['stock_sha256'] == m['stock_sha256']
         n = int(r['stock_functions']); assert p['functions'] == f'{n}/{n}'
-        owner = f'PERFORMANCE-POWERHAL-BATCH-01:{famof[i]}'
+        owner = f'KDM-MEDIA-SECURITY-BATCH-01:{famof[i]}'
         after = dict(source_status='A', abi_status='VERIFIED', crc_status='VERIFIED', kcfi_status='VERIFIED', blocker='NONE',
                      build_script=f'{REPO}/scripts/bulk-build.sh', equivalent_functions='0', exact_functions=str(n), unresolved_functions='0',
                      gap_kind='NONE_SOURCE_CERTIFIED', parity_evidence=f'{ev}/B1/acceptance/acceptance.json;{ev}/B2/acceptance/acceptance.json',
@@ -116,13 +119,13 @@ fn = next(n for n in code.body if isinstance(n, ast.FunctionDef) and n.name == '
 ns = dict(globals()); ns.update(sid=sid, E=E, A=A, base=base, rows=rows, by=by, review=review, hashes=hashes, table=table, write=write)
 queue_before = (A / 'RECONSTRUCTION-QUEUE.md').read_text().splitlines()
 exec(compile(ast.Module(body=[fn], type_ignores=[]), '<reviewed-regenerator>', 'exec'), ns)
-ns['regenerate']('performance-powerhal-batch-01')
+ns['regenerate']('kdm-media-security-batch-01')
 # Narrative: keep the current canonical integration header, append this batch (no other text changed).
 q = (A / 'RECONSTRUCTION-QUEUE.md').read_text().splitlines()
 old_hdr = next(l for l in queue_before if l.startswith('Completed integration'))
 idx = next(n for n, l in enumerate(q) if l.startswith('Completed integration'))
-# Compose on the integrated canonical header (63f12972: ...; LOW-POWER-BATCH-01 (...)).
-for anchor, new in [(' (12 LPM/SWPM/SSC/mbraink D->A). Retained', ' (12 LPM/SWPM/SSC/mbraink D->A); PERFORMANCE-POWERHAL-BATCH-01 (14 performance/PowerHAL/FPSGO/CPUQoS D->A). Retained')]:
+# Compose on the integrated canonical header (ee1803b7: ...; PERFORMANCE-POWERHAL-BATCH-01 (...)).
+for anchor, new in [(' (14 performance/PowerHAL/FPSGO/CPUQoS D->A). Retained', ' (14 performance/PowerHAL/FPSGO/CPUQoS D->A); KDM-MEDIA-SECURITY-BATCH-01 (10 media/security/platform D->A; flashlight retained D). Retained')]:
     if old_hdr.count(anchor) == 1:
         q[idx] = old_hdr.replace(anchor, new); break
 else:
