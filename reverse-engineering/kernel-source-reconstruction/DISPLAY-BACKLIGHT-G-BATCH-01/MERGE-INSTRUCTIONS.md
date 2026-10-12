@@ -31,3 +31,10 @@ Canonical was **not** modified by this batch. Integration needs a fresh exclusiv
    `PROPOSED-AUDIT.patch`.
 4. **Land it:** move the applier's scratch output into an integration package, restore the committed copy, commit,
    fast-forward canonical only. Rerun the inventory check, the validator and `test_validate.py` live. Do not push.
+
+## Note on the source repository HEAD
+
+The certified recipe commit is `c0b39b61bf23f18d30c25f8cdb7ec8cb6b7b2c7f`; the proof bundle and both B1/B2 runs
+used it. The repository HEAD is `9ec1a1609935987b26b1c51dd0defae43aa58a88`, a single documentation-only child that rewrites `README.md`:
+`git diff --name-only c0b39b61 HEAD` lists only README.md, and no recipe path (scripts/, reference/, patches/,
+families/, SOURCE-PINS.tsv) changed. Step 2 therefore accepts HEAD == c0b39b61 or this docs-only child.
