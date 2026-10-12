@@ -11,10 +11,11 @@ changes=[];records=[]
 # Upstream7:2.2 namespacing is absent in stock6:1.1; do not invent type declarations.
 f='drivers/tee/tkcore/include/linux/tee_kernel_api.h';orig=get(M/'tkcore-public.git',TK,f);unpref=re.sub(r'^#define TEEC_\w+ tkcore_TEEC_\w+\n','',orig,flags=re.M);assert orig!=unpref
 changes.append(diff(f,orig,unpref));records.append(dict(path=f,old_sha256=sha(orig),new_sha256=sha(unpref),delta='Remove documented7:2.2 tkcore_ API/tag namespacing to6:1.1; genuine original body/typegraph otherwise unchanged; provider natural CRC residual remains explicit'))
-# Older consumer40-byte SharedMemory layout: stocktee_session_open allocation0x140,
-# real legacy header and historicalTEEC namespace/KCFI contract, not compileddata transplant.
-legacy=unpref.replace('\tuint64_t registered;\n','');assert legacy!=unpref
-lf='drivers/tee/tkcore/legacy/tee_client_api.h';changes.append(diff(lf,'',legacy));records.append(dict(path=lf,old_sha256='PUBLIC7:2.2_HEADER:'+sha(orig),new_sha256=sha(legacy),delta='Reconstruct genuine older6:1.1 API header layout: no added7:2.2 registered member; original public declarations/copyright retained. Target consumer only, not disguised providerlayout/genksyms'))
+# D3 rejected the historical narrative's40B assertion: the ACTUAL historical
+# successful header retains registered, i.e.48B. Originalpublicsource matches it.
+# Preserve all real members; namespace-only legacy view, no private invented types.
+legacy=unpref
+lf='drivers/tee/tkcore/legacy/tee_client_api.h';changes.append(diff(lf,'',legacy));records.append(dict(path=lf,old_sha256='PUBLIC7:2.2_HEADER:'+sha(orig),new_sha256=sha(legacy),delta='Actual historical header/source comparison disproves stale40B note: preserve complete48B originalpublicSharedMemory inclregistered, namespace-only6:1.1 view; rejectedD3 field-removal hypothesis preserved separately'))
 f='drivers/misc/mediatek/geniezone/tz_system.c';orig=get(M/'alps5e41.git',ALPS,f);new=orig
 for a,b in [('teec_initialize_context','TEEC_InitializeContext'),('teec_finalize_context','TEEC_FinalizeContext'),('teec_open_session','TEEC_OpenSession'),('teec_close_session','TEEC_CloseSession'),('teec_invoke_command','TEEC_InvokeCommand'),('struct teec_context','struct TEEC_Context'),('struct teec_session','struct TEEC_Session'),('struct teec_uuid','struct TEEC_UUID'),('struct teec_operation','struct TEEC_Operation')]:new=new.replace(a,b)
 assert new!=orig;changes.append(diff(f,orig,new));records.append(dict(path=f,old_sha256=sha(orig),new_sha256=sha(new),delta='Recover five documented6:1.1 CamelCaseweak GP APIs and originalstructtags, bodies unchanged; required by stockfiveindependent KCFIids + errorstrings/61function evidence'))

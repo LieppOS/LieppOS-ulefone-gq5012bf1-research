@@ -2,6 +2,8 @@
 from pathlib import Path
 import json,csv,subprocess,shutil,hashlib,collections
 P=Path(__file__).resolve().parents[1];R=P.parents[2];W=Path('/home/armol/kernel-work/g-source-recovery-batch-01');E=P/'evidence';state=json.loads((P/'BATCH-STATE.json').read_text());manifest=list(csv.DictReader((P/'BATCH-MANIFEST.tsv').open(),delimiter='\t'));proofs={};rows=[]
+# Historical14-target checkpoint helper; final mixed22A/1C state uses finalize.py.
+assert not (E/'independent-proof/secure_transport/RESULT.json').exists(),'Use finalize.py for completed mixed A/C proof; never misclassify C'
 for fam in ['camera_lens','modem_interfaces','secure_transport']:
  f=E/'independent-proof'/fam/'RESULT.json'
  if f.exists():j=json.loads(f.read_text());assert j['result']=='PASS';proofs[fam]=dict(commit=j['commit'],scope=j['scope'],object_pairs=len(j['builds'][0]['objects']),status='PASS');d=W/(fam.replace('_','-')+'-independent-driver.log')
