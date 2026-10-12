@@ -1,0 +1,27 @@
+--- /home/armol/kernel-work/allc/tk72/variants/H1/src/include/linux/tee_tkcore.h	2026-10-12 00:49:59.040591510 +0300
++++ include/linux/tee_tkcore.h	2026-10-12 23:57:52.714702438 +0300
+@@ -189,6 +189,13 @@
+ 	struct tee_shm_dma_buf *sdb;
+ };
+ 
++struct tee_shm_resv {
++	void *kaddr;
++	dma_addr_t paddr;
++	struct sg_table sgt;
++	struct tee_shm_dma_buf *sdb;
++};
++
+ /**
+  * struct tee_shm - internal structure to store a shm object.
+  *
+@@ -213,9 +220,8 @@
+ 	size_t size_alloc;
+ 
+ 	uint32_t flags;
+-	uint16_t shm_name;
+ 
+-	struct tee_shm_static static_shm;
++	struct tee_shm_resv resv;
+ };
+ 
+ #define TEE_SHM_MAPPED			0x01000000
