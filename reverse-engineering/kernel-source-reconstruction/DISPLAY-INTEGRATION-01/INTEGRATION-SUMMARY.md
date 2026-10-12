@@ -61,3 +61,17 @@
   - `disp-sec` `mediatek,disp-sec-aidctl`.
 
   None of this is a runtime claim.
+
+## Applied to canonical
+
+The integration branch was committed as `e115fbd4`. Canonical was re-checked idle (still 1e87ca06, clean, no
+locks) and **fast-forwarded to `e115fbd4`**; nothing was forced and nothing pushed.
+
+Live post-checks on canonical (`evidence/live-post/`):
+
+- validator PASS, 0 errors, A420 B1 C11 D3 E0 F0 G23;
+- 14/14 `test_validate.py`;
+- inventory PASS 458/471;
+- 471 stock `.ko` hashes unchanged.
+
+The integration worktree (`ulefone-gq5012bf1-research-display-integration`) is kept for audit.
