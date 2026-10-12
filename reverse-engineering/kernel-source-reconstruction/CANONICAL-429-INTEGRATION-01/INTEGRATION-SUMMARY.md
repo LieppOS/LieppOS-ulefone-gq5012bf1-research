@@ -47,3 +47,7 @@ certified (93.7%)**, with 29 uncertified.
 | Validation | `STOCK-INVENTORY.md`, `SOURCE-PROOF-VALIDATION.md`, `MUTATION-TEST-RESULTS.md` |
 | Provenance and classes | `TRUSTKERNEL-SOURCE-PROVENANCE.md`, `CLASSIFICATIONS-BEFORE-AFTER.tsv` |
 | Recovery | `RECOVERY-REFERENCES.md` |
+
+## Applied to canonical
+
+Canonical was re-checked idle at 4e47a5b9 and fast-forwarded to `1801d814` (no force, no push). Live checks: validator PASS 0 errors A428 B1 C15 D3 E0 F0 G11; test_validate 14/14; inventory 458/471; 471 stock hashes unchanged (`evidence/live-post/`).
