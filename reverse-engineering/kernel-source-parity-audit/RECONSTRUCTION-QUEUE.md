@@ -1,8 +1,8 @@
 # Authoritative staged source reconstruction queue
 
-458 identities /471 occurrences; 67 uncertified identities. Generated from current identity-keyed audit, not a stale file replacement.
+458 identities /471 occurrences; 45 uncertified identities. Generated from current identity-keyed audit, not a stale file replacement.
 
-Completed integration (CANONICAL-INTEGRATION-01): AUDIO-BATCH-01, SCP-CONNECTIVITY-BATCH-01, AUDIO-DEPENDENCIES-BATCH-02, NEXT-DG-BATCH-01, ALL-C-TO-A-CLOSURE and the USB-TYPEC-CLOSURE C-evidence update; BOOT-DEPENDENCY-BATCH-01 (16 first-stage D->A); LOW-POWER-BATCH-01 (12 LPM/SWPM/SSC/mbraink D->A); PERFORMANCE-POWERHAL-BATCH-01 (14 performance/PowerHAL/FPSGO/CPUQoS D->A); KDM-MEDIA-SECURITY-BATCH-01 (10 media/security/platform D->A; flashlight retained D); REMAINING-KERNEL-SOURCE-BATCH-01 (5 reboot/kernel_modules/Mali-test D->A). Retained C proof obligations are separate from code/hardware/component status.
+Completed integration (CANONICAL-INTEGRATION-01): AUDIO-BATCH-01, SCP-CONNECTIVITY-BATCH-01, AUDIO-DEPENDENCIES-BATCH-02, NEXT-DG-BATCH-01, ALL-C-TO-A-CLOSURE and the USB-TYPEC-CLOSURE C-evidence update; BOOT-DEPENDENCY-BATCH-01 (16 first-stage D->A); LOW-POWER-BATCH-01 (12 LPM/SWPM/SSC/mbraink D->A); PERFORMANCE-POWERHAL-BATCH-01 (14 performance/PowerHAL/FPSGO/CPUQoS D->A); KDM-MEDIA-SECURITY-BATCH-01 (10 media/security/platform D->A; flashlight retained D); REMAINING-KERNEL-SOURCE-BATCH-01 (5 reboot/kernel_modules/Mali-test D->A); G-SOURCE-RECOVERY-BATCH-01 (22 camera-lens/modem-interface/secure-transport G->A, tmem_ffa G->C with 4 TrustKernel import CRCs not waived). Retained C proof obligations are separate from code/hardware/component status.
 
 ## 1. FINISH:BATCH04:charger_class — P0_BOOT
 - 1 identities: charger_class.ko
@@ -74,245 +74,196 @@ Completed integration (CANONICAL-INTEGRATION-01): AUDIO-BATCH-01, SCP-CONNECTIVI
 - Provider gaps: NONE
 - Proof needed: Independent source-input closure unproved. Existing artifact parity is not discarded; inspect ../Reverse Engineer - DONE/BACKLIGHT-DISPLAY-GLUE/scripts/glue.py and preserve all exact inputs before claiming A/B.
 
-## 11. PRESERVE:FFA-V10 — P0_BOOT
-- 1 identities: ffa_v10.ko
-- Classes: G:1
-- Source: ../Reverse Engineer - DONE/FFA-V10/source
-- Provider gaps: NONE
-- Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
-
-## 12. PRESERVE:FINGERPRINT-PLATFORM-SHIM — P0_BOOT
+## 11. PRESERVE:FINGERPRINT-PLATFORM-SHIM — P0_BOOT
 - 1 identities: fingerprint.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/FINGERPRINT-PLATFORM-SHIM/source
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 13. PRESERVE:MEDIATEK-DRM — P0_BOOT
+## 12. PRESERVE:MEDIATEK-DRM — P0_BOOT
 - 1 identities: mediatek-drm-panel-drv.ko
 - Classes: G:1
 - Source: .
 - Provider gaps: PRESERVE:DISPLAY-GLUE
 - Proof needed: Independent source-input closure unproved. Existing artifact parity is not discarded; inspect ../Reverse Engineer - DONE/MEDIATEK-DRM/scripts/build.sh and preserve all exact inputs before claiming A/B.
 
-## 14. PRESERVE:MICROARRAY-FP-TEE — P0_BOOT
+## 13. PRESERVE:MICROARRAY-FP-TEE — P0_BOOT
 - 1 identities: microarray_fp_tee.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/MICROARRAY-FP-TEE/source
 - Provider gaps: FINISH:TRUSTKERNEL-SOURCE-ABI;PRESERVE:FINGERPRINT-PLATFORM-SHIM;PRESERVE:SPI-MT65XX
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 15. PRESERVE:PROGRAMMABLE-KEYS — P0_BOOT
+## 14. PRESERVE:PROGRAMMABLE-KEYS — P0_BOOT
 - 1 identities: yft_gpio_keys.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/PROGRAMMABLE-KEYS/source
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 16. PRESERVE:RT5133-POWER-IC — P0_BOOT
+## 15. PRESERVE:RT5133-POWER-IC — P0_BOOT
 - 2 identities: extdev_io_class.ko;rt5133-regulator.ko
 - Classes: G:2
 - Source: ../Reverse Engineer - DONE/RT5133-POWER-IC/source
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 17. PRESERVE:SC8510-BIDIRECTIONAL-CHARGE-PUMP — P0_BOOT
+## 16. PRESERVE:SC8510-BIDIRECTIONAL-CHARGE-PUMP — P0_BOOT
 - 1 identities: sc851x_charger.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/SC8510-BIDIRECTIONAL-CHARGE-PUMP/source
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 18. PRESERVE:SC8571-CHARGE-PUMP — P0_BOOT
+## 17. PRESERVE:SC8571-CHARGE-PUMP — P0_BOOT
 - 1 identities: sc8571_charger.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/SC8571-CHARGE-PUMP/source
 - Provider gaps: FINISH:BATCH04:charger_class
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 19. PRESERVE:SH366003-FUEL-GAUGE — P0_BOOT
+## 18. PRESERVE:SH366003-FUEL-GAUGE — P0_BOOT
 - 1 identities: sh366003_fg.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/SH366003-FUEL-GAUGE/source
 - Provider gaps: FINISH:YFT-DEVINFO
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 20. PRESERVE:SPI-MT65XX — P0_BOOT
+## 19. PRESERVE:SPI-MT65XX — P0_BOOT
 - 1 identities: spi-mt65xx.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/SPI-MT65XX/source
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 21. PRESERVE:TKCORE-DRV — P0_BOOT
+## 20. PRESERVE:TKCORE-DRV — P0_BOOT
 - 1 identities: tkcore_drv.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/TKCORE-DRV/source
-- Provider gaps: FINISH:TRUSTKERNEL-SOURCE-ABI;PRESERVE:FFA-V10
+- Provider gaps: FINISH:TRUSTKERNEL-SOURCE-ABI
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 22. PRESERVE:VTDR6115-DISPLAY — P0_BOOT
+## 21. PRESERVE:VTDR6115-DISPLAY — P0_BOOT
 - 1 identities: panel-ky-vtdr6115-dphy-cmd.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/VTDR6115-DISPLAY/source
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 23. PRESERVE:YFT-TPD-GESTURE — P0_BOOT
+## 22. PRESERVE:YFT-TPD-GESTURE — P0_BOOT
 - 1 identities: yft_tpd_gesture.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/YFT-TPD-GESTURE/source
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 24. PRESERVE:GZ-MAIN-MOD — P1_RADIO_OR_SECURITY
-- 1 identities: gz_main_mod.ko
-- Classes: G:1
-- Source: ../Reverse Engineer - DONE/GZ-MAIN-MOD/source
-- Provider gaps: PRESERVE:FFA-V10;PRESERVE:GZ-TRANSPORT;PRESERVE:GZ-TZ-SYSTEM;PRESERVE:TMEM-FFA
-- Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
-
-## 25. PRESERVE:GZ-TRANSPORT — P1_RADIO_OR_SECURITY
-- 5 identities: gz_ipc_mod.ko;gz_irq_mod.ko;gz_log_mod.ko;gz_trusty_mod.ko;gz_virtio_mod.ko
-- Classes: G:5
-- Source: ../Reverse Engineer - DONE/GZ-TRANSPORT/source
-- Provider gaps: NONE
-- Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
-
-## 26. PRESERVE:GZ-TZ-SYSTEM — P1_RADIO_OR_SECURITY
-- 1 identities: gz_tz_system.ko
-- Classes: G:1
-- Source: ../Reverse Engineer - DONE/GZ-TZ-SYSTEM/source
-- Provider gaps: PRESERVE:GZ-TRANSPORT
-- Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
-
-## 27. PRESERVE:MODEM — P1_RADIO_OR_SECURITY
-- 7 identities: c2k_usb.ko;c2k_usb_f_via_atc.ko;c2k_usb_f_via_ets.ko;c2k_usb_f_via_modem.ko;md_cooling_all.ko;mddp.ko;mtk_md_power_throttling.ko
-- Classes: G:7
-- Source: .
-- Provider gaps: NONE
-- Proof needed: Independent source-input closure unproved. Existing artifact parity is not discarded; inspect reverse-engineering/modem/scripts/rebuild_all.sh and preserve all exact inputs before claiming A/B.
-
-## 28. PRESERVE:TMEM-FFA — P1_RADIO_OR_SECURITY
+## 23. G-SOURCE-RECOVERY-BATCH-01:NORMAL-WORLD-SECURE-TRANSPORT — P1_RADIO_OR_SECURITY
 - 1 identities: tmem_ffa.ko
-- Classes: G:1
-- Source: ../Reverse Engineer - DONE/TMEM-FFA/source
-- Provider gaps: FINISH:TRUSTKERNEL-SOURCE-ABI;PRESERVE:FFA-V10;PRESERVE:GZ-TZ-SYSTEM
-- Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
+- Classes: C:1
+- Source: ../android_kernel_modules_secure_transport_ulefone_gq5012bf1
+- Provider gaps: FINISH:TRUSTKERNEL-SOURCE-ABI
+- Proof needed: Four naturalpublicTrustKernel7:2.2 provider importCRCs differ fromstock6:1.1: TEEC_FinalizeContext/InitializeContext/OpenSession/RegisterSharedMemory; full141functions/allnonversiondata/rawrelocs exact; originalprivatecontextABI sourceclosure missing. SourceB1/B2 reproducible, NOTstockaccepted; outsideC tkcore ownerunchanged.
 
-## 29. FINISH:FT3680-TOUCH — P2_ACTIVE_FEATURE
+## 24. FINISH:FT3680-TOUCH — P2_ACTIVE_FEATURE
 - 1 identities: focaltech_touch_spi_ft3680.ko
 - Classes: C:1
 - Source: ../Reverse Engineer - PARTIAL/FT3680-TOUCH/source
 - Provider gaps: FINISH:YFT-DEVINFO;PRESERVE:YFT-TPD-GESTURE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 30. PRESERVE:CAMERA-EEPROMS — P2_ACTIVE_FEATURE
+## 25. PRESERVE:CAMERA-EEPROMS — P2_ACTIVE_FEATURE
 - 1 identities: camera_eeprom_v4l2.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/CAMERA-EEPROMS/source
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 31. PRESERVE:CAMERA-VCMS — P2_ACTIVE_FEATURE
-- 6 identities: camera_af_media.ko;main2_vcm.ko;main3_vcm.ko;main4_vcm.ko;main_vcm.ko;sub_vcm.ko
-- Classes: G:6
-- Source: ../Reverse Engineer - DONE/CAMERA-VCMS/source
-- Provider gaps: NONE
-- Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
-
-## 32. PRESERVE:CO5300-REAR-DISPLAY — P2_ACTIVE_FEATURE
+## 26. PRESERVE:CO5300-REAR-DISPLAY — P2_ACTIVE_FEATURE
 - 1 identities: spi_tiny_co5300_lcd.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/CO5300-REAR-DISPLAY/source
 - Provider gaps: FINISH:YFT-DEVINFO;PRESERVE:HYNITRON-REAR-TOUCH
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 33. PRESERVE:CUSTOM-LDO — P2_ACTIVE_FEATURE
+## 27. PRESERVE:CUSTOM-LDO — P2_ACTIVE_FEATURE
 - 1 identities: custom-ldo.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/CUSTOM-LDO/source
 - Provider gaps: PRESERVE:WL2868-CAMERA-LDO
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 34. PRESERVE:FM78100-COMPANION — P2_ACTIVE_FEATURE
+## 28. PRESERVE:FM78100-COMPANION — P2_ACTIVE_FEATURE
 - 1 identities: yft_tiny2c_usb.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/FM78100-COMPANION/source
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 35. PRESERVE:HYNITRON-REAR-TOUCH — P2_ACTIVE_FEATURE
+## 29. PRESERVE:HYNITRON-REAR-TOUCH — P2_ACTIVE_FEATURE
 - 1 identities: hynitron.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/HYNITRON-REAR-TOUCH/source
 - Provider gaps: FINISH:YFT-DEVINFO
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 36. PRESERVE:WL2868-CAMERA-LDO — P2_ACTIVE_FEATURE
+## 30. PRESERVE:WL2868-CAMERA-LDO — P2_ACTIVE_FEATURE
 - 1 identities: custom-ldo-wl2868.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/WL2868-CAMERA-LDO/source
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 37. AUDIO-BATCH-01:CODEC-AMP — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 31. AUDIO-BATCH-01:CODEC-AMP — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: aw883xx_driver.ko
 - Classes: C:1
 - Source: ../android_kernel_modules_audio_ulefone_gq5012bf1
 - Provider gaps: NONE
 - Proof needed: inlined v1.7.1 scene-parser codegen (insertion-sort loop shape) not reproduced; stock semantics restored
 
-## 38. CANDIDATE:device_modules:drivers/misc/mediatek/flashlight — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 32. CANDIDATE:device_modules:drivers/misc/mediatek/flashlight — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: flashlight.ko
 - Classes: D:1
 - Source: ../kernel-research/nothing-mt6878/device_modules/drivers/misc/mediatek/flashlight
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 39. CANDIDATE:kernel_modules:fpsgo_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 33. CANDIDATE:kernel_modules:fpsgo_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: fpsgo.ko
 - Classes: D:1
 - Source: ../kernel-research/nothing-mt6878/kernel_modules/fpsgo_cus
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 40. CANDIDATE:kernel_modules:msync2_frd_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 34. CANDIDATE:kernel_modules:msync2_frd_cus — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: msync2_frd.ko
 - Classes: D:1
 - Source: ../kernel-research/nothing-mt6878/kernel_modules/msync2_frd_cus
 - Provider gaps: NONE
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 41. PRESERVE:AW36515-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 35. PRESERVE:AW36515-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: aw36515.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/AW36515-FLASH/source
 - Provider gaps: CANDIDATE:device_modules:drivers/misc/mediatek/flashlight
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 42. PRESERVE:AW36518-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 36. PRESERVE:AW36518-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: aw36518.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/AW36518-FLASH/source
 - Provider gaps: CANDIDATE:device_modules:drivers/misc/mediatek/flashlight;FINISH:YFT-DEVINFO
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 43. PRESERVE:AW36518-V2-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 37. PRESERVE:AW36518-V2-FLASH — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: aw36518_v2.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/AW36518-V2-FLASH/source
 - Provider gaps: CANDIDATE:device_modules:drivers/misc/mediatek/flashlight
 - Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
 
-## 44. PRESERVE:DW9781C-OIS — P3_LOADED_PLATFORM_OR_OPTIONAL
-- 1 identities: dw9781c.ko
-- Classes: G:1
-- Source: ../Reverse Engineer - DONE/DW9781C-OIS/source
-- Provider gaps: NONE
-- Proof needed: Independent pinned input closure + full stock code/data/CRC/KCFI/section/relocation acceptance; G means evidence/preservation unresolved, not code missing
-
-## 45. PRESERVE:LN2403-CAMPLIGHT — P3_LOADED_PLATFORM_OR_OPTIONAL
+## 38. PRESERVE:LN2403-CAMPLIGHT — P3_LOADED_PLATFORM_OR_OPTIONAL
 - 1 identities: leds-ln2403.ko
 - Classes: G:1
 - Source: ../Reverse Engineer - DONE/LN2403-CAMPLIGHT/source
