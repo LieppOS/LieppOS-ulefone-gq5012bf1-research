@@ -1,0 +1,240 @@
+# Stock kernel source-parity gap audit — GQ5012BF1
+
+> **Update 2026-10-09 — BOOT-CLOCK-CORE completed.** `clk-common`, `clk-mt6878`,
+> `clk-mt6878-bus`, `clk-mt6878-peri`, `clk-mt6878-vlp` and `clk-fmeter-mt6878` moved
+> **D → A** (byte-exact except GNU build ID; independent clean-checkout B1/B2) via
+> `android_kernel_modules_boot_clock_ulefone_gq5012bf1` (107 / 351).
+>
+> **Update 2026-10-09 — PRESERVE:STORAGE completed.** `ufs-mediatek-mod`, `ufs-mediatek-dbg`,
+> `phy-mtk-ufs`, `rpmb`, `rpmb-mtk`, `mtk-mmc`, `mtk-mmc-dbg`, `cqhci`, `mtk-wp` and `blocktag`
+> moved **G → A** via `android_kernel_modules_storage_ulefone_gq5012bf1`
+> (`../kernel-source-reconstruction/STORAGE/`; then 117 certified / 341 uncertified).
+>
+> **Update 2026-10-09 — PINCTRL completed.** `pinctrl-mt6363`, `pinctrl-mt6878`,
+> `pinctrl-mtk-common-v2_debug` and `pinctrl-mtk-v2` moved **D → A** via the maintained
+> `android_kernel_modules_pinctrl_ulefone_gq5012bf1` recipe, independent clean B1/B2 and full
+> stock acceptance (`../kernel-source-reconstruction/PINCTRL/`; then 121 certified / 337 uncertified).
+>
+> **Update 2026-10-09 — REGULATORS completed.** `mt6315-regulator`, `mt6363-regulator`,
+> `mtk-dvfsrc-regulator` and `rt6160-regulator` moved **D → A** via the maintained
+> `android_kernel_modules_regulators_ulefone_gq5012bf1` recipe, clean-clone B1/B2 and full
+> stock acceptance (`../kernel-source-reconstruction/REGULATORS/`; then125 certified /333 uncertified).
+> RT6160's stale load_order133 is corrected to actual normal124 (recovery122); no load-list edits.
+>
+> **Update 2026-10-09 — INTERCONNECT-EMI completed.** `mmqos-common`, `mmqos-mt6878`
+> and `mtk-emi` moved **D → A** via unchanged ALPS C,33 real provider ABI witnesses,
+> committed fresh-clone B1/B2 and complete stock acceptance
+> (`../kernel-source-reconstruction/INTERCONNECT-EMI/`; then128 certified /330 uncertified).
+> Actual hashed stock lists correct common67→61, platform68→62 and EMI47→51;
+> recovery59/60/50. No load-list edits.
+>
+> **Update 2026-10-10 — IOMMU completed.** Only `mtk_iommu.ko` moved **D → A**:
+> unchanged ALPS C/headers,18 real external ABI witnesses, independent committed fresh-clone
+> B1/B2 and complete stock acceptance (`../kernel-source-reconstruction/IOMMU/`).
+> Then:**129 certified /329 uncertified of458**. Exactly one row changed;
+> all457 others, owners/statuses and stock paths unchanged. Hashed normal65/recovery63
+> correct target metadata71→65; no stock list edits. Debug/secure/test stay separate D.
+
+> **Update 2026-10-10 — PLATFORM-BATCH-01:** all35 frozen identities independently
+> compile as deterministic raw/stripped B1/B2.31 D→A; four CMDQ drivers D→C with
+> preserved recursive ABI/counter-symbol failures. Four maintained family repositories;
+> originals unavailable during clean builds. Then:**160 certified /298 remaining**.
+> All423 unselected rows and every owner/status/stock path unchanged; no load-list edits.
+> See `../kernel-source-reconstruction/PLATFORM-BATCH-01/BATCH-SUMMARY.md`.
+
+> **Update 2026-10-10 — PLATFORM-BATCH-02:** all27 frozen identities independently
+> accepted A (21D/6G→A), each of four fresh committed engines actually builds joint27 B1/B2.
+> Then:**187 certified /271 remaining of458**. All431 unselected rows,including
+> four CMDQ C, unchanged. No C/H behavior patch; genuine historical G source recovered.
+> See `../kernel-source-reconstruction/PLATFORM-BATCH-02/BATCH-SUMMARY.md`.
+
+> **PLATFORM-BATCH-03 processed:** all34 frozen identities source-built by five
+> committed clean-clone engines, ten full B1/B2 builds.33 A (27D/6G→A); native
+> thermal-generic-adc D→C for21 split-BTF reference bytes, with all code/data/ABI/
+> relocations/layout exact. Then:**220 certified /238 remaining of458**.
+> All424 unselected rows, four CMDQ C, ownership and471 stock occurrences unchanged.
+> See `../kernel-source-reconstruction/PLATFORM-BATCH-03/BATCH-SUMMARY.md`.
+
+> **PLATFORM-BATCH-04 processed:** all30 frozen identities independently source-built
+> through three committed engines, six complete B1/B2 runs.25 A (7D/18G→A),5G→C
+> for source-token/counter metadata and TCPC code/data/layout residuals. Current:
+> **245 certified /213 remaining of458**. All428 unselected rows, older CMDQ/ADC C,
+> owners/statuses and471 stock occurrences unchanged. See
+> `../kernel-source-reconstruction/PLATFORM-BATCH-04/BATCH-SUMMARY.md`.
+
+> **CANONICAL-INTEGRATION-01 processed:** completed packages integrated by identity-keyed CAS on f61ebf03:
+> AUDIO-BATCH-01, SCP-CONNECTIVITY-BATCH-01, AUDIO-DEPENDENCIES-BATCH-02 (via
+> COMPLETED-BATCHES-INTEGRATION-01, 57A/6C), NEXT-DG-BATCH-01 (22 D→A) and
+> ALL-C-TO-A-CLOSURE (10 C→A after canonical combined-environment strict reverification;
+> 32 already-A rows moved to the superseding verified recipe tips), plus the USB-TYPEC-CLOSURE
+> 22-field C-evidence update (no class change). STOCK-INVENTORY-INTEGRITY history merged.
+> Current: **334 certified /124 remaining of458**. Ten C retained with explicit blockers.
+> See `../kernel-source-reconstruction/CANONICAL-INTEGRATION-01/INTEGRATION-SUMMARY.md`.
+
+## Answer and limits
+
+**458 distinct stock binary identities, not 457.** There are 457 filenames and 471
+partition occurrences. The two `bluetooth.ko` binaries have different SHA256/size:
+`vendor_dlkm` is `2df021ea…`, `system_dlkm` is `d2659fb3…`. They must not share a proof
+merely because their filenames match. `ALL-457-MODULES.tsv` retains the requested filename
+but correctly contains **458** identity rows and every stock path.
+
+| Source class | Count | Evidence-supported interpretation |
+|---|---:|---|
+| A — VERIFIED_BYTE_EXACT | 333 | 60 system_dlkm ELF bodies;40 accelerator;6 boot-clock;10 storage;4 pinctrl;4 regulator;3 interconnect/EMI;1 IOMMU;31 batch01;27 batch02;33 batch03;25 batch04;20 audio;17 SCP/connectivity;20 audio-dependencies;22 diagnostics/MET;10 all-C closure (4 CMDQ,4 OEM-BTF-base,2 DRM); declared nonbehavioral metadata differences |
+| B — VERIFIED_SEMANTIC_EQUIVALENT | 1 | imgsensor, with bounded equivalent function/moved byte-load proof |
+| C — REPRODUCIBLE_SOURCE_UNVERIFIED | 10 | FT3680,YFT devinfo,ST21NFC,tkcore;AW883XX scene-parser codegen;five USB/Type-C source-token/counter residuals; full acceptance incomplete |
+| D — SOURCE_CANDIDATE_ONLY | 60 | Located public targets/source candidates; no accepted independent stock-compatible build |
+| E — SOURCE_MISSING | 0 | No implementation is affirmatively classified missing; this is NOT a claim that every implementation is sufficient |
+| F — PROVEN_NOT_REQUIRED | 0 | No production exclusion meets the requested evidential standard |
+| G — UNRESOLVED | 54 | Historical source builds/parity exist, but independent recipe/input closure is not established by the reviewed records |
+| **Total** | **458** | No unresolved identity dropped |
+
+**334 A/B identities are certified.124 identities are not certified or legitimately
+excluded.** Of those,**70** are candidate/incomplete-acceptance cases (60D+10C),
+and **54 remain unresolved for independent reproducibility**. Do not describe this as
+124 new reverse-engineering projects:the54 G cases include already reconstructed
+stacks whose existing code and parity must be preserved rather than redone.
+
+There are **43 uncertified identities required by the retained stock first-stage loader
+contract** (187 first-stage identities in total). This is a conditional boot/integration
+requirement, not proof that every driver controls indispensable physical hardware. For
+**271 identities, production/runtime necessity remains unknown**. No authorized stripped
+production configuration or removal-safety proof was supplied, so no F exclusions are made.
+
+Source is located in some form for all124 remaining identities:60 public candidates and
+64 reconstructed/built cases (54G+10C). **Ten have class C's specific
+incomplete stock-acceptance finding.** Availability of code is not independent reproduction;
+absence of an E finding is not evidence of complete source availability.
+
+## Inventory reconciliation
+
+Read-only recursive hashing of the extracted stock operands gives:
+
+| Location | Occurrences |
+|---|---:|
+| system_dlkm | 60 |
+| vendor_dlkm | 215 |
+| vendor_boot platform ramdisk | 196 |
+| **Total** | **471** |
+
+Thirteen content-identical cross-partition repeats reduce 471 occurrences to 458 identities.
+All identities match `kernel/stock-module-master.csv`; all filenames match the old 457-row
+coverage inventory. Every occurrence is retained in `stock_paths`. The old `214 vendor_dlkm`
+figure counts filename uniqueness across partitions differently and must not replace the
+215 physically shipped vendor_dlkm files.
+
+Actual extracted load lists contain 184 normal vendor_boot entries (183 distinct listed
+names), 189 recovery entries, 60 system_dlkm entries and 195 vendor_dlkm entries. All entries
+resolve to shipped identities in their respective partitions; list position and hashes are
+retained separately. The historical loader model resolves 187 first-stage names, including
+four dependency-only modules. Listing/loading does not establish successful probing.
+
+`runtime_status` retains name-level capture evidence separately from source class. Both
+Bluetooth binary identities remain runtime-identity-unproven. Direct saved driver/module
+symlinks establish binding for **23** identities; unresolved echo paths do not. Binding is
+not proof of bus transactions, streaming, userspace use or production indispensability.
+
+## Proof policy — no automatic DONE → A conversion
+
+A/B require a pinned, preserved recipe and independent clean-build acceptance bound to the
+specific stock identity. The six maintained accelerator repositories meet that bar; no
+reconstruction or compilation was repeated. The public GKI stamped build has two recorded
+clean builds and complete ELF-body parity.
+
+C is used for concrete incomplete stock acceptance, not to relabel historical exact builds.
+G is deliberately used for historical builds whose independent source-input closure has not
+been established. Examples include `/tmp/ispenv.sh` / `/tmp/connenv.sh`, mutable vendor trees,
+prepared NFC/camera output directories, generated external-provider tables and private
+include operands. Some inputs may be recoverable trivially: **G does not assert that a
+recipe is broken or that its driver code is missing**. `REPRODUCIBILITY-RISKS.tsv` records
+actual recipe references and the exact unanswered preservation/reproduction question.
+
+This stricter independent-reproduction audit does not revoke previous static parity proofs
+or change any DONE/PARTIAL/BLOCKED classification. The initial audit recorded158 rows across56 DONE owners needing
+further source evidence (24D/132G/2C);the regenerated discrepancy table is authoritative
+for remaining rows after later source certification. Ownership often covers
+additional related modules that were never the owner's reconstructed `.ko` target.
+
+## GKI/system_dlkm
+
+- GKI build **12901745**, common `6b18f0b574ab3267615ae6ce642d5a7c3c21ac09`.
+- Full public manifest/build pins: `kernel/phase4-gki-effective-manifest.xml` and
+  `kernel/phase4-gki-build-pins.tsv`; toolchain clang-r487747c, pinned clang
+  `7775eb113f960bc69a780b621d03a715914d4bca`.
+- Stamping `BUILD_NUMBER=12901745 --config=stamp`, declared `-faddrsig` handling and a
+  clean release string reproduce all **60** stock ELF bodies, including build IDs.
+- Appended signatures differ: Google release key versus ephemeral build key. This is
+  not a code/ABI delta. LieppOS must still choose an appropriate signing/enforcement
+  policy; A is not permission to load unsigned replacements into an enforcing stock boot.
+- Both complete parity reports and the B1/B2 comparison are preserved in SYSTEM-DLKM.
+- These 60 proofs do **not** cover vendor Bluetooth or any other vendor module.
+
+## Dependencies and optional/reference modules
+
+All **26,111 import records** are retained. Stock export parsing independently reproduces
+all 4,875 recorded export names and their CRCs, including exported data objects. Every import
+has a CRC-matching stock or exact-GKI provider: 26,039 unambiguous records and 72 with multiple
+CRC-matching binary identities. These alternatives remain explicit; runtime provider choice
+is not invented. CRC equality alone never proves KCFI or an independently source-built provider.
+
+The old 15 optional/reference names were all reevaluated. MET, the Mali DMA-BUF test and
+scheduler extensions may be valuable in engineering builds; generic NFC and the TFA98xx
+alternative need configuration-specific removal evidence. Some are listed or loaded despite
+old 'unused' labels, and TFA98xx/MET backlight have historical source parity. No one-capture
+absence or negative DT alias alone supports exclusion. See `OPTIONAL-15-REVIEW.tsv`.
+
+## Prioritized source gaps
+
+1. ~~**Boot clock core**~~ — **completed 2026-10-09**: all six D → A, see
+   `../kernel-source-reconstruction/BOOT-CLOCK-CORE/`.
+2. ~~**Boot/storage source preservation**~~ — **completed 2026-10-09**: all ten G → A, see
+   `../kernel-source-reconstruction/STORAGE/`.
+3. **PMIC/regulator and boot power infrastructure:** PINCTRL and REGULATORS completed
+   (four D → A each; see their reconstruction packages). PMIC/MFD/transport source gaps
+   remain separate; do not infer provider closure from these consumer builds.
+4. **Platform providers:** INTERCONNECT-EMI, main IOMMU and PLATFORM-BATCH-01
+   completed at their recorded scopes. Batch01 certifies31, including auxiliary IOMMU,
+   SMI, clock/power/DMA/IRQ/PMIC support; four CMDQ CRC/counter-symbol gaps stay C.
+   Batch02 now certifies27 more,including ICC,memory/PMIF/mailbox/policy source and six
+   historical G inputs. Batch03 processes34 more:33A/1C, with all target source preserved.
+   Batch04 processed30more:25A/5C; complete source recovery, six independent builds.
+   Current queue head:`CANDIDATE:device_modules:drivers/clocksource` (`timer-mediatek.ko`).
+   Proposed29 display/camera peripheral batch is in PLATFORM-BATCH-04/NEXT-BATCH.md;
+   native ADC BTF and four CMDQ C remain scoped blockers; firmware/runtime stay separate.
+5. **Connectivity:** preserve/reproduce the 21 historical connectivity targets and separately
+   integrate remaining candidate platform dependencies; do not redo radio firmware.
+6. **Modem/data path:** preserve the 16-source-build set and resolve external input closure;
+   modem firmware/IMS algorithms stay outside scope.
+7. **Normal-world security:** tkcore has a complete source island but is not a stock-ABI
+   drop-in; 14/19 consumer edges change historical CRCs. Preserve the existing TEE support work.
+8. **Audio:** preserve 22 exact historical modules; ADSP capability is not instantiated hardware.
+9. **Sensors/touch/OEM registry:** FT3680 code/semantic residuals and YFT enum/export-CRC/KCFI
+   gaps are concrete; do not reopen the closed sensor-hub algorithm/firmware boundaries.
+10. **Display/camera/peripheral source packaging:** preserve existing DRM, lens, EEPROM,
+    charger and support closures; independently resolve their build inputs before certification.
+
+The complete finite map is `RECONSTRUCTION-PROJECTS.tsv` / `RECONSTRUCTION-QUEUE.md`:
+112 scoped source/preservation projects (after Batch04;four CMDQ/native ADC/five Batch04 C remain), not 458 isolated projects and not one giant BSP project.
+
+## Reproduction and validation
+
+From the research repository:
+
+```sh
+python3 reverse-engineering/kernel-source-parity-audit/scripts/inventory.py
+python3 reverse-engineering/kernel-source-parity-audit/scripts/review.py
+python3 reverse-engineering/kernel-source-parity-audit/scripts/generate.py
+python3 reverse-engineering/kernel-source-parity-audit/scripts/validate.py
+python3 reverse-engineering/kernel-source-parity-audit/scripts/test_validate.py
+```
+
+The validator reports unsupported claims/missing operands rather than repairing them. A
+passing audit means the complete ledger and its evidence references are internally validated,
+**not** that all module sources are reconstructed or all G questions answered.
+
+Workspace remains **100 DONE / 36 PARTIAL / 3 BLOCKED / 0 TODO**. Existing global manifest
+drift (19 hash/size changes, 408 unregistered files, one duplicate) and the stale canonical
+Mali status are documented and left untouched. Audit regeneration itself is read-only evidence
+analysis; the separate completed reconstruction packages record their offline compilations and
+source preservation. No device access, component moves or pushes were performed.
