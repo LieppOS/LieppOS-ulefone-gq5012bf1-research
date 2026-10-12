@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+"""Prepare NEW owned subsystemrepos; references are measurements, not link inputs."""
+from pathlib import Path
+import csv,json,collections,sys,struct,hashlib,subprocess,shutil,os
+os.sched_setaffinity(0,sorted(os.sched_getaffinity(0))[-4:]);os.nice(10)
+P=Path(__file__).resolve().parents[1];R=P.parents[2];ROOT=R.parent;W=Path('/home/armol/kernel-work/g-source-recovery-batch-02');S=ROOT/'android_kernel_modules_camera_lens_ulefone_gq5012bf1';sys.path.insert(0,str(S/'scripts'));from normalize import kpp,normalized
+manifest=list(csv.DictReader((P/'BATCH-MANIFEST.tsv').open(),delimiter='\t'));assert hashlib.sha256((P/'BATCH-MANIFEST.tsv').read_bytes()).hexdigest()==(P/'BATCH-MANIFEST.sha256').read_text().split()[0];allrows=list(csv.DictReader((R/'reverse-engineering/kernel-source-parity-audit/ALL-457-MODULES.tsv').open(),delimiter='\t'));by={r['module_id']:r for r in allrows};edges=list(csv.DictReader((R/'reverse-engineering/kernel-source-parity-audit/DEPENDENCY-EDGES.tsv').open(),delimiter='\t'));sha=lambda b:hashlib.sha256(b).hexdigest();abi=[]
+locations={'extdev_io_class.ko':'drivers/misc/mediatek/subpmic','rt5133-regulator.ko':'drivers/regulator','spi-mt65xx.ko':'drivers/spi','leds-rgb-aw2013.ko':'drivers/leds','yft_gpio_keys.ko':'drivers/input/keyboard','aw36515.ko':'drivers/misc/mediatek/flashlight/flashlights','aw36518.ko':'drivers/misc/mediatek/flashlight/flashlights','aw36518_v2.ko':'drivers/misc/mediatek/flashlight/flashlights','camera_eeprom_v4l2.ko':'mtkcam/cam_cal/src_v4l2/custom','fingerprint.ko':'drivers/input/fingerprint/lieppos','microarray_fp_tee.ko':'drivers/input/fingerprint/microarray','tkcore_drv.ko':'drivers/tee/tkcore/armtz'}
+units={'board_io':{},'camera_aux':{'drivers/misc/mediatek/flashlight':['flashlight'],'drivers/misc/mediatek/yft_devinfo':['yft_devinfo']},'biometric_transport':{'drivers/tee/tkcore/core':['tkcore'],'drivers/tee/ffa':['ffa_v10'],'drivers/spi':['spi-mt65xx']}}
+family=sys.argv[1];repo=ROOT/('android_kernel_modules_'+family+'_ulefone_gq5012bf1');assert repo.is_dir() and repo!=S;rs=[dict(r,candidate_directory=locations[r['filename']],build_domain='NKM' if r['filename']=='camera_eeprom_v4l2.ko' else 'KDM') for r in manifest if r['subsystem']==family];selected={r['module_id'] for r in rs};ref=[];bounds={};symvers=[]
+with (repo/'reference/BATCH-MANIFEST.tsv').open('w') as f:w=csv.DictWriter(f,fieldnames=list(rs[0]),delimiter='\t',lineterminator='\n');w.writeheader();w.writerows(rs)
+for r in rs:
+ f=R/r['stock_paths'].split(';')[0];b=f.read_bytes();assert len(b)==int(r['stock_size']) and sha(b)==r['stock_sha256'];dest=W/'stock-flat'/r['filename'];shutil.copyfile(f,dest);k=kpp.KO(f);nb,d,l=normalized(k);ref.append(dict(module=r['filename'].removesuffix('.ko'),bytes=len(b),stock_sha256=sha(b),normalized_sha256=sha(nb),build_id_offset=d,build_id_bytes=l))
+for e in edges:
+ if e['consumer_module_id'] not in selected:continue
+ pid=e['provider_module_ids'];pids=pid.split(';');p=next((x for x in pids if x in by),None);external=pid!='GKI_CORE' and not any(x in selected for x in pids);provider=by.get(p,{})
+ v=dict(e,consumer_filename=by[e['consumer_module_id']]['filename'],family=family,provider_filename=provider.get('filename',pid),provider_stock_sha256=provider.get('stock_sha256','GKI12901745_PIN'),provider_class=provider.get('source_status','GKI_CORE'),provider_source_repo=provider.get('source_repo','kernel/common'),provider_source_commit=provider.get('source_commit','6b18f0b574ab3267615ae6ce642d5a7c3c21ac09'),provider_load_order=provider.get('load_order','BUILTIN'),provider_load_evidence=provider.get('runtime_evidence','PinnedGKIpublicsymvers'),boundary='EXTERNAL_WITNESS_ONLY_NO_PROVIDER_PROMOTION' if external else 'INTRA_FAMILY_SOURCE' if pid!='GKI_CORE' else 'PINNED_GKI_CORE');abi.append(v)
+ if not external:continue
+ assert p,pid;s=e['symbol'];f=R/provider['stock_paths'].split(';')[0];ko=kpp.KO(f);y=next(v for v in ko.syms if v['n']==s and 0<v['shndx']<len(ko.secs));typ=y['info']&15;word=hex(struct.unpack_from('<I',ko.b,ko.secs[y['shndx']]['off']+y['val']-4)[0]) if typ==2 else None;nsym=next((v for v in ko.syms if v['n']=='__kstrtabns_'+s and 0<v['shndx']<len(ko.secs)),None);ns=ko.b[ko.secs[nsym['shndx']]['off']+nsym['val']:].split(b'\0')[0].decode() if nsym else None;lic=e['export_type'];lic='EXPORT_SYMBOL_GPL' if lic=='EXPORT_SYMBOL_GPL' else 'EXPORT_SYMBOL';record=dict(crc=e['required_crc'],licence=lic,namespace=ns,symbol_type=typ,stock_kcfi_prefix_word=word,provider_module=provider['filename'],provider_id=p,provider_source_status=provider['source_status'])
+ if s in bounds:assert bounds[s]==record
+ bounds[s]=record
+for s,v in sorted(bounds.items()):symvers.append(f"{v['crc']}\t{s}\t{v['provider_module'].removesuffix('.ko')}\t{v['licence']}\t{v['namespace'] or ''}\n")
+with (repo/'reference/stock-normalized.tsv').open('w') as f:w=csv.DictWriter(f,fieldnames=list(ref[0]),delimiter='\t',lineterminator='\n');w.writeheader();w.writerows(ref)
+(repo/'reference/provider-boundaries.json').write_text(json.dumps(bounds,indent=2,sort_keys=True)+'\n');(repo/'reference/external-provider.symvers').write_text(''.join(symvers));(repo/'reference/provider-build-units.json').write_text(json.dumps(units[family],indent=2,sort_keys=True)+'\n')
+# Inheritedoldfamily metadata/patches are notowned bynewrepo; replaceonlythisNEWclone.
+shutil.rmtree(repo/'families');(repo/'families'/family).mkdir(parents=True);(repo/'families'/family/'OWNERSHIP.json').write_text(json.dumps(dict(owner='CODEX:G-SOURCE-RECOVERY-BATCH-02',family=family,targets=[r['module_id'] for r in rs],original='G',engine_ancestry='camera_lens082e1a29',providers_not_certification_targets=sorted({v['provider_module'] for v in bounds.values()})),indent=2)+'\n');shutil.rmtree(repo/'patches');(repo/'patches/source').mkdir(parents=True)
+pins=list(csv.DictReader((repo/'SOURCE-PINS.tsv').open(),delimiter='\t'))
+for q in pins:
+ if q['id']=='alps5e41':q['role']='Authentic '+family+' targets/providers; exact source patches separatelyattributed'
+with (repo/'SOURCE-PINS.tsv').open('w') as f:w=csv.DictWriter(f,fieldnames=list(pins[0]),delimiter='\t',lineterminator='\n');w.writeheader();w.writerows(pins)
+with (P/('ABI-PROVIDERS-'+family+'.tsv')).open('w') as f:w=csv.DictWriter(f,fieldnames=list(abi[0]),delimiter='\t',lineterminator='\n');w.writeheader();w.writerows(abi)
+print(family,'targets',len(rs),'external ABI slots',len(bounds),'classes',collections.Counter(v['provider_source_status'] for v in bounds.values()))
