@@ -35,3 +35,10 @@ identity-keyed compare-and-swap delta; no audit table was copied wholesale.
 
 The original research package is unchanged. The applier's scratch log was moved to `evidence/apply/`, and the
 committed original was restored.
+
+## Applied
+
+Canonical was fast-forwarded to `14dcd182` after re-checking that it was still idle at 63f12972 (clean, no locks).
+Live post-integration checks: inventory PASS 458/471 with all 471 stock `.ko` unchanged; validator
+PASS_WITH_EXPLICIT_UNRESOLVED_SOURCE_CLASSES, 0 errors, A375 B1 C10 D18 E0 F0 G54; `test_validate.py` 14/14
+OK (`evidence/live-post/`).
