@@ -1,0 +1,10 @@
+id	stage	targets	inputs	result	evidence	decision
+X01	inventory	31 remaining G	canonical 1e87ca06 audit; Codex REMAINING-G-AFTER-PROPOSAL and NEXT-BATCH; every branch manifest and maintained-repo ownership	31 G rows inventoried; none owned; the 8 display/backlight NEXT-BATCH names are current G with matching identities; none has .BTF	G-REMAINING-INVENTORY.tsv	freeze 8 (manifest 9b8199c6)
+X02	dependency	8	dep-graph.py on canonical stock (read-only)	212 edges: 161 GKI, 7 intra-batch, 44 external to 8 providers, all A; 0 inconsistent	DEPENDENCY-GRAPH.tsv	witness-only providers from pinned source
+X03	historical lineage	8	Reverse Engineer - DONE BACKLIGHT-DISPLAY-GLUE + MEDIATEK-DRM; audio_shared_infrastructure historical-drm series	historical byte-identical rebuilds; only pwm-mtk-disp carries a GQ5012BF1 code delta; panel-drv/disp_sec depend on the shared DRM series headers	SOURCE-LINEAGE.md	reuse the series unchanged; rebase pwm delta onto 5e415e05
+X04	pwm delta rebase	1	957dac blob 3c313edc + historical 5326ad70 patch vs ALPS 5e415e05 blob 2a65802d	post-image 6459e7e2 identical; only the 3 GQ5012BF1 hunks needed on 5e415e05	patches/source/0011	commit as reconstructed delta
+X05	D1	8	audio-only config b826d842	3/31 cmdq-sec provider CRC mismatches; KDM link skipped by inherited engine	evidence/development/D1-*	add TEE fragment; fix engine
+X06	D2	8	+ gq5012bf1-tee.config (Microtrust disabled)	31/31 witnesses exact	evidence/development/D2.log	keep
+X07	D3	8	engine fix + manifest NKM path fix	8/8 whole-file acceptance; 106/106 mutations	evidence/development/verify-D3.log	commit c0b39b61
+X08	independent B1/B2	8	bundle 4b98dbd2, fresh clones, offline	both 8/8 and 106/106; 16 outputs + 155 intermediates + configs + symvers + trees identical	evidence/independent-proof	certify 8
+X09	audit scratch	8	disposable worktree on research HEAD (audit == canonical 1e87ca06)	145 fields; validator 0 errors A420 B1 C11 D3 G23; 14/14 audit mutations; inventory 458/471; nothing outside the 8 changed	PROPOSED-AUDIT.patch, evidence/audit-scratch	owner-ready
