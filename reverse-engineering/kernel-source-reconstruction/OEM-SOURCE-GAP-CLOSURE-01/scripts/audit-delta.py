@@ -125,7 +125,7 @@ old_hdr = next(l for l in queue_before if l.startswith('Completed integration'))
 idx = next(n for n, l in enumerate(q) if l.startswith('Completed integration'))
 # Compose on canonical after DISPLAY-INTEGRATION-01, or after CANONICAL-429 step 1 (G-SOURCE-RECOVERY-BATCH-02 appended).
 TM = 'OEM-SOURCE-GAP-CLOSURE-01 (tmem_ffa C->A via stock-evidenced TrustKernel 6:1.1 provider witness)'
-for anchor, new in [(' tkcore_drv G->C). Retained', ' tkcore_drv G->C); ' + TM + '. Retained'),
+for anchor, new in [('/tkcore_drv G->C). Retained', '/tkcore_drv G->C); ' + TM + '. Retained'),
                     (' DISPLAY-BACKLIGHT-G-BATCH-01 (8 display/backlight/PWM/MET-backlight G->A). Retained', ' DISPLAY-BACKLIGHT-G-BATCH-01 (8 display/backlight/PWM/MET-backlight G->A); ' + TM + '. Retained')]:
     if old_hdr.count(anchor) == 1:
         q[idx] = old_hdr.replace(anchor, new); break
