@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only stock ELF import/export census for the frozen REMAINING-KERNEL-SOURCE-BATCH-01 targets (providers: vendor_boot + vendor_dlkm).
+"""Read-only stock ELF import/export census for the frozen DISPLAY-BACKLIGHT-G-BATCH-01 targets (providers: vendor_boot + vendor_dlkm).
 
 usage: dep-graph.py <stock-root> <gki-vmlinux.symvers> <out-dir>
 Reads stock .ko files only (never writes them). Every import (__versions name+CRC) is resolved to the
