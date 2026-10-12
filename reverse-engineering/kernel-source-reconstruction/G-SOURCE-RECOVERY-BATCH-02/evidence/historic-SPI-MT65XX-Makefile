@@ -1,0 +1,36 @@
+# Exact-GKI out-of-tree final build of the pinned MediaTek device_modules
+# spi-mt65xx driver, module basename spi-mt65xx (matching the GQ5012BF1
+# stock vendor module "spi_mt65xx").
+#
+# Source is a byte-identical copy of
+#   device_modules/drivers/spi/spi-mt65xx.c
+# at pinned device_modules commit 957dac185efe46cbf6336b0fff9516d84c8cd78f.
+# No delta.
+#
+# CONFIG_DEVICE_MODULES_SPI_MT65XX is a device_modules-tree-only Kconfig
+# symbol (drivers/spi/Kconfig in that tree); it gates nothing in this file
+# itself (no #ifdef on it), so it does not need to be defined here.
+#
+# The private header include/linux/platform_data/spi-mt65xx.h in the pinned
+# device_modules tree is NOT the same as common/include/linux/platform_data/
+# spi-mt65xx.h in the GKI ACK tree: the device_modules copy adds
+# cs_setuptime/cs_holdtime/cs_idletime fields to struct mtk_chip_config,
+# and drivers/spi/spi-mt65xx.c (line 383) dereferences those fields
+# directly. Building against the GKI common header would fail to compile.
+# We ship the pinned device_modules header locally as the flat file
+# spi-mt65xx-platform-data.h (byte-identical content to device_modules'
+# include/linux/platform_data/spi-mt65xx.h; only the on-disk path differs).
+# The single changed C line redirects that include to this flat local path;
+# this is external-build include-path plumbing only. No declaration or
+# executable statement differs from the donor.
+ifneq ($(KERNELRELEASE),)
+obj-m += spi-mt65xx.o
+else
+.PHONY: all modules modules_install clean
+all modules:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules
+modules_install:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules_install
+clean:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
+endif

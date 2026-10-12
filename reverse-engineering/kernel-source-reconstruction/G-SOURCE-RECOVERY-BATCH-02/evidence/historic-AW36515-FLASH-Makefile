@@ -1,0 +1,22 @@
+LIEPPOS_PROVIDER_SYMVERS := \
+	$(wildcard $(COMMON_OUT_DIR)/lieppos/aw36518-recon/providers/flashlight/Module.symvers)
+
+ifneq ($(KERNELRELEASE),)
+
+obj-m += aw36515.o
+ccflags-y += -DCONFIG_MTK_FLASHLIGHT=1
+ccflags-y += -DCONFIG_MTK_FLASHLIGHT_PT=1 -DCONFIG_MTK_FLASHLIGHT_DLPT=1
+KBUILD_EXTRA_SYMBOLS += $(LIEPPOS_PROVIDER_SYMVERS)
+
+else
+
+.PHONY: all modules modules_install clean
+all modules:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) \
+		KBUILD_EXTRA_SYMBOLS="$(LIEPPOS_PROVIDER_SYMVERS)" modules
+modules_install:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules_install
+clean:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
+
+endif

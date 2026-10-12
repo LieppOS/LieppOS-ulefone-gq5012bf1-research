@@ -1,0 +1,26 @@
+# LieppOS reconstruction of the GQ5012BF1 stock aw36518_v2.ko.
+#
+# Same vendor source family as aw36518.ko; the stock V2 module imports only
+# flashlight.ko symbols (no yft_devinfo), so only the flashlight provider's
+# real Module.symvers is consumed here.  No CRC is ever written by hand.
+LIEPPOS_PROVIDER_SYMVERS := \
+	$(wildcard $(COMMON_OUT_DIR)/lieppos/aw36518-recon/providers/flashlight/Module.symvers)
+
+ifneq ($(KERNELRELEASE),)
+
+obj-m += aw36518_v2.o
+ccflags-y += -DCONFIG_MTK_FLASHLIGHT=1 -DCONFIG_MTK_FLASHLIGHT_DLPT=1
+KBUILD_EXTRA_SYMBOLS += $(LIEPPOS_PROVIDER_SYMVERS)
+
+else
+
+.PHONY: all modules modules_install clean
+all modules:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) \
+		KBUILD_EXTRA_SYMBOLS="$(LIEPPOS_PROVIDER_SYMVERS)" modules
+modules_install:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules_install
+clean:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
+
+endif

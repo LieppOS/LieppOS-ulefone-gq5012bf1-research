@@ -1,0 +1,11 @@
+# Next unownedsource recovery — no quota padding
+
+Latestcanonical4e47a5b9 includesbothpriorcompletedbatchesandClaude8displayA:421certified/A420B1C11D3G23. This12proposal7A5C leaves11G,16C,3D and428certified. Allselected12processed; no selectedGremains. TenCbaseline+nobodyoutsidebatch promoted; Tmem/providercontextC unchanged.
+
+ElevenremainingG include2display-only identitiespanel-ky-vtdr6115-dphy-cmd andspi_tiny_co5300_lcd: outsideourassignment, checkClaudeadditionalmanifest beforetouching. Nineothernon-display candidates: Hynitron, WL2868/customLDO2, LN2403, SC851x/SC8571/SH366003 charging3, YFTcompanion, YFTgesture. OriginalfullOEM/profilesource gaps inG-REMAINING-INVENTORY; no claimtheyaregloballyunavailable.
+
+Prefer coherentbattery/chargepump/fuelgauge originalOEMrelease searchfirst ifnewlegitimateALPS/OEMhistory yieldsSC851x/SC8571/SH366003 fullC/profile/Cfgsource, orcameraLDO2 + LN2403 originalboard source withnowcertifiedPWMprovider afterClaudeintegration. Existinghandreconstructionalone notsourceauthenticity. Do notuseOPLUSSC8571register-map asthisMTKimplementation. HynoriginalCSTfirmware/source inputneeded; nostockheaderextract forA. TwoYFTsmallglues needOEMliteralheader/sourcehistoryandrealMT6375provider, notcounter/CRC coercion.
+
+FivebatchC residues: AW3eachonefunction+3dataorder; fingerprint5newline strings+21originalinclude-counter gap; backend50codeexact but5naturalcoreCRC/context+literalolder srcversiongap. TheseareCfollowups, noteligiblefutureG quota. Keepoutsideoriginaltkcore/Tmem4TEECABI andoriginalC/D sourceowners protected. ExistingthreeD areseparateoriginalsource/BTFclosures, notunownedG.
+
+Nextfreeze mustreadactualHEAD/stockidentity/currentowners/exclusions/proofbranches; neverblindlyreusearithmeticorassumeall11free. No physicalphone/flash/recovery/OSdeploy untilseparatelyqualified.
