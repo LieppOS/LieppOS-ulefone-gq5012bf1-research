@@ -1,0 +1,1112 @@
+diff --git a/Kbuild b/Kbuild
+index 2f13dd0..b0d46d1 100644
+--- a/Kbuild
++++ b/Kbuild
+@@ -5,97 +5,58 @@ ifneq ($(CONFIG_DEVICE_MODULES_ALLOW_BUILTIN),y)
+ LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
+ 
+ subdir-ccflags-y += -Werror \
+-		-I$(srctree)/$(src)/include \
+-		-I$(srctree)/$(src)/include/uapi \
++		-I$(src)/include \
++		-I$(src)/include/uapi \
+ 
+-obj-y += drivers/memory/
+ 
+-obj-y += drivers/iio/adc/
+ 
+-obj-y += drivers/mfd/
+ 
+-obj-y += drivers/nvmem/
+ 
+-obj-y += drivers/dma/mediatek/
+ 
+-obj-y += drivers/ufs/
+ 
+-obj-y += drivers/char/
+ 
+-obj-y += drivers/clk/mediatek/
+ 
+-obj-y += drivers/clocksource/
+ 
+-obj-y += drivers/cpufreq/
+ 
+-obj-y += drivers/soc/mediatek/
+ 
+-obj-y += drivers/watchdog/
+ 
+-obj-y += drivers/dma-buf/heaps/
+ 
+-obj-y += drivers/regulator/
+ 
+-obj-y += drivers/leds/
+ 
+-obj-y += drivers/pinctrl/mediatek/
+ 
+-obj-y += drivers/power/supply/
+ 
+-obj-y += drivers/rtc/
+ 
+-obj-y += drivers/remoteproc/
+ 
+-obj-y += drivers/rpmsg/
+ 
+-obj-y += drivers/input/keyboard/
+ 
+-obj-y += drivers/phy/mediatek/
+ 
+-obj-y += drivers/thermal/mediatek/
+ 
+-obj-y += drivers/spmi/
+ 
+-obj-y += drivers/tty/serial/8250/
+ 
+-obj-y += drivers/reset/
+ 
+-obj-y += drivers/mailbox/
+ 
+-obj-y += drivers/interconnect/
+ 
+-obj-y += drivers/i2c/busses/
+ 
+-obj-y += drivers/pwm/
+ 
+-obj-y += drivers/spi/
+ 
+-obj-y += drivers/iommu/
+ 
+-obj-y += drivers/mmc/host/
+ 
+-obj-y += drivers/tee/
+ 
+-obj-y += drivers/gpu/drm/mediatek/
+ 
+-obj-y += drivers/input/touchscreen/
+ 
+-obj-y += drivers/gpu/drm/panel/
+ 
+-obj-y += drivers/gpu/mediatek/
+ 
+-obj-y += drivers/media/platform/
+ 
+-obj-y += drivers/usb/
+ 
+-obj-y += drivers/devfreq/
+ 
+-obj-y += drivers/misc/mediatek/
+ 
+-obj-y += sound/soc/codecs/
+ 
+-obj-y += sound/soc/mediatek/
+ 
+-obj-y += drivers/pci/controller/
+ 
+ endif
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += drivers/gpu/mediatek/
++obj-y += drivers/misc/mediatek/
++obj-y += drivers/pinctrl/mediatek/
++obj-y += drivers/thermal/mediatek/
+diff --git a/drivers/gpu/mediatek/Makefile b/drivers/gpu/mediatek/Makefile
+index 3befca2..a1274b4 100644
+--- a/drivers/gpu/mediatek/Makefile
++++ b/drivers/gpu/mediatek/Makefile
+@@ -32,22 +32,18 @@ endif
+ endif
+ 
+ ifneq ($(CONFIG_MTK_GPU_SUPPORT),)
+-    obj-y += ged/
+-    obj-y += hal/
+-    obj-y += gpufreq/
+-    obj-y += gpu_bm/
+-    obj-y += gpueb/
+-    obj-y += gpu_iommu/
+ 
+ ifneq ($(CONFIG_MTK_GPU_VERSION),"")
+ # GPU R5P0
+ ifeq ($(CONFIG_MTK_GPU_R5P0),y)
+-    obj-y += $(subst ",,$(CONFIG_MTK_PLATFORM))/
+ else ifneq ($(word 1,$(MTK_GPU_VERSION)),)
+-    obj-y += gpu_$(word 1,$(MTK_GPU_VERSION))/
+ else ifneq ($(CONFIG_MTK_PLATFORM),)
+-    obj-y += $(subst ",,$(CONFIG_MTK_PLATFORM))/
+ endif
+ endif
+ 
+ endif
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += ged/
++obj-y += gpufreq/
++obj-y += hal/
+diff --git a/drivers/gpu/mediatek/ged/Makefile b/drivers/gpu/mediatek/ged/Makefile
+index bdf78d6..d339ac0 100644
+--- a/drivers/gpu/mediatek/ged/Makefile
++++ b/drivers/gpu/mediatek/ged/Makefile
+@@ -112,4 +112,6 @@ ged-y += \
+ 
+ ged-$(CONFIG_SYNC_FILE) += src/ged_sync.o
+ 
+-obj-$(CONFIG_MTK_GPU_SUPPORT) += ged.o
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += ged.o
+diff --git a/drivers/gpu/mediatek/gpufreq/Makefile b/drivers/gpu/mediatek/gpufreq/Makefile
+index 9e5ce9b..6056fb5 100644
+--- a/drivers/gpu/mediatek/gpufreq/Makefile
++++ b/drivers/gpu/mediatek/gpufreq/Makefile
+@@ -12,7 +12,8 @@
+ #
+ 
+ ifeq ($(CONFIG_MTK_GPUFREQ_V2), y)
+-	obj-y += v2/
+ else
+-	obj-y += v1/
+ endif
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += v2/
+diff --git a/drivers/gpu/mediatek/gpufreq/v2/Makefile b/drivers/gpu/mediatek/gpufreq/v2/Makefile
+index 8caaabc..995559f 100644
+--- a/drivers/gpu/mediatek/gpufreq/v2/Makefile
++++ b/drivers/gpu/mediatek/gpufreq/v2/Makefile
+@@ -66,34 +66,30 @@ mtk_gpufreq_mt6989-y := \
+ 	gpufreq_mt6989.o \
+ 	gpu_smmu_mt6989.o
+ 
+-obj-$(CONFIG_MTK_GPU_SUPPORT) += mtk_gpufreq_wrapper.o
+-ifneq ($(wildcard $(srctree)/$(src)/gpufreq_mt6878.c),)
+-obj-$(CONFIG_MTK_GPU_MT6878_SUPPORT) += mtk_gpufreq_mt6878.o
++ifneq ($(wildcard $(src)/gpufreq_mt6878.c),)
+ endif
+-ifneq ($(wildcard $(srctree)/$(src)/gpufreq_mt6886.c),)
+-ifneq ($(wildcard $(srctree)/$(src)/gpufreq_history_mt6886.c),)
+-obj-$(CONFIG_MTK_GPU_MT6886_SUPPORT) += mtk_gpufreq_mt6886.o
++ifneq ($(wildcard $(src)/gpufreq_mt6886.c),)
++ifneq ($(wildcard $(src)/gpufreq_history_mt6886.c),)
+ endif
+ endif
+-ifneq ($(wildcard $(srctree)/$(src)/gpufreq_mt6897.c),)
+-ifneq ($(wildcard $(srctree)/$(src)/gpufreq_history_mt6897.c),)
+-obj-$(CONFIG_MTK_GPU_MT6897_SUPPORT) += mtk_gpufreq_mt6897.o
++ifneq ($(wildcard $(src)/gpufreq_mt6897.c),)
++ifneq ($(wildcard $(src)/gpufreq_history_mt6897.c),)
+ endif
+ endif
+-ifneq ($(wildcard $(srctree)/$(src)/gpufreq_mt6985.c),)
+-ifneq ($(wildcard $(srctree)/$(src)/gpufreq_history_mt6985.c),)
+-obj-$(CONFIG_MTK_GPU_MT6985_SUPPORT) += mtk_gpufreq_mt6985.o
++ifneq ($(wildcard $(src)/gpufreq_mt6985.c),)
++ifneq ($(wildcard $(src)/gpufreq_history_mt6985.c),)
+ endif
+ endif
+-ifneq ($(wildcard $(srctree)/$(src)/gpufreq_mt6989_fpga.c),)
+-ifneq ($(wildcard $(srctree)/$(src)/gpufreq_history_mt6989_fpga.c),)
+-obj-$(CONFIG_MTK_GPU_MT6989_SUPPORT) += mtk_gpufreq_mt6989_fpga.o
++ifneq ($(wildcard $(src)/gpufreq_mt6989_fpga.c),)
++ifneq ($(wildcard $(src)/gpufreq_history_mt6989_fpga.c),)
+ endif
+ endif
+-ifneq ($(wildcard $(srctree)/$(src)/gpufreq_mt6989.c),)
+-ifneq ($(wildcard $(srctree)/$(src)/gpufreq_history_mt6989.c),)
+-ifneq ($(wildcard $(srctree)/$(src)/gpu_smmu_mt6989.c),)
+-obj-$(CONFIG_MTK_GPU_MT6989_SUPPORT) += mtk_gpufreq_mt6989.o
++ifneq ($(wildcard $(src)/gpufreq_mt6989.c),)
++ifneq ($(wildcard $(src)/gpufreq_history_mt6989.c),)
++ifneq ($(wildcard $(src)/gpu_smmu_mt6989.c),)
+ endif
+ endif
+ endif
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += mtk_gpufreq_wrapper.o
+diff --git a/drivers/gpu/mediatek/hal/Makefile b/drivers/gpu/mediatek/hal/Makefile
+index 4b55288..f72f9f0 100644
+--- a/drivers/gpu/mediatek/hal/Makefile
++++ b/drivers/gpu/mediatek/hal/Makefile
+@@ -16,5 +16,7 @@ ccflags-y += \
+ 	-I$(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/ \
+ 	-I$(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/gpufreq/ \
+ 
+-obj-$(CONFIG_MTK_GPU_SUPPORT) += mtk_gpu_hal.o
+ mtk_gpu_hal-y := mtk_gpu_utility.o
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += mtk_gpu_hal.o
+diff --git a/drivers/misc/mediatek/Makefile b/drivers/misc/mediatek/Makefile
+index 6b6c0f9..688bb49 100644
+--- a/drivers/misc/mediatek/Makefile
++++ b/drivers/misc/mediatek/Makefile
+@@ -1,108 +1,17 @@
+ # SPDX-License-Identifier: GPL-2.0
+ export MTK_PLATFORM := $(subst ",,$(CONFIG_MTK_PLATFORM))
+-obj-$(CONFIG_MTK_BLOCK_IO_TRACER) += blocktag/
+-obj-$(CONFIG_MTK_SLBC) += slbc/
+-obj-$(CONFIG_MTK_CM_MGR) += cm_mgr/
+-obj-$(CONFIG_MTK_QOS_FRAMEWORK) += qos/
+-obj-$(CONFIG_MTK_CCCI_DEVICES)	+=  ccci_util/
+-obj-$(CONFIG_MTK_NET_CCMNI) +=  ccmni/
+-obj-$(CONFIG_MTK_NET_RPS) += rps/
+-obj-$(CONFIG_NFC_CHIP_SUPPORT) += nfc/
+-obj-$(CONFIG_MTK_ECCCI_DRIVER) +=  eccci/
+-obj-$(CONFIG_MTK_MEMORY_BLOCK) += memblock/
+-obj-$(CONFIG_MTK_PID_MAP) += pidmap/
+-obj-$(CONFIG_MTK_TINYSYS_SSPM_SUPPORT) += sspm/
+-obj-$(CONFIG_MTK_TINYSYS_SCMI) += tinysys_scmi/
+-obj-$(CONFIG_MTK_TINYSYS_MCUPM_SUPPORT) += mcupm/
+-obj-$(CONFIG_MTK_ET) += et/
+-obj-$(CONFIG_MTK_SUBPMIC_MISC) += subpmic/
+-obj-$(CONFIG_MMPROFILE) += mmp/
+-obj-$(CONFIG_MTK_APUSYS_SUPPORT) += apusys/
+-obj-$(CONFIG_MTK_TRUSTED_MEMORY_SUBSYSTEM) += trusted_mem/
+-obj-$(CONFIG_MTK_ENABLE_GENIEZONE) += geniezone/
+-obj-$(CONFIG_TRUSTY) += trusty/
+-obj-$(CONFIG_MTK_ISE_LPM_SUPPORT) += ise_lpm/
+-obj-$(CONFIG_MTK_SECURITY_SW_SUPPORT) += masp/
+-obj-$(CONFIG_MTK_ATF_LOGGER) += atf/
+-obj-$(CONFIG_MTK_USB_TYPEC) += typec/
+-obj-$(CONFIG_MTPROF) += mtprof/
+-obj-$(CONFIG_MTK_IRQ_MONITOR) += mtprof/
+-obj-$(CONFIG_MTK_LOCKING_AEE) += locking/
+-obj-$(CONFIG_MTK_CAMERA_ISP_SUPPORT) += cameraisp/
+-obj-$(CONFIG_MTK_CAMERA_MEM_SUPPORT) += camera_mem/
+-obj-$(CONFIG_MTK_CAM_TIMESYNC) += cam_timesync/
+-obj-$(CONFIG_MTK_CMDQ_MBOX_EXT) += cmdq/
+-obj-$(CONFIG_MTK_MDP) += mdp/
+-obj-$(CONFIG_MTK_JPEG) += jpeg/
+-obj-$(CONFIG_MTK_VDEC_FMT) += vdec_fmt/
+-obj-$(CONFIG_MTK_DVFSRC_HELPER) += dvfsrc/
+-obj-$(CONFIG_MTK_V4L2_LENS) += lens/
+-obj-$(CONFIG_MTK_LENS)      += lens/
+-obj-$(CONFIG_MTK_FLASHLIGHT) += flashlight/
+-obj-$(CONFIG_MTK_V4L2_FLASHLIGHT) += flashlight/v4l2/
+-obj-$(CONFIG_MTK_DCM_COMMON) += dcm/
+-obj-$(CONFIG_MMSTAT_TRACER) += mmstat/
+-obj-$(CONFIG_MTK_LOW_POWER_MODULE) += lpm/
+-obj-$(CONFIG_MTK_SSC_MODULE) += ssc/
+-obj-$(CONFIG_MTK_SWPM_MODULE) += swpm/
+-obj-$(CONFIG_MTK_PMSR) += pmsr/
+-obj-$(CONFIG_MTK_IMGSENSOR) += imgsensor/src/
+-obj-$(CONFIG_MTK_IOMMU_MISC) += iommu/
+-obj-$(CONFIG_MTK_COMBO) += connectivity/
+-obj-$(CONFIG_MTK_CONN_SCP) += conn_scp/
+-obj-$(CONFIG_MTK_BTIF) += btif/
+-obj-$(CONFIG_MTK_CONN_MD) += conn_md/
+-obj-$(CONFIG_MTK_UARTHUB) += uarthub/
+-obj-$(CONFIG_MTK_CAM_CAL) += cam_cal/
+-obj-$(CONFIG_MTK_AEE_FEATURE) += aee/
+-obj-$(CONFIG_MTK_SELINUX_AEE_WARNING) += selinux_warning/
+-obj-$(CONFIG_MTK_CLKBUF_CTRL) += clkbuf/
+-obj-$(CONFIG_MTK_SRCLKEN_RC) += srclken_rc/
+-obj-$(CONFIG_MTK_POWER_THROTTLING_COMMON) += power_throttling/
+-obj-$(CONFIG_MTK_PMIC_PROTECT) += pmic_protect/
+-obj-$(CONFIG_MTK_PMIC_TIA) += pmic_tia/
+-obj-$(CONFIG_MTK_MDPM) += mdpm/
+-obj-$(CONFIG_MTK_PWM)	    += pwm/
+-obj-$(CONFIG_MTK_IRTX_PWM_SUPPORT) += irtx/
+-obj-$(CONFIG_MTK_PBM) += pbm/
+-obj-$(CONFIG_MTK_CG_PEAK_POWER_THROTTLING) += cg_ppt/
+-obj-$(CONFIG_MTK_CCU) += ccu/src/
+-obj-$(CONFIG_MEDIATEK_CPUFREQ_DEBUG) += cpufreq_v1/
+-obj-$(CONFIG_MEDIATEK_CPUFREQ_DEBUG_LITE) += cpufreq_lite/
+-obj-$(CONFIG_MTK_PTPOD_GPU) += eemgpu/
+-obj-$(CONFIG_MTK_MKP) += mkp/
+-obj-$(CONFIG_MTK_STATIC_POWER) += leakage_table/
+-obj-$(CONFIG_EXTCON_MTK_USB) += extcon/
+-obj-$(CONFIG_MTK_VOW_SUPPORT) += vow/
+-obj-$(CONFIG_MTK_PERFORMANCE_MODULE) += performance/
+-obj-$(CONFIG_MTK_PERF_COMMON) += perf_common/
+-obj-$(CONFIG_MTK_AUDIODSP_SUPPORT) += adsp/
+-obj-$(CONFIG_MTK_AUDIO_IPI) += audio_ipi/
+-obj-$(CONFIG_MTK_HANG_DETECT) += monitor_hang/
+-obj-$(CONFIG_MTK_SCHEDULER) += sched/
+-obj-$(CONFIG_MTK_CPUQOS_V3) += cache-auditor/
+-obj-$(CONFIG_MTK_AMMS) += memory-amms/
+-obj-$(CONFIG_MTK_SDA) += sda/
+-obj-$(CONFIG_MTK_MDDP_SUPPORT) += mddp/
+-obj-$(CONFIG_MTK_TINYSYS_SCP_SUPPORT) += scp/
+-obj-$(CONFIG_MTK_TINYSYS_VCP_SUPPORT) += vcp/
+-obj-$(CONFIG_MTK_SENSOR_SUPPORT) += sensor/
+-obj-$(CONFIG_MTK_DRAM_LOG_STORE) += log_store/
+-obj-$(CONFIG_MTK_PRINTK) += mtprintk/
+-obj-$(CONFIG_MTK_TASK_TURBO) += task_turbo/
+-obj-$(CONFIG_INTERCONNECT_MTK_EXTENSION) += mtk-interconnect/
+-obj-$(CONFIG_MTK_MMDVFS) += mmdvfs/
+-obj-$(CONFIG_MTK_MMDEBUG) += mmdebug/
+-obj-$(CONFIG_MTK_VMM_SPM) += vmm_spm/
+-obj-$(CONFIG_MTK_VMM_NOTIFIER) += vmm/
+-obj-$(CONFIG_MTK_MMINFRA) += mminfra/
+-obj-$(CONFIG_MTK_HW_SEMAPHORE) += hw_sem/
+-obj-$(CONFIG_DEVICE_MODULES_MTK_SMI) += smi/
+-obj-$(CONFIG_INTERCONNECT_MTK_MMQOS_COMMON) += mmqos/
+-obj-$(CONFIG_MTK_GATE_IC) += gate_ic/
+-obj-$(CONFIG_USB) += usb/
+-obj-$(CONFIG_MTK_WIDEVINE_DRM) += widevine_drm/
+-obj-$(CONFIG_MTK_PGBOOST) += pgboost/
+-obj-$(CONFIG_MTK_MBRAINK)      += mbraink/
+-obj-$(CONFIG_MTK_IPS_HELPER) += ips/
+ 
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += aee/
++obj-y += dvfsrc/
++obj-y += eccci/
++obj-y += lpm/
++obj-y += mbraink/
++obj-y += performance/
++obj-y += qos/
++obj-y += scp/
++obj-y += ssc/
++obj-y += sspm/
++obj-y += swpm/
++obj-y += tinysys_scmi/
+diff --git a/drivers/misc/mediatek/aee/Makefile b/drivers/misc/mediatek/aee/Makefile
+index 73e1d5b..a623fd4 100644
+--- a/drivers/misc/mediatek/aee/Makefile
++++ b/drivers/misc/mediatek/aee/Makefile
+@@ -22,6 +22,6 @@ ifdef CONFIG_MTK_ION
+ subdir-ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/staging/android/ion
+ endif
+ 
+-obj-$(CONFIG_MTK_AEE_FEATURE)	+= aed/
+-obj-$(CONFIG_MTK_AEE_FEATURE)	+= mrdump/
+-obj-$(CONFIG_MTK_AEE_HANGDET)   += hangdet/
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += aed/
+diff --git a/drivers/misc/mediatek/aee/aed/Makefile b/drivers/misc/mediatek/aee/aed/Makefile
+index 05c27f8..7cfa2b2 100644
+--- a/drivers/misc/mediatek/aee/aed/Makefile
++++ b/drivers/misc/mediatek/aee/aed/Makefile
+@@ -15,11 +15,12 @@ ifeq ($(CONFIG_MTK_GCOV_KERNEL),y)
+ GCOV_PROFILE := y
+ endif
+ 
+-obj-$(CONFIG_MTK_AEE_AED)	+= aee_aed.o
+ aee_aed-y	+= \
+ 	aed-main.o \
+ 	aed-debug.o \
+ 	aee-common.o \
+ 	slog.o
+ 
+-obj-$(CONFIG_MTK_AEE_FEATURE)	+= aee_rs.o
+\ No newline at end of file
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += aee_aed.o
+diff --git a/drivers/misc/mediatek/dvfsrc/Makefile b/drivers/misc/mediatek/dvfsrc/Makefile
+index 0a8ad6f..e9b25da 100644
+--- a/drivers/misc/mediatek/dvfsrc/Makefile
++++ b/drivers/misc/mediatek/dvfsrc/Makefile
+@@ -6,9 +6,11 @@ ccflags-y += \
+ 	-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/sspm/ \
+ 	-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat/ \
+ 
+-obj-$(CONFIG_MTK_DVFSRC_HELPER) += mtk-dvfsrc-helper.o
+ mtk-dvfsrc-helper-objs += dvfsrc-helper.o dvfsrc-debug-v3.o dvfsrc-sysfs.o
+ mtk-dvfsrc-helper-$(CONFIG_MTK_DVFSRC_MET) += dvfsrc-met.o
+ mtk-dvfsrc-helper-$(CONFIG_MTK_DVFSRC_MET_MT6873) += dvfsrc-met-v6873.o
+ mtk-dvfsrc-helper-${CONFIG_MTK_DVFSRC_MET_MT6873} += dvfsrc-met-v6983.o
+ mtk-dvfsrc-helper-$(CONFIG_MTK_DVFSRC_MB)	+= dvfsrc-mb.o
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += mtk-dvfsrc-helper.o
+diff --git a/drivers/misc/mediatek/eccci/Makefile b/drivers/misc/mediatek/eccci/Makefile
+index 395ba63..c6ac0eb 100644
+--- a/drivers/misc/mediatek/eccci/Makefile
++++ b/drivers/misc/mediatek/eccci/Makefile
+@@ -39,10 +39,8 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/eccci/udc/udc_lib_in
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/eccci/
+ 
+ ifneq ($(CONFIG_DEVICE_MODULES_MEDIATEK_MT6577_AUXADC), n)
+-obj-$(CCCI_OBJ) += ccci_auxadc.o
+ endif
+ 
+-obj-$(CCCI_OBJ) += ccci_md_all.o
+ ccci_md_all-$(CCCI_OBJ) := ccci_core.o ccci_bm.o ccci_modem.o \
+ 		udc/udc.o \
+ 		hif/ccci_hif.o
+@@ -94,18 +92,15 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/clk/mediatek
+ MASP_CORE_DRIVER_DIR := $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/drivers/masp
+ 
+ subdir-ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/eccci/fsm
+-obj-$(CCCI_OBJ)	+= fsm/
+ 
+ # ccci_ccif.ko, ccci_dpmaif.ko, ccci_cldma.ko
+ subdir-ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/eccci/hif
+-obj-$(CCCI_OBJ)	+= hif/
+ 
+ 
+ 
+ 
+ else
+ 
+-obj-$(CCCI_OBJ) += ccci_all.o
+ # common services
+ ccci_all-$(CCCI_OBJ) := ccci_core.o ccci_bm.o ccci_modem.o modem_sys1.o
+ 
+@@ -115,14 +110,12 @@ ccci_all-$(CCCI_OBJ) += ccci_auxadc.o
+ endif
+ 
+ # sub modules
+-obj-$(CCCI_OBJ) += fsm/
+-obj-$(CCCI_OBJ) += hif/
+-obj-$(CCCI_OBJ) += port/
+-obj-$(CCCI_OBJ) += udc/
+ 
+ # platform code
+-obj-$(CCCI_OBJ) += platform/
+ 
+ endif
+ 
+ endif
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += ccci_md_all.o
+diff --git a/drivers/misc/mediatek/lpm/Makefile b/drivers/misc/mediatek/lpm/Makefile
+index 6d7a5cd..b2a574b 100644
+--- a/drivers/misc/mediatek/lpm/Makefile
++++ b/drivers/misc/mediatek/lpm/Makefile
+@@ -42,10 +42,12 @@ LPM_MODULE += lpm_registry.o
+ 
+ #Generic build
+ LPM_SRC = $(LPM_MODULE) $(MTK_LPM_FS) $(LPM_PLATFORM) $(LPM_TRACEEVENT)
+-obj-$(CONFIG_MTK_LOW_POWER_MODULE) = mtk-lpm.o
+ mtk-lpm-objs += $(LPM_SRC)
+ 
+ 
+ #Generic subdir build
+-obj-$(CONFIG_MTK_LOW_POWER_MODULE) += modules/
+-obj-$(CONFIG_MTK_CPU_IDLE_GOV) += governors/
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += governors/
++obj-y += modules/
++obj-m += mtk-lpm.o
+diff --git a/drivers/misc/mediatek/lpm/governors/MHSP/Makefile b/drivers/misc/mediatek/lpm/governors/MHSP/Makefile
+index e70bddc..a9733b0 100644
+--- a/drivers/misc/mediatek/lpm/governors/MHSP/Makefile
++++ b/drivers/misc/mediatek/lpm/governors/MHSP/Makefile
+@@ -5,7 +5,9 @@ LPM_CPUIDLE_GOV_NAME=lpm-gov-$(subst ",,${CONFIG_MTK_CPU_IDLE_GOV_VERSION})
+ 
+ #Generic build
+ BUILD_MTK_GOV=${LPM_CPUIDLE_GOV_NAME}
+-obj-$(CONFIG_MTK_CPU_IDLE_GOV) += ${BUILD_MTK_GOV}.o
+ 
+ ${BUILD_MTK_GOV}-objs += $(LPM_CPUIDLE_GOV_OBJS)
+ CFLAGS_$(LPM_CPUIDLE_GOV_OBJS) := -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/lpm/governors/MHSP
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += lpm-gov-MHSP.o
+diff --git a/drivers/misc/mediatek/lpm/governors/Makefile b/drivers/misc/mediatek/lpm/governors/Makefile
+index 91f76cf..aab302b 100644
+--- a/drivers/misc/mediatek/lpm/governors/Makefile
++++ b/drivers/misc/mediatek/lpm/governors/Makefile
+@@ -1 +1,3 @@
+-obj-$(CONFIG_MTK_CPU_IDLE_GOV) += $(subst ",,${CONFIG_MTK_CPU_IDLE_GOV_VERSION})/
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += MHSP/
+diff --git a/drivers/misc/mediatek/lpm/modules/Makefile b/drivers/misc/mediatek/lpm/modules/Makefile
+index 4a96bd5..54a9ee2 100644
+--- a/drivers/misc/mediatek/lpm/modules/Makefile
++++ b/drivers/misc/mediatek/lpm/modules/Makefile
+@@ -1,2 +1,4 @@
+-obj-$(CONFIG_MTK_LOW_POWER_MODULE) += debug/
+-obj-$(CONFIG_MTK_LOW_POWER_MODULE) += platform/
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += debug/
++obj-y += platform/
+diff --git a/drivers/misc/mediatek/lpm/modules/debug/Makefile b/drivers/misc/mediatek/lpm/modules/debug/Makefile
+index 2421e65..97e3dfd 100644
+--- a/drivers/misc/mediatek/lpm/modules/debug/Makefile
++++ b/drivers/misc/mediatek/lpm/modules/debug/Makefile
+@@ -1,39 +1,35 @@
+ # common KOs
+-obj-$(CONFIG_MTK_LOW_POWER_MODULE) += v1/
+-obj-$(CONFIG_MTK_LOW_POWER_MODULE) += v2/
+ 
+ ifeq ($(CONFIG_MTK_LPM_MT6878),m)
+-ifneq ($(wildcard $(srctree)/$(src)/mt6878),)
+-obj-$(CONFIG_MTK_LPM_MT6878) += mt6878/
++ifneq ($(wildcard $(src)/mt6878),)
+ endif
+ endif
+ 
+ ifeq ($(CONFIG_MTK_LPM_MT6886),m)
+-ifneq ($(wildcard $(srctree)/$(src)/mt6886),)
+-obj-$(CONFIG_MTK_LPM_MT6886) += mt6886/
++ifneq ($(wildcard $(src)/mt6886),)
+ endif
+ endif
+ 
+ ifeq ($(CONFIG_MTK_LPM_MT6897),m)
+-ifneq ($(wildcard $(srctree)/$(src)/mt6897),)
+-obj-$(CONFIG_MTK_LPM_MT6897) += mt6897/
++ifneq ($(wildcard $(src)/mt6897),)
+ endif
+ endif
+ 
+ ifeq ($(CONFIG_MTK_LPM_MT6983),m)
+-ifneq ($(wildcard $(srctree)/$(src)/mt6983),)
+-obj-$(CONFIG_MTK_LPM_MT6983) += mt6983/
++ifneq ($(wildcard $(src)/mt6983),)
+ endif
+ endif
+ 
+ ifeq ($(CONFIG_MTK_LPM_MT6985),m)
+-ifneq ($(wildcard $(srctree)/$(src)/mt6985),)
+-obj-$(CONFIG_MTK_LPM_MT6985) += mt6985/
++ifneq ($(wildcard $(src)/mt6985),)
+ endif
+ endif
+ 
+ ifeq ($(CONFIG_MTK_LPM_MT6989),m)
+-ifneq ($(wildcard $(srctree)/$(src)/mt6989),)
+-obj-$(CONFIG_MTK_LPM_MT6989) += mt6989/
++ifneq ($(wildcard $(src)/mt6989),)
+ endif
+ endif
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += mt6878/
++obj-y += v2/
+diff --git a/drivers/misc/mediatek/lpm/modules/debug/mt6878/Makefile b/drivers/misc/mediatek/lpm/modules/debug/mt6878/Makefile
+index adcc940..8e04d4b 100644
+--- a/drivers/misc/mediatek/lpm/modules/debug/mt6878/Makefile
++++ b/drivers/misc/mediatek/lpm/modules/debug/mt6878/Makefile
+@@ -20,10 +20,11 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/lpm/modules/debug/sy
+ endif
+ 
+ BUILD_LPM_DBG_MODUDLE_NAME=mtk-lpm-dbg-mt6878
+-obj-$(CONFIG_MTK_LOW_POWER_MODULE) += ${BUILD_LPM_DBG_MODUDLE_NAME}.o
+ 
+ ${BUILD_LPM_DBG_MODUDLE_NAME}-objs += lpm_logger.o
+ ifeq ($(CONFIG_MTK_SYS_RES_DBG_SUPPORT),m)
+ ${BUILD_LPM_DBG_MODUDLE_NAME}-objs += lpm_sys_res_plat.o
+ ${BUILD_LPM_DBG_MODUDLE_NAME}-objs += lpm_sys_res_mbrain_plat.o
+-endif
+\ No newline at end of file
++endif
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += mtk-lpm-dbg-mt6878.o
+diff --git a/drivers/misc/mediatek/lpm/modules/debug/v2/Makefile b/drivers/misc/mediatek/lpm/modules/debug/v2/Makefile
+index 1fa28eb..b71bbc4 100644
+--- a/drivers/misc/mediatek/lpm/modules/debug/v2/Makefile
++++ b/drivers/misc/mediatek/lpm/modules/debug/v2/Makefile
+@@ -23,7 +23,6 @@ ccflags-y += -I$(MTK_LPM_MODULES_FOLDER)/debug/v2/cpc/
+ ccflags-y += -I$(MTK_LPM_MODULES_FOLDER)/debug/v2/
+ 
+ 
+-obj-$(CONFIG_MTK_LOW_POWER_MODULE) += ${MTK_LPM_DBG_COMMON_NAME}.o
+ ${MTK_LPM_DBG_COMMON_NAME}-objs += lpm_dbg_cpuidle_status.o
+ ${MTK_LPM_DBG_COMMON_NAME}-objs += mtk_cpupm_dbg.o
+ ${MTK_LPM_DBG_COMMON_NAME}-objs += lpm_dbg_cpuidle_control.o
+@@ -45,3 +44,6 @@ ${MTK_LPM_DBG_COMMON_NAME}-objs += $(LPM_MODULE_DEBUG_COMMON)
+ 
+ 
+ 
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += mtk-lpm-dbg-common-v2.o
+diff --git a/drivers/misc/mediatek/lpm/modules/platform/Makefile b/drivers/misc/mediatek/lpm/modules/platform/Makefile
+index 9a2bce5..5da64dc 100644
+--- a/drivers/misc/mediatek/lpm/modules/platform/Makefile
++++ b/drivers/misc/mediatek/lpm/modules/platform/Makefile
+@@ -1,2 +1,4 @@
+-obj-$(CONFIG_MTK_LOW_POWER_MODULE) += v1/
+ 
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += v1/
+diff --git a/drivers/misc/mediatek/lpm/modules/platform/v1/Makefile b/drivers/misc/mediatek/lpm/modules/platform/v1/Makefile
+index 9b72be1..ebf3856 100644
+--- a/drivers/misc/mediatek/lpm/modules/platform/v1/Makefile
++++ b/drivers/misc/mediatek/lpm/modules/platform/v1/Makefile
+@@ -25,6 +25,8 @@ LPM_MODULE_PLAT_PLATFORM += $(LPM_MODULE_PLAT_PLATFORM_SUSPEND_OBJS:%.o=../$(MTK
+ 
+ #Generic build
+ BUILD_MTK_LPM_PLAT_MODUDLE_NAME=mtk-lpm-plat-${MTK_LPM_MODULE_PLATFORM_PLAT_NAME}
+-obj-$(CONFIG_MTK_LOW_POWER_MODULE) += ${BUILD_MTK_LPM_PLAT_MODUDLE_NAME}.o
+ 
+ ${BUILD_MTK_LPM_PLAT_MODUDLE_NAME}-objs += $(LPM_MODULE_PLAT_PLATFORM)
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += mtk-lpm-plat-v1.o
+diff --git a/drivers/misc/mediatek/mbraink/Makefile b/drivers/misc/mediatek/mbraink/Makefile
+index 1c4c3d5..7832b36 100644
+--- a/drivers/misc/mediatek/mbraink/Makefile
++++ b/drivers/misc/mediatek/mbraink/Makefile
+@@ -41,6 +41,8 @@ ccflags-y += -I$(srctree)/drivers/misc/mediatek/qos/
+ 
+ subdir-ccflags-y += -Wformat
+ 
+-obj-${CONFIG_MTK_MBRAINK} += mtk_mbraink.o
+ 
+ mtk_mbraink-objs += mbraink_power.o mbraink_video.o mbraink_process.o mbraink.o mbraink_memory.o mbraink_gpu.o mbraink_audio.o mbraink_cpufreq.o mbraink_battery.o mbraink_pmu.o
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += mtk_mbraink.o
+diff --git a/drivers/misc/mediatek/performance/Makefile b/drivers/misc/mediatek/performance/Makefile
+index 7df21fc..adfe5ef 100644
+--- a/drivers/misc/mediatek/performance/Makefile
++++ b/drivers/misc/mediatek/performance/Makefile
+@@ -15,39 +15,31 @@ subdir-ccflags-y += \
+ include $(MTK_PM_BUILD_FOLDER)/perf_ioctl/build.mk
+ MTK_PERF_IOCTL = $(mtk_perf_ioctl_objs:%.o=perf_ioctl/%.o)
+ MTK_PERF_IOCTL_SRC = $(MTK_PERF_IOCTL)
+-obj-$(CONFIG_MTK_PERFORMANCE_MODULE) += mtk_perf_ioctl.o
+ mtk_perf_ioctl-objs += $(MTK_PERF_IOCTL_SRC)
+ 
+ # mtk_ioctl_touch_boost
+ MTK_IOCTL_TOUCH_BOOST = $(mtk_ioctl_touch_boost_objs:%.o=perf_ioctl/%.o)
+ MTK_IOCTL_TOUCH_BOOST_SRC = $(MTK_IOCTL_TOUCH_BOOST)
+-obj-$(CONFIG_MTK_PERFORMANCE_MODULE) += mtk_ioctl_touch_boost.o
+ mtk_ioctl_touch_boost-objs += $(MTK_IOCTL_TOUCH_BOOST_SRC)
+ 
+ # mtk_ioctl_powerhal
+ MTK_IOCTL_POWERHAL = $(mtk_ioctl_powerhal_objs:%.o=perf_ioctl/%.o)
+ MTK_IOCTL_POWERHAL_SRC = $(MTK_IOCTL_POWERHAL)
+-obj-$(CONFIG_MTK_PERFORMANCE_MODULE) += mtk_ioctl_powerhal.o
+ mtk_ioctl_powerhal-objs += $(MTK_IOCTL_POWERHAL_SRC)
+ 
+ # mtk_perf_ioctl_magt
+ MTK_PERF_IOCTL_MAGT = $(mtk_perf_ioctl_magt_objs:%.o=perf_ioctl/%.o)
+ MTK_PERF_IOCTL_MAGT_SRC = $(MTK_PERF_IOCTL_MAGT)
+-obj-$(CONFIG_MTK_PERF_IOCTL_MAGT) += mtk_perf_ioctl_magt.o
+ mtk_perf_ioctl_magt-objs += $(MTK_PERF_IOCTL_MAGT_SRC)
+ 
+ # mtk_game
+ mtk_game_objs += game.o
+ MTK_GAME = $(mtk_game_objs:%.o=game/%.o)
+ MTK_GAME_SRC = $(MTK_GAME)
+-obj-$(CONFIG_MTK_GAME) += mtk_game.o
+ mtk_game-objs += $(MTK_GAME_SRC)
+ 
+ #Generic subdir build
+-obj-$(CONFIG_MTK_FPSGO_V3) += fpsgo_v3/
+-obj-$(CONFIG_MTK_FRS) += frs/
+-obj-$(CONFIG_MTK_PERFORMANCE_MODULE) += powerhal_cpu_ctrl/
+-obj-$(CONFIG_MTK_PERFORMANCE_MODULE) += touch_boost/
+ 
+-obj-$(CONFIG_MTK_LOAD_TRACKER) += load_track/
+-obj-$(CONFIG_MTK_LOAD_TRACKER) += uload_ind/
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += fpsgo_v3/
+diff --git a/drivers/misc/mediatek/performance/fpsgo_v3/Makefile b/drivers/misc/mediatek/performance/fpsgo_v3/Makefile
+index b094c02..29097e1 100644
+--- a/drivers/misc/mediatek/performance/fpsgo_v3/Makefile
++++ b/drivers/misc/mediatek/performance/fpsgo_v3/Makefile
+@@ -70,6 +70,8 @@ MTK_FPSGO_GBE = $(mtk_fpsgo_gbe_objs:%.o=gbe/%.o)
+ 
+ MTK_FPSGO_SRC = $(MTK_FPSGO_MAIN) $(MTK_FPSGO_BASE) $(MTK_FPSGO_COMPOSER) $(MTK_FPSGO_FBT) $(MTK_FPSGO_FSTB) $(MTK_FPSGO_GBE)
+ 
+-obj-$(CONFIG_MTK_FPSGO_V3) += mtk_fpsgo.o
+ mtk_fpsgo-objs += $(MTK_FPSGO_SRC)
+ 
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += mtk_fpsgo.o
+diff --git a/drivers/misc/mediatek/qos/Makefile b/drivers/misc/mediatek/qos/Makefile
+index 6e56674..5bd013d 100644
+--- a/drivers/misc/mediatek/qos/Makefile
++++ b/drivers/misc/mediatek/qos/Makefile
+@@ -5,11 +5,13 @@ endif
+ 
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/sspm/v3
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/tinysys_scmi
+-ccflags-y += -I$(srctree)/$(src)
++ccflags-y += -I$(src)
+ 
+-obj-$(CONFIG_MTK_QOS_FRAMEWORK) += mtk_qos.o
+ ifeq ($(CONFIG_MTK_QOS_MT6893),y)
+ mtk_qos-objs := mtk_qos_common.o  mtk_qos_bound.o  mtk_qos_sysfs.o mtk_qos_share.o qos-v6893.o mtk_qos_scmi.o
+ else
+ mtk_qos-objs := mtk_qos_common.o  mtk_qos_bound.o  mtk_qos_sysfs.o mtk_qos_share.o qos-v6873.o mtk_qos_ipi_v2.o
+ endif
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += mtk_qos.o
+diff --git a/drivers/misc/mediatek/scp/Makefile b/drivers/misc/mediatek/scp/Makefile
+index 1469337..ab9fe3c 100644
+--- a/drivers/misc/mediatek/scp/Makefile
++++ b/drivers/misc/mediatek/scp/Makefile
+@@ -11,5 +11,7 @@
+ # GNU General Public License for more details.
+ #
+ 
+-obj-y += rv/
+ 
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += rv/
+diff --git a/drivers/misc/mediatek/scp/rv/Makefile b/drivers/misc/mediatek/scp/rv/Makefile
+index 23c538b..6f95454 100644
+--- a/drivers/misc/mediatek/scp/rv/Makefile
++++ b/drivers/misc/mediatek/scp/rv/Makefile
+@@ -1,4 +1,3 @@
+-obj-$(CONFIG_MTK_TINYSYS_SCP_SUPPORT) += scp.o
+ scp-$(CONFIG_MTK_TINYSYS_SCP_SUPPORT) += scp_helper.o
+ scp-$(CONFIG_MTK_TINYSYS_SCP_SUPPORT) += scp_excep.o
+ scp-$(CONFIG_MTK_TINYSYS_SCP_SUPPORT) += scp_wrapper_ipi.o
+@@ -24,3 +23,6 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/aee/aed/
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/clk/mediatek/
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/sound/soc/mediatek/common
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += scp.o
+diff --git a/drivers/misc/mediatek/ssc/Makefile b/drivers/misc/mediatek/ssc/Makefile
+index 1aa4961..aded50c 100644
+--- a/drivers/misc/mediatek/ssc/Makefile
++++ b/drivers/misc/mediatek/ssc/Makefile
+@@ -12,8 +12,10 @@ SSC_MODULE += ssc_module.o
+ 
+ #Generic build
+ SSC_SRC = $(SSC_MODULE)
+-obj-$(CONFIG_MTK_SSC_MODULE) = mtk-ssc.o
+ mtk-ssc-objs += $(SSC_SRC)
+ 
+ #Generic subdir build
+-obj-$(CONFIG_MTK_SSC_MODULE) += debug/
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += debug/
++obj-m += mtk-ssc.o
+diff --git a/drivers/misc/mediatek/ssc/debug/Makefile b/drivers/misc/mediatek/ssc/debug/Makefile
+index 049bd35..752f1f2 100644
+--- a/drivers/misc/mediatek/ssc/debug/Makefile
++++ b/drivers/misc/mediatek/ssc/debug/Makefile
+@@ -1,12 +1,13 @@
+ # debug KOs for ssc
+ ifeq ($(CONFIG_MTK_SSC_DBG_V1), m)
+-ifneq ($(wildcard $(srctree)/$(src)/v1),)
+-obj-$(CONFIG_MTK_SSC_DBG_V1) += v1/
++ifneq ($(wildcard $(src)/v1),)
+ endif
+ endif
+ 
+ ifeq ($(CONFIG_MTK_SSC_DBG_V2), m)
+-ifneq ($(wildcard $(srctree)/$(src)/v2),)
+-obj-$(CONFIG_MTK_SSC_DBG_V1) += v2/
++ifneq ($(wildcard $(src)/v2),)
+ endif
+ endif
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += v2/
+diff --git a/drivers/misc/mediatek/ssc/debug/v2/Makefile b/drivers/misc/mediatek/ssc/debug/v2/Makefile
+index a3c4811..aea1c61 100644
+--- a/drivers/misc/mediatek/ssc/debug/v2/Makefile
++++ b/drivers/misc/mediatek/ssc/debug/v2/Makefile
+@@ -5,6 +5,8 @@ SSC_MODULE_FOLDER=$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/ssc/
+ ccflags-y += -I${SSC_MODULE_FOLDER}/inc/
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/
+ 
+-obj-$(CONFIG_MTK_SSC_MODULE) += ${SSC_DBG_MODULE_NAME}.o
+ 
+ ${SSC_DBG_MODULE_NAME}-objs += ssc_dbg_v2.o
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += mtk-ssc-dbg-v2.o
+diff --git a/drivers/misc/mediatek/sspm/Makefile b/drivers/misc/mediatek/sspm/Makefile
+index b65e438..7da6932 100644
+--- a/drivers/misc/mediatek/sspm/Makefile
++++ b/drivers/misc/mediatek/sspm/Makefile
+@@ -1,5 +1,6 @@
+ # SPDX-License-Identifier: GPL-2.0
+ 
+-obj-$(CONFIG_MTK_TINYSYS_SSPM_V2) += v2/
+-obj-$(CONFIG_MTK_TINYSYS_SSPM_V3) += v3/
+ 
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += v3/
+diff --git a/drivers/misc/mediatek/sspm/v3/Makefile b/drivers/misc/mediatek/sspm/v3/Makefile
+index 9acc4fd..6fdb41e 100644
+--- a/drivers/misc/mediatek/sspm/v3/Makefile
++++ b/drivers/misc/mediatek/sspm/v3/Makefile
+@@ -1,4 +1,3 @@
+-obj-$(CONFIG_MTK_TINYSYS_SSPM_SUPPORT) += sspm_v3.o
+ 
+ sspm_v3-y += sspm_sysfs.o
+ sspm_v3-y += sspm_helper.o
+@@ -12,3 +11,6 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/sspm/v3
+ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/tinysys_scmi
+ 
+ #ccflags-y += -DDEBUG
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += sspm_v3.o
+diff --git a/drivers/misc/mediatek/swpm/Makefile b/drivers/misc/mediatek/swpm/Makefile
+index 5d3022f..76c5572 100644
+--- a/drivers/misc/mediatek/swpm/Makefile
++++ b/drivers/misc/mediatek/swpm/Makefile
+@@ -54,12 +54,14 @@ SWPM_MODULE += swpm_module_psp.o
+ 
+ #Generic build
+ SWPM_SRC = $(SWPM_MODULE) $(MTK_SWPM_FS)
+-obj-$(CONFIG_MTK_SWPM_MODULE) += mtk-swpm.o
+ mtk-swpm-objs := $(SWPM_SRC)
+ 
+ #PERF ARM PMU with CAP_SYS_ADMIN privilege
+-obj-$(CONFIG_MTK_SWPM_PERF_ARMV8_PMU) += mtk-swpm-perf-arm-pmu.o
+ mtk-swpm-perf-arm-pmu-objs := swpm_perf_arm_pmu.o
+ 
+ #Generic subdir build
+-obj-$(CONFIG_MTK_SWPM_MODULE) += modules/
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += modules/
++obj-m += mtk-swpm.o
++obj-m += mtk-swpm-perf-arm-pmu.o
+diff --git a/drivers/misc/mediatek/swpm/modules/Makefile b/drivers/misc/mediatek/swpm/modules/Makefile
+index e18d8ac..f609be6 100644
+--- a/drivers/misc/mediatek/swpm/modules/Makefile
++++ b/drivers/misc/mediatek/swpm/modules/Makefile
+@@ -1,2 +1,4 @@
+-obj-$(CONFIG_MTK_SWPM_MODULE) += debug/
+ #obj-$(CONFIG_MTK_SWPM_MODULE) += platform/
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += debug/
+diff --git a/drivers/misc/mediatek/swpm/modules/debug/Makefile b/drivers/misc/mediatek/swpm/modules/debug/Makefile
+index 60db6f7..e00245e 100644
+--- a/drivers/misc/mediatek/swpm/modules/debug/Makefile
++++ b/drivers/misc/mediatek/swpm/modules/debug/Makefile
+@@ -1,49 +1,37 @@
+ # common KOs
+-obj-$(CONFIG_MTK_SWPM_MODULE) += v1/
+ 
+ # platform dependent  KOs
+ ifeq ($(CONFIG_MTK_SWPM_MT6789),m)
+-obj-$(CONFIG_MTK_SWPM_MT6789) += v6789/
+ endif
+ ifeq ($(CONFIG_MTK_SWPM_MT6835),m)
+-obj-$(CONFIG_MTK_SWPM_MT6835) += v6835/
+ endif
+ ifeq ($(CONFIG_MTK_SWPM_MT6853),m)
+-obj-$(CONFIG_MTK_SWPM_MT6853) += v6853/
+ endif
+ ifeq ($(CONFIG_MTK_SWPM_MT6855),m)
+-obj-$(CONFIG_MTK_SWPM_MT6855) += v6855/
+ endif
+ ifeq ($(CONFIG_MTK_SWPM_MT6873),m)
+-obj-$(CONFIG_MTK_SWPM_MT6873) += v6873/
+ endif
+ ifeq ($(CONFIG_MTK_SWPM_MT6879),m)
+-obj-$(CONFIG_MTK_SWPM_MT6879) += v6879/
+ endif
+ ifeq ($(CONFIG_MTK_SWPM_MT6885),m)
+-obj-$(CONFIG_MTK_SWPM_MT6885) += v6885/
+ endif
+ ifeq ($(CONFIG_MTK_SWPM_MT6886),m)
+-obj-$(CONFIG_MTK_SWPM_MT6886) += v6886/
+ endif
+ ifeq ($(CONFIG_MTK_SWPM_MT6897),m)
+-obj-$(CONFIG_MTK_SWPM_MT6897) += v6897/
+ endif
+ ifeq ($(CONFIG_MTK_SWPM_MT6893),m)
+-obj-$(CONFIG_MTK_SWPM_MT6893) += v6893/
+ endif
+ ifeq ($(CONFIG_MTK_SWPM_MT6895),m)
+-obj-$(CONFIG_MTK_SWPM_MT6895) += v6895/
+ endif
+ ifeq ($(CONFIG_MTK_SWPM_MT6983),m)
+-obj-$(CONFIG_MTK_SWPM_MT6983) += v6983/
+ endif
+ ifeq ($(CONFIG_MTK_SWPM_MT6985),m)
+-obj-$(CONFIG_MTK_SWPM_MT6985) += v6985/
+ endif
+ ifeq ($(CONFIG_MTK_SWPM_MT6989),m)
+-obj-$(CONFIG_MTK_SWPM_MT6989) += v6989/
+ endif
+ ifeq ($(CONFIG_MTK_SWPM_MT6878),m)
+-obj-$(CONFIG_MTK_SWPM_MT6878) += v6878/
+ endif
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-y += v1/
++obj-y += v6878/
+diff --git a/drivers/misc/mediatek/swpm/modules/debug/v1/Makefile b/drivers/misc/mediatek/swpm/modules/debug/v1/Makefile
+index 557b97e..0f22207 100644
+--- a/drivers/misc/mediatek/swpm/modules/debug/v1/Makefile
++++ b/drivers/misc/mediatek/swpm/modules/debug/v1/Makefile
+@@ -5,8 +5,10 @@ MTK_SWPM_DBG_COMMON_NAME=mtk-swpm-dbg-common-v1
+ 
+ 
+ ccflags-y += -I$(MTK_SWPM_MODULES_FOLDER)/include/
+-ccflags-y += -I$(srctree)/$(src)
++ccflags-y += -I$(src)
+ 
+-obj-$(CONFIG_MTK_SWPM_MODULE) += ${MTK_SWPM_DBG_COMMON_NAME}.o
+ ${MTK_SWPM_DBG_COMMON_NAME}-objs += swpm_dbg_fs_common.o
+ ${MTK_SWPM_DBG_COMMON_NAME}-objs += $(SWPM_MODULE_DEBUG_COMMON)
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += mtk-swpm-dbg-common-v1.o
+diff --git a/drivers/misc/mediatek/swpm/modules/debug/v6878/Makefile b/drivers/misc/mediatek/swpm/modules/debug/v6878/Makefile
+index b827a53..abbc8d7 100644
+--- a/drivers/misc/mediatek/swpm/modules/debug/v6878/Makefile
++++ b/drivers/misc/mediatek/swpm/modules/debug/v6878/Makefile
+@@ -36,24 +36,20 @@ ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat/
+ ccflags-y += -I$(SWPM_MODULES_FOLDER)/include/v6878/
+ 
+ BUILD_SWPM_DBG_MODUDLE_NAME=mtk-swpm-dbg-v6878
+-obj-$(CONFIG_MTK_SWPM_MODULE) += ${BUILD_SWPM_DBG_MODUDLE_NAME}.o
+ ${BUILD_SWPM_DBG_MODUDLE_NAME}-objs += swpm_v6878.o
+ ${BUILD_SWPM_DBG_MODUDLE_NAME}-objs += swpm_v6878_ext.o
+ ${BUILD_SWPM_DBG_MODUDLE_NAME}-objs += swpm_v6878_subsys.o
+ ${BUILD_SWPM_DBG_MODUDLE_NAME}-objs += swpm_v6878_dbg_init.o
+ 
+ BUILD_SWPM_CPU_DBG_MODUDLE_NAME=mtk-swpm-cpu-dbg-v6878
+-obj-$(CONFIG_MTK_SWPM_MODULE) += ${BUILD_SWPM_CPU_DBG_MODUDLE_NAME}.o
+ ${BUILD_SWPM_CPU_DBG_MODUDLE_NAME}-objs += subsys/swpm_cpu_v6878.o
+ ${BUILD_SWPM_CPU_DBG_MODUDLE_NAME}-objs += subsys/swpm_cpu_v6878_dbg_init.o
+ 
+ BUILD_SWPM_MEM_DBG_MODUDLE_NAME=mtk-swpm-mem-dbg-v6878
+-obj-$(CONFIG_MTK_SWPM_MODULE) += ${BUILD_SWPM_MEM_DBG_MODUDLE_NAME}.o
+ ${BUILD_SWPM_MEM_DBG_MODUDLE_NAME}-objs += subsys/swpm_mem_v6878.o
+ ${BUILD_SWPM_MEM_DBG_MODUDLE_NAME}-objs += subsys/swpm_mem_v6878_dbg_init.o
+ 
+ BUILD_SWPM_CORE_DBG_MODUDLE_NAME=mtk-swpm-core-dbg-v6878
+-obj-$(CONFIG_MTK_SWPM_MODULE) += ${BUILD_SWPM_CORE_DBG_MODUDLE_NAME}.o
+ ${BUILD_SWPM_CORE_DBG_MODUDLE_NAME}-objs += subsys/swpm_core_v6878.o
+ ${BUILD_SWPM_CORE_DBG_MODUDLE_NAME}-objs += subsys/swpm_core_v6878_dbg_init.o
+ 
+@@ -62,3 +58,7 @@ subdir-ccflags-y += -DAUDIO_KERNEL_EXIST
+ endif
+ 
+ 
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += mtk-swpm-cpu-dbg-v6878.o
++obj-m += mtk-swpm-dbg-v6878.o
+diff --git a/drivers/misc/mediatek/tinysys_scmi/Makefile b/drivers/misc/mediatek/tinysys_scmi/Makefile
+index 3064dfc..743d6aa 100644
+--- a/drivers/misc/mediatek/tinysys_scmi/Makefile
++++ b/drivers/misc/mediatek/tinysys_scmi/Makefile
+@@ -1,5 +1,4 @@
+ # SPDX-License-Identifier: GPL-2.0
+-obj-$(CONFIG_MTK_TINYSYS_SCMI) += tinysys-scmi.o
+ 
+ tinysys-scmi-y := tinysys-scmi-drv.o tinysys.o
+ 
+@@ -7,3 +6,6 @@ tinysys-scmi-y := tinysys-scmi-drv.o tinysys.o
+ ccflags-y += -I$(srctree)/drivers/firmware/arm_scmi
+ 
+ ccflags-y += -DTINYSYS_SCMI_DEBUG
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += tinysys-scmi.o
+diff --git a/drivers/pinctrl/mediatek/Makefile b/drivers/pinctrl/mediatek/Makefile
+index 9e87b5a..91aa898 100644
+--- a/drivers/pinctrl/mediatek/Makefile
++++ b/drivers/pinctrl/mediatek/Makefile
+@@ -3,59 +3,44 @@ ccflags-y += -I$(srctree)/drivers/pinctrl/mediatek
+ 
+ # Core
+ ifeq ($(CONFIG_DEVICE_MODULES_EINT_MTK),m)
+-obj-m += pinctrl-mtk-v2.o
+ else ifeq ($(CONFIG_DEVICE_MODULES_PINCTRL_MTK_V2),m)
+-obj-m += pinctrl-mtk-v2.o
+ else ifeq ($(CONFIG_DEVICE_MODULES_PINCTRL_MTK_PARIS),m)
+-obj-m += pinctrl-mtk-v2.o
+ endif
+ 
+ ifeq ($(CONFIG_DEVICE_MODULES_EINT_MTK),y)
+-obj-y += mtk-eint.o
+ else ifeq ($(CONFIG_DEVICE_MODULES_EINT_MTK),m)
+ pinctrl-mtk-v2-y += mtk-eint.o
+ endif
+ 
+ ifeq ($(CONFIG_DEVICE_MODULES_PINCTRL_MTK_V2),y)
+-obj-y += pinctrl-mtk-common-v2.o
+ else ifeq ($(CONFIG_DEVICE_MODULES_PINCTRL_MTK_V2),m)
+ pinctrl-mtk-v2-y += pinctrl-mtk-common-v2.o
+ endif
+ 
+ ifeq ($(CONFIG_DEVICE_MODULES_PINCTRL_MTK_PARIS),y)
+-obj-y += pinctrl-paris.o pinctrl-mtk-common-v2_debug.o
+ else ifeq ($(CONFIG_DEVICE_MODULES_PINCTRL_MTK_PARIS),m)
+ pinctrl-mtk-v2-y += pinctrl-paris.o
+-obj-m += pinctrl-mtk-common-v2_debug.o
+ endif
+ 
+ # SoC Drivers
+-obj-$(CONFIG_DEVICE_MODULES_PINCTRL_MT6779)	+= pinctrl-mt6779.o
+-ifneq ($(wildcard $(srctree)/$(src)/pinctrl-mt6363.c),)
+-obj-$(CONFIG_PINCTRL_MT6363)	+= pinctrl-mt6363.o
++ifneq ($(wildcard $(src)/pinctrl-mt6363.c),)
+ endif
+-ifneq ($(wildcard $(srctree)/$(src)/pinctrl-mt6373.c),)
+-obj-$(CONFIG_PINCTRL_MT6373)	+= pinctrl-mt6373.o
++ifneq ($(wildcard $(src)/pinctrl-mt6373.c),)
+ endif
+-ifneq ($(wildcard $(srctree)/$(src)/pinctrl-mt6878.c),)
+-obj-$(CONFIG_PINCTRL_MT6878)	+= pinctrl-mt6878.o
++ifneq ($(wildcard $(src)/pinctrl-mt6878.c),)
+ endif
+-ifneq ($(wildcard $(srctree)/$(src)/pinctrl-mt6886.c),)
+-obj-$(CONFIG_PINCTRL_MT6886)	+= pinctrl-mt6886.o
++ifneq ($(wildcard $(src)/pinctrl-mt6886.c),)
+ endif
+-ifneq ($(wildcard $(srctree)/$(src)/pinctrl-mt6897.c),)
+-obj-$(CONFIG_PINCTRL_MT6897)	+= pinctrl-mt6897.o
++ifneq ($(wildcard $(src)/pinctrl-mt6897.c),)
+ endif
+-ifneq ($(wildcard $(srctree)/$(src)/pinctrl-mt6983.c),)
+-obj-$(CONFIG_PINCTRL_MT6983)	+= pinctrl-mt6983.o
++ifneq ($(wildcard $(src)/pinctrl-mt6983.c),)
+ endif
+-ifneq ($(wildcard $(srctree)/$(src)/pinctrl-mt6985.c),)
+-obj-$(CONFIG_PINCTRL_MT6985)	+= pinctrl-mt6985.o
++ifneq ($(wildcard $(src)/pinctrl-mt6985.c),)
+ endif
+-ifneq ($(wildcard $(srctree)/$(src)/pinctrl-mt6989.c),)
+-obj-$(CONFIG_PINCTRL_MT6989)	+= pinctrl-mt6989.o
++ifneq ($(wildcard $(src)/pinctrl-mt6989.c),)
+ endif
+-ifneq ($(wildcard $(srctree)/$(src)/pinctrl-mt8188.c),)
+-obj-$(CONFIG_DEVICE_MODULES_PINCTRL_MT8188)	+= pinctrl-mt8188.o
++ifneq ($(wildcard $(src)/pinctrl-mt8188.c),)
+ endif
+-obj-$(CONFIG_DEVICE_MODULES_PINCTRL_MT8195)    += pinctrl-mt8195.o
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += pinctrl-mtk-common-v2_debug.o
+diff --git a/drivers/thermal/mediatek/Makefile b/drivers/thermal/mediatek/Makefile
+index f422c9b..e26fe91 100644
+--- a/drivers/thermal/mediatek/Makefile
++++ b/drivers/thermal/mediatek/Makefile
+@@ -9,24 +9,15 @@ CFLAGS_md_cooling.o := -I$(srctree)/drivers/thermal
+ CFLAGS_soc_temp_lvts.o := -I$(srctree)/drivers/thermal
+ CFLAGS_thermal_trace.o := -I$(DEVICE_MODULES_PATH)/drivers/thermal/mediatek
+ 
+-obj-$(CONFIG_MTK_SOC_THERMAL)	+= soc_temp.o
+-obj-$(CONFIG_MTK_SOC_THERMAL_LVTS)	+= soc_temp_lvts.o
+-obj-$(CONFIG_MTK_PMIC_THERMAL) += pmic_temp.o
+-obj-$(CONFIG_MTK_MD_THERMAL)	+= md_cooling_all.o
+ md_cooling_all-y 		+= md_cooling.o
+ md_cooling_all-$(CONFIG_DEBUG_FS) += md_cooling_debugfs.o
+ 
+-obj-$(CONFIG_MTK_CHARGER_THERMAL) += charger_cooling.o
+-obj-$(CONFIG_MTK_BACKLIGHT_THERMAL) += backlight_cooling.o
+ 
+-obj-$(CONFIG_MTK_THERMAL_TRACE) += thermal_trace.o
+ 
+-obj-$(CONFIG_MTK_THERMAL_IPI)	+= thermal_ipi.o
+ 
+-obj-$(CONFIG_MTK_THERMAL_INTERFACE)	+= thermal_interface.o
+ 
+-obj-$(CONFIG_MTK_BOARD_THERMAL)	+= board_temp.o
+ 
+-obj-$(CONFIG_MTK_VTSKIN_THERMAL)	+= vtskin_temp.o
+ 
+-obj-$(CONFIG_MTK_WIFI_THERMAL) += wifi_cooling.o
++
++# LieppOS low-power-batch-01: owned target and genuine witness routes only.
++obj-m += thermal_interface.o

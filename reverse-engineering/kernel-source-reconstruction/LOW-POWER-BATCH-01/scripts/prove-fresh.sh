@@ -1,6 +1,6 @@
 #!/bin/bash
 # Independent committed-source proof for one tag (B1|B2). Static/offline, four CPUs, low priority.
-# Fresh --no-hardlinks clone of the authenticated bundle, new workspace, full bootstrap incl. OEM BTF base.
+# Fresh --no-hardlinks clone of the authenticated bundle, new workspace, full offline bootstrap (KDM only; no BTF base for this batch).
 set -euo pipefail
 TAG=${1:?B1|B2}; CPUS=${2:?cpu list}; case "$TAG" in B1|B2) ;; *) exit 2;; esac
 HERE=$(cd "$(dirname "$0")/.." && pwd)
