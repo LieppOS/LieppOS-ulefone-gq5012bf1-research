@@ -1,0 +1,38 @@
+{
+  "link_only_providers": [
+    {
+      "crc_identical": true,
+      "link_only": "mtk_ccu.ko",
+      "reason": "stock ships only mtk_ccuv.ko (stock mtk-vmm-isp71-regulator.ko depends=mtk_ccu_mssv,mtk_ccu: MediaTek linked against in-tree providers); mtk_ccu.ko is the in-tree modpost provider only (proposal-dk17-ccu-legacy-module-only)",
+      "substitute": "mtk_ccuv.ko",
+      "symbols": 6
+    }
+  ],
+  "replaced_in_tree": [
+    {
+      "elf_depends": [
+        "mtk_ccu"
+      ],
+      "identity": "mtk-vmm-isp71-regulator.ko",
+      "loader_depends": [
+        "mtk_ccuv"
+      ]
+    },
+    {
+      "elf_depends": [
+        "mtk-mmdvfs-v3",
+        "mtk_ccu"
+      ],
+      "identity": "mtk-mmdvfs-ccu.ko",
+      "loader_depends": [
+        "mtk-mmdvfs-v3",
+        "mtk_ccuv"
+      ]
+    },
+    {
+      "identity": "mtk_ccu.ko",
+      "selected": "link-only; staged as mtk_ccuv.ko"
+    }
+  ],
+  "rule": "the vendor profile declares replaces_in_tree; the in-tree copy is not staged, every consumer must resolve against the selected provider (checked by depmod -e -E below)"
+}
